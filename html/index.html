@@ -1,0 +1,189 @@
+<html>
+<head>
+   <link href="/css/default.css" rel="stylesheet">
+
+   <script src="/scripts/gl-matrix.js"></script>
+   <script src="/scripts/wings3d.js"></script>
+   <script src="/scripts/wings3d_gl.js"></script>
+   <script src="/scripts/wings3d_shaderprog.js"></script>
+   <script src="/scripts/wings3d_menu.js"></script>
+   <script src="/scripts/wings3d_buttonbar.js"></script>
+   <script src="/scripts/wings3d_camera.js"></script>
+   <script src="/scripts/wings3d_render.js"></script>
+   <script src="/scripts/wings3d_mads.js"></script>
+   <script src="/scripts/wings3d_view.js"></script>
+   <script src="/scripts/wings3d_wingededge.js"></script>
+   <script src="/scripts/wings3d_boundingvolume.js"></script>
+   <script src="/scripts/wings3d_model.js"></script>
+   <script src="/scripts/plugins/cubeshape.js"></script>
+
+
+  <script>
+    function help(text) {
+      if (typeof text === "undefined") {
+          text = ''; /* none-breaking space */
+      }
+      document.getElementById('helpbar').textContent=text;
+    }
+    function geometryStatus(text) {
+      if (typeof text === "undefined") {
+          text = ''; /* none-breaking space */
+      }
+      /* no safe escaping*/
+      document.getElementById('statusbar').innerHTML=text;
+    }
+  </script> 
+</head>
+<body class="box"onload="Wings3D.start('glcanvas')">
+  <header class="row header">
+  <nav class="menu">
+    <ul>
+      <li class="drop">
+        <a>File</a>
+        <ul>
+          <li><a onmouseover="help('Create a new, empty scene')" onmouseleave="help()">New</a></li>
+          <li><a onmouseover="help('Open a previously saved scene')" onmouseleave="help()">Open...</a></li>
+          <li><a onmouseover="help('Merge a previously saved scene into the current scene')" onmouseleave="help()">Merge...</a></li>
+          <hr/>
+          <li><a onmouseover="help('Save the current scene')" onmouseleave="help()">Save</a></li>
+          <li><a onmouseover="help('Save the current scene under a new name')" onmouseleave="help()">Save As...</a></li>
+          <li><a onmouseover="help('Save only the selected objects or faces')" onmouseleave="help()">Save Selected...</a></li>
+          <li><a onmouseover="help('Generate new filename and save')" onmouseleave="help()">Save Incrementally</a></li>
+          <li><a onmouseover="help('Include unused materials when saving a .wings file')" onmouseleave="help()">Save Unused Materials</a></li>
+          <hr/>
+          <li><a onmouseover="help('Revert current scene to the saved contents')" onmouseleave="help()">Revert</a></li>
+          <hr/>
+          <li><a>Import</a></li>
+          <li><a>Export</a></li>
+          <li><a>Export Selected</a></li>
+          <hr/>
+          <li><a onmouseover="help('Import an image file')" onmouseleave="help()">Import Image...</a></li>
+          <hr/>
+          <li><a>Render</a></li>
+          <hr/>
+          <li><a onmouseover="help('Install a plug-in')" onmouseleave="help()">Install Plug-In</a></li>
+          <hr/>
+          <li><a onmouseover="help('Save a preference subset from your current settings')" onmouseleave="help()">Save Preference Subset</a></li>
+          <li class="sub"><a>Load Preference Subset</a>
+            <ul>
+              <li><a onmouseover="help('Load a previously saved preference subset')" onmouseleave="help()">Load...</a></li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+      <li>
+        <a>Edit</a>
+      </li>
+      <li>
+        <a>Select</a>
+      </li>
+      <li>
+        <a>Tools</a>
+      </li>
+      <li>
+        <a>Window</a>
+      </li>
+      <li>
+        <a>Help</a>
+      </li>
+    </ul>
+  </nav>
+  <div class="button-bar" id="toolbar">
+    <div class="button-group system-group">
+      <button class="button">
+        <img src="/images/bluecube/open.png" >
+        <label>Open</label>
+      </button>
+      <button class="button">
+        <img src="/images/bluecube/save.png" >
+        <label>Save</label>
+      </button>
+      <button class="button">
+        <img src="/images/bluecube/undo.png" >
+        <label>Undo</label>
+      </button>
+      <button class="button">
+        <img src="/images/bluecube/redo.png" >
+        <label>Redo</label>
+      </button>
+    </div>
+    <div class="button-group object-select">
+      <button class="button" wings3d-api="toggleVertexMode" onmouseover="help('Change to vertex selection mode')">
+        <img src="/images/bluecube/vertex.png" >
+        <label >Vertex</label>
+      </button>
+      <button class="button" wings3d-api="toggleEdgeMode">
+        <img src="/images/bluecube/edge.png" >
+        <label>Edge</label>
+      </button>
+      <button class="button" wings3d-api="toggleFaceMode">
+        <img src="/images/bluecube/face.png" >
+        <label>Face</label>
+      </button>
+      <button class="button">
+        <img src="/images/bluecube/body.png" >
+        <label>Body</label>
+      </button>
+    </div>
+    <div class="button-group set-pref">
+      <button class="button">
+        <img src="/images/bluecube/pref.png" >
+        <label>Pref</label>
+      </button>
+      <button class="button">
+        <img src="/images/bluecube/smooth.png" >
+        <label>Smooth</label>
+      </button>
+      <button class="button">
+        <img src="/images/bluecube/perspective.png" >
+        <label>Persp</label>
+      </button>
+      <button class="button">
+        <img src="/images/bluecube/groundplane.png" >
+        <label>Ground</label>
+      </button>
+      <button class="button">
+        <img src="/images/bluecube/axes.png" >
+        <label>Axes</label>
+      </button>
+    </div>
+    </div>
+  </header>
+  <div id="canvas" class="row content" onmouseover="help('L:Select   M:Start Camera   R:Show Menu   [Alt]+R:Tweak menu')">
+  <div id="statusbar"> Wings3D Geometry </div>
+  <canvas id="glcanvas">
+    Your browser doesn't appear to support the 
+    <code>&lt;canvas&gt;</code> element.
+  </canvas>
+  </div>
+  <footer id="helpbar" class="row footer">This is help bar</footer>
+  <nav id="context-menu" class="context-menu">
+    <ul class="context-menu__items">
+      <li class="context-menu__item"><a class="context-menu__link" wings3d-api="createCube">Cube</a></li>
+      <hr/>
+      <li class="context-menu__item"><a href="javascript:alert('not implemented')" class="context-menu__link" wings3d-api="Edit">Not Implemented Yet</a></li>
+      <li class="context-menu__item"><a href="#" class="context-menu__link" wings3d-api="Delete">Dummy Item</a></li>
+    </ul>
+  </nav>
+  <nav id="edge-context-menu" class="context-menu">
+    <ul class="context-menu__items">
+      <li class="context-menu__item context-menu__submenu">
+        <a class="context-menu__link">Cut</a>
+        <ul class="context-menu__items">
+          <li class="context-menu__item"><a class="context-menu__link" wings3d-api="cutLine,2">2 Segments</a></li>
+          <li class="context-menu__item"><a class="context-menu__link" wings3d-api="cutLine,3">3 Segments</a></li>
+          <li class="context-menu__item"><a class="context-menu__link" wings3d-api="cutLine,4">4 Segments</a></li>
+          <li class="context-menu__item"><a class="context-menu__link" wings3d-api="cutLine,5">5 Segments</a></li>
+          <hr>
+          <li class="context-menu__item"><a class="context-menu__link" wings3d-api="cutLine,10">10 Segments</a></li>
+	  <hr>
+          <li class="context-menu__item"><a class="context-menu__link" wings3d-api="cutAsk">Enter Number...</a></li>
+	  <hr>
+          <li class="context-menu__item"><a class="context-menu__link" wings3d-api="cutArbitrary">Cut at arbitrary position</a></li>
+        </ul>
+        <hr>
+      </li>
+    </ul>
+  </nav>
+</body>
+</html>
