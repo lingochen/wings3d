@@ -302,8 +302,15 @@ function createRenderWorld() {
       my.groundAxisProg.miniAxisVBO.projection = mat4.create();
       mat4.ortho(my.groundAxisProg.miniAxisVBO.projection, -ratio, ratio, -1.0, 1.0, 0.00001,  10000000.0);
    }
-   function renderMiniAxis(gl) {
+   function renderMiniAxis(gl, inModelView) {
       if (Wings3D.view.prop.miniAxis) {
+         var ratio = gl.canvas.clientWidth / gl.canvas.clientHeight;
+         // set current rotation.
+         var modelView = my.groundAxisProg.miniAxisVBO.modelView;
+         mat4.copy(modelView, inModelView);
+         modelView[12] = 0.11-ratio;
+         modelView[13] = -1.0+0.11;
+         modelView[14] = 0.0;
          // save attribute
          var length = my.groundAxisProg.miniAxisVBO.length;
 
@@ -339,8 +346,11 @@ function createRenderWorld() {
       var height = Wings3D.gl.canvas.clientHeight;
       var w1 = Math.max(width, height);// /2.0;
       var coord = Wings3D.gl.unProject(w1, 0.0, 0.0, modelView, projection, [0, 0, width, height]);
-      return Wings3D.GROUND_GRID_SIZE * 
+      var ret = Wings3D.GROUND_GRID_SIZE * 
               Math.max(Math.round(Math.max(Math.max(Math.abs(coord[0]), Math.abs(coord[1])), Math.abs(coord[2]))), 10.0);
+      // hacked an value that just cover the screen space.
+      ret *= width/height * 0.7;
+      return Math.round(ret);
    }
    function computeGroundAndAxes(gl, projection, modelView) {
       var gridSize = calcGridSize(projection, modelView);
@@ -454,7 +464,7 @@ function createRenderWorld() {
             computeGroundAndAxes(gl, mat.projection, mat.modelView);
          }
          var yon = renderGroundAndAxes(gl, mat.projection, mat.modelView);
-         renderMiniAxis(gl);
+         renderMiniAxis(gl, mat.modelView);
          //show_saved_bb(St),
          //show_bb_center(St),
          //user_clipping_planes(on),
