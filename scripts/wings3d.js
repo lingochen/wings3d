@@ -72,7 +72,18 @@ var Wings3D = (function () {
 */
 
       requestAnimationFrame(my.render);
+
+      // prompt for quitting
+      window.addEventListener("beforeunload", _pvt.confirmation);
    };
+
+   _pvt.confirmation = function(ev) {
+      // check if not saved then ask if want to quit, if nothing then just quit.
+      var confirmMessage = "Are you sure you want to quit?";
+      ev.returnValue = confirmMessage;      // Gecko, Trident, Chrome 34+
+      return confirmMessage;                 // Gecko, WebKit, Chrome <34
+   };
+
 
    my.start_halt = function() {
       // closed resource
