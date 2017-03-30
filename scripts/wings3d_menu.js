@@ -97,7 +97,7 @@ function createMenuHandler(view, contextClassName) {
       if ( canvasInContext ) {
         e.preventDefault();
         _pvt.contextMenu = _pvt.view.getContextMenu(e);
-        positionMenu(e);
+        _pvt.positionDom(_pvt.contextMenu.menu, _pvt.getPosition(e));
         toggleMenuOn();
       } else {
         toggleMenuOff();
@@ -113,8 +113,8 @@ function createMenuHandler(view, contextClassName) {
       var clickeElIsLink = clickInsideElement( e, contextMenuLinkClassName );
 
       if ( clickeElIsLink ) {
-        e.preventDefault();
-        menuItemListener( clickeElIsLink );
+        //e.preventDefault();
+        menuItemListener( clickeElIsLink, e );
       } else {
         if ( (e.button == 0) || (e.button == 1) ) {
           toggleMenuOff();
@@ -164,41 +164,39 @@ function createMenuHandler(view, contextClassName) {
   }
 
   /**
-   * Positions the menu properly.
+   * Positions the menu properly. If outside the windows, tried to move backin.
    * 
    * @param {Object} e The event
    */
-  function positionMenu(e) {
-    var clickCoords = _pvt.getPosition(e);
+   _pvt.positionDom = function(element, mousePosition) {
+      var elementWidth = element.offsetWidth + 4;
+      var elementHeight = element.offsetHeight + 4;
 
-    var menuWidth = _pvt.contextMenu.menu.offsetWidth + 4;
-    var menuHeight = _pvt.contextMenu.menu.offsetHeight + 4;
+      var windowWidth = window.innerWidth;
+      var windowHeight = window.innerHeight;
 
-    var windowWidth = window.innerWidth;
-    var windowHeight = window.innerHeight;
+      if ( (windowWidth - mousePosition.x) < elementWidth ) {
+         element.style.left = windowWidth - elementWidth + "px";
+      } else {
+         element.style.left = mousePosition.x + "px";
+      }
 
-    if ( (windowWidth - clickCoords.x) < menuWidth ) {
-      _pvt.contextMenu.menu.style.left = windowWidth - menuWidth + "px";
-    } else {
-      _pvt.contextMenu.menu.style.left = clickCoords.x + "px";
-    }
-
-    if ( (windowHeight - clickCoords.y) < menuHeight ) {
-      _pvt.contextMenu.menu.style.top = windowHeight - menuHeight + "px";
-    } else {
-      _pvt.contextMenu.menu.style.top = clickCoords.y + "px";
-    }
-  }
+      if ( (windowHeight - mousePosition.y) < elementHeight ) {
+         element.style.top = windowHeight - elementHeight + "px";
+      } else {
+         element.style.top = mousePosition.y + "px";
+      }
+  };
 
   /**
    * Dummy action function that logs an action when a menu item link is clicked
    * 
    * @param {HTMLElement} link The link that was clicked
    */
-  function menuItemListener( link ) {
+  function menuItemListener( link, ev ) {
     toggleMenuOff();
     help( "wings3d api - " + link.getAttribute("wings3d-api"));
-    Wings3D.callApi(link.getAttribute("wings3d-api"));
+    //Wings3D.callApi(link.getAttribute("wings3d-api", _pvt.getPosition(ev)));
   }
   /**
    * Run the app.
@@ -206,5 +204,7 @@ function createMenuHandler(view, contextClassName) {
    return {
       setup: init,
       // tearDown:
+      getPosition: _pvt.getPosition,
+      positionDom: _pvt.positionDom,
    };
 }

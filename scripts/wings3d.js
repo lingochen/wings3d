@@ -54,7 +54,6 @@ var Wings3D = (function () {
 
     my.view = createView();
     my.view.init(my.gl);
-    my.apiExport.putIntoWorld = my.view.putIntoWorld;
 
       my.contextmenu = createMenuHandler(my.view, "content");
       my.contextmenu.setup();
@@ -114,7 +113,7 @@ var Wings3D = (function () {
    // used this api only, for plugin export.
    my.apiExport = {};
 
-   my.callApi = function(funcParam) {
+   my.callApi = function(funcParam, position) {
       var funArray = funcParam.split(',');
       var func = funArray[0];
       var param;
@@ -122,7 +121,7 @@ var Wings3D = (function () {
          param = funArray[1];
       }
       if (my.apiExport[func]) {
-         my.apiExport[func](param);
+         my.apiExport[func](position, param);
          help(func + " called");
       } else {
          console.log("api function: " + func + " does not exist.");

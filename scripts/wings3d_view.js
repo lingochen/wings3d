@@ -148,7 +148,18 @@ function createView(gl) {
       //
       _pvt.world.push( model );
       my.renderWorld.needToRedraw();
+      return model;
    };
+
+   my.removeFromWorld = function(previewCage) {
+      var index = _pvt.world.indexOf(previewCage);
+      if (index >= 0) {
+         _pvt.world.splice(index, 1);
+         my.renderWorld.needToRedraw();
+      }
+   };
+   Wings3D.apiExport.putIntoWorld = my.putIntoWorld;
+   Wings3D.apiExport.removeFromWorld = my.removeFromWorld;
    
    _pvt.lastPick = null;
 

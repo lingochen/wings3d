@@ -1,8 +1,45 @@
 /*
-   n cube create. 
+   n cube create. Use Dialog to create the cube.
+   todo: to support spherize, rotate, translate, putOnGround. currently only numberOfCuts and size is working.
 */
+document.addEventListener('DOMContentLoaded', function() {
+   var api = Wings3D.apiExport;
+   var _pvt = {previewCage: null};
+   _pvt.cubeParams = { numberOfCut: 1,
+                       spherize: false,
+                       size: {x: 2.0, y: 2.0, z: 2.0},
+                       rotate: {x: 0.0, y: 0.0, z: 0.0},
+                       translate: {x: 0.0, y: 0.0, z: 0.0},
+                       putOnGround: false,
 
-(function(api) {
+   };
+
+   _pvt.resetCubeParams = function() {
+      // reset.cubeParams.
+      _pvt.cubeParams.numberOfCut = 1;
+      _pvt.cubeParams.spherize = false;
+      _pvt.cubeParams.size.x = _pvt.cubeParams.size.y = _pvt.cubeParams.size.z = 2.0;
+      _pvt.cubeParams.rotate.x = _pvt.cubeParams.rotate.y = _pvt.cubeParams.rotate.z = 0.0;
+      _pvt.cubeParams.translate.x = _pvt.cubeParams.translate.y = _pvt.cubeParams.translate.z = 0.0;    
+      _pvt.cubeParams.putOnGround = false;
+   };
+
+   _pvt.cancelPreview = function() {
+      if (_pvt.previewCage !== null) {
+         // remove it from world.
+         api.removeFromWorld(_pvt.previewCage);
+         _pvt.previewCage = null;
+      } 
+   };
+
+   _pvt.updatePreview = function() {
+      if (_pvt.previewCage !== null) {
+         // remove it from world.
+         api.removeFromWorld(_pvt.previewCage);
+      }
+      api.createCube(_pvt.cubeParams.size, _pvt.cubeParams.numberOfCut);
+   };
+
    api.createCube = api.createCube || function(size={x:2.0,y:2.0,z:2.0}, numberOfCut=5) {//, translate, rotate, aboveGround = false) {
       // create, one 
       var mesh = new WingedTopology;
@@ -78,6 +115,126 @@
          return [dest.x-step[up].x, org.y, org.z+step[rt].z];
       });
 
-      api.putIntoWorld(mesh);
+      _pvt.previewCage = api.putIntoWorld(mesh);
+   }; 
+
+   // insert a hidden form into document
+   var form = document.getElementById('createCubeForm');
+   if (form === null) {
+      form = document.createElement('form');
+      form.setAttribute('id', 'createCubeForm');
+      form.innerHTML = `
+         <span class="close">&times;</span>
+         <h3>Cube Options</h3>
+         <fieldset> 
+            <legend>Number of Cuts</legend>
+            <input name="numberOfCuts" type="range" min="1" max="20" value="1" onchange="this.nextElementSibling.value=this.value" />
+            <input name="numberOfCuts" type="number" min="1" max="20" value="1" step="1" onchange="this.previousElementSibling.value=this.value" />
+         </fieldset>
+         <div>
+            <label>X <input type="number" name="size_x" value="2.0" step="0.5"></label><br>
+            <label>Y <input type="number" name="size_y" value="2.0" step="0.5"></label><br>
+            <label>Z <input type="number" name="size_z" value="2.0" step="0.5"></label>
+         </div>
+         <fieldset>
+            <legend>Spherize</legend>
+            <label><input type='radio' name='sphere' value='true'>Yes</label>
+            <label><input type='radio' name='sphere' value='false' checked>No<label>
+         </fieldset>
+         <fieldset>
+            <label>Rotate</label>
+            <span>
+               <label>X <input type="number" name="rotate_x" value="0.0" step="0.5"></label><br>
+               <label>Y <input type="number" name="rotate_y" value="0.0" step="0.5"></label><br>
+               <label>Z <input type="number" name="rotate_z" value="0.0" step="0.5"></label>    
+            </span>
+            <label>Move</label>
+            <span>
+               <label>X <input type="number" name="translate_x" value="0.0" step="0.5"></label><br>
+               <label>Y <input type="number" name="translate_y" value="0.0" step="0.5"></label><br>
+               <label>Z <input type="number" name="translate_z" value="0.0" step="0.5"></label>
+            </span>
+            <div>
+               <label><input type="checkbox">Put on Ground</label>
+            </div>
+         </fieldset>
+          <button type="reset" value="Reset">Reset</button>
+          <button type="submit" value="Ok">Ok</button>
+      `;
+      // hide, then append into document.body.
+      form.style.display = 'none'; 
+      form.style.position = 'absolute';
+      form.className += 'dialog';
+      document.body.appendChild(form);
+      // handlingEvent.
+      var close = form.getElementsByClassName("close")[0];
+      close.addEventListener('click',function(e) {
+         form.style.display = 'none';
+         // remove object from world.
+         _pvt.cancelPreview();
+      });
+      // submit button.
+      form.addEventListener('submit', function(ev) {
+         ev.preventDefault();
+         form.style.display = 'none';
+         // accept previewCage to the world
+         _pvt.previewCage = null;
+      });
+      var cutHandler = function(ev) {
+         _pvt.cubeParams.numberOfCut = Number(ev.target.value);
+         _pvt.updatePreview();
+      };
+      // var inputs = form.getElementsByTagName('input');
+      var cut = document.querySelectorAll('#createCubeForm input[name="numberOfCuts"]');
+      cut[0].addEventListener('change', cutHandler);
+      cut[1].addEventListener('change', cutHandler);
+      var size = document.querySelectorAll('#createCubeform input[name^="size"');
+      size[0].addEventListener('change', function(ev) { 
+         _pvt.cubeParams.size.x = Number(ev.target.value);
+         _pvt.updatePreview();
+      });
+      size[1].addEventListener('change', function(ev) { 
+         _pvt.cubeParams.size.y = Number(ev.target.value);
+         _pvt.updatePreview();
+      });
+      size[2].addEventListener('change', function(ev) {
+         _pvt.cubeParams.size.z = Number(ev.target.value);
+         _pvt.updatePreview();
+      });
+      //
+      form.addEventListener('change', function(ev) {
+         ev.stopPropagation();
+         if (ev.target.name !== null) {
+            help(ev.target.name + " = " + ev.target.value);    
+         }
+      });
+      form.addEventListener('reset', function(ev) {
+         _pvt.resetCubeParams();
+         // setup the first one.
+         _pvt.updatePreview();
+      });
    }
-})(Wings3D.apiExport);
+
+   // attach to click event.
+   var menuItem = document.querySelector("#createCube");
+   if (menuItem) {
+      menuItem.addEventListener("click", function(ev) {
+         // get exact position,
+         var position = Wings3D.contextmenu.getPosition(ev);
+         // run createCube dialog
+         api.createCubeDialog(position);
+      })
+   }
+   //
+   api.createCubeDialog = api.createCubeDialog || function(mousePosition) {
+      // display dialog, shown at the mouse location.
+      form.style.display = 'block';
+      // position form.
+      Wings3D.contextmenu.positionDom(form, mousePosition);
+      _pvt.previewCage = null;
+      // reset dialog value.
+      form.reset();
+      // get sphere value.
+      // _pvt.cubeParams.spherize = form.querySelector('input[name="sphere"]:checked').value;
+   };
+}, false);
