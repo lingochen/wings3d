@@ -31,7 +31,6 @@
 "use strict";
 
 var WingedEdge = function(orgVert, toVert) {
-   this.selected = false;
    this.index = -1;
    this.left = new HalfEdge(orgVert, this);
    this.right = new HalfEdge(toVert, this);
@@ -188,7 +187,6 @@ var Polygon = function(startEdge, size) {
    this.halfEdge = startEdge;
    this.numberOfVertex = size;       // how many vertex in the polygon
    this.index = -1;
-   this.selected = false;
 };
 
 Polygon.prototype.eachVertex = function(callbackFn) {

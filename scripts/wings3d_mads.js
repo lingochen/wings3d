@@ -38,6 +38,30 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
          this.drawObject(gl);
       }
    }
+
+   changeSelectMode(fromMadsor, toMadsor) {
+      var func;
+      if (fromMadsor instanceof FaceMadsor) {
+         if (toMadsor instanceof EdgeMadsor) {
+            func = PreviewCage.prototype.changeFromFaceToEdgeSelect();
+         } else {
+            func = PreviewCage.prototype.changeFromFacetoVertexSelect();
+         }
+      } else if (fromMadsor instanceof EdgeMadsor) {
+         if (toMadsor instanceof FaceMadsor) {
+            func = PreviewCage.prototype.changeFromEdgeToFaceSelect();
+         } else {
+            func = PreviewCage.prototype.changeFromEdgeToVertexSelect();
+         }
+      } else {
+         if (toMadsor instanceof FaceMadsor) {
+            func = PreviewCage.prototype.changeFromVertexToFaceSelect();
+         } else {
+            func = PreviewCage.prototype.changeFromVertexToEdgeSelect();
+         }
+      }
+      return func;
+   }
 }
 
 
@@ -81,6 +105,14 @@ class FaceMadsor extends Madsor {
       }
    }
 
+   toggleFunc(toMadsor) {
+      if (toMadsor instanceof EdgeMadsor) {
+         return PreviewCage.prototype.changeFromFaceToEdgeSelect;
+      } else {
+         return PreviewCage.prototype.changeFromFaceToVertexSelect;
+      }
+   }
+
    drawObject(gl) {
       // draw hilite
       gl.drawArrays(gl.TRIANGLE_FAN, 0, this.trianglefan.length);
@@ -100,21 +132,12 @@ class FaceMadsor extends Madsor {
 class EdgeMadsor extends Madsor {
    constructor() {
       super();
-      // saved the selectedEdge here.
-      this.selectedMap = new Map;
    }
 
    select(preview) {
       //
       if (this.currentEdge !== null) {
          preview.selectEdge(this.currentEdge);
-         var wingedEdge = this.currentEdge.wingedEdge;
-         if (wingedEdge.selected === true) {
-            this.selectedMap.set(wingedEdge.index, wingedEdge);
-            // checked if
-         } else {
-            this.selectedMap.delete(wingedEdge.index);
-         }
       }
    }
 
@@ -129,6 +152,14 @@ class EdgeMadsor extends Madsor {
       //if (this.currentEdge) {
          this.preview.hiliteEdge(edge, true);
       //}
+   }
+
+   toggleFunc(toMadsor) {
+      if (toMadsor instanceof FaceMadsor) {
+         return PreviewCage.prototype.changeFromEdgeToFaceSelect;
+      } else {
+         return PreviewCage.prototype.changeFromEdgeToVertexSelect;
+      }
    }
 
    draw(gl) {
@@ -187,6 +218,13 @@ class VertexMadsor extends Madsor {
       this.currentEdge = edge;
    }
 
+   toggleFunc(toMadsor) {
+      if (toMadsor instanceof FaceMadsor) {
+         return PreviewCage.prototype.changeFromVertexToFaceSelect;
+      } else {
+         return PreviewCage.prototype.changeFromVertexToEdgeSelect;
+      }
+   }
 
    draw(gl) {
       // draw hilite

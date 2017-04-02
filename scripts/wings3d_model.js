@@ -44,8 +44,8 @@ var PreviewCage = function(mesh) {
    this.previewVertex.shaderData.setAttribute('color', this.previewVertex.color, 1);
    this.previewVertex.shaderData.setUniform4fv("selectedColor", [1.0, 0.0, 0.0, 1.0]);
    this.previewVertex.shaderData.setUniform4fv('hiliteColor', [0.0, 1.0, 0.0, 1.0]);
-   // selectedMap
-   
+   // selecte(Vertex,Edge,Face)here
+   this.selectedMap = new Map;
 };
 
 
@@ -214,17 +214,56 @@ PreviewCage.prototype.hiliteVertex = function(vertex, show) {
 
 PreviewCage.prototype.selectVertex = function(vertex) {
    var color;
-   if (vertex.selected === false) {
-      vertex.selected = true;
+   if (this.selectedMap.has(vertex.index)) {
+      this.selectedMap.delete(vertex.index);
+      color = -0.25;
+   } else {
+      this.selectedMap.set(vertex.index, vertex);
       color = 0.25;
       geometryStatus("select vertex: " + vertex.index);
-   } else {
-      vertex.selected = false;
-      color = -0.25;
    }
    // selected color
    this.setVertexColor(vertex, color);
 };
+
+
+PreviewCage.prototype.changeFromVertexToFaceSelect = function() {
+   var self = this;
+   var oldSelected = this.selectedMap;
+   this.selectedMap = new Map;
+   // zeroout the edge seleciton.
+   this.previewVertex.color.fill(0.0);
+   this.previewVertex.shaderData.updateAttribute('color', 0, this.previewVertex.color);
+   //
+   for (var [key, vertex] of oldSelected) { 
+      // select all face that is connected to the vertex.
+      vertex.eachOutEdge(function(edge) {
+         if (!self.selectedMap.has(edge.face.index)) {
+            self.selectFace(edge);
+         }
+      });
+   }
+};
+
+
+PreviewCage.prototype.changeFromVertexToEdgeSelect = function() {
+   var self = this;
+   var oldSelected = this.selectedMap;
+   this.selectedMap = new Map;
+   // zeroout the edge seleciton.
+   this.previewVertex.color.fill(0.0);
+   this.previewVertex.shaderData.updateAttribute('color', 0, this.previewVertex.color);
+   //
+   for (var [key, vertex] of oldSelected) { 
+      // select all edge that is connected to the vertex.
+      vertex.eachOutEdge(function(edge) {
+         if (!self.selectedMap.has(edge.wingedEdge.index)) {
+            self.selectEdge(edge);
+         }
+      });
+   }
+};
+
 
 PreviewCage.prototype.setEdgeColor = function(wingedEdge, color) {
    // selected color
@@ -252,37 +291,68 @@ PreviewCage.prototype.selectEdge = function(selectEdge) {
    var wingedEdge = selectEdge.wingedEdge;
 
    var color;
-   if (wingedEdge.selected === false) {
-      wingedEdge.selected = true;
+   if (this.selectedMap.has(wingedEdge.index)) {
+      this.selectedMap.delete(wingedEdge.index);
+      color = -0.25;
+   } else {
+      this.selectedMap.set(wingedEdge.index, wingedEdge);
       color = 0.25;
       geometryStatus("select edge: " + wingedEdge.index);
-   } else {
-      wingedEdge.selected = false;
-      color = -0.25;
    }
    // selected color
    this.setEdgeColor(wingedEdge, color);
 };
 
+PreviewCage.prototype.changeFromEdgeToFaceSelect = function() {
+   var oldSelected = this.selectedMap;
+   this.selectedMap = new Map;
+   // zeroout the edge seleciton.
+   this.previewEdge.color.fill(0.0);
+   this.previewEdge.shaderData.updateAttribute('color', 0, this.previewEdge.color);
+   //
+   for (var [key, wingedEdge] of oldSelected) {
+      // for each WingedEdge, select both it face.
+      if (!this.selectedMap.has(wingedEdge.left.face.index)) {
+         this.selectFace(wingedEdge.left);
+      }
+      if (!this.selectedMap.has(wingedEdge.right.face.index)) {
+         this.selectFace(wingedEdge.right);
+      }
+   } 
+};
+
+PreviewCage.prototype.changeFromEdgeToVertexSelect = function() {
+   var oldSelected = this.selectedMap;
+   this.selectedMap = new Map;
+   // zeroout the edge seleciton.
+   this.previewEdge.color.fill(0.0);
+   this.previewEdge.shaderData.updateAttribute('color', 0, this.previewEdge.color);
+   //
+   for (var [key, wingedEdge] of oldSelected) {
+      // for each WingedEdge, select both it face.
+      if (!this.selectedMap.has(wingedEdge.left.origin.index)) {
+         this.selectVertex(wingedEdge.left.origin);
+      }
+      if (!this.selectedMap.has(wingedEdge.right.origin.index)) {
+         this.selectVertex(wingedEdge.right.origin);
+      }
+   } 
+};
 
 /**
  * 
  */
 PreviewCage.prototype.selectFace = function(selectEdge) {
    // select polygon set color,
-   var selected = this.preview.selected;
+   var self = this;
+   var selected = this.preview.selected;     // filled triangle's selection status.
    var polygon = selectEdge.face;
-   if (polygon.selected === false) {
+   if (this.selectedMap.has(polygon.index)) {
       polygon.eachVertex( function(vertex) {
-         selected[vertex.index] = 1.0;
-      });
-      selected[this.geometry.vertices.length+polygon.index]= 1.0;
-      polygon.selected = true;
-   } else {
-      polygon.eachVertex( function(vertex) {
+         // restore drawing color
          var vertexSelected = false;
          vertex.eachOutEdge( function(edge) {
-            if (edge.face !== polygon && edge.face.selected === true) {
+            if (edge.face !== polygon && self.selectedMap.has(edge.face.index)) {
                vertexSelected = true;
             }
          });
@@ -291,12 +361,51 @@ PreviewCage.prototype.selectFace = function(selectEdge) {
          }
       });
       selected[this.geometry.vertices.length+polygon.index]= 0.0;
-      polygon.selected = false;
+      this.selectedMap.delete(polygon.index);
+   } else {
+      // set the drawing color
+      polygon.eachVertex( function(vertex) {
+         selected[vertex.index] = 1.0;
+      });
+      selected[this.geometry.vertices.length+polygon.index]= 1.0;
+      this.selectedMap.set(polygon.index, polygon);
    }
    this.preview.shaderData.updateAttribute("selected", 0, selected);
    geometryStatus("polygon face # " + polygon.index);
 };
 
+
+PreviewCage.prototype.changeFromFaceToEdgeSelect = function() {
+   var self = this;
+   var oldSelected = this.selectedMap;
+   this.selectedMap = new Map;
+   this.preview.selected.fill(0.0);          // reset all polygon to non-selected 
+   this.preview.shaderData.updateAttribute("selected", 0, this.preview.selected);
+   for (var [key, polygon] of oldSelected) {
+      // for eachFace, selected all it edge.
+      polygon.eachEdge(function(edge) {
+         if (!self.selectedMap.has(edge.wingedEdge.index)) {
+            self.selectEdge(edge);
+         }
+      });
+   }
+};
+
+PreviewCage.prototype.changeFromFaceToVertexSelect = function() {
+   var self = this
+   var oldSelected = this.selectedMap;
+   this.selectedMap = new Map;
+   this.preview.selected.fill(0.0);          // reset all polygon to non-selected 
+   this.preview.shaderData.updateAttribute("selected", 0, this.preview.selected);
+   for (var [key, polygon] of oldSelected) {
+      // for eachFace, selected all it vertex.
+      polygon.eachVertex(function(vertex) {
+         if (!self.selectedMap.has(vertex.index)) {
+            self.selectVertex(vertex);
+         }
+      });
+   }
+};
 
 PreviewCage.prototype.EPSILON = 0.000001;
 // Möller–Trumbore ray-triangle intersection algorithm

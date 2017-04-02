@@ -19,22 +19,34 @@ function createView(gl) {
    _pvt.toggleVertexMode = function() {
       // change current mode to 
       if (_pvt.currentMode !== _pvt.vertexMode) {
+         var toggleFunc = _pvt.currentMode.toggleFunc(_pvt.vertexMode);
          _pvt.currentMode = _pvt.vertexMode;
          my.renderWorld.needToRedraw();
+         for (var i = 0; i < _pvt.world.length; ++i) {
+            toggleFunc.apply(_pvt.world[i]);
+         }
       }
    };
 
    _pvt.toggleFaceMode = function() {
       if (_pvt.currentMode !== _pvt.faceMode) {
+         var toggleFunc = _pvt.currentMode.toggleFunc(_pvt.faceMode);
          _pvt.currentMode = _pvt.faceMode;
          my.renderWorld.needToRedraw();
+         for (var i = 0; i < _pvt.world.length; ++i) {
+            toggleFunc.apply(_pvt.world[i]);
+         }
       }
    };
 
    _pvt.toggleEdgeMode = function() {
       if (_pvt.currentMode !== _pvt.edgeMode) {
+         var toggleFunc = _pvt.currentMode.toggleFunc(_pvt.edgeMode);
          _pvt.currentMode = _pvt.edgeMode;
          my.renderWorld.needToRedraw();
+         for (var i = 0; i < _pvt.world.length; ++i) {
+            toggleFunc.apply(_pvt.world[i]);
+         }
       }
    }
 
