@@ -1,21 +1,23 @@
 <html>
 <head>
-   <link href="/css/default.css" rel="stylesheet">
+   <link href="../css/default.css" rel="stylesheet">
 
-   <script src="/scripts/gl-matrix-min.js"></script>
-   <script src="/scripts/wings3d.js"></script>
-   <script src="/scripts/wings3d_gl.js"></script>
-   <script src="/scripts/wings3d_shaderprog.js"></script>
-   <script src="/scripts/wings3d_menu.js"></script>
-   <script src="/scripts/wings3d_buttonbar.js"></script>
-   <script src="/scripts/wings3d_camera.js"></script>
-   <script src="/scripts/wings3d_render.js"></script>
-   <script src="/scripts/wings3d_mads.js"></script>
-   <script src="/scripts/wings3d_view.js"></script>
-   <script src="/scripts/wings3d_wingededge.js"></script>
-   <script src="/scripts/wings3d_boundingvolume.js"></script>
-   <script src="/scripts/wings3d_model.js"></script>
-   <script src="/scripts/plugins/cubeshape.js"></script>
+   <script src="../scripts/gl-matrix-min.js"></script>
+   <script src="../scripts/wings3d.js"></script>
+   <script src="../scripts/wings3d_gl.js"></script>
+   <script src="../scripts/wings3d_shaderprog.js"></script>
+   <script src="../scripts/wings3d_menu.js"></script>
+   <script src="../scripts/wings3d_buttonbar.js"></script>
+   <script src="../scripts/wings3d_undo.js"></script>
+   <script src="../scripts/wings3d_camera.js"></script>
+   <script src="../scripts/wings3d_render.js"></script>
+   <script src="../scripts/wings3d_mads.js"></script>
+   <script src="../scripts/wings3d_edgemads.js"></script>
+   <script src="../scripts/wings3d_view.js"></script>
+   <script src="../scripts/wings3d_wingededge.js"></script>
+   <script src="../scripts/wings3d_boundingvolume.js"></script>
+   <script src="../scripts/wings3d_model.js"></script>
+   <script src="../scripts/plugins/cubeshape.js"></script>
 
 
   <script>
@@ -167,6 +169,17 @@
   </nav>
   <nav id="edge-context-menu" class="context-menu">
     <ul class="context-menu__items">
+      <li class="context-menu__item context-menu__submenu">
+	<a class="context-menu__link">Move</a>
+        <ul class="context-menu__items">
+          <li class="context-menu__item"><a class="context-menu__link" id="edgeMoveNormal">Normal</a></li>
+          <li class="context-menu__item"><a class="context-menu__link" id="edgeMoveFree">Free</a></li>
+          <li class="context-menu__item"><a class="context-menu__link" id="edgeMoveX">X</a></li>
+          <li class="context-menu__item"><a class="context-menu__link" id="edgeMoveY">Y</a></li>
+          <li class="context-menu__item"><a class="context-menu__link" id="edgeMoveZ">Z</a></li>
+        </ul>
+      </li>
+      <hr />
       <li class="context-menu__item context-menu__submenu">
         <a class="context-menu__link">Cut</a>
         <ul class="context-menu__items">

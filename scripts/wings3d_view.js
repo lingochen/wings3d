@@ -8,45 +8,40 @@
 function createView(gl) {
    var my = {};
    var _pvt = { world: [],
+                handler: {camera: null, mousemove: null},
                 faceMode: new FaceMadsor, 
                 edgeMode: new EdgeMadsor,
                 vertexMode: new VertexMadsor,
                 currentMode: null,
                 currentMouseHandler: null};
    _pvt.currentMode = _pvt.faceMode;
+   _pvt.faceMode.setWorld(_pvt.world);
+   _pvt.edgeMode.setWorld(_pvt.world);
+   _pvt.vertexMode.setWorld(_pvt.world);
    _pvt.curretMouseHandler = _pvt;
 
    _pvt.toggleVertexMode = function() {
       // change current mode to 
       if (_pvt.currentMode !== _pvt.vertexMode) {
-         var toggleFunc = _pvt.currentMode.toggleFunc(_pvt.vertexMode);
+         _pvt.currentMode.toggleFunc(_pvt.vertexMode);
          _pvt.currentMode = _pvt.vertexMode;
          my.renderWorld.needToRedraw();
-         for (var i = 0; i < _pvt.world.length; ++i) {
-            toggleFunc.apply(_pvt.world[i]);
-         }
       }
    };
 
    _pvt.toggleFaceMode = function() {
       if (_pvt.currentMode !== _pvt.faceMode) {
-         var toggleFunc = _pvt.currentMode.toggleFunc(_pvt.faceMode);
+         _pvt.currentMode.toggleFunc(_pvt.faceMode);
          _pvt.currentMode = _pvt.faceMode;
          my.renderWorld.needToRedraw();
-         for (var i = 0; i < _pvt.world.length; ++i) {
-            toggleFunc.apply(_pvt.world[i]);
-         }
       }
    };
 
    _pvt.toggleEdgeMode = function() {
       if (_pvt.currentMode !== _pvt.edgeMode) {
-         var toggleFunc = _pvt.currentMode.toggleFunc(_pvt.edgeMode);
+         _pvt.currentMode.toggleFunc(_pvt.edgeMode);
          _pvt.currentMode = _pvt.edgeMode;
          my.renderWorld.needToRedraw();
-         for (var i = 0; i < _pvt.world.length; ++i) {
-            toggleFunc.apply(_pvt.world[i]);
-         }
       }
    }
 
@@ -109,11 +104,12 @@ function createView(gl) {
    my.init = function(gl) {
        my.renderWorld.init(gl, my.drawWorld);
 
-
-
       // capture click mouse event.
-      my.addMouseEventHandler(Wings3D.gl.canvas);
+      Wings3D.gl.canvas.addEventListener("mouseup", _pvt.canvasHandleMouseUp, false);
+      Wings3D.gl.canvas.addEventListener("click", _pvt.canvasHandleClick, false);     
+      Wings3D.gl.canvas.addEventListener("mousemove", _pvt.canvasHandleMouseMove, false);
       Wings3D.gl.canvas.addEventListener("wheel", _pvt.canvasHandleWheel, false);
+      Wings3D.gl.canvas.addEventListener("contextmenu", _pvt.canvasHandleContextMenu, false);
    };
 
    my.drawWorld = function(gl) {
@@ -214,37 +210,33 @@ function createView(gl) {
       }
    }
 
-   my.addMouseEventHandler = function(canvas) {
-      canvas.addEventListener("click", _pvt.canvasHandleClick, false);
-      canvas.addEventListener("mouseup", _pvt.canvasHandleMouseUp, false);
-      // capture scroll event
-      canvas.addEventListener("mousemove", _pvt.canvasHandleMouseMove, false);
-   };
-
-
-   _pvt.removeMouseEventHandler = function(canvas) {
-      canvas.removeEventListener("click", _pvt.canvasHandleClick, false);
-      canvas.removeEventListener("mouseup", _pvt.canvasHandleMouseUp, false);
-      // capture scroll event
-      canvas.removeEventListener("mousemove", _pvt.canvasHandleMouseMove, false);
-   };
-
    // event handling, switching state if needs to be
    _pvt.canvasHandleMouseUp = function(e) {
       // check for middle button down
-      if (e.button == 1) { 
-         e.stopImmediatePropagation();
-         _pvt.removeMouseEventHandler(e.currentTarget);
-         // let camera handle the mouse event until it quit.
-         Wings3D.cam.addMouseEventHandler(e.currentTarget, my.addMouseEventHandler);
+      if (e.button == 1) {
+         if (_pvt.handler.camera === null) {
+            e.stopImmediatePropagation();
+            // let camera handle the mouse event until it quit.
+            _pvt.handler.camera = Wings3D.cam.getMouseMoveHandler();
+            // disable mouse cursor
+            //document.body.style.cursor = 'none';
+         } 
       }
    }
 
    _pvt.canvasHandleClick = function(e) {
       if (e.button == 0 ) {
-         //e.stopImmediatePropagation();
-         // ask view to select current hilite if any.
-         my.selectPick();
+         if (_pvt.handler.camera !== null) {
+            _pvt.handler.camera.commit(my);
+            _pvt.handler.camera = null;
+         } else if (_pvt.handler.mousemove !== null) {
+            _pvt.handler.mousemove.commit(my);
+            _pvt.handler.mousemove = null;
+         } else {
+            //e.stopImmediatePropagation();
+            // ask view to select current hilite if any.
+            my.selectPick();
+         }
       }
    }
 
@@ -266,25 +258,55 @@ function createView(gl) {
    };
 
    _pvt.canvasHandleMouseMove = function(e) {
-      // handle pick selection
-      var viewport = Wings3D.gl.getViewport();
-      var winx = e.pageX - e.currentTarget.offsetLeft;
-      var winy = (viewport[3]+1) - (e.pageY - e.currentTarget.offsetTop);   // y is upside-down
-      // yes, sometimes mouse coordinate is outside of the viewport. firefox is larger than width, height.
-      if (winx < 0) { winx = 0; }
-      if (winx > viewport[2]) { winx = viewport[2];}
-      if (winy < 0) { winy = 0; }
-      if (winy > viewport[3]) { winy = viewport[3];}
+      if (_pvt.handler.camera !== null) {
+         _pvt.handler.camera.handleMouseMove(e);
+      } else if (_pvt.handler.mousemove !== null) {
+         _pvt.handler.mousemove.handleMouseMove(e);
+      } else {
+         // handle pick selection
+         var viewport = Wings3D.gl.getViewport();
+         var winx = e.pageX - e.currentTarget.offsetLeft;
+         var winy = (viewport[3]+1) - (e.pageY - e.currentTarget.offsetTop);   // y is upside-down
+         // yes, sometimes mouse coordinate is outside of the viewport. firefox is larger than width, height.
+         if (winx < 0) { winx = 0; }
+         if (winx > viewport[2]) { winx = viewport[2];}
+         if (winy < 0) { winy = 0; }
+         if (winy > viewport[3]) { winy = viewport[3];}
 
-      var mat = my.loadMatrices(false);
-      var ptNear = Wings3D.gl.unProject(winx, winy, 0.0, mat.modelView, mat.projection);
-      var ptFar = Wings3D.gl.unProject(winx, winy, 1.0, mat.modelView, mat.projection);
+         var mat = my.loadMatrices(false);
+         var ptNear = Wings3D.gl.unProject(winx, winy, 0.0, mat.modelView, mat.projection);
+         var ptFar = Wings3D.gl.unProject(winx, winy, 1.0, mat.modelView, mat.projection);
 
-      vec3.sub(ptFar, ptFar, ptNear);
-      vec3.normalize(ptFar, ptFar);
-      var ray = {origin: ptNear, direction: ptFar};
-      //geometryStatus("mouse position: " + ptNear[0] + ", " + ptNear[1] + "," + ptNear[2] + ", <br />"+ ptFar[0] + ", " + ptFar[1] + ", " + ptFar[2]);
-      my.rayPick(ray);
+         vec3.sub(ptFar, ptFar, ptNear);
+         vec3.normalize(ptFar, ptFar);
+         var ray = {origin: ptNear, direction: ptFar};
+         //geometryStatus("mouse position: " + ptNear[0] + ", " + ptNear[1] + "," + ptNear[2] + ", <br />"+ ptFar[0] + ", " + ptFar[1] + ", " + ptFar[2]);
+         my.rayPick(ray);
+      }
+   };
+
+   // contextMenu, mouse right click.
+   _pvt.canvasHandleContextMenu = function(ev) {
+      if (_pvt.handler.camera !== null || _pvt.handler.mousemove !== null) {
+         // prevent propagation.
+         ev.preventDefault();
+         ev.stopImmediatePropagation();      // prevent document's contextmenu popup
+         if (_pvt.handler.camera !== null) {
+            _pvt.handler.camera.cancel();
+            _pvt.handler.camera = null;
+         } else {
+            _pvt.handler.mousemove.cancel();
+            _pvt.handler.mousemove = null;
+         }
+         return false;
+      }
+      // let wings3d_contextmenu handle the event.
+   };
+
+   // handling in reverse order. the newest one will handle the event. (should be at most 2 handler)
+   my.attachHandlerMouseMove = function(handler) {
+      // should we make sure _pvt.handler.mousemove is null?
+      _pvt.handler.mousemove = handler;
    };
 
    var contextMenuClassName = "context-menu";

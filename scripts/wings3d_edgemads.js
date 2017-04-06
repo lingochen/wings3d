@@ -1,10 +1,90 @@
 /**
 //    This module contains most edge command and edge utility functions.
 //
-//  Original Erlang Version: Bjorn Gustavsson.     
+//    
 **/
+// 
+class EdgeMadsor extends Madsor {
+   constructor() {
+      super();
+      // 
+      /*var self = this;
+      var menuItem = document.querySelector("#edgeMoveX");
+      if (menuItem) {
+         menuItem.addEventListener("click", function(ev) {
+            Wings3D.view.attachHandlerMouseMove(self.moveX);
+            //self.snapshotPosition();
+         });
+      }*/
+   }
 
-var EdgeCommand = (function() {
+
+   // get selected Edge's vertex snapshot. for doing, and redo queue. 
+   snapshotPosition() {
+      var snapshot = [];
+   }
+
+   snapshotSelection() {
+
+   }
+
+   // move edge along X axis.
+   moveX(ev) {
+
+   }
+
+   // select, hilite
+   select(preview) {
+      //
+      if (this.currentEdge !== null) {
+         preview.selectEdge(this.currentEdge);
+      }
+   }
+
+   hideOldHilite() {
+      //if (this.currentEdge) {
+         this.preview.hiliteEdge(this.currentEdge, false);
+      //}
+   }
+
+   showNewHilite(edge, intersect, _center) {
+      // setting of setCurrentEdge
+      //if (this.currentEdge) {
+         this.preview.hiliteEdge(edge, true);
+      //}
+   }
+
+   toggleFunc(toMadsor) {
+      if (toMadsor instanceof FaceMadsor) {
+         this.eachPreviewCage( function(preview) {
+            preview.changeFromEdgeToFaceSelect();
+         });
+      } else {
+         this.eachPreviewCage( function(preview) {
+            preview.changeFromEdgeToVertexSelect();
+         });
+      }
+   }
+
+   draw(gl) {
+      //if (this.currentEdge) {
+         this.useShader(gl);
+         gl.bindTransform();
+         this.eachPreviewCage( function(preview) {
+            preview.drawEdge(gl);
+         });
+      //}
+   }
+
+   previewShader(gl) {
+      gl.useShader(Wings3D.shaderProg.solidWireframe);
+   }
+
+   useShader(gl) {
+      //gl.useShader(Wings3D.shaderProg.solidColor);
+      gl.useShader(Wings3D.shaderProg.selectedColorLine);
+   }
+}
 
 /*%%%
 %%%
@@ -95,8 +175,6 @@ cut_pick_marker([I], D, Edge, We0, Start, Dir, Char) ->
 cut_pick_marker({finish,[I]}, D0, Edge, We, Start, Dir, Char) ->
     D = cut_pick_marker([I], D0, Edge, We, Start, Dir, Char),
     D#dlo{vs=none,hilite=none}.*/
-
-}());
 
 
 

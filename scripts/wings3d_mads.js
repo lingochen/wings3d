@@ -12,6 +12,16 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       this.shaderData.setUniform4fv("uColor", [0.0, 1.0, 0.0, 0.3]); // hilite green, selected hilite yellow.
    }
 
+   eachPreviewCage(func) {
+      for (var i = 0; i < this.world.length; ++i) {
+         func(this.world[i]);
+      }
+   }
+
+   setWorld(world) {
+      this.world = world;
+   }
+
    setPreview(preview) {
       this.preview = preview;
    }
@@ -37,30 +47,6 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
          gl.bindShaderData(this.shaderData, false);
          this.drawObject(gl);
       }
-   }
-
-   changeSelectMode(fromMadsor, toMadsor) {
-      var func;
-      if (fromMadsor instanceof FaceMadsor) {
-         if (toMadsor instanceof EdgeMadsor) {
-            func = PreviewCage.prototype.changeFromFaceToEdgeSelect();
-         } else {
-            func = PreviewCage.prototype.changeFromFacetoVertexSelect();
-         }
-      } else if (fromMadsor instanceof EdgeMadsor) {
-         if (toMadsor instanceof FaceMadsor) {
-            func = PreviewCage.prototype.changeFromEdgeToFaceSelect();
-         } else {
-            func = PreviewCage.prototype.changeFromEdgeToVertexSelect();
-         }
-      } else {
-         if (toMadsor instanceof FaceMadsor) {
-            func = PreviewCage.prototype.changeFromVertexToFaceSelect();
-         } else {
-            func = PreviewCage.prototype.changeFromVertexToEdgeSelect();
-         }
-      }
-      return func;
    }
 }
 
@@ -107,9 +93,13 @@ class FaceMadsor extends Madsor {
 
    toggleFunc(toMadsor) {
       if (toMadsor instanceof EdgeMadsor) {
-         return PreviewCage.prototype.changeFromFaceToEdgeSelect;
+         this.eachPreviewCage( function(cage) {
+            cage.changeFromFaceToEdgeSelect();
+         });
       } else {
-         return PreviewCage.prototype.changeFromFaceToVertexSelect;
+         this.eachPreviewCage( function(cage) {
+            cage.changeFromFaceToVertexSelect();
+         });
       }
    }
 
@@ -127,60 +117,6 @@ class FaceMadsor extends Madsor {
    }
 }
 
-
-// 
-class EdgeMadsor extends Madsor {
-   constructor() {
-      super();
-   }
-
-   select(preview) {
-      //
-      if (this.currentEdge !== null) {
-         preview.selectEdge(this.currentEdge);
-      }
-   }
-
-   hideOldHilite() {
-      //if (this.currentEdge) {
-         this.preview.hiliteEdge(this.currentEdge, false);
-      //}
-   }
-
-   showNewHilite(edge, intersect, _center) {
-      // setting of setCurrentEdge
-      //if (this.currentEdge) {
-         this.preview.hiliteEdge(edge, true);
-      //}
-   }
-
-   toggleFunc(toMadsor) {
-      if (toMadsor instanceof FaceMadsor) {
-         return PreviewCage.prototype.changeFromEdgeToFaceSelect;
-      } else {
-         return PreviewCage.prototype.changeFromEdgeToVertexSelect;
-      }
-   }
-
-   draw(gl) {
-      //if (this.currentEdge) {
-         this.useShader(gl);
-         gl.bindTransform();
-         if (this.preview) {
-            this.preview.drawEdge(gl);
-         }
-      //}
-   }
-
-   previewShader(gl) {
-      gl.useShader(Wings3D.shaderProg.solidWireframe);
-   }
-
-   useShader(gl) {
-      //gl.useShader(Wings3D.shaderProg.solidColor);
-      gl.useShader(Wings3D.shaderProg.selectedColorLine);
-   }
-}
 
 class VertexMadsor extends Madsor {
    constructor() {
@@ -220,9 +156,13 @@ class VertexMadsor extends Madsor {
 
    toggleFunc(toMadsor) {
       if (toMadsor instanceof FaceMadsor) {
-         return PreviewCage.prototype.changeFromVertexToFaceSelect;
+         this.eachPreviewCage( function(cage) {
+            cage.changeFromVertexToFaceSelect();
+         } );
       } else {
-         return PreviewCage.prototype.changeFromVertexToEdgeSelect;
+         this.eachPreviewCage( function(cage) {
+            cage.changeFromVertexToEdgeSelect();
+         });
       }
    }
 
@@ -231,9 +171,9 @@ class VertexMadsor extends Madsor {
       //if (this.currentEdge) {
          this.useShader(gl);
          gl.bindTransform();
-         if (this.preview) {
-            this.preview.drawVertex(gl);
-         }
+         this.eachPreviewCage( function(preview) {
+            preview.drawVertex(gl);
+         });
       //}
    }
 

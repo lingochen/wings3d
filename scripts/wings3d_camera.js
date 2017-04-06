@@ -7,6 +7,36 @@
 */
 "use strict";
 
+
+class CameraMouseMoveHandler extends MouseMoveHandler {
+   constructor(camera) {
+      super();
+      this.camera = camera;
+      this.saveView = { origin: [0, 0, 0], };
+      this.camera.copyCam(this.saveView, this.camera.view);
+   }
+
+   handleMouseMove(ev) {
+      // if middle button down, pan 
+      if (ev.buttons == 4) {
+         this.camera.pan(ev.movementX, 0);
+      } else {
+         // rotated
+         this.camera.rotate(ev.movementX, ev.movementY);
+         //help(e.button + "," + e.buttons);
+      }
+   }
+
+   _commit(view) {
+      // no redo, undo for now
+   }
+
+   _cancel() {
+      // restore camera's value.
+      this.camera.copyCam(this.camera.view, this.saveView);
+   }
+}
+
 function createCamera() {
    var my = { pref: {
          cameraMode: "WingsCam",
@@ -105,11 +135,7 @@ function createCamera() {
       })(),
    };
 
-   var saveView = {
-      origin: [0, 0, 0],
-   };
-
-   function copyCam(save, source) {
+   my.copyCam = function(save, source) {
       save.origin[0] = source.origin[0];
       save.origin[1] = source.origin[1];
       save.origin[2] = source.origin[2];
@@ -123,13 +149,6 @@ function createCamera() {
       save.zFar = source.zFar;
    };
 
-   my.saveCam = function() {
-      copyCam(saveView, my.view);
-   };
-   my.restoreCam = function() {
-      copyCam(my.view, saveView);
-   };
-
    my.init = function() {
 /*    case {wings_pref:get_value(num_buttons),wings_pref:get_value(camera_mode)} of
 	   {3,_} -> ok
@@ -140,45 +159,11 @@ function createCamera() {
 
    var _pvt = {};
 
-   my.addMouseEventHandler = function(canvas, restoreHandler) {
-      my.saveCam();
-      _pvt.restoreMouseHandler = restoreHandler;
-      canvas.addEventListener('click', _pvt.handleClick, false);
-      canvas.addEventListener("contextmenu", _pvt.handleContextmenu, false);
-      canvas.addEventListener("mousemove", _pvt.handleMouseMove, false);
+   my.getMouseMoveHandler = function() {
+      var ret = new CameraMouseMoveHandler(my);
+      return ret;
    };
 
-   _pvt.removeMouseEventHandler = function(canvas) {
-      canvas.removeEventListener("click", _pvt.handleClick, false);
-      canvas.removeEventListener("mousemove", _pvt.handleMouseMove, false);
-      canvas.removeEventListener("contextmenu", _pvt.handleContextmenu, false);
-      _pvt.restoreMouseHandler(canvas);
-   };
-
-   _pvt.handleClick = function(ev) {
-      _pvt.removeMouseEventHandler(ev.currentTarget);
-      help("camera clicked");
-   };
-
-   _pvt.handleContextmenu = function(ev) {
-      ev.preventDefault();
-      ev.stopImmediatePropagation();      // prevent document's contextmenu popup
-      _pvt.removeMouseEventHandler(ev.currentTarget);
-      // cancel
-      my.restoreCam();
-      return false;
-   };
-
-   _pvt.handleMouseMove = function(e) {
-      // if middle button down, pan 
-      if (e.buttons == 4) {
-         my.pan(e.movementX, 0);
-      } else {
-         // rotated
-         my.rotate(e.movementX, e.movementY);
-         //help(e.button + "," + e.buttons);
-      }
-   };
 /*
 %%%
 %%% Common utilities.
