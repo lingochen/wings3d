@@ -117,10 +117,10 @@ PreviewCage.prototype.computePreview = function() {
 
 PreviewCage.prototype.computePreviewEdge = function() {
    for (var i = 0, j = 0; i < this.geometry.edges.length; i++) {
-      this.previewEdge.line.set(this.geometry.edges[i].left.origin.vertex, j);
-      j += 3;
-      this.previewEdge.line.set(this.geometry.edges[i].right.origin.vertex, j);
-      j += 3;
+      for (let halfEdge of this.geometry.edges[i]) {
+         this.previewEdge.line.set(halfEdge.origin.vertex, j);
+         j += 3;
+      }
    }
    this.previewEdge.color.fill(0.0);
 }
@@ -316,9 +316,11 @@ PreviewCage.prototype.computeSnapshot = function(snapshot) {
       for (var i = sphere.indexStart; i < sphere.indexEnd; ++i) {
          var index = this.preview.index.data[i];     // vec3 size so *3
          index *= 3;
-         this.preview.vertices[index] = this.geometry.buf.data[index++];
-         this.preview.vertices[index] = this.geometry.buf.data[index++];
-         this.preview.vertices[index] = this.geometry.buf.data[index++];
+         if (index < this.geometry.buf.len) {   // not barycentric 
+            this.preview.vertices[index] = this.geometry.buf.data[index++];
+            this.preview.vertices[index] = this.geometry.buf.data[index++];
+            this.preview.vertices[index] = this.geometry.buf.data[index++];
+         }
       }
    }
    // done, update shader data, should we update each vertex individually?
@@ -326,9 +328,10 @@ PreviewCage.prototype.computeSnapshot = function(snapshot) {
    // update the edges.vertex
    for (var [oid, wingedEdge] of snapshot.wingedEdges) {
       var index = oid * 2 * 3;
-      this.previewEdge.line.set(wingedEdge.left.origin.vertex, index);
-      index += 3;
-      this.previewEdge.line.set(wingedEdge.right.origin.vertex, index);
+      for (let halfEdge of wingedEdge) {
+         this.previewEdge.line.set(halfEdge.origin.vertex, index);
+         index += 3;
+      }
    }
    this.previewEdge.shaderData.updatePosition(this.previewEdge.line);
 };
@@ -363,15 +366,13 @@ PreviewCage.prototype.snapshotEdgePosition = function() {
    };
    // first collect all the vertex
    for (var [_key, wingedEdge] of this.selectedMap) {
-      var vertex = wingedEdge.left.origin;
-      if (!ret.vertices.has(vertex.index)) {
-         ret.vertices.set(vertex.index, vertex);
+      for (let edge of wingedEdge) {
+         var vertex = edge.origin;
+         if (!ret.vertices.has(vertex.index)) {
+            ret.vertices.set(vertex.index, vertex);
+         }
       }
-      vertex = wingedEdge.right.origin;
-      if (!ret.vertices.has(vertex.index)) {
-         ret.vertices.set(vertex.index, vertex);
-      }
-   };
+   }
    // allocated save position data.
    ret.position = new Float32Array(ret.vertices.size*3);
    // use the vertex to collect the affected polygon and the affected edge.
@@ -402,11 +403,10 @@ PreviewCage.prototype.changeFromEdgeToFaceSelect = function() {
    //
    for (var [key, wingedEdge] of oldSelected) {
       // for each WingedEdge, select both it face.
-      if (!this.selectedMap.has(wingedEdge.left.face.index)) {
-         this.selectFace(wingedEdge.left);
-      }
-      if (!this.selectedMap.has(wingedEdge.right.face.index)) {
-         this.selectFace(wingedEdge.right);
+      for (let halfEdge of wingedEdge) {
+         if (!this.selectedMap.has(halfEdge.face.index)) {
+            this.selectFace(halfEdge);
+         }
       }
    } 
 };
@@ -420,11 +420,10 @@ PreviewCage.prototype.changeFromEdgeToVertexSelect = function() {
    //
    for (var [key, wingedEdge] of oldSelected) {
       // for each WingedEdge, select both it face.
-      if (!this.selectedMap.has(wingedEdge.left.origin.index)) {
-         this.selectVertex(wingedEdge.left.origin);
-      }
-      if (!this.selectedMap.has(wingedEdge.right.origin.index)) {
-         this.selectVertex(wingedEdge.right.origin);
+      for (let halfEdge of wingedEdge) {
+         if (!this.selectedMap.has(halfEdge.origin.index)) {
+            this.selectVertex(halfEdge.origin);
+         }
       }
    } 
 };

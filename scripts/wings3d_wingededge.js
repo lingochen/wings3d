@@ -43,6 +43,11 @@ var WingedEdge = function(orgVert, toVert) {
    // this.right.prev = this.left;
 };
 
+WingedEdge.prototype[Symbol.iterator] = function* () {
+   yield this.left;
+   yield this.right;
+};
+
 var HalfEdge = function(vert, edge) {  // should only be created by WingedEdge
    this.next = null;
 //   this.prev = null;       // not required, but very nice to have shortcut
