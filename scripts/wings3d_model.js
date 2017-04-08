@@ -50,16 +50,16 @@ var PreviewCage = function(mesh) {
 
 
 PreviewCage.prototype.computeBoundingSphere = function() {
-   // assign a boundingSphere for each polygon.
-   var boundingSphere = new Array(this.geometry.faces.length);
-   boundingSphere.length = 0;
+   // assign a boundingsphere for each polygon.
+   var boundingSpheres = new Array(this.geometry.faces.length);
+   boundingSpheres.length = 0;
    for (var i = 0; i < this.geometry.faces.length; ++i) {
       var polygon = this.geometry.faces[i];
       // recalibrate index for free.
       polygon.index = i;
-      boundingSphere.push( BoundingSphere.create(polygon) ); 
+      boundingSpheres.push( BoundingSphere.create(polygon) ); 
    }
-   this.boundingSphere = boundingSphere;
+   this.boundingSpheres = boundingSpheres;
 };
 
 
@@ -67,7 +67,7 @@ PreviewCage.prototype.computePreview = function() {
    // given the mesh topology, recompute drawindex and drawindexbuffer, only works for convex polygon.
    var model = this;
    // fill preview position, barycentric, selected
-   var newLength = model.geometry.buf.len+(model.boundingSphere.length*3);
+   var newLength = model.geometry.buf.len+(model.boundingSpheres.length*3);
    model.preview.vertices = new Float32Array(newLength);
    model.preview.barycentric = new Float32Array(newLength);
    model.preview.selected = new Float32Array(newLength/3);
@@ -87,8 +87,9 @@ PreviewCage.prototype.computePreview = function() {
    }
    // setup triangle index.
    var barycentric = model.geometry.vertices.length;
-   this.boundingSphere.forEach( function(sphere, _index, _arrray) {
+   this.boundingSpheres.forEach( function(sphere, _index, _arrray) {
       var polygon = sphere.polygon;
+      sphere.indexStart = model.preview.index.length;
       // copy the polygon's center to vertices
       model.preview.vertices[barycentric*3] = sphere.center[0];
       model.preview.vertices[barycentric*3+1] = sphere.center[1];
@@ -102,14 +103,13 @@ PreviewCage.prototype.computePreview = function() {
             indices[indicesLength++] = vertex.index;
             indices[indicesLength++] = barycentric; 
          }
-         indices[indicesLength++] = vertex.index;
-         
+         indices[indicesLength++] = vertex.index;         
       });
       // last triangle using the first vertices.
-      sphere.indexIndex = model.preview.index.length;
       indices[indicesLength++] = indices[0];
       indices[indicesLength++] = barycentric++;
       model.preview.index.length += indicesLength;
+      sphere.indexEnd = model.preview.index.length;
    });
    // done, copy all polygon
 };
@@ -161,9 +161,9 @@ PreviewCage.prototype.rayPick = function(ray) {
    // return the closest face (triangle) that intersect ray.
    var intersect = {polygon: [], pt: []};
    var hitSphere = [];
-   for (var i = 0; i < this.boundingSphere.length; ++i) {
-      if (this.boundingSphere[i].isIntersect(ray)){
-         hitSphere.push( this.boundingSphere[i] );
+   for (var i = 0; i < this.boundingSpheres.length; ++i) {
+      if (this.boundingSpheres[i].isIntersect(ray)){
+         hitSphere.push( this.boundingSpheres[i] );
       }
    }
    // check for triangle intersection, select the hit Face, hit Edge(closest), and hit Vertex (closest).
@@ -302,6 +302,96 @@ PreviewCage.prototype.selectEdge = function(selectEdge) {
    // selected color
    this.setEdgeColor(wingedEdge, color);
 };
+
+PreviewCage.prototype.computeSnapshot = function(snapshot) {
+   // update all affected polygon(use sphere). copy and recompute vertex.
+   for (var [oid, polygon] of snapshot.faces) {
+      var sphere = this.boundingSpheres[polygon.index];
+      // recompute sphere center.
+      sphere.setSphere( BoundingSphere.computeSphere(polygon) );
+      // copy center to cage.position.
+      var barycentric = this.geometry.buf.len + (oid*3);
+      this.preview.vertices.set(sphere.center, barycentric);
+      // recopy vertex
+      for (var i = sphere.indexStart; i < sphere.indexEnd; ++i) {
+         var index = this.preview.index.data[i];     // vec3 size so *3
+         index *= 3;
+         this.preview.vertices[index] = this.geometry.buf.data[index++];
+         this.preview.vertices[index] = this.geometry.buf.data[index++];
+         this.preview.vertices[index] = this.geometry.buf.data[index++];
+      }
+   }
+   // done, update shader data, should we update each vertex individually?
+   this.preview.shaderData.updatePosition(this.preview.vertices);
+   // update the edges.vertex
+   for (var [oid, wingedEdge] of snapshot.wingedEdges) {
+      var index = oid * 2 * 3;
+      this.previewEdge.line.set(wingedEdge.left.origin.vertex, index);
+      index += 3;
+      this.previewEdge.line.set(wingedEdge.right.origin.vertex, index);
+   }
+   this.previewEdge.shaderData.updatePosition(this.previewEdge.line);
+};
+
+
+PreviewCage.prototype.restoreMoveSelection = function(snapshot) {
+   // restore to the snapshot position.
+   var i = 0;
+   for (var [_index, vertex] of snapshot.vertices) {
+      vec3.copy(vertex.vertex, snapshot.position.slice(i, i+3));
+      i += 3;
+   }
+   this.previewVertex.shaderData.updatePosition(this.geometry.buf.data);
+   this.computeSnapshot(snapshot);
+};
+
+PreviewCage.prototype.moveSelection = function(movement, snapshot) {
+   // first move geometry's position
+   for (var [_key, vertex] of snapshot.vertices) {
+      vec3.add(vertex.vertex, vertex.vertex, movement);
+   }
+   this.previewVertex.shaderData.updatePosition(this.geometry.buf.data);
+   this.computeSnapshot(snapshot);
+};
+
+PreviewCage.prototype.snapshotEdgePosition = function() {
+   var ret = {
+      faces: new Map,
+      vertices: new Map,
+      wingedEdges: new Map,
+      position: null,
+   };
+   // first collect all the vertex
+   for (var [_key, wingedEdge] of this.selectedMap) {
+      var vertex = wingedEdge.left.origin;
+      if (!ret.vertices.has(vertex.index)) {
+         ret.vertices.set(vertex.index, vertex);
+      }
+      vertex = wingedEdge.right.origin;
+      if (!ret.vertices.has(vertex.index)) {
+         ret.vertices.set(vertex.index, vertex);
+      }
+   };
+   // allocated save position data.
+   ret.position = new Float32Array(ret.vertices.size*3);
+   // use the vertex to collect the affected polygon and the affected edge.
+   var i = 0;
+   for (var [_key, vertex] of ret.vertices) {
+      vertex.eachOutEdge(function(edge) {
+         if (!ret.faces.has(edge.face.index)) {
+            ret.faces.set(edge.face.index, edge.face);
+         }
+         if (!ret.wingedEdges.has(edge.wingedEdge.index)) {
+            ret.wingedEdges.set(edge.wingedEdge.index, edge.wingedEdge);
+         }
+      });
+      // save position data
+      ret.position.set(vertex.vertex, i);
+      i += 3;
+   }
+   return ret;
+};
+
 
 PreviewCage.prototype.changeFromEdgeToFaceSelect = function() {
    var oldSelected = this.selectedMap;

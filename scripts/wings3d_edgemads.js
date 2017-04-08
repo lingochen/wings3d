@@ -3,34 +3,49 @@
 //
 //    
 **/
+
+
+
 // 
 class EdgeMadsor extends Madsor {
    constructor() {
       super();
       // 
-      /*var self = this;
+      var self = this;
       var menuItem = document.querySelector("#edgeMoveX");
       if (menuItem) {
          menuItem.addEventListener("click", function(ev) {
-            Wings3D.view.attachHandlerMouseMove(self.moveX);
-            //self.snapshotPosition();
+            var handler = new MouseMoveX(self);
+            Wings3D.view.attachHandlerMouseMove(handler);
          });
-      }*/
+      }
    }
 
 
    // get selected Edge's vertex snapshot. for doing, and redo queue. 
    snapshotPosition() {
-      var snapshot = [];
+      var snapshots = [];
+      this.eachPreviewCage( function(preview) {
+         snapshots.push( preview.snapshotEdgePosition() );
+      });
+      return snapshots;
    }
 
    snapshotSelection() {
 
    }
 
-   // move edge along X axis.
-   moveX(ev) {
+   // move edge along movement.
+   moveSelection(movement, snapshots) {
+      for (var i =0; i < this.world.length; ++i) {
+         this.world[i].moveSelection(movement, snapshots[i]);
+      }
+   }
 
+   restoreMoveSelection(snapshots) {
+      for (var i =0; i < this.world.length; ++i) {
+         this.world[i].restoreMoveSelection(snapshots[i]);
+      }
    }
 
    // select, hilite

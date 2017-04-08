@@ -8,6 +8,8 @@ var BoundingSphere = function(center, radius, polygon) {
    this.center = center;
    this.radius = radius;
    this.radius2 = radius*radius;
+   this.indexStart = -1;
+   this.indexEnd = -1;
    this.polygon = polygon;
 };
 
@@ -28,21 +30,31 @@ BoundingSphere.prototype.isIntersect = function(ray) {
    return true;
 };
 
-// simple minded bounding sphere builder.
-BoundingSphere.create = function(polygon) {
+BoundingSphere.prototype.setSphere = function(sphere) {
+   this.center = sphere.center;
+   this.radius = sphere.radius;
+   this.radius2 = sphere.radius*sphere.radius;
+};
+
+BoundingSphere.computeSphere = function(polygon) {
    // get all the polygon's vertex. compute barycentric.
-   var center = vec3.create();
+   var ret = {center: vec3.create(), radius: 0.0};
    polygon.eachVertex( function(vertex) {
-      vec3.add(center, center, vertex.vertex);
+      vec3.add(ret.center, ret.center, vertex.vertex);
    });
-   vec3.scale(center, center, 1.0/polygon.numberOfVertex);
+   vec3.scale(ret.center, ret.center, 1.0/polygon.numberOfVertex);
    // get the furthest distance. that the radius.
-   var radius = 0.0;
    polygon.eachVertex( function(vertex) {
-      var distance = vec3.distance(center, vertex.vertex);
-      if (distance > radius) {
-         radius = distance;
+      var distance = vec3.distance(ret.center, vertex.vertex);
+      if (distance > ret.radius) {
+         ret.radius = distance;
       }
    });
-   return new BoundingSphere(center, radius, polygon);
+   return ret;
+};
+
+// simple minded bounding sphere builder.
+BoundingSphere.create = function(polygon) {
+   var sphere = BoundingSphere.computeSphere(polygon);
+   return new BoundingSphere(sphere.center, sphere.radius, polygon);
 }

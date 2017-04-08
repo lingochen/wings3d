@@ -185,3 +185,31 @@ class VertexMadsor extends Madsor {
       gl.useShader(Wings3D.shaderProg.selectedColorPoint);
    }
 } 
+
+// movement handler.
+class MouseMoveX extends MouseMoveHandler {
+   constructor(madsor) {
+      super();
+      this.madsor = madsor;
+      this.snapshots = madsor.snapshotPosition();
+      this.movement = [0.0, 0.0, 0.0];             // cumulative movement.
+   }
+
+   handleMouseMove(ev) {
+      // todo: instead of magic constant. should supply a scaling factor.
+      var x = ev.movementX/20.0;
+      if (x >= 2) {
+         x = 2;
+      }
+      this.madsor.moveSelection([x, 0.0, 0.0], this.snapshots);
+      this.movement[0] += x;
+   }
+
+   _commit(view) {
+
+   }
+
+   _cancel() {
+      this.madsor.restoreMoveSelection(this.snapshots);
+   }
+}

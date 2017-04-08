@@ -262,6 +262,7 @@ function createView(gl) {
          _pvt.handler.camera.handleMouseMove(e);
       } else if (_pvt.handler.mousemove !== null) {
          _pvt.handler.mousemove.handleMouseMove(e);
+         my.renderWorld.needToRedraw();
       } else {
          // handle pick selection
          var viewport = Wings3D.gl.getViewport();
@@ -297,6 +298,7 @@ function createView(gl) {
          } else {
             _pvt.handler.mousemove.cancel();
             _pvt.handler.mousemove = null;
+            my.renderWorld.needToRedraw();
          }
          return false;
       }
