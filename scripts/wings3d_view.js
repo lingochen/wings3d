@@ -335,7 +335,7 @@ function createView(gl) {
    my.undoQueue = function(editCommand) {
       if ( (_pvt.undo.queue.length-1) > _pvt.undo.current ) {
          // remove branch not taken
-         _pvt.undo.queue.length = _pvt.undo.current;
+         _pvt.undo.queue.length = _pvt.undo.current+1;
       }
       // now push the new command back
       _pvt.undo.queue.push(editCommand);

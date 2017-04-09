@@ -53,6 +53,7 @@ class EdgeMadsor extends Madsor {
       //
       if (this.currentEdge !== null) {
          preview.selectEdge(this.currentEdge);
+         Wings3D.view.undoQueue( new SelectEdgeCommand(preview, this.currentEdge));
       }
    }
 
@@ -101,18 +102,19 @@ class EdgeMadsor extends Madsor {
    }
 }
 
-class EdgeSelectionCommand extends Editcommand {
-   constructor(selectionMap) {
+class SelectEdgeCommand extends EditCommand {
+   constructor(previewCage, current) {
       super();
-      this.selectionMap = selectionMap;
+      this.previewCage = previewCage;
+      this.halfEdge = current;
    }
 
    doIt() {
-
+      this.previewCage.selectEdge(this.halfEdge);
    }
 
    undo() {
-
+      this.previewCage.selectEdge(this.halfEdge);
    }
 }
 
