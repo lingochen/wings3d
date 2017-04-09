@@ -101,6 +101,21 @@ class EdgeMadsor extends Madsor {
    }
 }
 
+class EdgeSelectionCommand extends Editcommand {
+   constructor(selectionMap) {
+      super();
+      this.selectionMap = selectionMap;
+   }
+
+   doIt() {
+
+   }
+
+   undo() {
+
+   }
+}
+
 /*%%%
 %%%
 %%% The Cut command.

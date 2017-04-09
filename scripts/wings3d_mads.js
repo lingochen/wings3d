@@ -206,10 +206,27 @@ class MouseMoveX extends MouseMoveHandler {
    }
 
    _commit(view) {
-
+      view.undoQueue(new MoveCommand(this.madsor, this.snapshots, this.movement));
    }
 
    _cancel() {
+      this.madsor.restoreMoveSelection(this.snapshots);
+   }
+}
+
+class MoveCommand extends EditCommand {
+   constructor(madsor, snapshots, movement) {
+      super();
+      this.madsor = madsor;
+      this.snapshots = snapshots;
+      this.movement = movement;
+   }
+
+   doIt() {
+      this.madsor.moveSelection(this.movement, this.snapshots);
+   }
+
+   undo() {
       this.madsor.restoreMoveSelection(this.snapshots);
    }
 }

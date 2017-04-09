@@ -1,5 +1,5 @@
 /**
- *  abstract DoCommand class for undo, redo handling. also MouseMoveHandler class.
+ *  abstract EditCommand class for undo, redo handling. also MouseMoveHandler class.
  * 
  */
 "use strict";
@@ -21,7 +21,7 @@ class MouseMoveHandler {
    }
 }
 
-class DoCommand {
+class EditCommand {
 
 
    //doIt() {}

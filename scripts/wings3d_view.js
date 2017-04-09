@@ -330,6 +330,34 @@ function createView(gl) {
       return _pvt.contextMenu;
    };
 
+   _pvt.undo = {queue: [], current: -1};
+   // undo queue
+   my.undoQueue = function(editCommand) {
+      if ( (_pvt.undo.queue.length-1) > _pvt.undo.current ) {
+         // remove branch not taken
+         _pvt.undo.queue.length = _pvt.undo.current;
+      }
+      // now push the new command back
+      _pvt.undo.queue.push(editCommand);
+      _pvt.undo.current++;
+   }
+
+   my.redoEdit = function() {
+      if ( (_pvt.undo.queue.length-1) > _pvt.undo.current) {
+         _pvt.undo.queue[++_pvt.undo.current].doIt();
+         my.renderWorld.needToRedraw();
+      }
+   }
+
+   my.undoEdit = function() {
+      if (_pvt.undo.current >= 0) {
+         _pvt.undo.queue[_pvt.undo.current--].undo();
+         my.renderWorld.needToRedraw();
+      }
+   }
+   Wings3D.apiExport.redoEdit = my.redoEdit;
+   Wings3D.apiExport.undoEdit = my.undoEdit;
+
    // init Prop
    my.prop = {
       showEdges: true,
