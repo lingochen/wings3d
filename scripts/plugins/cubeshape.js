@@ -178,6 +178,7 @@ document.addEventListener('DOMContentLoaded', function() {
          ev.preventDefault();
          form.style.display = 'none';
          // accept previewCage to the world
+         api.undoQueue( new CreatePreviewCageCommand(_pvt.previewCage) );
          _pvt.previewCage = null;
       });
       var cutHandler = function(ev) {

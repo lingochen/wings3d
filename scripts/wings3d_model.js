@@ -9,6 +9,7 @@
 */
 "use strict"; 
 
+
 var PreviewCage = function(mesh) {
    this.geometry = mesh;
    this.numberOfTriangles = mesh.faces.reduce( function(acc, element) {
@@ -547,3 +548,17 @@ PreviewCage.prototype.intersectTriangle = function(ray, triangle) {
 
 
 
+class CreatePreviewCageCommand extends EditCommand {
+   constructor(previewCage) {
+      super();
+      this.previewCage = previewCage;
+   }
+
+   doIt() {
+      Wings3D.view.addToWorld(this.previewCage);
+   }
+
+   undo() {
+      Wings3D.view.removeFromWorld(this.previewCage);
+   }
+}

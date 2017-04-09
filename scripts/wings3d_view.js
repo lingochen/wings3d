@@ -154,10 +154,14 @@ function createView(gl) {
       //
       var model = new PreviewCage(mesh);
       //
+      return my.addToWorld(model);
+   };
+
+   my.addToWorld = function(model) {
       _pvt.world.push( model );
       my.renderWorld.needToRedraw();
       return model;
-   };
+   }
 
    my.removeFromWorld = function(previewCage) {
       var index = _pvt.world.indexOf(previewCage);
@@ -357,6 +361,7 @@ function createView(gl) {
    }
    Wings3D.apiExport.redoEdit = my.redoEdit;
    Wings3D.apiExport.undoEdit = my.undoEdit;
+   Wings3D.apiExport.undoQueue = my.undoQueue;
 
    // init Prop
    my.prop = {
