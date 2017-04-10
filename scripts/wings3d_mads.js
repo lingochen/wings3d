@@ -12,9 +12,16 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       this.shaderData.setUniform4fv("uColor", [0.0, 1.0, 0.0, 0.3]); // hilite green, selected hilite yellow.
    }
 
-   eachPreviewCage(func) {
-      for (var i = 0; i < this.world.length; ++i) {
-         func(this.world[i]);
+   // can be use arguments object?
+   eachPreviewCage(func, items) {
+      if (items) {
+         for (var i = 0; i < this.world.length; ++i) {
+            func(this.world[i], items[i]);
+         }
+      } else {
+         for (var i = 0; i < this.world.length; ++i) {
+            func(this.world[i]);
+         }
       }
    }
 
@@ -103,6 +110,19 @@ class FaceMadsor extends Madsor {
       }
    }
 
+
+   restoreMode(toMadsor, snapshots) {
+      if (toMadsor instanceof EdgeMadsor) {
+         this.eachPreviewCage( function(cage, snapshot) {
+            cage.restoreFromFaceToEdgeSelect(snapshot);
+         }, snapshots);
+      } else {
+         this.eachPreviewCage( function(cage, snapshot) {
+            cage.restoreFromFaceToEdgeSelect(snapshot);
+         }, snapshots);
+      }
+   }
+
    drawObject(gl) {
       // draw hilite
       gl.drawArrays(gl.TRIANGLE_FAN, 0, this.trianglefan.length);
@@ -163,6 +183,19 @@ class VertexMadsor extends Madsor {
          this.eachPreviewCage( function(cage) {
             cage.changeFromVertexToEdgeSelect();
          });
+      }
+   }
+
+
+   restoreMode(toMadsor, snapshots) {
+      if (toMadsor instanceof FaceMadsor) {
+         this.eachPreviewCage( function(cage, snapshot) {
+            cage.restoreFromVertexToFaceSelect(snapshot);
+         }, snapshots);
+      } else {
+         this.eachPreviewCage( function(cage, snapshot) {
+            cage.restoreFromVertexToEdgeSelect(snapshot);
+         }, snapshots);
       }
    }
 

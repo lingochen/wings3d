@@ -194,6 +194,10 @@ PreviewCage.prototype.rayPick = function(ray) {
    }
 };
 
+PreviewCage.prototype.snapshotSelection = function() {
+   return new Map(this.selectedMap);
+};
+
 PreviewCage.prototype.setVertexColor = function(vertex, color) {
    // selected color
    var j = vertex.index;  
@@ -429,6 +433,14 @@ PreviewCage.prototype.changeFromEdgeToVertexSelect = function() {
    } 
 };
 
+PreviewCage.prototype.restoreFromEdgeToFaceSelect = function(snapshot) {
+   if (snapshot) {
+
+   } else {
+      this.changeFromEdgeToFaceSelect();  // we cheat, use the same code as going forward.
+   }
+}
+
 /**
  * 
  */
@@ -496,6 +508,22 @@ PreviewCage.prototype.changeFromFaceToVertexSelect = function() {
       });
    }
 };
+
+PreviewCage.prototype.restoreFromFaceToEdgeSelect = function(snapshot) {
+   if (snapshot) {
+      // discard old selected,
+      this.selectedMap = new Map;
+      this.preview.selected.fill(0.0);          // reset all polygon to non-selected 
+      this.preview.shaderData.updateAttribute("selected", 0, this.preview.selected);
+      // and selected using the snapshots.
+      for (var [_key, wingedEdge] of snapshot) {
+         this.selectEdge(wingedEdge.left);
+      }
+
+   } else {
+      this.changeFromFaceToEdgeSelect();
+   }
+}
 
 PreviewCage.prototype.EPSILON = 0.000001;
 // Möller–Trumbore ray-triangle intersection algorithm

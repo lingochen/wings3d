@@ -32,7 +32,11 @@ class EdgeMadsor extends Madsor {
    }
 
    snapshotSelection() {
-
+      var snapshots = [];
+      this.eachPreviewCage( function(preview) {
+         snapshots.push( preview.snapshotSelection() );
+      });
+      return snapshots;
    }
 
    // move edge along movement.
@@ -72,13 +76,27 @@ class EdgeMadsor extends Madsor {
 
    toggleFunc(toMadsor) {
       if (toMadsor instanceof FaceMadsor) {
+         var snapshots = this.snapshotSelection();
          this.eachPreviewCage( function(preview) {
             preview.changeFromEdgeToFaceSelect();
          });
+         Wings3D.apiExport.undoQueue( new ToggleEdgeToFaceModeCommand(snapshots) );
       } else {
          this.eachPreviewCage( function(preview) {
             preview.changeFromEdgeToVertexSelect();
          });
+      }
+   }
+
+   restoreMode(toMadsor, snapshots) {
+      if (toMadsor instanceof FaceMadsor) {
+         this.eachPreviewCage( function(cage, snapshot) {
+            cage.restoreFromEdgeToFaceSelect(snapshot);
+         }, snapshots);
+      } else {
+         this.eachPreviewCage( function(cage, snapshot) {
+            cage.restoreFromEdgeToVertexSelect(snapshot);
+         }, snapshots);
       }
    }
 
@@ -115,6 +133,22 @@ class SelectEdgeCommand extends EditCommand {
 
    undo() {
       this.previewCage.selectEdge(this.halfEdge);
+   }
+}
+
+class ToggleEdgeToFaceModeCommand extends EditCommand {
+   constructor(snapshots) {
+      super();
+      this.snapshots = snapshots;
+   }
+
+   doIt() {
+      Wings3D.apiExport.restoreFaceMode();
+   }
+
+   undo() {
+      // toggle back
+      Wings3D.apiExport.restoreEdgeMode(this.snapshots);
    }
 }
 

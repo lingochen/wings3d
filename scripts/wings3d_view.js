@@ -37,17 +37,39 @@ function createView(gl) {
       }
    };
 
-   _pvt.toggleEdgeMode = function() {
+   _pvt.toggleEdgeMode = function(restore=false) {
       if (_pvt.currentMode !== _pvt.edgeMode) {
          _pvt.currentMode.toggleFunc(_pvt.edgeMode);
          _pvt.currentMode = _pvt.edgeMode;
          my.renderWorld.needToRedraw();
       }
-   }
+   };
+
+   _pvt.restoreFaceMode = function(snapshots) {
+      if (_pvt.currentMode !== _pvt.faceMode) {
+         _pvt.currentMode.restoreMode(_pvt.faceMode, snapshots);
+         _pvt.currentMode = _pvt.faceMode;
+         my.renderWorld.needToRedraw();
+      } else {
+         // bad state. should always be in other mode. 
+      }
+   };
+
+   _pvt.restoreEdgeMode = function(snapshots) {
+      if (_pvt.currentMode !== _pvt.edgeMode) {
+         _pvt.currentMode.restoreMode(_pvt.edgeMode, snapshots);
+         _pvt.currentMode = _pvt.edgeMode;
+         my.renderWorld.needToRedraw();
+      } else {
+         // bad state. should always be in other mode. 
+      }
+   };
 
    Wings3D.apiExport.toggleVertexMode = _pvt.toggleVertexMode;
    Wings3D.apiExport.toggleFaceMode = _pvt.toggleFaceMode;
    Wings3D.apiExport.toggleEdgeMode = _pvt.toggleEdgeMode;
+   Wings3D.apiExport.restoreFaceMode = _pvt.restoreFaceMode;
+   Wings3D.apiExport.restoreEdgeMode = _pvt.restoreEdgeMode;
 
    my.loadMatrices = function(includeLights) {
       var projection = my.projection(mat4.create()); // passed identity matrix.
