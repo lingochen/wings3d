@@ -25,6 +25,14 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       }
    }
 
+   snapshotSelection() {
+      var snapshots = [];
+      this.eachPreviewCage( function(preview) {
+         snapshots.push( preview.snapshotSelection() );
+      });
+      return snapshots;
+   }
+
    setWorld(world) {
       this.world = world;
    }
@@ -99,15 +107,22 @@ class FaceMadsor extends Madsor {
    }
 
    toggleFunc(toMadsor) {
+      var redoFn;
+      var snapshots = [];
       if (toMadsor instanceof EdgeMadsor) {
+         redoFn = Wings3D.apiExport.restoreEdgeMode;
          this.eachPreviewCage( function(cage) {
+            snapshots.push( cage.snapshotSelection() );
             cage.changeFromFaceToEdgeSelect();
          });
       } else {
+         redoFn = Wings3D.apiExport.restoreVertexMode;
          this.eachPreviewCage( function(cage) {
+            snapshots.push( cage.snapshotSelection() );
             cage.changeFromFaceToVertexSelect();
          });
       }
+      Wings3D.apiExport.undoQueue(new ToggleModeCommand(redoFn, Wings3D.apiExport.restoreFaceMode, snapshots));
    }
 
 
@@ -118,7 +133,7 @@ class FaceMadsor extends Madsor {
          }, snapshots);
       } else {
          this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromFaceToEdgeSelect(snapshot);
+            cage.restoreFromFaceToVertexSelect(snapshot);
          }, snapshots);
       }
    }
@@ -175,15 +190,22 @@ class VertexMadsor extends Madsor {
    }
 
    toggleFunc(toMadsor) {
+      var redoFn;
+      var snapshots = [];
       if (toMadsor instanceof FaceMadsor) {
+         redoFn = Wings3D.apiExport.restoreFaceMode;
          this.eachPreviewCage( function(cage) {
+            snapshots.push( cage.snapshotSelection() );
             cage.changeFromVertexToFaceSelect();
          } );
       } else {
+         redoFn = Wings3D.apiExport.restoreEdgeMode;
          this.eachPreviewCage( function(cage) {
+            snapshots.push( cage.snapshotSelection() );
             cage.changeFromVertexToEdgeSelect();
          });
       }
+      Wings3D.apiExport.undoQueue( new ToggleModeCommand(redoFn, Wings3D.apiExport.restoreVertexMode, snapshots) );
    }
 
 
@@ -261,5 +283,23 @@ class MoveCommand extends EditCommand {
 
    undo() {
       this.madsor.restoreMoveSelection(this.snapshots);
+   }
+}
+
+class ToggleModeCommand extends EditCommand {
+   constructor(doFn, undoFn, snapshots) {
+      super();
+      this.snapshots = snapshots;
+      this.redoToggle = doFn;
+      this.undoToggle = undoFn;
+   }
+
+   doIt() {
+      this.redoToggle();
+   }
+
+   undo() {
+      // toggle back
+      this.undoToggle(this.snapshots);
    }
 }

@@ -255,7 +255,7 @@ PreviewCage.prototype.changeFromVertexToEdgeSelect = function() {
    var self = this;
    var oldSelected = this.selectedMap;
    this.selectedMap = new Map;
-   // zeroout the edge seleciton.
+   // zeroout the vertex seleciton.
    this.previewVertex.color.fill(0.0);
    this.previewVertex.shaderData.updateAttribute('color', 0, this.previewVertex.color);
    //
@@ -268,6 +268,36 @@ PreviewCage.prototype.changeFromVertexToEdgeSelect = function() {
       });
    }
 };
+
+PreviewCage.prototype.restoreFromVertexToFaceSelect = function(snapshot) {
+   if (snapshot) {
+      // discard old selected,
+      this.selectedMap = new Map;
+      // zeroout the vertex seleciton.
+      this.previewVertex.color.fill(0.0);
+      this.previewVertex.shaderData.updateAttribute('color', 0, this.previewVertex.color);
+      for (var [_key, polygon] of snapshot) {
+         this.selectFace(polygon.halfEdge);
+      }
+   } else {
+      this.changeFromVertexToFaceSelect();  // choose compute over storage, use the same code as going forward.
+   }
+}
+
+PreviewCage.prototype.restoreFromVertexToEdgeSelect = function(snapshot) {
+   if (snapshot) {
+      // discard old selected,
+      this.selectedMap = new Map;
+      // zeroout the vertex seleciton.
+      this.previewVertex.color.fill(0.0);
+      this.previewVertex.shaderData.updateAttribute('color', 0, this.previewVertex.color);
+      for (var [_key, wingedEdge] of snapshot) {
+         this.selectEdge(wingedEdge.left);
+      }
+   } else {
+      this.changeFromVertexToEdgeSelect();  // choose compute over storage, use the same code as going forward.
+   }
+}
 
 
 PreviewCage.prototype.setEdgeColor = function(wingedEdge, color) {
@@ -435,9 +465,31 @@ PreviewCage.prototype.changeFromEdgeToVertexSelect = function() {
 
 PreviewCage.prototype.restoreFromEdgeToFaceSelect = function(snapshot) {
    if (snapshot) {
-
+      // discard old selected,
+      this.selectedMap = new Map;
+      // zeroout the edge seleciton.
+      this.previewEdge.color.fill(0.0);
+      this.previewEdge.shaderData.updateAttribute('color', 0, this.previewEdge.color);
+      for (var [_key, polygon] of snapshot) {
+         this.selectFace(polygon.halfEdge);
+      }
    } else {
       this.changeFromEdgeToFaceSelect();  // we cheat, use the same code as going forward.
+   }
+}
+
+PreviewCage.prototype.restoreFromEdgeToVertexSelect = function(snapshot) {
+   if (snapshot) {
+      // discard old selected,
+      this.selectedMap = new Map;
+      // zeroout the edge seleciton.
+      this.previewEdge.color.fill(0.0);
+      this.previewEdge.shaderData.updateAttribute('color', 0, this.previewEdge.color);
+      for (var [_key, vertex] of snapshot) {
+         this.selectVertex(vertex);
+      }
+   } else {
+      this.changeFromEdgeToVertexSelect();  // we cheat, use the same code as going forward.
    }
 }
 
@@ -509,6 +561,7 @@ PreviewCage.prototype.changeFromFaceToVertexSelect = function() {
    }
 };
 
+
 PreviewCage.prototype.restoreFromFaceToEdgeSelect = function(snapshot) {
    if (snapshot) {
       // discard old selected,
@@ -519,11 +572,26 @@ PreviewCage.prototype.restoreFromFaceToEdgeSelect = function(snapshot) {
       for (var [_key, wingedEdge] of snapshot) {
          this.selectEdge(wingedEdge.left);
       }
-
    } else {
-      this.changeFromFaceToEdgeSelect();
+      this.changeFromFaceToEdgeSelect();  // compute vs storage. currently lean toward compute.
    }
 }
+
+
+PreviewCage.prototype.restoreFromFaceToVertexSelect = function(snapshot) {
+   if (snapshot) {
+      // discard old selected,
+      this.selectedMap = new Map;
+      this.preview.selected.fill(0.0);          // reset all polygon to non-selected 
+      this.preview.shaderData.updateAttribute("selected", 0, this.preview.selected);
+      // and selected using the snapshots.
+      for (var [_key, vertex] of snapshot) {
+         this.selectVertex(vertex);
+      }
+   } else {
+      this.changeFromFaceToVertexSelect();  // compute vs storage. currently lean toward compute.
+   }
+};
 
 PreviewCage.prototype.EPSILON = 0.000001;
 // Möller–Trumbore ray-triangle intersection algorithm

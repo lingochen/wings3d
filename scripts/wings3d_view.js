@@ -45,6 +45,16 @@ function createView(gl) {
       }
    };
 
+   _pvt.restoreVertexMode = function(snapshots) {
+      if (_pvt.currentMode !== _pvt.vertexMode) {
+         _pvt.currentMode.restoreMode(_pvt.vertexMode, snapshots);
+         _pvt.currentMode = _pvt.vertexMode;
+         my.renderWorld.needToRedraw();
+      } else {
+         // bad state. should always be in other mode. 
+      }
+   };
+
    _pvt.restoreFaceMode = function(snapshots) {
       if (_pvt.currentMode !== _pvt.faceMode) {
          _pvt.currentMode.restoreMode(_pvt.faceMode, snapshots);
@@ -68,6 +78,7 @@ function createView(gl) {
    Wings3D.apiExport.toggleVertexMode = _pvt.toggleVertexMode;
    Wings3D.apiExport.toggleFaceMode = _pvt.toggleFaceMode;
    Wings3D.apiExport.toggleEdgeMode = _pvt.toggleEdgeMode;
+   Wings3D.apiExport.restoreVertexMode = _pvt.restoreVertexMode;
    Wings3D.apiExport.restoreFaceMode = _pvt.restoreFaceMode;
    Wings3D.apiExport.restoreEdgeMode = _pvt.restoreEdgeMode;
 
