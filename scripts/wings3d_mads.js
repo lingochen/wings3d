@@ -58,7 +58,27 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
 }
 
 
+class DragSelect {
+   constructor(madsor, cage, current, onOff) {
+      this.madsor = madsor;
+      this.select = new Map; 
+      this.select.set(cage, [current]);
+      this.onOff = onOff;        // true = on, false = off.
+   }
 
+ //  finish() {
+ //     return new EdgeSelectCommand(this.select);
+ //  }
+
+   dragSelect(cage) {
+      var array = this.select.get(cage);
+      if (array === undefined) {
+         array = [];
+         this.select.set(cage, array);
+      }
+      this.madsor.dragSelect(cage, array, this.onOff);
+   }
+}
 
 
 // movement handler.
@@ -123,3 +143,4 @@ class ToggleModeCommand extends EditCommand {
       this.undoToggle(this.snapshots);
    }
 }
+

@@ -44,13 +44,21 @@ class EdgeMadsor extends Madsor {
       }
    }
 
-   // select, hilite
-   select(preview) {
-      //
+   dragSelect(cage, selectArray, onOff) {
       if (this.currentEdge !== null) {
-         preview.selectEdge(this.currentEdge);
-         Wings3D.view.undoQueue( new SelectEdgeCommand(preview, this.currentEdge));
+        if (cage.dragSelectEdge(this.currentEdge, onOff)) {
+            selectArray.push(this.currentEdge);
+        }
       }
+   }
+
+   // select, hilite
+   selectStart(cage) {
+      if (this.currentEdge !== null) {
+         var onOff = cage.selectEdge(this.currentEdge);
+         return new DragEdgeSelect(this, cage, this.currentEdge, onOff);
+      }
+      return null;
    }
 
    hideOldHilite() {
@@ -118,19 +126,33 @@ class EdgeMadsor extends Madsor {
    }
 }
 
-class SelectEdgeCommand extends EditCommand {
-   constructor(previewCage, current) {
+class DragEdgeSelect extends DragSelect {
+   constructor(madsor, cage, halfEdge, onOff) {
+      super(madsor, cage, halfEdge, onOff);
+   }
+
+   finish() {
+      return new EdgeSelectCommand(this.select);
+   }
+}
+
+
+class EdgeSelectCommand extends EditCommand {
+   constructor(select) {
       super();
-      this.previewCage = previewCage;
-      this.halfEdge = current;
+      this.select = select;
    }
 
    doIt() {
-      this.previewCage.selectEdge(this.halfEdge);
+      for (var [cage, halfEdges] of this.select) {
+         for (var i = 0; i < halfEdges.length; ++i) {
+            cage.selectEdge(halfEdges[i]);
+         }
+      }
    }
 
    undo() {
-      this.previewCage.selectEdge(this.halfEdge);
+      this.doIt();   // selectEdge, flip/flop, so
    }
 }
 

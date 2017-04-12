@@ -138,8 +138,9 @@ function createView(gl) {
        my.renderWorld.init(gl, my.drawWorld);
 
       // capture click mouse event.
+      Wings3D.gl.canvas.addEventListener("mousedown", _pvt.canvasHandleMouseDown, false); 
       Wings3D.gl.canvas.addEventListener("mouseup", _pvt.canvasHandleMouseUp, false);
-      Wings3D.gl.canvas.addEventListener("click", _pvt.canvasHandleClick, false);     
+      Wings3D.gl.canvas.addEventListener("mouseleave", _pvt.canvasHandleMouseLeave, false);
       Wings3D.gl.canvas.addEventListener("mousemove", _pvt.canvasHandleMouseMove, false);
       Wings3D.gl.canvas.addEventListener("wheel", _pvt.canvasHandleWheel, false);
       Wings3D.gl.canvas.addEventListener("contextmenu", _pvt.canvasHandleContextMenu, false);
@@ -240,29 +241,32 @@ function createView(gl) {
       _pvt.lastPick = pick;
    };
 
-   my.selectPick = function() {
+   _pvt.dragMode = null;
+
+   _pvt.selectStart = function() {
       if (_pvt.lastPick !== null) {
-         _pvt.currentMode.select(_pvt.lastPick.model);
+         _pvt.dragMode = _pvt.currentMode.selectStart(_pvt.lastPick.model);
          my.renderWorld.needToRedraw();
       }
+   };
+
+   _pvt.selectDrag = function() {
+      if ((_pvt.dragMode !== null) ){// &&
+          if ((_pvt.lastPick !== null)) {
+         _pvt.dragMode.dragSelect(_pvt.lastPick.model);
+         my.renderWorld.needToRedraw();
+      } }
    }
 
-   // event handling, switching state if needs to be
-   _pvt.canvasHandleMouseUp = function(e) {
-      // check for middle button down
-      if (e.button == 1) {
-         if (_pvt.handler.camera === null) {
-            e.stopImmediatePropagation();
-            // let camera handle the mouse event until it quit.
-            _pvt.handler.camera = Wings3D.cam.getMouseMoveHandler();
-            // disable mouse cursor
-            //document.body.style.cursor = 'none';
-         } 
+   _pvt.selectFinish = function() {
+      if (_pvt.dragMode !== null) {
+         my.undoQueue(_pvt.dragMode.finish());
+         _pvt.dragMode = null;
       }
    }
 
-   _pvt.canvasHandleClick = function(e) {
-      if (e.button == 0 ) {
+   _pvt.canvasHandleMouseDown = function(ev) {
+      if (ev.button == 0) {
          if (_pvt.handler.camera !== null) {
             _pvt.handler.camera.commit(my);
             _pvt.handler.camera = null;
@@ -272,26 +276,28 @@ function createView(gl) {
          } else {
             //e.stopImmediatePropagation();
             // ask view to select current hilite if any.
-            my.selectPick();
+            _pvt.selectStart();
          }
       }
-   }
+   };
 
-   _pvt.canvasHandleWheel = function(e) {
-      // adjusting to scroll pixels, inspiration from facebook's estimate.
-      var px = e.deltaX, py = e.deltaY, pz = e.deltaZ;
-      if ((px || py || pz) && e.deltaMode) {
-         var scale = 360;        // page scaler
-         if (e.deltaMode == 1) {
-            scale = 18;          // line scaler, should be line height
-         }
-         px *= scale;
-         py *= scale;
-         pz *= scale;
+   _pvt.canvasHandleMouseLeave = function(ev) {
+      _pvt.selectFinish();       // we can't caputre mouseup when mouse leave, so force to finish the selection.
+   };
+
+   // event handling, switching state if needs to be
+   _pvt.canvasHandleMouseUp = function(ev) {
+      if (ev.button == 0) {
+         _pvt.selectFinish();
+      } else if (ev.button == 1) { // check for middle button down
+         if (_pvt.handler.camera === null) {
+            ev.stopImmediatePropagation();
+            // let camera handle the mouse event until it quit.
+            _pvt.handler.camera = Wings3D.cam.getMouseMoveHandler();
+            // disable mouse cursor
+            //document.body.style.cursor = 'none';
+         } 
       }
-      
-      // asks camera to zoomIn/Out.
-      Wings3D.cam.zoomStep(py);
    };
 
    _pvt.canvasHandleMouseMove = function(e) {
@@ -320,6 +326,8 @@ function createView(gl) {
          var ray = {origin: ptNear, direction: ptFar};
          //geometryStatus("mouse position: " + ptNear[0] + ", " + ptNear[1] + "," + ptNear[2] + ", <br />"+ ptFar[0] + ", " + ptFar[1] + ", " + ptFar[2]);
          my.rayPick(ray);
+         // selectDrag if left button mousedown
+         _pvt.selectDrag();
       }
    };
 
@@ -347,7 +355,25 @@ function createView(gl) {
       // should we make sure _pvt.handler.mousemove is null?
       _pvt.handler.mousemove = handler;
    };
+   
+   _pvt.canvasHandleWheel = function(e) {
+      // adjusting to scroll pixels, inspiration from facebook's estimate.
+      var px = e.deltaX, py = e.deltaY, pz = e.deltaZ;
+      if ((px || py || pz) && e.deltaMode) {
+         var scale = 360;        // page scaler
+         if (e.deltaMode == 1) {
+            scale = 18;          // line scaler, should be line height
+         }
+         px *= scale;
+         py *= scale;
+         pz *= scale;
+      }
+      
+      // asks camera to zoomIn/Out.
+      Wings3D.cam.zoomStep(py);
+   };
 
+   
    var contextMenuClassName = "context-menu";
    var contextMenuItemClassName = ".context-menu__item";
    _pvt.contextMenu = {menu: document.querySelector("#context-menu")};

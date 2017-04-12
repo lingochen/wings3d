@@ -11,12 +11,21 @@ class VertexMadsor extends Madsor {
       this.currentVertex = null;
    }
 
-   select(preview) {
+   dragSelect(cage, selectArray, onOff) {
+      if (this.currentVertex !== null) {
+        if (cage.dragSelectVertex(this.currentVertex, onOff)) {
+            selectArray.push(this.currentVertex);
+        }
+      }
+   }
+
+   selectStart(cage) {
       //
       if (this.currentVertex !== null) {
-         this.preview.selectVertex(this.currentVertex);
-         Wings3D.view.undoQueue(new SelectVertexCommand(preview, this.currentVertex));
+         var onOff = this.preview.selectVertex(this.currentVertex);
+         return new DragVertexSelect(this, cage, this.currentVertex, onOff);
       }
+      return null;
    }
 
    setCurrent(edge, intersect, center) {
@@ -94,18 +103,32 @@ class VertexMadsor extends Madsor {
    }
 } 
 
-class SelectVertexCommand extends EditCommand {
-   constructor(previewCage, current) {
+class DragVertexSelect extends DragSelect {
+   constructor(madsor, cage, vertex, onOff) {
+      super(madsor, cage, vertex, onOff);
+   }
+
+   finish() {
+      return new VertexSelectCommand(this.select);
+   }
+}
+
+class VertexSelectCommand extends EditCommand {
+   constructor(select) {
       super();
-      this.previewCage = previewCage;
-      this.vertex = current;
+      this.select = select;
    }
 
    doIt() {
-      this.previewCage.selectVertex(this.vertex);
+      for (var [cage, vertices] of this.select) {
+         for (var i = 0; i < vertices.length; ++i) {
+            cage.selectVertex(vertices[i]);
+         }
+      }
    }
 
    undo() {
-      this.previewCage.selectVertex(this.vertex);
-   }
+      this.doIt();   // selectVertex, flip/flop, so
+   }  
 }
+

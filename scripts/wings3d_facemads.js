@@ -13,11 +13,20 @@ class FaceMadsor extends Madsor {
       this.shaderData.setPosition(this.trianglefan.data);      
    }
 
-   select(preview) {
+   dragSelect(cage, selectArray, onOff) {
+      if (this.currentEdge !== null) {
+        if (cage.dragSelectFace(this.currentEdge, onOff)) {
+            selectArray.push(this.currentEdge);
+        }
+      }
+   }
+
+   // select, hilite
+   selectStart(preview) {
       // check not null, shouldn't happened
       if (this.currentEdge !== null) {
-         preview.selectFace(this.currentEdge);
-         Wings3D.view.undoQueue(new SelectFaceCommand(preview, this.currentEdge));
+         var onOff = preview.selectFace(this.currentEdge);
+         return new DragFaceSelect(this, preview, this.currentEdge, onOff);
       }    
    }
 
@@ -91,18 +100,33 @@ class FaceMadsor extends Madsor {
    }
 }
 
-class SelectFaceCommand extends EditCommand {
-   constructor(previewCage, current) {
+
+class DragFaceSelect extends DragSelect {
+   constructor(madsor, cage, halfEdge, onOff) {
+      super(madsor, cage, halfEdge, onOff);
+   }
+
+   finish() {
+      return new FaceSelectCommand(this.select);
+   }
+}
+
+
+class FaceSelectCommand extends EditCommand {
+   constructor(select) {
       super();
-      this.previewCage = previewCage;
-      this.halfEdge = current;
+      this.select = select;
    }
 
    doIt() {
-      this.previewCage.selectFace(this.halfEdge);
+      for (var [cage, halfEdges] of this.select) {
+         for (var i = 0; i < halfEdges.length; ++i) {
+            cage.selectFace(halfEdges[i]);
+         }
+      }
    }
 
    undo() {
-      this.previewCage.selectFace(this.halfEdge);
+      this.doIt();   // selectEdge, flip/flop, so
    }
 }

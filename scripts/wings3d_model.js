@@ -217,18 +217,41 @@ PreviewCage.prototype.hiliteVertex = function(vertex, show) {
    this.setVertexColor(vertex, color);
 };
 
+PreviewCage.prototype.dragSelectVertex = function(vertex, onOff) {
+   var color;
+   if (this.selectedMap.has(vertex.index)) {
+      if (onOff === false) {
+         this.selectedMap.delete(vertex.index);
+         this.setVertexColor(vertex, -0.25);
+         return true;
+      }
+   } else {
+      if (onOff === true) {
+         this.selectedMap.set(vertex.index, vertex);
+         this.setVertexColor(vertex, 0.25);
+         geometryStatus("select vertex: " + vertex.index);
+         return true;
+      }
+   }
+   return false;
+}
+
 PreviewCage.prototype.selectVertex = function(vertex) {
+   var onOff;
    var color;
    if (this.selectedMap.has(vertex.index)) {
       this.selectedMap.delete(vertex.index);
       color = -0.25;
+      onOff = false;
    } else {
       this.selectedMap.set(vertex.index, vertex);
       color = 0.25;
+      onOff = true;
       geometryStatus("select vertex: " + vertex.index);
    }
    // selected color
    this.setVertexColor(vertex, color);
+   return onOff;
 };
 
 
@@ -321,21 +344,45 @@ PreviewCage.prototype.hiliteEdge = function(selectEdge, show) {
    this.setEdgeColor(wingedEdge, color);
 };
 
+PreviewCage.prototype.dragSelectEdge = function(selectEdge, dragOn) {
+   var wingedEdge = selectEdge.wingedEdge;
+
+   if (this.selectedMap.has(wingedEdge.index)) { 
+      if (dragOn === false) { // turn from on to off
+         this.selectedMap.delete(wingedEdge.index);
+         this.setEdgeColor(wingedEdge, -0.25);
+         return true;   // new off selection
+      }
+   } else {
+      if (dragOn === true) {   // turn from off to on.
+         this.selectedMap.set(wingedEdge.index, wingedEdge);
+         this.setEdgeColor(wingedEdge, 0.25);
+         return true;
+      }
+   }
+   // edge already on the correct state.
+   return false;
+}
+
 PreviewCage.prototype.selectEdge = function(selectEdge) {
    // select polygon set color,
    var wingedEdge = selectEdge.wingedEdge;
 
+   var onOff;
    var color;
    if (this.selectedMap.has(wingedEdge.index)) {
       this.selectedMap.delete(wingedEdge.index);
       color = -0.25;
+      onOff = false;
    } else {
       this.selectedMap.set(wingedEdge.index, wingedEdge);
       color = 0.25;
+      onOff = true;
       geometryStatus("select edge: " + wingedEdge.index);
    }
    // selected color
    this.setEdgeColor(wingedEdge, color);
+   return onOff;
 };
 
 PreviewCage.prototype.computeSnapshot = function(snapshot) {
@@ -493,39 +540,69 @@ PreviewCage.prototype.restoreFromEdgeToVertexSelect = function(snapshot) {
    }
 }
 
+PreviewCage.prototype.setFaceSelectionOff = function(polygon) {
+   var self = this;
+   var selected = this.preview.selected;     // filled triangle's selection status.
+   polygon.eachVertex( function(vertex) {
+      // restore drawing color
+      var vertexSelected = false;
+      vertex.eachOutEdge( function(edge) {
+         if (edge.face !== polygon && self.selectedMap.has(edge.face.index)) {
+            vertexSelected = true;
+         }
+      }); 
+      if (vertexSelected === false) {  // no more sharing, can safely reset
+         selected[vertex.index] = 0;
+      }
+   });
+   selected[this.geometry.vertices.length+polygon.index]= 0.0;
+   this.selectedMap.delete(polygon.index);
+   this.preview.shaderData.updateAttribute("selected", 0, selected);
+};
+PreviewCage.prototype.setFaceSelectionOn = function(polygon) {
+   var selected = this.preview.selected;     // filled triangle's selection status.
+   // set the drawing color
+   polygon.eachVertex( function(vertex) {
+      selected[vertex.index] = 1.0;
+   });
+   selected[this.geometry.vertices.length+polygon.index]= 1.0;
+   this.selectedMap.set(polygon.index, polygon);
+   this.preview.shaderData.updateAttribute("selected", 0, selected);
+};
+
+PreviewCage.prototype.dragSelectFace = function(selectEdge, onOff) {
+   // select polygon set color,
+   var polygon = selectEdge.face;
+   if (this.selectedMap.has(polygon.index)) {
+      if (onOff === false) {
+         this.setFaceSelectionOff(polygon);
+         return true;
+      }
+   } else {
+      if (onOff === true) {
+         this.setFaceSelectionOn(polygon);
+         return true;
+      }
+   }
+   geometryStatus("polygon face # " + polygon.index);
+   return false;
+};
+
 /**
  * 
  */
 PreviewCage.prototype.selectFace = function(selectEdge) {
-   // select polygon set color,
-   var self = this;
-   var selected = this.preview.selected;     // filled triangle's selection status.
+   var onOff;
    var polygon = selectEdge.face;
    if (this.selectedMap.has(polygon.index)) {
-      polygon.eachVertex( function(vertex) {
-         // restore drawing color
-         var vertexSelected = false;
-         vertex.eachOutEdge( function(edge) {
-            if (edge.face !== polygon && self.selectedMap.has(edge.face.index)) {
-               vertexSelected = true;
-            }
-         });
-         if (vertexSelected === false) {  // no more sharing, can safely reset
-            selected[vertex.index] = 0;
-         }
-      });
-      selected[this.geometry.vertices.length+polygon.index]= 0.0;
-      this.selectedMap.delete(polygon.index);
+      this.setFaceSelectionOff(polygon);
+      onOff = false;
    } else {
-      // set the drawing color
-      polygon.eachVertex( function(vertex) {
-         selected[vertex.index] = 1.0;
-      });
-      selected[this.geometry.vertices.length+polygon.index]= 1.0;
-      this.selectedMap.set(polygon.index, polygon);
+      this.setFaceSelectionOn(polygon);
+      onOff = true;
    }
-   this.preview.shaderData.updateAttribute("selected", 0, selected);
    geometryStatus("polygon face # " + polygon.index);
+   return onOff;
 };
 
 
