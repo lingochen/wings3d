@@ -138,6 +138,11 @@ PreviewCage.prototype.draw = function(gl) {
 };
 
 
+PreviewCage.prototype.hasSelection = function() {
+   return (this.selectedMap.size > 0);
+}
+
+
 // draw vertex, select color, 
 PreviewCage.prototype.drawVertex = function(gl) {
    // drawing using vertex array
@@ -439,22 +444,15 @@ PreviewCage.prototype.moveSelection = function(movement, snapshot) {
    this.computeSnapshot(snapshot);
 };
 
-PreviewCage.prototype.snapshotEdgePosition = function() {
+
+PreviewCage.prototype.snapshotPosition = function(vertices) {
    var ret = {
       faces: new Map,
-      vertices: new Map,
+      vertices: null,
       wingedEdges: new Map,
       position: null,
    };
-   // first collect all the vertex
-   for (var [_key, wingedEdge] of this.selectedMap) {
-      for (let edge of wingedEdge) {
-         var vertex = edge.origin;
-         if (!ret.vertices.has(vertex.index)) {
-            ret.vertices.set(vertex.index, vertex);
-         }
-      }
-   }
+   ret.vertices = vertices;
    // allocated save position data.
    ret.position = new Float32Array(ret.vertices.size*3);
    // use the vertex to collect the affected polygon and the affected edge.
@@ -474,6 +472,38 @@ PreviewCage.prototype.snapshotEdgePosition = function() {
    }
    return ret;
 };
+
+PreviewCage.prototype.snapshotEdgePosition = function() {
+   var vertices = new Map;
+   // first collect all the vertex
+   for (var [_key, wingedEdge] of this.selectedMap) {
+      for (let edge of wingedEdge) {
+         var vertex = edge.origin;
+         if (!vertices.has(vertex.index)) {
+            vertices.set(vertex.index, vertex);
+         }
+      }
+   }
+   return this.snapshotPosition(vertices);
+};
+
+PreviewCage.prototype.snapshotFacePosition = function() {
+   var vertices = new Map;
+   // first collect all the vertex
+   for (var [_key, polygon] of this.selectedMap) {
+      polygon.eachVertex( function(vertex) {
+         if (!vertices.has(vertex.index)) {
+            vertices.set(vertex.index, vertex);
+         }
+      });
+   }
+   return this.snapshotPosition(vertices);
+};
+
+PreviewCage.prototype.snapshotVertexPosition = function() {
+   var vertices = new Map(this.selectedMap);
+   return this.snapshotPosition(vertices);
+}
 
 
 PreviewCage.prototype.changeFromEdgeToFaceSelect = function() {

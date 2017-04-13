@@ -9,18 +9,10 @@
 // 
 class EdgeMadsor extends Madsor {
    constructor() {
-      super();
-      // 
-      var self = this;
-      var menuItem = document.querySelector("#edgeMoveX");
-      if (menuItem) {
-         menuItem.addEventListener("click", function(ev) {
-            var handler = new MouseMoveX(self);
-            Wings3D.view.attachHandlerMouseMove(handler);
-         });
-      }
-   }
+      super('edge');
+      // cut commands
 
+   }
 
    // get selected Edge's vertex snapshot. for doing, and redo queue. 
    snapshotPosition() {
@@ -29,19 +21,6 @@ class EdgeMadsor extends Madsor {
          snapshots.push( preview.snapshotEdgePosition() );
       });
       return snapshots;
-   }
-
-   // move edge along movement.
-   moveSelection(movement, snapshots) {
-      for (var i =0; i < this.world.length; ++i) {
-         this.world[i].moveSelection(movement, snapshots[i]);
-      }
-   }
-
-   restoreMoveSelection(snapshots) {
-      for (var i =0; i < this.world.length; ++i) {
-         this.world[i].restoreMoveSelection(snapshots[i]);
-      }
    }
 
    dragSelect(cage, selectArray, onOff) {

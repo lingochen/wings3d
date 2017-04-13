@@ -6,11 +6,20 @@
 
 class FaceMadsor extends Madsor {
    constructor() {
-      super();
+      super('face');
       // setup highlite face, at most 18 triangles.
       var buf = new Float32Array(3*20);
       this.trianglefan = {data: buf, length: 0};
       this.shaderData.setPosition(this.trianglefan.data);      
+   }
+
+   // get selected Face's vertex snapshot. for doing, and redo queue. 
+   snapshotPosition() {
+      var snapshots = [];
+      this.eachPreviewCage( function(preview) {
+         snapshots.push( preview.snapshotFacePosition() );
+      });
+      return snapshots;
    }
 
    dragSelect(cage, selectArray, onOff) {

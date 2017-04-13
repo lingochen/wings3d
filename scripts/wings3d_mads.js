@@ -6,10 +6,43 @@
 "use strict";
 
 class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
-   constructor() {
+   constructor(mode) {
       this.currentEdge = null;
       this.shaderData = Wings3D.gl.createShaderData();
       this.shaderData.setUniform4fv("uColor", [0.0, 1.0, 0.0, 0.3]); // hilite green, selected hilite yellow.
+      // contextMenu
+      this.contextMenu = {menu: document.querySelector("#"+mode+"-context-menu")};
+      if (this.contextMenu.menu) {
+         this.contextMenu.menuItems = this.contextMenu.menu.querySelectorAll(".context-menu__item");
+      }
+      // type handler 
+      var self = this;
+      // movement for (x, y, z)
+      function addMovementHandler(axis, mode) {
+         var axisName = ['X', 'Y', 'Z'];
+         var menuItem = document.querySelector('#' + mode + 'Move' + axisName[axis]);
+         if (menuItem) {
+            menuItem.addEventListener("click", function(ev) {
+               Wings3D.view.attachHandlerMouseMove(new MouseMoveAlongAxis(self, axis));
+            });
+         }  
+      }
+      for (var i = 0; i < 3; ++i) {
+         addMovementHandler(i, mode);
+      }
+      // free Movement.
+
+   }
+
+   getContextMenu() {
+      var hasSelection = false;
+      this.eachPreviewCage( function(cage) {
+         hasSelection = hasSelection || cage.hasSelection();
+      });
+      if (hasSelection) {
+         return this.contextMenu;
+      }
+      return null;
    }
 
    // can be use arguments object?
@@ -23,6 +56,19 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
             func(this.world[i]);
          }
       }
+   }
+
+   // move edge along movement.
+   moveSelection(movement, snapshots) {
+      this.eachPreviewCage( function(cage, snapshot) {
+         cage.moveSelection(movement, snapshot);
+      }, snapshots);
+   }
+
+   restoreMoveSelection(snapshots) {
+      this.eachPreviewCage( function(cage, snapshot) {
+         cage.restoreMoveSelection(snapshot);
+      }, snapshots);
    }
 
    setWorld(world) {
@@ -82,22 +128,25 @@ class DragSelect {
 
 
 // movement handler.
-class MouseMoveX extends MouseMoveHandler {
-   constructor(madsor) {
+class MouseMoveAlongAxis extends MouseMoveHandler {
+   constructor(madsor, axis) {   // 0 = x axis, 1 = y axis, 2 = z axis.
       super();
       this.madsor = madsor;
       this.snapshots = madsor.snapshotPosition();
+      this.axis = axis;
       this.movement = [0.0, 0.0, 0.0];             // cumulative movement.
    }
 
    handleMouseMove(ev) {
       // todo: instead of magic constant. should supply a scaling factor.
-      var x = ev.movementX/20.0;
-      if (x >= 2) {
-         x = 2;
+      var move = ev.movementX/20.0;
+      if (move >= 2) {
+         move = 2;
       }
-      this.madsor.moveSelection([x, 0.0, 0.0], this.snapshots);
-      this.movement[0] += x;
+      var movement = [0.0, 0.0, 0.0];
+      movement[this.axis] = move;
+      this.madsor.moveSelection(movement, this.snapshots);
+      this.movement[this.axis] += move;
    }
 
    _commit(view) {
@@ -108,6 +157,10 @@ class MouseMoveX extends MouseMoveHandler {
       this.madsor.restoreMoveSelection(this.snapshots);
    }
 }
+
+
+
+
 
 class MoveCommand extends EditCommand {
    constructor(madsor, snapshots, movement) {

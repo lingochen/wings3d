@@ -378,19 +378,16 @@ function createView(gl) {
    var contextMenuItemClassName = ".context-menu__item";
    _pvt.contextMenu = {menu: document.querySelector("#context-menu")};
    _pvt.contextMenu.menuItems = _pvt.contextMenu.menu.querySelectorAll(".context-menu__item");
-   _pvt.edgeContextMenu = {menu: document.querySelector("#edge-context-menu")};
-   _pvt.edgeContextMenu.menuItems = _pvt.edgeContextMenu.menu.querySelectorAll(".context-menu__item");
 
    my.getContextMenu = function(ev) {
       // 
-      if (_pvt.world.length >= 0) {
-         // check 
-         if (_pvt.currentMode === _pvt.edgeMode) {
-            return _pvt.edgeContextMenu;
-         }
+      var contextMenu = _pvt.currentMode.getContextMenu();
+      if (contextMenu && contextMenu.menu) {
+         return contextMenu;
+      } else {
+         // return default
+         return _pvt.contextMenu;
       }
-      // return default
-      return _pvt.contextMenu;
    };
 
    _pvt.undo = {queue: [], current: -1};

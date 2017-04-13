@@ -7,8 +7,16 @@
 
 class VertexMadsor extends Madsor {
    constructor() {
-      super();
+      super('vertex');
       this.currentVertex = null;
+   }
+   // get selected vertex snapshot. for doing, and redo queue. 
+   snapshotPosition() {
+      var snapshots = [];
+      this.eachPreviewCage( function(preview) {
+         snapshots.push( preview.snapshotVertexPosition() );
+      });
+      return snapshots;
    }
 
    dragSelect(cage, selectArray, onOff) {
