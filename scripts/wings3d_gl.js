@@ -238,6 +238,12 @@ function createWebGLContext(canvasID, attrib) {
       gl.vertexAttribPointer(position, size, gl.FLOAT, false, 0, 0);
       gl.enableVertexAttribArray(position);
    };
+   
+   gl.bindAttributeToProgram = function(progLoc, attrib) {
+      gl.bindBuffer(attrib.target, attrib.handle);
+      gl.vertexAttribPointer(progLoc, attrib.size, attrib.type, attrib.normalized, attrib.stride, attrib.offset);
+      gl.enableVertexAttribArray(progLoc);
+   }
 
    gl.bindShaderData = function(data, useIndex=true) {
       // using current setShader, set shader, set indexbuffer
@@ -247,6 +253,7 @@ function createWebGLContext(canvasID, attrib) {
          gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, data.index.handle);
       }
    };
+
    gl.bindTransform = function() {
       // current shader, set current transform
       _pvt.currentShader.bindTransform(gl, _pvt.transform);
@@ -260,6 +267,12 @@ function createWebGLContext(canvasID, attrib) {
    gl.useShader = function(shader) {
       _pvt.currentShader = shader;
       gl.useProgram(shader.progHandle);
+   };
+   gl.disableShader = function() {
+      // disable vertex attribute array
+      if (_pvt.currentShader) {
+         _pvt.currentShader.disableVertexAttributeArray(gl);
+      }
    };
 
    gl.drawVertex =  function(drawObject) {
@@ -287,11 +300,76 @@ function createWebGLContext(canvasID, attrib) {
 // define ShaderProgram, ShaderData.
 //
 
-/**sinput to ShaderProgram.
+/**input to ShaderProgram.
  */
 var ShaderData = function() {
    this.attribute = {};
    this.uniform = {};
+};
+
+ShaderData.attribLayout = function(attribSize=3, attribType=Wings3D.gl.FLOAT, normalized=false, stride=0, offset=0) {
+   return {size: attribSize, type: attribType, normalized: normalized, stride: stride, offset: offset};
+}
+
+
+ShaderData.prototype.createAttribute = function(name, target, buffLength, usage, layout) {
+   if (!this.attribute[name]) {
+      var gl = Wings3D.gl;
+      var handle = gl.createBuffer();
+      gl.bindBuffer(target, handle);
+      gl.bufferData(target, buffLength, usage);
+      this.attribute[name] = {handle: handle,
+                              length: buffLength,
+                              target: target,
+                              //usage: usage,
+                              size: layout.attribSize,
+                              type: layout.attribType,
+                              normalized: layout.normalized,
+                              stride: layout.stride,
+                              offset: layout.offset
+                             };
+   } else {
+      console.log("Shader Data: " + name + " already initialized");
+   }
+};
+
+ShaderData.prototype.deleteAttribute = function(name) {
+   var attribute = this.attribute[name];
+   if (attribute) {
+      Wings3D.gl.deleteBuffer(attribute.handle);
+      this.attribute[name] = null;
+   }
+};
+
+ShaderData.prototype.freeAllAttributes = function() {
+   var removeList = [];
+   for (var key in this.attribute) {
+      removeList.push(key);
+   }
+   for (var i = 0; i < removeList.length; ++i) {
+      this.deleteAttribute(removeList[i]);
+   }
+};
+
+ShaderData.prototype.resizeAttribute = function(name, buffLength) {
+   var attrib = this.attribute[name];
+   if (attrib && attrib.buffLength != buffLength) {
+      var gl = Wings3D.gl;
+      gl.bindBuffer(attrib.target, attrib.handle);
+      gl.bufferData(attrib.target, buffLength, attrib.usage);
+      attrib.buffLength = buffLength;
+   }
+};
+
+ShaderData.prototype.uploadAttribute = function(name, byteOffset, typedArray)  {
+   var attrb = this.attribute[name];
+   if (attrib) {
+      var gl = Wings3D.gl;
+      gl.bindBuffer(attrib.target, attrb.handle);
+      gl.bufferSubData(attrib.target, byteOffset, typedArray);
+   } else {
+      console.log("Shader Data: " + name + " not initialized");
+   }
 };
 
 //ShaderData.prototype.setAttribute = function(name, value) {
@@ -309,6 +387,7 @@ ShaderData.prototype.setIndex = function(index) {
    }
 };
 
+
 // expect, float32array, vec3 data type. convenient functions
 ShaderData.prototype.setPosition = function(arry, size=3) {
    this.setAttribute('position', arry, size);
@@ -317,6 +396,7 @@ ShaderData.prototype.setPosition = function(arry, size=3) {
 ShaderData.prototype.setColor = function(data, size=3) {
    this.setAttribute('color', data, size);
 };
+
 
 ShaderData.prototype.setAttribute = function(name, arry, size=3) {
    if (typeof(this.attribute[name]) !== "undefined" && this.attribute[name] !== null) {
@@ -338,12 +418,12 @@ ShaderData.setAttributeFn = function(gl, loc, bufferHndl, size) {
 };
 
 // expect, float32array, convenience functions
-ShaderData.prototype.updatePosition = function(data) {
-   this.updateAttribute('position', 0, data);
+ShaderData.prototype.updatePosition = function(data, byteoffset=0) {
+   this.updateAttribute('position', byteoffset, data);
 };
 
-ShaderData.prototype.updateColor = function(data) {
-   this.updateAttribute('color', 0, data);
+ShaderData.prototype.updateColor = function(data, byteoffset=0) {
+   this.updateAttribute('color', byteoffset, data);
 };
 
 ShaderData.prototype.updateAttribute = function(name, byteoffset, data)  {
@@ -382,12 +462,24 @@ var ShaderProgram = function(progHandle, transform, attribute, uniform) {
    this.uniform = uniform;
 };
 
+ShaderProgram.prototype.disableVertexAttributeArray = function(gl) {
+   for (var key in this.attribute) {
+      if (this.attribute.hasOwnProperty(key)) {
+         gl.disableVertexAttribArray(this.attribute[key].loc);
+      }
+   }
+};
+
 ShaderProgram.prototype.bindAttribute = function(gl, attribute) {
    try {
    for (var key in this.attribute) {
       if (attribute.hasOwnProperty(key)) {   // don't need to check this.attribute' inherited property, cannot possibley exist
          var attrb = attribute[key];
-         attrb.binder(gl, this.attribute[key].loc, attrb.handle, attrb.size);
+         if (attrb.binder) {
+            attrb.binder(gl, this.attribute[key].loc, attrb.handle, attrb.size);
+         } else {
+            gl.bindAttributeToProgram(this.attribute[key].loc, attrb);
+         }
       } else {
          // don't have property. console.log?
          console.log("shaderData don't have shader attribute: " + key);

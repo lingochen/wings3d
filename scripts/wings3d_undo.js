@@ -6,6 +6,15 @@
 
 class MouseMoveHandler {
 
+   _calibrateMovement(mouseMove) {
+      // todo: instead of magic constant. should supply a scaling factor.
+      var move = mouseMove/20.0;
+      if (move >= 2) {
+         move = 2;
+      }
+      return move;
+   }
+
    //handleMouseMove(ev) {}
 
    cancel() {

@@ -22,6 +22,7 @@ var PreviewCage = function(mesh) {
    this.computeBoundingSphere();
    this.computePreview();
    // set up position, faceColor, index.
+   var layout = ShaderData.attribLayout();
    this.preview.shaderData.setIndex(this.preview.index.data);
    this.preview.shaderData.setPosition(this.preview.vertices);
    //this.preview.shaderData.setColor(this.preview.color);
@@ -124,6 +125,17 @@ PreviewCage.prototype.computePreviewEdge = function() {
       }
    }
    this.previewEdge.color.fill(0.0);
+}
+
+
+// free webgl buffer.
+PreviewCage.prototype.freeBuffer = function() {
+   this.preview.shaderData.freeAllAttributes();
+   this.preview.shaderData =  null;
+   this.previewEdge.shaderData.freeAllAttributes();
+   this.preview.shaderData = null;
+   this.previewVertex.shaderData.freeAllAttributes();
+   this.previewVertex.shaderData = null;
 }
 
 

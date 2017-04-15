@@ -28,6 +28,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if (_pvt.previewCage !== null) {
          // remove it from world.
          api.removeFromWorld(_pvt.previewCage);
+         _pvt.previewCage.freeBuffer();
          _pvt.previewCage = null;
       } 
    };
@@ -36,6 +37,8 @@ document.addEventListener('DOMContentLoaded', function() {
       if (_pvt.previewCage !== null) {
          // remove it from world.
          api.removeFromWorld(_pvt.previewCage);
+         _pvt.previewCage.freeBuffer();
+         _pvt.previewCage = null;
       }
       api.createCube(_pvt.cubeParams.size, _pvt.cubeParams.numberOfCut);
    };

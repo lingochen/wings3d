@@ -155,6 +155,7 @@ function createView(gl) {
             gl.bindTransform();
             model.draw(gl);
          });
+         gl.disableShader();
          gl.disable(gl.POLYGON_OFFSET_FILL);
 
 

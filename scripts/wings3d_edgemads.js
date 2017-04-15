@@ -92,6 +92,7 @@ class EdgeMadsor extends Madsor {
          this.eachPreviewCage( function(preview) {
             preview.drawEdge(gl);
          });
+         gl.disableShader();
       //}
    }
 

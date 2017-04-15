@@ -386,3 +386,20 @@ WingedTopology.prototype.findHalfEdge = function(v0, v1) {
             return false;
          });
 };
+
+/*
+WingedTopology.prototype.removePolygon = function(polygon) {
+   Half begin(polygon.half());
+   Half current(begin);
+
+   do
+   {
+      HalfData* halfData = current.half_;
+      halfData->left_ = 0;
+      current = current.next();
+   } 
+   while(current != begin);
+
+   deAllocatePolygon(polygon);
+}
+*/

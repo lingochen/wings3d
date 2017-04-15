@@ -18,7 +18,7 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       // type handler 
       var self = this;
       // movement for (x, y, z)
-      function addMovementHandler(axis, mode) {
+      function addMoveAlongAxisHandler(axis, mode) {
          var axisName = ['X', 'Y', 'Z'];
          var menuItem = document.querySelector('#' + mode + 'Move' + axisName[axis]);
          if (menuItem) {
@@ -28,9 +28,16 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
          }  
       }
       for (var i = 0; i < 3; ++i) {
-         addMovementHandler(i, mode);
+         addMoveAlongAxisHandler(i, mode);
       }
       // free Movement.
+      var menuItem = document.querySelector('#' + mode + 'MoveFree');
+      if (menuItem) {
+         menuItem.addEventListener('click', function(ev) {
+            Wings3D.view.attachHandlerMouseMove(new MoveFreePositionHandler(self));
+         });
+      }
+      // normal Movement.
 
    }
 
@@ -99,6 +106,7 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
          gl.bindTransform();
          gl.bindShaderData(this.shaderData, false);
          this.drawObject(gl);
+         gl.disableShader();
       }
    }
 }
@@ -126,28 +134,14 @@ class DragSelect {
    }
 }
 
-
-// movement handler.
-class MouseMoveAlongAxis extends MouseMoveHandler {
-   constructor(madsor, axis) {   // 0 = x axis, 1 = y axis, 2 = z axis.
+class MovePositionHandler extends MouseMoveHandler {
+   constructor(madsor) {
       super();
       this.madsor = madsor;
       this.snapshots = madsor.snapshotPosition();
-      this.axis = axis;
       this.movement = [0.0, 0.0, 0.0];             // cumulative movement.
    }
 
-   handleMouseMove(ev) {
-      // todo: instead of magic constant. should supply a scaling factor.
-      var move = ev.movementX/20.0;
-      if (move >= 2) {
-         move = 2;
-      }
-      var movement = [0.0, 0.0, 0.0];
-      movement[this.axis] = move;
-      this.madsor.moveSelection(movement, this.snapshots);
-      this.movement[this.axis] += move;
-   }
 
    _commit(view) {
       view.undoQueue(new MoveCommand(this.madsor, this.snapshots, this.movement));
@@ -158,8 +152,37 @@ class MouseMoveAlongAxis extends MouseMoveHandler {
    }
 }
 
+// movement handler.
+class MouseMoveAlongAxis extends MovePositionHandler {
+   constructor(madsor, axis) {   // 0 = x axis, 1 = y axis, 2 = z axis.
+      super(madsor);
+      this.axis = axis;
+   }
+
+   handleMouseMove(ev) {
+
+      var move = this._calibrateMovement(ev.movementX);
+      var movement = [0.0, 0.0, 0.0];
+      movement[this.axis] = move;
+      this.madsor.moveSelection(movement, this.snapshots);
+      this.movement[this.axis] += move;
+   }
+}
 
 
+class MoveFreePositionHandler extends MovePositionHandler {
+   constructor(madsor) {
+      super(madsor);
+   }
+
+   handleMouseMove(ev) {
+      var moveX = this._calibrateMovement(ev.movementX);
+      var moveY = this._calibrateMovement(ev.movementY);
+      var movement = [moveX, moveY, 0.0];
+      this.madsor.moveSelection(movement, this.snapshots);
+      vec3.add(this.movement, this.movement, movement);
+   }
+}
 
 
 class MoveCommand extends EditCommand {

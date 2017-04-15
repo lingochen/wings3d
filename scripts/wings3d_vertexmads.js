@@ -99,6 +99,7 @@ class VertexMadsor extends Madsor {
          this.eachPreviewCage( function(preview) {
             preview.drawVertex(gl);
          });
+         gl.disableShader();
       //}
    }
 
