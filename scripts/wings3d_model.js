@@ -21,29 +21,30 @@ var PreviewCage = function(mesh) {
    this.preview.shaderData = Wings3D.gl.createShaderData();
    this.computeBoundingSphere();
    this.computePreview();
+   var gl = Wings3D.gl;
    // set up position, faceColor, index.
-   var layout = ShaderData.attribLayout();
+   var layoutVec = ShaderData.attribLayout();
+   var layoutFloat = ShaderData.attribLayout(1);
    this.preview.shaderData.setIndex(this.preview.index.data);
-   this.preview.shaderData.setPosition(this.preview.vertices);
-   //this.preview.shaderData.setColor(this.preview.color);
-   this.preview.shaderData.setAttribute('barycentric', this.preview.barycentric);
-   this.preview.shaderData.setAttribute('selected', this.preview.selected, 1);
+   this.preview.shaderData.setupAttribute('position', layoutVec, this.preview.vertices, gl.STATIC_DRAW);
+   this.preview.shaderData.setupAttribute('barycentric', layoutVec, this.preview.barycentric, gl.STATIC_DRAW);
+   this.preview.shaderData.setupAttribute('selected', layoutFloat, this.preview.selected, gl.DYNAMIC_DRAW);
    this.preview.shaderData.setUniform3fv("faceColor", [1.0, 0.0, 0.0]);
    this.preview.shaderData.setUniform3fv("selectedColor", [1.0, 0.0, 0.0]);
    // previewEdge
    this.previewEdge = {line: new Float32Array(mesh.edges.length*2*3), color: new Float32Array(mesh.edges.length*2)};
    this.computePreviewEdge();
    this.previewEdge.shaderData = Wings3D.gl.createShaderData();
-   this.previewEdge.shaderData.setPosition(this.previewEdge.line);
-   this.previewEdge.shaderData.setAttribute('color', this.previewEdge.color, 1);
+   this.previewEdge.shaderData.setupAttribute('position', layoutVec, this.previewEdge.line, gl.STATIC_DRAW);
+   this.previewEdge.shaderData.setupAttribute('color', layoutFloat, this.previewEdge.color, gl.DYNAMIC_DRAW);
    this.previewEdge.shaderData.setUniform4fv("selectedColor", [1.0, 0.0, 0.0, 1.0]);
    this.previewEdge.shaderData.setUniform4fv('hiliteColor', [0.0, 1.0, 0.0, 1.0]);
    // previewVertex
    this.previewVertex = {color: new Float32Array(mesh.vertices.length)};
    this.previewVertex.color.fill(0.0);
    this.previewVertex.shaderData = Wings3D.gl.createShaderData();
-   this.previewVertex.shaderData.setPosition(this.geometry.buf.data);
-   this.previewVertex.shaderData.setAttribute('color', this.previewVertex.color, 1);
+   this.previewVertex.shaderData.setupAttribute('position', layoutVec, this.geometry.buf.data, gl.STATIC_DRAW);
+   this.previewVertex.shaderData.setupAttribute('color', layoutFloat, this.previewVertex.color, gl.DYNAMIC_DRAW);
    this.previewVertex.shaderData.setUniform4fv("selectedColor", [1.0, 0.0, 0.0, 1.0]);
    this.previewVertex.shaderData.setUniform4fv('hiliteColor', [0.0, 1.0, 0.0, 1.0]);
    // selecte(Vertex,Edge,Face)here
@@ -220,7 +221,7 @@ PreviewCage.prototype.setVertexColor = function(vertex, color) {
    var j = vertex.index;  
    this.previewVertex.color[j] += color;
    var point = this.previewVertex.color.slice(j, j+1);
-   this.previewVertex.shaderData.updateAttribute('color', j*Float32Array.BYTES_PER_ELEMENT, point);
+   this.previewVertex.shaderData.uploadAttribute('color', j*Float32Array.BYTES_PER_ELEMENT, point);
 };
 
 PreviewCage.prototype.hiliteVertex = function(vertex, show) {
@@ -278,7 +279,7 @@ PreviewCage.prototype.changeFromVertexToFaceSelect = function() {
    this.selectedMap = new Map;
    // zeroout the edge seleciton.
    this.previewVertex.color.fill(0.0);
-   this.previewVertex.shaderData.updateAttribute('color', 0, this.previewVertex.color);
+   this.previewVertex.shaderData.uploadAttribute('color', 0, this.previewVertex.color);
    //
    for (var [key, vertex] of oldSelected) { 
       // select all face that is connected to the vertex.
@@ -297,7 +298,7 @@ PreviewCage.prototype.changeFromVertexToEdgeSelect = function() {
    this.selectedMap = new Map;
    // zeroout the vertex seleciton.
    this.previewVertex.color.fill(0.0);
-   this.previewVertex.shaderData.updateAttribute('color', 0, this.previewVertex.color);
+   this.previewVertex.shaderData.uploadAttribute('color', 0, this.previewVertex.color);
    //
    for (var [key, vertex] of oldSelected) { 
       // select all edge that is connected to the vertex.
@@ -315,7 +316,7 @@ PreviewCage.prototype.restoreFromVertexToFaceSelect = function(snapshot) {
       this.selectedMap = new Map;
       // zeroout the vertex seleciton.
       this.previewVertex.color.fill(0.0);
-      this.previewVertex.shaderData.updateAttribute('color', 0, this.previewVertex.color);
+      this.previewVertex.shaderData.uploadAttribute('color', 0, this.previewVertex.color);
       for (var [_key, polygon] of snapshot) {
          this.selectFace(polygon.halfEdge);
       }
@@ -330,7 +331,7 @@ PreviewCage.prototype.restoreFromVertexToEdgeSelect = function(snapshot) {
       this.selectedMap = new Map;
       // zeroout the vertex seleciton.
       this.previewVertex.color.fill(0.0);
-      this.previewVertex.shaderData.updateAttribute('color', 0, this.previewVertex.color);
+      this.previewVertex.shaderData.uploadAttribute('color', 0, this.previewVertex.color);
       for (var [_key, wingedEdge] of snapshot) {
          this.selectEdge(wingedEdge.left);
       }
@@ -346,7 +347,7 @@ PreviewCage.prototype.setEdgeColor = function(wingedEdge, color) {
    this.previewEdge.color[j] += color;
    this.previewEdge.color[j+1] += color;
    var line = this.previewEdge.color.slice(j, j+2);
-   this.previewEdge.shaderData.updateAttribute('color', j*Float32Array.BYTES_PER_ELEMENT, line);
+   this.previewEdge.shaderData.uploadAttribute('color', j*Float32Array.BYTES_PER_ELEMENT, line);
 };
 
 PreviewCage.prototype.hiliteEdge = function(selectEdge, show) {
@@ -523,7 +524,7 @@ PreviewCage.prototype.changeFromEdgeToFaceSelect = function() {
    this.selectedMap = new Map;
    // zeroout the edge seleciton.
    this.previewEdge.color.fill(0.0);
-   this.previewEdge.shaderData.updateAttribute('color', 0, this.previewEdge.color);
+   this.previewEdge.shaderData.uploadAttribute('color', 0, this.previewEdge.color);
    //
    for (var [key, wingedEdge] of oldSelected) {
       // for each WingedEdge, select both it face.
@@ -540,7 +541,7 @@ PreviewCage.prototype.changeFromEdgeToVertexSelect = function() {
    this.selectedMap = new Map;
    // zeroout the edge seleciton.
    this.previewEdge.color.fill(0.0);
-   this.previewEdge.shaderData.updateAttribute('color', 0, this.previewEdge.color);
+   this.previewEdge.shaderData.uploadAttribute('color', 0, this.previewEdge.color);
    //
    for (var [key, wingedEdge] of oldSelected) {
       // for each WingedEdge, select both it face.
@@ -558,7 +559,7 @@ PreviewCage.prototype.restoreFromEdgeToFaceSelect = function(snapshot) {
       this.selectedMap = new Map;
       // zeroout the edge seleciton.
       this.previewEdge.color.fill(0.0);
-      this.previewEdge.shaderData.updateAttribute('color', 0, this.previewEdge.color);
+      this.previewEdge.shaderData.uploadAttribute('color', 0, this.previewEdge.color);
       for (var [_key, polygon] of snapshot) {
          this.selectFace(polygon.halfEdge);
       }
@@ -573,7 +574,7 @@ PreviewCage.prototype.restoreFromEdgeToVertexSelect = function(snapshot) {
       this.selectedMap = new Map;
       // zeroout the edge seleciton.
       this.previewEdge.color.fill(0.0);
-      this.previewEdge.shaderData.updateAttribute('color', 0, this.previewEdge.color);
+      this.previewEdge.shaderData.uploadAttribute('color', 0, this.previewEdge.color);
       for (var [_key, vertex] of snapshot) {
          this.selectVertex(vertex);
       }
@@ -599,7 +600,7 @@ PreviewCage.prototype.setFaceSelectionOff = function(polygon) {
    });
    selected[this.geometry.vertices.length+polygon.index]= 0.0;
    this.selectedMap.delete(polygon.index);
-   this.preview.shaderData.updateAttribute("selected", 0, selected);
+   this.preview.shaderData.uploadAttribute("selected", 0, selected);
 };
 PreviewCage.prototype.setFaceSelectionOn = function(polygon) {
    var selected = this.preview.selected;     // filled triangle's selection status.
@@ -609,7 +610,7 @@ PreviewCage.prototype.setFaceSelectionOn = function(polygon) {
    });
    selected[this.geometry.vertices.length+polygon.index]= 1.0;
    this.selectedMap.set(polygon.index, polygon);
-   this.preview.shaderData.updateAttribute("selected", 0, selected);
+   this.preview.shaderData.uploadAttribute("selected", 0, selected);
 };
 
 PreviewCage.prototype.dragSelectFace = function(selectEdge, onOff) {
@@ -653,7 +654,7 @@ PreviewCage.prototype.changeFromFaceToEdgeSelect = function() {
    var oldSelected = this.selectedMap;
    this.selectedMap = new Map;
    this.preview.selected.fill(0.0);          // reset all polygon to non-selected 
-   this.preview.shaderData.updateAttribute("selected", 0, this.preview.selected);
+   this.preview.shaderData.uploadAttribute("selected", 0, this.preview.selected);
    for (var [key, polygon] of oldSelected) {
       // for eachFace, selected all it edge.
       polygon.eachEdge(function(edge) {
@@ -669,7 +670,7 @@ PreviewCage.prototype.changeFromFaceToVertexSelect = function() {
    var oldSelected = this.selectedMap;
    this.selectedMap = new Map;
    this.preview.selected.fill(0.0);          // reset all polygon to non-selected 
-   this.preview.shaderData.updateAttribute("selected", 0, this.preview.selected);
+   this.preview.shaderData.uploadAttribute("selected", 0, this.preview.selected);
    for (var [key, polygon] of oldSelected) {
       // for eachFace, selected all it vertex.
       polygon.eachVertex(function(vertex) {
@@ -686,7 +687,7 @@ PreviewCage.prototype.restoreFromFaceToEdgeSelect = function(snapshot) {
       // discard old selected,
       this.selectedMap = new Map;
       this.preview.selected.fill(0.0);          // reset all polygon to non-selected 
-      this.preview.shaderData.updateAttribute("selected", 0, this.preview.selected);
+      this.preview.shaderData.uploadAttribute("selected", 0, this.preview.selected);
       // and selected using the snapshots.
       for (var [_key, wingedEdge] of snapshot) {
          this.selectEdge(wingedEdge.left);
@@ -702,7 +703,7 @@ PreviewCage.prototype.restoreFromFaceToVertexSelect = function(snapshot) {
       // discard old selected,
       this.selectedMap = new Map;
       this.preview.selected.fill(0.0);          // reset all polygon to non-selected 
-      this.preview.shaderData.updateAttribute("selected", 0, this.preview.selected);
+      this.preview.shaderData.uploadAttribute("selected", 0, this.preview.selected);
       // and selected using the snapshots.
       for (var [_key, vertex] of snapshot) {
          this.selectVertex(vertex);

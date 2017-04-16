@@ -10,7 +10,8 @@ class FaceMadsor extends Madsor {
       // setup highlite face, at most 18 triangles.
       var buf = new Float32Array(3*20);
       this.trianglefan = {data: buf, length: 0};
-      this.shaderData.setPosition(this.trianglefan.data);      
+      var layout = ShaderData.attribLayout();
+      this.shaderData.setupAttribute('position', layout, this.trianglefan.data, Wings3D.gl.DYNAMIC_DRAW);      
    }
 
    // get selected Face's vertex snapshot. for doing, and redo queue. 
@@ -58,7 +59,7 @@ class FaceMadsor extends Madsor {
             position[i++] = position[5];
             this.trianglefan.length = i / 3;
             // update vbo buffer
-            this.shaderData.updatePosition(this.trianglefan.data);
+            this.shaderData.uploadAttribute('position', 0, this.trianglefan.data);
          }
       }
    }
