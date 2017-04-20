@@ -36,9 +36,10 @@ BoundingSphere.prototype.setSphere = function(sphere) {
    this.radius2 = sphere.radius*sphere.radius;
 };
 
-BoundingSphere.computeSphere = function(polygon) {
+BoundingSphere.computeSphere = function(polygon, center) {  // vec3
    // get all the polygon's vertex. compute barycentric.
-   var ret = {center: vec3.create(), radius: 0.0};
+   center.fill(0.0);
+   var ret = {center: center, radius: 0.0};
    polygon.eachVertex( function(vertex) {
       vec3.add(ret.center, ret.center, vertex.vertex);
    });
@@ -54,7 +55,7 @@ BoundingSphere.computeSphere = function(polygon) {
 };
 
 // simple minded bounding sphere builder.
-BoundingSphere.create = function(polygon) {
-   var sphere = BoundingSphere.computeSphere(polygon);
+BoundingSphere.create = function(polygon, center) {
+   var sphere = BoundingSphere.computeSphere(polygon, center);
    return new BoundingSphere(sphere.center, sphere.radius, polygon);
 }

@@ -21,14 +21,31 @@ var PreviewCage = function(mesh) {
    this.preview.shaderData = Wings3D.gl.createShaderData();
    this.computeBoundingSphere();
    this.computePreview();
+   this.preview.selectOn = new Float32Array(1);
+   this.preview.selectOn[0] = 1.0;
+   this.preview.selectOff = new Float32Array(1);
+   this.preview.selectOff[0] = 0.0;
    var gl = Wings3D.gl;
    // set up position, faceColor, index.
    var layoutVec = ShaderData.attribLayout();
    var layoutFloat = ShaderData.attribLayout(1);
    this.preview.shaderData.setIndex(this.preview.index.data);
-   this.preview.shaderData.setupAttribute('position', layoutVec, this.preview.vertices, gl.STATIC_DRAW);
-   this.preview.shaderData.setupAttribute('barycentric', layoutVec, this.preview.barycentric, gl.STATIC_DRAW);
-   this.preview.shaderData.setupAttribute('selected', layoutFloat, this.preview.selected, gl.DYNAMIC_DRAW);
+   var length = this.geometry.buf.len;
+   var centroidLength = this.preview.centroid.len;
+   var totalLength = centroidLength + length;
+   // vertices is geometry data + centroid data.
+   this.preview.shaderData.createAttribute('position', layoutVec, totalLength * 4, gl.STATIC_DRAW);
+   this.preview.shaderData.uploadAttribute('position', 0, this.geometry.buf.data.subarray(0, length));
+   this.preview.shaderData.uploadAttribute('position', length*4, this.preview.centroid.buf.data.subarray(0, centroidLength));
+   this.preview.shaderData.createAttribute('barycentric', layoutVec, totalLength * 4, gl.STATIC_DRAW);
+   this.preview.shaderData.uploadAttribute('barycentric', 0, this.preview.barycentric.subarray(0, length));
+   this.preview.shaderData.uploadAttribute('barycentric', length*4, this.preview.centroid.barycentric.subarray(0, centroidLength));
+   length /= 3;
+   totalLength /= 3;
+   centroidLength /= 3;
+   this.preview.shaderData.createAttribute('selected', layoutFloat, totalLength * 4, gl.DYNAMIC_DRAW);
+   this.preview.shaderData.uploadAttribute('selected', 0, this.preview.selected.subarray(0, length));
+   this.preview.shaderData.uploadAttribute('selected', length*4, this.preview.centroid.selected.subarray(0, centroidLength));
    this.preview.shaderData.setUniform3fv("faceColor", [1.0, 0.0, 0.0]);
    this.preview.shaderData.setUniform3fv("selectedColor", [1.0, 0.0, 0.0]);
    // previewEdge
@@ -53,16 +70,21 @@ var PreviewCage = function(mesh) {
 
 
 PreviewCage.prototype.computeBoundingSphere = function() {
+   var buf = new ArrayBuffer(this.geometry.faces.length * 3 * 2 * Float32Array.BYTES_PER_ELEMENT); // twice the current size
+   var centroid = {buf: {buffer: buf, data: new Float32Array(buf)}, len: 0 };
    // assign a boundingsphere for each polygon.
    var boundingSpheres = new Array(this.geometry.faces.length);
    boundingSpheres.length = 0;
    for (var i = 0; i < this.geometry.faces.length; ++i) {
+      var center = new Float32Array(centroid.buf.buffer, Float32Array.BYTES_PER_ELEMENT*centroid.len, 3);
+      centroid.len += 3;
       var polygon = this.geometry.faces[i];
       // recalibrate index for free.
       polygon.index = i;
-      boundingSpheres.push( BoundingSphere.create(polygon) ); 
+      boundingSpheres.push( BoundingSphere.create(polygon, center) );
    }
    this.boundingSpheres = boundingSpheres;
+   this.preview.centroid = centroid;
 };
 
 
@@ -70,33 +92,28 @@ PreviewCage.prototype.computePreview = function() {
    // given the mesh topology, recompute drawindex and drawindexbuffer, only works for convex polygon.
    var model = this;
    // fill preview position, barycentric, selected
-   var newLength = model.geometry.buf.len+(model.boundingSpheres.length*3);
-   model.preview.vertices = new Float32Array(newLength);
-   model.preview.barycentric = new Float32Array(newLength);
-   model.preview.selected = new Float32Array(newLength/3);
+   var length = model.geometry.buf.data.length;
+   //var newLength = model.geometry.buf.len+(model.boundingSpheres.length*3);
+   //model.preview.vertices = new Float32Array(newLength);
+   model.preview.barycentric = new Float32Array(length);
+   model.preview.selected = new Float32Array(length/3);
    model.preview.selected.fill(0.0);
-   for (var i = 0, j = 0; i < model.geometry.buf.len; i+=3) {
-      model.preview.vertices[i] = model.geometry.buf.data[i];
-      model.preview.vertices[i+1] = model.geometry.buf.data[i+1];
-      model.preview.vertices[i+2] = model.geometry.buf.data[i+2];
-      model.preview.barycentric[i] = 1.0;
-      model.preview.barycentric[i+1] = 0.0;
-      model.preview.barycentric[i+2] = 1.0;
-   }
-   for (; i < newLength; i+=3) {
-      model.preview.barycentric[i] = 1.0;
-      model.preview.barycentric[i+1] = 1.0;
-      model.preview.barycentric[i+2] = 1.0;
-   }
+   model.preview.barycentric[0] = 1.0;
+   model.preview.barycentric[1] = 0.0;
+   model.preview.barycentric[2] = 1.0;
+   model.preview.barycentric.copyWithin(3, 0, 3);
+
+   var centroidLength = model.preview.centroid.buf.data.length;
+   model.preview.centroid.barycentric = new Float32Array(centroidLength);
+   model.preview.centroid.selected = new Float32Array(centroidLength/3);
+   model.preview.centroid.barycentric.fill(1.0);
+   model.preview.centroid.selected.fill(0.0);
+
    // setup triangle index.
    var barycentric = model.geometry.vertices.length;
    this.boundingSpheres.forEach( function(sphere, _index, _arrray) {
       var polygon = sphere.polygon;
       sphere.indexStart = model.preview.index.length;
-      // copy the polygon's center to vertices
-      model.preview.vertices[barycentric*3] = sphere.center[0];
-      model.preview.vertices[barycentric*3+1] = sphere.center[1];
-      model.preview.vertices[barycentric*3+2] = sphere.center[2];
       var size = Uint16Array.BYTES_PER_ELEMENT;
       var indices = new Uint16Array(model.preview.index.buffer, size*model.preview.index.length, 3*polygon.numberOfVertex);
       var indicesLength = 0;
@@ -220,7 +237,7 @@ PreviewCage.prototype.setVertexColor = function(vertex, color) {
    // selected color
    var j = vertex.index;  
    this.previewVertex.color[j] += color;
-   var point = this.previewVertex.color.slice(j, j+1);
+   var point = this.previewVertex.color.subarray(j, j+1);
    this.previewVertex.shaderData.uploadAttribute('color', j*Float32Array.BYTES_PER_ELEMENT, point);
 };
 
@@ -273,13 +290,18 @@ PreviewCage.prototype.selectVertex = function(vertex) {
 };
 
 
-PreviewCage.prototype.changeFromVertexToFaceSelect = function() {
-   var self = this;
+PreviewCage.prototype._resetSelectVertex = function() {
    var oldSelected = this.selectedMap;
    this.selectedMap = new Map;
    // zeroout the edge seleciton.
    this.previewVertex.color.fill(0.0);
    this.previewVertex.shaderData.uploadAttribute('color', 0, this.previewVertex.color);
+   return oldSelected;
+};
+
+PreviewCage.prototype.changeFromVertexToFaceSelect = function() {
+   var self = this;
+   var oldSelected = this._resetSelectVertex();
    //
    for (var [key, vertex] of oldSelected) { 
       // select all face that is connected to the vertex.
@@ -294,11 +316,7 @@ PreviewCage.prototype.changeFromVertexToFaceSelect = function() {
 
 PreviewCage.prototype.changeFromVertexToEdgeSelect = function() {
    var self = this;
-   var oldSelected = this.selectedMap;
-   this.selectedMap = new Map;
-   // zeroout the vertex seleciton.
-   this.previewVertex.color.fill(0.0);
-   this.previewVertex.shaderData.uploadAttribute('color', 0, this.previewVertex.color);
+   var oldSelected = this._resetSelectVertex();
    //
    for (var [key, vertex] of oldSelected) { 
       // select all edge that is connected to the vertex.
@@ -313,10 +331,7 @@ PreviewCage.prototype.changeFromVertexToEdgeSelect = function() {
 PreviewCage.prototype.restoreFromVertexToFaceSelect = function(snapshot) {
    if (snapshot) {
       // discard old selected,
-      this.selectedMap = new Map;
-      // zeroout the vertex seleciton.
-      this.previewVertex.color.fill(0.0);
-      this.previewVertex.shaderData.uploadAttribute('color', 0, this.previewVertex.color);
+      this._resetSelectVertex();
       for (var [_key, polygon] of snapshot) {
          this.selectFace(polygon.halfEdge);
       }
@@ -328,10 +343,7 @@ PreviewCage.prototype.restoreFromVertexToFaceSelect = function(snapshot) {
 PreviewCage.prototype.restoreFromVertexToEdgeSelect = function(snapshot) {
    if (snapshot) {
       // discard old selected,
-      this.selectedMap = new Map;
-      // zeroout the vertex seleciton.
-      this.previewVertex.color.fill(0.0);
-      this.previewVertex.shaderData.uploadAttribute('color', 0, this.previewVertex.color);
+      this._resetSelectVertex();
       for (var [_key, wingedEdge] of snapshot) {
          this.selectEdge(wingedEdge.left);
       }
@@ -346,7 +358,7 @@ PreviewCage.prototype.setEdgeColor = function(wingedEdge, color) {
    var j = wingedEdge.index * 2;  
    this.previewEdge.color[j] += color;
    this.previewEdge.color[j+1] += color;
-   var line = this.previewEdge.color.slice(j, j+2);
+   var line = this.previewEdge.color.subarray(j, j+2);
    this.previewEdge.shaderData.uploadAttribute('color', j*Float32Array.BYTES_PER_ELEMENT, line);
 };
 
@@ -408,23 +420,11 @@ PreviewCage.prototype.computeSnapshot = function(snapshot) {
    for (var [oid, polygon] of snapshot.faces) {
       var sphere = this.boundingSpheres[polygon.index];
       // recompute sphere center.
-      sphere.setSphere( BoundingSphere.computeSphere(polygon) );
-      // copy center to cage.position.
-      var barycentric = this.geometry.buf.len + (oid*3);
-      this.preview.vertices.set(sphere.center, barycentric);
-      // recopy vertex
-      for (var i = sphere.indexStart; i < sphere.indexEnd; ++i) {
-         var index = this.preview.index.data[i];     // vec3 size so *3
-         index *= 3;
-         if (index < this.geometry.buf.len) {   // not barycentric 
-            this.preview.vertices[index] = this.geometry.buf.data[index++];
-            this.preview.vertices[index] = this.geometry.buf.data[index++];
-            this.preview.vertices[index] = this.geometry.buf.data[index++];
-         }
-      }
+      sphere.setSphere( BoundingSphere.computeSphere(polygon, sphere.center) );
    }
    // done, update shader data, should we update each vertex individually?
-   this.preview.shaderData.updatePosition(this.preview.vertices);
+   var centroids = this.preview.centroid.buf.data.subarray(0, this.preview.centroid.len)
+   this.preview.shaderData.uploadAttribute('position', this.geometry.buf.len*4, centroids);
    // update the edges.vertex
    for (var [oid, wingedEdge] of snapshot.wingedEdges) {
       var index = oid * 2 * 3;
@@ -433,7 +433,7 @@ PreviewCage.prototype.computeSnapshot = function(snapshot) {
          index += 3;
       }
    }
-   this.previewEdge.shaderData.updatePosition(this.previewEdge.line);
+   this.previewEdge.shaderData.uploadAttribute('position', 0, this.previewEdge.line);
 };
 
 
@@ -441,10 +441,13 @@ PreviewCage.prototype.restoreMoveSelection = function(snapshot) {
    // restore to the snapshot position.
    var i = 0;
    for (var [_index, vertex] of snapshot.vertices) {
-      vec3.copy(vertex.vertex, snapshot.position.slice(i, i+3));
+      vec3.copy(vertex.vertex, snapshot.position.subarray(i, i+3));
       i += 3;
    }
-   this.previewVertex.shaderData.updatePosition(this.geometry.buf.data);
+   // todo: we really should update as little as possible.
+   var vertices = this.geometry.buf.data.subarray(0, this.geometry.buf.len);
+   this.preview.shaderData.uploadAttribute('position', 0, vertices);
+   this.previewVertex.shaderData.uploadAttribute('position', 0, vertices);
    this.computeSnapshot(snapshot);
 };
 
@@ -453,7 +456,10 @@ PreviewCage.prototype.moveSelection = function(movement, snapshot) {
    for (var [_key, vertex] of snapshot.vertices) {
       vec3.add(vertex.vertex, vertex.vertex, movement);
    }
-   this.previewVertex.shaderData.updatePosition(this.geometry.buf.data);
+   // todo: we really should update as little as possible.
+   var vertices = this.geometry.buf.data.subarray(0, this.geometry.buf.len);
+   this.preview.shaderData.uploadAttribute('position', 0, vertices);
+   this.previewVertex.shaderData.uploadAttribute('position', 0, vertices);
    this.computeSnapshot(snapshot);
 };
 
@@ -516,15 +522,20 @@ PreviewCage.prototype.snapshotFacePosition = function() {
 PreviewCage.prototype.snapshotVertexPosition = function() {
    var vertices = new Map(this.selectedMap);
    return this.snapshotPosition(vertices);
-}
+};
 
 
-PreviewCage.prototype.changeFromEdgeToFaceSelect = function() {
+PreviewCage.prototype._resetSelectEdge = function() {
    var oldSelected = this.selectedMap;
    this.selectedMap = new Map;
    // zeroout the edge seleciton.
    this.previewEdge.color.fill(0.0);
    this.previewEdge.shaderData.uploadAttribute('color', 0, this.previewEdge.color);
+   return oldSelected;
+};
+
+PreviewCage.prototype.changeFromEdgeToFaceSelect = function() {
+   var oldSelected = this._resetSelectEdge();
    //
    for (var [key, wingedEdge] of oldSelected) {
       // for each WingedEdge, select both it face.
@@ -537,11 +548,7 @@ PreviewCage.prototype.changeFromEdgeToFaceSelect = function() {
 };
 
 PreviewCage.prototype.changeFromEdgeToVertexSelect = function() {
-   var oldSelected = this.selectedMap;
-   this.selectedMap = new Map;
-   // zeroout the edge seleciton.
-   this.previewEdge.color.fill(0.0);
-   this.previewEdge.shaderData.uploadAttribute('color', 0, this.previewEdge.color);
+   var oldSelected = this._resetSelectEdge();
    //
    for (var [key, wingedEdge] of oldSelected) {
       // for each WingedEdge, select both it face.
@@ -556,10 +563,7 @@ PreviewCage.prototype.changeFromEdgeToVertexSelect = function() {
 PreviewCage.prototype.restoreFromEdgeToFaceSelect = function(snapshot) {
    if (snapshot) {
       // discard old selected,
-      this.selectedMap = new Map;
-      // zeroout the edge seleciton.
-      this.previewEdge.color.fill(0.0);
-      this.previewEdge.shaderData.uploadAttribute('color', 0, this.previewEdge.color);
+      this._resetSelectEdge();
       for (var [_key, polygon] of snapshot) {
          this.selectFace(polygon.halfEdge);
       }
@@ -571,10 +575,7 @@ PreviewCage.prototype.restoreFromEdgeToFaceSelect = function(snapshot) {
 PreviewCage.prototype.restoreFromEdgeToVertexSelect = function(snapshot) {
    if (snapshot) {
       // discard old selected,
-      this.selectedMap = new Map;
-      // zeroout the edge seleciton.
-      this.previewEdge.color.fill(0.0);
-      this.previewEdge.shaderData.uploadAttribute('color', 0, this.previewEdge.color);
+      this._resetSelectEdge();
       for (var [_key, vertex] of snapshot) {
          this.selectVertex(vertex);
       }
@@ -585,7 +586,7 @@ PreviewCage.prototype.restoreFromEdgeToVertexSelect = function(snapshot) {
 
 PreviewCage.prototype.setFaceSelectionOff = function(polygon) {
    var self = this;
-   var selected = this.preview.selected;     // filled triangle's selection status.
+   var selected = this.preview.selected;    // filled triangle's selection status.
    polygon.eachVertex( function(vertex) {
       // restore drawing color
       var vertexSelected = false;
@@ -595,22 +596,29 @@ PreviewCage.prototype.setFaceSelectionOff = function(polygon) {
          }
       }); 
       if (vertexSelected === false) {  // no more sharing, can safely reset
-         selected[vertex.index] = 0;
+         selected[vertex.index] = 0.0;
+         self.preview.shaderData.uploadAttribute('selected', vertex.index*4, self.preview.selectOff);
       }
    });
-   selected[this.geometry.vertices.length+polygon.index]= 0.0;
+   selected = this.preview.centroid.selected;
+   selected[polygon.index]= 0.0;
    this.selectedMap.delete(polygon.index);
-   this.preview.shaderData.uploadAttribute("selected", 0, selected);
+   var byteOffset = (this.geometry.vertices.length+polygon.index)*4;
+   this.preview.shaderData.uploadAttribute("selected", byteOffset, this.preview.selectOff);
 };
 PreviewCage.prototype.setFaceSelectionOn = function(polygon) {
-   var selected = this.preview.selected;     // filled triangle's selection status.
+   var self = this;
+   var selected = this.preview.selected;      // filled triangle's selection status.
    // set the drawing color
    polygon.eachVertex( function(vertex) {
       selected[vertex.index] = 1.0;
+      self.preview.shaderData.uploadAttribute('selected', vertex.index*4, self.preview.selectOn);
    });
-   selected[this.geometry.vertices.length+polygon.index]= 1.0;
+   this.preview.centroid.selected;
+   selected[polygon.index]= 1.0;
    this.selectedMap.set(polygon.index, polygon);
-   this.preview.shaderData.uploadAttribute("selected", 0, selected);
+   var byteOffset = (this.geometry.vertices.length+polygon.index)*4;
+   this.preview.shaderData.uploadAttribute("selected", byteOffset, this.preview.selectOn);
 };
 
 PreviewCage.prototype.dragSelectFace = function(selectEdge, onOff) {
@@ -648,13 +656,22 @@ PreviewCage.prototype.selectFace = function(selectEdge) {
    return onOff;
 };
 
-
-PreviewCage.prototype.changeFromFaceToEdgeSelect = function() {
-   var self = this;
+PreviewCage.prototype._resetSelectFace = function() {
    var oldSelected = this.selectedMap;
    this.selectedMap = new Map;
    this.preview.selected.fill(0.0);          // reset all polygon to non-selected 
-   this.preview.shaderData.uploadAttribute("selected", 0, this.preview.selected);
+   this.preview.centroid.selected.fill(0.0);
+   var length = this.geometry.buf.len/3;
+   this.preview.shaderData.uploadAttribute("selected", 0, this.preview.selected.subarray(0, length));
+   var centroidLength = this.preview.centroid.len/3;
+   this.preview.shaderData.uploadAttribute('selected', length*4, this.preview.centroid.selected.subarray(0, centroidLength));
+   return oldSelected;
+}
+
+
+PreviewCage.prototype.changeFromFaceToEdgeSelect = function() {
+   var self = this;
+   var oldSelected = this._resetSelectFace();
    for (var [key, polygon] of oldSelected) {
       // for eachFace, selected all it edge.
       polygon.eachEdge(function(edge) {
@@ -667,10 +684,7 @@ PreviewCage.prototype.changeFromFaceToEdgeSelect = function() {
 
 PreviewCage.prototype.changeFromFaceToVertexSelect = function() {
    var self = this
-   var oldSelected = this.selectedMap;
-   this.selectedMap = new Map;
-   this.preview.selected.fill(0.0);          // reset all polygon to non-selected 
-   this.preview.shaderData.uploadAttribute("selected", 0, this.preview.selected);
+   var oldSelected = this._resetSelectFace();
    for (var [key, polygon] of oldSelected) {
       // for eachFace, selected all it vertex.
       polygon.eachVertex(function(vertex) {
@@ -685,9 +699,7 @@ PreviewCage.prototype.changeFromFaceToVertexSelect = function() {
 PreviewCage.prototype.restoreFromFaceToEdgeSelect = function(snapshot) {
    if (snapshot) {
       // discard old selected,
-      this.selectedMap = new Map;
-      this.preview.selected.fill(0.0);          // reset all polygon to non-selected 
-      this.preview.shaderData.uploadAttribute("selected", 0, this.preview.selected);
+      this._resetSelectFace();
       // and selected using the snapshots.
       for (var [_key, wingedEdge] of snapshot) {
          this.selectEdge(wingedEdge.left);
@@ -701,9 +713,7 @@ PreviewCage.prototype.restoreFromFaceToEdgeSelect = function(snapshot) {
 PreviewCage.prototype.restoreFromFaceToVertexSelect = function(snapshot) {
    if (snapshot) {
       // discard old selected,
-      this.selectedMap = new Map;
-      this.preview.selected.fill(0.0);          // reset all polygon to non-selected 
-      this.preview.shaderData.uploadAttribute("selected", 0, this.preview.selected);
+      this._resetSelectFace();
       // and selected using the snapshots.
       for (var [_key, vertex] of snapshot) {
          this.selectVertex(vertex);
