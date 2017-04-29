@@ -59,16 +59,22 @@ var HalfEdge = function(vert, edge) {  // should only be created by WingedEdge
 
 // boundary edge if no assigned face.
 HalfEdge.prototype.isBoundary = function() {
-   return this.face == null;
+   return this.face === null;
+};
+HalfEdge.prototype.isNotBoundary = function() {
+   return this.face !== null;
 };
 
-/*HalfEdge.prototype.pair = function() {
-   if (this.wingedEdge.left === this) {
-      return this.wingedEdge.right;
-   } else {
-      return this.wingedEdge.left;
-   }
-};*/
+/*Object.defineProperty(HalfEdge.prototype, 'pair', {
+   get: function() {
+      if (this.wingedEdge.left === this) {
+         return this.wingedEdge.right;
+      } else {
+         return this.wingedEdge.left;
+      }
+    },
+});*/
+
 
 HalfEdge.prototype.destination = function() {
    return this.pair.origin;
@@ -89,6 +95,17 @@ HalfEdge.prototype.prev = function() {
    return ret;
 };
 
+HalfEdge.prototype.eachEdge = function(callbackfn) {
+   var start = this;
+   var edge = start;
+   if (edge) {
+      do {  // counter clockwise ordering
+         callbackfn(edge);
+         edge = edge.pair.next;
+      } while (edge && (edge !== start));
+   }
+};
+
 
 //
 var Vertex = function(pt) {
@@ -106,25 +123,27 @@ Object.defineProperty(Vertex.prototype, 'index', {
 // utility functions for traversing all incident edge,
 Vertex.prototype.eachInEdge = function(callbackfn) {
    // i am in
-   var edge = this.outEdge;
+   var start = this.outEdge;
+   var edge = begin;
    if (edge) {
       do { // ccw ordering
          callbackfn(edge.pair, this);
          edge = edge.pair.next;   // my pair's next is outEdge. 
-      } while (edge && (edge != this.outEdge));
+      } while (edge && (edge !== start));
    }
 };
 
 Vertex.prototype.findInEdge = function(callbackfn) {
    // this.halfEdge is inEdge
-   var edge = this.outEdge;
+   var start = this.outEdge;
+   var edge = start;
    if (edge) {
       do { // ccw ordering
          if (callbackfn(edge.pair, this)) {
             return edge.pair;
          }
          edge = edge.pair.next;   // my pair's tail is in too. 
-      } while (edge && (edge != this.outEdge));
+      } while (edge && (edge !== start));
    }
    return null;
 };
@@ -132,26 +151,28 @@ Vertex.prototype.findInEdge = function(callbackfn) {
 // utility functions for traversing all direct out edge.
 Vertex.prototype.eachOutEdge = function(callbackfn) {
    // i am in, so my pair is out.
-   var edge = this.outEdge;
+   var start = this.outEdge;
+   var edge = start;
    if (edge) {
       do {  // counter clockwise ordering
          callbackfn(edge, this);
          edge = edge.pair.next;      // pair's next is outEdge too.
-      } while (edge && (edge !== this.outEdge));
+      } while (edge && (edge !== start));
    }
 };
 
 // find first matching OutEdge
 Vertex.prototype.findOutEdge = function(callbackfn) {
    // i am in, so my pair is out.
-   var edge = this.outEdge;
+   var start = this.outEdge;
+   var edge = start;
    if (edge) {
       do {  // counter clockwise ordering
          if (callbackfn(edge, this)) {
             return edge;
          }
          edge = edge.pair.next;
-      } while (edge && (edge !== this.outEdge));
+      } while (edge && (edge !== start));
    }
    return null;
 };
@@ -223,7 +244,7 @@ var WingedTopology = function(allocatedSize = 256) {     // default to 256 verte
 };
 
 // return vertex index
-WingedTopology.prototype.addVertex = function(x, y, z) {
+WingedTopology.prototype.addVertex = function(pt) {
    if (this.buf.len >= (this.buf.data.length)) {
       // reached maximum buff size, resize, double the size
       var buffer = new ArrayBuffer(Float32Array.BYTES_PER_ELEMENT*this.buf.len*2);
@@ -241,12 +262,22 @@ WingedTopology.prototype.addVertex = function(x, y, z) {
    // vec3 is 3 float32. mapped into the big buffer. float32=4 byte.
    var vertex = new Float32Array(this.buf.buffer, Float32Array.BYTES_PER_ELEMENT*this.buf.len, 3);
    this.buf.len += 3;
-   vertex[0] = x;
-   vertex[1] = y;
-   vertex[2] = z;
+   vertex[0] = pt[0];
+   vertex[1] = pt[1];
+   vertex[2] = pt[2];
    var _vert = new Vertex(vertex);
    //_vert.index = this.vertices.length;
-   return this.vertices.push( _vert ) - 1;
+   this.vertices.push( _vert );
+   return _vert;
+};
+
+WingedTopology.prototype._createEdge = function(begVert, endVert) {
+   // initialized data.
+   var edge = new WingedEdge(begVert, endVert);
+   edge.index = this.edges.length;
+   this.edges.push( edge );
+
+   return edge.left;
 };
 
 // return winged edge ptr because internal use only.
@@ -255,15 +286,13 @@ WingedTopology.prototype.addEdge = function(begVert, endVert) {
    // what to do with parallel edge?
 
    // initialized data.
-   var edge = new WingedEdge(begVert, endVert);
-   edge.index = this.edges.length;
+   var edge = this._createEdge(begVert, endVert).wingedEdge;
 
    // Link outedge, splice if needed
    begVert.linkEdge(edge.left, edge.right);
    // Link inedge, splice if needed
    endVert.linkEdge(edge.right, edge.left);
 
-   this.edges.push( edge );
    // return outEdge.
    return edge.left;
 };
@@ -387,19 +416,168 @@ WingedTopology.prototype.findHalfEdge = function(v0, v1) {
          });
 };
 
-/*
-WingedTopology.prototype.removePolygon = function(polygon) {
-   Half begin(polygon.half());
-   Half current(begin);
+// to split a face into 2 faces by insertEdge.
+WingedTopology.prototype.insertEdge = function(prevHalf, nextHalf) {
+   // assert(prevHalf.face === nextHalf.face);
+   // assert(prevHalf.next !== _nextHalf);      // we want to split face, not adding edge
+   const v0 = prevHalf.destination();
+   const v1 = nextHalf.origin;
 
-   do
-   {
-      HalfData* halfData = current.half_;
-      halfData->left_ = 0;
-      current = current.next();
-   } 
-   while(current != begin);
+   // create edge and link together.
+   const outEdge = this._createEdge(v0, v1);
+   const inEdge = outEdge.pair;
+   const nextPrev = prevHalf.next;           // save for later use
+   const prevNext = nextHalf.prev();
+   prevHalf.next = outEdge;
+   outEdge.next = nextHalf;
+   prevNext.next = inEdge;
+   inEdge.next = nextPrev;
+  
+   //now set the face handles
+   const newPolygon = new Polygon(outEdge, 4);  // readjust size later.
+   outEdge.face = newPolygon;
+   let size = 0;
+   newPolygon.eachEdge( function(halfEdge) {
+      ++size;
+      halfEdge.face = newPolygon;
+   });
+   newPolygon.numberOfVertex = size;
+   this.faces.push( newPolygon );
 
-   deAllocatePolygon(polygon);
+   const oldPolygon = nextPrev.face;
+   inEdge.face = oldPolygon;
+   if (oldPolygon.halfEdge.face === newPolygon) {
+      //  pointed to one of the halfedges now assigned to new_fh
+      oldPolygon.halfEdge = inEdge.face;
+   }
+
+   // adjustOutEdge for v0, v1. point to boundary so, ccw work better?
+   return outEdge;
 }
-*/
+
+
+WingedTopology.prototype.splitEdge = function(outEdge, vertex) {
+   const inEdge = outEdge.pair;
+   const outPrev = outEdge.prev();
+   const inNext = inEdge.next;
+   const vOrigin = outEdge.origin;
+   const vOut = vOrigin.outEdge;
+
+   //add the new edge
+   const newOut = this._createEdge(vOrigin, vertex);
+   const newIn = newOut.pair;
+   // fixe the halfedge connectivity
+   newOut.next = outEdge;
+   inEdge.next = newIn;
+  
+   outPrev.next = newOut;
+   newIn.next = inNext;
+  
+   newOut.face = outEdge.face;
+   newIn.face = inEdge.face;
+
+   // fix vertex
+   outEdge.origin = vertex;
+   vertex.outEdge = outEdge;
+  
+   if (vOrigin.outEdge === outEdge) {
+      vOrigin.outEdge = newOut;
+   }
+   // return the newOut
+   return newOut;
+};
+
+
+
+WingedTopology.prototype.extrudePolygon = function(selectedPolygon) {
+   let edgeLoops = this._extractPolygon(selectedPolygon);
+   // extrude face. connect (outer, inner) loop.
+   for (let contour of edgeLoops) {
+      for (let edge of contour) {
+         let polygon = [];
+         polygon.push( edge.outer.origin.index );
+         polygon.push( edge.outer.destination().index );
+         polygon.push( edge.inner.destination().index );
+         polygon.push( edge.inner.origin.index );
+         this.addPolygon( polygon );
+      }
+   }
+
+   return edgeLoops;
+};
+
+
+WingedTopology.prototype._extractPolygon = function(selectedPolygon) {   // selectedPolygon is es6 map. should be set.
+   const self = this;
+   let contourEdges = new Set;
+   let edgeLoops = [];
+   // find all contourEdges to extrude
+   for (var [_oid, polygon] of selectedPolygon) {
+      polygon.eachEdge( function(outEdge) {
+         if (!contourEdges.has(outEdge) && !selectedPolygon.has(outEdge.pair.face.index)) {
+            const firstVertex = self.addVertex(outEdge.origin.vertex);
+            let fromVertex = firstVertex;
+            const edgeLoop = [];
+            let currentIn = outEdge;
+            do {
+               // this edge is contour. now walk cwRing to find the next edges.
+               let nextIn = currentIn.next.pair;
+               while (nextIn !== currentIn) {
+                  if (!selectedPolygon.has(nextIn.face.index)) { // yup, find the other contour
+                     break;
+                  }
+                  nextIn = nextIn.next.pair;
+               }
+               // check if it the first vertex, in other word, the last one.
+               var check = nextIn.destination();
+               let toVertex = firstVertex;
+               if (check !== outEdge.origin) {
+                  toVertex = self.addVertex(check.vertex);
+               }
+               const edges = {outer: currentIn, inner: self.addEdge(fromVertex, toVertex)};
+               edgeLoop.push( edges );
+               fromVertex = toVertex;
+               contourEdges.add(currentIn);       // checkIn the contour edge.
+               // we cw walk over to the next contour edge.
+               currentIn = nextIn.pair;
+            } while (currentIn !== outEdge);      // check if we come full circle
+            edgeLoops.push( edgeLoop );
+         }
+      } );
+   }
+
+   // got the internal loop, now lift and connect the faces to the innerLoop.
+   for (let i = 0; i < edgeLoops.length; ++i) {
+      const edgeLoop = edgeLoops[i];
+      let edge0 = edgeLoop[edgeLoop.length-1];
+      // lift the face edge from outer to inner.
+      for (let j = 0; j < edgeLoop.length; ++j) {
+         let edge1 = edgeLoop[j];
+         // lift edges from outer, and connect to inner
+         let outerNext = edge0.outer.next;
+         // let innerNext = edge0.inner.next; === edge1.inner;
+         let inner = edge0.inner;
+         while (outerNext !== edge1.outer) {
+            if (outerNext.origin.outEdge === outerNext) {   
+               outerNext.origin.outEdge = edge0.outer.pair; // needs to redirect origin's outerEdge
+            }
+            outerNext.origin = edge1.inner.origin;    // first set the vertex
+            edge0.outer.next = outerNext.pair.next;   // lift off
+            outerNext.pair.next = inner.next;
+            inner.next = outerNext;                   // lift done
+            // advance to next edge.
+            outerNext = edge0.outer.next;
+            inner = inner.next.pair;
+         }
+         edge0 = edge1;       // move edge post
+         // setup the faces.
+         if (edge1.outer.face.halfEdge === edge1.outer) {
+            edge1.outer.face.halfEdge = edge1.inner;
+         }
+         edge1.inner.face = edge1.outer.face;
+         edge1.outer.face = null;
+      }
+   }
+
+   return edgeLoops;
+};

@@ -51,9 +51,9 @@ document.addEventListener('DOMContentLoaded', function() {
          var x = pt[0], y = pt[1], z = pt[2];
          var key = x.toFixed(6) + "," + y.toFixed(6) + "," + z.toFixed(6); // convert to fixed decimal, so no needs for (x-x1<epsilon)
          if (!map.hasOwnProperty(key)) {
-            map[key] = mesh.addVertex(x, y, z);
+            map[key] = mesh.addVertex(pt);
          }
-         return map[key];
+         return map[key].index;
       }
       function makeFaces(getVertexFN) {
          var offset = 0;

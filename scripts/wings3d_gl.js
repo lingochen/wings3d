@@ -313,19 +313,17 @@ ShaderData.attribLayout = function(attribSize=3, attribType=Wings3D.gl.FLOAT, no
 
 
 ShaderData.prototype.setupAttribute = function(name, layout, buffer, usage) {
-   this.createAttribute(name, layout, buffer.byteLength, usage);
+   this.createAttribute(name, layout, usage);
+   this.resizeAttribute(name, buffer.byteLength);
    this.uploadAttribute(name, 0, buffer);
 }
 
-ShaderData.prototype.createAttribute = function(name, layout, byteLength, usage) {
+ShaderData.prototype.createAttribute = function(name, layout, usage) {
    if (!this.attribute[name]) {
-      var gl = Wings3D.gl;
-      var handle = gl.createBuffer();
-      gl.bindBuffer(gl.ARRAY_BUFFER, handle);
-      gl.bufferData(gl.ARRAY_BUFFER, byteLength, usage);
+      var handle = Wings3D.gl.createBuffer();
       this.attribute[name] = {handle: handle,
-                              length: byteLength,
-                              //usage: usage,
+                              byteLength: 0,
+                              usage: usage,
                               size: layout.size,
                               type: layout.type,
                               normalized: layout.normalized,
@@ -334,6 +332,16 @@ ShaderData.prototype.createAttribute = function(name, layout, byteLength, usage)
                              };
    } else {
       console.log("Shader Data: " + name + " already initialized");
+   }
+};
+
+ShaderData.prototype.resizeAttribute = function(name, byteLength) {//, usage) {
+   var attrib = this.attribute[name];
+   if (attrib && attrib.byteLength != byteLength) {
+      var gl = Wings3D.gl;
+      gl.bindBuffer(gl.ARRAY_BUFFER, attrib.handle);
+      gl.bufferData(gl.ARRAY_BUFFER, byteLength, attrib.usage);
+      attrib.byteLength = byteLength;
    }
 };
 
@@ -355,15 +363,6 @@ ShaderData.prototype.freeAllAttributes = function() {
    }
 };
 
-ShaderData.prototype.resizeAttribute = function(name, buffLength, usage) {
-   var attrib = this.attribute[name];
-   if (attrib && attrib.buffLength != buffLength) {
-      var gl = Wings3D.gl;
-      gl.bindBuffer(gl.ARRAY_BUFFER, attrib.handle);
-      gl.bufferData(gl.ARRAY_BUFFER, buffLength, usage);
-      attrib.buffLength = buffLength;
-   }
-};
 
 ShaderData.prototype.uploadAttribute = function(name, byteOffset, typedArray)  {
    var attrb = this.attribute[name];

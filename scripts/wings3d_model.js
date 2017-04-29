@@ -12,50 +12,30 @@
 
 var PreviewCage = function(mesh) {
    this.geometry = mesh;
-   this.numberOfTriangles = mesh.faces.reduce( function(acc, element) {
-      return acc + element.numberOfVertex; // -2; for half the vertex
-   }, 0);
-   var buf = new ArrayBuffer(this.numberOfTriangles*3 * Uint16Array.BYTES_PER_ELEMENT);
-   this.preview = {index: {buffer: buf, data: new Uint16Array(buf), length: 0},
-                };
-   this.preview.shaderData = Wings3D.gl.createShaderData();
-   this.computeBoundingSphere();
-   this.computePreview();
-   this.preview.selectOn = new Float32Array(1);
-   this.preview.selectOn[0] = 1.0;
-   this.preview.selectOff = new Float32Array(1);
-   this.preview.selectOff[0] = 0.0;
+   this.preview = {};
    var gl = Wings3D.gl;
-   // set up position, faceColor, index.
-   var layoutVec = ShaderData.attribLayout();
-   var layoutFloat = ShaderData.attribLayout(1);
-   this.preview.shaderData.setIndex(this.preview.index.data);
-   var length = this.geometry.buf.len;
-   var centroidLength = this.preview.centroid.len;
-   var totalLength = centroidLength + length;
-   // vertices is geometry data + centroid data.
-   this.preview.shaderData.createAttribute('position', layoutVec, totalLength * 4, gl.STATIC_DRAW);
-   this.preview.shaderData.uploadAttribute('position', 0, this.geometry.buf.data.subarray(0, length));
-   this.preview.shaderData.uploadAttribute('position', length*4, this.preview.centroid.buf.data.subarray(0, centroidLength));
-   this.preview.shaderData.createAttribute('barycentric', layoutVec, totalLength * 4, gl.STATIC_DRAW);
-   this.preview.shaderData.uploadAttribute('barycentric', 0, this.preview.barycentric.subarray(0, length));
-   this.preview.shaderData.uploadAttribute('barycentric', length*4, this.preview.centroid.barycentric.subarray(0, centroidLength));
-   length /= 3;
-   totalLength /= 3;
-   centroidLength /= 3;
-   this.preview.shaderData.createAttribute('selected', layoutFloat, totalLength * 4, gl.DYNAMIC_DRAW);
-   this.preview.shaderData.uploadAttribute('selected', 0, this.preview.selected.subarray(0, length));
-   this.preview.shaderData.uploadAttribute('selected', length*4, this.preview.centroid.selected.subarray(0, centroidLength));
+   this.preview.shaderData = gl.createShaderData();
    this.preview.shaderData.setUniform3fv("faceColor", [1.0, 0.0, 0.0]);
    this.preview.shaderData.setUniform3fv("selectedColor", [1.0, 0.0, 0.0]);
+   var layoutVec = ShaderData.attribLayout();
+   var layoutFloat = ShaderData.attribLayout(1);
+   this.preview.shaderData.createAttribute('position', layoutVec, gl.STATIC_DRAW);
+   this.preview.shaderData.createAttribute('barycentric', layoutVec, gl.STATIC_DRAW);
+   this.preview.shaderData.createAttribute('selected', layoutFloat, gl.DYNAMIC_DRAW);
+
+   this._resizeBoundingSphere(0);
+   this._resizePreview(0, 0);
+
+
    // previewEdge
-   this.previewEdge = {line: new Float32Array(mesh.edges.length*2*3), color: new Float32Array(mesh.edges.length*2)};
-   this.computePreviewEdge();
-   this.previewEdge.shaderData = Wings3D.gl.createShaderData();
-   this.previewEdge.shaderData.setupAttribute('position', layoutVec, this.previewEdge.line, gl.STATIC_DRAW);
-   this.previewEdge.shaderData.setupAttribute('color', layoutFloat, this.previewEdge.color, gl.DYNAMIC_DRAW);
+   this.previewEdge = {};
+   this.previewEdge.shaderData = gl.createShaderData();
    this.previewEdge.shaderData.setUniform4fv("selectedColor", [1.0, 0.0, 0.0, 1.0]);
    this.previewEdge.shaderData.setUniform4fv('hiliteColor', [0.0, 1.0, 0.0, 1.0]);
+   this.previewEdge.shaderData.createAttribute('position', layoutVec, gl.STATIC_DRAW);
+   this.previewEdge.shaderData.createAttribute('color', layoutFloat, gl.DYNAMIC_DRAW);
+   this._resizePreviewEdge(0);
+
    // previewVertex
    this.previewVertex = {color: new Float32Array(mesh.vertices.length)};
    this.previewVertex.color.fill(0.0);
@@ -68,70 +48,169 @@ var PreviewCage = function(mesh) {
    this.selectedMap = new Map;
 };
 
+PreviewCage.CONST = (function() {
+   var constant = {};
 
-PreviewCage.prototype.computeBoundingSphere = function() {
-   var buf = new ArrayBuffer(this.geometry.faces.length * 3 * 2 * Float32Array.BYTES_PER_ELEMENT); // twice the current size
-   var centroid = {buf: {buffer: buf, data: new Float32Array(buf)}, len: 0 };
-   // assign a boundingsphere for each polygon.
-   var boundingSpheres = new Array(this.geometry.faces.length);
-   boundingSpheres.length = 0;
-   for (var i = 0; i < this.geometry.faces.length; ++i) {
-      var center = new Float32Array(centroid.buf.buffer, Float32Array.BYTES_PER_ELEMENT*centroid.len, 3);
-      centroid.len += 3;
-      var polygon = this.geometry.faces[i];
-      // recalibrate index for free.
-      polygon.index = i;
-      boundingSpheres.push( BoundingSphere.create(polygon, center) );
+   constant.SELECTON  = new Float32Array(1);
+   constant.SELECTON[0] = 1.0;
+   constant.SELECTOFF = new Float32Array(1);
+   constant.SELECTOFF[0] = 0.0;
+   constant.BARYCENTRIC = new Float32Array(3);
+   constant.BARYCENTRIC[0] = 1.0;
+   constant.BARYCENTRIC[1] = 0.0;
+   constant.BARYCENTRIC[2] = 1.0;
+   return constant;
+}());
+
+PreviewCage.prototype._resizeBoundingSphere = function(oldSize) {
+   let size = this.geometry.faces.length - oldSize;
+   if (size > 0) {   // we only care about growth for now
+      if (oldSize > 0) {
+         if (this.preview.centroid.buf.data.length < (this.preview.centroid.buf.len+size*3)) {
+            // needs to resize, and copy
+            const buf = new ArrayBuffer(this.geometry.faces.length * 3 * Float32Array.BYTES_PER_ELEMENT * 2);
+            const centroid = {buf: {buffer: buf, data: new Float32Array(buf)}, len: 0 };
+            // 
+            centroid.data.set(this.preview.centroid.data);  // copy old data
+            for (let sphere of this.boundingspheres) {
+               sphere.center = Float32Array(centroid.buf.buffer, Float32Array.BYTES_PER_ELEMENT*centroid.len, 3); 
+               centroid.len += 3;             
+            }
+            this.preview.centroid = centroid;
+         }
+      } else { // brand new
+         const buf = new ArrayBuffer(this.geometry.faces.length * 3 * Float32Array.BYTES_PER_ELEMENT * 2); // twice the current size
+         this.preview.centroid = {buf: {buffer: buf, data: new Float32Array(buf)}, len: 0 };
+         // assign a boundingsphere for each polygon.
+         this.boundingSpheres = new Array(this.geometry.faces.length);
+         this.boundingSpheres.length = 0;
+      }
+      // create New
+      const centroid = this.preview.centroid;   // 
+      for (let i = oldSize; i < this.geometry.faces.length; ++i) {
+         const center = new Float32Array(centroid.buf.buffer, Float32Array.BYTES_PER_ELEMENT*centroid.len, 3);
+         centroid.len += 3;
+         const polygon = this.geometry.faces[i];
+         // recalibrate index for free.
+         polygon.index = i;
+         this.boundingSpheres.push( BoundingSphere.create(polygon, center) );
+      }
+      // vertices is geometry data + centroid data.
    }
-   this.boundingSpheres = boundingSpheres;
-   this.preview.centroid = centroid;
+};
+
+PreviewCage.prototype._resizePreview = function(oldSize, oldCentroidSize) {
+   const size = this.geometry.vertices.length - oldSize;
+   if (size > 0) {
+      const model = this;
+      let length = model.geometry.buf.data.length;
+      let centroidLength = model.preview.centroid.buf.data.length;
+      if (oldSize > 0) {
+         if (length > model.preview.barycentric.length) {
+            // create new length
+            model.preview.barycentric = new Float32Array(length);
+            let selected = new Float32Array(length/3);
+            selected.set(model.preview.selected);
+            model.preview.selected = selected;
+         }
+         if (centroidLength > model.preview.centroid.barycentric.length) {
+            model.preview.centroid.barycentric = new Float32Array(centroidLength);
+            let selected = new Float32Array(centroidLength/3);
+            selected.set(model.preview.centroid.selected);
+            model.preview.centroid.selected = selected;
+         }
+      } else { // brand new
+         // created array
+         model.preview.barycentric = new Float32Array(length);
+         model.preview.selected = new Float32Array(length/3);
+      
+         model.preview.centroid.barycentric = new Float32Array(centroidLength);
+         model.preview.centroid.selected = new Float32Array(centroidLength/3);
+      }
+      model.preview.barycentric.set(PreviewCage.CONST.BARYCENTRIC);
+      model.preview.selected.fill(0.0, oldSize);
+      model.preview.centroid.barycentric.fill(1.0);
+      model.preview.centroid.selected.fill(0.0, oldCentroidSize);
+      // upload the data to webgl
+      length = this.geometry.buf.len;
+      centroidLength = this.preview.centroid.len;
+      model.preview.shaderData.resizeAttribute('position', (length+centroidLength)*4);
+      model.preview.shaderData.uploadAttribute('position', 0, this.geometry.buf.data.subarray(0, length));
+      model.preview.shaderData.uploadAttribute('position', length*4, this.preview.centroid.buf.data.subarray(0, centroidLength));
+      model.preview.shaderData.resizeAttribute('barycentric', (length+centroidLength)*4);
+      model.preview.shaderData.uploadAttribute('barycentric', 0, this.preview.barycentric.subarray(0, length));
+      model.preview.shaderData.uploadAttribute('barycentric', length*4, this.preview.centroid.barycentric.subarray(0, centroidLength));
+      length /= 3;
+      centroidLength /= 3;
+      model.preview.shaderData.resizeAttribute('selected', (length+centroidLength) * 4);
+      model.preview.shaderData.uploadAttribute('selected', 0, this.preview.selected.subarray(0, length));
+      model.preview.shaderData.uploadAttribute('selected', length*4, this.preview.centroid.selected.subarray(0, centroidLength));
+   }
+      
+   // compute index.
+   this._computePreviewIndex();
+};
+
+PreviewCage.prototype._computePreviewIndex = function() {
+   this.numberOfTriangles = this.geometry.faces.reduce( function(acc, element) {
+      return acc + element.numberOfVertex; // -2; for half the vertex
+   }, 0);
+   const index = new Uint16Array(this.numberOfTriangles*3 );
+   let length = 0;
+   // recompute all index. (no optimization unless prove to be bottleneck)
+   let barycentric = this.geometry.vertices.length;
+   for (let sphere of this.boundingSpheres) {
+      const polygon = sphere.polygon;
+      //sphere.indexStart = model.preview.index.length;
+      let indicesLength = 0;
+      polygon.eachEdge( function(edge) {
+         const vertex = edge.origin;
+         if (indicesLength > 0) {
+            index[length+indicesLength++] = vertex.index;
+            index[length+indicesLength++] = barycentric; 
+         }
+         index[length+indicesLength++] = vertex.index;         
+      });
+      // last triangle using the first vertices.
+      index[length+indicesLength++] = index[length];
+      index[length+indicesLength++] = barycentric++;
+      length += indicesLength;
+      //sphere.indexEnd = model.preview.index.length;
+   }
+   // save it to the buffer 
+   this.preview.shaderData.setIndex(index);
+   this.preview.indexLength = length;
 };
 
 
-PreviewCage.prototype.computePreview = function() {
-   // given the mesh topology, recompute drawindex and drawindexbuffer, only works for convex polygon.
-   var model = this;
-   // fill preview position, barycentric, selected
-   var length = model.geometry.buf.data.length;
-   //var newLength = model.geometry.buf.len+(model.boundingSpheres.length*3);
-   //model.preview.vertices = new Float32Array(newLength);
-   model.preview.barycentric = new Float32Array(length);
-   model.preview.selected = new Float32Array(length/3);
-   model.preview.selected.fill(0.0);
-   model.preview.barycentric[0] = 1.0;
-   model.preview.barycentric[1] = 0.0;
-   model.preview.barycentric[2] = 1.0;
-   model.preview.barycentric.copyWithin(3, 0, 3);
-
-   var centroidLength = model.preview.centroid.buf.data.length;
-   model.preview.centroid.barycentric = new Float32Array(centroidLength);
-   model.preview.centroid.selected = new Float32Array(centroidLength/3);
-   model.preview.centroid.barycentric.fill(1.0);
-   model.preview.centroid.selected.fill(0.0);
-
-   // setup triangle index.
-   var barycentric = model.geometry.vertices.length;
-   this.boundingSpheres.forEach( function(sphere, _index, _arrray) {
-      var polygon = sphere.polygon;
-      sphere.indexStart = model.preview.index.length;
-      var size = Uint16Array.BYTES_PER_ELEMENT;
-      var indices = new Uint16Array(model.preview.index.buffer, size*model.preview.index.length, 3*polygon.numberOfVertex);
-      var indicesLength = 0;
-      polygon.eachEdge( function(edge) {
-         var vertex = edge.origin;
-         if (indicesLength > 0) {
-            indices[indicesLength++] = vertex.index;
-            indices[indicesLength++] = barycentric; 
+PreviewCage.prototype._resizePreviewEdge = function(oldSize) {
+   const size = this.geometry.edges.length - oldSize;
+   if (size > 0) {
+      if (oldSize > 0) {
+         let line = new Float32Array(this.geometry.edges.length*2*3);
+         line.set(this.previewEdge.line);
+         this.previewEdge.line = line;
+         let color = new Float32Array(this.geometry.edges.length*2);
+         color.set(this.previewEdge.color);
+         this.previewEdge.color = color;
+      } else { // brand new
+         this.previewEdge.line = new Float32Array(this.geometry.edges.length*2*3);
+         this.previewEdge.color = new Float32Array(this.geometry.edges.length*2)
+      }
+      for (let i = oldSize, j=(oldSize*3); i < this.geometry.edges.length; i++) {
+         for (let halfEdge of this.geometry.edges[i]) {
+            this.previewEdge.line.set(halfEdge.origin.vertex, j);
+            j += 3;
          }
-         indices[indicesLength++] = vertex.index;         
-      });
-      // last triangle using the first vertices.
-      indices[indicesLength++] = indices[0];
-      indices[indicesLength++] = barycentric++;
-      model.preview.index.length += indicesLength;
-      sphere.indexEnd = model.preview.index.length;
-   });
-   // done, copy all polygon
+      }
+      //
+      this.previewEdge.color.fill(0.0, oldSize*2);
+      // update webgl
+      this.previewEdge.shaderData.resizeAttribute('position', this.previewEdge.line.length*4);
+      this.previewEdge.shaderData.uploadAttribute('position', 0, this.previewEdge.line);
+      this.previewEdge.shaderData.resizeAttribute('color', this.previewEdge.color.length*4);
+      this.previewEdge.shaderData.uploadAttribute('color', 0, this.previewEdge.color);
+   }
 };
 
 
@@ -143,7 +222,7 @@ PreviewCage.prototype.computePreviewEdge = function() {
       }
    }
    this.previewEdge.color.fill(0.0);
-}
+};
 
 
 // free webgl buffer.
@@ -161,7 +240,7 @@ PreviewCage.prototype.draw = function(gl) {
    // draw using index
    try {
       gl.bindShaderData(this.preview.shaderData);
-      gl.drawElements(gl.TRIANGLES, this.preview.index.length, gl.UNSIGNED_SHORT, 0);
+      gl.drawElements(gl.TRIANGLES, this.preview.indexLength, gl.UNSIGNED_SHORT, 0);
    } catch (e) {
       console.log(e);
    }
@@ -478,7 +557,7 @@ PreviewCage.prototype.snapshotPosition = function(vertices) {
    var i = 0;
    for (var [_key, vertex] of ret.vertices) {
       vertex.eachOutEdge(function(edge) {
-         if (!ret.faces.has(edge.face.index)) {
+         if (edge.isNotBoundary() && !ret.faces.has(edge.face.index)) {
             ret.faces.set(edge.face.index, edge.face);
          }
          if (!ret.wingedEdges.has(edge.wingedEdge.index)) {
@@ -591,20 +670,20 @@ PreviewCage.prototype.setFaceSelectionOff = function(polygon) {
       // restore drawing color
       var vertexSelected = false;
       vertex.eachOutEdge( function(edge) {
-         if (edge.face !== polygon && self.selectedMap.has(edge.face.index)) {
+         if (edge.isNotBoundary() && (edge.face !== polygon) && self.selectedMap.has(edge.face.index)) {
             vertexSelected = true;
          }
       }); 
       if (vertexSelected === false) {  // no more sharing, can safely reset
          selected[vertex.index] = 0.0;
-         self.preview.shaderData.uploadAttribute('selected', vertex.index*4, self.preview.selectOff);
+         self.preview.shaderData.uploadAttribute('selected', vertex.index*4, PreviewCage.CONST.SELECTOFF);
       }
    });
    selected = this.preview.centroid.selected;
    selected[polygon.index]= 0.0;
    this.selectedMap.delete(polygon.index);
    var byteOffset = (this.geometry.vertices.length+polygon.index)*4;
-   this.preview.shaderData.uploadAttribute("selected", byteOffset, this.preview.selectOff);
+   this.preview.shaderData.uploadAttribute("selected", byteOffset, PreviewCage.CONST.SELECTOFF);
 };
 PreviewCage.prototype.setFaceSelectionOn = function(polygon) {
    var self = this;
@@ -612,13 +691,13 @@ PreviewCage.prototype.setFaceSelectionOn = function(polygon) {
    // set the drawing color
    polygon.eachVertex( function(vertex) {
       selected[vertex.index] = 1.0;
-      self.preview.shaderData.uploadAttribute('selected', vertex.index*4, self.preview.selectOn);
+      self.preview.shaderData.uploadAttribute('selected', vertex.index*4, PreviewCage.CONST.SELECTON);
    });
-   this.preview.centroid.selected;
+   selected = this.preview.centroid.selected;
    selected[polygon.index]= 1.0;
    this.selectedMap.set(polygon.index, polygon);
    var byteOffset = (this.geometry.vertices.length+polygon.index)*4;
-   this.preview.shaderData.uploadAttribute("selected", byteOffset, this.preview.selectOn);
+   this.preview.shaderData.uploadAttribute("selected", byteOffset, PreviewCage.CONST.SELECTON);
 };
 
 PreviewCage.prototype.dragSelectFace = function(selectEdge, onOff) {
@@ -709,7 +788,6 @@ PreviewCage.prototype.restoreFromFaceToEdgeSelect = function(snapshot) {
    }
 }
 
-
 PreviewCage.prototype.restoreFromFaceToVertexSelect = function(snapshot) {
    if (snapshot) {
       // discard old selected,
@@ -722,6 +800,49 @@ PreviewCage.prototype.restoreFromFaceToVertexSelect = function(snapshot) {
       this.changeFromFaceToVertexSelect();  // compute vs storage. currently lean toward compute.
    }
 };
+
+
+PreviewCage.prototype._resizeVertices = function(oldSize) {
+   // update webgl buffer
+   if (oldSize < this.geometry.vertices.length) {
+      // expand webgl buffer
+      this.preview.setAttribute();
+
+   } // ignore shrinking request for now.
+};
+
+
+
+PreviewCage.prototype.extractFace = function() {
+   var vertexSize = this.geometry.vertices.length;
+   var edgeSize = this.geometry.edges.length;
+   var faceSize = this.geometry.faces.length;
+   // array of edgeLoop. 
+   var edgeLoops = this.geometry.extractPolygon(this.selectedMap);
+   // adjust preview to the new vertices, edges and faces.
+   this._resizeBoundingSphere(faceSize);
+   this._resizePreview(vertexSize, faceSize);
+   //this._resizeEdges();
+
+   return edgeLoops;
+};
+
+//
+// extrudeFace - will create a list of 
+PreviewCage.prototype.extrudeFace = function() {
+   var vertexSize = this.geometry.vertices.length;
+   var edgeSize = this.geometry.edges.length;
+   var faceSize = this.geometry.faces.length;
+   // array of edgeLoop. 
+   var edgeLoops = this.geometry.extrudePolygon(this.selectedMap);
+   // add the new Faces. and new vertices to the preview
+   this._resizeBoundingSphere(faceSize);
+   this._resizePreview(vertexSize, faceSize);
+   this._resizePreviewEdge(edgeSize);
+
+   return edgeLoops;
+};
+
 
 PreviewCage.prototype.EPSILON = 0.000001;
 // Möller–Trumbore ray-triangle intersection algorithm

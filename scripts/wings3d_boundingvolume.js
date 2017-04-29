@@ -8,8 +8,6 @@ var BoundingSphere = function(center, radius, polygon) {
    this.center = center;
    this.radius = radius;
    this.radius2 = radius*radius;
-   this.indexStart = -1;
-   this.indexEnd = -1;
    this.polygon = polygon;
 };
 

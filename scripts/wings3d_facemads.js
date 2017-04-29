@@ -7,6 +7,14 @@
 class FaceMadsor extends Madsor {
    constructor() {
       super('face');
+      var self = this;
+      // extrude
+      var menuItem = document.querySelector('#faceExtrude');
+      if (menuItem) {
+         menuItem.addEventListener('click', function(ev) {
+            Wings3D.view.attachHandlerMouseMove(new FaceExtrudeHandler(self));
+         });
+      } 
       // setup highlite face, at most 18 triangles.
       var buf = new Float32Array(3*20);
       this.trianglefan = {data: buf, length: 0};
@@ -21,6 +29,15 @@ class FaceMadsor extends Madsor {
          snapshots.push( preview.snapshotFacePosition() );
       });
       return snapshots;
+   }
+
+   // extrude Face
+   extrudeFace() {
+      var edgeLoops = [];
+      this.eachPreviewCage( function(preview) {
+         edgeLoops.push( preview.extrudeFace() );
+      });
+      return edgeLoops;
    }
 
    dragSelect(cage, selectArray, onOff) {
@@ -138,5 +155,30 @@ class FaceSelectCommand extends EditCommand {
 
    undo() {
       this.doIt();   // selectEdge, flip/flop, so
+   }
+}
+
+class FaceExtrudeHandler extends MovePositionHandler {
+   constructor(madsor) {
+      let edgeLoops = madsor.extrudeFace();
+      super(madsor);
+      this.edgeLoops = edgeLoops;
+      this.axis = 0;
+   }
+
+
+   handleMouseMove(ev) {
+      var move = this._calibrateMovement(ev.movementX);
+      var movement = [0.0, 0.0, 0.0];
+      movement[this.axis] = move;
+      this.madsor.moveSelection(movement, this.snapshots);
+      this.movement[this.axis] += move;
+   }
+   _commit(view) {
+      //view.undoQueue(new MoveCommand(this.madsor, this.snapshots, this.movement));
+   }
+
+   _cancel() {
+      //this.madsor.restoreMoveSelection(this.snapshots);
    }
 }
