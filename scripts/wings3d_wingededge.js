@@ -507,14 +507,14 @@ WingedTopology.prototype.extrudePolygon = function(selectedPolygon) {
 };
 
 
-WingedTopology.prototype._extractPolygon = function(selectedPolygon) {   // selectedPolygon is es6 map. should be set.
+WingedTopology.prototype._extractPolygon = function(selectedPolygon) {   // selectedPolygon is es6 set.
    const self = this;
    let contourEdges = new Set;
    let edgeLoops = [];
    // find all contourEdges to extrude
-   for (var [_oid, polygon] of selectedPolygon) {
+   for (let polygon of selectedPolygon) {
       polygon.eachEdge( function(outEdge) {
-         if (!contourEdges.has(outEdge) && !selectedPolygon.has(outEdge.pair.face.index)) {
+         if (!contourEdges.has(outEdge) && !selectedPolygon.has(outEdge.pair.face)) {
             const firstVertex = self.addVertex(outEdge.origin.vertex);
             let fromVertex = firstVertex;
             const edgeLoop = [];
@@ -523,7 +523,7 @@ WingedTopology.prototype._extractPolygon = function(selectedPolygon) {   // sele
                // this edge is contour. now walk cwRing to find the next edges.
                let nextIn = currentIn.next.pair;
                while (nextIn !== currentIn) {
-                  if (!selectedPolygon.has(nextIn.face.index)) { // yup, find the other contour
+                  if (!selectedPolygon.has(nextIn.face)) { // yup, find the other contour
                      break;
                   }
                   nextIn = nextIn.next.pair;
