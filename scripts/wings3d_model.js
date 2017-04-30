@@ -12,7 +12,7 @@
 
 var PreviewCage = function(mesh) {
    this.geometry = mesh;
-   this.preview = {};
+   this.preview = {centroid: {}};
    var gl = Wings3D.gl;
    this.preview.shaderData = gl.createShaderData();
    this.preview.shaderData.setUniform3fv("faceColor", [1.0, 0.0, 0.0]);
@@ -22,7 +22,6 @@ var PreviewCage = function(mesh) {
    this.preview.shaderData.createAttribute('position', layoutVec, gl.STATIC_DRAW);
    this.preview.shaderData.createAttribute('barycentric', layoutVec, gl.STATIC_DRAW);
    this.preview.shaderData.createAttribute('selected', layoutFloat, gl.DYNAMIC_DRAW);
-
    this._resizeBoundingSphere(0);
    this._resizePreview(0, 0);
 
@@ -37,13 +36,13 @@ var PreviewCage = function(mesh) {
    this._resizePreviewEdge(0);
 
    // previewVertex
-   this.previewVertex = {color: new Float32Array(mesh.vertices.length)};
-   this.previewVertex.color.fill(0.0);
-   this.previewVertex.shaderData = Wings3D.gl.createShaderData();
-   this.previewVertex.shaderData.setupAttribute('position', layoutVec, this.geometry.buf.data, gl.STATIC_DRAW);
-   this.previewVertex.shaderData.setupAttribute('color', layoutFloat, this.previewVertex.color, gl.DYNAMIC_DRAW);
+   this.previewVertex = {};
+   this.previewVertex.shaderData = gl.createShaderData();
    this.previewVertex.shaderData.setUniform4fv("selectedColor", [1.0, 0.0, 0.0, 1.0]);
    this.previewVertex.shaderData.setUniform4fv('hiliteColor', [0.0, 1.0, 0.0, 1.0]);
+   this.previewVertex.shaderData.createAttribute('position', layoutVec, gl.STATIC_DRAW);
+   this.previewVertex.shaderData.createAttribute('color', layoutFloat, gl.DYNAMIC_DRAW);
+   this._resizePreviewVertex(0);
    // selecte(Vertex,Edge,Face)here
    this.selectedMap = new Map;
 };
@@ -66,21 +65,21 @@ PreviewCage.prototype._resizeBoundingSphere = function(oldSize) {
    let size = this.geometry.faces.length - oldSize;
    if (size > 0) {   // we only care about growth for now
       if (oldSize > 0) {
-         if (this.preview.centroid.buf.data.length < (this.preview.centroid.buf.len+size*3)) {
+         if (this.preview.centroid.buf.data.length < (this.preview.centroid.buf.len+(size*3))) {
             // needs to resize, and copy
             const buf = new ArrayBuffer(this.geometry.faces.length * 3 * Float32Array.BYTES_PER_ELEMENT * 2);
-            const centroid = {buf: {buffer: buf, data: new Float32Array(buf)}, len: 0 };
+            const centroid = {buf: {buffer: buf, data: new Float32Array(buf), len: 0} };
             // 
-            centroid.data.set(this.preview.centroid.data);  // copy old data
-            for (let sphere of this.boundingspheres) {
-               sphere.center = Float32Array(centroid.buf.buffer, Float32Array.BYTES_PER_ELEMENT*centroid.len, 3); 
-               centroid.len += 3;             
+            centroid.buf.data.set(this.preview.centroid.buf.data);  // copy old data
+            for (let sphere of this.boundingSpheres) {
+               sphere.center = new Float32Array(centroid.buf.buffer, Float32Array.BYTES_PER_ELEMENT*centroid.buf.len, 3); 
+               centroid.buf.len += 3;             
             }
-            this.preview.centroid = centroid;
+            this.preview.centroid.buf = centroid.buf;
          }
       } else { // brand new
          const buf = new ArrayBuffer(this.geometry.faces.length * 3 * Float32Array.BYTES_PER_ELEMENT * 2); // twice the current size
-         this.preview.centroid = {buf: {buffer: buf, data: new Float32Array(buf)}, len: 0 };
+         this.preview.centroid.buf = {buffer: buf, data: new Float32Array(buf), len: 0};
          // assign a boundingsphere for each polygon.
          this.boundingSpheres = new Array(this.geometry.faces.length);
          this.boundingSpheres.length = 0;
@@ -88,8 +87,8 @@ PreviewCage.prototype._resizeBoundingSphere = function(oldSize) {
       // create New
       const centroid = this.preview.centroid;   // 
       for (let i = oldSize; i < this.geometry.faces.length; ++i) {
-         const center = new Float32Array(centroid.buf.buffer, Float32Array.BYTES_PER_ELEMENT*centroid.len, 3);
-         centroid.len += 3;
+         const center = new Float32Array(centroid.buf.buffer, Float32Array.BYTES_PER_ELEMENT*centroid.buf.len, 3);
+         centroid.buf.len += 3;
          const polygon = this.geometry.faces[i];
          // recalibrate index for free.
          polygon.index = i;
@@ -133,7 +132,7 @@ PreviewCage.prototype._resizePreview = function(oldSize, oldCentroidSize) {
       model.preview.centroid.selected.fill(0.0, oldCentroidSize);
       // upload the data to webgl
       length = this.geometry.buf.len;
-      centroidLength = this.preview.centroid.len;
+      centroidLength = this.preview.centroid.buf.len;
       model.preview.shaderData.resizeAttribute('position', (length+centroidLength)*4);
       model.preview.shaderData.uploadAttribute('position', 0, this.geometry.buf.data.subarray(0, length));
       model.preview.shaderData.uploadAttribute('position', length*4, this.preview.centroid.buf.data.subarray(0, centroidLength));
@@ -214,14 +213,23 @@ PreviewCage.prototype._resizePreviewEdge = function(oldSize) {
 };
 
 
-PreviewCage.prototype.computePreviewEdge = function() {
-   for (var i = 0, j = 0; i < this.geometry.edges.length; i++) {
-      for (let halfEdge of this.geometry.edges[i]) {
-         this.previewEdge.line.set(halfEdge.origin.vertex, j);
-         j += 3;
+PreviewCage.prototype._resizePreviewVertex = function(oldSize) {
+   const length = this.geometry.vertices.length;
+   const size = length - oldSize;
+   if (size > 0) {
+      const preview = this.previewVertex;
+      const color = new Float32Array(length);
+      if (oldSize > 0) {
+         color.set(preview.color);
       }
+      color.fill(0.0, oldSize);
+      preview.color = color;
+      // 
+      preview.shaderData.resizeAttribute('position', length*4*3);
+      preview.shaderData.uploadAttribute('position', 0, this.geometry.buf.data.subarray(0, length*3));
+      preview.shaderData.resizeAttribute('color', length*4);
+      preview.shaderData.uploadAttribute('color', 0, preview.color);
    }
-   this.previewEdge.color.fill(0.0);
 };
 
 
@@ -502,7 +510,7 @@ PreviewCage.prototype.computeSnapshot = function(snapshot) {
       sphere.setSphere( BoundingSphere.computeSphere(polygon, sphere.center) );
    }
    // done, update shader data, should we update each vertex individually?
-   var centroids = this.preview.centroid.buf.data.subarray(0, this.preview.centroid.len)
+   var centroids = this.preview.centroid.buf.data.subarray(0, this.preview.centroid.buf.len)
    this.preview.shaderData.uploadAttribute('position', this.geometry.buf.len*4, centroids);
    // update the edges.vertex
    for (var [oid, wingedEdge] of snapshot.wingedEdges) {
@@ -742,7 +750,7 @@ PreviewCage.prototype._resetSelectFace = function() {
    this.preview.centroid.selected.fill(0.0);
    var length = this.geometry.buf.len/3;
    this.preview.shaderData.uploadAttribute("selected", 0, this.preview.selected.subarray(0, length));
-   var centroidLength = this.preview.centroid.len/3;
+   var centroidLength = this.preview.centroid.buf.len/3;
    this.preview.shaderData.uploadAttribute('selected', length*4, this.preview.centroid.selected.subarray(0, centroidLength));
    return oldSelected;
 }
@@ -839,6 +847,7 @@ PreviewCage.prototype.extrudeFace = function() {
    this._resizeBoundingSphere(faceSize);
    this._resizePreview(vertexSize, faceSize);
    this._resizePreviewEdge(edgeSize);
+   this._resizePreviewVertex(vertexSize);
 
    return edgeLoops;
 };
