@@ -40,6 +40,13 @@ class FaceMadsor extends Madsor {
       return edgeLoops;
    }
 
+   collapseEdge(extrudeEdgesContoursArray) {
+      this.eachPreviewCage(function(cage, extrudeEdgesContours) {
+         var edges = [].concat.apply([], extrudeEdgesContours);
+         cage.collapseEdge(edges);
+      }, extrudeEdgesContoursArray);
+   }
+
    dragSelect(cage, selectArray, onOff) {
       if (this.currentEdge !== null) {
         if (cage.dragSelectFace(this.currentEdge, onOff)) {
@@ -160,9 +167,9 @@ class FaceSelectCommand extends EditCommand {
 
 class FaceExtrudeHandler extends MovePositionHandler {
    constructor(madsor) {
-      let edgeLoops = madsor.extrudeFace();
+      const contourEdges = madsor.extrudeFace();
       super(madsor);
-      this.edgeLoops = edgeLoops;
+      this.contourEdges = contourEdges;
       this.axis = 0;
    }
 
@@ -175,10 +182,26 @@ class FaceExtrudeHandler extends MovePositionHandler {
       this.movement[this.axis] += move;
    }
    _commit(view) {
-      //view.undoQueue(new MoveCommand(this.madsor, this.snapshots, this.movement));
+      view.undoQueue(new ExtrudeFaceCommand(this.madsor, this.contourEdges));
    }
 
    _cancel() {
-      //this.madsor.restoreMoveSelection(this.snapshots);
+      this.madsor.collapseEdge(this.contourEdges);
+   }
+}
+
+class ExtrudeFaceCommand extends EditCommand {
+   constructor(faceMadsor, extrudeEdgesContours) {
+      super();
+      this.madsor = faceMadsor;
+      this.extrudeEdgesContoursArray = extrudeEdgesContours;
+   }
+
+   doIt() {
+      this.extrudeEdgesContoursArray = this.madsor.extrudeFace();
+   }
+
+   undo() {
+      this.madsor.collapseEdge(this.extrudeEdgesContoursArray);
    }
 }

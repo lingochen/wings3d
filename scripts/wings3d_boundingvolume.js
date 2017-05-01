@@ -11,6 +11,10 @@ var BoundingSphere = function(center, radius, polygon) {
    this.polygon = polygon;
 };
 
+BoundingSphere.prototype.isReal = function() {
+   return this.polygon.isReal();
+};
+
 BoundingSphere.prototype.isIntersect = function(ray) {
 	//  Fast Ray Sphere Intersection - eric haine, realtimerendering, similar to graphic gem's Jeff Hultquist
 	var l = vec3.create();

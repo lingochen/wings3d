@@ -77,21 +77,20 @@ PreviewCage.prototype._resizeBoundingSphere = function(oldSize) {
             }
             this.preview.centroid.buf = centroid.buf;
          }
-      } else { // brand new
+      } else {
          const buf = new ArrayBuffer(this.geometry.faces.length * 3 * Float32Array.BYTES_PER_ELEMENT * 2); // twice the current size
          this.preview.centroid.buf = {buffer: buf, data: new Float32Array(buf), len: 0};
          // assign a boundingsphere for each polygon.
          this.boundingSpheres = new Array(this.geometry.faces.length);
          this.boundingSpheres.length = 0;
       }
-      // create New
+      // create New, should not have deleted sphere to mess up things
       const centroid = this.preview.centroid;   // 
       for (let i = oldSize; i < this.geometry.faces.length; ++i) {
          const center = new Float32Array(centroid.buf.buffer, Float32Array.BYTES_PER_ELEMENT*centroid.buf.len, 3);
          centroid.buf.len += 3;
          const polygon = this.geometry.faces[i];
-         // recalibrate index for free.
-         polygon.index = i;
+         //polygon.index = i; // recalibrate index for free.
          this.boundingSpheres.push( BoundingSphere.create(polygon, center) );
       }
       // vertices is geometry data + centroid data.
@@ -159,22 +158,24 @@ PreviewCage.prototype._computePreviewIndex = function() {
    // recompute all index. (no optimization unless prove to be bottleneck)
    let barycentric = this.geometry.vertices.length;
    for (let sphere of this.boundingSpheres) {
-      const polygon = sphere.polygon;
-      //sphere.indexStart = model.preview.index.length;
-      let indicesLength = 0;
-      polygon.eachEdge( function(edge) {
-         const vertex = edge.origin;
-         if (indicesLength > 0) {
-            index[length+indicesLength++] = vertex.index;
-            index[length+indicesLength++] = barycentric; 
-         }
-         index[length+indicesLength++] = vertex.index;         
-      });
-      // last triangle using the first vertices.
-      index[length+indicesLength++] = index[length];
-      index[length+indicesLength++] = barycentric++;
-      length += indicesLength;
-      //sphere.indexEnd = model.preview.index.length;
+      if (sphere.isReal()) {     // skip over deleted sphere.
+         const polygon = sphere.polygon;
+         //sphere.indexStart = model.preview.index.length;
+         let indicesLength = 0;
+         polygon.eachEdge( function(edge) {
+            const vertex = edge.origin;
+            if (indicesLength > 0) {
+               index[length+indicesLength++] = vertex.index;
+               index[length+indicesLength++] = barycentric; 
+            }
+            index[length+indicesLength++] = vertex.index;         
+         });
+         // last triangle using the first vertices.
+         index[length+indicesLength++] = index[length];
+         index[length+indicesLength++] = barycentric++;
+         length += indicesLength;
+         //sphere.indexEnd = model.preview.index.length;
+      }
    }
    // save it to the buffer 
    this.preview.shaderData.setIndex(index);
@@ -197,8 +198,13 @@ PreviewCage.prototype._resizePreviewEdge = function(oldSize) {
          this.previewEdge.color = new Float32Array(this.geometry.edges.length*2)
       }
       for (let i = oldSize, j=(oldSize*3); i < this.geometry.edges.length; i++) {
-         for (let halfEdge of this.geometry.edges[i]) {
-            this.previewEdge.line.set(halfEdge.origin.vertex, j);
+         let wingedEdge = this.geometry.edges[i];
+         for (let halfEdge of wingedEdge) {
+            if (wingedEdge.isReal()) {
+               this.previewEdge.line.set(halfEdge.origin.vertex, j);
+            } else {
+               this.previewEdge.line.fill(0.0, j, j+3);
+            }
             j += 3;
          }
       }
@@ -284,9 +290,9 @@ PreviewCage.prototype.rayPick = function(ray) {
    // return the closest face (triangle) that intersect ray.
    var intersect = {polygon: [], pt: []};
    var hitSphere = [];
-   for (var i = 0; i < this.boundingSpheres.length; ++i) {
-      if (this.boundingSpheres[i].isIntersect(ray)){
-         hitSphere.push( this.boundingSpheres[i] );
+   for (let sphere of this.boundingSpheres) {
+      if (sphere.isReal() && sphere.isIntersect(ray)){
+         hitSphere.push( sphere );
       }
    }
    // check for triangle intersection, select the hit Face, hit Edge(closest), and hit Vertex (closest).
@@ -838,20 +844,60 @@ PreviewCage.prototype.extractFace = function() {
 //
 // extrudeFace - will create a list of 
 PreviewCage.prototype.extrudeFace = function() {
-   var vertexSize = this.geometry.vertices.length;
-   var edgeSize = this.geometry.edges.length;
-   var faceSize = this.geometry.faces.length;
+   const vertexSize = this.geometry.vertices.length;
+   const edgeSize = this.geometry.edges.length;
+   const faceSize = this.geometry.faces.length;
    // array of edgeLoop. 
-   var edgeLoops = this.geometry.extrudePolygon(this.selectedSet);
+   const edgeLoops = this.geometry.extrudePolygon(this.selectedSet);
    // add the new Faces. and new vertices to the preview
    this._resizeBoundingSphere(faceSize);
    this._resizePreview(vertexSize, faceSize);
    this._resizePreviewEdge(edgeSize);
    this._resizePreviewVertex(vertexSize);
+   // reselect face
+   const oldSelected = this._resetSelectFace();
+   for (let polygon of oldSelected) {
+      this.selectFace(polygon.halfEdge);
+   }
 
    return edgeLoops;
 };
 
+// collapse list of edges
+PreviewCage.prototype.collapseEdge = function(edges) {
+   const affectedPolygon = new Set;
+   const vertexSize = this.geometry.vertices.length;
+   const edgeSize = this.geometry.edges.length;
+   const faceSize = this.geometry.faces.length;
+   for (let edge of edges) {
+      edge.origin.eachOutEdge( function(edge) {
+         affectedPolygon.add(edge.face);
+      });
+      this.geometry.collapseEdge(edge);
+   }
+   // recompute the smaller size
+   this._resizeBoundingSphere(faceSize);
+   this._resizePreview(vertexSize, faceSize);
+   this._resizePreviewEdge(edgeSize);
+   this._resizePreviewVertex(vertexSize);
+      // reselect face
+   const oldSelected = this._resetSelectFace();
+   for (let polygon of oldSelected) {
+      this.selectFace(polygon.halfEdge);
+   }
+
+   // update all affected polygon(use sphere). recompute centroid.
+   for (let polygon of affectedPolygon) {
+      if (polygon.isReal()) {
+         const sphere = this.boundingSpheres[polygon.index];
+         // recompute sphere center.
+         sphere.setSphere( BoundingSphere.computeSphere(polygon, sphere.center) );
+      }
+   }
+   // done, update shader data, should we update each vertex individually?
+   const centroids = this.preview.centroid.buf.data.subarray(0, this.preview.centroid.buf.len)
+   this.preview.shaderData.uploadAttribute('position', this.geometry.buf.len*4, centroids);
+};
 
 PreviewCage.prototype.EPSILON = 0.000001;
 // Möller–Trumbore ray-triangle intersection algorithm
