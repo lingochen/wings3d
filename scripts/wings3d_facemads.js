@@ -182,7 +182,7 @@ class FaceExtrudeHandler extends MovePositionHandler {
       this.movement[this.axis] += move;
    }
    _commit(view) {
-      view.undoQueue(new ExtrudeFaceCommand(this.madsor, this.contourEdges));
+      view.undoQueue(new ExtrudeFaceCommand(this.madsor, this.movement, this.contourEdges));
    }
 
    _cancel() {
@@ -191,14 +191,17 @@ class FaceExtrudeHandler extends MovePositionHandler {
 }
 
 class ExtrudeFaceCommand extends EditCommand {
-   constructor(faceMadsor, extrudeEdgesContours) {
+   constructor(faceMadsor, movement, extrudeEdgesContours) {
       super();
       this.madsor = faceMadsor;
+      this.movement = movement;
       this.extrudeEdgesContoursArray = extrudeEdgesContours;
    }
 
    doIt() {
       this.extrudeEdgesContoursArray = this.madsor.extrudeFace();
+      this.snapshots = this.madsor.snapshotPosition();
+      this.madsor.moveSelection(this.movement, this.snapshots);
    }
 
    undo() {
