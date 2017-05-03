@@ -15,20 +15,17 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       if (this.contextMenu.menu) {
          this.contextMenu.menuItems = this.contextMenu.menu.querySelectorAll(".context-menu__item");
       }
+      const axisName = ['X', 'Y', 'Z'];
       // type handler 
       var self = this;
       // movement for (x, y, z)
-      function addMoveAlongAxisHandler(axis, mode) {
-         var axisName = ['X', 'Y', 'Z'];
+      for (let axis=0; axis < 3; ++axis) {
          var menuItem = document.querySelector('#' + mode + 'Move' + axisName[axis]);
          if (menuItem) {
             menuItem.addEventListener("click", function(ev) {
                Wings3D.view.attachHandlerMouseMove(new MouseMoveAlongAxis(self, axis));
             });
-         }  
-      }
-      for (var i = 0; i < 3; ++i) {
-         addMoveAlongAxisHandler(i, mode);
+         } 
       }
       // free Movement.
       var menuItem = document.querySelector('#' + mode + 'MoveFree');
@@ -39,6 +36,7 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       }
       // normal Movement.
 
+      // constructor
    }
 
    getContextMenu() {
@@ -160,7 +158,6 @@ class MouseMoveAlongAxis extends MovePositionHandler {
    }
 
    handleMouseMove(ev) {
-
       var move = this._calibrateMovement(ev.movementX);
       var movement = [0.0, 0.0, 0.0];
       movement[this.axis] = move;
@@ -177,7 +174,7 @@ class MoveFreePositionHandler extends MovePositionHandler {
 
    handleMouseMove(ev) {
       var moveX = this._calibrateMovement(ev.movementX);
-      var moveY = this._calibrateMovement(ev.movementY);
+      var moveY = this._calibrateMovement(-ev.movementY);
       var movement = [moveX, moveY, 0.0];
       this.madsor.moveSelection(movement, this.snapshots);
       vec3.add(this.movement, this.movement, movement);

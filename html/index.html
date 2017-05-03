@@ -202,7 +202,16 @@
   </nav>
   <nav id="face-context-menu" class="context-menu">
     <ul class="context-menu__items">
-      <li class="context-menu__item"><a class="context-menu__link" id="faceExtrude">Extrude</a></li>
+      <li class="context-menu__item  context-menu__submenu">
+        <a class="context-menu__link" id="faceExtrude">Extrude</a>
+        <ul class="context-menu__items">
+          <li class="context-menu__item"><a class="context-menu__link" id="faceExtrudeNormal">Normal</a></li>
+          <li class="context-menu__item"><a class="context-menu__link" id="faceExtrudeFree">Free</a></li>
+          <li class="context-menu__item"><a class="context-menu__link" id="faceExtrudeX">X</a></li>
+          <li class="context-menu__item"><a class="context-menu__link" id="faceExtrudeY">Y</a></li>
+          <li class="context-menu__item"><a class="context-menu__link" id="faceExtrudeZ">Z</a></li>
+        </ul>
+      </li>
       <hr />
       <li class="context-menu__item context-menu__submenu">
 	<a class="context-menu__link">Move</a>
