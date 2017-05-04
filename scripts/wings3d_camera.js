@@ -66,6 +66,23 @@ function createCamera() {
          return {
             alongAxis: false,
             isModified: false,
+            inverseCameraVectors: function() {
+               var cam = mat4.create();
+               // fromTranslation, identity * vec3. modelView rest.
+               mat4.fromTranslation(cam, vec3.fromValues(-camera.panX, -camera.panY, camera.distance));
+               mat4.rotateX(cam, cam, -camera.elevation * Math.PI / 180);
+               mat4.rotateY(cam, cam, -camera.azimuth * Math.PI / 180);
+               mat4.translate(cam, cam, -camera.origin);
+               // x===right, y===up, z===forward.
+               var ret = {x: [cam[0], cam[1], cam[2]], 
+                          y: [cam[4], cam[5], cam[6]], 
+                          z: [cam[8], cam[9], cam[10]]
+                         };
+               vec3.normalize(ret.x, ret.x);
+               vec3.normalize(ret.y, ret.y);
+               vec3.normalize(ret.z, ret.z);
+               return ret;
+            }, 
             get origin() { return camera.origin; },
             set origin(org) { 
                if ( camera.origin[0] != org[0] || camera.origin[1] != org[1] || camera.origin[2] != org[2]) {

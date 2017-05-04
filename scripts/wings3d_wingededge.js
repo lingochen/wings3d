@@ -379,6 +379,7 @@ WingedTopology.prototype.spliceAdjacent = function(inEdge, outEdge) {
 
     if (g === null) {
         console.log("WingedTopology.spliceAjacent: no free inedge, bad ajacency");
+        this.findFreeInEdge(outEdge, inEdge);
         return false;
     }
     var h = g.next;

@@ -305,7 +305,7 @@ function createView(gl) {
       if (_pvt.handler.camera !== null) {
          _pvt.handler.camera.handleMouseMove(e);
       } else if (_pvt.handler.mousemove !== null) {
-         _pvt.handler.mousemove.handleMouseMove(e);
+         _pvt.handler.mousemove.handleMouseMove(e, Wings3D.cam.view);
          my.renderWorld.needToRedraw();
       } else {
          // handle pick selection

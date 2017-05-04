@@ -172,10 +172,12 @@ class MoveFreePositionHandler extends MovePositionHandler {
       super(madsor);
    }
 
-   handleMouseMove(ev) {
-      var moveX = this._calibrateMovement(ev.movementX);
-      var moveY = this._calibrateMovement(-ev.movementY);
-      var movement = [moveX, moveY, 0.0];
+   handleMouseMove(ev, cameraView) {
+      var x = this._calibrateMovement(ev.movementX);
+      var y = this._calibrateMovement(-ev.movementY);
+      var cam = cameraView.inverseCameraVectors();
+      // move parallel to camera.
+      var movement = [cam.x[0]*x + cam.y[0]*y, cam.x[1]*x + cam.y[1]*y, cam.x[2]*x + cam.y[2]*y];
       this.madsor.moveSelection(movement, this.snapshots);
       vec3.add(this.movement, this.movement, movement);
    }
