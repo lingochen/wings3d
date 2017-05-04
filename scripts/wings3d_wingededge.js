@@ -268,7 +268,7 @@ var WingedTopology = function(allocatedSize = 256) {     // default to 256 verte
 WingedTopology.prototype._createPolygon = function(halfEdge, numberOfVertex) {
    let polygon;
    if (this.freeFaces.length > 0) {
-      polygon = this.freeFaces.pop();
+      polygon = this.freeFaces.shift();
       polygon.halfEdge = halfEdge;
       polygon.numberOfVertex = numberOfVertex;
    } else {
@@ -282,7 +282,7 @@ WingedTopology.prototype._createPolygon = function(halfEdge, numberOfVertex) {
 // return vertex index
 WingedTopology.prototype.addVertex = function(pt) {
    if (this.freeVertices.length > 0) {
-      let vertex = this.freeVertices.pop();
+      let vertex = this.freeVertices.shift();
       vertex.vertex.set(pt);
       return vertex;
    } else {
@@ -316,7 +316,7 @@ WingedTopology.prototype.addVertex = function(pt) {
 WingedTopology.prototype._createEdge = function(begVert, endVert) {
    let edge;
    if (this.freeEdges.length > 0) { // prefered recycle edge.
-      edge = this.freeEdges.pop();
+      edge = this.freeEdges.shift();
       edge.left.origin = begVert;
       edge.right.origin = endVert;
    } else {
@@ -606,6 +606,7 @@ WingedTopology.prototype._extractPolygon = function(selectedPolygon) {   // sele
       // lift the face edge from outer to inner.
       for (let j = 0; j < edgeLoop.length; ++j) {
          let edge1 = edgeLoop[j];
+         //let prev = edge1.prev();
          // lift edges from outer, and connect to inner
          let outerNext = edge0.outer.next;
          // let innerNext = edge0.inner.next; === edge1.inner;

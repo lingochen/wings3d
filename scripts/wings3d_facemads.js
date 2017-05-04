@@ -185,10 +185,11 @@ class FaceExtrudeHandler extends MouseMoveAlongAxis {
    }
 
    _commit(view) {
-      view.undoQueue(new ExtrudeFaceCommand(this.madsor, this.movement, this.contourEdges));
+      view.undoQueue(new ExtrudeFaceCommand(this.madsor, this.movement, this.snapshots, this.contourEdges));
    }
 
    _cancel() {
+      this.madsor.restoreMoveSelection(this.snapshots);
       this.madsor.collapseEdge(this.contourEdges);
    }
 }
@@ -201,7 +202,7 @@ class FaceExtrudeFreeHandler extends MoveFreePositionHandler {
    }
 
    _commit(view) {
-      view.undoQueue(new ExtrudeFaceCommand(this.madsor, this.movement, this.contourEdges));
+      view.undoQueue(new ExtrudeFaceCommand(this.madsor, this.movement, this.snapshots, this.contourEdges));
    }
 
    _cancel() {
@@ -210,10 +211,11 @@ class FaceExtrudeFreeHandler extends MoveFreePositionHandler {
 }
 
 class ExtrudeFaceCommand extends EditCommand {
-   constructor(faceMadsor, movement, extrudeEdgesContours) {
+   constructor(faceMadsor, movement, snapshots, extrudeEdgesContours) {
       super();
       this.madsor = faceMadsor;
       this.movement = movement;
+      this.snapshots = snapshots;
       this.extrudeEdgesContoursArray = extrudeEdgesContours;
    }
 
@@ -224,6 +226,7 @@ class ExtrudeFaceCommand extends EditCommand {
    }
 
    undo() {
+      this.madsor.restoreMoveSelection(this.snapshots);
       this.madsor.collapseEdge(this.extrudeEdgesContoursArray);
    }
 }
