@@ -352,17 +352,19 @@ WingedTopology.prototype.findFreeInEdge = function(inner_next, inner_prev) {
    // search a free gap, free gap will be between boundary_prev and boundary_next
    var boundary_prev = inner_next.pair;
    do {
-      boundary_prev = boundary_prev.next.pair;
-   } while (!boundary_prev.isBoundary());
+      do {
+         boundary_prev = boundary_prev.next.pair;
+      } while (!boundary_prev.isBoundary());
 
-   // ok ?
-   if (boundary_prev === inner_prev) {  // check for bad connectivity. somewhere 
-      console.log("WingedTopology.addFace.findFreeInEdge: patch re-linking failed");
-      return null;
-   }
-
-   // return free Incident edge.
-   return boundary_prev.next;
+      // ok ?
+      if (boundary_prev !== inner_prev) {
+         return boundary_prev.next;
+      }
+   } while (boundary_prev !== inner_next.pair);
+   
+   // check for bad connectivity. somewhere, there is no free inedge anywhere.
+   console.log("WingedTopology.addFace.findFreeInEdge: patch re-linking failed");
+   return null;
 };
 
 WingedTopology.prototype.spliceAdjacent = function(inEdge, outEdge) {
@@ -437,6 +439,7 @@ WingedTopology.prototype.addPolygon = function(pts) {
 
       if (!this.spliceAdjacent(halfLoop[i], halfLoop[nextIndex])) {
          // The polygon would introduce a non-manifold condition.
+         this.spliceAdjacent(halfLoop[i], halfLoop[nextIndex]);   // debugging purpose
          return -1;
       }
    }
@@ -606,30 +609,31 @@ WingedTopology.prototype._extractPolygon = function(selectedPolygon) {   // sele
       // lift the face edge from outer to inner.
       for (let j = 0; j < edgeLoop.length; ++j) {
          let edge1 = edgeLoop[j];
-         //let prev = edge1.prev();
          // lift edges from outer, and connect to inner
          let outerNext = edge0.outer.next;
-         // let innerNext = edge0.inner.next; === edge1.inner;
-         let inner = edge0.inner;
-         while (outerNext !== edge1.outer) {
-            if (outerNext.origin.outEdge === outerNext) {   
-               outerNext.origin.outEdge = edge0.outer.pair; // needs to redirect origin's outerEdge
-            }
-            outerNext.origin = edge1.inner.origin;    // first set the vertex
-            edge0.outer.next = outerNext.pair.next;   // lift off
-            outerNext.pair.next = inner.next;
-            inner.next = outerNext;                   // lift done
-            // advance to next edge.
-            outerNext = edge0.outer.next;
-            inner = inner.next.pair;
+         if (outerNext !== edge1.outer) {
+            // lift begin to end
+            let outer1Prev = edge1.outer.prev();
+            edge0.outer.next = edge1.outer;
+            edge0.inner.next = outerNext;
+            outer1Prev.next = edge1.inner;
+            // reset all vertex
+            let inner = outerNext;
+            do {
+               if (inner.origin.outEdge === inner) {
+                  inner.origin.outEdge = edge1.outer;
+               }
+               inner.origin = edge1.inner.origin;
+               inner = inner.pair.next;
+            } while (inner !== edge1.inner);
          }
          edge0 = edge1;       // move edge post
          // setup the faces.
-         if (edge1.outer.face.halfEdge === edge1.outer) {
-            edge1.outer.face.halfEdge = edge1.inner;
-         }
          edge1.inner.face = edge1.outer.face;
          edge1.outer.face = null;
+         if (edge1.inner.face.halfEdge === edge1.outer) {
+            edge1.inner.face.halfEdge = edge1.inner;
+         }
       }
    }
 
