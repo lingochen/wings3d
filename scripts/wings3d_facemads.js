@@ -44,17 +44,17 @@ class FaceMadsor extends Madsor {
    }
 
    // extrude Face
-   extrude() {
+   extrude(reuseLoops) {
       var edgeLoops = [];
-      this.eachPreviewCage( function(preview) {
-         edgeLoops.push( preview.extrudeFace() );
-      });
+      this.eachPreviewCage( function(preview, contours) {
+         edgeLoops.push( preview.extrudeFace(contours) );
+      }, reuseLoops);
       return edgeLoops;
    }
 
    collapseEdge(extrudeEdgesContoursArray) {
       this.eachPreviewCage(function(cage, extrudeEdgesContours) {
-         var edges = [].concat.apply([], extrudeEdgesContours);
+         var edges = [].concat.apply([], extrudeEdgesContours.extrudeEdges);
          cage.collapseEdge(edges);
       }, extrudeEdgesContoursArray);
    }
@@ -118,7 +118,6 @@ class FaceMadsor extends Madsor {
       }
       Wings3D.apiExport.undoQueue(new ToggleModeCommand(redoFn, Wings3D.apiExport.restoreFaceMode, snapshots));
    }
-
 
    restoreMode(toMadsor, snapshots) {
       if (toMadsor instanceof EdgeMadsor) {
@@ -206,6 +205,7 @@ class FaceExtrudeFreeHandler extends MoveFreePositionHandler {
    }
 
    _cancel() {
+      this.madsor.restoreMoveSelection(this.snapshots);
       this.madsor.collapseEdge(this.contourEdges);
    }
 }
@@ -220,7 +220,7 @@ class ExtrudeFaceCommand extends EditCommand {
    }
 
    doIt() {
-      this.extrudeEdgesContoursArray = this.madsor.extrude();
+      this.extrudeEdgesContoursArray = this.madsor.extrude( this.extrudeEdgesContoursArray );
       this.snapshots = this.madsor.snapshotPosition();
       this.madsor.moveSelection(this.movement, this.snapshots);
    }

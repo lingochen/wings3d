@@ -843,12 +843,18 @@ PreviewCage.prototype.extractFace = function() {
 
 //
 // extrudeFace - will create a list of 
-PreviewCage.prototype.extrudeFace = function() {
+PreviewCage.prototype.extrudeFace = function(contours) {
    const vertexSize = this.geometry.vertices.length;
    const edgeSize = this.geometry.edges.length;
    const faceSize = this.geometry.faces.length;
    // array of edgeLoop. 
-   const edgeLoops = this.geometry.extrudePolygon(this.selectedSet);
+   if (!contours) {
+      contours = {};
+      contours.edgeLoops = this.geometry.findContours(this.selectedSet); 
+   }
+   contours.edgeLoops = this.geometry.liftContours(contours.edgeLoops);
+   contours.extrudeEdges = this.geometry.extrudeContours(contours.edgeLoops);
+   //const edgeLoops = this.geometry.extrudePolygon(this.selectedSet);
    // add the new Faces. and new vertices to the preview
    this._resizeBoundingSphere(faceSize);
    this._resizePreview(vertexSize, faceSize);
@@ -860,8 +866,9 @@ PreviewCage.prototype.extrudeFace = function() {
       this.selectFace(polygon.halfEdge);
    }
 
-   return edgeLoops;
+   return contours; //edgeLoops;
 };
+
 
 // collapse list of edges
 PreviewCage.prototype.collapseEdge = function(edges) {
