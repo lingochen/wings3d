@@ -183,6 +183,16 @@ PreviewCage.prototype._computePreviewIndex = function() {
 };
 
 
+PreviewCage.prototype._updatePreviewEdge = function(edge, updateShader) {
+   const index = edge.wingedEdge.index * 6; // 2*3
+   this.previewEdge.line.set(edge.origin.vertex, index);
+   this.previewEdge.line.set(edge.pair.origin.vertex, index+3);
+
+   if (updateShader) {
+      this.previewEdge.shaderData.uploadAttribute('position', index*4, this.previewEdge.line.subarray(index, index+6));
+   }
+};
+
 PreviewCage.prototype._resizePreviewEdge = function(oldSize) {
    const size = this.geometry.edges.length - oldSize;
    if (size > 0) {
@@ -195,9 +205,9 @@ PreviewCage.prototype._resizePreviewEdge = function(oldSize) {
          this.previewEdge.color = color;
       } else { // brand new
          this.previewEdge.line = new Float32Array(this.geometry.edges.length*2*3);
-         this.previewEdge.color = new Float32Array(this.geometry.edges.length*2)
+         this.previewEdge.color = new Float32Array(this.geometry.edges.length*2);
       }
-      for (let i = oldSize, j=(oldSize*3); i < this.geometry.edges.length; i++) {
+      for (let i = oldSize, j=(oldSize*2*3); i < this.geometry.edges.length; i++) {
          let wingedEdge = this.geometry.edges[i];
          for (let halfEdge of wingedEdge) {
             if (wingedEdge.isReal()) {
@@ -871,7 +881,7 @@ PreviewCage.prototype.extrudeFace = function(contours) {
 
 
 // collapse list of edges
-PreviewCage.prototype.collapseEdge = function(edges) {
+PreviewCage.prototype.collapseExtrudeEdge = function(edges) {
    const affectedPolygon = new Set;
    const vertexSize = this.geometry.vertices.length;
    const edgeSize = this.geometry.edges.length;
@@ -905,6 +915,52 @@ PreviewCage.prototype.collapseEdge = function(edges) {
    const centroids = this.preview.centroid.buf.data.subarray(0, this.preview.centroid.buf.len)
    this.preview.shaderData.uploadAttribute('position', this.geometry.buf.len*4, centroids);
 };
+
+
+PreviewCage.prototype.cutEdge = function(numberOfSegments) {
+   const edges = this.selectedSet;
+
+   const faceSize = this.geometry.faces.length;
+   const edgeSize = this.geometry.edges.length;
+   const vertexSize = this.geometry.vertices.length;
+   const vertices = [];
+   const splitEdges = [];              // added edges list
+   // cut edge by numberOfCuts
+   let total = vec3.create();
+   let vertex = vec3.create();
+   for (let wingedEdge of edges) {
+      let edge = wingedEdge.left;
+      vec3.add(total, edge.origin.vertex, edge.destination().vertex);
+      for (let i = 1; i < numberOfSegments; ++i) {
+         vec3.scale(vertex, total, i/numberOfSegments);
+         const newEdge = this.geometry.splitEdge(edge, vertex);       // input edge will take the new vertex as origin.
+         vertices.push( edge.origin );
+         splitEdges.push( newEdge.pair );
+      }
+      // update previewEdge position.
+      this._updatePreviewEdge(edge, true);
+   }
+   this._resizePreview(vertexSize, faceSize);
+   this._resizePreviewEdge(edgeSize);
+   this._resizePreviewVertex(vertexSize);
+   // returns created vertices.
+   return {vertices: vertices, splitEdges: splitEdges};
+};
+
+// collapse list of edges
+PreviewCage.prototype.collapseSplitEdge = function(edges) {
+   const vertexSize = this.geometry.vertices.length;
+   const edgeSize = this.geometry.edges.length;
+   const faceSize = this.geometry.faces.length;
+   for (let edge of edges) {
+      this.geometry.collapseEdge(edge);
+   }
+   // recompute the smaller size
+//   this._resizePreview(vertexSize, faceSize);
+   this._resizePreviewEdge(edgeSize);
+   this._resizePreviewVertex(vertexSize);
+};
+
 
 PreviewCage.prototype.EPSILON = 0.000001;
 // Möller–Trumbore ray-triangle intersection algorithm

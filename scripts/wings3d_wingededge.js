@@ -56,6 +56,9 @@ var HalfEdge = function(vert, edge) {  // should only be created by WingedEdge
    this.next = null;
 //   this.prev = null;       // not required, but very nice to have shortcut
    this.origin = vert;     // origin vertex, 
+   if (vert.outEdge === null) {
+      vert.outEdge = this;
+   }
    this.face = null;       // face pointer, not required, but useful shortcut
    this.pair = null;
    this.wingedEdge = edge; // parent winged edge
@@ -508,7 +511,7 @@ WingedTopology.prototype.insertEdge = function(prevHalf, nextHalf) {
 }
 
 
-WingedTopology.prototype.splitEdge = function(outEdge, vertex) {
+WingedTopology.prototype.splitEdge = function(outEdge, pt) {
    const inEdge = outEdge.pair;
    const outPrev = outEdge.prev();
    const inNext = inEdge.next;
@@ -516,6 +519,7 @@ WingedTopology.prototype.splitEdge = function(outEdge, vertex) {
    const vOut = vOrigin.outEdge;
 
    //add the new edge
+   const vertex = this.addVertex(pt);
    const newOut = this._createEdge(vOrigin, vertex);
    const newIn = newOut.pair;
    // fixe the halfedge connectivity
@@ -526,13 +530,15 @@ WingedTopology.prototype.splitEdge = function(outEdge, vertex) {
    newIn.next = inNext;
   
    newOut.face = outEdge.face;
+   newOut.face.numberOfVertex++;
    newIn.face = inEdge.face;
+   newIn.face.numberOfVertex++;
 
    // fix vertex
    outEdge.origin = vertex;
-   vertex.outEdge = outEdge;
+   //vertex.outEdge = newIn;
   
-   if (vOrigin.outEdge === outEdge) {
+   if (vOut === outEdge) {
       vOrigin.outEdge = newOut;
    }
    // return the newOut
@@ -544,7 +550,6 @@ WingedTopology.prototype.extrudeContours = function(edgeLoops) {
    // extrude face. connect(outer, inner) loop.
    let extrudeContours = [];
    for (let contour of edgeLoops) {
-      let extrudeEdges = [];
       for (let edge of contour) {
          let polygon = [];
          polygon.push( edge.inner.origin.index );
@@ -552,9 +557,8 @@ WingedTopology.prototype.extrudeContours = function(edgeLoops) {
          polygon.push( edge.outer.destination().index );
          polygon.push( edge.inner.destination().index );
          this.addPolygon( polygon );
-         extrudeEdges.push( this.findHalfEdge(edge.inner.origin, edge.outer.origin) );
+         extrudeContours.push( this.findHalfEdge(edge.inner.origin, edge.outer.origin) );
       }
-      extrudeContours.push( extrudeEdges );
    }
 
    return extrudeContours;
@@ -734,6 +738,23 @@ WingedTopology.prototype._extractPolygon = function(selectedPolygon) {   // sele
 
 
 
+// insert the index number in reverse order. smallest last.
+WingedTopology.prototype._insertFreeList = function(val, array) {
+   var l = 0, r = array.length - 1;
+   while (l <= r) {
+      let m = (l + r) >>> 1; /// equivalent to Math.floor((l + h) / 2) but faster 
+      let comparison = val - array[m];
+      if (comparison > 0) {
+         r = m - 1;
+      } else if (comparison < 0) {
+         l = m + 1;
+      } else {
+         break; // should no happened.
+      }
+   }
+   array.splice(l, 0, val);
+};
+
 // recycled
 WingedTopology.prototype._freeVertex = function(vertex) {
    vertex.outEdge = null;
@@ -793,10 +814,12 @@ WingedTopology.prototype._collapseEdge = function(halfEdge) {
    if (face.halfEdge === halfEdge) {
       face.halfEdge = next;
    }
+   face.numberOfVertex--;
    face = pair.face;
    if (face.halfEdge === pair) {
       face.halfEdge = pairNext;
    }
+   face.numberOfVertex--;
 
    // adjust vertex
    if (toVertex.outEdge === pair) {
@@ -902,22 +925,6 @@ WingedTopology.prototype.removeEdge = function(outEdge) {
    return face;   // return the remaining face handle
 };
 
-// insert the index number in reverse order. smallest last.
-WingedTopology.prototype._insertFreeList = function(val, array) {
-   var l = 0, r = array.length - 1;
-   while (l <= r) {
-      let m = (l + r) >>> 1; /// equivalent to Math.floor((l + h) / 2) but faster 
-      let comparison = val - array[m];
-      if (comparison > 0) {
-         r = m - 1;
-      } else if (comparison < 0) {
-         l = m + 1;
-      } else {
-         break; // should no happened.
-      }
-   }
-   array.splice(l, 0, val);
-}
 
 
 /*WingedTopology.prototype.removePolygon = function(polygon) {

@@ -27,8 +27,8 @@ class FaceMadsor extends Madsor {
             Wings3D.view.attachHandlerMouseMove(new FaceExtrudeFreeHandler(self));
          });
       }
-      // setup highlite face, at most 18 triangles.
-      var buf = new Float32Array(3*20);
+      // setup highlite face, at most 28 triangles.
+      var buf = new Float32Array(3*30);
       this.trianglefan = {data: buf, length: 0};
       var layout = ShaderData.attribLayout();
       this.shaderData.setupAttribute('position', layout, this.trianglefan.data, Wings3D.gl.DYNAMIC_DRAW);      
@@ -54,8 +54,7 @@ class FaceMadsor extends Madsor {
 
    collapseEdge(extrudeEdgesContoursArray) {
       this.eachPreviewCage(function(cage, extrudeEdgesContours) {
-         var edges = [].concat.apply([], extrudeEdgesContours.extrudeEdges);
-         cage.collapseEdge(edges);
+         cage.collapseExtrudeEdge(extrudeEdgesContours.extrudeEdges);
       }, extrudeEdgesContoursArray);
    }
 
