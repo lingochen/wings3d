@@ -926,13 +926,15 @@ PreviewCage.prototype.cutEdge = function(numberOfSegments) {
    const vertices = [];
    const splitEdges = [];              // added edges list
    // cut edge by numberOfCuts
-   let total = vec3.create();
+   let diff = vec3.create();
    let vertex = vec3.create();
    for (let wingedEdge of edges) {
       let edge = wingedEdge.left;
-      vec3.add(total, edge.origin.vertex, edge.destination().vertex);
+      vec3.sub(diff, edge.origin.vertex, edge.destination().vertex);
       for (let i = 1; i < numberOfSegments; ++i) {
-         vec3.scale(vertex, total, i/numberOfSegments);
+         const scaler = (numberOfSegments-i)/numberOfSegments;
+         vec3.scale(vertex, diff, scaler);
+         vec3.add(vertex, edge.destination().vertex, vertex);
          const newEdge = this.geometry.splitEdge(edge, vertex);       // input edge will take the new vertex as origin.
          vertices.push( edge.origin );
          splitEdges.push( newEdge.pair );
@@ -948,12 +950,14 @@ PreviewCage.prototype.cutEdge = function(numberOfSegments) {
 };
 
 // collapse list of edges
-PreviewCage.prototype.collapseSplitEdge = function(edges) {
+PreviewCage.prototype.collapseSplitEdge = function(splitEdges) {
    const vertexSize = this.geometry.vertices.length;
    const edgeSize = this.geometry.edges.length;
    const faceSize = this.geometry.faces.length;
-   for (let edge of edges) {
+   for (let edge of splitEdges) {
+      let updateEdge = edge.pair.next;    // bad hacked.
       this.geometry.collapseEdge(edge);
+      this._updatePreviewEdge(updateEdge, true);
    }
    // recompute the smaller size
 //   this._resizePreview(vertexSize, faceSize);

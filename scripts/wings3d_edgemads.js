@@ -12,13 +12,15 @@ class EdgeMadsor extends Madsor {
       super('edge');
       // cut commands
       var self = this;
-      var menuItem = document.querySelector('#cutLine2');
-      if (menuItem) {
-         menuItem.addEventListener('click', function(ev) {
-            const cutEdge = new CutEdgeCommand(self, 2);
-            Wings3D.apiExport.undoQueue(cutEdge);
-            cutEdge.doIt();
-         });
+      for (let numberOfSegments of [2, 3, 4, 5, 10]) {
+         let menuItem = document.querySelector('#cutLine'+numberOfSegments);
+         if (menuItem) {
+            menuItem.addEventListener('click', function(ev) {
+               const cutEdge = new CutEdgeCommand(self, numberOfSegments);
+               Wings3D.apiExport.undoQueue(cutEdge);
+               cutEdge.doIt();
+            });
+         }
       }
    }
 

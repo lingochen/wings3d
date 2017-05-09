@@ -536,7 +536,7 @@ WingedTopology.prototype.splitEdge = function(outEdge, pt) {
 
    // fix vertex
    outEdge.origin = vertex;
-   //vertex.outEdge = newIn;
+   vertex.outEdge = newIn;
   
    if (vOut === outEdge) {
       vOrigin.outEdge = newOut;
@@ -758,7 +758,7 @@ WingedTopology.prototype._insertFreeList = function(val, array) {
 // recycled
 WingedTopology.prototype._freeVertex = function(vertex) {
    vertex.outEdge = null;
-   vertex.vertex.fill(0.0);
+   //vertex.vertex.fill(0.0);
    // assert !freeVertices.has(vertex);
    //this.freeVertices.push( vertex );
    this._insertFreeList(vertex.index, this.freeVertices);
