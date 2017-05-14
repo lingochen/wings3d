@@ -9,6 +9,24 @@ class VertexMadsor extends Madsor {
    constructor() {
       super('vertex');
       this.currentVertex = null;
+      let self = this;
+      var menuItem = document.querySelector('#vertexConnect');
+      if (menuItem) {
+         menuItem.addEventListener('click', function(ev) {
+            const cageArray = self.connect();
+            let total = 0;
+            for (let insertEdges of cageArray) {
+               total += insertEdges.length;
+            }
+            if (total > 0) {
+               //const vertexConnect = new VertexConnectCommand(self, cageArray);
+               //Wings3D.apiExport.undoQueue(vertexConnect);
+            } else {
+               // show no connection message.
+
+            }
+         });
+      }
    }
    // get selected vertex snapshot. for doing, and redo queue. 
    snapshotPosition() {
@@ -18,6 +36,14 @@ class VertexMadsor extends Madsor {
       });
       return snapshots;
    }
+
+   connect() {
+      let list = [];
+      this.eachPreviewCage( function(cage) {
+         list.push( cage.connectVertex() );
+      });
+      return list;
+   };
 
    dragSelect(cage, selectArray, onOff) {
       if (this.currentVertex !== null) {
@@ -141,3 +167,16 @@ class VertexSelectCommand extends EditCommand {
    }  
 }
 
+
+class VertexConnectCommand extends EditCommand {
+   constructor(madsor, insertEdges) {
+      super();
+      this.madsor = madsor;
+      this.insertEdges = insertEdges;
+   }
+
+   doIt() {}
+
+   undo() {}
+   
+}

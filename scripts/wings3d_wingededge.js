@@ -122,9 +122,24 @@ var Vertex = function(pt) {
 };
 
 Object.defineProperty(Vertex.prototype, 'index', {
-    get: function() {
-        return (this.vertex.byteOffset / (this.vertex.BYTES_PER_ELEMENT*3));
-    },
+   get: function() {
+      return (this.vertex.byteOffset / (this.vertex.BYTES_PER_ELEMENT*3));
+   },
+});
+
+Object.defineProperty(Vertex.prototype, 'valence', {
+   get: function() {
+      let valence = 0;
+      let start = this.outEdge;
+      let edge = start;
+      if (edge) {
+         do {  // face edge is ccw. walking around vertex is cw.
+            ++valence;
+            edge = edge.pair.next;      // pair's next is outEdge too.
+         } while (edge && (edge !== start));
+      }
+      return valence;
+   },
 });
 
 Vertex.prototype.isReal = function() {
@@ -505,6 +520,11 @@ WingedTopology.prototype.insertEdge = function(prevHalf, nextHalf) {
       //  pointed to one of the halfedges now assigned to new_fh
       oldPolygon.halfEdge = inEdge.face;
    }
+   size = 0;
+   oldPolygon.eachEdge( function(halfEdge) {
+      ++size;
+   });
+   oldPolygon.numberOfVertex = size;
 
    // adjustOutEdge for v0, v1. point to boundary so, ccw work better?
    return outEdge;
@@ -927,6 +947,108 @@ WingedTopology.prototype.removeEdge = function(outEdge) {
 
 
 
+
+// selectedVertex. search the nearest edge on the same face.
+// 2 ways to determine if vertex is edge. 1)prev, next edges are not parallel. 2) vertex has only 2 wingededges, and share the same faces.
+// we decided to use the 2nd way temporary. After everything is debugged, switch to first method because it more robust.
+WingedTopology.prototype.connectVertex = function(selectedVertex) {
+   // first collect face from vertex.
+   const selectedFace = new Map();
+   for (let vertex of selectedVertex) {
+      vertex.eachOutEdge( function(edge) {
+         let val = 1;
+         if (selectedFace.has(edge.face)) {
+            val = selectedFace.get(edge.face) + 1;
+         }
+         selectedFace.set(edge.face, val);
+      });
+   }
+
+   // corner. 
+   const faceList = [];
+   let edges = [];       // each face's edges
+   // second (group vertex) that have the same faces as same edgeGroup.
+   for (let [polygon, faceCount] of selectedFace) {
+      if (faceCount > 1) {
+         // at least 2 vertex selected.
+         let special = true;
+         let prevEdgeNumber = -1;
+         let edgeNumber = -1;
+         let outEdge = polygon.halfEdge;
+         // find first corner.
+         while (outEdge.origin.valence == 2) {
+            outEdge = outEdge.next;
+         }
+         // ok, first corner.
+         const firstCorner = outEdge;
+         do {
+            let valence = outEdge.origin.valence;
+            prevEdgeNumber = edgeNumber;
+            if (valence != 2) {
+               edgeNumber++;
+            }
+            if (selectedVertex.has(outEdge.origin)) {
+               const obj = {prevEdgeNumber: prevEdgeNumber, edgeNumber: edgeNumber, outEdge: outEdge};
+               edges.push( obj );
+            }
+            outEdge = outEdge.next;
+         } while (outEdge !== firstCorner);
+         //update first edges number
+         const edge = edges[0];
+         if (edge.prevEdgeNumber == -1) {
+            edge.prevEdgeNumber = edgeNumber;
+         }
+         // save to face list
+         faceList.push( edges );
+         edges = [];
+      }
+   }
+
+
+   const edgeList = [];
+   // the real meat, connect vertex.
+   for (let edges of faceList) {
+      // check for special case. one interior selected vertex per edge.
+      let specialCase = true;
+      for (let [index, edge] of edges.entries()) {
+         if ( (edge.prevEdgeNumber != index) || (edge.edgeNumber != index) ) {
+            specialCase = false;
+            break;
+         }
+      }
+      if (specialCase) {
+         for (let i = 0; i < edges.length; ++i) {
+            let origin = edges[i];
+            let destination;
+            if ( (i+1) < edges.length) {
+               destination = edges[i+1];
+            } else {
+               destination = edges[0];
+            }
+            let edge = this.insertEdge(origin.outEdge.prev(), destination.outEdge);
+            edgeList.push( edge );
+         }
+      } else {
+         // walk from beginning++, and end--.
+         let i = edges.length-1;
+         let j = 0;
+         do {
+            let origin = edges[i];
+            let destination = edges[j];
+            if (origin.edgeNumber != destination.prevEdgeNumber) {
+               const edge = this.insertEdge(origin.outEdge.prev(), destination.outEdge);
+               edgeList.push( edge );
+               i--;
+            }
+            j++;     // move to next destination.
+         } while (j < i);
+      }
+   }
+   // return insertEdge list.
+   return edgeList;
+};
+
+
 /*WingedTopology.prototype.removePolygon = function(polygon) {
    polygon.eachEdge( function(edge) {
       edge.face = null;
@@ -935,6 +1057,16 @@ WingedTopology.prototype.removeEdge = function(outEdge) {
    polygon.halfEdge = null;
    this.freeFaces.push(polygon);
 };
+function isCorner(outEdge) {
+   const prev = outEdge.prev();
+   const a = vec3.create();
+   vec3.sub(a, outEdge.destination().vertex, outEdge.origin.vertex); 
+   const b = vec3.create();
+   vec3.sub(b, prev.origin.vertex, prev.destination().vertex);
+   const cosTheta = vec3.dot(a, b) / (vec3.len(a) + vec3.len(b));
+   // none straight line is corner; cos 180 === -1. cos 0 === 1.
+   return cosTheta > -0.992;   // ~< 175 degree. is a corner.
+}
 WingedTopology.prototype.removeVertex = function(vertex) {
    if (!vertex.isIsolated()) {
 

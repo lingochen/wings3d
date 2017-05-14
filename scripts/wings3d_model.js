@@ -966,6 +966,23 @@ PreviewCage.prototype.collapseSplitEdge = function(splitEdges) {
 };
 
 
+// connect selected Vertex,
+PreviewCage.prototype.connectVertex = function() {
+   const faceSize = this.geometry.faces.length;
+   const edgeSize = this.geometry.edges.length;
+   const vertexSize = this.geometry.vertices.length;
+   
+   const edgeList = this.geometry.connectVertex(this.selectedSet);
+   
+   //
+   this._resizePreview(vertexSize, faceSize);
+   this._resizePreviewEdge(edgeSize);
+   this._resizePreviewVertex(vertexSize);
+
+   return edgeList;
+};
+
+
 PreviewCage.prototype.EPSILON = 0.000001;
 // Möller–Trumbore ray-triangle intersection algorithm
 // should I use float64array? 
