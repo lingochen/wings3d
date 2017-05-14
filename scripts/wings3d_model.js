@@ -975,6 +975,10 @@ PreviewCage.prototype.connectVertex = function() {
    const vertexSize = this.geometry.vertices.length;
    
    const edgeList = this.geometry.connectVertex(this.selectedSet);
+   const wingedEdgeList = [];
+   for (let edge of edgeList) {
+      wingedEdgeList.push( edge.wingedEdge );
+   }
    
    //
    this._resizeBoundingSphere(faceSize);
@@ -982,7 +986,7 @@ PreviewCage.prototype.connectVertex = function() {
    this._resizePreviewEdge(edgeSize);
    this._resizePreviewVertex(vertexSize);
 
-   return edgeList;
+   return {edgeList: edgeList, wingedEdgeList: wingedEdgeList};
 };
 
 

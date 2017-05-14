@@ -496,6 +496,7 @@ WingedTopology.prototype.insertEdge = function(prevHalf, nextHalf) {
    // assert(prevHalf.next !== _nextHalf);      // we want to split face, not adding edge
    const v0 = prevHalf.destination();
    const v1 = nextHalf.origin;
+   const oldPolygon = prevHalf.face;
 
    // create edge and link together.
    const outEdge = this._createEdge(v0, v1);
@@ -517,11 +518,11 @@ WingedTopology.prototype.insertEdge = function(prevHalf, nextHalf) {
    });
    newPolygon.numberOfVertex = size;
 
-   const oldPolygon = nextPrev.face;
+   // inEdge is oldPolygon
    inEdge.face = oldPolygon;
    if (oldPolygon.halfEdge.face === newPolygon) {
-      //  pointed to one of the halfedges now assigned to new_fh
-      oldPolygon.halfEdge = inEdge.face;
+      //  pointed to one of the halfedges now assigned to newPolygon
+      oldPolygon.halfEdge = inEdge;
    }
    size = 0;
    oldPolygon.eachEdge( function(halfEdge) {
@@ -940,15 +941,18 @@ WingedTopology.prototype.connectVertex = function(selectedVertex) {
          }
       }
       if (specialCase) {
+         const edge0Prev = edges[0].outEdge.prev();
          for (let i = 0; i < edges.length; ++i) {
             let origin = edges[i];
             let destination;
+            let edge;
             if ( (i+1) < edges.length) {
                destination = edges[i+1];
+               edge = this.insertEdge(origin.outEdge.prev(), destination.outEdge);
             } else {
-               destination = edges[0];
+               edge = this.insertEdge(origin.outEdge.prev(), edge0Prev.next);
             }
-            let edge = this.insertEdge(origin.outEdge.prev(), destination.outEdge);
+
             edgeList.push( edge );
          }
       } else {
