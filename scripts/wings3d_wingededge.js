@@ -281,6 +281,9 @@ var WingedTopology = function(allocatedSize = 256) {     // default to 256 verte
    this.freeVertices = [];
    this.freeEdges = [];
    this.freeFaces = [];
+   this.updateVertex = null;
+   this.updateEdge = null;
+   this.updateFace = null;
 };
 
 WingedTopology.prototype._createPolygon = function(halfEdge, numberOfVertex) {
@@ -676,86 +679,6 @@ WingedTopology.prototype.liftContours = function(edgeLoops) {
 
    return edgeLoops;
 };
-
-
-/*
-WingedTopology.prototype._extractPolygon = function(selectedPolygon) {   // selectedPolygon is es6 set.
-   const self = this;
-   let contourEdges = new Set;
-   let edgeLoops = [];
-   // find all contourEdges to extrude
-   for (let polygon of selectedPolygon) {
-      polygon.eachEdge( function(outEdge) {
-         if (!contourEdges.has(outEdge) && !selectedPolygon.has(outEdge.pair.face)) {
-            const firstVertex = self.addVertex(outEdge.origin.vertex);
-            let fromVertex = firstVertex;
-            const edgeLoop = [];
-            let currentIn = outEdge;
-            do {
-               // this edge is contour. now walk cwRing to find the next edges.
-               let nextIn = currentIn.next.pair;
-               while (nextIn !== currentIn) {
-                  if (!selectedPolygon.has(nextIn.face)) { // yup, find the other contour
-                     break;
-                  }
-                  nextIn = nextIn.next.pair;
-               }
-               // check if it the first vertex, in other word, the last one.
-               var check = nextIn.destination();
-               let toVertex = firstVertex;
-               if (check !== outEdge.origin) {
-                  toVertex = self.addVertex(check.vertex);
-               }
-               const edges = {outer: currentIn, inner: self.addEdge(fromVertex, toVertex)};
-               edgeLoop.push( edges );
-               fromVertex = toVertex;
-               contourEdges.add(currentIn);       // checkIn the contour edge.
-               // we cw walk over to the next contour edge.
-               currentIn = nextIn.pair;
-            } while (currentIn !== outEdge);      // check if we come full circle
-            edgeLoops.push( edgeLoop );
-         }
-      } );
-   }
-
-   // got the internal loop, now lift and connect the faces to the innerLoop.
-   for (let i = 0; i < edgeLoops.length; ++i) {
-      const edgeLoop = edgeLoops[i];
-      let edge0 = edgeLoop[edgeLoop.length-1];
-      // lift the face edge from outer to inner.
-      for (let j = 0; j < edgeLoop.length; ++j) {
-         let edge1 = edgeLoop[j];
-         // lift edges from outer, and connect to inner
-         let outerNext = edge0.outer.next;
-         if (outerNext !== edge1.outer) {
-            // lift begin to end
-            let outer1Prev = edge1.outer.prev();
-            edge0.outer.next = edge1.outer;
-            edge0.inner.next = outerNext;
-            outer1Prev.next = edge1.inner;
-            // reset all vertex
-            let inner = outerNext;
-            do {
-               if (inner.origin.outEdge === inner) {
-                  inner.origin.outEdge = edge1.outer;
-               }
-               inner.origin = edge1.inner.origin;
-               inner = inner.pair.next;
-            } while (inner !== edge1.inner);
-         }
-         edge0 = edge1;       // move edge post
-         // setup the faces.
-         edge1.inner.face = edge1.outer.face;
-         edge1.outer.face = null;
-         if (edge1.inner.face.halfEdge === edge1.outer) {
-            edge1.inner.face.halfEdge = edge1.inner;
-         }
-      }
-   }
-
-   return edgeLoops;
-};*/
-
 
 
 // insert the index number in reverse order. smallest last.

@@ -61,6 +61,7 @@ PreviewCage.CONST = (function() {
    return constant;
 }());
 
+
 PreviewCage.prototype._resizeBoundingSphere = function(oldSize) {
    let size = this.geometry.faces.length - oldSize;
    if (size > 0) {   // we only care about growth for now
@@ -99,7 +100,8 @@ PreviewCage.prototype._resizeBoundingSphere = function(oldSize) {
 
 PreviewCage.prototype._resizePreview = function(oldSize, oldCentroidSize) {
    const size = this.geometry.vertices.length - oldSize;
-   if (size > 0) {
+   const centroidSize = this.geometry.faces.length - oldCentroidSize;
+   if ((size > 0) || (centroidSize > 0)) {
       const model = this;
       let length = model.geometry.buf.data.length;
       let centroidLength = model.preview.centroid.buf.data.length;
@@ -975,6 +977,7 @@ PreviewCage.prototype.connectVertex = function() {
    const edgeList = this.geometry.connectVertex(this.selectedSet);
    
    //
+   this._resizeBoundingSphere(faceSize);
    this._resizePreview(vertexSize, faceSize);
    this._resizePreviewEdge(edgeSize);
    this._resizePreviewVertex(vertexSize);
