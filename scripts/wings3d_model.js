@@ -184,6 +184,34 @@ PreviewCage.prototype._computePreviewIndex = function() {
    this.preview.indexLength = length;
 };
 
+PreviewCage.prototype._updateAffected = function(affected) {
+   if (affected.vertices.size > 0) {
+      for (let vertex of affected.vertices) {
+         this._updateVertex(vertex);
+      }
+   }
+   if (affected.edges.size > 0) {
+      for (let edges of affected.edges) {
+         this._updatePreviewEdge(edge.left, true);
+      }
+   }
+   if (affected.faces.size > 0) {
+      for (let face of affected.faces) {
+         this._updatePreview(face);
+      }
+   }
+
+   this.geometry.clearAffected();
+};
+
+PreviewCage.prototype._updatePreview = function(polygon) {
+   // recompute boundingSphere centroid, and if numberOfVertex changed, needs to recompute index.
+   if (polygon.index < this.boundingSpheres.length) { // will be get recompute on resize
+      const sphere = this.boundingSpheres[ polygon.index ];
+      sphere.setSphere( BoundingSphere.computeSphere(sphere.polygon, sphere.center) ); 
+   }
+};
+
 
 PreviewCage.prototype._updatePreviewEdge = function(edge, updateShader) {
    const index = edge.wingedEdge.index * 6; // 2*3
@@ -974,13 +1002,17 @@ PreviewCage.prototype.connectVertex = function() {
    const edgeSize = this.geometry.edges.length;
    const vertexSize = this.geometry.vertices.length;
    
+   //this.geometry.clearAffected();
    const edgeList = this.geometry.connectVertex(this.selectedSet);
    const wingedEdgeList = [];
    for (let edge of edgeList) {
       wingedEdgeList.push( edge.wingedEdge );
    }
-   
-   //
+
+   // updateAffected.
+   this._updateAffected(this.geometry.affected);
+
+   // addition.
    this._resizeBoundingSphere(faceSize);
    this._resizePreview(vertexSize, faceSize);
    this._resizePreviewEdge(edgeSize);

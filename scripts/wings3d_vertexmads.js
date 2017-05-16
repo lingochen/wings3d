@@ -48,6 +48,12 @@ class VertexMadsor extends Madsor {
       return snapshots;
    };
 
+   dissolve(edgesArray) {
+      this.eachPreviewCage( function(cage, edges) {
+         cage.dissolve(edges);
+      }, edgesArray);
+   }
+
    dragSelect(cage, selectArray, onOff) {
       if (this.currentVertex !== null) {
         if (cage.dragSelectVertex(this.currentVertex, onOff)) {
@@ -178,8 +184,12 @@ class VertexConnectCommand extends EditCommand {
       this.insertEdges = insertEdges;
    }
 
-   doIt() {}
+   doIt() {
 
-   undo() {}
+   }
+
+   undo() {
+
+   }
    
 }

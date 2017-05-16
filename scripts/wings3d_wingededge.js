@@ -281,9 +281,14 @@ var WingedTopology = function(allocatedSize = 256) {     // default to 256 verte
    this.freeVertices = [];
    this.freeEdges = [];
    this.freeFaces = [];
-   this.updateVertex = null;
-   this.updateEdge = null;
-   this.updateFace = null;
+   // affected is when reuse, deleted, or change vital stats.
+   this.affected = {vertices: new Set, edges: new Set, faces: new Set};
+};
+
+WingedTopology.prototype.clearAffected = function() {
+   this.affected.vertices.clear();
+   this.affected.edges.clear();
+   this.affected.faces.clear();
 };
 
 WingedTopology.prototype._createPolygon = function(halfEdge, numberOfVertex) {
@@ -292,6 +297,7 @@ WingedTopology.prototype._createPolygon = function(halfEdge, numberOfVertex) {
       polygon = this.faces[ this.freeFaces.pop() ];
       polygon.halfEdge = halfEdge;
       polygon.numberOfVertex = numberOfVertex;
+      this.affected.faces.add( polygon );
    } else {
       polygon = new Polygon(halfEdge, numberOfVertex);
       polygon.index = this.faces.length;
@@ -305,6 +311,7 @@ WingedTopology.prototype.addVertex = function(pt) {
    if (this.freeVertices.length > 0) {
       let vertex = this.vertices[this.freeVertices.pop()];
       vertex.vertex.set(pt);
+      this.affected.vertices.add( vertex );
       return vertex;
    } else {
       if (this.buf.len >= (this.buf.data.length)) {
@@ -340,6 +347,7 @@ WingedTopology.prototype._createEdge = function(begVert, endVert) {
       edge = this.edges[this.freeEdges.pop()];
       edge.left.origin = begVert;
       edge.right.origin = endVert;
+      this.affected.edges.add( edge );
    } else {
       // initialized data.
       edge = new WingedEdge(begVert, endVert);
@@ -529,6 +537,7 @@ WingedTopology.prototype.insertEdge = function(prevHalf, nextHalf) {
       ++size;
    });
    oldPolygon.numberOfVertex = size;
+   this.affected.faces.add( oldPolygon );
 
    // adjustOutEdge for v0, v1. point to boundary so, ccw work better?
    return outEdge;
@@ -706,6 +715,7 @@ WingedTopology.prototype._freeVertex = function(vertex) {
    // assert !freeVertices.has(vertex);
    //this.freeVertices.push( vertex );
    this._insertFreeList(vertex.index, this.freeVertices);
+   this.affected.vertices.add( vertex );
 };
 
 WingedTopology.prototype._freeEdge = function(edge) {
@@ -720,6 +730,7 @@ WingedTopology.prototype._freeEdge = function(edge) {
    // assert !this.freeEdges.has( edge.wingedEdge );
    //this.freeEdges.push( edge.wingedEdge );
    this._insertFreeList(edge.wingedEdge.index, this.freeEdges);
+   this.affected.edges.add( edge.wingedEdge );
 };
 
 WingedTopology.prototype._freePolygon = function(polygon) {
@@ -728,6 +739,7 @@ WingedTopology.prototype._freePolygon = function(polygon) {
    // assert !freeFaces.has( polygon );
    //this.freeFaces.push( polygon );
    this._insertFreeList(polygon.index, this.freeFaces);
+   this.affected.faces.add( polygon );
 };
 
 
