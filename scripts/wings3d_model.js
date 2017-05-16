@@ -276,6 +276,17 @@ PreviewCage.prototype._resizePreviewVertex = function(oldSize) {
       preview.shaderData.resizeAttribute('color', length*4);
       preview.shaderData.uploadAttribute('color', 0, preview.color);
    }
+   // rebuild index.
+   const index = new Uint16Array(length);
+   let j = 0;
+   for (let i = 0; i < length; ++i) {
+      if (this.geometry.vertices[i].isReal()) {
+         index[j++] = i;
+      }
+   }
+   // 
+   this.previewVertex.shaderData.setIndex(index);
+   this.previewVertex.indexLength = j;
 };
 
 
@@ -300,18 +311,13 @@ PreviewCage.prototype.draw = function(gl) {
    }
 };
 
-
-PreviewCage.prototype.hasSelection = function() {
-   return (this.selectedSet.size > 0);
-}
-
-
 // draw vertex, select color, 
 PreviewCage.prototype.drawVertex = function(gl) {
    // drawing using vertex array
    try {
       gl.bindShaderData(this.previewVertex.shaderData);
-      gl.drawArrays(gl.POINTS, 0, this.geometry.vertices.length);
+      //gl.drawArrays(gl.POINTS, 0, this.geometry.vertices.length);
+      gl.drawElements(gl.POINTS, this.previewVertex.indexLength, gl.UNSIGNED_SHORT, 0);
    } catch (e) {
       console.log(e);
    }
@@ -361,6 +367,13 @@ PreviewCage.prototype.rayPick = function(ray) {
       return null;
    }
 };
+
+
+
+PreviewCage.prototype.hasSelection = function() {
+   return (this.selectedSet.size > 0);
+}
+
 
 PreviewCage.prototype.snapshotSelection = function() {
    return new Set(this.selectedSet);
@@ -979,7 +992,7 @@ PreviewCage.prototype.cutEdge = function(numberOfSegments) {
    return {vertices: vertices, splitEdges: splitEdges};
 };
 
-// collapse list of edges
+// collapse list of edges, pair with CutEdge.
 PreviewCage.prototype.collapseSplitEdge = function(splitEdges) {
    const vertexSize = this.geometry.vertices.length;
    const edgeSize = this.geometry.edges.length;
@@ -1019,6 +1032,18 @@ PreviewCage.prototype.connectVertex = function() {
    this._resizePreviewVertex(vertexSize);
 
    return {edgeList: edgeList, wingedEdgeList: wingedEdgeList};
+};
+
+
+//
+PreviewCage.prototype.dissolveConnect = function(insertEdges) {
+   // dissolve in reverse direction
+   for (let i = insertEdges.length-1; i >= 0; --i) {
+      const halfEdge = insertEdges[i];
+      this.geometry.removeEdge(halfEdge);
+   }
+
+
 };
 
 

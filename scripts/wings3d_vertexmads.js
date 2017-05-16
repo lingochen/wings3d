@@ -50,7 +50,7 @@ class VertexMadsor extends Madsor {
 
    dissolve(edgesArray) {
       this.eachPreviewCage( function(cage, edges) {
-         cage.dissolve(edges);
+         cage.dissolveConnect(edges);
       }, edgesArray);
    }
 
@@ -178,18 +178,23 @@ class VertexSelectCommand extends EditCommand {
 
 
 class VertexConnectCommand extends EditCommand {
-   constructor(madsor, insertEdges) {
+   constructor(madsor, cageArray) {
       super();
       this.madsor = madsor;
-      this.insertEdges = insertEdges;
+      this.cageArray = cageArray;
    }
 
    doIt() {
+      // reconnect
+
+      // goes to edgeMode.
 
    }
 
    undo() {
+      // restore to vertexMode.
 
+      // dissolve the connect edges.
    }
    
 }
