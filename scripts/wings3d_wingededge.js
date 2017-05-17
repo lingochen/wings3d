@@ -872,9 +872,13 @@ WingedTopology.prototype.removeEdge = function(outEdge) {
       }
    }
    // make sure everye connect edge point to the same face.
-   outPrev.eachEdge( function(outEdge) {
+   let size = 0;
+   face.eachEdge( function(outEdge) {
+      ++size;
       outEdge.face = face;
    });
+   face.numberOfVertex = size;
+   this.affected.faces.add(face);
 
    this._freePolygon(delFace);
    this._freeEdge(outEdge);

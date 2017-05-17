@@ -62,6 +62,14 @@ PreviewCage.CONST = (function() {
 }());
 
 
+PreviewCage.prototype._getGeometrySize = function() {
+   return { face: this.geometry.faces.length,
+            edge: this.geometry.edges.length,
+            vertex: this.geometry.vertices.length
+          };
+};
+
+
 PreviewCage.prototype._resizeBoundingSphere = function(oldSize) {
    let size = this.geometry.faces.length - oldSize;
    if (size > 0) {   // we only care about growth for now
@@ -187,11 +195,11 @@ PreviewCage.prototype._computePreviewIndex = function() {
 PreviewCage.prototype._updateAffected = function(affected) {
    if (affected.vertices.size > 0) {
       for (let vertex of affected.vertices) {
-         this._updateVertex(vertex);
+      //   this._updateVertex(vertex);
       }
    }
    if (affected.edges.size > 0) {
-      for (let edges of affected.edges) {
+      for (let edge of affected.edges) {
          this._updatePreviewEdge(edge.left, true);
       }
    }
@@ -206,7 +214,7 @@ PreviewCage.prototype._updateAffected = function(affected) {
 
 PreviewCage.prototype._updatePreview = function(polygon) {
    // recompute boundingSphere centroid, and if numberOfVertex changed, needs to recompute index.
-   if (polygon.index < this.boundingSpheres.length) { // will be get recompute on resize
+   if ((polygon.index < this.boundingSpheres.length) && polygon.isReal()) { // will be get recompute on resize
       const sphere = this.boundingSpheres[ polygon.index ];
       sphere.setSphere( BoundingSphere.computeSphere(sphere.polygon, sphere.center) ); 
    }
@@ -1037,12 +1045,21 @@ PreviewCage.prototype.connectVertex = function() {
 
 //
 PreviewCage.prototype.dissolveConnect = function(insertEdges) {
+   const size = this._getGeometrySize();
+
    // dissolve in reverse direction
    for (let i = insertEdges.length-1; i >= 0; --i) {
       const halfEdge = insertEdges[i];
-      this.geometry.removeEdge(halfEdge);
+      this.geometry.removeEdge(halfEdge.pair);
    }
 
+   // after deletion of faces and edges. update
+   //this._updateAffected(this.geometry.affected);
+
+   // let _resize, to update preview
+   this._resizeBoundingSphere(size.face);
+   this._resizePreview(size.vertex, size.face);
+   this._resizePreviewEdge(size.edge);
 
 };
 

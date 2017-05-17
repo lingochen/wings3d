@@ -19,8 +19,8 @@ class VertexMadsor extends Madsor {
                total += insertEdges.length;
             }
             if (total > 0) {
-               //const vertexConnect = new VertexConnectCommand(self, cageArray);
-               //Wings3D.apiExport.undoQueue(vertexConnect);
+               const vertexConnect = new VertexConnectCommand(self, cageArray);
+               Wings3D.apiExport.undoQueue(vertexConnect);
                Wings3D.apiExport.restoreEdgeMode(cageArray.wingedEdgeList);    // abusing the api?
             } else {
                // show no connection message.
@@ -48,7 +48,7 @@ class VertexMadsor extends Madsor {
       return snapshots;
    };
 
-   dissolve(edgesArray) {
+   dissolveConnect(edgesArray) {
       this.eachPreviewCage( function(cage, edges) {
          cage.dissolveConnect(edges);
       }, edgesArray);
@@ -186,15 +186,16 @@ class VertexConnectCommand extends EditCommand {
 
    doIt() {
       // reconnect
-
+      this.cageArray = this.madsor.connect();
       // goes to edgeMode.
-
+      Wings3D.apiExport.restoreEdgeMode(this.cageArray.wingedEdgeList);    // abusing the api?
    }
 
    undo() {
       // restore to vertexMode.
-
+      Wings3D.apiExport.restoreVertexMode();
       // dissolve the connect edges.
+      this.madsor.dissolveConnect(this.cageArray.edgeList);
    }
    
 }
