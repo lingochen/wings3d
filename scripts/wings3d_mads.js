@@ -20,7 +20,7 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       var self = this;
       // movement for (x, y, z)
       for (let axis=0; axis < 3; ++axis) {
-         var menuItem = document.querySelector('#' + mode + 'Move' + axisName[axis]);
+         let menuItem = document.querySelector('#' + mode + 'Move' + axisName[axis]);
          if (menuItem) {
             menuItem.addEventListener("click", function(ev) {
                Wings3D.view.attachHandlerMouseMove(new MouseMoveAlongAxis(self, axis));
@@ -28,14 +28,19 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
          } 
       }
       // free Movement.
-      var menuItem = document.querySelector('#' + mode + 'MoveFree');
+      let menuItem = document.querySelector('#' + mode + 'MoveFree');
       if (menuItem) {
          menuItem.addEventListener('click', function(ev) {
             Wings3D.view.attachHandlerMouseMove(new MoveFreePositionHandler(self));
          });
       }
       // normal Movement.
-
+      menuItem = document.querySelector('#' + mode + 'MoveNormal');
+      if (menuItem) {
+         menuItem.addEventListener('click', function(ev) {
+            Wings3D.view.attachHandlerMouseMove(new MoveAlongNormal(self));
+         });
+      }
       // constructor
    }
 
@@ -136,8 +141,8 @@ class MovePositionHandler extends MouseMoveHandler {
    constructor(madsor) {
       super();
       this.madsor = madsor;
-      this.snapshots = madsor.snapshotPosition();
-      this.movement = [0.0, 0.0, 0.0];             // cumulative movement.
+      // this.snapshots
+      // this.movement
    }
 
 
@@ -154,6 +159,8 @@ class MovePositionHandler extends MouseMoveHandler {
 class MouseMoveAlongAxis extends MovePositionHandler {
    constructor(madsor, axis) {   // 0 = x axis, 1 = y axis, 2 = z axis.
       super(madsor);
+      this.snapshots = madsor.snapshotPosition();
+      this.movement = [0.0, 0.0, 0.0];             // cumulative movement.
       this.axis = axis;
    }
 
@@ -167,9 +174,26 @@ class MouseMoveAlongAxis extends MovePositionHandler {
 }
 
 
+class MoveAlongNormal extends MovePositionHandler {
+   constructor(madsor) {
+      super(madsor);
+      this.snapshots = madsor.snapshotPositionAndNormal();
+      this.movement = 0.0;                    // cumulative movement.
+   }
+
+   handleMouseMove(ev) {
+      var move = this._calibrateMovement(ev.movementX);
+      this.madsor.moveSelection(move, this.snapshots);
+      this.movement += move;
+   }
+}
+
+
 class MoveFreePositionHandler extends MovePositionHandler {
    constructor(madsor) {
       super(madsor);
+      this.snapshots = madsor.snapshotPosition();
+      this.movement = [0.0, 0.0, 0.0];             // cumulative movement.
    }
 
    handleMouseMove(ev, cameraView) {
@@ -200,6 +224,7 @@ class MoveCommand extends EditCommand {
       this.madsor.restoreMoveSelection(this.snapshots);
    }
 }
+
 
 class ToggleModeCommand extends EditCommand {
    constructor(doFn, undoFn, snapshots) {

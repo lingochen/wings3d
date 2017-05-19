@@ -221,13 +221,23 @@ PreviewCage.prototype._updatePreview = function(polygon) {
 };
 
 
+// usually deleted edge is already deselected.?
 PreviewCage.prototype._updatePreviewEdge = function(edge, updateShader) {
-   const index = edge.wingedEdge.index * 6; // 2*3
-   this.previewEdge.line.set(edge.origin.vertex, index);
-   this.previewEdge.line.set(edge.pair.origin.vertex, index+3);
+   const wingedEdge = edge.wingedEdge;
+   if (wingedEdge.isReal()) {
+      const index = wingedEdge.index * 6; // 2*3
+      this.previewEdge.line.set(edge.origin.vertex, index);
+      this.previewEdge.line.set(edge.pair.origin.vertex, index+3);
 
-   if (updateShader) {
-      this.previewEdge.shaderData.uploadAttribute('position', index*4, this.previewEdge.line.subarray(index, index+6));
+      if (updateShader) {
+         this.previewEdge.shaderData.uploadAttribute('position', index*4, this.previewEdge.line.subarray(index, index+6));
+      }
+   } else {    // deleted edge.
+      this.previewEdge.color.fill(0.0, wingedEdge.index, wingedEdge.index+2);
+
+      if (updateShader) {
+         // 
+      }
    }
 };
 
@@ -380,7 +390,7 @@ PreviewCage.prototype.rayPick = function(ray) {
 
 PreviewCage.prototype.hasSelection = function() {
    return (this.selectedSet.size > 0);
-}
+};
 
 
 PreviewCage.prototype.snapshotSelection = function() {
@@ -607,8 +617,15 @@ PreviewCage.prototype.restoreMoveSelection = function(snapshot) {
 
 PreviewCage.prototype.moveSelection = function(movement, snapshot) {
    // first move geometry's position
-   for (let vertex of snapshot.vertices) {
-      vec3.add(vertex.vertex, vertex.vertex, movement);
+   if (snapshot.normal) {
+      let i = 0; 
+      for (let vertex of snapshot.vertices) {
+         vec3.scaleAndAdd(vertex.vertex, vertex.vertex, snapshot.normal[i++], movement);  // movement is magnitude
+      }
+   } else {
+      for (let vertex of snapshot.vertices) {
+         vec3.add(vertex.vertex, vertex.vertex, movement);
+      }
    }
    // todo: we really should update as little as possible.
    const vertices = this.geometry.buf.data.subarray(0, this.geometry.buf.len);
@@ -618,12 +635,13 @@ PreviewCage.prototype.moveSelection = function(movement, snapshot) {
 };
 
 
-PreviewCage.prototype.snapshotPosition = function(vertices) {
+PreviewCage.prototype.snapshotPosition = function(vertices, normalArray) {
    var ret = {
       faces: new Set,
       vertices: null,
       wingedEdges: new Set,
       position: null,
+      normal: normalArray,
    };
    ret.vertices = vertices;
    // allocated save position data.
@@ -660,6 +678,8 @@ PreviewCage.prototype.snapshotEdgePosition = function() {
    return this.snapshotPosition(vertices);
 };
 
+
+
 PreviewCage.prototype.snapshotFacePosition = function() {
    var vertices = new Set;
    // first collect all the vertex
@@ -676,6 +696,36 @@ PreviewCage.prototype.snapshotFacePosition = function() {
 PreviewCage.prototype.snapshotVertexPosition = function() {
    const vertices = new Set(this.selectedSet);
    return this.snapshotPosition(vertices);
+};
+
+
+PreviewCage.prototype.snapshotFacePositionAndNormal = function() {
+   const vertices = new Set;
+   let normalMap = new Map;
+   // first collect all the vertex
+   for (let polygon of this.selectedSet) {
+      polygon.eachVertex( function(vertex) {
+         if (!vertices.has(vertex)) {
+            vertices.add(vertex);
+            const normal = [polygon.normal[0], polygon.normal[1], polygon.normal[2]];
+            normalMap.set(vertex, normal);
+         } else {
+            const normal = normalMap.get(vertex);
+            vec3.add(normal, normal, polygon.normal); 
+         }
+      });
+   }
+   // copy normal;
+   const normalArray = new Float32Array(vertices.size*3);
+   const retArray = [];
+   let i = 0;
+   for (let [_vert, normal] of normalMap) {
+      let inputNormal = normalArray.subarray(i, i+3);
+      vec3.copy(inputNormal, normal);
+      retArray.push(inputNormal);
+      i+=3;
+   }
+   return this.snapshotPosition(vertices, retArray);
 };
 
 
@@ -1043,7 +1093,7 @@ PreviewCage.prototype.connectVertex = function() {
 };
 
 
-//
+// pair with connectVertex.
 PreviewCage.prototype.dissolveConnect = function(insertEdges) {
    const size = this._getGeometrySize();
 
@@ -1054,7 +1104,7 @@ PreviewCage.prototype.dissolveConnect = function(insertEdges) {
    }
 
    // after deletion of faces and edges. update
-   //this._updateAffected(this.geometry.affected);
+   this._updateAffected(this.geometry.affected);
 
    // let _resize, to update preview
    this._resizeBoundingSphere(size.face);

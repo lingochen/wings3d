@@ -43,6 +43,14 @@ class FaceMadsor extends Madsor {
       return snapshots;
    }
 
+   snapshotPositionAndNormal() {
+      var snapshots = [];
+      this.eachPreviewCage( function(preview) {
+         snapshots.push( preview.snapshotFacePositionAndNormal() );
+      });
+      return snapshots;
+   }
+
    // extrude Face
    extrude(reuseLoops) {
       var edgeLoops = [];

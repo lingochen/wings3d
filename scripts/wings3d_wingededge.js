@@ -244,6 +244,7 @@ Vertex.prototype.isIsolated = function() {
 var Polygon = function(startEdge, size) {
    this.halfEdge = startEdge;
    this.numberOfVertex = size;       // how many vertex in the polygon
+   this.update(); //this.computeNormal();
    this.index = -1;
 };
 
@@ -269,6 +270,36 @@ Polygon.prototype.eachEdge = function(callbackFn) {
       callbackFn(current);
       current = current.next;
    } while (current != begin);
+};
+
+// ccw ordering
+Polygon.prototype.computeNormal = function() {
+   const U = vec3.create();
+   const V = vec3.create();
+   const v1 = this.halfEdge.origin.vertex;
+   const v0 = this.halfEdge.next.origin.vertex;
+   const v2 = this.halfEdge.next.destination().vertex;
+   vec3.sub(U, v1, v0);
+   vec3.sub(V, v2, v0);
+   if (!this.normal) {
+      this.normal = vec3.create();
+   }
+   vec3.cross(this.normal, V, U);
+   vec3.normalize(this.normal, this.normal);
+};
+
+// recompute numberOfVertex and normal.
+Polygon.prototype.update = function() {
+   const begin = this.halfEdge;
+   let current = begin;
+   this.numberOfVertex = 0;
+   do {
+      current.face = this;
+      ++this.numberOfVertex;
+      current = current.next;
+   } while (current !== begin);
+   // compute normal.
+   this.computeNormal();
 };
 
 
@@ -297,6 +328,7 @@ WingedTopology.prototype._createPolygon = function(halfEdge, numberOfVertex) {
       polygon = this.faces[ this.freeFaces.pop() ];
       polygon.halfEdge = halfEdge;
       polygon.numberOfVertex = numberOfVertex;
+      polygon.update();
       this.affected.faces.add( polygon );
    } else {
       polygon = new Polygon(halfEdge, numberOfVertex);
@@ -758,6 +790,7 @@ WingedTopology.prototype._collapseEdge = function(halfEdge) {
    let current = pairNext;
    while (current !== halfEdge) {
       current.origin = toVertex;
+      this.affected.edges.add(current.wingedEdge);
       current = current.pair.next;
    }
 
@@ -771,11 +804,13 @@ WingedTopology.prototype._collapseEdge = function(halfEdge) {
       face.halfEdge = next;
    }
    face.numberOfVertex--;
+   this.affected.faces.add(face);
    face = pair.face;
    if (face.halfEdge === pair) {
       face.halfEdge = pairNext;
    }
    face.numberOfVertex--;
+   this.affected.faces.add(face);
 
    // adjust vertex
    if (toVertex.outEdge === pair) {
