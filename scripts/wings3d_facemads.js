@@ -27,6 +27,12 @@ class FaceMadsor extends Madsor {
             Wings3D.view.attachHandlerMouseMove(new FaceExtrudeFreeHandler(self));
          });
       }
+      menuItem = document.querySelector('#faceExtrudeNormal');
+      if (menuItem) {
+         menuItem.addEventListener('click', function(ev) {
+            Wings3D.view.attachHandlerMouseMove(new FaceExtrudeNormalHandler(self));
+         });
+      }
       // setup highlite face, at most 28 triangles.
       var buf = new Float32Array(3*30);
       this.trianglefan = {data: buf, length: 0};
@@ -217,18 +223,40 @@ class FaceExtrudeFreeHandler extends MoveFreePositionHandler {
    }
 }
 
+class FaceExtrudeNormalHandler extends MoveAlongNormal {
+   constructor(madsor) {
+      const contourEdges = madsor.extrude();
+      super(madsor);
+      this.contourEdges = contourEdges;
+   }
+
+   _commit(view) {
+      view.undoQueue(new ExtrudeFaceCommand(this.madsor, this.movement, this.snapshots, this.contourEdges, true));
+   }
+
+   _cancel() {
+      this.madsor.restoreMoveSelection(this.snapshots);
+      this.madsor.collapseEdge(this.contourEdges);
+   }
+}
+
 class ExtrudeFaceCommand extends EditCommand {
-   constructor(faceMadsor, movement, snapshots, extrudeEdgesContours) {
+   constructor(faceMadsor, movement, snapshots, extrudeEdgesContours, useNormal = false) {
       super();
       this.madsor = faceMadsor;
       this.movement = movement;
       this.snapshots = snapshots;
+      this.useNormal = useNormal;
       this.extrudeEdgesContoursArray = extrudeEdgesContours;
    }
 
    doIt() {
       this.extrudeEdgesContoursArray = this.madsor.extrude( this.extrudeEdgesContoursArray );
-      this.snapshots = this.madsor.snapshotPosition();
+      if (this.useNormal) {
+         this.snapshots = this.madsor.snapshotPositionAndNormal();
+      } else {
+         this.snapshots = this.madsor.snapshotPosition();
+      }
       this.madsor.moveSelection(this.movement, this.snapshots);
    }
 
