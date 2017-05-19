@@ -679,7 +679,6 @@ PreviewCage.prototype.snapshotEdgePosition = function() {
 };
 
 
-
 PreviewCage.prototype.snapshotFacePosition = function() {
    var vertices = new Set;
    // first collect all the vertex
@@ -722,6 +721,50 @@ PreviewCage.prototype.snapshotFacePositionAndNormal = function() {
    for (let [_vert, normal] of normalMap) {
       let inputNormal = normalArray.subarray(i, i+3);
       vec3.copy(inputNormal, normal);
+      retArray.push(inputNormal);
+      i+=3;
+   }
+   return this.snapshotPosition(vertices, retArray);
+};
+
+
+PreviewCage.prototype.snapshotEdgePositionAndNormal = function() {
+   const vertices = new Set;
+   const normalMap = new Map; 
+   // first collect all the vertex
+   const tempNorm = vec3.create();
+   for (let wingedEdge of this.selectedSet) {
+      const p0 = wingedEdge.left.face;
+      const p1 = wingedEdge.right.face;
+      //vec3.normalize(tempNorm, tempNorm);
+      for (let edge of wingedEdge) {
+         let vertex = edge.origin;
+         let normal;
+         if (!vertices.has(vertex)) {
+            vertices.add(vertex);
+            normal = new Set;
+            normalMap.set(vertex, normal);
+         } else {
+            normal = normalMap.get(vertex);
+         }
+         if (p0 !== null) {
+            normal.add( p0 );
+         }
+         if (p1 !== null) {
+            normal.add( p1 );
+         }
+      }
+   }
+   // copy normal
+   const normalArray = new Float32Array(vertices.size*3);
+   normalArray.fill(0.0);
+   const retArray = [];
+   let i = 0;
+   for (let [_vert, normal] of normalMap) {
+      let inputNormal = normalArray.subarray(i, i+3);
+      for (let poly of normal) {
+         vec3.add(inputNormal, inputNormal, poly.normal);
+      }
       retArray.push(inputNormal);
       i+=3;
    }

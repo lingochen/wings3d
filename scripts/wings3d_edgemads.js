@@ -33,6 +33,14 @@ class EdgeMadsor extends Madsor {
       return snapshots;
    }
 
+   snapshotPositionAndNormal() {
+      var snapshots = [];
+      this.eachPreviewCage( function(preview) {
+         snapshots.push( preview.snapshotEdgePositionAndNormal() );
+      });
+      return snapshots;
+   }
+
    cut(numberOfSegments) {
       var snapshots = {vertices: [], splitEdges: []};
       this.eachPreviewCage( function(preview) {
