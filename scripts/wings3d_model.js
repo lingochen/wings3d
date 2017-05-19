@@ -727,6 +727,27 @@ PreviewCage.prototype.snapshotFacePositionAndNormal = function() {
    return this.snapshotPosition(vertices, retArray);
 };
 
+PreviewCage.prototype.snapshotVertexPositionAndNormal = function() {
+   const vertices = new Set(this.selectedSet);
+   const normalArray = [];
+   const array = new Float32Array(vertices.size*3);
+   array.fill(0.0);
+   // copy normal
+   let i = 0;
+   for (let vertex of vertices) {
+      let normal = array.subarray(i, i+3);
+      normalArray.push( normal );
+      vertex.eachOutEdge( function(outEdge) {
+         if (outEdge.isNotBoundary()) {
+            vec3.add(normal, normal, outEdge.face.normal);
+         }
+      });
+      vec3.normalize(normal, normal);        // finally, we can safely normalized?
+      i +=3;
+   }
+
+   return this.snapshotPosition(vertices, normalArray);
+};
 
 PreviewCage.prototype.snapshotEdgePositionAndNormal = function() {
    const vertices = new Set;

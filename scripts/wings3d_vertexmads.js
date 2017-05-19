@@ -38,6 +38,14 @@ class VertexMadsor extends Madsor {
       return snapshots;
    }
 
+   snapshotPositionAndNormal() {
+      var snapshots = [];
+      this.eachPreviewCage( function(preview) {
+         snapshots.push( preview.snapshotVertexPositionAndNormal() );
+      });
+      return snapshots;
+   }
+
    connect() {
       let snapshots = {edgeList: [], wingedEdgeList: []};
       this.eachPreviewCage( function(cage) {
