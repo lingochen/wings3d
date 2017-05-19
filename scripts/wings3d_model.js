@@ -583,7 +583,8 @@ PreviewCage.prototype.computeSnapshot = function(snapshot) {
    // update all affected polygon(use sphere). copy and recompute vertex.
    for (let polygon of snapshot.faces) {
       const sphere = this.boundingSpheres[polygon.index];
-      // recompute sphere center.
+      // recompute sphere center. and normal
+      polygon.computeNormal();
       sphere.setSphere( BoundingSphere.computeSphere(polygon, sphere.center) );
    }
    // done, update shader data, should we update each vertex individually?
