@@ -14,16 +14,12 @@ class VertexMadsor extends Madsor {
       if (menuItem) {
          menuItem.addEventListener('click', function(ev) {
             const cageArray = self.connect();
-            let total = 0;
-            for (let insertEdges of cageArray.edgeList) {
-               total += insertEdges.length;
-            }
-            if (total > 0) {
+            if (cageArray) {
                const vertexConnect = new VertexConnectCommand(self, cageArray);
                Wings3D.apiExport.undoQueue(vertexConnect);
                Wings3D.apiExport.restoreEdgeMode(cageArray.wingedEdgeList);    // abusing the api?
             } else {
-               // show no connection message.
+               // show no connection possible message.
 
             }
          });
@@ -48,12 +44,18 @@ class VertexMadsor extends Madsor {
 
    connect() {
       let snapshots = {edgeList: [], wingedEdgeList: []};
+      let total = 0;
       this.eachPreviewCage( function(cage) {
          const snapshot = cage.connectVertex();
+         total += snapshot.edgeList.length;
          snapshots.edgeList.push( snapshot.edgeList );
          snapshots.wingedEdgeList.push( snapshot.wingedEdgeList );
       });
-      return snapshots;
+      if (total > 0) {
+         return snapshots;
+      }
+      // return undefined, or null?
+      return undefined;
    };
 
    dissolveConnect(edgesArray) {
