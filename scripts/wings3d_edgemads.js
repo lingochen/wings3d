@@ -11,7 +11,7 @@ class EdgeMadsor extends Madsor {
    constructor() {
       super('edge');
       // cut commands
-      var self = this;
+      const self = this;
       for (let numberOfSegments of [2, 3, 4, 5, 10]) {
          let menuItem = document.querySelector('#cutLine'+numberOfSegments);
          if (menuItem) {
@@ -19,6 +19,29 @@ class EdgeMadsor extends Madsor {
                const cutEdge = new CutEdgeCommand(self, numberOfSegments);
                Wings3D.apiExport.undoQueue(cutEdge);
                cutEdge.doIt();
+            });
+         }
+      }
+      // cutEdge Dialog
+      let menuItem = document.querySelector('#cutAsk');
+      if (menuItem) {
+         const form = Wings3D.setupDialog('#cutLineDialog', function(data) {
+            if (data['Segments']) {
+               const number = parseInt(data['Segments'], 10);
+               if ((number != NaN) && (number > 0) && (number < 100)) { // sane input
+                  const cutEdge = new CutEdgeCommand(self, number);
+                  Wings3D.apiExport.undoQueue(cutEdge);
+                  cutEdge.doIt();
+               }
+            }
+         });
+         if (form) {
+            // show Form when menuItem clicked
+            menuItem.addEventListener('click', function(ev) {
+               // position then show form;
+               Wings3D.contextmenu.positionDom(form, Wings3D.contextmenu.getPosition(ev));
+               form.style.display = 'block';
+               form.reset();
             });
          }
       }
@@ -170,6 +193,10 @@ class EdgeSelectCommand extends EditCommand {
    }
 }
 
+
+class CutEdgeMoveCommand extends MouseMoveHandler {
+   
+}
 
 
 class CutEdgeCommand extends EditCommand {
