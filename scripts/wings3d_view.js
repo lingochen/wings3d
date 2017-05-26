@@ -480,5 +480,6 @@ function createView(gl) {
    my.theme = my.nativeTheme;
    console.log("Workspace init successful");
    my.renderWorld = createRenderWorld();
+   my.wavefront_obj = new WavefrontObjImportExporter;
    return my;
 };

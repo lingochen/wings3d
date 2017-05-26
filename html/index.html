@@ -20,7 +20,8 @@
    <script src="../scripts/wings3d_boundingvolume.js"></script>
    <script src="../scripts/wings3d_model.js"></script>
    <script src="../scripts/plugins/cubeshape.js"></script>
-
+   <script src="../scripts/wings3d_importexport.js"></script>
+   <script src="../scripts/plugins/wavefront_obj.js"></script>
 
   <script>
     function help(text) {
@@ -57,7 +58,7 @@
           <hr/>
           <li><a onmouseover="help('Revert current scene to the saved contents')" onmouseleave="help()">Revert</a></li>
           <hr/>
-          <li><a>Import</a></li>
+          <li class="sub"><a>Import</a><ul id="fileImport"> </ul></li>
           <li><a>Export</a></li>
           <li><a>Export Selected</a></li>
           <hr/>

@@ -363,7 +363,7 @@ PreviewCage.prototype.rayPick = function(ray) {
    var hitEdge = null;
    var center;
    var hitT = 10000000;   // z_far is the furthest possible intersection
-   for (i = 0; i < hitSphere.length; ++i) {
+   for (let i = 0; i < hitSphere.length; ++i) {
       // walk the face, build a triangle on centroid + edge's 2 point. check for intersection
       var sphere = hitSphere[i];
       sphere.polygon.eachEdge( function(edge) {
