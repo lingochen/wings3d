@@ -163,7 +163,7 @@ PreviewCage.prototype._computePreviewIndex = function() {
    this.numberOfTriangles = this.geometry.faces.reduce( function(acc, element) {
       return acc + element.numberOfVertex; // -2; for half the vertex
    }, 0);
-   const index = new Uint16Array(this.numberOfTriangles*3 );
+   const index = new Uint32Array(this.numberOfTriangles*3 );
    let length = 0;
    // recompute all index. (no optimization unless prove to be bottleneck)
    let barycentric = this.geometry.vertices.length;
@@ -295,7 +295,7 @@ PreviewCage.prototype._resizePreviewVertex = function(oldSize) {
       preview.shaderData.uploadAttribute('color', 0, preview.color);
    }
    // rebuild index.
-   const index = new Uint16Array(length);
+   const index = new Uint32Array(length);
    let j = 0;
    for (let i = 0; i < length; ++i) {
       if (this.geometry.vertices[i].isReal()) {
@@ -323,7 +323,7 @@ PreviewCage.prototype.draw = function(gl) {
    // draw using index
    try {
       gl.bindShaderData(this.preview.shaderData);
-      gl.drawElements(gl.TRIANGLES, this.preview.indexLength, gl.UNSIGNED_SHORT, 0);
+      gl.drawElements(gl.TRIANGLES, this.preview.indexLength, gl.UNSIGNED_INT, 0);
    } catch (e) {
       console.log(e);
    }
@@ -335,7 +335,7 @@ PreviewCage.prototype.drawVertex = function(gl) {
    try {
       gl.bindShaderData(this.previewVertex.shaderData);
       //gl.drawArrays(gl.POINTS, 0, this.geometry.vertices.length);
-      gl.drawElements(gl.POINTS, this.previewVertex.indexLength, gl.UNSIGNED_SHORT, 0);
+      gl.drawElements(gl.POINTS, this.previewVertex.indexLength, gl.UNSIGNED_INT, 0);
    } catch (e) {
       console.log(e);
    }

@@ -21,7 +21,16 @@ function createWebGLContext(canvasID, attrib) {
       gl = canvas.getContext("webgl", attrib) || canvas.getContext("experimental-webgl", attrib);
       if (gl) {
          // init_extensions(), init_restrictions()
-         gl.getExtension("OES_standard_derivatives"); // webgl2 is standard.
+         let ext = gl.getExtension("OES_standard_derivatives"); // webgl2 is standard.
+         if (ext === null) {
+            console.log("No OES_standard_derivatives");
+            return null;   
+         }
+         ext = gl.getExtension("OES_element_index_uint");
+         if (ext === null) {
+            console.log("No OES_element_index_uint");
+            return null;
+         }
          console.log("WebGL 1 init with extension");
       } else {
          alert("Unable to initialize WebGL");
