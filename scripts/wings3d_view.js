@@ -392,6 +392,11 @@ function createView(gl) {
    };
 
    _pvt.undo = {queue: [], current: -1};
+   // undo queueCombo, convenient functions
+   my.undoQueueCombo = function(editCommands) {
+      // wrap the array in a combo
+      const combo = new EditCombo(editCommands);
+   };
    // undo queue
    my.undoQueue = function(editCommand) {
       if ( (_pvt.undo.queue.length-1) > _pvt.undo.current ) {
@@ -419,6 +424,7 @@ function createView(gl) {
    Wings3D.apiExport.redoEdit = my.redoEdit;
    Wings3D.apiExport.undoEdit = my.undoEdit;
    Wings3D.apiExport.undoQueue = my.undoQueue;
+   Wings3D.apiExport.undoQueueCombo = my.undoQueueCombo;
 
    // init Prop
    my.prop = {

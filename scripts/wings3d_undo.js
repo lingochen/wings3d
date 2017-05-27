@@ -38,3 +38,23 @@ class EditCommand {
    //undo() {}
 
 }
+
+class EditCommandCombo extends EditCommand {
+   constructor(editCommands) {
+      this.editCommands = editCommands;
+   }
+
+   doIt() {
+      // start from beginning
+      for (let cmd of this.editCommands) {
+         cmd.doIt();
+      }
+   }
+
+   undo() {
+      // walk from last to first
+      for (let i = this.editCommmands.length-1; i >= 0; --i) {
+         this.editCommands[i].undo();
+      }
+   }
+}

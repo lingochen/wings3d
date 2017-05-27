@@ -52,9 +52,20 @@ class ImportExporter {
 
       reader.onload = function(ev) {
          const text = reader.result;
-         const mesh = self._import(text);
-         const cage = Wings3D.apiExport.putIntoWorld(mesh);
-         Wings3D.apiExport.undoQueue( new CreatePreviewCageCommand(cage) );
+         self.objs = [];
+         self.obj = new WingedTopology;
+         const meshes = self._import(text);
+         const cages = [];
+         for (let mesh of meshes) {
+            let cage = Wings3D.apiExport.putIntoWorld(mesh);
+            cages.push( new CreatePreviewCageCommand(cage) );
+         }
+         if (cages.length > 1) {
+            // combo
+            Wings3D.apiExport.undoQueueCombo( cages );
+         } else if (cages.length > 0) {
+            Wings3D.apiExport.undoQueue(cages[0]);
+         }
       }
 
       reader.readAsText(file);

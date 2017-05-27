@@ -15,34 +15,39 @@ class WavefrontObjImportExporter extends ImportExporter {
 
       if (linesMatch) {
          for (let line of linesMatch) {
+            line = line.trim();            // how can we remove end of space in regex?
             let split = line.split(/\s+/);
             let tag = split.shift();
             if (typeof this[tag] === 'function') {
                this[tag](split);
             } else {
-               console.log("unexpected tag: " + tag);
+               console.log("unexpected tag: " + tag); // should not happened
             }
          }
          // done reading, return the object.
-         return this.obj;
+         this.objs.push( this.obj );
+         return this.objs;
       }
    }
 
    o(objName) {
-      if (this.obj) {   //
-
+      if (this.obj.vertices.length == 0) {   //
+         // no needs to create a new one.
+      } else {
+         this.objs.push( this.obj );
+         this.obj = new WingedTopology;
       }
-      this.obj = new WingedTopology;
-      // create new obj
-      return objName;
+      // assignedName
+      this.obj.name = objName;
    }
 
    g(groupNames) {
+      // to be implemented later
 
    }
 
    s(groupNumber) {
-
+      // to be implemented later
    }
 
    v(vertex) {
