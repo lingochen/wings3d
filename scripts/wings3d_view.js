@@ -81,6 +81,7 @@ function createView(gl) {
    Wings3D.apiExport.restoreVertexMode = _pvt.restoreVertexMode;
    Wings3D.apiExport.restoreFaceMode = _pvt.restoreFaceMode;
    Wings3D.apiExport.restoreEdgeMode = _pvt.restoreEdgeMode;
+   Wings3D.apiExport.currentMode = function() { return _pvt.currentMode; };
 
    my.loadMatrices = function(includeLights) {
       var projection = my.projection(mat4.create()); // passed identity matrix.
@@ -395,7 +396,8 @@ function createView(gl) {
    // undo queueCombo, convenient functions
    my.undoQueueCombo = function(editCommands) {
       // wrap the array in a combo
-      const combo = new EditCombo(editCommands);
+      const combo = new EditCommandCombo(editCommands);
+      my.undoQueue( combo );
    };
    // undo queue
    my.undoQueue = function(editCommand) {

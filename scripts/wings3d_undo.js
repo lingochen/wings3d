@@ -41,6 +41,7 @@ class EditCommand {
 
 class EditCommandCombo extends EditCommand {
    constructor(editCommands) {
+      super();
       this.editCommands = editCommands;
    }
 
@@ -53,7 +54,7 @@ class EditCommandCombo extends EditCommand {
 
    undo() {
       // walk from last to first
-      for (let i = this.editCommmands.length-1; i >= 0; --i) {
+      for (let i = this.editCommands.length-1; i >= 0; --i) {
          this.editCommands[i].undo();
       }
    }

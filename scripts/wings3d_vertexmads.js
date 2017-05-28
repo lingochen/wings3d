@@ -13,15 +13,7 @@ class VertexMadsor extends Madsor {
       var menuItem = document.querySelector('#vertexConnect');
       if (menuItem) {
          menuItem.addEventListener('click', function(ev) {
-            const cageArray = self.connect();
-            if (cageArray) {
-               const vertexConnect = new VertexConnectCommand(self, cageArray);
-               Wings3D.apiExport.undoQueue(vertexConnect);
-               Wings3D.apiExport.restoreEdgeMode(cageArray.wingedEdgeList);    // abusing the api?
-            } else {
-               // show no connection possible message.
-
-            }
+            self.connectVertex();
          });
       }
    }
@@ -40,6 +32,18 @@ class VertexMadsor extends Madsor {
          snapshots.push( preview.snapshotVertexPositionAndNormal() );
       });
       return snapshots;
+   }
+
+   connectVertex() {
+      const cageArray = this.connect();
+      if (cageArray) {
+         const vertexConnect = new VertexConnectCommand(this, cageArray);
+         Wings3D.apiExport.undoQueue(vertexConnect);
+         Wings3D.apiExport.restoreEdgeMode(cageArray.wingedEdgeList);    // abusing the api?
+      } else {
+         // show no connection possible message.
+
+      }
    }
 
    connect() {

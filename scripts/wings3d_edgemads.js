@@ -16,9 +16,7 @@ class EdgeMadsor extends Madsor {
          let menuItem = document.querySelector('#cutLine'+numberOfSegments);
          if (menuItem) {
             menuItem.addEventListener('click', function(ev) {
-               const cutEdge = new CutEdgeCommand(self, numberOfSegments);
-               Wings3D.apiExport.undoQueue(cutEdge);
-               cutEdge.doIt();
+               self.cutEdge(numberOfSegments);
             });
          }
       }
@@ -29,9 +27,7 @@ class EdgeMadsor extends Madsor {
             if (data['Segments']) {
                const number = parseInt(data['Segments'], 10);
                if ((number != NaN) && (number > 0) && (number < 100)) { // sane input
-                  const cutEdge = new CutEdgeCommand(self, number);
-                  Wings3D.apiExport.undoQueue(cutEdge);
-                  cutEdge.doIt();
+                  self.cutEdge(number);
                }
             }
          });
@@ -44,6 +40,13 @@ class EdgeMadsor extends Madsor {
                form.reset();
             });
          }
+      }
+      // cutAndConnect
+      menuItem = document.querySelector('#cutAndConnect');
+      if (menuItem) {
+         menuItem.addEventListener('click', function(ev) {
+            self.cutAndConnect();
+         });
       }
    }
 
@@ -62,6 +65,27 @@ class EdgeMadsor extends Madsor {
          snapshots.push( preview.snapshotEdgePositionAndNormal() );
       });
       return snapshots;
+   }
+
+   cutEdge(numberOfSegments) {
+      const cutEdge = new CutEdgeCommand(this, numberOfSegments);
+      Wings3D.apiExport.undoQueue(cutEdge);
+      cutEdge.doIt();
+   }
+
+   cutAndConnect() {
+      const cutEdge = new CutEdgeCommand(this, 2);
+      cutEdge.doIt();
+      let vertexMadsor = Wings3D.apiExport.currentMode();   // assurely it vertexMode
+      let result = vertexMadsor.connect();
+      if (result) {
+         const vertexConnect = new VertexConnectCommand(vertexMadsor, result);
+         Wings3D.apiExport.undoQueueCombo([cutEdge, vertexConnect]);
+         Wings3D.apiExport.restoreEdgeMode(result.wingedEdgeList);
+      } else { // no connection possible
+         cutEdge.undo();
+         // post on geomoetryStatus
+      }
    }
 
    cut(numberOfSegments) {
