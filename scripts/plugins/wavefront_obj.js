@@ -53,6 +53,7 @@ class WavefrontObjImportExporter extends ImportExporter {
    v(vertex) {
       // should we do error check?
       this.obj.addVertex(vertex);
+      this.vertexCount++;
    }
 
    f(index) {
@@ -66,7 +67,11 @@ class WavefrontObjImportExporter extends ImportExporter {
             console.log("face index out of bound: " + idx);
          }
       }
-      this.obj.addPolygon(faceIndex);
+      let polygonIndex = this.obj.addPolygon(faceIndex);
+      if (polygonIndex === null) {
+         this.non_manifold.push( this.polygonCount );    // addup failure.
+      }
+      this.polygonCount++;
    }
 }
 

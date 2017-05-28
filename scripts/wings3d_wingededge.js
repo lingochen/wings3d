@@ -234,6 +234,23 @@ Vertex.prototype.linkEdge = function(outHalf, inHalf) { // left, right of winged
    return true;
 };
 
+Vertex.prototype.unlinkEdge = function(outHalf, inHalf)  {// left, right of winged edge
+   const prev = outHalf.prev();
+   if (prev === null) {
+      console.log("bad prev");
+      return;
+   }
+   if (this.outEdge === outHalf) {
+      if (prev === outHalf) {
+         this.outEdge = null;
+         return;
+      }
+      this.outEdge = prev;
+   }
+   // remove from circular list.
+   prev.next = inHalf.next;
+};
+
 Vertex.prototype.isIsolated = function() {
    return (this.outEdge === null);
 };
@@ -296,6 +313,10 @@ Polygon.prototype.update = function() {
    do {
       current.face = this;
       ++this.numberOfVertex;
+      if (this.numberOfVertex > 1000) {   // break;   
+         console.log("something is wrong with polygon link list");
+         return;
+      }
       current = current.next;
    } while (current !== begin);
    // compute normal.
@@ -399,9 +420,18 @@ WingedTopology.prototype.addEdge = function(begVert, endVert) {
    var edge = this._createEdge(begVert, endVert).wingedEdge;
 
    // Link outedge, splice if needed
-   begVert.linkEdge(edge.left, edge.right);
+   if (!begVert.linkEdge(edge.left, edge.right)) {
+      // release the edge
+      this._freeEdge(edge.left);
+      return null;
+   }
    // Link inedge, splice if needed
-   endVert.linkEdge(edge.right, edge.left);
+   if (!endVert.linkEdge(edge.right, edge.left)) {
+      begVert.unlinkEdge(edge.left, edge.right);
+      // release the endge
+      this._freeEdge(edge.right);
+      return null; 
+   }
 
    // return outEdge.
    return edge.left;
@@ -459,6 +489,15 @@ WingedTopology.prototype.spliceAdjacent = function(inEdge, outEdge) {
     return true;
 };
 
+// failed addPolygon. free and unlink edges.
+WingedTopology.prototype._unwindNewEdges = function(halfEdges) {
+   for (let halfEdge of halfEdges) {
+      let pair = halfEdge.pair;
+      halfEdge.origin.unlinkEdge(halfEdge, pair);
+      pair.origin.unlinkEdge(pair, halfEdge);
+      this._freeEdge(halfEdge);
+   }
+};
 
 // passed in an array of vertex index. automatically create the required edge.
 // return polygon index.
@@ -471,6 +510,7 @@ WingedTopology.prototype.addPolygon = function(pts) {
    var i, nextIndex;
    // builds WingEdge if not exist
    var halfLoop = [];
+   var newEdges = [];
    for (i =0; i < halfCount; ++i) {
       nextIndex = i + 1;
       if (nextIndex == halfCount) {
@@ -482,9 +522,16 @@ WingedTopology.prototype.addPolygon = function(pts) {
       var edge = this.findHalfEdge(v0, v1);
       if (edge === null) { // not found, create one
          edge = this.addEdge(v0, v1);
+         if (edge === null) {
+            this._unwindNewEdges(newEdges);
+            return null;
+         }
+         newEdges.push(edge);
       } else if (!edge.isBoundary()) { // is it free? only free can form a chain.
+         this._unwindNewEdges(newEdges);
          // This half-edge would introduce a non-manifold condition.
-         return -1;
+         console.log("non-manifold condition, no boundary");
+         return null;
          // should we rewinded the newly created winged edge? currently nay.
       }
 
@@ -499,9 +546,10 @@ WingedTopology.prototype.addPolygon = function(pts) {
       }
 
       if (!this.spliceAdjacent(halfLoop[i], halfLoop[nextIndex])) {
+         this._unwindNewEdges(newEdges);
          // The polygon would introduce a non-manifold condition.
-         this.spliceAdjacent(halfLoop[i], halfLoop[nextIndex]);   // debugging purpose
-         return -1;
+         console.log("non-manifold condition, cannot splice");
+         return null;
       }
    }
 

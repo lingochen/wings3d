@@ -40,6 +40,8 @@ class ImportExporter {
             }
          });
       }
+      // init at beginning.
+      this._reset();
    }
 
 
@@ -52,8 +54,6 @@ class ImportExporter {
 
       reader.onload = function(ev) {
          const text = reader.result;
-         self.objs = [];
-         self.obj = new WingedTopology;
          const meshes = self._import(text);
          const cages = [];
          for (let mesh of meshes) {
@@ -66,8 +66,18 @@ class ImportExporter {
          } else if (cages.length > 0) {
             Wings3D.apiExport.undoQueue(cages[0]);
          }
+         // after we finisehd _reset too.
+         self._reset();
       }
 
       reader.readAsText(file);
+   }
+
+   _reset() {
+      this.objs = [];
+      this.obj = new WingedTopology;
+      this.polygonCount = 0;
+      this.vertexCount = 0;
+      this.non_manifold = [];
    }
 }

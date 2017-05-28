@@ -85,6 +85,7 @@ class EdgeMadsor extends Madsor {
       } else { // no connection possible
          cutEdge.undo();
          // post on geomoetryStatus
+         
       }
    }
 
