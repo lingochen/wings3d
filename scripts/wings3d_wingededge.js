@@ -241,11 +241,11 @@ Vertex.prototype.unlinkEdge = function(outHalf, inHalf)  {// left, right of wing
       return;
    }
    if (this.outEdge === outHalf) {
-      if (prev === outHalf) {
+      if (prev === inHalf) {
          this.outEdge = null;
          return;
       }
-      this.outEdge = prev;
+      this.outEdge = prev.pair;
    }
    // remove from circular list.
    prev.next = inHalf.next;
@@ -335,6 +335,26 @@ var WingedTopology = function(allocatedSize = 256) {     // default to 256 verte
    this.freeFaces = [];
    // affected is when reuse, deleted, or change vital stats.
    this.affected = {vertices: new Set, edges: new Set, faces: new Set};
+};
+
+WingedTopology.prototype.sanityCheck = function() {
+   let sanity = true;
+   // first check vertex for error.
+   for (let [index, vertex] of this.vertices.entries()) {
+      if (vertex.outEdge) {
+         if (vertex.outEdge.origin !== vertex) {
+            console.log("vertex " + index + " outEdge is wrong");
+         } else {
+         const prev = vertex.outEdge.prev();
+         if (prev === null) {
+            console.log("vertex " + index + " is broken");
+            sanity = false;
+         }
+         }
+      }
+   }
+   // now check polygon
+   return sanity;
 };
 
 WingedTopology.prototype.clearAffected = function() {

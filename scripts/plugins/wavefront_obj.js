@@ -71,6 +71,9 @@ class WavefrontObjImportExporter extends ImportExporter {
       if (polygonIndex === null) {
          this.non_manifold.push( this.polygonCount );    // addup failure.
       }
+      if (!this.obj.sanityCheck()) {
+         console.log("polygon # " + this.polygonCount + " not sane");
+      }
       this.polygonCount++;
    }
 }
