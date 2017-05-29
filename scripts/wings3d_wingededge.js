@@ -56,9 +56,9 @@ var HalfEdge = function(vert, edge) {  // should only be created by WingedEdge
    this.next = null;
 //   this.prev = null;       // not required, but very nice to have shortcut
    this.origin = vert;     // origin vertex, 
-   if (vert.outEdge === null) {
-      vert.outEdge = this;
-   }
+//   if (vert.outEdge === null) {
+//     vert.outEdge = this;
+//   }
    this.face = null;       // face pointer, not required, but useful shortcut
    this.pair = null;
    this.wingedEdge = edge; // parent winged edge
@@ -341,15 +341,30 @@ WingedTopology.prototype.sanityCheck = function() {
    let sanity = true;
    // first check vertex for error.
    for (let [index, vertex] of this.vertices.entries()) {
-      if (vertex.outEdge) {
+      if (vertex.isReal()) {
          if (vertex.outEdge.origin !== vertex) {
             console.log("vertex " + index + " outEdge is wrong");
-         } else {
-         const prev = vertex.outEdge.prev();
-         if (prev === null) {
-            console.log("vertex " + index + " is broken");
             sanity = false;
-         }
+         } else {
+            // manual find prev. 
+            var start = vertex.outEdge;
+            var edge = start;
+            let prev = null;
+            let iterationCount = 0;    // make sure, no infinite loop
+            if (edge) {
+               do { // ccw ordering
+                  if (edge.pair.next === start) {
+                     prev = edge.pair;
+                     break;
+                  }
+                  edge = edge.pair.next;   // my pair's tail is in too. 
+                  iterationCount++;
+               } while (edge && (edge !== start) && (iterationCount < 101));
+            }
+            if (prev === null) {
+               console.log("vertex " + index + " is broken");
+               sanity = false;
+            }
          }
       }
    }
@@ -521,6 +536,8 @@ WingedTopology.prototype._unwindNewEdges = function(halfEdges) {
 
 // passed in an array of vertex index. automatically create the required edge.
 // return polygon index.
+// add proper handling for non-manifold. (2017/05/28)
+// add checking for complex polygon. (2017/05/29)
 WingedTopology.prototype.addPolygon = function(pts) {
    var halfCount = pts.length;
    if (halfCount < 3) { // at least a triangle
@@ -531,6 +548,7 @@ WingedTopology.prototype.addPolygon = function(pts) {
    // builds WingEdge if not exist
    var halfLoop = [];
    var newEdges = [];
+   const complex = new Set;
    for (i =0; i < halfCount; ++i) {
       nextIndex = i + 1;
       if (nextIndex == halfCount) {
@@ -547,12 +565,22 @@ WingedTopology.prototype.addPolygon = function(pts) {
             return null;
          }
          newEdges.push(edge);
+         complex.add(edge.wingedEdge);
       } else if (!edge.isBoundary()) { // is it free? only free can form a chain.
          this._unwindNewEdges(newEdges);
          // This half-edge would introduce a non-manifold condition.
          console.log("non-manifold condition, no boundary");
          return null;
          // should we rewinded the newly created winged edge? currently nay.
+      } else {
+         // check if the wingedEdge already included.
+         if (complex.has(edge.wingedEdge)) {
+            this._unwindNewEdges(newEdges);
+            // complex polygon that cannot be handle properly with halfEdge structure.
+            console.log("complex polygon detected");
+            return null;
+         }
+         complex.add(edge.wingedEdge);
       }
 
       halfLoop.push( edge );
