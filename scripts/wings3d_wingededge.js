@@ -220,7 +220,7 @@ Vertex.prototype.linkEdge = function(outHalf, inHalf) { // left, right of winged
    } else {
       var inEdge = this.findFreeInEdge();
       if (inEdge === null) {
-         console.log("Error: Vertex.linkEdge: complex vertex");
+         console.log("Error: Vertex.linkEdge: complex vertex " + this.index);
          return false;
       }
       // else insert into circular list.
@@ -494,34 +494,36 @@ WingedTopology.prototype.findFreeInEdge = function(inner_next, inner_prev) {
 };
 
 WingedTopology.prototype.spliceAdjacent = function(inEdge, outEdge) {
-    if (inEdge.next === outEdge) {   // adjacency is already correct.
-        return true;
-    }
+   if (inEdge.next === outEdge) {   // adjacency is already correct.
+      return true;
+   }
 
-    var b = inEdge.next;
-    var d = outEdge.prev();
+   const b = inEdge.next;
+   const d = outEdge.prev();
 
-    // Find a free incident half edge
-    // after 'out' and before 'in'.
-    var g = this.findFreeInEdge(outEdge, inEdge);
+   // Find a free incident half edge
+   // after 'out' and before 'in'.
+   const g = this.findFreeInEdge(outEdge, inEdge);
 
-    if (g === null) {
-        console.log("WingedTopology.spliceAjacent: no free inedge, bad ajacency");
-        this.findFreeInEdge(outEdge, inEdge);
-        return false;
-    }
-    var h = g.next;
+   if (g === null) {
+      console.log("WingedTopology.spliceAjacent: no free inedge, bad ajacency");
+      return false;
+   } else if (g === d) {
+      inEdge.next = outEdge;
+      d.next = b;
+   } else {
+      const h = g.next;
 
-    inEdge.next = outEdge;
-    //out.half_->previous_ = in.half_;
+      inEdge.next = outEdge;
+      //out.half_->previous_ = in.half_;
 
-    g.next = b;
-    //b.half_->previous_ = g.half_;
+      g.next = b;
+      //b.half_->previous_ = g.half_;
 
-    d.next = h;
-    //h.half_->previous_ = d.half_;
-
-    return true;
+      d.next = h;
+      //h.half_->previous_ = d.half_;
+   }
+   return true;
 };
 
 // failed addPolygon. free and unlink edges.
