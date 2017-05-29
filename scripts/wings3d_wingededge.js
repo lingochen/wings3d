@@ -484,7 +484,7 @@ WingedTopology.prototype.findFreeInEdge = function(inner_next, inner_prev) {
 
       // ok ?
       if (boundary_prev !== inner_prev) {
-         return boundary_prev.next;
+         return boundary_prev;
       }
    } while (boundary_prev !== inner_next.pair);
    
