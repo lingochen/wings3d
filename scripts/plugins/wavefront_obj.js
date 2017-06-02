@@ -6,7 +6,38 @@
 
 class WavefrontObjImportExporter extends ImportExporter {
    constructor() {
-      super('Wavefront (.obj)...');
+      super('Wavefront (.obj)...', 'Wavefront (.obj)...');
+   }
+
+   extension() {
+      return "obj";
+   }
+
+   _export(world) {      
+      let text = "#wings3d-web wavefront export\n";
+      const fn = function(vertex) {
+         text += " " + (vertex.index+1);
+      };
+      for (const [index, cage] of world.entries()) {
+         const mesh = cage.geometry;
+         text += "o " + index.toString() + "\n";
+         // now append the "v x y z\n"
+         text += "#vertex\n";
+         for (let vertex of mesh.vertices) {
+            const vert = Array.from(vertex.vertex);     // I want to use textdecoder to decode to string, but Microsoft Edge does not support it yet.
+            text += "v " + vert[0] + " " + vert[1] + " " + vert[2] + "\n";
+         }
+         // "f index+1 index+1 index+1"
+         text += "#faces\n";
+         for (let polygon of mesh.faces) {
+            text += "f";
+            polygon.eachVertex(fn);
+            text += "\n";
+         }
+      }
+      const blob = new Blob([text], {type: "text/plain;charset=utf-8"});
+
+      return blob;
    }
 
    _import(objText) {

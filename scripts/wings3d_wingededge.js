@@ -236,10 +236,10 @@ Vertex.prototype.linkEdge = function(outHalf, inHalf) { // left, right of winged
 
 Vertex.prototype.unlinkEdge = function(outHalf, inHalf)  {// left, right of winged edge
    const prev = outHalf.prev();
-   if (prev === null) {
-      console.log("bad prev");
-      return;
-   }
+//   if (prev === null) {
+//      console.log("bad prev");
+//      return;
+//   }
    if (this.outEdge === outHalf) {
       if (prev === inHalf) {
          this.outEdge = null;

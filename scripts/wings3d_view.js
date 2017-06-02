@@ -208,6 +208,7 @@ function createView(gl) {
    };
    Wings3D.apiExport.putIntoWorld = my.putIntoWorld;
    Wings3D.apiExport.removeFromWorld = my.removeFromWorld;
+   Wings3D.apiExport.getWorld = function() { return _pvt.world; };
    
    _pvt.lastPick = null;
 

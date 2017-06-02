@@ -2,6 +2,7 @@
 <head>
    <link href="../css/default.css" rel="stylesheet">
 
+   <script src="../scripts/FileSaver.min.js"></script>
    <script src="../scripts/gl-matrix-min.js"></script>
    <script src="../scripts/wings3d.js"></script>
    <script src="../scripts/wings3d_gl.js"></script>
@@ -59,7 +60,7 @@
           <li><a onmouseover="help('Revert current scene to the saved contents')" onmouseleave="help()">Revert</a></li>
           <hr/>
           <li class="sub"><a>Import</a><ul id="fileImport"> </ul></li>
-          <li><a>Export</a></li>
+          <li class="sub"><a>Export</a><ul id="fileExport"> </ul></li>
           <li><a>Export Selected</a></li>
           <hr/>
           <li><a onmouseover="help('Import an image file')" onmouseleave="help()">Import Image...</a></li>
@@ -251,6 +252,12 @@
      <input type="text" name="Segments" value="2"></input>
      <button type="submit" value="Cancel">Cancel</button>
      <button type="submit" value="Ok">Ok</button>
+  </form>
+  <form id="exportFile">
+     <h2>Saving Scene</h2>
+       <label>Filename: <input type="text" name="Filename" placeholder="wings3d-web"/></label>
+       <button type="submit" value="Ok">Ok</button>
+       <button type="submit" value="Cancel">Cancel</button>
   </form>
 </body>
 </html>

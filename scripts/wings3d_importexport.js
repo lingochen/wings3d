@@ -1,6 +1,6 @@
 //
 // file handling. 
-// 1) handling local file upload and download
+// 1) handling local file upload. and simple file download.
 // todo
 // 2) dropbox, yandex.
 // 3) google drive, microsoft onedrive, baidupan to come later.
@@ -40,12 +40,38 @@ class ImportExporter {
             }
          });
       }
+      if (exportMenuText) {
+         const submenu = document.querySelector('#fileExport');
+         // insert simple menuItem.
+         const menuItem = document.createElement('li');
+         const a = document.createElement('a');
+         a.textContent = exportMenuText;
+         menuItem.appendChild(a);
+         submenu.appendChild(menuItem);
+         const form = Wings3D.setupDialog('#exportFile', function(data) {
+            if (data['Filename']) {
+               self.export(data['Filename']);
+            }
+         });
+
+         if (form) {
+            menuItem.addEventListener('click', function(ev){
+               // popup dialog.
+               // position then show form;
+               Wings3D.contextmenu.positionDom(form, Wings3D.contextmenu.getPosition(ev));
+               form.style.display = 'block';
+               form.reset();
+            });
+         }
+      }
       // init at beginning.
       this._reset();
    }
 
 
-   export() {
+   export(filename) {
+      const blob = this._export(Wings3D.apiExport.getWorld());
+      saveAs(blob, filename + '.' + this.extension());
    }
 
    import(file) {
