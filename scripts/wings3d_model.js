@@ -711,7 +711,9 @@ PreviewCage.prototype.snapshotFacePositionAndNormal = function() {
             normalMap.set(vertex, normal);
          } else {
             const normal = normalMap.get(vertex);
-            vec3.add(normal, normal, polygon.normal); 
+            if (vec3.dot(normal, polygon.normal) < 0.98) {  // check for nearly same normal, or only added if hard edge?
+               vec3.add(normal, normal, polygon.normal);
+            } 
          }
       });
    }

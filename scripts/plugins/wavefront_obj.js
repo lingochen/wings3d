@@ -22,13 +22,13 @@ class WavefrontObjImportExporter extends ImportExporter {
          const mesh = cage.geometry;
          text += "o " + index.toString() + "\n";
          // now append the "v x y z\n"
-         text += "#vertex\n";
+         text += "\n#vertex total " + mesh.vertices.length + "\n";
          for (let vertex of mesh.vertices) {
-            const vert = Array.from(vertex.vertex);     // I want to use textdecoder to decode to string, but Microsoft Edge does not support it yet.
+            const vert = vertex.vertex;
             text += "v " + vert[0] + " " + vert[1] + " " + vert[2] + "\n";
          }
          // "f index+1 index+1 index+1"
-         text += "#faces\n";
+         text += "\n#face list total " + mesh.faces.length + "\n";
          for (let polygon of mesh.faces) {
             text += "f";
             polygon.eachVertex(fn);
@@ -68,6 +68,7 @@ class WavefrontObjImportExporter extends ImportExporter {
          this.objs.push( this.obj );
          this.obj = new WingedTopology;
       }
+      this.obj.clearAffected();
       // assignedName
       this.obj.name = objName;
    }
