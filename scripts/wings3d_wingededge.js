@@ -1057,7 +1057,7 @@ WingedTopology.prototype.connectVertex = function(selectedVertex) {
          do {
             let valence = outEdge.origin.valence;
             prevEdgeNumber = edgeNumber;
-            if (valence != 2) {
+            if (valence != 2) {        // we should really check for straight line.
                edgeNumber++;
             }
             if (selectedVertex.has(outEdge.origin)) {
@@ -1081,13 +1081,15 @@ WingedTopology.prototype.connectVertex = function(selectedVertex) {
    const edgeList = [];
    // the real meat, connect vertex.
    for (let edges of faceList) {
-      // check for special case. one interior selected vertex per edge.
+      // check for special case. one interior selected vertex per edge. update. includeing zero selected vertex per edge.
       let specialCase = true;
+      let prevEdgeNumber = -1;
       for (let [index, edge] of edges.entries()) {
-         if ( (edge.prevEdgeNumber != index) || (edge.edgeNumber != index) ) {
+         if ( (edge.prevEdgeNumber !== edge.edgeNumber) || (prevEdgeNumber == edge.edgeNumber) ) {   // corner or more than 1 vertex on same Edge.
             specialCase = false;
             break;
          }
+         prevEdgeNumber = edge.edgeNumber;
       }
       if (specialCase) {
          const edge0Prev = edges[0].outEdge.prev();
