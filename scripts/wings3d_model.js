@@ -195,7 +195,7 @@ PreviewCage.prototype._computePreviewIndex = function() {
 PreviewCage.prototype._updateAffected = function(affected) {
    if (affected.vertices.size > 0) {
       for (let vertex of affected.vertices) {
-      //   this._updateVertex(vertex);
+         this._updateVertex(vertex, affected);
       }
    }
    if (affected.edges.size > 0) {
@@ -210,6 +210,26 @@ PreviewCage.prototype._updateAffected = function(affected) {
    }
 
    this.geometry.clearAffected();
+};
+
+
+PreviewCage.prototype._updateVertex = function(vertex, affected) {
+   if (vertex.isReal()) {
+      // first the simple case, update the vertexPreview,
+      const index = vertex.index;
+      this.previewVertex.shaderData.uploadAttribute('position', vertex.vertex.byteOffset, vertex.vertex);
+
+      // then update the effectedEdge and effectedFaces.
+      vertex.eachOutEdge( function(halfEdge) {
+         if (!affected.edges.has(halfEdge.wingedEdge)) {    // check edge
+            affected.edges.add(halfEdge.wingedEdge);
+         }
+         const face = halfEdge.face;
+         if ((face!==null) && !affected.faces.has(face)) {  // check face
+            affected.faces.add(face);
+         }
+      });
+   }
 };
 
 PreviewCage.prototype._updatePreview = function(polygon) {
@@ -1108,8 +1128,11 @@ PreviewCage.prototype.cutEdge = function(numberOfSegments) {
          splitEdges.push( newEdge.pair );
       }
       // update previewEdge position.
-      this._updatePreviewEdge(edge, true);
+      //this._updatePreviewEdge(edge, true);
    }
+      // after deletion of faces and edges. update
+   this._updateAffected(this.geometry.affected);
+   //
    this._resizePreview(vertexSize, faceSize);
    this._resizePreviewEdge(edgeSize);
    this._resizePreviewVertex(vertexSize);
