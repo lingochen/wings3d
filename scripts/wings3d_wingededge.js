@@ -704,6 +704,7 @@ WingedTopology.prototype.splitEdge = function(outEdge, pt) {
    if (vOut === outEdge) {
       vOrigin.outEdge = newOut;
    }
+   this.affected.edges.add( outEdge.wingedEdge );     // edge changed.
    // return the newOut
    return newOut;
 };

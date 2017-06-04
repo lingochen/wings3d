@@ -182,10 +182,11 @@ PreviewCage.prototype._computePreviewIndex = function() {
          });
          // last triangle using the first vertices.
          index[length+indicesLength++] = index[length];
-         index[length+indicesLength++] = barycentric++;
+         index[length+indicesLength++] = barycentric;
          length += indicesLength;
          //sphere.indexEnd = model.preview.index.length;
       }
+      barycentric++;
    }
    // save it to the buffer 
    this.preview.shaderData.setIndex(index);
@@ -207,6 +208,8 @@ PreviewCage.prototype._updateAffected = function(affected) {
       for (let face of affected.faces) {
          this._updatePreview(face);
       }
+      // update index
+
    }
 
    this.geometry.clearAffected();
@@ -220,15 +223,18 @@ PreviewCage.prototype._updateVertex = function(vertex, affected) {
       this.previewVertex.shaderData.uploadAttribute('position', vertex.vertex.byteOffset, vertex.vertex);
 
       // then update the effectedEdge and effectedFaces.
-      vertex.eachOutEdge( function(halfEdge) {
-         if (!affected.edges.has(halfEdge.wingedEdge)) {    // check edge
-            affected.edges.add(halfEdge.wingedEdge);
-         }
-         const face = halfEdge.face;
-         if ((face!==null) && !affected.faces.has(face)) {  // check face
-            affected.faces.add(face);
-         }
-      });
+//      vertex.eachOutEdge( function(halfEdge) {
+//         if (!affected.edges.has(halfEdge.wingedEdge)) {    // check edge
+//            affected.edges.add(halfEdge.wingedEdge);        // should not happened, for debugging purpose.
+//         }
+      //   const face = halfEdge.face;
+      //   if ((face!==null) && !affected.faces.has(face)) {  // check face
+      //      affected.faces.add(face);               // should not happened, for debugging purpose.
+      //   }
+//      });
+
+      // update preview too.
+      this.preview.shaderData.uploadAttribute('position', vertex.vertex.byteOffset, vertex.vertex);
    }
 };
 
@@ -237,6 +243,9 @@ PreviewCage.prototype._updatePreview = function(polygon) {
    if ((polygon.index < this.boundingSpheres.length) && polygon.isReal()) { // will be get recompute on resize
       const sphere = this.boundingSpheres[ polygon.index ];
       sphere.setSphere( BoundingSphere.computeSphere(sphere.polygon, sphere.center) ); 
+      // update center.
+      const index = this.geometry.vertices.length+polygon.index;
+      this.preview.shaderData.uploadAttribute('position', index*3*4, sphere.center);
    }
 };
 
@@ -1146,12 +1155,12 @@ PreviewCage.prototype.collapseSplitEdge = function(splitEdges) {
    const edgeSize = this.geometry.edges.length;
    const faceSize = this.geometry.faces.length;
    for (let edge of splitEdges) {
-      let updateEdge = edge.pair.next;    // bad hacked.
       this.geometry.collapseEdge(edge);
-      this._updatePreviewEdge(updateEdge, true);
    }
    // recompute the smaller size
-//   this._resizePreview(vertexSize, faceSize);
+   this._updateAffected(this.geometry.affected);
+   this._resizeBoundingSphere(faceSize);
+   this._resizePreview(vertexSize, faceSize);
    this._resizePreviewEdge(edgeSize);
    this._resizePreviewVertex(vertexSize);
 };
