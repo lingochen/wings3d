@@ -304,6 +304,7 @@
          fragment:[
             '#extension GL_OES_standard_derivatives : enable',
             'precision mediump float;',
+            'uniform vec3 faceColor;',
             'uniform vec3 selectedColor;',  // hilite color
             'varying vec3 vBC;',
             'varying float vSelected;',
@@ -315,7 +316,7 @@
             '}',
 
             'void main(){',
-               'vec3 interiorColor = vec3(0.5);',
+               'vec3 interiorColor = faceColor;',
                'if (vSelected == 1.0) {',
                '  interiorColor = selectedColor;',
                '}',

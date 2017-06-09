@@ -122,11 +122,17 @@ class FaceMadsor extends Madsor {
             snapshots.push( cage.snapshotSelection() );
             cage.changeFromFaceToEdgeSelect();
          });
-      } else {
+      } else if (toMadsor instanceof VertexMadsor) {
          redoFn = Wings3D.apiExport.restoreVertexMode;
          this.eachPreviewCage( function(cage) {
             snapshots.push( cage.snapshotSelection() );
             cage.changeFromFaceToVertexSelect();
+         });
+      } else {
+         redoFn = Wings3D.apiExport.restoreBodyMode;
+         this.eachPreviewCage( function(cage) {
+            snapshots.push( cage.snapshotSelection() );
+            cage.changeFromFaceToBodySelect();
          });
       }
       Wings3D.apiExport.undoQueue(new ToggleModeCommand(redoFn, Wings3D.apiExport.restoreFaceMode, snapshots));
@@ -137,9 +143,13 @@ class FaceMadsor extends Madsor {
          this.eachPreviewCage( function(cage, snapshot) {
             cage.restoreFromFaceToEdgeSelect(snapshot);
          }, snapshots);
-      } else {
+      } else if (toMadsor instanceof VertexMadsor) {
          this.eachPreviewCage( function(cage, snapshot) {
             cage.restoreFromFaceToVertexSelect(snapshot);
+         }, snapshots);
+      } else {
+         this.eachPreviewCage( function(cage, snapshot) {
+            cage.restoreFromFaceToBodySelect(snapshot);
          }, snapshots);
       }
    }

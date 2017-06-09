@@ -12,12 +12,14 @@ function createView(gl) {
                 faceMode: new FaceMadsor, 
                 edgeMode: new EdgeMadsor,
                 vertexMode: new VertexMadsor,
+                bodyMode: new BodyMadsor,
                 currentMode: null,
                 currentMouseHandler: null};
    _pvt.currentMode = _pvt.faceMode;
    _pvt.faceMode.setWorld(_pvt.world);
    _pvt.edgeMode.setWorld(_pvt.world);
    _pvt.vertexMode.setWorld(_pvt.world);
+   _pvt.bodyMode.setWorld(_pvt.world);
    _pvt.curretMouseHandler = _pvt;
 
    _pvt.toggleVertexMode = function() {
@@ -37,10 +39,18 @@ function createView(gl) {
       }
    };
 
-   _pvt.toggleEdgeMode = function(restore=false) {
+   _pvt.toggleEdgeMode = function() {
       if (_pvt.currentMode !== _pvt.edgeMode) {
          _pvt.currentMode.toggleFunc(_pvt.edgeMode);
          _pvt.currentMode = _pvt.edgeMode;
+         my.renderWorld.needToRedraw();
+      }
+   };
+
+   _pvt.toggleBodyMode = function() {
+      if (_pvt.currentMode !== _pvt.bodyMode) {
+         _pvt.currentMode.toggleFunc(_pvt.bodyMode);
+         _pvt.currentMode = _pvt.bodyMode;
          my.renderWorld.needToRedraw();
       }
    };
@@ -75,12 +85,24 @@ function createView(gl) {
       }
    };
 
+   _pvt.restoreBodyMode = function(snapshots) {
+      if (_pvt.currentMode !== _pvt.bodyMode) {
+         _pvt.currentMode.restoreMode(_pvt.bodyMode, snapshots);
+         _pvt.currentMode = _pvt.bodyMode;
+         my.renderWorld.needToRedraw();
+      } else {
+         // bad state. should always be in other mode. 
+      }
+   };
+
    Wings3D.apiExport.toggleVertexMode = _pvt.toggleVertexMode;
    Wings3D.apiExport.toggleFaceMode = _pvt.toggleFaceMode;
    Wings3D.apiExport.toggleEdgeMode = _pvt.toggleEdgeMode;
+   Wings3D.apiExport.toggleBodyMode = _pvt.toggleBodyMode;
    Wings3D.apiExport.restoreVertexMode = _pvt.restoreVertexMode;
    Wings3D.apiExport.restoreFaceMode = _pvt.restoreFaceMode;
    Wings3D.apiExport.restoreEdgeMode = _pvt.restoreEdgeMode;
+   Wings3D.apiExport.restoreBodyMode = _pvt.restoreBodyMode;
    Wings3D.apiExport.currentMode = function() { return _pvt.currentMode; };
 
    my.loadMatrices = function(includeLights) {

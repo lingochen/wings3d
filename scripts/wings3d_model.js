@@ -15,7 +15,7 @@ var PreviewCage = function(mesh) {
    this.preview = {centroid: {}};
    var gl = Wings3D.gl;
    this.preview.shaderData = gl.createShaderData();
-   this.preview.shaderData.setUniform3fv("faceColor", [1.0, 0.0, 0.0]);
+   this.preview.shaderData.setUniform3fv("faceColor", [0.5, 0.5, 0.5]);
    this.preview.shaderData.setUniform3fv("selectedColor", [1.0, 0.0, 0.0]);
    var layoutVec = ShaderData.attribLayout();
    var layoutFloat = ShaderData.attribLayout(1);
@@ -43,8 +43,11 @@ var PreviewCage = function(mesh) {
    this.previewVertex.shaderData.createAttribute('position', layoutVec, gl.STATIC_DRAW);
    this.previewVertex.shaderData.createAttribute('color', layoutFloat, gl.DYNAMIC_DRAW);
    this._resizePreviewVertex(0);
+   // body state.
+   this.previewBody = {hilite: false};
    // selecte(Vertex,Edge,Face)here
    this.selectedSet = new Set;
+   this.groupSelection = false;
 };
 
 PreviewCage.CONST = (function() {
@@ -416,6 +419,135 @@ PreviewCage.prototype.rayPick = function(ray) {
 };
 
 
+// body selection.
+PreviewCage.prototype.changeFromBodyToFaceSelect = function() {
+   if (this.hasSelection()) {
+      this._resetBody();  
+      // select all face
+      this.selectedSet = new Set(this.geometry.faces);
+      this.preview.selected.fill(1.0);
+      this.preview.centroid.selected.fill(1.0);
+      // update drawing element
+      const length = this.geometry.buf.len/3;
+      const centroidLength = this.preview.centroid.buf.len/3;
+      this.preview.shaderData.uploadAttribute('selected', 0, this.preview.selected.subarray(0, length));
+      this.preview.shaderData.uploadAttribute('selected', length*4, this.preview.centroid.selected.subarray(0, centroidLength));
+   }
+};
+
+PreviewCage.prototype.changeFromBodyToEdgeSelect = function() {
+   if (this.hasSelection()) {
+      this._resetBody();
+      this.groupSelection = true;
+      // select all edge
+      for (let wingedEdge of this.geometry.edges) {
+         this.selectedSet.add(wingedEdge);
+         this.setEdgeColor(wingedEdge, 0.25);
+      }
+      // update previewLine
+      this.groupSelection = false;
+      this.previewEdge.shaderData.uploadAttribute('color', 0, this.previewEdge.color);
+   }
+};
+
+PreviewCage.prototype.changeFromBodyToVertexSelect = function() {
+   if (this.hasSelection()) {
+      this._resetBody();
+      this.groupSelection = true;
+      // select all vertex
+      for (let vertex of this.geometry.vertices) {
+         this.selectedSet.add(vertex);
+         this.setVertexColor(vertex, 0.25);
+      }
+      // update previewVertex
+      this.groupSelection = false;
+      this.previewVertex.shaderData.uploadAttribute('color', 0, this.previewVertex.color);
+   }
+};
+
+PreviewCage.prototype.restoreFromBodyToFaceSelect = function(snapshot) {
+   if (snapshot) {
+      this._resetBody();
+      for (let polygon of snapshot) {
+         this.selectFace(polygon.halfEdge);
+      }
+   } else {
+      this.changeFromBodyToFaceSelect();
+   }
+};
+
+PreviewCage.prototype.restoreFromBodyToEdgeSelect = function(snapshot) {
+   if (snapshot) {
+      // discard old selected,
+      this._resetBody();
+      for (let wingedEdge of snapshot) {
+         this.selectEdge(wingedEdge.left);
+      }
+   } else {
+      this.changeFromBodyToEdgeSelect();  // choose compute over storage, use the same code as going forward.
+   }
+};
+
+PreviewCage.prototype.restoreFromBodyToVertexSelect = function(snapshot) {
+   if (snapshot) {
+      // discard old selected,
+      this._resetBody();
+      // and selected using the snapshots.
+      for (let vertex of snapshot) {
+         this.selectVertex(vertex);
+      }
+   } else {
+      this.changeFromBodyToVertexSelect();  // compute vs storage. currently lean toward compute.
+   }
+};
+
+PreviewCage.prototype._resetBody = function() {
+   this.selectedSet = new Set();
+   this.previewBody.hilite = false;
+   this.preview.shaderData.setUniform3fv("faceColor", [0.5, 0.5, 0.5]);
+};
+
+PreviewCage.prototype.selectBody = function() {
+   let faceColor;
+   // we change interior color to show the selection
+   if (this.hasSelection()) {
+      this.selectedSet.delete( this.geometry );
+      // change to unselect, check if we are hilite,
+      if (this.previewBody.hilite) {
+         faceColor = [0.0, 1.0, 0.0];   // hilite and unselected         
+      } else {
+         faceColor = [0.5, 0.5, 0.5];   // unselected
+      }
+   } else {
+      this.selectedSet.add( this.geometry );
+      if (this.previewBody.hilite) {
+         faceColor = [1.0, 1.0, 0.0];   // selected and hilite
+      } else {
+         faceColor = [1.0, 0.0, 0.0];   // selected.
+      }
+   }
+   this.preview.shaderData.setUniform3fv("faceColor", faceColor);
+   return this.hasSelection();
+};
+
+PreviewCage.prototype.hiliteBody = function(hilite) {
+   let faceColor;
+   this.previewBody.hilite = hilite;
+   if (hilite) {
+      if (this.hasSelection()) {
+         faceColor = [1.0, 1.0, 0.0];
+      } else {
+         faceColor = [0.0, 1.0, 0.0];
+      }
+   } else {
+      if (this.hasSelection()) {
+         faceColor = [1.0, 0.0, 0.0];
+      } else {
+         faceColor = [0.5, 0.5, 0.5];
+      }
+   }
+   this.preview.shaderData.setUniform3fv("faceColor", faceColor);
+}
 
 PreviewCage.prototype.hasSelection = function() {
    return (this.selectedSet.size > 0);
@@ -428,10 +560,12 @@ PreviewCage.prototype.snapshotSelection = function() {
 
 PreviewCage.prototype.setVertexColor = function(vertex, color) {
    // selected color
-   var j = vertex.index;  
+   const j = vertex.index;  
    this.previewVertex.color[j] += color;
-   var point = this.previewVertex.color.subarray(j, j+1);
-   this.previewVertex.shaderData.uploadAttribute('color', j*Float32Array.BYTES_PER_ELEMENT, point);
+   if (!this.groupSelection) {
+      const point = this.previewVertex.color.subarray(j, j+1);
+      this.previewVertex.shaderData.uploadAttribute('color', j*Float32Array.BYTES_PER_ELEMENT, point);
+   }
 };
 
 PreviewCage.prototype.hiliteVertex = function(vertex, show) {
@@ -462,7 +596,7 @@ PreviewCage.prototype.dragSelectVertex = function(vertex, onOff) {
       }
    }
    return false;
-}
+};
 
 PreviewCage.prototype.selectVertex = function(vertex) {
    var onOff;
@@ -506,7 +640,6 @@ PreviewCage.prototype.changeFromVertexToFaceSelect = function() {
    }
 };
 
-
 PreviewCage.prototype.changeFromVertexToEdgeSelect = function() {
    var self = this;
    var oldSelected = this._resetSelectVertex();
@@ -521,6 +654,14 @@ PreviewCage.prototype.changeFromVertexToEdgeSelect = function() {
    }
 };
 
+PreviewCage.prototype.changeFromVertexToBodySelect = function() {
+   if (this.hasSelection()) {
+      // select whole body,
+      this._resetSelectVertex();
+      this.selectBody();
+   }
+};
+
 PreviewCage.prototype.restoreFromVertexToFaceSelect = function(snapshot) {
    if (snapshot) {
       // discard old selected,
@@ -531,7 +672,7 @@ PreviewCage.prototype.restoreFromVertexToFaceSelect = function(snapshot) {
    } else {
       this.changeFromVertexToFaceSelect();  // choose compute over storage, use the same code as going forward.
    }
-}
+};
 
 PreviewCage.prototype.restoreFromVertexToEdgeSelect = function(snapshot) {
    if (snapshot) {
@@ -543,16 +684,29 @@ PreviewCage.prototype.restoreFromVertexToEdgeSelect = function(snapshot) {
    } else {
       this.changeFromVertexToEdgeSelect();  // choose compute over storage, use the same code as going forward.
    }
-}
+};
+
+PreviewCage.prototype.restoreFromVertexToBodySelect = function(snapshot) {
+   if (snapshot) {
+      this._resetSelectVertex();
+      if (snapshot.length > 0) {
+         this.selectBody();
+      }
+   } else {
+      this.changeFromVertexToBodySelect();
+   }
+};
 
 
 PreviewCage.prototype.setEdgeColor = function(wingedEdge, color) {
    // selected color
-   var j = wingedEdge.index * 2;  
+   const j = wingedEdge.index * 2;  
    this.previewEdge.color[j] += color;
    this.previewEdge.color[j+1] += color;
-   var line = this.previewEdge.color.subarray(j, j+2);
-   this.previewEdge.shaderData.uploadAttribute('color', j*Float32Array.BYTES_PER_ELEMENT, line);
+   if (!this.groupSelection) {
+      const line = this.previewEdge.color.subarray(j, j+2);
+      this.previewEdge.shaderData.uploadAttribute('color', j*Float32Array.BYTES_PER_ELEMENT, line);
+   }
 };
 
 PreviewCage.prototype.hiliteEdge = function(selectEdge, show) {
@@ -860,6 +1014,13 @@ PreviewCage.prototype.changeFromEdgeToVertexSelect = function() {
    } 
 };
 
+PreviewCage.prototype.changeFromEdgeToBodySelect = function() {
+   if (this.hasSelection()) {
+      this._resetSelectEdge();
+      this.selectBody();
+   }
+};
+
 PreviewCage.prototype.restoreFromEdgeToFaceSelect = function(snapshot) {
    if (snapshot) {
       // discard old selected,
@@ -870,7 +1031,7 @@ PreviewCage.prototype.restoreFromEdgeToFaceSelect = function(snapshot) {
    } else {
       this.changeFromEdgeToFaceSelect();  // we cheat, use the same code as going forward.
    }
-}
+};
 
 PreviewCage.prototype.restoreFromEdgeToVertexSelect = function(snapshot) {
    if (snapshot) {
@@ -882,7 +1043,18 @@ PreviewCage.prototype.restoreFromEdgeToVertexSelect = function(snapshot) {
    } else {
       this.changeFromEdgeToVertexSelect();  // we cheat, use the same code as going forward.
    }
-}
+};
+
+PreviewCage.prototype.restoreFromEdgeToBodySelect = function(snapshot) {
+   if (snapshot) {
+      this._resetSelectEdge();
+      if (snapshot.length > 0) {
+         this.selectBody();
+      }
+   } else {
+      this.changeFromEdgeToBodySelect();
+   }
+};
 
 PreviewCage.prototype.setFaceSelectionOff = function(polygon) {
    var self = this;
@@ -995,6 +1167,12 @@ PreviewCage.prototype.changeFromFaceToVertexSelect = function() {
    }
 };
 
+PreviewCage.prototype.changeFromFaceToBodySelect = function() {
+   if (this.hasSelection()) {
+      this._resetSelectFace();
+      this.selectBody();
+   }
+};
 
 PreviewCage.prototype.restoreFromFaceToEdgeSelect = function(snapshot) {
    if (snapshot) {
@@ -1019,6 +1197,17 @@ PreviewCage.prototype.restoreFromFaceToVertexSelect = function(snapshot) {
       }
    } else {
       this.changeFromFaceToVertexSelect();  // compute vs storage. currently lean toward compute.
+   }
+};
+
+PreviewCage.prototype.restoreFromFaceToBodySelect = function(snapshot) {
+   if (snapshot) {
+      this._resetSelectFace();
+      if (snapshot.length > 0) {
+         this.selectBody();
+      }
+   } else {
+      this.changeFromFaceToBodySelect();
    }
 };
 
