@@ -65,6 +65,19 @@ PreviewCage.CONST = (function() {
 }());
 
 
+Object.defineProperty(PreviewCage.prototype, 'name', {
+   get: function() {
+      if (typeof this.name === 'undefined') {
+         this.name = "";
+      }
+      return this.name;
+   },
+   set: function(newName) {
+      this.name = newName;
+   }
+});
+
+
 PreviewCage.prototype._getGeometrySize = function() {
    return { face: this.geometry.faces.length,
             edge: this.geometry.edges.length,

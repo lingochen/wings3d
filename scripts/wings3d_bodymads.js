@@ -6,22 +6,25 @@ class BodyMadsor extends Madsor {
    constructor() {
       super('body');
       const self = this;
-      let menuItem = document.querySelector('#deleteObj');
+      let menuItem = document.querySelector('#bodyDelete');
       if (menuItem) {
-         self.delete();    // delete current;
+         menuItem.addEventListener('click', function(ev) {
+            const command = new DeletePreviewCagesCommand(self.getSelected());
+            Wings3D.apiExport.undoQueue( command );
+            command.doIt(); // delete current selected.
+         });
       }
+      
    }
 
-   delete() {
-      // delete current select obj
-/*      var hasSelection = false;
+   getSelected() {
+      const selection = [];
       this.eachPreviewCage( function(cage) {
-         hasSelection = hasSelection || cage.hasSelection();
+         if (cage.hasSelection()) {
+            selection.push(cage);
+         }
       });
-      if (hasSelection) {
-         return this.contextMenu;
-      }
-      return null; */
+      return selection;
    }
 
    duplicate() {
@@ -142,4 +145,23 @@ class BodySelectCommand extends EditCommand {
       this.doIt();   // selectEdge, flip/flop, so
    }
 
+}
+
+class DeletePreviewCagesCommand extends EditCommand {
+   constructor(previewCages) {
+      super();
+      this.previewCages = previewCages;
+   }
+
+   undo() {
+      for (let previewCage of this.previewCages) {
+         Wings3D.view.addToWorld(previewCage);
+      }
+   }
+
+   doIt() {
+      for (let previewCage of this.previewCages) {
+         Wings3D.view.removeFromWorld(previewCage);
+      }
+   }
 }
