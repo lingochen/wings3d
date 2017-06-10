@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', function() {
                        putOnGround: false,
 
    };
+   _pvt.creationCount = 0;
 
    _pvt.resetCubeParams = function() {
       // reset.cubeParams.
@@ -182,7 +183,9 @@ document.addEventListener('DOMContentLoaded', function() {
          form.style.display = 'none';
          // accept previewCage to the world
          api.undoQueue( new CreatePreviewCageCommand(_pvt.previewCage) );
+         _pvt.previewCage.name = "Cube" + (_pvt.creationCount+1);
          _pvt.previewCage = null;
+         _pvt.creationCount++;
       });
       var cutHandler = function(ev) {
          _pvt.cubeParams.numberOfCut = Number(ev.target.value);

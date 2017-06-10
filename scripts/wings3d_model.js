@@ -48,6 +48,8 @@ var PreviewCage = function(mesh) {
    // selecte(Vertex,Edge,Face)here
    this.selectedSet = new Set;
    this.groupSelection = false;
+   // default no name
+   this.name = "";
 };
 
 PreviewCage.CONST = (function() {
@@ -63,19 +65,6 @@ PreviewCage.CONST = (function() {
    constant.BARYCENTRIC[2] = 1.0;
    return constant;
 }());
-
-
-Object.defineProperty(PreviewCage.prototype, 'name', {
-   get: function() {
-      if (typeof this.name === 'undefined') {
-         this.name = "";
-      }
-      return this.name;
-   },
-   set: function(newName) {
-      this.name = newName;
-   }
-});
 
 
 PreviewCage.prototype._getGeometrySize = function() {
@@ -538,6 +527,7 @@ PreviewCage.prototype.selectBody = function() {
       } else {
          faceColor = [1.0, 0.0, 0.0];   // selected.
       }
+      geometryStatus("Object " + this.name + " has " + this.geometry.faces.length + " polygons");
    }
    this.preview.shaderData.setUniform3fv("faceColor", faceColor);
    return this.hasSelection();
