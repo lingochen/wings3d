@@ -32,6 +32,14 @@ class BodyMadsor extends Madsor {
 
    }
 
+   snapshotPosition() {
+      var snapshots = [];
+      this.eachPreviewCage( function(preview) {
+         snapshots.push( preview.snapshotBodyPosition() );
+      });
+      return snapshots;
+   }
+
    dragSelect(cage, selectArray, onOff) {
       if (this.currentEdge !== null) {
        // if (cage.dragSelectFace(this.currentEdge, onOff)) {

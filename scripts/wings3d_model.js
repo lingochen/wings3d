@@ -689,7 +689,7 @@ PreviewCage.prototype.restoreFromVertexToEdgeSelect = function(snapshot) {
 PreviewCage.prototype.restoreFromVertexToBodySelect = function(snapshot) {
    if (snapshot) {
       this._resetSelectVertex();
-      if (snapshot.length > 0) {
+      if (snapshot.size > 0) {
          this.selectBody();
       }
    } else {
@@ -881,6 +881,14 @@ PreviewCage.prototype.snapshotVertexPosition = function() {
    return this.snapshotPosition(vertices);
 };
 
+PreviewCage.prototype.snapshotBodyPosition = function() {
+   let vertices = new Set;
+   if (this.hasSelection()) {
+      vertices = new Set(this.geometry.vertices);
+   }
+   return this.snapshotPosition(vertices);
+};
+
 
 PreviewCage.prototype.snapshotFacePositionAndNormal = function() {
    const vertices = new Set;
@@ -1048,7 +1056,7 @@ PreviewCage.prototype.restoreFromEdgeToVertexSelect = function(snapshot) {
 PreviewCage.prototype.restoreFromEdgeToBodySelect = function(snapshot) {
    if (snapshot) {
       this._resetSelectEdge();
-      if (snapshot.length > 0) {
+      if (snapshot.size > 0) {
          this.selectBody();
       }
    } else {
@@ -1203,7 +1211,7 @@ PreviewCage.prototype.restoreFromFaceToVertexSelect = function(snapshot) {
 PreviewCage.prototype.restoreFromFaceToBodySelect = function(snapshot) {
    if (snapshot) {
       this._resetSelectFace();
-      if (snapshot.length > 0) {
+      if (snapshot.size > 0) {
          this.selectBody();
       }
    } else {
