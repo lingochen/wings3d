@@ -9,7 +9,7 @@ class BodyMadsor extends Madsor {
       let menuItem = document.querySelector('#bodyDelete');
       if (menuItem) {
          menuItem.addEventListener('click', function(ev) {
-            const command = new DeletePreviewCagesCommand(self.getSelected());
+            const command = new DeleteBodyCommand(self.getSelected());
             Wings3D.apiExport.undoQueue( command );
             command.doIt(); // delete current selected.
          });
@@ -17,11 +17,9 @@ class BodyMadsor extends Madsor {
       menuItem = document.querySelector('#bodyRename');
       if (menuItem) {
          const form = Wings3D.setupDialog('#renameDialog', function(data) {
-            self.eachPreviewCage( function(cage) {
-               if (data.hasOwnProperty(cage.name)) {
-                  cage.name = data[cage.name];  // rename
-               }
-            });
+            const command = new RenameBodyCommand(self.getSelected(), data);
+            Wings3D.apiExport.undoQueue( command );
+            command.doIt();   // rename
          });
          if (form) {
             // show Form when menuItem clicked
@@ -37,7 +35,8 @@ class BodyMadsor extends Madsor {
                   content.removeChild(label);
                }
                // add input name 
-               self.eachPreviewCage( function(cage) {
+               let array = self.getSelected();
+               for (let cage of array) {
                   const label = document.createElement('label');
                   label.textContent = cage.name;
                   const input = document.createElement('input');
@@ -46,9 +45,13 @@ class BodyMadsor extends Madsor {
                   input.placeholder = cage.name;
                   label.appendChild(input);
                   content.appendChild(label);
-               });
+               }
             });
          }
+      }
+      menuItem = document.querySelector('#bodyDuplicate');
+      if (menuItem) {
+
       }
    }
 
@@ -182,10 +185,16 @@ class BodySelectCommand extends EditCommand {
 
 }
 
-class DeletePreviewCagesCommand extends EditCommand {
+class DeleteBodyCommand extends EditCommand {
    constructor(previewCages) {
       super();
       this.previewCages = previewCages;
+   }
+
+   doIt() {
+      for (let previewCage of this.previewCages) {
+         Wings3D.view.removeFromWorld(previewCage);
+      }
    }
 
    undo() {
@@ -193,10 +202,32 @@ class DeletePreviewCagesCommand extends EditCommand {
          Wings3D.view.addToWorld(previewCage);
       }
    }
+}
+
+class RenameBodyCommand extends EditCommand {
+   constructor(previewCages, data) {
+      super();
+      this.previewCages = previewCages;
+      this.newName = data;
+      this.oldName = new Map;
+   }
 
    doIt() {
-      for (let previewCage of this.previewCages) {
-         Wings3D.view.removeFromWorld(previewCage);
+      for (let cage of this.previewCages) {
+         if (this.newName.hasOwnProperty(cage.name)) {
+            if (!this.oldName.has(cage.name)) {
+               this.oldName.set(cage.name, cage);
+            }
+            cage.name = this.newName[cage.name];
+            geometryStatus("Object new name is " + cage.name);
+         }
       }
+   }
+
+   undo() {
+      for (let [name, cage] of this.oldName) {
+         cage.name = name;
+         geometryStatus("Object restore name to " + cage.name);
+      }  
    }
 }
