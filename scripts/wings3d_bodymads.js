@@ -14,7 +14,42 @@ class BodyMadsor extends Madsor {
             command.doIt(); // delete current selected.
          });
       }
-      
+      menuItem = document.querySelector('#bodyRename');
+      if (menuItem) {
+         const form = Wings3D.setupDialog('#renameDialog', function(data) {
+            self.eachPreviewCage( function(cage) {
+               if (data.hasOwnProperty(cage.name)) {
+                  cage.name = data[cage.name];  // rename
+               }
+            });
+         });
+         if (form) {
+            // show Form when menuItem clicked
+            const content = document.querySelector('#renameDialog div');
+            menuItem.addEventListener('click', function(ev) {
+               // position then show form;
+               Wings3D.contextmenu.positionDom(form, Wings3D.contextmenu.getPosition(ev));
+               form.style.display = 'block';
+               // remove old label
+               form.reset();
+               let labels = document.querySelectorAll('#renameDialog label');
+               for (let label of labels) {
+                  content.removeChild(label);
+               }
+               // add input name 
+               self.eachPreviewCage( function(cage) {
+                  const label = document.createElement('label');
+                  label.textContent = cage.name;
+                  const input = document.createElement('input');
+                  input.type = "text";
+                  input.name = cage.name;
+                  input.placeholder = cage.name;
+                  label.appendChild(input);
+                  content.appendChild(label);
+               });
+            });
+         }
+      }
    }
 
    getSelected() {
