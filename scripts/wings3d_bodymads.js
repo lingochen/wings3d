@@ -264,9 +264,10 @@ class DuplicateBodyCommand extends EditCommand {
 
    undo() {
       for (let cage of this.duplicateCages) {
+         cage.selectBody();                  // deselection before out
          Wings3D.view.removeFromWorld(cage);
       }
-      this._toggleOriginalSelected();
+      this._toggleOriginalSelected();        // reselected the original
    }
 }
 
