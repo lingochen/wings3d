@@ -145,7 +145,6 @@ class MovePositionHandler extends MouseMoveHandler {
       // this.movement
    }
 
-
    _commit(view) {
       view.undoQueue(new MoveCommand(this.madsor, this.snapshots, this.movement));
    }

@@ -49,9 +49,21 @@ class BodyMadsor extends Madsor {
             });
          }
       }
-      menuItem = document.querySelector('#bodyDuplicate');
+      const axisName = ['X', 'Y', 'Z'];
+      // movement for (x, y, z)
+      for (let axis=0; axis < 3; ++axis) {
+         menuItem = document.querySelector('#bodyDuplicateMove' + axisName[axis]);
+         if (menuItem) {
+            menuItem.addEventListener("click", function(ev) {
+               Wings3D.view.attachHandlerMouseMove(new DuplicateMouseMoveAlongAxis(self, axis, self.getSelected()));
+            });
+         } 
+      }
+      menuItem = document.querySelector('#bodyDuplicateMoveFree');
       if (menuItem) {
-
+         menuItem.addEventListener('click', function(ev) {
+            Wings3D.view.attachHandlerMouseMove(new DuplicateMoveFreePositionHandler(self, self.getSelected()));
+         });
       }
    }
 
@@ -63,14 +75,6 @@ class BodyMadsor extends Madsor {
          }
       });
       return selection;
-   }
-
-   duplicate() {
-
-   }
-
-   rename(newName) {
-
    }
 
    snapshotPosition() {
@@ -230,4 +234,77 @@ class RenameBodyCommand extends EditCommand {
          geometryStatus("Object restore name to " + cage.name);
       }  
    }
+}
+
+
+class DuplicateBodyCommand extends EditCommand {
+   constructor(originalCages) {
+      super();
+      this.originalCages = originalCages;
+      this.duplicateCages = [];
+      for (let cage of originalCages) {
+         let duplicate = PreviewCage.duplicate(cage);
+         this.duplicateCages.push( duplicate );
+      }
+   }
+
+   _toggleOriginalSelected() {
+      for (let cage of this.originalCages) {
+         cage.selectBody();
+      }
+   }
+
+   doIt() {
+      for (let cage of this.duplicateCages) {
+         Wings3D.view.addToWorld(cage);
+         cage.selectBody();
+      }
+      this._toggleOriginalSelected();
+   }
+
+   undo() {
+      for (let cage of this.duplicateCages) {
+         Wings3D.view.removeFromWorld(cage);
+      }
+      this._toggleOriginalSelected();
+   }
+}
+
+class DuplicateMouseMoveAlongAxis extends MouseMoveAlongAxis {
+   constructor(madsor, axis, originalCages) {
+      const duplicateBodyCommand = new DuplicateBodyCommand(originalCages);
+      duplicateBodyCommand.doIt();
+      super(madsor, axis);
+      this.duplicateBodyCommand = duplicateBodyCommand;
+   }
+
+   _commit(view) {
+      const movement = new MoveCommand(this.madsor, this.snapshots, this.movement);
+      view.undoQueueCombo([this.duplicateBodyCommand, movement]);
+   }
+
+   _cancel() {
+      // no needs to restore position. /this.madsor.restoreMoveSelection(this.snapshots);
+      this.duplicateBodyCommand.undo();
+   }
+}
+
+class DuplicateMoveFreePositionHandler extends MoveFreePositionHandler {
+   constructor(madsor, originalCages) {
+      const duplicateBodyCommand = new DuplicateBodyCommand(originalCages);
+      duplicateBodyCommand.doIt();
+      super(madsor);
+      this.duplicateBodyCommand = duplicateBodyCommand;
+   }
+
+   _commit(view) {
+      const movement = new MoveCommand(this.madsor, this.snapshots, this.movement);
+      view.undoQueueCombo([this.duplicateBodyCommand, movement]);
+   }
+
+   _cancel() {
+      // no needs to restore position. /this.madsor.restoreMoveSelection(this.snapshots);
+      this.duplicateBodyCommand.undo();
+   }
+
 }

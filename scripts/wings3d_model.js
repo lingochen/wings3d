@@ -67,6 +67,28 @@ PreviewCage.CONST = (function() {
 }());
 
 
+PreviewCage.duplicate = function(originalCage) {
+   // copy geometry.
+   const geometry = new WingedTopology( originalCage.geometry.vertices.length*2 );
+   for (let vertex of originalCage.geometry.vertices) {
+      geometry.addVertex(vertex.vertex);
+   }
+   for (let polygon of originalCage.geometry.faces) {
+      let index = [];
+      polygon.eachVertex( function(vertex) {
+         index.push( vertex.index );
+      });
+      geometry.addPolygon(index);
+   }
+   geometry.clearAffected();
+   // new PreviewCage, and new name
+   const previewCage = new PreviewCage(geometry);
+   previewCage.name = originalCage.name + "_copy1";
+
+   return previewCage;
+};
+
+
 PreviewCage.prototype._getGeometrySize = function() {
    return { face: this.geometry.faces.length,
             edge: this.geometry.edges.length,
