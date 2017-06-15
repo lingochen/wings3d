@@ -431,6 +431,7 @@ function createView(gl) {
       // now push the new command back
       _pvt.undo.queue.push(editCommand);
       _pvt.undo.current++;
+      my.renderWorld.needToRedraw();
    }
 
    my.redoEdit = function() {

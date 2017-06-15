@@ -378,10 +378,19 @@ WingedTopology.prototype.clearAffected = function() {
    this.affected.faces.clear();
 };
 
-WingedTopology.prototype._createPolygon = function(halfEdge, numberOfVertex) {
+// todo: ?binary search for delPolygon, then use splice. a win? for large freelist yes, but, I don't think it a common situation.
+WingedTopology.prototype._createPolygon = function(halfEdge, numberOfVertex, delPolygon) {
    let polygon;
    if (this.freeFaces.length > 0) {
-      polygon = this.faces[ this.freeFaces.pop() ];
+      if (typeof delPolygon !== "undefined") {
+         const index = delPolygon.index;   // remove delOutEdge from freeEdges list
+         this.freeFaces = this.freeFaces.filter(function(element) {
+            return element !== index;
+         });
+         polygon = delPolygon;
+      } else {
+         polygon = this.faces[ this.freeFaces.pop() ];
+      }
       polygon.halfEdge = halfEdge;
       polygon.numberOfVertex = numberOfVertex;
       polygon.update();
@@ -429,10 +438,18 @@ WingedTopology.prototype.addVertex = function(pt) {
    }
 };
 
-WingedTopology.prototype._createEdge = function(begVert, endVert) {
+WingedTopology.prototype._createEdge = function(begVert, endVert, delOutEdge) {
    let edge;
    if (this.freeEdges.length > 0) { // prefered recycle edge.
-      edge = this.edges[this.freeEdges.pop()];
+      if (typeof delOutEdge !== "undefined") {
+         const index = delOutEdge.wingedEdge.index;   // remove delOutEdge from freeEdges list
+         this.freeEdges = this.freeEdges.filter(function(element) {
+            return element !== index;
+         });
+         edge = delOutEdge.wingedEdge;
+      } else {
+         edge = this.edges[this.freeEdges.pop()];
+      }
       edge.left.origin = begVert;
       edge.right.origin = endVert;
       this.affected.edges.add( edge );
@@ -628,8 +645,8 @@ WingedTopology.prototype.findHalfEdge = function(v0, v1) {
          });
 };
 
-// to split a face into 2 faces by insertEdge.
-WingedTopology.prototype.insertEdge = function(prevHalf, nextHalf) {
+// to split a face into 2 faces by insertEdge, delOutEdge and delPolygon optional.
+WingedTopology.prototype.insertEdge = function(prevHalf, nextHalf, delOutEdge, delPolygon) {
    // assert(prevHalf.face === nextHalf.face);
    // assert(prevHalf.next !== _nextHalf);      // we want to split face, not adding edge
    const v0 = prevHalf.destination();
@@ -637,7 +654,7 @@ WingedTopology.prototype.insertEdge = function(prevHalf, nextHalf) {
    const oldPolygon = prevHalf.face;
 
    // create edge and link together.
-   const outEdge = this._createEdge(v0, v1);
+   const outEdge = this._createEdge(v0, v1, delOutEdge);
    const inEdge = outEdge.pair;
    const nextPrev = prevHalf.next;           // save for later use
    const prevNext = nextHalf.prev();
@@ -647,7 +664,7 @@ WingedTopology.prototype.insertEdge = function(prevHalf, nextHalf) {
    inEdge.next = nextPrev;
   
    //now set the face handles
-   const newPolygon = this._createPolygon(outEdge, 4);  // readjust size later.
+   const newPolygon = this._createPolygon(outEdge, 4, delPolygon);  // readjust size later.
    outEdge.face = newPolygon;
    let size = 0;
    newPolygon.eachEdge( function(halfEdge) {
@@ -1006,15 +1023,19 @@ WingedTopology.prototype.removeEdge = function(outEdge) {
       }
    }
    // make sure everye connect edge point to the same face.
-   let size = 0;
-   face.eachEdge( function(outEdge) {
-      ++size;
-      outEdge.face = face;
-   });
-   face.numberOfVertex = size;
-   this.affected.faces.add(face);
+   if (face !== null) {
+      let size = 0;
+      face.eachEdge( function(outEdge) {
+         ++size;
+         outEdge.face = face;
+      });
+      face.numberOfVertex = size;
+      this.affected.faces.add(face);
+   }
 
-   this._freePolygon(delFace);
+   if (delFace !== null) {
+      this._freePolygon(delFace);
+   }
    this._freeEdge(outEdge);
    return face;   // return the remaining face handle
 };

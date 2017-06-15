@@ -48,6 +48,18 @@ class EdgeMadsor extends Madsor {
             self.cutAndConnect();
          });
       }
+      // Dissolve
+      menuItem = document.querySelector('#edgeDissolve');
+      if (menuItem) {
+         menuItem.addEventListener('click', function(ev) {
+            const dissolve = self.dissolve();
+            if (dissolve.count > 0) {
+               Wings3D.view.undoQueue(new DissolveEdgeCommand(self, dissolve.record));
+            } else {
+               // should not happened.
+            }
+         });
+      }
    }
 
    // get selected Edge's vertex snapshot. for doing, and redo queue. 
@@ -97,6 +109,23 @@ class EdgeMadsor extends Madsor {
          snapshots.splitEdges.push( snapshot.splitEdges );
       });
       return snapshots;
+   }
+
+   // dissolve edge
+   dissolve() {
+      const dissolve = {count: 0, record: []};
+      this.eachPreviewCage(function(cage) {
+         const record = cage.dissolveSelectedEdge();
+         dissolve.count += record.length;
+         dissolve.record.push( record );
+      });
+      return dissolve;
+   }
+
+   reinsertDissolve(dissolveEdgesArray) {
+      this.eachPreviewCage(function(cage, dissolveEdges) {
+         cage.reinsertDissolveEdge(dissolveEdges);
+      }, dissolveEdgesArray);
    }
 
    collapseEdge(splitEdgesArray) {
@@ -228,9 +257,8 @@ class EdgeSelectCommand extends EditCommand {
 }
 
 
-class CutEdgeMoveCommand extends MouseMoveHandler {
-   
-}
+//class CutEdgeMoveCommand extends MouseMoveHandler {
+//}
 
 
 class CutEdgeCommand extends EditCommand {
@@ -255,5 +283,22 @@ class CutEdgeCommand extends EditCommand {
       // restoreToEdgeMode
       this.madsor.collapseEdge(this.splitEdges);
       Wings3D.apiExport.restoreEdgeMode(this.selectedEdges);
+   }
+}
+
+
+class DissolveEdgeCommand extends EditCommand {
+   constructor(madsor, dissolveEdges) {
+      super();
+      this.madsor = madsor;
+      this.dissolveEdges = dissolveEdges;
+   }
+
+   doIt() {
+      this.madsor.dissolve(); // return data should be the same as previous one
+   }
+
+   undo() {
+      this.madsor.reinsertDissolve(this.dissolveEdges);
    }
 }

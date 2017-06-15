@@ -277,7 +277,6 @@ PreviewCage.prototype._updatePreview = function(polygon) {
 };
 
 
-// usually deleted edge is already deselected.?
 PreviewCage.prototype._updatePreviewEdge = function(edge, updateShader) {
    const wingedEdge = edge.wingedEdge;
    if (wingedEdge.isReal()) {
@@ -288,12 +287,15 @@ PreviewCage.prototype._updatePreviewEdge = function(edge, updateShader) {
       if (updateShader) {
          this.previewEdge.shaderData.uploadAttribute('position', index*4, this.previewEdge.line.subarray(index, index+6));
       }
-   } else {    // deleted edge.
-      this.previewEdge.color.fill(0.0, wingedEdge.index, wingedEdge.index+2);
+   } else {    // deleted edge. deselcted, dehilite.
+      const index = wingedEdge.index*2;
+      const color = this.previewEdge.color.subarray(index, index+2);
+      color.fill(0.0);
+      //this.previewEdge.color.fill(0.0, wingedEdge.index, wingedEdge.index+2);
 
-      if (updateShader) {
-         // 
-      }
+      //if (updateShader) {
+         this.previewEdge.shaderData.uploadAttribute('color', index*4, color);
+      //}
    }
 };
 
@@ -1412,8 +1414,6 @@ PreviewCage.prototype.connectVertex = function() {
 
    return {edgeList: edgeList, wingedEdgeList: wingedEdgeList};
 };
-
-
 // pair with connectVertex.
 PreviewCage.prototype.dissolveConnect = function(insertEdges) {
    const size = this._getGeometrySize();
@@ -1432,6 +1432,39 @@ PreviewCage.prototype.dissolveConnect = function(insertEdges) {
    this._resizePreview(size.vertex, size.face);
    this._resizePreviewEdge(size.edge);
 
+};
+
+
+//
+PreviewCage.prototype.dissolveSelectedEdge = function() {
+   const dissolveEdges = [];
+   const size = this._getGeometrySize();
+   for (let edge of this.selectedSet) {
+      // 
+      let dissolve = {nextHalf: edge.right.next, prevHalf: edge.right.prev(), outEdge: edge.right, delFace: edge.right.face};
+      this.geometry.removeEdge(edge.left);
+      dissolveEdges.push(dissolve);
+   }
+   this.selectedSet.clear();
+   // after deletion of faces and edges. update
+   this._updateAffected(this.geometry.affected);
+   this._resizeBoundingSphere(size.face);
+   this._resizePreview(size.vertex, size.face);
+   this._resizePreviewEdge(size.edge);
+   // return affected.
+   return dissolveEdges;
+};
+PreviewCage.prototype.reinsertDissolveEdge = function(dissolveEdges) {
+   const size = this._getGeometrySize();
+   // walk form last to first.
+   for (let i = (dissolveEdges.length-1); i >= 0; --i) {
+      let dissolve = dissolveEdges[i];
+      this.geometry.insertEdge(dissolve.prevHalf, dissolve.nextHalf, dissolve.outEdge, dissolve.delFace);
+   }
+   this._updateAffected(this.geometry.affected);
+   this._resizeBoundingSphere(size.face);
+   this._resizePreview(size.vertex, size.face);
+   this._resizePreviewEdge(size.edge);
 };
 
 
