@@ -1460,6 +1460,7 @@ PreviewCage.prototype.reinsertDissolveEdge = function(dissolveEdges) {
    for (let i = (dissolveEdges.length-1); i >= 0; --i) {
       let dissolve = dissolveEdges[i];
       this.geometry.insertEdge(dissolve.prevHalf, dissolve.nextHalf, dissolve.outEdge, dissolve.delFace);
+      this.selectEdge(dissolve.outEdge);
    }
    this._updateAffected(this.geometry.affected);
    this._resizeBoundingSphere(size.face);

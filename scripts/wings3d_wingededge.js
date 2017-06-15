@@ -440,6 +440,7 @@ WingedTopology.prototype.addVertex = function(pt) {
 
 WingedTopology.prototype._createEdge = function(begVert, endVert, delOutEdge) {
    let edge;
+   let outEdge;
    if (this.freeEdges.length > 0) { // prefered recycle edge.
       if (typeof delOutEdge !== "undefined") {
          const index = delOutEdge.wingedEdge.index;   // remove delOutEdge from freeEdges list
@@ -447,20 +448,23 @@ WingedTopology.prototype._createEdge = function(begVert, endVert, delOutEdge) {
             return element !== index;
          });
          edge = delOutEdge.wingedEdge;
+         outEdge = delOutEdge;
       } else {
          edge = this.edges[this.freeEdges.pop()];
+         outEdge = edge.left;
       }
-      edge.left.origin = begVert;
-      edge.right.origin = endVert;
+      outEdge.origin = begVert;
+      outEdge.pair.origin = endVert;
       this.affected.edges.add( edge );
    } else {
       // initialized data.
       edge = new WingedEdge(begVert, endVert);
       edge.index = this.edges.length;
       this.edges.push( edge );
+      outEdge = edge.left;
    }
 
-   return edge.left;
+   return outEdge;
 };
 
 // return winged edge ptr because internal use only.
@@ -1004,10 +1008,10 @@ WingedTopology.prototype.removeEdge = function(outEdge) {
 
    //correct vertext.outEdge if needed.
    if (outEdge.origin.outEdge === outEdge) {
-      outEdge.origin.outEdge = outEdge.next;
+      outEdge.origin.outEdge = outPrev.pair;
    }
    if (inEdge.origin.outEdge === inEdge) {
-      inEdge.origin.outEdge = inEdge.next;
+      inEdge.origin.outEdge = inPrev.pair;
    }
   
    //deal with the faces
