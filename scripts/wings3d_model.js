@@ -1440,9 +1440,8 @@ PreviewCage.prototype.dissolveSelectedEdge = function() {
    const dissolveEdges = [];
    const size = this._getGeometrySize();
    for (let edge of this.selectedSet) {
-      // 
-      let dissolve = {nextHalf: edge.right.next, prevHalf: edge.right.prev(), outEdge: edge.right, delFace: edge.right.face};
-      this.geometry.removeEdge(edge.left);
+      let undo = this.geometry.dissolveEdge(edge.left);
+      let dissolve = { halfEdge: edge.left, undo: undo};
       dissolveEdges.push(dissolve);
    }
    this.selectedSet.clear();
@@ -1459,8 +1458,8 @@ PreviewCage.prototype.reinsertDissolveEdge = function(dissolveEdges) {
    // walk form last to first.
    for (let i = (dissolveEdges.length-1); i >= 0; --i) {
       let dissolve = dissolveEdges[i];
-      this.geometry.insertEdge(dissolve.prevHalf, dissolve.nextHalf, dissolve.outEdge, dissolve.delFace);
-      this.selectEdge(dissolve.outEdge);
+      dissolve.undo();
+      this.selectEdge(dissolve.halfEdge);
    }
    this._updateAffected(this.geometry.affected);
    this._resizeBoundingSphere(size.face);

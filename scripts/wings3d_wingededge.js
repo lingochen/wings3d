@@ -404,9 +404,18 @@ WingedTopology.prototype._createPolygon = function(halfEdge, numberOfVertex, del
 };
 
 // return vertex index
-WingedTopology.prototype.addVertex = function(pt) {
+WingedTopology.prototype.addVertex = function(pt, delVertex) {
    if (this.freeVertices.length > 0) {
-      let vertex = this.vertices[this.freeVertices.pop()];
+      let vertex;
+      if (typeof delVertex === 'undefined') {
+         vertex = this.vertices[this.freeVertices.pop()];
+      } else {
+         const index = delVertex.index;   // remove delOutEdge from freeEdges list
+         this.freeVertices = this.freeVertices.filter(function(element) {
+            return element !== index;
+         });
+         vertex = delVertex;
+      }
       vertex.vertex.set(pt);
       this.affected.vertices.add( vertex );
       return vertex;
@@ -426,7 +435,7 @@ WingedTopology.prototype.addVertex = function(pt) {
          this.buf.buffer = buffer;
       }
       // vec3 is 3 float32. mapped into the big buffer. float32=4 byte.
-      var vertex = new Float32Array(this.buf.buffer, Float32Array.BYTES_PER_ELEMENT*this.buf.len, 3);
+      let vertex = new Float32Array(this.buf.buffer, Float32Array.BYTES_PER_ELEMENT*this.buf.len, 3);
       this.buf.len += 3;
       vertex[0] = pt[0];
       vertex[1] = pt[1];
@@ -695,7 +704,7 @@ WingedTopology.prototype.insertEdge = function(prevHalf, nextHalf, delOutEdge, d
 }
 
 
-WingedTopology.prototype.splitEdge = function(outEdge, pt) {
+WingedTopology.prototype.splitEdge = function(outEdge, pt, delOut) {
    const inEdge = outEdge.pair;
    const outPrev = outEdge.prev();
    const inNext = inEdge.next;
@@ -704,7 +713,7 @@ WingedTopology.prototype.splitEdge = function(outEdge, pt) {
 
    //add the new edge
    const vertex = this.addVertex(pt);
-   const newOut = this._createEdge(vOrigin, vertex);
+   const newOut = this._createEdge(vOrigin, vertex, delOut);
    const newIn = newOut.pair;
    // fixe the halfedge connectivity
    newOut.next = outEdge;
@@ -843,6 +852,35 @@ WingedTopology.prototype.liftContours = function(edgeLoops) {
 };
 
 
+// insert a new edge, for undo purpose
+WingedTopology.prototype._liftEdge = function(outLeft, inRight, fromVertex, delEdge) {
+   const beg = outLeft.prev();
+   const endOut = inRight.next;
+   const outEdge = this._createEdge(fromVertex, outLeft.origin, delEdge);
+   const inEdge = outEdge.pair;
+   inRight.next = outEdge;
+   outEdge.next = endOut;
+   inEdge.next = outLeft;
+   beg.next = inEdge;
+   fromVertex.outEdge = outEdge;
+   // lift edges up from left to right.
+   let currentOut = outLeft;
+   do {
+      if (currentOut.origin.outEdge === currentOut) {
+         currentOut.origin.outEdge = endOut;
+      }
+      currentOut.origin = fromVertex;
+      currentOut = currentOut.pair.next;
+   } while (currentOut !== outEdge);
+   outEdge.face = inRight.face;
+   outEdge.face.numberOfVertex++;
+   inEdge.face = outLeft.face;
+   inEdge.face.numberOfVertex++;
+   this.affected.faces.add(outEdge.face);
+   this.affected.faces.add(inEdge.face);
+}
+
+
 // insert the index number in reverse order. smallest last.
 WingedTopology.prototype._insertFreeList = function(val, array) {
    var l = 0, r = array.length - 1;
@@ -940,10 +978,42 @@ WingedTopology.prototype._collapseEdge = function(halfEdge) {
 
    // delete stuff
    this._freeEdge(halfEdge);
+   const pt = fromVertex.vertex;
    this._freeVertex(fromVertex);
+   const self = this;
+   return function() {  // undo collapseEdge
+      self._liftEdge(pairNext, prev, self.addVertex(pt, fromVertex), halfEdge);
+   }
 };
 
+// undo of  _collapseLoop.
+WingedTopology.prototype._restoreLoop = function(halfEdge, delEdge, delPolygon) {
+   const prev = halfEdge.prev();
+   const outEdge = this._createEdge(halfEdge.destination(), halfEdge.origin, delEdge);
+   const inEdge = outEdge.pair;
 
+   // fix connection
+   prev.next = inEdge;
+   inEdge.next = halfEdge.next;
+   halfEdge.next = outEdge;
+   outEdge.next = halfEdge;
+
+   // fix face
+   this._createPolygon(outEdge, 2, delPolygon);
+   inEdge.face = halfEdge.face;
+   halfEdge.face = delPolygon;
+   outEdge.face = delPolygon;
+
+   // fix face.outEdge
+   if (inEdge.face.halfEdge === halfEdge) {
+      inEdge.face.halfEdge = inEdge;
+   }
+
+   // const self = this;
+   // return function() {
+   //    self._collapseLoop(outEdge);      
+   //}
+};
 WingedTopology.prototype._collapseLoop = function(halfEdge) {
    const next = halfEdge.next;
    const pair = halfEdge.pair;
@@ -973,8 +1043,13 @@ WingedTopology.prototype._collapseLoop = function(halfEdge) {
    }
 
    // delete stuff
+   const delPolygogn = halfEdge.face;
    this._freePolygon(halfEdge.face);
    this._freeEdge(halfEdge);
+   const self = this;
+   return function() {
+      self._restoreLoop(next, halfEdge, delPolygon);
+   };
 };
 
 
@@ -984,26 +1059,46 @@ WingedTopology.prototype.collapseEdge = function(halfEdge) {
    const pairNext = pair.next;
 
    // remove edge
-   this._collapseEdge(halfEdge);
+   const undo = this._collapseEdge(halfEdge);
 
    // remove loops(2 side polygon)
+   let undoCollapseLeft;
+   let undoCollapseRight;
    if (next.next.next === next) {
-      this._collapseLoop(next.next);
+      undoCollapseLeft = this._collapseLoop(next.next);
    }
    if (pairNext.next.next === pairNext) {
-      this._collapseLoop(pairNext);
+      undoCollapseRight = this._collapseLoop(pairNext);
+   }
+   return function() {
+      if (typeof undoCollapseRight !== 'undefined') {
+         undoCollapseRight();
+      }
+      if (typeof undoCollapseLeft !== 'undefined') {
+         undoCollapseLeft();
+      }
+      undo();
    }
 };
 
+// won't work with potentially "dangling" vertices and edges. Any doubt, call dissolveEdge
 WingedTopology.prototype.removeEdge = function(outEdge) {
-   //don't allow "dangling" vertices and edges
-   const inEdge = outEdge.pair;
+   let inEdge = outEdge.pair;
+   if (inEdge.face === null) {   // switch side
+      inEdge = outEdge;
+      outEdge = outEdge.pair;
+      if (inEdge.face === null) {
+         console.log("error, both side of the edges are null faces");
+         return null;
+      }
+   }
 
    //fix the halfedge relations
    const outPrev = outEdge.prev();
    const inPrev = inEdge.prev();
-
-   outPrev.next = inEdge.next;
+   const inNext = inEdge.next;
+   
+   outPrev.next = inNext;
    inPrev.next = outEdge.next;
 
    //correct vertext.outEdge if needed.
@@ -1015,19 +1110,14 @@ WingedTopology.prototype.removeEdge = function(outEdge) {
    }
   
    //deal with the faces
-   let face = outEdge.face;
-   let delFace = inEdge.face;
-   if (delFace === null) {  
-      delFace = face; // the other side is boundary, after removal becomes boundary too.
-      face = null;
-   } else if (face !== null) {
-      //correct the hafledge handle of face if needed
-      if (face.halfEdge === outEdge) {
+   const face = outEdge.face;    // the other side is boundary, after removal becomes boundary too.
+   const delFace = inEdge.face;
+
+   if (face !== null) {
+      if (face.halfEdge === outEdge) { //correct the halfedge handle of face if needed
          face.halfEdge = outPrev;
       }
-   }
    // make sure everye connect edge point to the same face.
-   if (face !== null) {
       let size = 0;
       face.eachEdge( function(outEdge) {
          ++size;
@@ -1037,13 +1127,32 @@ WingedTopology.prototype.removeEdge = function(outEdge) {
       this.affected.faces.add(face);
    }
 
-   if (delFace !== null) {
+   if (delFace !== null) {    // guaranteed to be non-null, but
       this._freePolygon(delFace);
    }
    this._freeEdge(outEdge);
-   return face;   // return the remaining face handle
+   // return undo functions
+   const self = this;
+   return function() {
+      self.insertEdge(inPrev, inNext, inEdge, delFace);
+   };
+   //return face;   // return the remaining face handle
 };
 
+
+WingedTopology.prototype.dissolveEdge = function(outEdge) {
+   // check next only connect to outEdge? 
+   const self = this;
+   const inEdge = outEdge.pair;
+   if (outEdge.next.pair.next === inEdge) {
+      const outNext = outEdge.next;
+      return this.collapseEdge(inEdge);   // collapse inward
+   } else if (inEdge.next.pair.next === outEdge) {
+      return this.collapseEdge(outEdge);  // collapse outward
+   } else {
+      return this.removeEdge(outEdge);    // normal dissolve
+   }
+};
 
 
 
