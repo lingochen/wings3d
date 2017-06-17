@@ -870,6 +870,7 @@ WingedTopology.prototype._liftEdge = function(outLeft, inRight, fromVertex, delE
          currentOut.origin.outEdge = endOut;
       }
       currentOut.origin = fromVertex;
+      this.affected.edges.add( currentOut.wingedEdge );
       currentOut = currentOut.pair.next;
    } while (currentOut !== outEdge);
    outEdge.face = inRight.face;

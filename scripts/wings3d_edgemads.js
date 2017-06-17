@@ -60,6 +60,9 @@ class EdgeMadsor extends Madsor {
             }
          });
       }
+      // Collapse
+      menuItem = document.querySelector('#edgeCollapse');
+      
    }
 
    // get selected Edge's vertex snapshot. for doing, and redo queue. 
