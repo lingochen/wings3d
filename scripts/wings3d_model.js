@@ -1468,6 +1468,38 @@ PreviewCage.prototype.reinsertDissolveEdge = function(dissolveEdges) {
 };
 
 
+PreviewCage.prototype.collapseSelectedEdge = function() {
+   const collapseEdges = [];
+   const size = this._getGeometrySize();
+   for (let edge of this.selectedSet) {
+      let undo = this.geometry.collapseEdge(edge.left, true);
+      let collapse = { halfEdge: edge.left, undo: undo};
+      collapseEdges.push(collapse);
+   }
+   this.selectedSet.clear();
+   // after deletion of
+   this._updateAffected(this.geometry.affected);
+   this._resizeBoundingSphere(size.face);
+   this._resizePreview(size.vertex, size.face);
+   this._resizePreviewEdge(size.edge);
+   return collapseEdges;
+};
+
+PreviewCage.prototype.restoreCollapseEdge = function(collapseEdges) {
+   const size = this._getGeometrySize();
+   // walk form last to first.
+   for (let i = (collapseEdges.length-1); i >= 0; --i) {
+      let collapse = collapseEdges[i];
+      collapse.undo();
+      this.selectEdge(collapse.halfEdge);
+   }
+   this._updateAffected(this.geometry.affected);
+   this._resizeBoundingSphere(size.face);
+   this._resizePreview(size.vertex, size.face);
+   this._resizePreviewEdge(size.edge);   
+};
+
+
 PreviewCage.prototype.EPSILON = 0.000001;
 // Möller–Trumbore ray-triangle intersection algorithm
 // should I use float64array? 

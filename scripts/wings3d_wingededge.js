@@ -867,7 +867,7 @@ WingedTopology.prototype._liftEdge = function(outLeft, inRight, fromVertex, delE
    let currentOut = outLeft;
    do {
       if (currentOut.origin.outEdge === currentOut) {
-         currentOut.origin.outEdge = endOut;
+         currentOut.origin.outEdge = endOut; // or inEdge a safer choice? 
       }
       currentOut.origin = fromVertex;
       this.affected.edges.add( currentOut.wingedEdge );
@@ -934,7 +934,7 @@ WingedTopology.prototype._freePolygon = function(polygon) {
 };
 
 
-WingedTopology.prototype._collapseEdge = function(halfEdge) {
+WingedTopology.prototype._collapseEdge = function(halfEdge, toMiddle) {
    const next = halfEdge.next;
    const prev = halfEdge.prev();
 
@@ -975,15 +975,27 @@ WingedTopology.prototype._collapseEdge = function(halfEdge) {
    if (toVertex.outEdge === pair) {
       toVertex.outEdge = next;
    }
-   //adjust_outgoing_halfedge
+   const fromPt = fromVertex.vertex;
+   let toPt;
+   if (toMiddle) {
+      toPt = new Float32Array(3);
+      vec3.copy(toPt, toVertex.vertex);
+      vec3.add(toVertex.vertex, toVertex.vertex, fromVertex.vertex);
+      vec3.scale(toVertex.vertex, toVertex.vertex, 0.5);
+      this.affected.vertices.add(toVertex);
+   }
 
    // delete stuff
    this._freeEdge(halfEdge);
-   const pt = fromVertex.vertex;
    this._freeVertex(fromVertex);
+
    const self = this;
    return function() {  // undo collapseEdge
-      self._liftEdge(pairNext, prev, self.addVertex(pt, fromVertex), halfEdge);
+      if (toMiddle) {
+         vec3.copy(toVertex.vertex, toPt);
+         self.affected.vertices.add(toVertex);
+      }
+      self._liftEdge(pairNext, prev, self.addVertex(fromPt, fromVertex), halfEdge);
    }
 };
 
@@ -1054,13 +1066,13 @@ WingedTopology.prototype._collapseLoop = function(halfEdge) {
 };
 
 
-WingedTopology.prototype.collapseEdge = function(halfEdge) {
+WingedTopology.prototype.collapseEdge = function(halfEdge, toMiddle = false) {
    const next = halfEdge.next;
    const pair = halfEdge.pair;
    const pairNext = pair.next;
 
    // remove edge
-   const undo = this._collapseEdge(halfEdge);
+   const undo = this._collapseEdge(halfEdge, toMiddle);
 
    // remove loops(2 side polygon)
    let undoCollapseLeft;

@@ -62,7 +62,16 @@ class EdgeMadsor extends Madsor {
       }
       // Collapse
       menuItem = document.querySelector('#edgeCollapse');
-      
+        if (menuItem) {
+         menuItem.addEventListener('click', function(ev) {
+            const collapse = self.collapse();
+            if (collapse.count > 0) {
+               Wings3D.view.undoQueue(new CollapseEdgeCommand(self, collapse.record));
+            } else {
+               // should not happened.
+            }
+         });
+      }    
    }
 
    // get selected Edge's vertex snapshot. for doing, and redo queue. 
@@ -114,6 +123,12 @@ class EdgeMadsor extends Madsor {
       return snapshots;
    }
 
+   collapseEdge(splitEdgesArray) {  // undo of splitEdge.
+      this.eachPreviewCage(function(cage, splitEdges) {
+         cage.collapseSplitEdge(splitEdges);
+      }, splitEdgesArray);
+   }
+
    // dissolve edge
    dissolve() {
       const dissolve = {count: 0, record: []};
@@ -124,18 +139,29 @@ class EdgeMadsor extends Madsor {
       });
       return dissolve;
    }
-
    reinsertDissolve(dissolveEdgesArray) {
       this.eachPreviewCage(function(cage, dissolveEdges) {
          cage.reinsertDissolveEdge(dissolveEdges);
       }, dissolveEdgesArray);
    }
 
-   collapseEdge(splitEdgesArray) {
-      this.eachPreviewCage(function(cage, splitEdges) {
-         cage.collapseSplitEdge(splitEdges);
-      }, splitEdgesArray);
+   // collapse edge
+   collapse() {
+      const collapse = {count: 0, record: []};
+      this.eachPreviewCage(function(cage) {
+         const record = cage.collapseSelectedEdge();
+         collapse.count += record.length;
+         collapse.record.push( record );
+      });
+      return collapse;
    }
+
+   restoreEdge(collapseEdgesArray) {
+      this.eachPreviewCage(function(cage, collapseEdges) {
+         cage.restoreCollapseEdge(collapseEdges);
+      }, collapseEdgesArray);
+   }
+
 
    dragSelect(cage, selectArray, onOff) {
       if (this.currentEdge !== null) {
@@ -303,5 +329,22 @@ class DissolveEdgeCommand extends EditCommand {
 
    undo() {
       this.madsor.reinsertDissolve(this.dissolveEdges);
+   }
+}
+
+
+class CollapseEdgeCommand extends EditCommand {
+   constructor(madsor, collapseEdges) {
+      super();
+      this.madsor = madsor;
+      this.collapseEdges = collapseEdges;
+   }
+
+   doIt() {
+      this.madsor.collapse();
+   }
+
+   undo() {
+      this.madsor.restoreEdge(this.collapseEdges);
    }
 }
