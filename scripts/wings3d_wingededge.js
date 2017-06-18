@@ -378,6 +378,16 @@ WingedTopology.prototype.clearAffected = function() {
    this.affected.faces.clear();
 };
 
+WingedTopology.prototype.addAffectedEdgeAndFace = function(vertex) {
+   const self = this;
+   vertex.eachOutEdge( function(halfEdge) {
+      self.affected.edges.add(halfEdge.wingedEdge);
+      if (halfEdge.face !== null) {
+         self.affected.faces.add(halfEdge.face);
+     }
+   });
+};
+
 // todo: ?binary search for delPolygon, then use splice. a win? for large freelist yes, but, I don't think it a common situation.
 WingedTopology.prototype._createPolygon = function(halfEdge, numberOfVertex, delPolygon) {
    let polygon;
@@ -983,6 +993,7 @@ WingedTopology.prototype._collapseEdge = function(halfEdge, toMiddle) {
       vec3.add(toVertex.vertex, toVertex.vertex, fromVertex.vertex);
       vec3.scale(toVertex.vertex, toVertex.vertex, 0.5);
       this.affected.vertices.add(toVertex);
+      this.addAffectedEdgeAndFace(toVertex);
    }
 
    // delete stuff
@@ -1056,7 +1067,7 @@ WingedTopology.prototype._collapseLoop = function(halfEdge) {
    }
 
    // delete stuff
-   const delPolygogn = halfEdge.face;
+   const delPolygon = halfEdge.face;
    this._freePolygon(halfEdge.face);
    this._freeEdge(halfEdge);
    const self = this;
