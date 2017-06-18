@@ -1005,6 +1005,7 @@ WingedTopology.prototype._collapseEdge = function(halfEdge, toMiddle) {
       if (toMiddle) {
          vec3.copy(toVertex.vertex, toPt);
          self.affected.vertices.add(toVertex);
+         self.addAffectedEdgeAndFace(toVertex);
       }
       self._liftEdge(pairNext, prev, self.addVertex(fromPt, fromVertex), halfEdge);
    }
