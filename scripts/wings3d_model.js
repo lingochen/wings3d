@@ -1491,7 +1491,12 @@ PreviewCage.prototype.collapseSelectedEdge = function() {
       } else {
          selected.set(keep, pt);
       }
-      let undo = this.geometry.collapseEdge(edge.left);
+   }
+   for (let edge of this.selectedSet) {
+      let undo = function() {};
+      if (edge.isReal()) { // not already deleted.
+         undo = this.geometry.collapseEdge(edge.left);
+      }
       let collapse = { halfEdge: edge.left, undo: undo};
       collapseEdges.push(collapse);
    }
