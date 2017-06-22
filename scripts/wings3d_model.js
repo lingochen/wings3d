@@ -1469,34 +1469,78 @@ PreviewCage.prototype.reinsertDissolveEdge = function(dissolveEdges) {
 
 
 PreviewCage.prototype.collapseSelectedEdge = function() {
+   const restoreVertex = [];
    const collapseEdges = [];
    const size = this._getGeometrySize();
+   const selected = new Map();
    for (let edge of this.selectedSet) {
-      let undo = this.geometry.collapseEdge(edge.left, true);
+      let vertex = edge.left.origin;
+      let pt;
+      if (selected.has(vertex)) {
+         pt = selected.get(vertex);    
+         selected.delete(vertex);   // going to be freed, so we can safely remove it.
+      } else {
+         pt = {pt: new Float32Array(3), count: 1};
+         vec3.copy(pt.pt, vertex.vertex);
+      }
+      let keep = edge.right.origin;
+      if (selected.has(keep)) {
+         const keepPt = selected.get(keep);
+         vec3.add(keepPt.pt, pt.pt, keepPt.pt);
+         keepPt.count += pt.count;
+      } else {
+         selected.set(keep, pt);
+      }
+      let undo = this.geometry.collapseEdge(edge.left);
       let collapse = { halfEdge: edge.left, undo: undo};
       collapseEdges.push(collapse);
    }
    this.selectedSet.clear();
+
+   // the selected is the remaining Vertex
+   const selectedVertex = [];
+   for (let [vertex, pt] of selected) {
+      selectedVertex.push( vertex );
+      // save and move the position
+      const savePt = new Float32Array(3);
+      vec3.copy(savePt, vertex.vertex);
+      restoreVertex.push({vertex: vertex, savePt: savePt});
+      vec3.add(pt.pt, pt.pt, savePt);
+      vec3.scale(pt.pt, pt.pt, 1.0/(pt.count+1)); 
+      vec3.copy(vertex.vertex, pt.pt);
+      this.geometry.addAffectedEdgeAndFace(vertex);
+   }
    // after deletion of
    this._updateAffected(this.geometry.affected);
    this._resizeBoundingSphere(size.face);
    this._resizePreview(size.vertex, size.face);
    this._resizePreviewEdge(size.edge);
-   return collapseEdges;
+   this._resizePreviewVertex(size.vertex);
+   return { collapse: {edge: collapseEdges, vertex: restoreVertex}, selectedVertex: selectedVertex};
 };
 
-PreviewCage.prototype.restoreCollapseEdge = function(collapseEdges) {
+PreviewCage.prototype.restoreCollapseEdge = function(collapse) {
    const size = this._getGeometrySize();
    // walk form last to first.
+   this.selectedSet.clear();
+
+   const collapseEdges = collapse.edge;
    for (let i = (collapseEdges.length-1); i >= 0; --i) {
       let collapse = collapseEdges[i];
       collapse.undo();
       this.selectEdge(collapse.halfEdge);
    }
+   const restoreVertex = collapse.vertex;
+   for (let restore of restoreVertex) {   // restore position
+      vec3.copy(restore.vertex.vertex, restore.savePt);
+      this.geometry.addAffectedEdgeAndFace(restore.vertex);
+   }
+   // 
    this._updateAffected(this.geometry.affected);
    this._resizeBoundingSphere(size.face);
    this._resizePreview(size.vertex, size.face);
    this._resizePreviewEdge(size.edge);   
+   this._resizePreviewVertex(size.vertex);
 };
 
 

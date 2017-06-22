@@ -110,6 +110,12 @@ class BodyMadsor extends Madsor {
       this.preview.hiliteBody(true);
    }
 
+   resetSelection() {
+      this.eachPreviewCage( function(cage) {
+         cage._resetSelectBody();
+      });
+   }
+
    toggleFunc(toMadsor) {
       var redoFn;
       var snapshots = [];

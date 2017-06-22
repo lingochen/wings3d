@@ -64,9 +64,9 @@ class EdgeMadsor extends Madsor {
       menuItem = document.querySelector('#edgeCollapse');
         if (menuItem) {
          menuItem.addEventListener('click', function(ev) {
-            const collapse = self.collapse();
-            if (collapse.count > 0) {
-               Wings3D.view.undoQueue(new CollapseEdgeCommand(self, collapse.record));
+            const command = new CollapseEdgeCommand(self);
+            if (command.doIt()) {
+               Wings3D.view.undoQueue(command);
             } else {
                // should not happened.
             }
@@ -147,11 +147,13 @@ class EdgeMadsor extends Madsor {
 
    // collapse edge
    collapse() {
-      const collapse = {count: 0, record: []};
+      const collapse = {count: 0, collapseArray: [], vertexArray: []};
+      const selectedVertex = [];
       this.eachPreviewCage(function(cage) {
          const record = cage.collapseSelectedEdge();
-         collapse.count += record.length;
-         collapse.record.push( record );
+         collapse.count += record.collapse.edge.length;
+         collapse.collapseArray.push( record.collapse );
+         collapse.vertexArray.push( record.selectedVertex );
       });
       return collapse;
    }
@@ -191,6 +193,12 @@ class EdgeMadsor extends Madsor {
       //if (this.currentEdge) {
          this.preview.hiliteEdge(edge, true);
       //}
+   }
+   
+   resetSelection() {
+      this.eachPreviewCage( function(cage) {
+         cage._resetSelectEdge();
+      });
    }
 
    toggleFunc(toMadsor) {
@@ -334,17 +342,25 @@ class DissolveEdgeCommand extends EditCommand {
 
 
 class CollapseEdgeCommand extends EditCommand {
-   constructor(madsor, collapseEdges) {
+   constructor(madsor) {
       super();
       this.madsor = madsor;
-      this.collapseEdges = collapseEdges;
    }
 
    doIt() {
-      this.madsor.collapse();
+      const collapse = this.madsor.collapse();
+      if (collapse.count > 0) {
+         Wings3D.apiExport.restoreVertexMode(collapse.vertexArray);
+         this.collapse = collapse.collapseArray;
+         return true;
+      } else {
+         return false;
+      }
    }
 
    undo() {
-      this.madsor.restoreEdge(this.collapseEdges);
+      Wings3D.apiExport.currentMode().resetSelection();
+      Wings3D.apiExport.restoreEdgeMode();
+      this.madsor.restoreEdge(this.collapse);
    }
 }

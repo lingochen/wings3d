@@ -113,6 +113,12 @@ class FaceMadsor extends Madsor {
       }
    }
 
+   resetSelection() {
+      this.eachPreviewCage( function(cage) {
+         cage._resetSelectFace();
+      });
+   }
+
    toggleFunc(toMadsor) {
       var redoFn;
       var snapshots = [];

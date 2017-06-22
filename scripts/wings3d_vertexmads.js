@@ -108,6 +108,12 @@ class VertexMadsor extends Madsor {
       this.currentEdge = edge;
    }
 
+   resetSelection() {
+      this.eachPreviewCage( function(cage) {
+         cage._resetSelectVertex();
+      });
+   }
+
    toggleFunc(toMadsor) {
       var redoFn;
       var snapshots = [];
