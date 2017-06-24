@@ -1474,11 +1474,15 @@ PreviewCage.prototype.collapseSelectedEdge = function() {
    const size = this._getGeometrySize();
    const selected = new Map();
    for (let edge of this.selectedSet) {
+      let undo = function() {};
+      if (edge.isReal()){
       let vertex = edge.left.origin;
       let pt;
       if (selected.has(vertex)) {
          pt = selected.get(vertex);    
          selected.delete(vertex);   // going to be freed, so we can safely remove it.
+         vec3.add(pt.pt, pt.pt, vertex.vertex);
+         pt.count++;
       } else {
          pt = {pt: new Float32Array(3), count: 1};
          vec3.copy(pt.pt, vertex.vertex);
@@ -1491,10 +1495,6 @@ PreviewCage.prototype.collapseSelectedEdge = function() {
       } else {
          selected.set(keep, pt);
       }
-   }
-   for (let edge of this.selectedSet) {
-      let undo = function() {};
-      if (edge.isReal()) { // not already deleted.
          undo = this.geometry.collapseEdge(edge.left);
       }
       let collapse = { halfEdge: edge.left, undo: undo};
