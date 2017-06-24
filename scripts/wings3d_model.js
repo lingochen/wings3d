@@ -1533,7 +1533,9 @@ PreviewCage.prototype.restoreCollapseEdge = function(collapse) {
    for (let i = (collapseEdges.length-1); i >= 0; --i) {
       let collapse = collapseEdges[i];
       collapse.undo();
-      this.selectEdge(collapse.halfEdge);
+   }
+   for (let collapseEdge of collapseEdges) {
+      this.selectEdge(collapseEdge.halfEdge);
    }
    const restoreVertex = collapse.vertex;
    for (let restore of restoreVertex) {   // restore position
