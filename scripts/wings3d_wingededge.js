@@ -1010,10 +1010,10 @@ WingedTopology.prototype._restoreLoop = function(halfEdge, delEdge, delPolygon) 
    outEdge.next = halfEdge;
 
    // fix face
-   this._createPolygon(outEdge, 2, delPolygon);
    inEdge.face = halfEdge.face;
-   halfEdge.face = delPolygon;
-   outEdge.face = delPolygon;
+   const newPolygon = this._createPolygon(outEdge, 2, delPolygon);
+   halfEdge.face = newPolygon;   // unnecessary, already update
+   outEdge.face = newPolygon;    // unnecessary, already update.
 
    // fix face.outEdge
    if (inEdge.face.halfEdge === halfEdge) {

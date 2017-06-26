@@ -33,6 +33,17 @@ class FaceMadsor extends Madsor {
             Wings3D.view.attachHandlerMouseMove(new FaceExtrudeNormalHandler(self));
          });
       }
+      menuItem = document.querySelector('#faceDissolve');
+      if (menuItem) {
+         menuItem.addEventListener('click', function(ev) {
+            const command = new DissolveFaceCommand(self);
+            if (command.doIt()) {
+               Wings3D.view.undoQueue(command);
+            } else {
+               geometryStatus('Selected Face not dissolveable');
+            }
+         });
+      }
       // setup highlite face, at most 28 triangles.
       var buf = new Float32Array(3*30);
       this.trianglefan = {data: buf, length: 0};
@@ -70,6 +81,16 @@ class FaceMadsor extends Madsor {
       this.eachPreviewCage(function(cage, extrudeEdgesContours) {
          cage.collapseExtrudeEdge(extrudeEdgesContours.extrudeEdges);
       }, extrudeEdgesContoursArray);
+   }
+
+   dissolve() {
+      const dissolve = {count: 0, record: []};
+      this.eachPreviewCage(function(cage) {
+         const record = cage.dissolveSelectedFace();
+         dissolve.count += record.length;
+         dissolve.record.push( record );
+      });
+      return dissolve;
    }
 
    dragSelect(cage, selectArray, onOff) {
@@ -280,4 +301,29 @@ class ExtrudeFaceCommand extends EditCommand {
       this.madsor.restoreMoveSelection(this.snapshots);
       this.madsor.collapseEdge(this.extrudeEdgesContoursArray);
    }
+}
+
+class DissolveFaceCommand extends EditCommand {
+   constructor(madsor) {
+      super();
+      this.madsor = madsor;
+   }
+
+   doIt() {
+      const collapse = this.madsor.dissolve();
+      if (collapse.count > 0) {
+         Wings3D.apiExport.restoreVertexMode(collapse.vertexArray);
+         this.collapse = collapse.collapseArray;
+         return true;
+      } else {
+         return false;
+      }
+   }
+
+   undo() {
+      Wings3D.apiExport.currentMode().resetSelection();
+      Wings3D.apiExport.restoreEdgeMode();
+      this.madsor.restoreEdge(this.collapse);
+   }
+
 }
