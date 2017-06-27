@@ -5,7 +5,7 @@ wings3d web version. Polygonal Modelling using web browser. Interactive Tutorial
 * [Playground](https://cdn.rawgit.com/lingochen/wings3d/trunk/html/index.html) - Current Version.
 
 ### Prerequisites
-Current Firefox or Chrome browser, supporting webgl. (Microsoft Edge and Apple Safari not supported yet)
+Current Firefox, Chrome, and Microsoft Edge browser, with support for webgl. (Apple Safari not supported yet)
 
 ## Authors
 * **Lingo Chen** - *Initial work* - [LingoChen](https://github.com/lingochen)
