@@ -11,6 +11,11 @@ var Wings3D = (function () {
 	var my = {};
    var _pvt = {};
 
+   // a few polyfill
+   if (NodeList.prototype[Symbol.iterator] === 'undefined') {
+      NodeList.prototype[Symbol.iterator] = Array.prototype[Symbol.iterator]; // Microsoft Edge not support yet.
+   }
+
    // define constants
    my.GROUND_GRID_SIZE = 1;
    my.CAMERA_DIST = 8.0*my.GROUND_GRID_SIZE;
