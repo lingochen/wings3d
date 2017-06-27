@@ -12,7 +12,7 @@ var Wings3D = (function () {
    var _pvt = {};
 
    // a few polyfill
-   if (NodeList.prototype[Symbol.iterator] === 'undefined') {
+   if (NodeList.prototype[Symbol.iterator] === undefined) {
       NodeList.prototype[Symbol.iterator] = Array.prototype[Symbol.iterator]; // Microsoft Edge not support yet.
    }
 
