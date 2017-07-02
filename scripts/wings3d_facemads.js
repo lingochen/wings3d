@@ -83,14 +83,20 @@ class FaceMadsor extends Madsor {
       }, extrudeEdgesContoursArray);
    }
 
+   // face dissolve mode
    dissolve() {
       const dissolve = {count: 0, record: []};
       this.eachPreviewCage(function(cage) {
          const record = cage.dissolveSelectedFace();
-         dissolve.count += record.length;
+         dissolve.count += record.edges.length;
          dissolve.record.push( record );
       });
       return dissolve;
+   }
+   undoDissolve(dissolveArray) {
+      this.eachPreviewCage( function(cage, dissolveEdge) {
+         cage.undoDissolveFace(dissolveEdge);
+      }, dissolveArray);
    }
 
    dragSelect(cage, selectArray, onOff) {
@@ -310,10 +316,9 @@ class DissolveFaceCommand extends EditCommand {
    }
 
    doIt() {
-      const collapse = this.madsor.dissolve();
-      if (collapse.count > 0) {
-         Wings3D.apiExport.restoreVertexMode(collapse.vertexArray);
-         this.collapse = collapse.collapseArray;
+      const dissolve = this.madsor.dissolve();
+      if (dissolve.count > 0) {
+         this.dissolve = dissolve.record;
          return true;
       } else {
          return false;
@@ -321,9 +326,7 @@ class DissolveFaceCommand extends EditCommand {
    }
 
    undo() {
-      Wings3D.apiExport.currentMode().resetSelection();
-      Wings3D.apiExport.restoreEdgeMode();
-      this.madsor.restoreEdge(this.collapse);
+      this.madsor.undoDissolve(this.dissolve);
    }
 
 }

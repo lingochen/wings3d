@@ -1551,6 +1551,68 @@ PreviewCage.prototype.restoreCollapseEdge = function(collapse) {
 };
 
 
+PreviewCage.prototype.dissolveSelectedFace = function() {
+   const size = this._getGeometrySize();
+   const selectedEdges = new Set;
+   // the all the selectedFace's edge.
+   for (let polygon of this.selectedSet) {
+      polygon.eachEdge( function(outEdge) {
+         selectedEdges.add(outEdge.wingedEdge);
+      });
+   }
+   // get the outline edge
+   const contourLoops = this.geometry.findContours(this.selectedSet);
+   // subtract outline edges from all selected edge.
+   for (let loop of contourLoops) {
+      for (let edge of loop) {
+         let outEdge = edge.outer;
+         if (selectedEdges.has(outEdge.wingedEdge)) {
+            selectedEdges.delete(outEdge.wingedEdge);
+         }
+      }
+   }
+   // the reemaining edges is the remove Edge.
+   const substract = [];
+   for (let edge of selectedEdges) {
+      substract.unshift( this.geometry.removeEdge(edge.left) );   // add in reverse order
+   }
+   // update the remaining selectedSet.
+   const selectedFace = this.selectedSet;
+   const selectedSet = new Set;
+   for (let polygon of this.selectedSet) {
+      if (polygon.isReal()) {
+         selectedSet.add(polygon);
+      }
+   }
+   this.selectedSet = selectedSet;
+   // update previewBox.
+   this._updateAffected(this.geometry.affected);
+   this._resizeBoundingSphere(size.face);
+   this._resizePreview(size.vertex, size.face);
+   this._resizePreviewEdge(size.edge);   
+   this._resizePreviewVertex(size.vertex);
+   // return undo function
+   return {edges: substract, selection: selectedFace};
+};
+PreviewCage.prototype.undoDissolveFace = function(dissolve) {
+   const size = this._getGeometrySize();
+   for (let removeUndo of dissolve.edges) {
+      removeUndo();
+   }
+   this.selectedSet.clear();
+   // reselected the polygon in order.
+   for (let polygon of dissolve.selection) {
+      this.selectFace(polygon.halfEdge);
+   }
+   // update previewBox.
+   this._updateAffected(this.geometry.affected);
+   this._resizeBoundingSphere(size.face);
+   this._resizePreview(size.vertex, size.face);
+   this._resizePreviewEdge(size.edge);   
+   this._resizePreviewVertex(size.vertex);
+}
+
+
 PreviewCage.prototype.EPSILON = 0.000001;
 // Möller–Trumbore ray-triangle intersection algorithm
 // should I use float64array? 
