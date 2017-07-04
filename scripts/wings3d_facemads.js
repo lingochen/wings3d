@@ -44,6 +44,14 @@ class FaceMadsor extends Madsor {
             }
          });
       }
+      menuItem = document.querySelector('#faceCollapse');
+      if (menuItem) {
+            menuItem.addEventListener('click', function(ev) {
+            const command = new CollapseFaceCommand(self);
+            command.doIt();
+            Wings3D.view.undoQueue(command);
+         });
+      }
       // setup highlite face, at most 28 triangles.
       var buf = new Float32Array(3*30);
       this.trianglefan = {data: buf, length: 0};
@@ -98,6 +106,25 @@ class FaceMadsor extends Madsor {
          cage.undoDissolveFace(dissolveEdge);
       }, dissolveArray);
    }
+
+   // face collapse 
+   collapse() {
+      const collapse = {count: 0, collapseArray: [], vertexArray: [], faceArray: []};
+      this.eachPreviewCage(function(cage) {
+         const record = cage.collapseSelectedFace();
+         collapse.count += record.collapse.edge.length;
+         collapse.collapseArray.push( record.collapse );
+         collapse.vertexArray.push( record.selectedVertex );
+         collapse.faceArray.push( record.selectedFace );
+      });
+      return collapse;
+   }
+   undoCollapse(collapseArray) {
+      this.eachPreviewCage( function(cage, collapseEdge) {
+         cage.undoCollapseFace(collapseEdge);
+      }, collapseArray);
+   }
+
 
    dragSelect(cage, selectArray, onOff) {
       if (this.currentEdge !== null) {
@@ -328,5 +355,29 @@ class DissolveFaceCommand extends EditCommand {
    undo() {
       this.madsor.undoDissolve(this.dissolve);
    }
+}
 
+class CollapseFaceCommand extends EditCommand {
+   constructor(madsor) {
+      super();
+      this.madsor = madsor;
+   }
+
+   doIt() {
+      const collapse = this.madsor.collapse();
+      if (collapse.count > 0) {
+         Wings3D.apiExport.restoreVertexMode(collapse.vertexArray);
+         this.collapse = collapse.collapseArray;
+         this.selectedFace = collapse.faceArray;
+         return true;
+      } else {
+         return false;
+      }
+   }
+
+   undo() {
+      Wings3D.apiExport.currentMode().resetSelection();
+      this.madsor.undoCollapse(this.collapse);
+      Wings3D.apiExport.restoreFaceMode(this.selectedFace);
+   }   
 }

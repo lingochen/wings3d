@@ -1596,8 +1596,8 @@ PreviewCage.prototype.dissolveSelectedFace = function() {
 };
 PreviewCage.prototype.undoDissolveFace = function(dissolve) {
    const size = this._getGeometrySize();
-   for (let removeUndo of dissolve.edges) {
-      removeUndo();
+   for (let dissolveUndo of dissolve.edges) {
+      dissolveUndo();
    }
    this.selectedSet.clear();
    // reselected the polygon in order.
@@ -1611,6 +1611,22 @@ PreviewCage.prototype.undoDissolveFace = function(dissolve) {
    this._resizePreviewEdge(size.edge);   
    this._resizePreviewVertex(size.vertex);
 }
+
+
+// this is such a strange selection. sort polygon by index? such a weird algorithm.
+// change to collapse to middle.
+PreviewCage.prototype.collapseSelectedFace = function() {
+   const saveSet = this.selectedSet;
+   // reuse edgeSelect().
+   this.changeFromFaceToEdgeSelect();
+   // reuse collapseEdge
+   const collapse = this.collapseSelectedEdge();
+   collapse.selectedFace = saveSet;
+   return collapse;
+};
+PreviewCage.prototype.undoCollapseFace = function(collapse) {
+   this.restoreCollapseEdge(collapse);
+};
 
 
 PreviewCage.prototype.EPSILON = 0.000001;
