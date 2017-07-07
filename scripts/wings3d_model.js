@@ -1643,6 +1643,19 @@ PreviewCage.prototype.dissolveSelectedVertex = function() {
    this._resizePreviewVertex(size.vertex);
    return undoArray;
 };
+PreviewCage.prototype.undoDissolveVertex = function(undoArray) {
+   const size = this._getGeometrySize();
+   for (let undo of undoArray) {
+      let vertex = undo();
+      //this.selectVertex(vertex);
+   }
+   // update previewBox.
+   this._updateAffected(this.geometry.affected);
+   this._resizeBoundingSphere(size.face);
+   this._resizePreview(size.vertex, size.face);
+   this._resizePreviewEdge(size.edge);   
+   this._resizePreviewVertex(size.vertex);
+};
 
 PreviewCage.prototype.EPSILON = 0.000001;
 // Möller–Trumbore ray-triangle intersection algorithm

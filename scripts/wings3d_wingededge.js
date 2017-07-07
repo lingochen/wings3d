@@ -1352,6 +1352,7 @@ WingedTopology.prototype.dissolveVertex = function(vertex) {
          }
          // reattach edges to vertex
          let inEdge = lastIn;
+         lastIn = lastIn.next.pair;
          let prevIn = firstIn;
          do {
             let outEdge = inEdge.pair;
@@ -1359,7 +1360,8 @@ WingedTopology.prototype.dissolveVertex = function(vertex) {
             let prevOut = prevIn.pair;
             prevOut.next = inEdge.next;
             inEdge.next = prevOut;
-            inEdge.face = 
+            prevOut.face = inEdge.face;  
+            ++prevOut.face.numberOfVertex;
             // ready for next.
             prevIn = inEdge;
             inEdge = outEdge.next.pair;
@@ -1367,6 +1369,9 @@ WingedTopology.prototype.dissolveVertex = function(vertex) {
          vertex.outEdge = firstIn.pair;
          // free polygon
          self._freePolygon(polygon);
+         // selected vertex
+         self.addAffectedEdgeAndFace(vertex);
+         return vertex;
       };
    }
 };

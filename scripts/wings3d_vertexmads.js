@@ -262,10 +262,10 @@ class VertexDissolveCommand extends EditCommand {
    doIt() {
       // dissolve
       const dissolve = this.madsor.dissolve();
-      this.cageArray = dissolve.record;         // guaranteed to have the dissolve vertex
+      this.undoArray = dissolve.undoArray;         // guaranteed to have the dissolve vertex
    }
 
    undo() {
-      this.madsor.undoDissolve(this.cageArray);
+      this.madsor.undoDissolve(this.undoArray);
    }
 }
