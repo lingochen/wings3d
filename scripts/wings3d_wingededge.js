@@ -150,11 +150,12 @@ Vertex.prototype.isReal = function() {
 Vertex.prototype.eachInEdge = function(callbackfn) {
    // i am in
    var start = this.outEdge;
-   var edge = begin;
+   var edge = start;
    if (edge) {
       do { // ccw ordering
-         callbackfn(edge.pair, this);
+         const inEdge = edge.pair;
          edge = edge.pair.next;   // my pair's next is outEdge. 
+         callbackfn(inEdge, this);
       } while (edge && (edge !== start));
    }
 };
@@ -1290,9 +1291,82 @@ function isCorner(outEdge) {
    const cosTheta = vec3.dot(a, b) / (vec3.len(a) + vec3.len(b));
    // none straight line is corner; cos 180 === -1. cos 0 === 1.
    return cosTheta > -0.992;   // ~< 175 degree. is a corner.
-}
-WingedTopology.prototype.removeVertex = function(vertex) {
-   if (!vertex.isIsolated()) {
+}*/
 
+WingedTopology.prototype.dissolveVertex = function(vertex) {
+   // now free the vertex.
+   const self = this;
+   const pt = new Float32Array(3);
+   vec3.copy(pt, vertex.vertex);
+   if (vertex.isIsolated()) {
+      this._freeVertex(vertex);
+      return function() {
+         self.addVertex(pt, vertex);
+      };
+   } else {
+      this.addAffectedEdgeAndFace(vertex);
+      let count = 0;
+      const firstIn = vertex.outEdge.pair;
+      let lastIn;
+      // slide edge, move edge down like collapse edge, withou thehe collapsing.
+      let outEdge;    // outEdge for new Polygon
+      vertex.eachInEdge( function(inEdge) {
+         //inEdges.unshift( inEdge );
+         const nextOut = inEdge.next;
+         outEdge = inEdge.pair;
+         if (nextOut.face.halfEdge === nextOut) {
+            nextOut.face.halfEdge = inEdge;   // reassigned outEdge.
+         }
+         --nextOut.face.numberOfVertex;
+         inEdge.next = nextOut.next;      // slide down the next Edge.
+         nextOut.next = outEdge;
+         outEdge.origin = nextOut.pair.origin; // reassign new vertex
+         count++;
+         lastIn = inEdge;
+      });
+      // remove loop edge.
+      const polygon = this._createPolygon(outEdge, count);
+      const undoCollapseLoop = [];
+      let vertexOutEdge = vertex.outEdge;
+      outEdge = vertex.outEdge;
+      do {
+         let inEdge = outEdge.pair;
+         outEdge = outEdge.next;
+         if (inEdge.next.next === inEdge) {  // 2 edge loop, not polygon, now collapse it.
+            if (inEdge.pair === vertexOutEdge) {
+               vertexOutEdge = inEdge.next;  // 
+            }
+            undoCollapseLoop.unshift( this._collapseLoop(inEdge) );   // collapse inward
+         } else {
+            //inEdge.pair.face = polygon;      // already assigned in _createPolygon.
+         }
+      } while (outEdge !== vertexOutEdge);
+      // free vertex
+      this._freeVertex(vertex);
+      return function() {
+         // reallocated free vertex
+         self.addVertex(pt, vertex);
+         // undo collapse loop
+         for (let undo of undoCollapseLoop) {
+            undo();
+         }
+         // reattach edges to vertex
+         let inEdge = lastIn;
+         let prevIn = firstIn;
+         do {
+            let outEdge = inEdge.pair;
+            outEdge.origin = vertex;
+            let prevOut = prevIn.pair;
+            prevOut.next = inEdge.next;
+            inEdge.next = prevOut;
+            inEdge.face = 
+            // ready for next.
+            prevIn = inEdge;
+            inEdge = outEdge.next.pair;
+         } while (inEdge !== lastIn);
+         vertex.outEdge = firstIn.pair;
+         // free polygon
+         self._freePolygon(polygon);
+      };
    }
-};*/
+};

@@ -1613,8 +1613,8 @@ PreviewCage.prototype.undoDissolveFace = function(dissolve) {
 }
 
 
-// this is such a strange selection. sort polygon by index? such a weird algorithm.
-// change to collapse to middle.
+// the original wings3D collapse quite strangely. collapse by edge index order? such a weird algorithm.
+// we change it to collapse to middle.
 PreviewCage.prototype.collapseSelectedFace = function() {
    const saveSet = this.selectedSet;
    // reuse edgeSelect().
@@ -1628,6 +1628,21 @@ PreviewCage.prototype.undoCollapseFace = function(collapse) {
    this.restoreCollapseEdge(collapse);
 };
 
+
+PreviewCage.prototype.dissolveSelectedVertex = function() {
+   const size = this._getGeometrySize();
+   const undoArray = [];
+   for (let vertex of this.selectedSet) {
+      undoArray.unshift( this.geometry.dissolveVertex(vertex) );
+   }
+   // update previewBox.
+   this._updateAffected(this.geometry.affected);
+   this._resizeBoundingSphere(size.face);
+   this._resizePreview(size.vertex, size.face);
+   this._resizePreviewEdge(size.edge);   
+   this._resizePreviewVertex(size.vertex);
+   return undoArray;
+};
 
 PreviewCage.prototype.EPSILON = 0.000001;
 // Möller–Trumbore ray-triangle intersection algorithm

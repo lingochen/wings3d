@@ -9,14 +9,22 @@ class VertexMadsor extends Madsor {
    constructor() {
       super('vertex');
       this.currentVertex = null;
-      let self = this;
-      var menuItem = document.querySelector('#vertexConnect');
+      const self = this;
+      let menuItem = document.querySelector('#vertexConnect');
       if (menuItem) {
          menuItem.addEventListener('click', function(ev) {
             self.connectVertex();
          });
       }
-   }
+      menuItem = document.querySelector('#vertexDissolve');
+      if (menuItem) {
+         menuItem.addEventListener('click', function(ev) {
+            const dissolve = new VertexDissolveCommand(self);
+            dissolve.doIt();
+            Wings3D.apiExport.undoQueue(dissolve);
+         });
+      }
+    }
    // get selected vertex snapshot. for doing, and redo queue. 
    snapshotPosition() {
       var snapshots = [];
@@ -66,6 +74,22 @@ class VertexMadsor extends Madsor {
       this.eachPreviewCage( function(cage, edges) {
          cage.dissolveConnect(edges);
       }, edgesArray);
+   }
+
+   dissolve() {
+      const dissolve = {count: 0, undoArray: []};
+      this.eachPreviewCage(function(cage) {
+         const undoArray = cage.dissolveSelectedVertex();
+         dissolve.count += undoArray.length;
+         dissolve.undoArray.push( undoArray );
+      });
+      return dissolve;
+   }
+
+   undoDissolve(dissolveArray) {
+      this.eachPreviewCage( function(cage, dissolveVertex) {
+         cage.undoDissolveVertex(dissolveVertex);
+      }, dissolveArray);
    }
 
    dragSelect(cage, selectArray, onOff) {
@@ -226,6 +250,22 @@ class VertexConnectCommand extends EditCommand {
       Wings3D.apiExport.restoreVertexMode();
       // dissolve the connect edges.
       this.madsor.dissolveConnect(this.cageArray.edgeList);
+   }  
+}
+
+class VertexDissolveCommand extends EditCommand {
+   constructor(madsor) {
+      super();
+      this.madsor = madsor;
    }
-   
+
+   doIt() {
+      // dissolve
+      const dissolve = this.madsor.dissolve();
+      this.cageArray = dissolve.record;         // guaranteed to have the dissolve vertex
+   }
+
+   undo() {
+      this.madsor.undoDissolve(this.cageArray);
+   }
 }
