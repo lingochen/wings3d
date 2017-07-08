@@ -24,6 +24,14 @@ class VertexMadsor extends Madsor {
             Wings3D.apiExport.undoQueue(dissolve);
          });
       }
+      menuItem = document.querySelector('#vertexCollapse');
+      if (menuItem) {
+         menuItem.addEventListener('click', function(ev) {
+            const dissolve = new VertexCollapseCommand(self);
+            dissolve.doIt();
+            Wings3D.apiExport.undoQueue(dissolve);
+         });  
+      }
     }
    // get selected vertex snapshot. for doing, and redo queue. 
    snapshotPosition() {
@@ -77,11 +85,12 @@ class VertexMadsor extends Madsor {
    }
 
    dissolve() {
-      const dissolve = {count: 0, undoArray: []};
+      const dissolve = {count: 0, undoArray: [], selectedFace: []};
       this.eachPreviewCage(function(cage) {
-         const undoArray = cage.dissolveSelectedVertex();
-         dissolve.count += undoArray.length;
-         dissolve.undoArray.push( undoArray );
+         const undo = cage.dissolveSelectedVertex();
+         dissolve.count += undo.array.length;
+         dissolve.undoArray.push( undo.array );
+         dissolve.selectedFace.push( undo.selectedFace );
       });
       return dissolve;
    }
@@ -266,6 +275,29 @@ class VertexDissolveCommand extends EditCommand {
    }
 
    undo() {
+      this.madsor.undoDissolve(this.undoArray);
+   }
+}
+
+class VertexCollapseCommand extends EditCommand {
+   constructor(madsor) {
+      super();
+      this.madsor = madsor;
+   }
+
+   doIt() {
+      // collapse, is just like dissolve, but switch to facemode
+      const dissolve = this.madsor.dissolve();
+      this.undoArray = dissolve.undoArray;
+      Wings3D.apiExport.restoreFaceMode(dissolve.selectedFace);
+   }
+
+   undo() {
+      const emptySelect = [];
+      this.madsor.eachPreviewCage( function(cage) {
+         emptySelect.push( [] );
+      });
+      Wings3D.apiExport.restoreVertexMode(emptySelect);
       this.madsor.undoDissolve(this.undoArray);
    }
 }

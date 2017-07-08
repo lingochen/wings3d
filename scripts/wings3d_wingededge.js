@@ -1343,7 +1343,7 @@ WingedTopology.prototype.dissolveVertex = function(vertex) {
       } while (outEdge !== vertexOutEdge);
       // free vertex
       this._freeVertex(vertex);
-      return function() {
+      return {polygon: polygon, undo: function() {
          // reallocated free vertex
          self.addVertex(pt, vertex);
          // undo collapse loop
@@ -1372,6 +1372,6 @@ WingedTopology.prototype.dissolveVertex = function(vertex) {
          // selected vertex
          self.addAffectedEdgeAndFace(vertex);
          return vertex;
-      };
+      }};
    }
 };
