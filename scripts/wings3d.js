@@ -16,6 +16,13 @@ var Wings3D = (function () {
       NodeList.prototype[Symbol.iterator] = Array.prototype[Symbol.iterator]; // Microsoft Edge not support yet.
    }
 
+   // utility function
+   my.createMask = function() {  // from mozilla doc
+      let nMask = 0, nFlag = 0, nLen = arguments.length > 32 ? 32 : arguments.length;
+      for (nFlag; nFlag < nLen; nMask |= arguments[nFlag] << nFlag++);
+      return nMask;
+   }
+
    // define constants
    my.GROUND_GRID_SIZE = 1;
    my.CAMERA_DIST = 8.0*my.GROUND_GRID_SIZE;

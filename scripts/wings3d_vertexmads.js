@@ -293,11 +293,8 @@ class VertexCollapseCommand extends EditCommand {
    }
 
    undo() {
-      const emptySelect = [];
-      this.madsor.eachPreviewCage( function(cage) {
-         emptySelect.push( [] );
-      });
-      Wings3D.apiExport.restoreVertexMode(emptySelect);
+      this.madsor.resetSelection();
+      Wings3D.apiExport.restoreVertexMode();
       this.madsor.undoDissolve(this.undoArray);
    }
 }

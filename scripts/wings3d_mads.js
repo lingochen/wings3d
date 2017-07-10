@@ -41,7 +41,21 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
             Wings3D.view.attachHandlerMouseMove(new MoveAlongNormal(self));
          });
       }
-      // constructor
+      // deselect function
+      let fn = function(ev) {
+
+      };
+      this.bind('#Deselect', function(ev) {
+         self.resetSelection();
+      });
+   }
+
+   bind(id, fn) {
+      const menuItem = document.querySelector(id);
+      if (menuItem) {
+         menuItem.addEventListener('click', fn);
+      }
+      //Wings3D.hotkey(id, fn);   // hotkey already defined?
    }
 
    getContextMenu() {
