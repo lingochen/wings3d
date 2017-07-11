@@ -5,6 +5,7 @@
    <script src="../scripts/FileSaver.min.js"></script>
    <script src="../scripts/gl-matrix-min.js"></script>
    <script src="../scripts/wings3d.js"></script>
+   <script src="../scripts/wings3d_hotkey.js"></script>
    <script src="../scripts/wings3d_gl.js"></script>
    <script src="../scripts/wings3d_shaderprog.js"></script>
    <script src="../scripts/wings3d_menu.js"></script>
@@ -81,8 +82,11 @@
       <li>
         <a>Edit</a>
       </li>
-      <li>
+      <li class="drop">
         <a>Select</a>
+        <ul>
+           <li><a onmouseover="help('Deselect selection')" onmouseleave="help()" id="deselect">Deselect</a></li>
+        </ul>
       </li>
       <li>
         <a>Tools</a>
