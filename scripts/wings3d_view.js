@@ -21,6 +21,12 @@ function createView(gl) {
    _pvt.vertexMode.setWorld(_pvt.world);
    _pvt.bodyMode.setWorld(_pvt.world);
    _pvt.curretMouseHandler = _pvt;
+      
+   // deselect function
+   Wings3D.bindMenuItem('#deselect', function(ev) {
+      _pvt.currentMode.resetSelection();
+      my.renderWorld.needToRedraw();
+   }, ' ');
 
    _pvt.toggleVertexMode = function() {
       // change current mode to 

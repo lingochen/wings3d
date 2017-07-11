@@ -22,6 +22,17 @@ var Wings3D = (function () {
       for (nFlag; nFlag < nLen; nMask |= arguments[nFlag] << nFlag++);
       return nMask;
    }
+   my.bindMenuItem = function(id, fn, hotkey, meta) {
+      const menuItem = document.querySelector(id);
+      if (menuItem) {
+         menuItem.addEventListener('click', fn);
+      }
+      Wings3D.bindHotkey(id, fn);
+      if (hotkey !== undefined) {
+         Wings3D.setHotkey(id, hotkey, meta);
+
+      }
+   }
 
    // define constants
    my.GROUND_GRID_SIZE = 1;
