@@ -168,9 +168,20 @@ class FaceMadsor extends Madsor {
    }
 
    resetSelection() {
+      const selection = [];
       this.eachPreviewCage( function(cage) {
-         cage._resetSelectFace();
+         selection.push( cage._resetSelectFace() );
       });
+      const self = this;
+      return function() {  // undo
+         self.restoreSelection(selection);
+      };
+   }
+
+   restoreSelection(selection) {
+      this.eachPreviewCage( function(cage, snapshot) {
+         cage.restoreFaceSelection(snapshot);
+      }, selection);
    }
 
    toggleFunc(toMadsor) {

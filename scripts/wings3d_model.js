@@ -491,12 +491,34 @@ PreviewCage.prototype.changeFromBodyToVertexSelect = function() {
    }
 };
 
+PreviewCage.prototype.restoreFaceSelection = function(snapshot) {
+   for (let polygon of snapshot) {
+      this.selectFace(polygon.halfEdge);
+   }
+};
+
+PreviewCage.prototype.restoreEdgeSelection = function(snapshot) {
+   for (let wingedEdge of snapshot) {
+      this.selectEdge(wingedEdge.left);
+   }
+};
+
+PreviewCage.prototype.restoreVertexSelection = function(snapshot) {
+   for (let vertex of snapshot) {
+      this.selectVertex(vertex);
+   }
+};
+
+PreviewCage.prototype.restoreBodySelection = function(snapshot) {
+   if (snapshot.size > 0) {
+      this.selectBody();
+   }
+};
+
 PreviewCage.prototype.restoreFromBodyToFaceSelect = function(snapshot) {
    if (snapshot) {
       this._resetBody();
-      for (let polygon of snapshot) {
-         this.selectFace(polygon.halfEdge);
-      }
+      this.restoreFaceSelection(snapshot);
    } else {
       this.changeFromBodyToFaceSelect();
    }
@@ -506,9 +528,7 @@ PreviewCage.prototype.restoreFromBodyToEdgeSelect = function(snapshot) {
    if (snapshot) {
       // discard old selected,
       this._resetBody();
-      for (let wingedEdge of snapshot) {
-         this.selectEdge(wingedEdge.left);
-      }
+      this.restoreEdgeSelection(snapshot);
    } else {
       this.changeFromBodyToEdgeSelect();  // choose compute over storage, use the same code as going forward.
    }
@@ -519,18 +539,18 @@ PreviewCage.prototype.restoreFromBodyToVertexSelect = function(snapshot) {
       // discard old selected,
       this._resetBody();
       // and selected using the snapshots.
-      for (let vertex of snapshot) {
-         this.selectVertex(vertex);
-      }
+      this.restoreVertexSelection(snapshot);
    } else {
       this.changeFromBodyToVertexSelect();  // compute vs storage. currently lean toward compute.
    }
 };
 
 PreviewCage.prototype._resetBody = function() {
+   const oldSet = this.selectedSet;
    this.selectedSet = new Set();
    this.previewBody.hilite = false;
    this.preview.shaderData.setUniform3fv("faceColor", [0.5, 0.5, 0.5]);
+   return oldSet;
 };
 
 PreviewCage.prototype.selectBody = function() {
@@ -693,9 +713,7 @@ PreviewCage.prototype.restoreFromVertexToFaceSelect = function(snapshot) {
    if (snapshot) {
       // discard old selected,
       this._resetSelectVertex();
-      for (let polygon of snapshot) {
-         this.selectFace(polygon.halfEdge);
-      }
+      this.restoreFaceSelection(snapshot);
    } else {
       this.changeFromVertexToFaceSelect();  // choose compute over storage, use the same code as going forward.
    }
@@ -705,9 +723,7 @@ PreviewCage.prototype.restoreFromVertexToEdgeSelect = function(snapshot) {
    if (snapshot) {
       // discard old selected,
       this._resetSelectVertex();
-      for (let wingedEdge of snapshot) {
-         this.selectEdge(wingedEdge.left);
-      }
+      this.restoreEdgeSelection(snapshot);
    } else {
       this.changeFromVertexToEdgeSelect();  // choose compute over storage, use the same code as going forward.
    }
@@ -716,9 +732,7 @@ PreviewCage.prototype.restoreFromVertexToEdgeSelect = function(snapshot) {
 PreviewCage.prototype.restoreFromVertexToBodySelect = function(snapshot) {
    if (snapshot) {
       this._resetSelectVertex();
-      if (snapshot.size > 0) {
-         this.selectBody();
-      }
+      this.restoreBodySelection(snapshot);
    } else {
       this.changeFromVertexToBodySelect();
    }
@@ -1060,9 +1074,7 @@ PreviewCage.prototype.restoreFromEdgeToFaceSelect = function(snapshot) {
    if (snapshot) {
       // discard old selected,
       this._resetSelectEdge();
-      for (let polygon of snapshot) {
-         this.selectFace(polygon.halfEdge);
-      }
+      this.restoreFaceSelection(snapshot);
    } else {
       this.changeFromEdgeToFaceSelect();  // we cheat, use the same code as going forward.
    }
@@ -1072,9 +1084,7 @@ PreviewCage.prototype.restoreFromEdgeToVertexSelect = function(snapshot) {
    if (snapshot) {
       // discard old selected,
       this._resetSelectEdge();
-      for (let vertex of snapshot) {
-         this.selectVertex(vertex);
-      }
+      this.restoreVertexSelection(snapshot);
    } else {
       this.changeFromEdgeToVertexSelect();  // we cheat, use the same code as going forward.
    }
@@ -1083,9 +1093,7 @@ PreviewCage.prototype.restoreFromEdgeToVertexSelect = function(snapshot) {
 PreviewCage.prototype.restoreFromEdgeToBodySelect = function(snapshot) {
    if (snapshot) {
       this._resetSelectEdge();
-      if (snapshot.size > 0) {
-         this.selectBody();
-      }
+      this.restoreBodySelection(snapshot);
    } else {
       this.changeFromEdgeToBodySelect();
    }
@@ -1214,9 +1222,7 @@ PreviewCage.prototype.restoreFromFaceToEdgeSelect = function(snapshot) {
       // discard old selected,
       this._resetSelectFace();
       // and selected using the snapshots.
-      for (let wingedEdge of snapshot) {
-         this.selectEdge(wingedEdge.left);
-      }
+      this.restoreEdgeSelection(snapshot);
    } else {
       this.changeFromFaceToEdgeSelect();  // compute vs storage. currently lean toward compute.
    }
@@ -1227,9 +1233,7 @@ PreviewCage.prototype.restoreFromFaceToVertexSelect = function(snapshot) {
       // discard old selected,
       this._resetSelectFace();
       // and selected using the snapshots.
-      for (let vertex of snapshot) {
-         this.selectVertex(vertex);
-      }
+      this.restoreVertexSelection(snapshot);
    } else {
       this.changeFromFaceToVertexSelect();  // compute vs storage. currently lean toward compute.
    }
@@ -1238,9 +1242,7 @@ PreviewCage.prototype.restoreFromFaceToVertexSelect = function(snapshot) {
 PreviewCage.prototype.restoreFromFaceToBodySelect = function(snapshot) {
    if (snapshot) {
       this._resetSelectFace();
-      if (snapshot.size > 0) {
-         this.selectBody();
-      }
+      this.restoreBodySelection(snapshot);
    } else {
       this.changeFromFaceToBodySelect();
    }

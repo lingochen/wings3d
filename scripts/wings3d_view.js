@@ -24,9 +24,16 @@ function createView(gl) {
       
    // deselect function
    Wings3D.bindMenuItem('#deselect', function(ev) {
-      _pvt.currentMode.resetSelection();
+      const command = new EditCommandSimple('resetSelection');
+      command.doIt(_pvt.currentMode);
+      my.undoQueue( command );
       my.renderWorld.needToRedraw();
    }, ' ');
+   // select more
+   Wings3D.bindMenuItem('#more', function(ev) {
+      _pvt.currentMode.moreSelection();
+      my.renderWorld.needToRedraw();
+   }, 'a', 'control');
 
    _pvt.toggleVertexMode = function() {
       // change current mode to 
@@ -442,14 +449,14 @@ function createView(gl) {
 
    my.redoEdit = function() {
       if ( (_pvt.undo.queue.length-1) > _pvt.undo.current) {
-         _pvt.undo.queue[++_pvt.undo.current].doIt();
+         _pvt.undo.queue[++_pvt.undo.current].doIt(_pvt.currentMode);
          my.renderWorld.needToRedraw();
       }
    }
 
    my.undoEdit = function() {
       if (_pvt.undo.current >= 0) {
-         _pvt.undo.queue[_pvt.undo.current--].undo();
+         _pvt.undo.queue[_pvt.undo.current--].undo(_pvt.currentMode);
          my.renderWorld.needToRedraw();
       }
    }

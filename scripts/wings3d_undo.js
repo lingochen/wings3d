@@ -39,6 +39,21 @@ class EditCommand {
 
 }
 
+class EditCommandSimple extends EditCommand {
+   constructor(command) {
+      super();
+      this.commandName = command;
+   }
+
+   doIt(currentMadsor) {
+      this.undo = currentMadsor[this.commandName]();
+   }
+
+   undo(currentMadsor) {
+      this.undo(currentMadsor);
+   }
+}
+
 class EditCommandCombo extends EditCommand {
    constructor(editCommands) {
       super();

@@ -196,9 +196,20 @@ class EdgeMadsor extends Madsor {
    }
    
    resetSelection() {
+      const snapshots = [];
       this.eachPreviewCage( function(cage) {
-         cage._resetSelectEdge();
+         snapshots.push( cage._resetSelectEdge() );
       });
+      const self = this;
+      return function() {
+         self.restoreSelection(snapshots);
+      }
+   }
+
+   restoreSelection(selection) {
+      this.eachPreviewCage( function(cage, snapshot) {
+         cage.restoreEdgeSelection(snapshot);
+      }, selection);
    }
 
    toggleFunc(toMadsor) {

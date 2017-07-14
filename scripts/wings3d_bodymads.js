@@ -111,9 +111,20 @@ class BodyMadsor extends Madsor {
    }
 
    resetSelection() {
+      const snapshots = [];
       this.eachPreviewCage( function(cage) {
-         cage._resetSelectBody();
+         snapshots.push( cage._resetBody() );
       });
+      const self = this;
+      return function() {
+         self.restoreSelection(snapshots);
+      }
+   }
+
+   restoreSelection(selection) {
+      this.eachPreviewCage( function(cage, snapshot) {
+         cage.restoreBodySelection(snapshot);
+      }, selection);     
    }
 
    toggleFunc(toMadsor) {
