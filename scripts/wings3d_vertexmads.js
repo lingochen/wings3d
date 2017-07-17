@@ -141,21 +141,16 @@ class VertexMadsor extends Madsor {
       this.currentEdge = edge;
    }
 
-   resetSelection() {
-      const snapshots = [];
-      this.eachPreviewCage( function(cage) {
-         snapshots.push( cage._resetSelectVertex() );
-      });
-      const self = this;
-      return function() {
-         self.restoreSelection(snapshots);
-      }
+   _moreSelection(cage) {
+      return cage._moreSelectVertex();
    }
 
-   restoreSelection(selection) {
-      this.eachPreviewCage( function(cage, snapshot) {
-         cage.restoreVertexSelection(snapshot);
-      }, selection);
+   _resetSelection(cage) {
+      return cage._resetSelectVertex();
+   }
+
+   _restoreSelection(cage, snapshot) {
+      cage.restoreVertexSelection(snapshot);
    }
 
    toggleFunc(toMadsor) {

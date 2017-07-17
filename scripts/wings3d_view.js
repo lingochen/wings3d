@@ -31,9 +31,12 @@ function createView(gl) {
    }, ' ');
    // select more
    Wings3D.bindMenuItem('#more', function(ev) {
-      _pvt.currentMode.moreSelection();
-      my.renderWorld.needToRedraw();
-   }, 'a', 'control');
+      const command = new EditCommandSimple('moreSelection');
+      if (command.doIt(_pvt.currentMode)) {
+         my.undoQueue( command );
+         my.renderWorld.needToRedraw();
+      }
+   }, '+');
 
    _pvt.toggleVertexMode = function() {
       // change current mode to 

@@ -553,6 +553,11 @@ PreviewCage.prototype._resetBody = function() {
    return oldSet;
 };
 
+//PreviewCage.prototype._moreSelectBody = function() {
+//   const snapshot = new Set(this.selectedSet);
+//   return snapshot;
+//}
+
 PreviewCage.prototype.selectBody = function() {
    let faceColor;
    // we change interior color to show the selection
@@ -671,6 +676,22 @@ PreviewCage.prototype._resetSelectVertex = function() {
    this.previewVertex.color.fill(0.0);
    this.previewVertex.shaderData.uploadAttribute('color', 0, this.previewVertex.color);
    return oldSelected;
+};
+
+PreviewCage.prototype._moreSelectVertex = function() {
+   const oldSelection = this.selectedSet;
+   this.selectedSet = new Set(oldSelection);
+
+   const self = this;
+   for (let vertex of oldSelection) {
+      vertex.eachInEdge( function(inEdge) {
+         if (!self.selectedSet.has(inEdge.origin)) {
+            self.selectVertex(inEdge.origin);
+         }
+      });
+   }
+
+   return oldSelection;
 };
 
 PreviewCage.prototype.changeFromVertexToFaceSelect = function() {
@@ -1037,6 +1058,24 @@ PreviewCage.prototype._resetSelectEdge = function() {
    return oldSelected;
 };
 
+PreviewCage.prototype._moreSelectEdge = function() {
+   const oldSelection = this.selectedSet;
+   this.selectedSet = new Set(oldSelection);
+
+   const self = this;
+   for (let wingedEdge of oldSelection) {
+      for (let halfEdge of wingedEdge) {
+         halfEdge.eachEdge( function(edge) {
+            if (!self.selectedSet.has(edge.wingedEdge)) {
+               self.selectEdge(edge);
+            }
+         });
+      }
+   }
+
+   return oldSelection;
+};
+
 PreviewCage.prototype.changeFromEdgeToFaceSelect = function() {
    const oldSelected = this._resetSelectEdge();
    //
@@ -1171,6 +1210,7 @@ PreviewCage.prototype.selectFace = function(selectEdge) {
    return onOff;
 };
 
+
 PreviewCage.prototype._resetSelectFace = function() {
    var oldSelected = this.selectedSet;
    this.selectedSet = new Set;
@@ -1183,6 +1223,24 @@ PreviewCage.prototype._resetSelectFace = function() {
    return oldSelected;
 }
 
+PreviewCage.prototype._moreSelectFace = function() {
+   const oldSelected = this.selectedSet;
+   this.selectedSet = new Set(oldSelected);
+   const self = this;
+   // seleceted selectedFace's vertex's all faces.
+   for (let polygon of oldSelected) {
+      polygon.eachVertex( function(vertex) {
+         vertex.eachOutEdge( function(outEdge) {
+            // check if face is not selected.
+            if ( (outEdge.face !== null) && !self.selectedSet.has(outEdge.face) ) {
+               self.selectFace(outEdge);
+            }
+         });
+      });
+   }
+
+   return oldSelected;
+};
 
 PreviewCage.prototype.changeFromFaceToEdgeSelect = function() {
    var self = this;

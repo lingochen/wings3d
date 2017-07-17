@@ -110,21 +110,19 @@ class BodyMadsor extends Madsor {
       this.preview.hiliteBody(true);
    }
 
-   resetSelection() {
-      const snapshots = [];
-      this.eachPreviewCage( function(cage) {
-         snapshots.push( cage._resetBody() );
-      });
-      const self = this;
-      return function() {
-         self.restoreSelection(snapshots);
-      }
+   moreSelection() {
+      return null;      // does nothing.
+   }
+//   _moreSelection(cage) {
+//      return cage._moreSelectBody();
+//   }
+
+   _resetSelection(cage) {
+      return cage._resetBody();
    }
 
-   restoreSelection(selection) {
-      this.eachPreviewCage( function(cage, snapshot) {
-         cage.restoreBodySelection(snapshot);
-      }, selection);     
+   _restoreSelection(cage, snapshot) {
+      cage.restoreBodySelection(snapshot);
    }
 
    toggleFunc(toMadsor) {

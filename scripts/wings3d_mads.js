@@ -102,6 +102,42 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
 
    hideOldHilite() {}
 
+   moreSelection() {
+      const snapshots = [];
+      const self = this;
+      let count = 0;
+      this.eachPreviewCage( function(cage) {
+         const selection = self._moreSelection(cage);
+         snapshots.push( selection );
+         count += selection.size;
+      });
+      if (count != 0) {
+         return function() {
+            self.resetSelection();
+            self.restoreSelection(snapshots);
+         }
+      } // else
+      return null;
+   }
+
+   resetSelection() {
+      const snapshots = [];
+      const self = this;
+      this.eachPreviewCage( function(cage) {
+         snapshots.push( self._resetSelection(cage) );
+      });
+      return function() {
+         self.restoreSelection(snapshots);
+      }
+   }
+
+   restoreSelection(selection) {
+      const self = this;
+      this.eachPreviewCage( function(cage, snapshot) {
+         self._restoreSelection(cage, snapshot);
+      }, selection);     
+   }
+
    draw(gl) {
       if (this.currentEdge) {
          this.useShader(gl);

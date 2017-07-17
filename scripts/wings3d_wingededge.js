@@ -278,7 +278,7 @@ Polygon.prototype.eachVertex = function(callbackFn) {
    do {
       callbackFn(current.origin);
       current = current.next;
-   } while (current != begin);
+   } while (current !== begin);
 };
 
 Polygon.prototype.eachEdge = function(callbackFn) {
@@ -287,7 +287,7 @@ Polygon.prototype.eachEdge = function(callbackFn) {
    do {
       callbackFn(current);
       current = current.next;
-   } while (current != begin);
+   } while (current !== begin);
 };
 
 // ccw ordering

@@ -47,6 +47,7 @@ class EditCommandSimple extends EditCommand {
 
    doIt(currentMadsor) {
       this.undo = currentMadsor[this.commandName]();
+      return (this.undo !== null);
    }
 
    undo(currentMadsor) {

@@ -9,6 +9,8 @@
    const _private = {keyMap: new Map, idMap: new Map};
 
    document.addEventListener('keydown', function(event) {
+      event.preventDefault();
+      event.stopPropagation();
       //      Don't fire in text-accepting inputs that we didn't directly bind to
 
       // extract alt, ctrl, shift key
@@ -28,7 +30,7 @@
             }
          }
       }
-   });
+   }, true);
 
    Wings3D.setHotkey = function(id, hotkey, meta='') {
       hotkey = hotkey.toLowerCase();
