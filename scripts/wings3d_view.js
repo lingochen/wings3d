@@ -37,6 +37,15 @@ function createView(gl) {
          my.renderWorld.needToRedraw();
       }
    }, '+');
+   // select less
+   Wings3D.bindMenuItem('#less', function(ev) {
+      const command = new EditCommandSimple('lessSelection');
+      if (command.doIt(_pvt.currentMode)) {
+         my.undoQueue( command );
+         my.renderWorld.needToRedraw();
+      }
+   }, '-');
+
 
    _pvt.toggleVertexMode = function() {
       // change current mode to 

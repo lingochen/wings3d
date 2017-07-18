@@ -553,10 +553,13 @@ PreviewCage.prototype._resetBody = function() {
    return oldSet;
 };
 
-//PreviewCage.prototype._moreSelectBody = function() {
-//   const snapshot = new Set(this.selectedSet);
-//   return snapshot;
-//}
+PreviewCage.prototype._lessSelectBody = function() {
+   const snapshot = new Set(this.selectedSet);
+   if (this.hasSelection()) {
+      this.selectBody();
+   }
+   return snapshot;
+}
 
 PreviewCage.prototype.selectBody = function() {
    let faceColor;
@@ -689,6 +692,22 @@ PreviewCage.prototype._moreSelectVertex = function() {
             self.selectVertex(inEdge.origin);
          }
       });
+   }
+
+   return oldSelection;
+};
+
+PreviewCage.prototype._lessSelectVertex = function() {
+   const oldSelection = this.selectedSet;
+   this.selectedSet = new Set(oldSelection);
+
+   for (let vertex of oldSelection) {
+      for (let ringV of vertex.oneRing()) {
+         if (!oldSelection.has(ringV)) {
+            this.selectVertex(vertex);
+            break;
+         }
+      }
    }
 
    return oldSelection;
@@ -1076,6 +1095,23 @@ PreviewCage.prototype._moreSelectEdge = function() {
    return oldSelection;
 };
 
+PreviewCage.prototype._lessSelectEdge = function() {
+   const oldSelection = this.selectedSet;
+   this.selectedSet = new Set(oldSelection);
+
+   const self = this;
+   for (let selectedWinged of oldSelection) {
+      for (let wingedEdge of selectedWinged.oneRing()) {
+         if (!oldSelection.has(wingedEdge)) {
+            this.selectEdge(selectedWinged.left);
+            break;
+         }
+      }
+   }
+
+   return oldSelection;
+}
+
 PreviewCage.prototype.changeFromEdgeToFaceSelect = function() {
    const oldSelected = this._resetSelectEdge();
    //
@@ -1240,6 +1276,22 @@ PreviewCage.prototype._moreSelectFace = function() {
    }
 
    return oldSelected;
+};
+
+PreviewCage.prototype._lessSelectFace = function() {
+   const oldSelection = this.selectedSet;
+   this.selectedSet = new Set(oldSelection);
+   const self = this;
+   for (let selected of oldSelection) {
+      for (let polygon of selected.oneRing()) {
+         if (!oldSelection.has(polygon)) {      // selected is a boundary polygon
+            this.selectFace(selected.halfEdge); // now removed.
+            break;
+         }
+      }
+   }
+
+   return oldSelection;
 };
 
 PreviewCage.prototype.changeFromFaceToEdgeSelect = function() {

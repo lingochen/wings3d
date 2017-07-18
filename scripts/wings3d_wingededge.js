@@ -52,6 +52,17 @@ WingedEdge.prototype.isReal = function() {
    return (this.left.origin !== null) && (this.right.origin !== null);
 };
 
+WingedEdge.prototype.oneRing = function* () {
+   for (let start of this) {
+      let current = start.next;
+      start = start.pair;
+      do {
+         yield current.wingedEdge;
+         current = current.pair.next;
+      } while (current !== start);
+   }
+};
+
 var HalfEdge = function(vert, edge) {  // should only be created by WingedEdge
    this.next = null;
 //   this.prev = null;       // not required, but very nice to have shortcut
@@ -144,6 +155,16 @@ Object.defineProperty(Vertex.prototype, 'valence', {
 
 Vertex.prototype.isReal = function() {
    return (this.outEdge !== null);
+};
+
+Vertex.prototype.oneRing = function* () {
+   const start = this.outEdge; // we want inEdge.
+   let current = start;
+   do {
+      const inEdge = current.pair;
+      yield inEdge.origin;
+      current = inEdge.next;
+   } while(current !== start);
 };
 
 // utility functions for traversing all incident edge,
@@ -288,6 +309,20 @@ Polygon.prototype.eachEdge = function(callbackFn) {
       callbackFn(current);
       current = current.next;
    } while (current !== begin);
+};
+
+Polygon.prototype.oneRing = function* () {
+   const check = new Set;
+   const start = this.halfEdge;
+   let current = start;
+   do {
+      let face = current.pair.face;
+      if (face !== null && !check.has(face)) {
+         check.add(face);
+         yield face;
+      }
+      current = current.next;
+   } while (current !== start);
 };
 
 // ccw ordering

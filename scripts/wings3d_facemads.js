@@ -167,6 +167,10 @@ class FaceMadsor extends Madsor {
       }
    }
 
+   _lessSelection(cage) {
+      return cage._lessSelectFace();
+   }
+
    _moreSelection(cage) {
       return cage._moreSelectFace();
    }

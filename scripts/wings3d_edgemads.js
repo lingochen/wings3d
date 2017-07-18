@@ -194,6 +194,10 @@ class EdgeMadsor extends Madsor {
          this.preview.hiliteEdge(edge, true);
       //}
    }
+
+   _lessSelection(cage) {
+      return cage._lessSelectEdge();
+   }
    
    _moreSelection(cage) {
       return cage._moreSelectEdge();

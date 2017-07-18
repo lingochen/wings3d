@@ -141,6 +141,10 @@ class VertexMadsor extends Madsor {
       this.currentEdge = edge;
    }
 
+   _lessSelection(cage) {
+      return cage._lessSelectVertex();
+   }
+
    _moreSelection(cage) {
       return cage._moreSelectVertex();
    }
