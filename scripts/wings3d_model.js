@@ -1262,17 +1262,14 @@ PreviewCage.prototype._resetSelectFace = function() {
 PreviewCage.prototype._moreSelectFace = function() {
    const oldSelected = this.selectedSet;
    this.selectedSet = new Set(oldSelected);
-   const self = this;
    // seleceted selectedFace's vertex's all faces.
    for (let polygon of oldSelected) {
-      polygon.eachVertex( function(vertex) {
-         vertex.eachOutEdge( function(outEdge) {
-            // check if face is not selected.
-            if ( (outEdge.face !== null) && !self.selectedSet.has(outEdge.face) ) {
-               self.selectFace(outEdge);
-            }
-         });
-      });
+      for (let face of polygon.oneRing()) {
+         // check if face is not selected.
+         if ( (face !== null) && !this.selectedSet.has(face) ) {
+            this.selectFace(face.halfEdge);
+         }
+      }
    }
 
    return oldSelected;
@@ -1281,9 +1278,9 @@ PreviewCage.prototype._moreSelectFace = function() {
 PreviewCage.prototype._lessSelectFace = function() {
    const oldSelection = this.selectedSet;
    this.selectedSet = new Set(oldSelection);
-   const self = this;
+
    for (let selected of oldSelection) {
-      for (let polygon of selected.oneRing()) {
+      for (let polygon of selected.adjacent()) {
          if (!oldSelection.has(polygon)) {      // selected is a boundary polygon
             this.selectFace(selected.halfEdge); // now removed.
             break;

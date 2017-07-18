@@ -52,6 +52,13 @@ WingedEdge.prototype.isReal = function() {
    return (this.left.origin !== null) && (this.right.origin !== null);
 };
 
+WingedEdge.prototype.adjacent = function* () {
+   yield this.left.next.wingedEdge;
+   yield this.left.prev().wingedEdg;
+   yield this.right.next.wingedEdge;
+   yield this.right.prev().wingedEdge;
+};
+
 WingedEdge.prototype.oneRing = function* () {
    for (let start of this) {
       let current = start.next;
@@ -164,6 +171,15 @@ Vertex.prototype.oneRing = function* () {
       const inEdge = current.pair;
       yield inEdge.origin;
       current = inEdge.next;
+   } while(current !== start);
+};
+
+Vertex.prototype.edgeRing = function* () {
+   const start = this.outEdge; // we want inEdge.
+   let current = start;
+   do {
+      yield current;
+      current = current.pair.next;
    } while(current !== start);
 };
 
@@ -311,7 +327,8 @@ Polygon.prototype.eachEdge = function(callbackFn) {
    } while (current !== begin);
 };
 
-Polygon.prototype.oneRing = function* () {
+// adjacent face, along the edge
+Polygon.prototype.adjacent = function* () {
    const check = new Set;
    const start = this.halfEdge;
    let current = start;
@@ -323,6 +340,25 @@ Polygon.prototype.oneRing = function* () {
       }
       current = current.next;
    } while (current !== start);
+};
+
+// one ring faces. all the vertex's face
+Polygon.prototype.oneRing = function* () {
+   const check = new Set; check.add(this);
+   const start = this.halfEdge;
+   let current = start;
+   do {
+      const vertex = current.origin;
+      for (let outEdge of vertex.edgeRing()) {
+         const face = outEdge.face;
+         if ((face !== null) && !check.has(face)) {
+            check.add(face);
+            yield face;
+         }
+      }
+      current = current.next;
+   } while (current !== start);
+
 };
 
 // ccw ordering
