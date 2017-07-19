@@ -22,30 +22,20 @@ function createView(gl) {
    _pvt.bodyMode.setWorld(_pvt.world);
    _pvt.curretMouseHandler = _pvt;
       
-   // deselect function
-   Wings3D.bindMenuItem('#deselect', function(ev) {
-      const command = new EditCommandSimple('resetSelection');
-      command.doIt(_pvt.currentMode);
-      my.undoQueue( command );
-      my.renderWorld.needToRedraw();
-   }, ' ');
-   // select more
-   Wings3D.bindMenuItem('#more', function(ev) {
-      const command = new EditCommandSimple('moreSelection');
-      if (command.doIt(_pvt.currentMode)) {
-         my.undoQueue( command );
-         my.renderWorld.needToRedraw();
-      }
-   }, '+');
-   // select less
-   Wings3D.bindMenuItem('#less', function(ev) {
-      const command = new EditCommandSimple('lessSelection');
-      if (command.doIt(_pvt.currentMode)) {
-         my.undoQueue( command );
-         my.renderWorld.needToRedraw();
-      }
-   }, '-');
-
+   const selectionMenu = [ {id: '#deselect', fn: 'resetSelection', hotKey: ' '},
+                         {id: '#more', fn: 'moreSelection', hotKey: '+'},
+                         {id: '#less', fn: 'lessSelection', hotKey: '-'},
+                         {id: '#all', fn: 'allSelection', hotKey: 'a', meta: 'ctrl'},
+                        ];
+   for (let select of selectionMenu) {
+      Wings3D.bindMenuItem(select.id, function(ev) {
+         const command = new EditCommandSimple(select.fn);
+         if(command.doIt(_pvt.currentMode)) {
+            my.undoQueue( command );
+            my.renderWorld.needToRedraw();
+         }
+      }, select.hotKey, select.meta);
+   }
 
    _pvt.toggleVertexMode = function() {
       // change current mode to 

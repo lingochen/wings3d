@@ -110,6 +110,10 @@ class BodyMadsor extends Madsor {
       this.preview.hiliteBody(true);
    }
 
+   _allSelection(cage) {
+      return cage._selectBodyAll();
+   }
+
    _lessSelection(cage) {
       return cage._lessSelectBody();
    }

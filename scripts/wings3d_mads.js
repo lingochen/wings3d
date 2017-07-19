@@ -102,12 +102,12 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
 
    hideOldHilite() {}
 
-   lessSelection() {
+   _doSelection(doName, initialCount=0) {
       const snapshots = [];
       const self = this;
-      let count = 0;
+      let count = initialCount;        // set initialCount, so we can force undo
       this.eachPreviewCage( function(cage) {
-         const selection = self._lessSelection(cage);
+         const selection = self[doName](cage);
          snapshots.push( selection );
          count += selection.size;
       });
@@ -117,25 +117,19 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
             self.restoreSelection(snapshots);
          }
       } // else
-      return null;
+      return null;  
+   }
+
+   allSelection() {
+      return this._doSelection('_allSelection', 1);
+   }
+
+   lessSelection() {
+      return this._doSelection('_lessSelection');
    }
 
    moreSelection() {
-      const snapshots = [];
-      const self = this;
-      let count = 0;
-      this.eachPreviewCage( function(cage) {
-         const selection = self._moreSelection(cage);
-         snapshots.push( selection );
-         count += selection.size;
-      });
-      if (count != 0) {
-         return function() {
-            self.resetSelection();
-            self.restoreSelection(snapshots);
-         }
-      } // else
-      return null;
+      return this._doSelection('_moreSelection');
    }
 
    resetSelection() {

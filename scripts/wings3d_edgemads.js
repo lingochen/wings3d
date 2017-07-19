@@ -195,6 +195,10 @@ class EdgeMadsor extends Madsor {
       //}
    }
 
+   _allSelection(cage) {
+      return cage._selectEdgeAll();
+   }
+
    _lessSelection(cage) {
       return cage._lessSelectEdge();
    }

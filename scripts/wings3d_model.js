@@ -561,6 +561,14 @@ PreviewCage.prototype._lessSelectBody = function() {
    return snapshot;
 }
 
+PreviewCage.prototype._selectBodyAll = function() {
+   const snapshot = new Set(this.selectedSet);
+   if (!this.hasSelection()) {
+      this.selectBody();
+   }
+   return snapshot;
+}
+
 PreviewCage.prototype.selectBody = function() {
    let faceColor;
    // we change interior color to show the selection
@@ -712,6 +720,19 @@ PreviewCage.prototype._lessSelectVertex = function() {
 
    return oldSelection;
 };
+
+PreviewCage.prototype._selectVertexAll = function() {
+   const oldSelection = this.selectedSet;
+   this.selectedSet = new Set(oldSelection);
+
+   for (let vertex of this.geometry.vertices) {
+      if (vertex.isReal() && !oldSelection.has(vertex)) {
+         this.selectVertex(vertex);
+      }
+   }
+
+   return oldSelection;
+}
 
 PreviewCage.prototype.changeFromVertexToFaceSelect = function() {
    var self = this;
@@ -1112,6 +1133,19 @@ PreviewCage.prototype._lessSelectEdge = function() {
    return oldSelection;
 }
 
+PreviewCage.prototype._selectEdgeAll = function() {
+   const oldSelection = this.selectedSet;
+   this.selectedSet = new Set(oldSelection);
+
+   for (let wingedEdge of this.geometry.edges) {
+      if (wingedEdge.isReal() && !oldSelection.has(wingedEdge)) {
+         this.selectEdge(wingedEdge.left);
+      }
+   }
+
+   return oldSelection;
+}
+
 PreviewCage.prototype.changeFromEdgeToFaceSelect = function() {
    const oldSelected = this._resetSelectEdge();
    //
@@ -1273,6 +1307,20 @@ PreviewCage.prototype._moreSelectFace = function() {
    }
 
    return oldSelected;
+};
+
+
+PreviewCage.prototype._selectFaceAll = function() {
+   const oldSelection = this.selectedSet;
+   this.selectedSet = new Set(oldSelection);
+
+   for (let polygon of this.geometry.faces) {
+      if (polygon.isReal && !oldSelection.has(polygon)) {
+         this.selectFace(polygon.halfEdge);
+      }
+   }
+
+   return oldSelection;
 };
 
 PreviewCage.prototype._lessSelectFace = function() {
