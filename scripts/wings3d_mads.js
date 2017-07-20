@@ -105,9 +105,10 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
    _doSelection(doName, initialCount=0) {
       const snapshots = [];
       const self = this;
+      doName = '_select' + this.modeName() + doName;
       let count = initialCount;        // set initialCount, so we can force undo
       this.eachPreviewCage( function(cage) {
-         const selection = self[doName](cage);
+         const selection = cage[doName]();
          snapshots.push( selection );
          count += selection.size;
       });
@@ -120,16 +121,20 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       return null;  
    }
 
+   invertSelection() {
+      return this._doSelection('Invert', 1);
+   }
+
    allSelection() {
-      return this._doSelection('_allSelection', 1);
+      return this._doSelection('All', 1);
    }
 
    lessSelection() {
-      return this._doSelection('_lessSelection');
+      return this._doSelection('Less');
    }
 
    moreSelection() {
-      return this._doSelection('_moreSelection');
+      return this._doSelection('More');
    }
 
    resetSelection() {

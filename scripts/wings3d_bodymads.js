@@ -67,6 +67,10 @@ class BodyMadsor extends Madsor {
       }
    }
 
+   modeName() {
+      return 'Body';
+   }
+
    getSelected() {
       const selection = [];
       this.eachPreviewCage( function(cage) {
@@ -108,14 +112,6 @@ class BodyMadsor extends Madsor {
 
    showNewHilite(_edge, _intersect, _center) {
       this.preview.hiliteBody(true);
-   }
-
-   _allSelection(cage) {
-      return cage._selectBodyAll();
-   }
-
-   _lessSelection(cage) {
-      return cage._lessSelectBody();
    }
 
    moreSelection() {

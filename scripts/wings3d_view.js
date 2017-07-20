@@ -25,7 +25,8 @@ function createView(gl) {
    const selectionMenu = [ {id: '#deselect', fn: 'resetSelection', hotKey: ' '},
                          {id: '#more', fn: 'moreSelection', hotKey: '+'},
                          {id: '#less', fn: 'lessSelection', hotKey: '-'},
-                         {id: '#all', fn: 'allSelection', hotKey: 'a', meta: 'ctrl'},
+                         {id: '#all', fn: 'allSelection', hotKey: 'a', meta: 'ctrl'}, 
+                         {id: '#invert', fn: 'invertSelection', hotKey: 'i', meta: 'ctrl+shift'}
                         ];
    for (let select of selectionMenu) {
       Wings3D.bindMenuItem(select.id, function(ev) {

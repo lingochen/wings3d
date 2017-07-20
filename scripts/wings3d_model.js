@@ -553,7 +553,7 @@ PreviewCage.prototype._resetBody = function() {
    return oldSet;
 };
 
-PreviewCage.prototype._lessSelectBody = function() {
+PreviewCage.prototype._selectBodyLess = function() {
    const snapshot = new Set(this.selectedSet);
    if (this.hasSelection()) {
       this.selectBody();
@@ -566,6 +566,12 @@ PreviewCage.prototype._selectBodyAll = function() {
    if (!this.hasSelection()) {
       this.selectBody();
    }
+   return snapshot;
+}
+
+PreviewCage.prototype._selectBodyInvert = function() {
+   const snapshot = new Set(this.selectedSet);
+   this.selectBody();
    return snapshot;
 }
 
@@ -689,7 +695,7 @@ PreviewCage.prototype._resetSelectVertex = function() {
    return oldSelected;
 };
 
-PreviewCage.prototype._moreSelectVertex = function() {
+PreviewCage.prototype._selectVertexMore = function() {
    const oldSelection = this.selectedSet;
    this.selectedSet = new Set(oldSelection);
 
@@ -705,7 +711,7 @@ PreviewCage.prototype._moreSelectVertex = function() {
    return oldSelection;
 };
 
-PreviewCage.prototype._lessSelectVertex = function() {
+PreviewCage.prototype._selectVertexLess = function() {
    const oldSelection = this.selectedSet;
    this.selectedSet = new Set(oldSelection);
 
@@ -733,6 +739,19 @@ PreviewCage.prototype._selectVertexAll = function() {
 
    return oldSelection;
 }
+
+PreviewCage.prototype._selectVertexInvert = function() {
+   const snapshot = new Set(this.selectedSet);
+
+   for (let vertex of this.geometry.vertices) {
+      if (vertex.isReal()) {
+         this.selectVertex(vertex);
+      }
+   }
+
+   return snapshot;
+}
+
 
 PreviewCage.prototype.changeFromVertexToFaceSelect = function() {
    var self = this;
@@ -1098,7 +1117,7 @@ PreviewCage.prototype._resetSelectEdge = function() {
    return oldSelected;
 };
 
-PreviewCage.prototype._moreSelectEdge = function() {
+PreviewCage.prototype._selectEdgeMore = function() {
    const oldSelection = this.selectedSet;
    this.selectedSet = new Set(oldSelection);
 
@@ -1116,7 +1135,7 @@ PreviewCage.prototype._moreSelectEdge = function() {
    return oldSelection;
 };
 
-PreviewCage.prototype._lessSelectEdge = function() {
+PreviewCage.prototype._selectEdgeLess = function() {
    const oldSelection = this.selectedSet;
    this.selectedSet = new Set(oldSelection);
 
@@ -1145,6 +1164,18 @@ PreviewCage.prototype._selectEdgeAll = function() {
 
    return oldSelection;
 }
+
+PreviewCage.prototype._selectEdgeInvert = function() {
+   const snapshot = new Set(this.selectedSet);
+
+   for (let wingedEdge of this.geometry.edges) {
+      if (wingedEdge.isReal()) {
+         this.selectEdge(wingedEdge.left);
+      }
+   }
+
+   return snapshot;
+};
 
 PreviewCage.prototype.changeFromEdgeToFaceSelect = function() {
    const oldSelected = this._resetSelectEdge();
@@ -1293,7 +1324,7 @@ PreviewCage.prototype._resetSelectFace = function() {
    return oldSelected;
 }
 
-PreviewCage.prototype._moreSelectFace = function() {
+PreviewCage.prototype._selectFaceMore = function() {
    const oldSelected = this.selectedSet;
    this.selectedSet = new Set(oldSelected);
    // seleceted selectedFace's vertex's all faces.
@@ -1309,21 +1340,7 @@ PreviewCage.prototype._moreSelectFace = function() {
    return oldSelected;
 };
 
-
-PreviewCage.prototype._selectFaceAll = function() {
-   const oldSelection = this.selectedSet;
-   this.selectedSet = new Set(oldSelection);
-
-   for (let polygon of this.geometry.faces) {
-      if (polygon.isReal && !oldSelection.has(polygon)) {
-         this.selectFace(polygon.halfEdge);
-      }
-   }
-
-   return oldSelection;
-};
-
-PreviewCage.prototype._lessSelectFace = function() {
+PreviewCage.prototype._selectFaceLess = function() {
    const oldSelection = this.selectedSet;
    this.selectedSet = new Set(oldSelection);
 
@@ -1338,6 +1355,32 @@ PreviewCage.prototype._lessSelectFace = function() {
 
    return oldSelection;
 };
+
+PreviewCage.prototype._selectFaceAll = function() {
+   const oldSelection = this.selectedSet;
+   this.selectedSet = new Set(oldSelection);
+
+   for (let polygon of this.geometry.faces) {
+      if (polygon.isReal && !oldSelection.has(polygon)) {
+         this.selectFace(polygon.halfEdge);
+      }
+   }
+
+   return oldSelection;
+};
+
+PreviewCage.prototype._selectFaceInvert = function() {
+   const snapshot = new Set(this.selectedSet);
+
+   for (let polygon of this.geometry.faces) {
+      if (polygon.isReal()) {
+         this.selectFace(polygon.halfEdge);
+      }
+   }
+
+   return snapshot;
+};
+
 
 PreviewCage.prototype.changeFromFaceToEdgeSelect = function() {
    var self = this;

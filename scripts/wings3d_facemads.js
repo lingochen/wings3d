@@ -59,6 +59,10 @@ class FaceMadsor extends Madsor {
       this.shaderData.setupAttribute('position', layout, this.trianglefan.data, Wings3D.gl.DYNAMIC_DRAW);      
    }
 
+   modeName() {
+      return 'Face';
+   }
+
    // get selected Face's vertex snapshot. for doing, and redo queue. 
    snapshotPosition() {
       var snapshots = [];
@@ -165,18 +169,6 @@ class FaceMadsor extends Madsor {
             this.shaderData.uploadAttribute('position', 0, this.trianglefan.data);
          }
       }
-   }
-
-   _allSelection(cage) {
-      return cage._selectFaceAll();
-   }
-
-   _lessSelection(cage) {
-      return cage._lessSelectFace();
-   }
-
-   _moreSelection(cage) {
-      return cage._moreSelectFace();
    }
 
    _resetSelection(cage) {

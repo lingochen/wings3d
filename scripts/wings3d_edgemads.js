@@ -74,6 +74,10 @@ class EdgeMadsor extends Madsor {
       }    
    }
 
+   modeName() {
+      return 'Edge';
+   }
+
    // get selected Edge's vertex snapshot. for doing, and redo queue. 
    snapshotPosition() {
       var snapshots = [];
@@ -193,18 +197,6 @@ class EdgeMadsor extends Madsor {
       //if (this.currentEdge) {
          this.preview.hiliteEdge(edge, true);
       //}
-   }
-
-   _allSelection(cage) {
-      return cage._selectEdgeAll();
-   }
-
-   _lessSelection(cage) {
-      return cage._lessSelectEdge();
-   }
-   
-   _moreSelection(cage) {
-      return cage._moreSelectEdge();
    }
 
    _resetSelection(cage) {

@@ -33,6 +33,11 @@ class VertexMadsor extends Madsor {
          });  
       }
     }
+
+   modeName() {
+      return 'Vertex';
+   }
+
    // get selected vertex snapshot. for doing, and redo queue. 
    snapshotPosition() {
       var snapshots = [];
@@ -139,18 +144,6 @@ class VertexMadsor extends Madsor {
          this.currentVertex = currentVertex;
       }
       this.currentEdge = edge;
-   }
-
-   _allSelection(cage) {
-      return cage._selectVertexAll();
-   }
-
-   _lessSelection(cage) {
-      return cage._lessSelectVertex();
-   }
-
-   _moreSelection(cage) {
-      return cage._moreSelectVertex();
    }
 
    _resetSelection(cage) {

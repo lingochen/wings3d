@@ -16,7 +16,7 @@
       // extract alt, ctrl, shift key
       const meta = Wings3D.createMask(event.altKey, event.ctrlKey, event.shiftKey);
       // extract key
-      const hotkey = event.key;
+      const hotkey = event.key.toLowerCase();
       // run the binding function
       if (_private.keyMap.has(hotkey)) {
          const metaSet = _private.keyMap.get(hotkey);
