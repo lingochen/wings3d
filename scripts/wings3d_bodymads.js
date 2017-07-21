@@ -114,6 +114,10 @@ class BodyMadsor extends Madsor {
       this.preview.hiliteBody(true);
    }
 
+   adjacentSelection() {
+      return null;   // does nothing.
+   }
+
    moreSelection() {
       return null;      // does nothing.
    }

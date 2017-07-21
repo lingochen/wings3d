@@ -53,10 +53,18 @@ WingedEdge.prototype.isReal = function() {
 };
 
 WingedEdge.prototype.adjacent = function* () {
-   yield this.left.next.wingedEdge;
-   yield this.left.prev().wingedEdg;
-   yield this.right.next.wingedEdge;
-   yield this.right.prev().wingedEdge;
+   let next = this.left.next.wingedEdge;
+   yield next;
+   let prev = this.left.prev().wingedEdge;
+   if (prev !== next) {
+      yield prev;
+   }
+   next = this.right.next.wingedEdge;
+   yield next;
+   prev = this.right.prev().wingedEdge;
+   if (prev !== next) {
+      yield prev;
+   }
 };
 
 WingedEdge.prototype.oneRing = function* () {

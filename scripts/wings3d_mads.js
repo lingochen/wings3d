@@ -121,6 +121,10 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       return null;  
    }
 
+   adjacentSelection() {
+      return this._doSelection('Adjacent');
+   }
+
    invertSelection() {
       return this._doSelection('Invert', 1);
    }

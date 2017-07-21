@@ -752,6 +752,10 @@ PreviewCage.prototype._selectVertexInvert = function() {
    return snapshot;
 }
 
+PreviewCage.prototype._selectVertexAdjacent = function() {
+   return this._selectVertexMore();
+}
+
 
 PreviewCage.prototype.changeFromVertexToFaceSelect = function() {
    var self = this;
@@ -1118,8 +1122,7 @@ PreviewCage.prototype._resetSelectEdge = function() {
 };
 
 PreviewCage.prototype._selectEdgeMore = function() {
-   const oldSelection = this.selectedSet;
-   this.selectedSet = new Set(oldSelection);
+   const oldSelection = new Set(this.selectedSet);
 
    const self = this;
    for (let wingedEdge of oldSelection) {
@@ -1177,6 +1180,19 @@ PreviewCage.prototype._selectEdgeInvert = function() {
    return snapshot;
 };
 
+PreviewCage.prototype._selectEdgeAdjacent = function() {
+   const oldSelection = new Set(this.selectedSet);
+
+   for (let wingedEdge of oldSelection) {
+      for (let adjacent of wingedEdge.adjacent()) {
+         if (!this.selectedSet.has(adjacent)) {
+            this.selectEdge(adjacent.left);
+         }
+      }
+   }
+
+   return oldSelection;
+};
 PreviewCage.prototype.changeFromEdgeToFaceSelect = function() {
    const oldSelected = this._resetSelectEdge();
    //
@@ -1380,6 +1396,22 @@ PreviewCage.prototype._selectFaceInvert = function() {
 
    return snapshot;
 };
+
+PreviewCage.prototype._selectFaceAdjacent = function() {
+   const snapshot = new Set(this.selectedSet);
+
+   // seleceted selectedFace's vertex's all faces.
+   for (let polygon of snapshot) {
+      for (let face of polygon.adjacent()) {
+         // check if face is not selected.
+         if ( (face !== null) && !this.selectedSet.has(face) ) {
+            this.selectFace(face.halfEdge);
+         }
+      }
+   }
+   
+   return snapshot;
+}
 
 
 PreviewCage.prototype.changeFromFaceToEdgeSelect = function() {
