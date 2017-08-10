@@ -977,7 +977,8 @@ WingedTopology.prototype._liftEdge = function(outLeft, inRight, fromVertex, delE
 WingedTopology.prototype._insertFreeList = function(val, array) {
    var l = 0, r = array.length - 1;
    while (l <= r) {
-      let m = (l + r) >>> 1; /// equivalent to Math.floor((l + h) / 2) but faster 
+      //let m = (l + r) >>> 1; /// equivalent to Math.floor((l + h) / 2) but faster
+      let m = l + ((r-l) >>> 1); // avoid overflow. 
       let comparison = val - array[m];
       if (comparison > 0) {
          r = m - 1;

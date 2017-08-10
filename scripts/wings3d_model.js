@@ -1411,7 +1411,20 @@ PreviewCage.prototype._selectFaceAdjacent = function() {
    }
    
    return snapshot;
-}
+};
+
+PreviewCage.prototype._selectFaceSimilar = function() {
+   const snapshot = new Set(this.selectedSet);
+   const similarFace = new SimilarFace(snapshot);
+
+   for (let polygon of this.geometry.faces) {
+      if (polygon.isReal && !snapshot.has(polygon) && similarFace.find(polygon)) {
+         this.selectFace(polygon.halfEdge);
+      }
+   }
+
+   return snapshot;
+};
 
 
 PreviewCage.prototype.changeFromFaceToEdgeSelect = function() {

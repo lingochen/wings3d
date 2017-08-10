@@ -25,6 +25,7 @@ function createView(gl) {
    const selectionMenu = [ {id: '#deselect', fn: 'resetSelection', hotKey: ' '},
                          {id: '#more', fn: 'moreSelection', hotKey: '+'},
                          {id: '#less', fn: 'lessSelection', hotKey: '-'},
+                         {id: '#similar', fn: 'similarSelection', hotkey: 'i'},
                          {id: '#all', fn: 'allSelection', hotKey: 'a', meta: 'ctrl'}, 
                          {id: '#invert', fn: 'invertSelection', hotKey: 'i', meta: 'ctrl+shift'},
                          {id: '#adjacent', fn: 'adjacentSelection'}

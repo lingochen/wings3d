@@ -67,6 +67,15 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       }
    }
 
+   * selectableCage() {
+      for (let i = 0; i < this.world.length; ++i) {
+         let cage = this.world[i];
+         if (!cage.isLock() && cage.isVisible()) {
+            yield cage;
+         }
+      }
+   }
+
    // move edge along movement.
    moveSelection(movement, snapshots) {
       this.eachPreviewCage( function(cage, snapshot) {
@@ -119,6 +128,10 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
          }
       } // else
       return null;  
+   }
+
+   similarSelection() {
+      return this._doSelection('Similar');
    }
 
    adjacentSelection() {
