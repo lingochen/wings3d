@@ -78,8 +78,10 @@ class SimilarFace extends SimilarGeometry {
             if (ratio < angle[index]) {
                index = angle.length;
             } 
-            if (ratioR == angleR[index]) {
-               indexR = angleR.length;
+            if (ratioR < angleR[indexR]) {
+               indexR = 0;
+            } else {
+               ++indexR;
             }
          }
          angle.push( ratio );
@@ -92,8 +94,8 @@ class SimilarFace extends SimilarGeometry {
       let metric = 0;
       let metricR = 0;
       for (let i = 0; i < angle.length; ++i) {
-         metric = (metric*2*Math.PI) + angle[i];                     // needFixing. better unique computation.
-         metricR = (metricR*2*Math.PI) + angleR[i];
+         metric = (metric*angle[i]) + angle[i];                     // needFixing. better unique computation.
+         metricR = (metricR*angleR[i]) + angleR[i];
       }
       if (reflect) {
          return [metric, metricR];
@@ -105,12 +107,6 @@ class SimilarFace extends SimilarGeometry {
    find(polygon) {   // find the selection set has similar .
       const metric = this.getMetric(polygon);
 
-      const result = this.set.has(metric);
-      if (result) {
-         return true;
-      } else {
-         this.getMetric(polygon);
-         return false;
-      }
+      return this.set.has(metric);
    }
 }
