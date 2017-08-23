@@ -195,7 +195,7 @@ document.addEventListener('DOMContentLoaded', function() {
       var cut = document.querySelectorAll('#createCubeForm input[name="numberOfCuts"]');
       cut[0].addEventListener('change', cutHandler);
       cut[1].addEventListener('change', cutHandler);
-      var size = document.querySelectorAll('#createCubeform input[name^="size"');
+      var size = document.querySelectorAll('#createCubeForm input[name^="size_"]');
       size[0].addEventListener('change', function(ev) { 
          _pvt.cubeParams.size.x = Number(ev.target.value);
          _pvt.updatePreview();

@@ -38,6 +38,12 @@ class SimilarGeometry {
       const mag = vec3.length(aLengthB);
       return this._discreetAngle(dist / mag);
    }
+
+   // find if selection has similar target
+   find(target) {
+      const metric = this.getMetric(target);
+      return this.set.has(metric);
+   }
 }
 
 
@@ -103,10 +109,25 @@ class SimilarFace extends SimilarGeometry {
          return metric;
       }
    }
+}
 
-   find(polygon) {   // find the selection set has similar .
-      const metric = this.getMetric(polygon);
 
-      return this.set.has(metric);
+class SimilarWingedEdge extends SimilarGeometry {
+   constructor(selection) {
+      super();
+      for (let wingedEdge of selection) {
+
+      }
+   }
+
+   getMetric(wingedEdge, reflect=false) {
+      // 
+      let a 
+      for (let halfEdge of wingedEdge) {
+         const prev = halfEdge.prev();
+
+         
+      }
+      
    }
 }
