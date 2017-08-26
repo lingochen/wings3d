@@ -78,6 +78,18 @@ WingedEdge.prototype.oneRing = function* () {
    }
 };
 
+// return left wing then right wing. \   right0-> /
+//                                   |            |
+//                          left0->  /            \ 
+WingedEdge.prototype.wing = function* () {
+   yield this.left.prev();
+   yield this.left;
+   yield this.left.next;
+   yield this.right.prev();
+   yield this.right;
+   yield this.right.next;
+};
+
 var HalfEdge = function(vert, edge) {  // should only be created by WingedEdge
    this.next = null;
 //   this.prev = null;       // not required, but very nice to have shortcut
