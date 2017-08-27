@@ -27,7 +27,7 @@ class SimilarGeometry {
    }
 
    // W. Kahan suggested in his paper "Mindeless.pdf". numerically better formula.
-   static computeAngle(m) {   // m = {a, b, aLengthB, bLengthA};
+   static _computeAngle(m) {   // m = {a, b, aLengthB, bLengthA};
       // 2 * atan(norm(x*norm(y) - norm(x)*y) / norm(x * norm(y) + norm(x) * y));
       vec3.scale(m.aLengthB, m.a, m.bLength);
       vec3.scale(m.bLengthA, m.b, m.aLength);
@@ -38,7 +38,7 @@ class SimilarGeometry {
    }
 
    static computeRatio(m) {
-      const rad = SimilarGeometry.computeAngle(m);
+      const rad = SimilarGeometry._computeAngle(m);
       const ratio = SimilarGeometry._toFixed(m.bLength/m.aLength, 2) * rad;      // needFixing: possible collision, but should be fairly uncommon
       const ratioR = SimilarGeometry._toFixed(m.aLength/m.bLength, 2) * rad;  
       if (m.fwd.index === -1) {
@@ -139,7 +139,8 @@ class SimilarWingedEdge extends SimilarGeometry {
    }
 
    getMetric(wingedEdge, reflect=false) {
-      let metric = SimilarGeometry.mStruct();
+      const metric = SimilarGeometry.mStruct();
+      const normal2 = [];
       for (let hEdge of wingedEdge) {  // left, right side 
          // down side.
          const hEdgeA = hEdge.prev();
@@ -148,17 +149,23 @@ class SimilarWingedEdge extends SimilarGeometry {
          metric.aLength = vec3.length(metric.a); 
          vec3.sub(metric.b, hEdgeB.origin.vertex, hEdge.origin.vertex);
          metric.bLength = vec3.length(metric.b);
-         SimilarGeometry.computeAngle(metric);
+         SimilarGeometry.computeRatio(metric);
+         const norm = vec3.create();
+         vec3.cross(norm, metric.b, metric.a);
+         vec3.normalize(norm, norm);
+         normal2.push(norm);
          // up
          vec3.negate(metric.a, metric.b);
          metric.aLength = metric.bLength;
-         vec3.sub(metric.b, hEdgeB.destination().vertex, hEdge.origin.vertex);
+         vec3.sub(metric.b, hEdgeB.destination().vertex, hEdgeB.origin.vertex);
          metric.bLength = vec3.length(metric.b);
-         SimilarGeometry.computeAngle(metric);
+         SimilarGeometry.computeRatio(metric);
       }
-      let result = SimilarGeometry.computeMetric(metric);
-      // add the normal of 2 side of edge.
-
+      const result = SimilarGeometry.computeMetric(metric);
+      // we should also check the difference of the  normal of the 2 side of the edge? differing from original implementation.
+      const dot = vec3.dot(normal2[1], normal2[0]);
+      result[0] += dot;
+      result[1] += dot;
       if (reflect) {
          return result;
       } else {

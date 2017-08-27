@@ -1193,6 +1193,22 @@ PreviewCage.prototype._selectEdgeAdjacent = function() {
 
    return oldSelection;
 };
+
+
+PreviewCage.prototype._selectEdgeSimilar = function() {
+   const snapshot = new Set(this.selectedSet);
+   const similarEdge = new SimilarWingedEdge(snapshot);
+
+   for (let wingedEdge of this.geometry.edges) {
+      if (wingedEdge.isReal && !snapshot.has(wingedEdge) && similarEdge.find(wingedEdge)) {
+         this.selectEdge(wingedEdge.left);
+      }
+   }
+
+   return snapshot;
+};
+
+
 PreviewCage.prototype.changeFromEdgeToFaceSelect = function() {
    const oldSelected = this._resetSelectEdge();
    //
