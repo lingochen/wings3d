@@ -738,7 +738,7 @@ PreviewCage.prototype._selectVertexAll = function() {
    }
 
    return oldSelection;
-}
+};
 
 PreviewCage.prototype._selectVertexInvert = function() {
    const snapshot = new Set(this.selectedSet);
@@ -750,12 +750,24 @@ PreviewCage.prototype._selectVertexInvert = function() {
    }
 
    return snapshot;
-}
+};
 
 PreviewCage.prototype._selectVertexAdjacent = function() {
    return this._selectVertexMore();
-}
+};
 
+PreviewCage.prototype._selectVertexSimilar = function() {
+   const snapshot = new Set(this.selectedSet);
+   const similarVertex = new SimilarVertex(snapshot);
+
+   for (let vertex of this.geometry.vertices) {
+      if (vertex.isReal() && !snapshot.has(vertex) && similarVertex.find(vertex)) {
+         this.selectVertex(vertex);
+      }
+   }
+
+   return snapshot;
+};
 
 PreviewCage.prototype.changeFromVertexToFaceSelect = function() {
    var self = this;

@@ -58,14 +58,14 @@ class SimilarGeometry {
       m.rev.angle.unshift( ratioR  );
    }
 
-   static computeMetric(m) {
+   static computeMetric(m, initial = 0.0) {
       // rotate the array, so the smallest angle start at index 0. so we can compare directly
       m.fwd.angle.unshift( ...(m.fwd.angle.splice(m.fwd.index, m.fwd.angle.length)) ); // spread operator to explode array.
       m.rev.angle.unshift( ...(m.rev.angle.splice(m.rev.index, m.rev.angle.length)) ); // spread operator to explode array.
 
       // convert to string, or really hash.
-      let metric = 0.0;
-      let metricR = 0.0;
+      let metric = initial;
+      let metricR = initial;
       for (let i = 0; i < m.fwd.angle.length; ++i) {
          metric = (metric*(m.fwd.angle[i]+0.1)) + m.fwd.angle[i];                     // needFixing. better unique computation.
          metricR = (metricR*(m.rev.angle[i]+0.1)) + m.rev.angle[i];
@@ -161,11 +161,43 @@ class SimilarWingedEdge extends SimilarGeometry {
          metric.bLength = vec3.length(metric.b);
          SimilarGeometry.computeRatio(metric);
       }
-      const result = SimilarGeometry.computeMetric(metric);
       // we should also check the difference of the  normal of the 2 side of the edge? differing from original implementation.
       const dot = vec3.dot(normal2[1], normal2[0]);
-      result[0] += dot;
-      result[1] += dot;
+      const result = SimilarGeometry.computeMetric(metric, dot);
+      if (reflect) {
+         return result;
+      } else {
+         return result[0];
+      }
+   }
+}
+
+
+class SimilarVertex extends SimilarGeometry {
+   constructor(selection) {
+      super();
+      for (let vertex of selection) {
+         const metric = this.getMetric(vertex, true);
+         this.set.add( metric[0] );
+         this.set.add( metric[1] );
+      }
+   }
+
+   getMetric(vertex, reflect=false) {
+      const m = SimilarGeometry.mStruct();
+      vertex.eachOutEdge( function(edge) {
+         if (m.aLength === -1) {
+            vec3.sub(m.a, edge.destination().vertex, vertex.vertex);  // similar to SimilarFace, but everything point outEdge.
+            m.aLength = vec3.length(m.a);
+         } else {
+            vec3.copy(m.a, m.b);
+            m.aLength = m.bLength;
+         }
+         vec3.sub(m.b, edge.destination().vertex, vertex.vertex);
+         m.bLength = vec3.length(m.b);
+         SimilarGeometry.computeRatio(m);
+      });
+      const result = SimilarGeometry.computeMetric(m);
       if (reflect) {
          return result;
       } else {
