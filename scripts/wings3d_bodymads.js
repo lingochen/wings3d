@@ -114,6 +114,39 @@ class BodyMadsor extends Madsor {
       this.preview.hiliteBody(true);
    }
 
+   similarSelection() {
+      // first compute selected body's metric
+      const snapshot = new Set;
+      this.eachPreviewCage( function(cage) {
+         if (cage.hasSelection()) {
+            const size = cage._getGeometrySize();
+            const metric = size.vertex*3 + size.edge*2 + size.face;
+            snapshot.add(metric);
+         } 
+      });
+      const restore = [];
+      // now check if some of the unselected bodys match selected body.
+      this.eachPreviewCage( function(cage) {
+         if (!cage.hasSelection()) {
+            const size = cage._getGeometrySize();
+            const metric = size.vertex*3 + size.edge*2 + size.face;
+            if (snapshot.has(metric)) {
+               cage.selectBody();
+               restore.push(cage);
+            }
+         }
+      });
+      if (restore.length > 0) {
+         return function() {  // restore to previous state
+            for (let cage in restore) {
+               cage.selectBody();
+            }
+         };
+      } else {
+         return null;
+      }
+   }
+
    adjacentSelection() {
       return null;   // does nothing.
    }
