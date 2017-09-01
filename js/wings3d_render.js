@@ -156,7 +156,7 @@ function createRenderWorld() {
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 255, 255]));
       // Asynchronously load an image
       var image = new Image();
-      image.src = "../images/8x8-font.png";
+      image.src = "../img/8x8-font.png";
       image.onload = function() {   // image loaded, copy it to the texture.
          gl.bindTexture(gl.TEXTURE_2D, glyphTex);
          gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);

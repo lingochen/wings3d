@@ -81,7 +81,7 @@ nav.menu ul > li > ul {
    z-index: 1;
 }
 /*nav.menu ul > li.drop {
-    background: url(/images/ic_keyboard_arrow_down_white_18dp.png) right center no-repeat;
+    background: url(/img/ic_keyboard_arrow_down_white_18dp.png) right center no-repeat;
 }*/
 
 nav.menu ul > li.drop li.sub:before {
@@ -90,7 +90,7 @@ nav.menu ul > li.drop li.sub:before {
     padding: 0.5em 0.5em;
 }
 /*nav.menu ul > li.sub li.sub {
-        background: url(/images/ic_keyboard_arrow_right_white_18dp.png) right center no-repeat;
+        background: url(/img/ic_keyboard_arrow_right_white_18dp.png) right center no-repeat;
 }*/
 
 .box {

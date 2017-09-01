@@ -2,35 +2,32 @@
 <html>
 <head>
    <link href="../css/default.css" rel="stylesheet">
-   <link rel="stylesheet" href="../css/hopscotch.min.css"></link>
-
-   <script src="../scripts/vendor/hopscotch.min.js"></script>
-   <script src="../scripts/wings3d_tours.js"></script>  
    
-   <script src="../scripts/FileSaver.min.js"></script>
-   <script src="../scripts/gl-matrix-min.js"></script>
-   <script src="../scripts/wings3d.js"></script>
-   <script src="../scripts/wings3d_hotkey.js"></script>
-   <script src="../scripts/wings3d_gl.js"></script>
-   <script src="../scripts/wings3d_shaderprog.js"></script>
-   <script src="../scripts/wings3d_menu.js"></script>
-   <script src="../scripts/wings3d_buttonbar.js"></script>
-   <script src="../scripts/wings3d_undo.js"></script>
-   <script src="../scripts/wings3d_camera.js"></script>
-   <script src="../scripts/wings3d_render.js"></script>
-   <script src="../scripts/wings3d_mads.js"></script>
-   <script src="../scripts/wings3d_edgemads.js"></script>
-   <script src="../scripts/wings3d_facemads.js"></script>
-   <script src="../scripts/wings3d_vertexmads.js"></script>
-   <script src="../scripts/wings3d_bodymads.js"></script>
-   <script src="../scripts/wings3d_view.js"></script>
-   <script src="../scripts/wings3d_wingededge.js"></script>
-   <script src="../scripts/wings3d_boundingvolume.js"></script>
-   <script src="../scripts/wings3d_similar.js"></script>
-   <script src="../scripts/wings3d_model.js"></script>
-   <script src="../scripts/plugins/cubeshape.js"></script>
-   <script src="../scripts/wings3d_importexport.js"></script>
-   <script src="../scripts/plugins/wavefront_obj.js"></script>
+
+   <script src="../js/FileSaver.min.js"></script>
+   <script src="../js/gl-matrix-min.js"></script>
+   <script src="../js/wings3d.js"></script>
+   <script src="../js/wings3d_hotkey.js"></script>
+   <script src="../js/wings3d_gl.js"></script>
+   <script src="../js/wings3d_shaderprog.js"></script>
+   <script src="../js/wings3d_menu.js"></script>
+   <script src="../js/wings3d_buttonbar.js"></script>
+   <script src="../js/wings3d_undo.js"></script>
+   <script src="../js/wings3d_camera.js"></script>
+   <script src="../js/wings3d_render.js"></script>
+   <script src="../js/wings3d_mads.js"></script>
+   <script src="../js/wings3d_edgemads.js"></script>
+   <script src="../js/wings3d_facemads.js"></script>
+   <script src="../js/wings3d_vertexmads.js"></script>
+   <script src="../js/wings3d_bodymads.js"></script>
+   <script src="../js/wings3d_view.js"></script>
+   <script src="../js/wings3d_wingededge.js"></script>
+   <script src="../js/wings3d_boundingvolume.js"></script>
+   <script src="../js/wings3d_similar.js"></script>
+   <script src="../js/wings3d_model.js"></script>
+   <script src="../js/plugins/cubeshape.js"></script>
+   <script src="../js/wings3d_importexport.js"></script>
+   <script src="../js/plugins/wavefront_obj.js"></script>
 
   <script>
     function help(text) {
@@ -114,59 +111,59 @@
   <div class="button-bar" id="toolbar">
     <div class="button-group system-group">
       <button class="button">
-        <img src="../images/bluecube/open.png" >
+        <img src="../img/bluecube/open.png" >
         <label>Open</label>
       </button>
       <button class="button">
-        <img src="../images/bluecube/save.png" >
+        <img src="../img/bluecube/save.png" >
         <label>Save</label>
       </button>
       <button class="button" wings3d-api="undoEdit">
-        <img src="../images/bluecube/undo.png" >
+        <img src="../img/bluecube/undo.png" >
         <label>Undo</label>
       </button>
       <button class="button" wings3d-api="redoEdit">
-        <img src="../images/bluecube/redo.png" >
+        <img src="../img/bluecube/redo.png" >
         <label>Redo</label>
       </button>
     </div>
     <div class="button-group object-select">
       <button class="button" wings3d-api="toggleVertexMode" onmouseover="help('Change to vertex selection mode')">
-        <img src="../images/bluecube/vertex.png" >
+        <img src="../img/bluecube/vertex.png" >
         <label >Vertex</label>
       </button>
       <button class="button" wings3d-api="toggleEdgeMode">
-        <img src="../images/bluecube/edge.png" >
+        <img src="../img/bluecube/edge.png" >
         <label>Edge</label>
       </button>
       <button class="button" wings3d-api="toggleFaceMode">
-        <img src="../images/bluecube/face.png" >
+        <img src="../img/bluecube/face.png" >
         <label>Face</label>
       </button>
       <button class="button" wings3d-api="toggleBodyMode">
-        <img src="../images/bluecube/body.png" >
+        <img src="../img/bluecube/body.png" >
         <label>Body</label>
       </button>
     </div>
     <div class="button-group set-pref">
       <button class="button">
-        <img src="../images/bluecube/pref.png" >
+        <img src="../img/bluecube/pref.png" >
         <label>Pref</label>
       </button>
       <button class="button">
-        <img src="../images/bluecube/smooth.png" >
+        <img src="../img/bluecube/smooth.png" >
         <label>Smooth</label>
       </button>
       <button class="button">
-        <img src="../images/bluecube/perspective.png" >
+        <img src="../img/bluecube/perspective.png" >
         <label>Persp</label>
       </button>
       <button class="button">
-        <img src="../images/bluecube/groundplane.png" >
+        <img src="../img/bluecube/groundplane.png" >
         <label>Ground</label>
       </button>
       <button class="button">
-        <img src="../images/bluecube/axes.png" >
+        <img src="../img/bluecube/axes.png" >
         <label>Axes</label>
       </button>
     </div>
