@@ -1,0 +1,27 @@
+.dialog {
+  background-color:  #fff;
+  border: solid 1px #dfdfdf;
+  box-shadow: 1px 1px 2px #cfcfcf;
+  width: 340px;
+}
+
+.dialog input[type=number] {
+   width: 60px;
+}
+
+.dialog span {
+    display: inline-block;
+}
+
+/* all form dialog start in hiding */
+form {
+  display: none;
+  position: absolute;
+}
+
+#cutLineDialog {
+  background-color:  #fff;
+  border: solid 1px #dfdfdf;
+  box-shadow: 1px 1px 2px #cfcfcf;
+  width: 240px;
+}

@@ -92,6 +92,8 @@ var Wings3D = (function () {
 
 //    open_file(File),
 */
+//      my.tutor = createGuideTutor();
+//      my.tutor.introduction();
 
       requestAnimationFrame(my.render);
 
