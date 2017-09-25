@@ -113,64 +113,77 @@
       </li>
     </ul>
   </nav>
-  <div class="button-bar" id="toolbar">
+  <div class="button-bar unselectable" id="toolbar">
     <div class="button-group system-group">
-      <button class="button">
+      <input type="button" id="openCloudButton">
+      <label for="openFileButton" class="button not-implemented">
         <img src="../img/bluecube/open.png" >
-        <label>Open</label>
-      </button>
-      <button class="button">
+        <span>Open</span>
+      </label>
+      <input type="button" id="saveCloudButton">
+      <label for="saveCloudButton" class="button not-implemented">
         <img src="../img/bluecube/save.png" >
-        <label>Save</label>
-      </button>
-      <button class="button" wings3d-api="undoEdit">
+        <span>Save</span>
+      </label>
+      <input type="button" id="undoEdit">
+      <label for="undoEdit" class="button" wings3d-api="undoEdit">
         <img src="../img/bluecube/undo.png" >
-        <label>Undo</label>
-      </button>
-      <button class="button" wings3d-api="redoEdit">
+        <span>Undo</span>
+      </label>
+      <input type="button" id="redoEdit">
+      <label for="redoEdit" class="button" wings3d-api="redoEdit">
         <img src="../img/bluecube/redo.png" >
-        <label>Redo</label>
-      </button>
+        <span>Redo</span>
+      </label>
     </div>
     <div class="button-group object-select">
-      <button class="button" wings3d-api="toggleVertexMode" onmouseover="help('Change to vertex selection mode')">
+      <input type="radio" name="toggleMode" id="toggleVertexMode">
+      <label for="toggleVertexMode" class="button" wings3d-api="toggleVertexMode" onmouseover="help('Change to vertex selection mode')">
         <img src="../img/bluecube/vertex.png" >
-        <label >Vertex</label>
-      </button>
-      <button class="button" wings3d-api="toggleEdgeMode">
+        <span >Vertex</span>
+      </label>
+      <input type="radio" name="toggleMode" id="toggleEdgeMode">
+      <label for="toggleEdgeMode" class="button" wings3d-api="toggleEdgeMode">
         <img src="../img/bluecube/edge.png" >
-        <label>Edge</label>
-      </button>
-      <button class="button" wings3d-api="toggleFaceMode">
+        <span>Edge</span>
+      </label>
+      <input type="radio" name="toggleMode" id="toggleFaceMode" checked>
+      <label for="toggleFaceMode" class="button" wings3d-api="toggleFaceMode">
         <img src="../img/bluecube/face.png" >
-        <label>Face</label>
-      </button>
-      <button class="button" wings3d-api="toggleBodyMode">
+        <span>Face</span>
+      </label>
+      <input type="radio" name="toggleMode" id="toggleBodyMode">
+      <label for="toggleBodyMode" class="button" wings3d-api="toggleBodyMode">
         <img src="../img/bluecube/body.png" >
-        <label>Body</label>
-      </button>
+        <span>Body</span>
+      </label>
     </div>
     <div class="button-group set-pref">
-      <button class="button">
+      <input type="button" id="preferenceDialog">
+      <label for="preferencedDialog" class="button not-implemented">
         <img src="../img/bluecube/pref.png" >
-        <label>Pref</label>
-      </button>
-      <button class="button">
+        <span>Pref</span>
+      </label>
+      <input type="checkbox" id="toggleSmooth">
+      <label for="toggleSmooth" class="button not-implemented">
         <img src="../img/bluecube/smooth.png" >
-        <label>Smooth</label>
-      </button>
-      <button class="button">
+        <span>Smooth</span>
+      </label>
+      <input type="checkbox" id="togglePerspective">
+      <label for="togglePerspective" class="button not-implemented">
         <img src="../img/bluecube/perspective.png" >
-        <label>Persp</label>
-      </button>
-      <button class="button">
+        <span>Persp</span>
+      </label>
+      <input type="checkbox" id="toggleGround">
+      <label for="toggleGround" class="button not-implemented">
         <img src="../img/bluecube/groundplane.png" >
-        <label>Ground</label>
-      </button>
-      <button class="button">
+        <span>Ground</span>
+      </label>
+      <input type="checkbox" id="toggleAxes">
+      <label for="toggleAxes" class="button not-implemented">
         <img src="../img/bluecube/axes.png" >
-        <label>Axes</label>
-      </button>
+        <span>Axes</span>
+      </label>
     </div>
     </div>
   </header>
