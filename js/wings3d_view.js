@@ -40,11 +40,18 @@ function createView(gl) {
       }, select.hotKey, select.meta);
    }
 
+   function toggleMode(mode) {
+      let button = document.getElementById('toggle'+mode+'Mode');
+      if (button) {
+         button.checked = true;
+      }
+   }
    _pvt.toggleVertexMode = function() {
       // change current mode to 
       if (_pvt.currentMode !== _pvt.vertexMode) {
          _pvt.currentMode.toggleFunc(_pvt.vertexMode);
          _pvt.currentMode = _pvt.vertexMode;
+         toggleMode('Vertex');
          my.renderWorld.needToRedraw();
       }
    };
@@ -53,6 +60,7 @@ function createView(gl) {
       if (_pvt.currentMode !== _pvt.faceMode) {
          _pvt.currentMode.toggleFunc(_pvt.faceMode);
          _pvt.currentMode = _pvt.faceMode;
+         toggleMode('Face');
          my.renderWorld.needToRedraw();
       }
    };
@@ -61,6 +69,7 @@ function createView(gl) {
       if (_pvt.currentMode !== _pvt.edgeMode) {
          _pvt.currentMode.toggleFunc(_pvt.edgeMode);
          _pvt.currentMode = _pvt.edgeMode;
+         toggleMode('Edge');
          my.renderWorld.needToRedraw();
       }
    };
@@ -69,6 +78,7 @@ function createView(gl) {
       if (_pvt.currentMode !== _pvt.bodyMode) {
          _pvt.currentMode.toggleFunc(_pvt.bodyMode);
          _pvt.currentMode = _pvt.bodyMode;
+         toggleMode('Body');
          my.renderWorld.needToRedraw();
       }
    };
@@ -77,6 +87,7 @@ function createView(gl) {
       if (_pvt.currentMode !== _pvt.vertexMode) {
          _pvt.currentMode.restoreMode(_pvt.vertexMode, snapshots);
          _pvt.currentMode = _pvt.vertexMode;
+         toggleMode('Vertex');
          my.renderWorld.needToRedraw();
       } else {
          // bad state. should always be in other mode. 
@@ -87,6 +98,7 @@ function createView(gl) {
       if (_pvt.currentMode !== _pvt.faceMode) {
          _pvt.currentMode.restoreMode(_pvt.faceMode, snapshots);
          _pvt.currentMode = _pvt.faceMode;
+         toggleMode('Face');
          my.renderWorld.needToRedraw();
       } else {
          // bad state. should always be in other mode. 
@@ -97,6 +109,7 @@ function createView(gl) {
       if (_pvt.currentMode !== _pvt.edgeMode) {
          _pvt.currentMode.restoreMode(_pvt.edgeMode, snapshots);
          _pvt.currentMode = _pvt.edgeMode;
+         toggleMode('Edge');
          my.renderWorld.needToRedraw();
       } else {
          // bad state. should always be in other mode. 
@@ -107,6 +120,7 @@ function createView(gl) {
       if (_pvt.currentMode !== _pvt.bodyMode) {
          _pvt.currentMode.restoreMode(_pvt.bodyMode, snapshots);
          _pvt.currentMode = _pvt.bodyMode;
+         toggleMode('Body');
          my.renderWorld.needToRedraw();
       } else {
          // bad state. should always be in other mode. 

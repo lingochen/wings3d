@@ -27,6 +27,14 @@ nav.menu > ul > li > a {
     padding: 0.5em 2em;
     text-decoration: none;
 }
+nav.menu > ul > li > input {
+    color: #aaa;
+    display: block;
+    line-height: 1em;
+    padding: 0.5em 2em;
+    text-decoration: none;
+}
+
 
 nav.menu li > ul{
     display : none;

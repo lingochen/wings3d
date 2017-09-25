@@ -56,3 +56,16 @@ footer:before {
 #helpbar {
   white-space: pre;
 }
+
+/* global class */
+.unselectable {
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+
+  -webkit-user-drag: none; /* Prevents dragging of images/divs etc */
+  user-drag: none;
+}
+.not-implemented { cursor: not-allowed; } /* for temporary disabled selection */
+
