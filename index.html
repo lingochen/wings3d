@@ -53,10 +53,10 @@
 <body class="box"onload="Wings3D.start('glcanvas')">
   <header class="row header">
   <nav class="menu">
-    <ul>
-      <li class="drop">
+    <ul class="menubar">
+      <li class="dropdown">
         <a>File</a>
-        <ul>
+        <ul class="popupmenu">
           <li><a onmouseover="help('Create a new, empty scene')" onmouseleave="help()">New</a></li>
           <li><a onmouseover="help('Open a previously saved scene')" onmouseleave="help()">Open...</a></li>
           <li><a onmouseover="help('Merge a previously saved scene into the current scene')" onmouseleave="help()">Merge...</a></li>
@@ -69,8 +69,8 @@
           <hr/>
           <li><a onmouseover="help('Revert current scene to the saved contents')" onmouseleave="help()">Revert</a></li>
           <hr/>
-          <li class="sub"><a>Import</a><ul id="fileImport"> </ul></li>
-          <li class="sub"><a>Export</a><ul id="fileExport"> </ul></li>
+          <li class="dropside"><a>Import</a><ul id="fileImport" class="popupmenu"> </ul></li>
+          <li class="dropside"><a>Export</a><ul id="fileExport" class="popupmenu"> </ul></li>
           <li><a>Export Selected</a></li>
           <hr/>
           <li><a onmouseover="help('Import an image file')" onmouseleave="help()">Import Image...</a></li>
@@ -90,9 +90,9 @@
       <li>
         <a>Edit</a>
       </li>
-      <li class="drop">
+      <li class="dropdown">
         <a>Select</a>
-        <ul>
+        <ul class="popupmenu">
           <li><a onmouseover="help('Deselect selection')" onmouseleave="help()" id="deselect">Deselect space</a></li>
           <li><a onmouseover="help('More selection')" onmouseleave="help()" id="more">More +</a></li>
           <li><a onmouseover="help('Less selection')" onmouseleave="help()" id="less">Less -</a></li>
@@ -195,117 +195,111 @@
   </canvas>
   </div>
   <footer id="helpbar" class="row footer">This is help bar</footer>
-  <nav id="context-menu" class="context-menu">
-    <ul class="context-menu__items">
-      <li class="context-menu__item"><a class="context-menu__link" id="createCube">Cube</a></li>
+
+  <!-- Hidden context menu -->
+  <nav class="menu">
+    <ul id="context-menu" class="popupmenu">
+      <li><a id="createCube">Cube</a></li>
       <hr/>
-      <li class="context-menu__item"><a href="javascript:alert('not implemented')" class="context-menu__link" wings3d-api="Edit">Not Implemented Yet</a></li>
-      <li class="context-menu__item"><a href="#" class="context-menu__link" wings3d-api="Delete">Dummy Item</a></li>
+      <li><a href="javascript:alert('not implemented')" wings3d-api="Edit">Not Implemented Yet</a></li>
+      <li><a href="#" wings3d-api="Delete">Dummy Item</a></li>
     </ul>
-  </nav>
-  <nav id="edge-context-menu" class="context-menu">
-    <ul class="context-menu__items">
-      <li class="context-menu__item context-menu__submenu">
-	<a class="context-menu__link">Move</a>
-        <ul class="context-menu__items">
-          <li class="context-menu__item"><a class="context-menu__link" id="edgeMoveNormal">Normal</a></li>
-          <li class="context-menu__item"><a class="context-menu__link" id="edgeMoveFree">Free</a></li>
-          <li class="context-menu__item"><a class="context-menu__link" id="edgeMoveX">X</a></li>
-          <li class="context-menu__item"><a class="context-menu__link" id="edgeMoveY">Y</a></li>
-          <li class="context-menu__item"><a class="context-menu__link" id="edgeMoveZ">Z</a></li>
+    <ul id="edge-context-menu" class="popupmenu">
+      <li class="dropside">
+	<a>Move</a>
+        <ul class="popupmenu">
+          <li><a id="edgeMoveNormal">Normal</a></li>
+          <li><a id="edgeMoveFree">Free</a></li>
+          <li><a id="edgeMoveX">X</a></li>
+          <li><a id="edgeMoveY">Y</a></li>
+          <li><a id="edgeMoveZ">Z</a></li>
         </ul>
       </li>
       <hr />
-      <li class="context-menu__item context-menu__submenu">
-        <a class="context-menu__link">Cut</a>
-        <ul class="context-menu__items">
-          <li class="context-menu__item"><a class="context-menu__link" id="cutLine2">2 Segments</a></li>
-          <li class="context-menu__item"><a class="context-menu__link" id="cutLine3">3 Segments</a></li>
-          <li class="context-menu__item"><a class="context-menu__link" id="cutLine4">4 Segments</a></li>
-          <li class="context-menu__item"><a class="context-menu__link" id="cutLine5">5 Segments</a></li>
+      <li class="dropside">
+        <a>Cut</a>
+        <ul class="popupmenu">
+          <li><a id="cutLine2">2 Segments</a></li>
+          <li><a id="cutLine3">3 Segments</a></li>
+          <li><a id="cutLine4">4 Segments</a></li>
+          <li><a id="cutLine5">5 Segments</a></li>
           <hr>
-          <li class="context-menu__item"><a class="context-menu__link" id="cutLine10">10 Segments</a></li>
+          <li><a id="cutLine10">10 Segments</a></li>
 	  <hr>
-          <li class="context-menu__item"><a class="context-menu__link" id="cutAsk">Enter Number...</a></li>
+          <li><a id="cutAsk">Enter Number...</a></li>
 	  <hr>
-          <li class="context-menu__item"><a class="context-menu__link" id="cutArbitrary">Cut at arbitrary position</a></li>
+          <li><a id="cutArbitrary">Cut at arbitrary position</a></li>
         </ul>
       </li>
-      <li class="context-menu_item"><a class="context-menu__link" id="cutAndConnect">Connect</a></li>
+      <li><a id="cutAndConnect">Connect</a></li>
       <hr>
-      <li class="context-menu__item"><a class="context-menu__link" id="edgeDissolve">Dissolve Bksp</a></li>
-      <li class="context-menu__item"><a class="context-menu__link" id="edgeCollapse">Collapse</a></li>
+      <li><a id="edgeDissolve">Dissolve Bksp</a></li>
+      <li><a id="edgeCollapse">Collapse</a></li>
     </ul>
-  </nav>
-  <nav id="face-context-menu" class="context-menu">
-    <ul class="context-menu__items">
-      <li class="context-menu__item  context-menu__submenu">
-        <a class="context-menu__link" id="faceExtrude">Extrude</a>
-        <ul class="context-menu__items">
-          <li class="context-menu__item"><a class="context-menu__link" id="faceExtrudeNormal">Normal</a></li>
-          <li class="context-menu__item"><a class="context-menu__link" id="faceExtrudeFree">Free</a></li>
-          <li class="context-menu__item"><a class="context-menu__link" id="faceExtrudeX">X</a></li>
-          <li class="context-menu__item"><a class="context-menu__link" id="faceExtrudeY">Y</a></li>
-          <li class="context-menu__item"><a class="context-menu__link" id="faceExtrudeZ">Z</a></li>
+    <ul id="face-context-menu" class="context-menu popupmenu">
+      <li class="dropside">
+        <a id="faceExtrude">Extrude</a>
+        <ul class="popupmenu">
+          <li><a id="faceExtrudeNormal">Normal</a></li>
+          <li><a id="faceExtrudeFree">Free</a></li>
+          <li><a id="faceExtrudeX">X</a></li>
+          <li><a id="faceExtrudeY">Y</a></li>
+          <li><a id="faceExtrudeZ">Z</a></li>
         </ul>
       </li>
       <hr />
-      <li class="context-menu__item context-menu__submenu">
-	<a class="context-menu__link">Move</a>
-        <ul class="context-menu__items">
-          <li class="context-menu__item"><a class="context-menu__link" id="faceMoveNormal">Normal</a></li>
-          <li class="context-menu__item"><a class="context-menu__link" id="faceMoveFree">Free</a></li>
-          <li class="context-menu__item"><a class="context-menu__link" id="faceMoveX">X</a></li>
-          <li class="context-menu__item"><a class="context-menu__link" id="faceMoveY">Y</a></li>
-          <li class="context-menu__item"><a class="context-menu__link" id="faceMoveZ">Z</a></li>
+      <li class="dropside">
+	<a>Move</a>
+        <ul class="popupmenu">
+          <li><a id="faceMoveNormal">Normal</a></li>
+          <li><a id="faceMoveFree">Free</a></li>
+          <li><a id="faceMoveX">X</a></li>
+          <li><a id="faceMoveY">Y</a></li>
+          <li><a id="faceMoveZ">Z</a></li>
         </ul>
       </li>
       <hr />
-      <li class="context-menu__item"><a class="context-menu__link" id="faceDissolve">Dissolve Bksp</a></li>
-      <li class="context-menu__item"><a class="context-menu__link" id="faceCollapse">Collapse</a></li>
+      <li><a id="faceDissolve">Dissolve Bksp</a></li>
+      <li><a id="faceCollapse">Collapse</a></li>
     </ul>
-  </nav>
-  <nav id="vertex-context-menu" class="context-menu">
-    <ul class="context-menu__items">
-      <li class="context-menu__item"><a class="context-menu__link" id="vertexConnect">Connect</a></li>
-      <li class="context-menu__item"><a class="context-menu__link" id="vertexDissolve">Dissolve   Delete</a></li>
-      <li class="context-menu__item"><a class="context-menu__link" id="vertexCollapse">Collapse   Bksp</a></li>
+    <ul id="vertex-context-menu" class="popupmenu">
+      <li><a id="vertexConnect">Connect</a></li>
+      <li><a id="vertexDissolve">Dissolve   Delete</a></li>
+      <li><a id="vertexCollapse">Collapse   Bksp</a></li>
       <hr>
-      <li class="context-menu__item context-menu__submenu">
-	<a class="context-menu__link">Move</a>
-        <ul class="context-menu__items">
-          <li class="context-menu__item"><a class="context-menu__link" id="vertexMoveNormal">Normal</a></li>
-          <li class="context-menu__item"><a class="context-menu__link" id="vertexMoveFree">Free</a></li>
-          <li class="context-menu__item"><a class="context-menu__link" id="vertexMoveX">X</a></li>
-          <li class="context-menu__item"><a class="context-menu__link" id="vertexMoveY">Y</a></li>
-          <li class="context-menu__item"><a class="context-menu__link" id="vertexMoveZ">Z</a></li>
+      <li class="dropside">
+	<a>Move</a>
+        <ul class="popupmenu">
+          <li><a id="vertexMoveNormal">Normal</a></li>
+          <li><a id="vertexMoveFree">Free</a></li>
+          <li><a id="vertexMoveX">X</a></li>
+          <li><a id="vertexMoveY">Y</a></li>
+          <li><a id="vertexMoveZ">Z</a></li>
         </ul>
       </li>
     </ul>
-  </nav>
-  <nav id="body-context-menu" class="context-menu">
-    <ul class="context-menu__items">
-      <li class="context-menu__item context-menu__submenu">
-	<a class="context-menu__link">Move</a>
-        <ul class="context-menu__items">
-          <li class="context-menu__item"><a class="context-menu__link" id="bodyMoveFree">Free</a></li>
-          <li class="context-menu__item"><a class="context-menu__link" id="bodyMoveX">X</a></li>
-          <li class="context-menu__item"><a class="context-menu__link" id="bodyMoveY">Y</a></li>
-          <li class="context-menu__item"><a class="context-menu__link" id="bodyMoveZ">Z</a></li>
+    <ul id="body-context-menu" class="popupmenu">
+      <li class="dropside">
+	<a>Move</a>
+        <ul class="popupmenu">
+          <li><a id="bodyMoveFree">Free</a></li>
+          <li><a id="bodyMoveX">X</a></li>
+          <li><a id="bodyMoveY">Y</a></li>
+          <li><a id="bodyMoveZ">Z</a></li>
         </ul>
       </li>
       <hr>
-      <li class="context-menu__item context-menu__submenu">
-        <a class="context-menu__link">Duplicate</a>
-        <ul class="context-menu__items">
-          <li class="context-menu__item"><a class="context-menu__link" id="bodyDuplicateMoveFree">Free</a></li>
-          <li class="context-menu__item"><a class="context-menu__link" id="bodyDuplicateMoveX">X</a></li>
-          <li class="context-menu__item"><a class="context-menu__link" id="bodyDuplicateMoveY">Y</a></li>
-          <li class="context-menu__item"><a class="context-menu__link" id="bodyDuplicateMoveZ">Z</a></li>
+      <li class="dropside">
+        <a>Duplicate</a>
+        <ul class="popupmenu">
+          <li><a id="bodyDuplicateMoveFree">Free</a></li>
+          <li><a id="bodyDuplicateMoveX">X</a></li>
+          <li><a id="bodyDuplicateMoveY">Y</a></li>
+          <li><a id="bodyDuplicateMoveZ">Z</a></li>
         </ul>
       </li>
-      <li class="context-menu__item"><a class="context-menu__link" id="bodyDelete">Delete          Bksp</a></li>
-      <li class="context-menu__item"><a class="context-menu__link" id="bodyRename">Rename</a></li>
+      <li><a id="bodyDelete">Delete          Bksp</a></li>
+      <li><a id="bodyRename">Rename</a></li>
       <hr>
     </ul>
   </nav>
