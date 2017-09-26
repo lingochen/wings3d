@@ -16,6 +16,7 @@
 /* all form dialog start in hiding */
 form {
   display: none;
+  flex-direction: column;
   position: absolute;
 }
 

@@ -32,6 +32,13 @@ class ImportExporter {
          a.addEventListener('click', function(ev) {
             ev.preventDefault();
             fileInput.click();      // open file Dialog
+            let target = ev.target;
+            while ( target = target.parentNode ) {
+               if ( target.classList && target.classList.contains("hover") ) {
+                 target.classList.remove("hover");
+                 break;
+               }
+            }
          });
          fileInput.addEventListener('change', function(ev) {
             let fileList = this.files;    // = ev.target.files;
@@ -56,6 +63,13 @@ class ImportExporter {
 
          if (form) {
             menuItem.addEventListener('click', function(ev){
+               let target = ev.target;
+               while ( target = target.parentNode ) {
+                  if ( target.classList && target.classList.contains("hover") ) {
+                    target.classList.remove("hover");
+                    break;
+                  }
+               }
                // popup dialog.
                // position then show form;
                Wings3D.contextmenu.positionDom(form, Wings3D.contextmenu.getPosition(ev));

@@ -1,5 +1,5 @@
 /*
-interactive Tutor's speech bubble css. copy hopscotch js's style. we needs fairly recent browser to support webgl, can we can assumed fairly advance css3 support.
+interactive Tutor's speech bubble css. copy hopscotch js's style. we needs fairly recent browser to support webgl, we can assumed fairly advance css3 support.
 */
 
 div.tour-bubble .tour-nav-button {
@@ -102,7 +102,7 @@ div.tour-bubble .close.hide,
 div.tour-bubble .close.hide-all {
   display: none;
 }
-div.hopscotch-bubble .hopscotch-bubble-arrow-container {
+div.tour-bubble .hopscotch-bubble-arrow-container {
   position: absolute;
   width: 34px;
   height: 34px;
