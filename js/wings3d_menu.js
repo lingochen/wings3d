@@ -149,7 +149,8 @@ function createMenuHandler(view, contextClassName) {
   function toggleMenuOn() {
     if ( _pvt.menuState !== 1 ) {
       _pvt.menuState = 1;
-      _pvt.contextMenu.menu.classList.add( contextMenuActive );
+      //_pvt.contextMenu.menu.classList.add( contextMenuActive );
+      _pvt.contextMenu.menu.style.display = "block";
     }
   }
 
@@ -159,7 +160,8 @@ function createMenuHandler(view, contextClassName) {
   function toggleMenuOff() {
     if ( _pvt.menuState !== 0 ) {
       _pvt.menuState = 0;
-      _pvt.contextMenu.menu.classList.remove( contextMenuActive );
+      //_pvt.contextMenu.menu.classList.remove( contextMenuActive );
+      _pvt.contextMenu.menu.style.display = "none";
     }
   }
 
