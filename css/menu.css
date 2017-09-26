@@ -61,7 +61,7 @@ ul.popupmenu > li > a {
 }
 
 /* popup shown */
-li.dropdown:hover > ul.popupmenu {
+li.dropdown.hover > ul.popupmenu {
    position:absolute;
    display : block;
 }

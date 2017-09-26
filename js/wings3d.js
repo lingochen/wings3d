@@ -25,7 +25,17 @@ var Wings3D = (function () {
    my.bindMenuItem = function(id, fn, hotkey, meta) {
       const menuItem = document.querySelector(id);
       if (menuItem) {
-         menuItem.addEventListener('click', fn);
+         menuItem.addEventListener('click', function(ev) {
+            let target = ev.target;
+            while ( target = target.parentNode ) {
+               if ( target.classList && target.classList.contains("hover") ) {
+                 target.classList.remove("hover");
+                 break;
+               }
+             }
+             // now run functions
+             fn(ev);
+         });
       }
       Wings3D.bindHotkey(id, fn);
       if (hotkey !== undefined) {
@@ -82,6 +92,7 @@ var Wings3D = (function () {
       my.contextmenu.setup();
       my.buttonbar = createButtonBarHandler();
       my.buttonbar.setup();
+      createUi(my);
  /*   wings_u:caption(St),
     wings_file:init_autosave(),
     wings_pb:start_link(Frame),
