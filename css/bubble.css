@@ -107,8 +107,8 @@ div.tour-bubble .hopscotch-bubble-arrow-container {
   width: 34px;
   height: 34px;
 }
-div.hopscotch-bubble .hopscotch-bubble-arrow-container .hopscotch-bubble-arrow,
-div.hopscotch-bubble .hopscotch-bubble-arrow-container .hopscotch-bubble-arrow-border {
+div.tour-bubble .hopscotch-bubble-arrow-container .hopscotch-bubble-arrow,
+div.tour-bubble .hopscotch-bubble-arrow-container .hopscotch-bubble-arrow-border {
   width: 0;
   height: 0;
 }
