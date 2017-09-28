@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html>
 <head>
-   <link rel="stylesheet" href="../css/default.css" rel="stylesheet">
+   <link rel="stylesheet" href="../css/default.css" />
    <link rel="stylesheet" href="../css/menu.css" />
    <link rel="stylesheet" href="../css/button.css" />
    <link rel="stylesheet" href="../css/form.css" />
-   
+   <link rel="stylesheet" href="../css/bubble.css" />
 
    <script src="../js/vendor/FileSaver.min.js"></script>
    <script src="../js/vendor/gl-matrix-min.js"></script>
@@ -51,7 +51,7 @@
     }
   </script> 
 </head>
-<body class="box"onload="Wings3D.start('glcanvas')">
+<body class="box" onload="Wings3D.start('glcanvas')">
   <header class="row header">
   <nav class="menu">
     <ul id="menubar" class="menubar">
@@ -109,8 +109,11 @@
       <li>
         <a>Window</a>
       </li>
-      <li>
+      <li class="dropdown">
         <a>Help</a>
+        <ul class="popupmenu">
+          <li><a onmouseover="help('Start the introduction Tour')" onmouseleave="help()" id="introduction">Introduction</a></li>
+        </ul>
       </li>
     </ul>
   </nav>
@@ -202,7 +205,7 @@
     <ul id="context-menu" class="popupmenu">
       <li><a id="createCube">Cube</a></li>
       <hr/>
-      <li class="not-implemented"><a id="createPlane"">Various Planes</a></li>
+      <li class="not-implemented"><a id="createPlane">Various Planes</a></li>
       <li class="not-implemented"><a id="createGrid">Grid</a></li>
     </ul>
     <ul id="edge-context-menu" class="popupmenu">
@@ -229,7 +232,7 @@
 	  <hr>
           <li><a id="cutAsk">Enter Number...</a></li>
 	  <hr>
-          <li><a id="cutArbitrary">Cut at arbitrary position</a></li>
+          <li class="not-implemented"><a id="cutArbitrary">Cut at arbitrary position</a></li>
         </ul>
       </li>
       <li><a id="cutAndConnect">Connect</a></li>
@@ -307,7 +310,7 @@
   <!-- Start of various Dialog -->
   <form id="cutLineDialog" class="dialog">
      <label>Segments</label>
-     <input type="text" name="Segments" value="2"></input>
+     <input type="text" name="Segments" value="2">
      <button type="submit" value="Cancel">Cancel</button>
      <button type="submit" value="Ok">Ok</button>
   </form>
@@ -324,5 +327,13 @@
        <button type="submit" value="Cancel">Cancel</button>
        <button type="submit" value="Ok">Ok</button>
   </form>
+  <div id="tutorGuide" class="tutor-bubble hide left">
+    <span class="tutor-arrow"></span>
+    <div class="tutor-container">
+      <span class="close">&times;</span>
+      <div class="tutor-content" style="width: 400px;"></div>
+      <div class="tutor-actions"></div>
+    </div>
+  </div>
 </body>
 </html>
