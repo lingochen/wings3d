@@ -103,13 +103,12 @@ var Wings3D = (function () {
 
 //    open_file(File),
 */
-//      my.tutor = createGuideTutor();
-//      my.tutor.introduction();
-
       requestAnimationFrame(my.render);
 
       // prompt for quitting
       window.addEventListener("beforeunload", _pvt.confirmation);
+
+      startIntroduction(my.ui.tutor);
    };
 
    _pvt.confirmation = function(ev) {
