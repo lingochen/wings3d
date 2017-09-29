@@ -85,7 +85,6 @@ function createUi(Wings3D) {
                _this.popUp.bubble.classList.add(Wings3D.ui.getArrow(step.placement));
                // now place it
                const placement = Wings3D.ui.placement(step.target, step.placement, _this.popUp.bubble);
-               _this.popUp.bubble.classList.add(placement.arrow);
                _this.popUp.bubble.style.top = placement.top.toString() + "px";
                _this.popUp.bubble.style.left = placement.left.toString() + "px"; 
                step.interact();
@@ -137,6 +136,7 @@ function createUi(Wings3D) {
       } else if (placement === "right") {
          return "left";
       }
+      return "";
    };
 
    // placement.

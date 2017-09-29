@@ -55,9 +55,9 @@ div.tutor-bubble .tour-nav-button.prev:hover {
 }
 div.tutor-bubble {
   position: absolute;
-  width: 350px;
+  width: auto;
   max-width: 350px;
-  display: flex;
+  display: inline-flex;
   flex-wrap: nowrap;
   flex-direction: row;
   align-items: center;
@@ -65,6 +65,8 @@ div.tutor-bubble {
 div.tutor-bubble .tutor-container {
   border: 5px solid rgba(0, 0, 0, 0.5);
   border-radius: 10px;
+  width: 100%;
+  min-width: 200px;
   padding: 10px;
   color: #333;
   background-color: #ffffff;
@@ -73,7 +75,7 @@ div.tutor-bubble .tutor-container {
   background-clip: padding-box;
 }
 div.tutor-bubble * {
-  box-sizing: content-box;
+  box-sizing: border-box;
 }
 div.tutor-bubble.invisible {
   opacity: 0;
