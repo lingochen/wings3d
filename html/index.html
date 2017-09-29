@@ -113,6 +113,8 @@
         <a>Help</a>
         <ul class="popupmenu">
           <li><a onmouseover="help('Start the introduction Tour')" onmouseleave="help()" id="introduction">Introduction</a></li>
+          <hr />
+          <li class="not-implemented"><a id="about">About</a></li>
         </ul>
       </li>
     </ul>
@@ -327,12 +329,15 @@
        <button type="submit" value="Cancel">Cancel</button>
        <button type="submit" value="Ok">Ok</button>
   </form>
-  <div id="tutorGuide" class="tutor-bubble hide left">
+  <div id="tutorGuide" class="tutor-bubble left hide">
     <span class="tutor-arrow"></span>
     <div class="tutor-container">
       <span class="close">&times;</span>
-      <div class="tutor-content" style="width: 400px;"></div>
-      <div class="tutor-actions"></div>
+      <h3 class="tutor-title"></h3>
+      <div class="tutor-content"></div>
+      <div class="tutor-actions">
+          <button class="tour-nav-button next">Next</button>
+      </div>
     </div>
   </div>
 </body>

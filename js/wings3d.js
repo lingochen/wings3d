@@ -93,6 +93,7 @@ var Wings3D = (function () {
       my.buttonbar = createButtonBarHandler();
       my.buttonbar.setup();
       createUi(my);
+      createGuideTour(my.ui.tutor);
  /*   wings_u:caption(St),
     wings_file:init_autosave(),
     wings_pb:start_link(Frame),
@@ -108,7 +109,7 @@ var Wings3D = (function () {
       // prompt for quitting
       window.addEventListener("beforeunload", _pvt.confirmation);
 
-      startIntroduction(my.ui.tutor);
+      my.ui.tutor.tours.introduction();
    };
 
    _pvt.confirmation = function(ev) {
