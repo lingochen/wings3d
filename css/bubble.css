@@ -102,6 +102,9 @@ div.tutor-bubble .tutor-content {
   margin: 0 0 11px 5px;
   padding-top: 8px;
 }
+div.tutor-bubble .tutor-content em {
+  color: red;
+}
 div.tutor-bubble .close.hide,
 div.tutor-bubble .close.hide-all {
   display: none;

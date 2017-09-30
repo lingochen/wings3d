@@ -129,7 +129,11 @@ function createUi(Wings3D) {
    Wings3D.ui.getArrow = function(placement) {
       if (placement === "bottom") {
          return "top";
+      } else if (placement === "bottom-start") {
+         return "top";
       } else if (placement === "top") {
+         return "bottom";
+      } else if (placement === "top-start") {
          return "bottom";
       } else if (placement === "left") {
          return "right";
@@ -141,33 +145,40 @@ function createUi(Wings3D) {
 
    // placement.
    Wings3D.ui.placement = function(targetId, placement, bubble) {
-      let target = document.getElementById(targetId);
-      if (!target) {
-         target = document.body;
-      }
-
       // get the size of bubble.
       const bubbleRect = bubble.getBoundingClientRect();
-      bubbleRect.top -= window.scrollY;
-      bubbleRect.left -= window.scrollX;
 
-      // get the location and size of target
-      const targetRect = target.getBoundingClientRect();
-      targetRect.top -= window.scrollY;
-      targetRect.left -= window.scrollX;
+      let target = document.getElementById(targetId);
+      let targetRect;
+      if (!target) { // no target, then point at the workarea's center
+         target = document.getElementById("glcanvas");
+         const rect = target.getBoundingClientRect();
+         targetRect = {left: Math.round(rect.left+rect.width/2), 
+                       top: Math.round(rect.top+rect.height/2), 
+                       width: 1, height: 1};
+      } else {
+         // get the location and size of target
+         targetRect = target.getBoundingClientRect();
+      }
 
+      let x=targetRect.left - window.scrollX, y=targetRect.top - window.scrollY;
       // now compute the target position.
       if (placement === "bottom") {
-         let x = Math.round((targetRect.width / 2) - (bubbleRect.width /2));
-         x += targetRect.left;
-         let y = targetRect.height;
-         y += targetRect.top;
+         x += Math.round((targetRect.width / 2) - (bubbleRect.width /2));
+         y += targetRect.height;
          return { top: y, left: x };
+      } else if (placement ==="bottom-start") {
+         x += Math.round((targetRect.width / 8) - (bubbleRect.width /2));
+         y += targetRect.height;
+         return { top: y, left: x};
       } else if (placement === "top") {
-         let x = Math.round((targetRect.width / 2) - (bubbleRect.width /2));
-         x += targetRect.left;
-         let y = targetRect.top - bubbleRect.height;
+         x += Math.round((targetRect.width / 2) - (bubbleRect.width /2));
+         y -= bubbleRect.height;
          return { top: y, left: x };
+      } else if (placement === "top-start") {
+         x += Math.round((targetRect.width / 8) - (bubbleRect.width /2));
+         y -= bubbleRect.height;
+         return { top: y, left: x};
       }
    };
 

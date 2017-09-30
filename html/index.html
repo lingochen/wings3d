@@ -110,34 +110,48 @@
         <a>Window</a>
       </li>
       <li class="dropdown">
-        <a>Help</a>
+        <a id="helpMenu">Help</a>
         <ul class="popupmenu">
           <li><a onmouseover="help('Start the introduction Tour')" onmouseleave="help()" id="introduction">Introduction</a></li>
+          <li class="dropside"><a onmouseover="help('Learn how to use')" onmouseleave="help()" id="basic">Let practice..</a>
+            <ul class="popupmenu">
+              <li class="not-implemented"><a>Basic Modelling</a></li>
+              <li class="not-implemented"><a>Edge Rings</a></li>
+              <li class="not-implemented"><a>Virtual Mirror</a></li>
+              <li class="not-implemented"><a>Texturing</a></li>
+            </ul>
+          </li>
+          <li class="dropside"><a>I want to model...</a>
+            <ul class="popupmenu">
+              <li class="not-implemented"><a>a Table</a></li>
+              <li class="not-implemented"><a>a Car</a></li>
+            </ul>
+          </li>
           <hr />
-          <li class="not-implemented"><a id="about">About</a></li>
+          <li><a  onmouseover="help('About Wings3d4Web')" id="about">About</a></li>
         </ul>
       </li>
     </ul>
   </nav>
   <div class="button-bar unselectable" id="toolbar">
     <div class="button-group system-group">
-      <input type="button" id="openCloudButton">
-      <label for="openFileButton" class="button not-implemented">
+      <input type="button">
+      <label for="openFileButton" class="button not-implemented" id="openCloudButton">
         <img src="../img/bluecube/open.png" >
         <span>Open</span>
       </label>
-      <input type="button" id="saveCloudButton">
-      <label for="saveCloudButton" class="button not-implemented">
+      <input type="button">
+      <label for="saveCloudButton" class="button not-implemented" id="saveCloudButton">
         <img src="../img/bluecube/save.png" >
         <span>Save</span>
       </label>
-      <input type="button" id="undoEdit">
-      <label for="undoEdit" class="button" wings3d-api="undoEdit">
+      <input type="button">
+      <label for="undoEdit" class="button" wings3d-api="undoEdit" id="undoEdit">
         <img src="../img/bluecube/undo.png" >
         <span>Undo</span>
       </label>
-      <input type="button" id="redoEdit">
-      <label for="redoEdit" class="button" wings3d-api="redoEdit">
+      <input type="button">
+      <label for="redoEdit" class="button" wings3d-api="redoEdit" id="redoEdit">
         <img src="../img/bluecube/redo.png" >
         <span>Redo</span>
       </label>

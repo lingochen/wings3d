@@ -109,7 +109,7 @@ var Wings3D = (function () {
       // prompt for quitting
       window.addEventListener("beforeunload", _pvt.confirmation);
 
-      my.ui.tutor.tours.introduction();
+      my.ui.tutor.tours.about();
    };
 
    _pvt.confirmation = function(ev) {
