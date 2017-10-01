@@ -179,6 +179,10 @@ function createUi(Wings3D) {
          x += Math.round((targetRect.width / 8) - (bubbleRect.width /2));
          y -= bubbleRect.height;
          return { top: y, left: x};
+      } else if (placement === "right") {
+         x -= targetRect.width;
+         y += Math.round((targetRect.height/2) - (bubbleRect.height/2));
+         return {top: y, left: x};
       }
    };
 

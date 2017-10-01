@@ -55,9 +55,10 @@ function createGuideTour(tutor) {
       // show 
       tutor.startTour();
    };
-   tutor.tours.basicModelling = () => {
-      
-
+   tutor.tours.basicCommands = () => {
+      tutor.cancel();   // clear tours.
+      tutor.addStep("Welcome", "Camera", "Let click middle mouse button[M] anywhere in the Canvas to enter camera mode. After rotating around, Right mouse button click to cancel the movement, or Left mouse button to confirm the modification",       
+       "", "right");
       // show
       tutor.startTour();
    };
@@ -67,5 +68,7 @@ function createGuideTour(tutor) {
    Wings3D.bindMenuItem("#introduction", (ev) => {
       tutor.tours.introduction();
    });
-
+   Wings3D.bindMenuItem("#basicCommands", (ev) => {
+      tutor.tours.basicCommands();
+   });
 }

@@ -193,6 +193,7 @@ function createView(gl) {
        my.renderWorld.init(gl, my.drawWorld);
 
       // capture click mouse event.
+      Wings3D.gl.canvas.addEventListener("mouseenter", _pvt.canvasHandleMouseEnter, false);
       Wings3D.gl.canvas.addEventListener("mousedown", _pvt.canvasHandleMouseDown, false); 
       Wings3D.gl.canvas.addEventListener("mouseup", _pvt.canvasHandleMouseUp, false);
       Wings3D.gl.canvas.addEventListener("mouseleave", _pvt.canvasHandleMouseLeave, false);
@@ -327,6 +328,7 @@ function createView(gl) {
          if (_pvt.handler.camera !== null) {
             _pvt.handler.camera.commit(my);
             _pvt.handler.camera = null;
+            help('L:Select   M:Start Camera   R:Show Menu   [Alt]+R:Tweak menu');      
          } else if (_pvt.handler.mousemove !== null) {
             _pvt.handler.mousemove.commit(my);
             _pvt.handler.mousemove = null;
@@ -335,6 +337,14 @@ function createView(gl) {
             // ask view to select current hilite if any.
             _pvt.selectStart();
          }
+      }
+   };
+
+   _pvt.canvasHandleMouseEnter = function(ev) {
+      if (_pvt.handler.camera !== null) {
+         help('L:Accept   M:Drag to Pan  R:Cancel/Restore to View   Move mouse to tumble');
+      } else {
+         help('L:Select   M:Start Camera   R:Show Menu   [Alt]+R:Tweak menu');
       }
    };
 
@@ -351,6 +361,7 @@ function createView(gl) {
             ev.stopImmediatePropagation();
             // let camera handle the mouse event until it quit.
             _pvt.handler.camera = Wings3D.cam.getMouseMoveHandler();
+            help('L:Accept   M:Drag to Pan  R:Cancel/Restore to View   Move mouse to tumble');
             // disable mouse cursor
             //document.body.style.cursor = 'none';
          } 
@@ -397,6 +408,7 @@ function createView(gl) {
          if (_pvt.handler.camera !== null) {
             _pvt.handler.camera.cancel();
             _pvt.handler.camera = null;
+            help('L:Select   M:Start Camera   R:Show Menu   [Alt]+R:Tweak menu');
          } else {
             _pvt.handler.mousemove.cancel();
             _pvt.handler.mousemove = null;
