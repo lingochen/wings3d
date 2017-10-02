@@ -57,9 +57,20 @@ function createGuideTour(tutor) {
    };
    tutor.tours.basicCommands = () => {
       tutor.cancel();   // clear tours.
-      tutor.addStep("Welcome", "Camera", "Let click middle mouse button[M] anywhere in the Canvas to enter camera mode. After rotating around, Right mouse button click to cancel the movement, or Left mouse button to confirm the modification",       
+      tutor.addStep("Welcome", "Zoom", "Mouse wheel scroll in Canvas will zoom in/out",
+       "", "top");
+      tutor.addExpectStep("enterCameraMode", "Camera", "Camera Mode", "Let <em>M</em>, click middle mouse button anywhere in the Canvas to enter camera mode",       
        "", "right");
-      // show
+      tutor.addExpectStep("exitCameraMode", "MoveCamera", "Move Camera", "Information Line shows you how to move camera, and you can still zoom in/out",
+       "helpbar", "top-start");
+      tutor.addExpectStep("contextMenu", "CreateMenu", "ContextMenu", "Let <em>R</em> click right mouse button in the Canvas empty place to bring up CreateObject Menu",
+       "", "left");
+      tutor.addExpectStep("createCubeForm", "CreateCubeForm", "Great Job", "Click Cube MenuItem to create Cube",
+       "createCube", "right");
+      tutor.addExpectStep("createCube", "CreateCube", "Form", "You can adjust the cube's parameter",
+       "createCubeForm", "top");
+      tutor.addStep("Congratulation", "Congratulation", "You can now play with the cube object",
+       "", "bottom");
       tutor.startTour();
    };
    Wings3D.bindMenuItem("#about", (ev) => {

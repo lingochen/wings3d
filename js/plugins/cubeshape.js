@@ -183,6 +183,7 @@ document.addEventListener('DOMContentLoaded', function() {
          form.style.display = 'none';
          // accept previewCage to the world
          api.undoQueue( new CreatePreviewCageCommand(_pvt.previewCage) );
+         Wings3D.log("createCube", _pvt.previewCage);
          _pvt.previewCage.name = "Cube" + (_pvt.creationCount+1);
          _pvt.previewCage = null;
          _pvt.creationCount++;
@@ -230,6 +231,7 @@ document.addEventListener('DOMContentLoaded', function() {
          var position = Wings3D.contextmenu.getPosition(ev);
          // run createCube dialog
          api.createCubeDialog(position);
+         Wings3D.log("createCubeForm");
       })
    }
    //

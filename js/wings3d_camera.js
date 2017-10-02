@@ -29,11 +29,13 @@ class CameraMouseMoveHandler extends MouseMoveHandler {
 
    _commit(view) {
       // no redo, undo for now
+      Wings3D.log("exitCameraMode", {ok: this.camera});
    }
 
    _cancel() {
       // restore camera's value.
       this.camera.copyCam(this.camera.view, this.saveView);
+      Wings3D.log("exitCameraMode", {cancel: this.camera});
    }
 }
 

@@ -5,31 +5,59 @@
 
 
 class TutorStep {
-   constructor(tour, title, text, target, placement, buttons) {
+   constructor(tour, title, text, target, placement) {
      this.tour = tour;
      this.target = target;
      this.placement = placement;
      this.title = title;
      this.content = text;
-     
    }
 
-   interact() {}
+   expect(action, value) {}
 }
 
-function createUi(Wings3D) {
+class ExpectStep extends TutorStep {
+   constructor(tour, expect, title, text, target, placement) {
+      super(tour, title, text, target, placement);
+      this.expectAction = expect;
+   }
 
+   expect(action, value) {
+      if (this.expectAction === action) { // yes, great, now we can goto next step
+         this.tour.goNext();
+      }
+   }
+}
+
+
+function createUi(Wings3D) {
    Wings3D.ui = {};
 
    Wings3D.ui.tutor = (function(ui) {
       const _this = {tours: {}};
       const _rail = {stops: new Map, routes: [], currentStation: -1};
+      let oldLog;
+      function interceptLog(command, value) {
+         oldLog(command, value);
+         _this.expect(command, value);
+      }
       function extractElement(className) {
          const nodeList = _this.popUp.bubble.getElementsByClassName(className);
          if (nodeList.length > 0) {
             return nodeList[0];
          }
          return undefined;
+      }
+      function noDuplicate(nameId) {
+         if (_rail.stops.has(nameId)) {
+            console.log("bad step: already has ", nameId);
+            return false;
+         }
+         return true;
+      }
+      function addStep(nameId, step) {
+         _rail.stops.set(nameId, _rail.routes.length);
+         _rail.routes.push(step);
       }
     
       // default 
@@ -55,17 +83,18 @@ function createUi(Wings3D) {
          _this.popUp.title = extractElement("tutor-title");
          _this.popUp.content = extractElement("tutor-content");
          //
-      // 
          _this.addStep = function(nameId, title, text, target, placement, stepOptions) {
-               if (_rail.stops.has(nameId)) {
-                  console.log("bad step: already has ", nameId);
-                  return;
-               }
+            if (noDuplicate(nameId)) {
                // create a new step, and put it into rail
-               const step = new TutorStep(this, title, text, target, placement);
-               _rail.stops.set(nameId, _rail.routes.length);
-               _rail.routes.push(step);
+               addStep(nameId, new TutorStep(this, title, text, target, placement));
+            }
+         };
 
+         _this.addExpectStep = function(expect, nameId, title, text, target, placement, stepOptions) {
+            if (noDuplicate(nameId)) {
+               // create a new step, and put it into rail
+               addStep(nameId, new ExpectStep(this, expect, title, text, target, placement));
+            }
          };
 
          _this._play = function(stepNumber) {
@@ -87,11 +116,12 @@ function createUi(Wings3D) {
                const placement = Wings3D.ui.placement(step.target, step.placement, _this.popUp.bubble);
                _this.popUp.bubble.style.top = placement.top.toString() + "px";
                _this.popUp.bubble.style.left = placement.left.toString() + "px"; 
-               step.interact();
             }
          };
     
          _this.startTour = function(stepArray) {
+            oldLog = Wings3D.log;
+            Wings3D.log = interceptLog;
             //myObj.hasOwnProperty('key')
             if (stepArray) {
 
@@ -112,6 +142,9 @@ function createUi(Wings3D) {
             _rail.stops.clear();
             _rail.routes.length = 0;
             _rail.currentStation = -1;
+            if (oldLog) {
+               Wings3D.log = oldLog;
+            }
          };
     
          _this.goNext = function() { _this._play(_rail.currentStation+1); };
@@ -119,6 +152,13 @@ function createUi(Wings3D) {
          _this.goBack = function() { _this._play(_rail.currentStation-1); };
     
          _this.goTo = function(id) {};
+
+         _this.expect = function(action, value) {
+            if (_rail.currentStation >= 0) {
+               const step =  _rail.routes[_rail.currentStation];
+               step.expect(action, value);
+            }
+         };
 
          return _this;
       } else { // should we create tour-bubble instead?
@@ -180,7 +220,11 @@ function createUi(Wings3D) {
          y -= bubbleRect.height;
          return { top: y, left: x};
       } else if (placement === "right") {
-         x -= targetRect.width;
+         x += targetRect.width;
+         y += Math.round((targetRect.height/2) - (bubbleRect.height/2));
+         return {top: y, left: x};
+      } else if (placement === "left") {        
+         x -= bubbleRect.width;
          y += Math.round((targetRect.height/2) - (bubbleRect.height/2));
          return {top: y, left: x};
       }

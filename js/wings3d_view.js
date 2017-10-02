@@ -359,6 +359,8 @@ function createView(gl) {
       } else if (ev.button == 1) { // check for middle button down
          if (_pvt.handler.camera === null) {
             ev.stopImmediatePropagation();
+            // tell tutor step, we are in camera mode
+            Wings3D.log("enterCameraMode",  Wings3D.cam);
             // let camera handle the mouse event until it quit.
             _pvt.handler.camera = Wings3D.cam.getMouseMoveHandler();
             help('L:Accept   M:Drag to Pan  R:Cancel/Restore to View   Move mouse to tumble');

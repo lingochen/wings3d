@@ -11,6 +11,12 @@ var Wings3D = (function () {
 	var my = {};
    var _pvt = {};
 
+
+   // log, does nothing for now, debug build?
+   my.log = function(command, value) {
+      
+   };
+
    // a few polyfill
    if (NodeList.prototype[Symbol.iterator] === undefined) {
       NodeList.prototype[Symbol.iterator] = Array.prototype[Symbol.iterator]; // Microsoft Edge not support yet.
@@ -204,6 +210,7 @@ var Wings3D = (function () {
       }
       return form;
    };
+
 
    return my;
 }());

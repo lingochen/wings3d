@@ -149,6 +149,7 @@ function createMenuHandler(view, contextClassName) {
     if ( _pvt.menuState !== 1 ) {
       _pvt.menuState = 1;
       _pvt.contextMenu.menu.style.display = "block";
+      Wings3D.log("contextMenu", _pvt.contextMenu.menu.id);
     }
   }
 
