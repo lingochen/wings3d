@@ -13,7 +13,23 @@ class TutorStep {
      this.content = text;
    }
 
+   done() {}
+
    expect(action, value) {}
+
+   show() {
+      const popUp = this.tour.popUp;
+      // place on  the world.
+      popUp.title.textContent = this.title;
+      popUp.content.innerHTML = this.content;
+      popUp.bubble.classList.remove("left", "right", "top", "bottom");
+      popUp.bubble.classList.add(Wings3D.ui.getArrow(this.placement));
+      // now place it
+      const placement = Wings3D.ui.placement(this.target, this.placement, popUp.bubble);
+      popUp.bubble.style.top = placement.top.toString() + "px";
+      popUp.bubble.style.left = placement.left.toString() + "px"; 
+   }
+
 }
 
 class ExpectStep extends TutorStep {
@@ -29,12 +45,70 @@ class ExpectStep extends TutorStep {
    }
 }
 
+class SelectStep extends TutorStep {
+   constructor(tour, selections, title, text, placement) {
+      super(tour, title, text, "", placement);
+      if (Number.isInteger(selections)) {
+         this.count = selections;
+         this.countDown = selections;
+      } else {
+         this.selections = selections;
+         this.countDown = new Set(selections);
+      } 
+   }
+
+   expect(action, value) {
+      if (action === this.modeSelect) {
+         // now check inside the array. if the array is empty. check number.
+         if (this.count !== undefined) {
+            if(--this.countDown === 0) {
+               this.tour.goNext();
+            } else {
+               this.showSelectionCount();
+            }
+         } else {
+            if (this.countDown.has(value)) {
+               this.countDown.delete(value);
+               this.showSelectionCount();
+            }
+         }
+      }
+   }
+
+   done() {
+      this.tour.popUp.select.textContent = "";    
+   }
+
+   show() {
+      super.show();
+      this.showSelectionCount();
+   }
+
+   showSelectionCount() {
+      const popUp = this.tour.popUp;
+      if (this.count !== undefined) {
+         popUp.select.textContent = "selection " + (this.count - this.countDown).toString() + " of " + (this.count).toString();
+      } else {
+            // popUp.select.textContent = (this.selections.size - this.countDown.size).toString() + " of " + (this.selections.size).toString();
+      }
+   }
+}
+
+class FaceSelectStep extends SelectStep {
+   constructor(tour, selections, title, text, placement) {
+      super(tour, selections, title, text, placement);
+      this.modeSelect = "faceSelectOn";
+   }
+}
+
+class EdgeSelectStep extends SelectStep {
+}
 
 function createUi(Wings3D) {
    Wings3D.ui = {};
 
    Wings3D.ui.tutor = (function(ui) {
-      const _this = {tours: {}};
+      const _this = {tours: {}, targetCage: null};
       const _rail = {stops: new Map, routes: [], currentStation: -1};
       let oldLog;
       function interceptLog(command, value) {
@@ -82,6 +156,7 @@ function createUi(Wings3D) {
          //
          _this.popUp.title = extractElement("tutor-title");
          _this.popUp.content = extractElement("tutor-content");
+         _this.popUp.select = extractElement("tutor-selection");
          //
          _this.addStep = function(nameId, title, text, target, placement, stepOptions) {
             if (noDuplicate(nameId)) {
@@ -97,6 +172,13 @@ function createUi(Wings3D) {
             }
          };
 
+         _this.addFaceSelectStep = function(selection, nameId, title, text, placement, stepOptions) {
+            if (noDuplicate(nameId)) {
+               // create a new step, and put it into rail
+               addStep(nameId, new FaceSelectStep(this, selection, title, text, placement));
+            }
+         };
+
          _this._play = function(stepNumber) {
             if ((stepNumber < 0) || (stepNumber >= _rail.routes.length)) {
                console.log("bad step number in tutor guide");
@@ -105,17 +187,14 @@ function createUi(Wings3D) {
                   // change the NextButton to DoneButton
                   _this.popUp.next.textContent = "Done";
                }
+               if ((_rail.currentStation >= 0) && (_rail.currentStation < _rail.routes.length)) {
+                  const prevStep = _rail.routes[_rail.currentStation];
+                  prevStep.done();
+               }
                _rail.currentStation = stepNumber;
                const step = _rail.routes[stepNumber];
                // apply data
-               _this.popUp.title.textContent = step.title;
-               _this.popUp.content.innerHTML = step.content;
-               _this.popUp.bubble.classList.remove("left", "right", "top", "bottom");
-               _this.popUp.bubble.classList.add(Wings3D.ui.getArrow(step.placement));
-               // now place it
-               const placement = Wings3D.ui.placement(step.target, step.placement, _this.popUp.bubble);
-               _this.popUp.bubble.style.top = placement.top.toString() + "px";
-               _this.popUp.bubble.style.left = placement.left.toString() + "px"; 
+               step.show();
             }
          };
     
@@ -157,6 +236,9 @@ function createUi(Wings3D) {
             if (_rail.currentStation >= 0) {
                const step =  _rail.routes[_rail.currentStation];
                step.expect(action, value);
+               if (action === "createCube") {   // 
+                  this.targetCage = value;
+               }
             }
          };
 
@@ -188,15 +270,16 @@ function createUi(Wings3D) {
       // get the size of bubble.
       const bubbleRect = bubble.getBoundingClientRect();
 
-      let target = document.getElementById(targetId);
+      let target;
       let targetRect;
-      if (!target) { // no target, then point at the workarea's center
+      if (targetId === "") { // no target, then point at the workarea's center
          target = document.getElementById("glcanvas");
          const rect = target.getBoundingClientRect();
          targetRect = {left: Math.round(rect.left+rect.width/2), 
                        top: Math.round(rect.top+rect.height/2), 
                        width: 1, height: 1};
       } else {
+         target = document.getElementById(targetId);
          // get the location and size of target
          targetRect = target.getBoundingClientRect();
       }
@@ -233,17 +316,14 @@ function createUi(Wings3D) {
    // menuBar
    function initMenubar() {
       // bind on hover function (mouseEnter, mouseLeave, )
-      let bar = document.getElementById("menubar");
-      if (bar) {
-         let dropdowns = bar.getElementsByClassName("dropdown");
-         for (let dropdown of dropdowns) {
-            dropdown.addEventListener("mouseenter", function(ev) {
-               dropdown.classList.add("hover");
-            });
-            dropdown.addEventListener("mouseleave", function(ev) {
-               dropdown.classList.remove("hover");
-            });
-         }
+      let dropdowns = document.querySelectorAll("#menubar .dropdown");
+      for (let dropdown of dropdowns) {
+         dropdown.addEventListener("mouseenter", function(ev) {
+            dropdown.classList.add("hover");
+         });
+         dropdown.addEventListener("mouseleave", function(ev) {
+            dropdown.classList.remove("hover");
+         });
       }
    }
 

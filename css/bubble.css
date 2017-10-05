@@ -3,7 +3,7 @@ interactive Tutor's speech bubble css. like hopscotch js's thick border style. l
 Use flex-box ability to move arrow around(up,down,left,right) easier.
 */
 
-div.tutor-bubble .tour-nav-button {
+div.tutor-bubble .tutor-nav-button {
   /* borrowed from katy styles */
   font-weight: bold;
   border-width: 1px;
@@ -23,13 +23,13 @@ div.tutor-bubble .tour-nav-button {
   border-radius: 3px;
   box-sizing: border-box;
 }
-div.tutor-bubble .tour-nav-button:hover {
+div.tutor-bubble .tutor-nav-button:hover {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
 }
-div.tutor-bubble .tour-nav-button:active {
+div.tutor-bubble .tutor-nav-button:active {
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25) inset;
 }
-div.tutor-bubble .tour-nav-button.next {
+div.tutor-bubble .tutor-nav-button.next {
   border-color: #1b5480;
   color: #fff;
   margin: 0 0 0 10px;
@@ -38,18 +38,18 @@ div.tutor-bubble .tour-nav-button.next {
   background-color: #287bbc;
   background-image: linear-gradient(to bottom, #287bbc 0%, #23639a 100%);
 }
-div.tutor-bubble .tour-nav-button.next:hover {
+div.tutor-bubble .tutor-nav-button.next:hover {
   background-color: #2672ae;
   background-image: linear-gradient(to bottom, #2672ae 0%, #1e4f7e 100%);
 }
-div.tutor-bubble .tour-nav-button.prev {
+div.tutor-bubble .tutor-nav-button.prev {
   border-color: #a7a7a7;
   color: #444;
   text-shadow: 0 1px 1px rgba(255, 255, 255, 0.75);
   background-color: #f2f2f2;
   background-image: linear-gradient(to bottom, #f2f2f2 0%, #e9e9e9 100%);
 }
-div.tutor-bubble .tour-nav-button.prev:hover {
+div.tutor-bubble .tutor-nav-button.prev:hover {
   background-color: #e8e8e8;
   background-image: linear-gradient(to bottom, #e8e8e8 0%, #e3e3e3 13%, #d7d7d7 32%, #b9b9b9 71%, #a9a9a9 100%);
 }

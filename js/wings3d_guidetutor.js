@@ -67,11 +67,15 @@ function createGuideTour(tutor) {
        "", "left");
       tutor.addExpectStep("createCubeForm", "CreateCubeForm", "Great Job", "Click Cube MenuItem to create Cube",
        "createCube", "right");
-      tutor.addExpectStep("createCube", "CreateCube", "Form", "You can adjust the cube's parameter",
+      tutor.addExpectStep("createCube", "CreateCube", "Cube Form", "You can adjust the cube's parameter",
        "createCubeForm", "top");
-      tutor.addStep("Congratulation", "Congratulation", "You can now play with the cube object",
+      tutor.addFaceSelectStep(1, "selectFace", "Select any Face", "Try to click around the face, see how to select face",
+       "left");
+      tutor.addStep("Congratulation", "Congratulation", "Now right click mouse button to bring up more Face tools.",
        "", "bottom");
-      tutor.startTour();
+
+       // start tour
+       tutor.startTour();
    };
    Wings3D.bindMenuItem("#about", (ev) => {
       tutor.tours.about();

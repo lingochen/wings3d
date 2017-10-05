@@ -1346,9 +1346,11 @@ PreviewCage.prototype.selectFace = function(selectEdge) {
    var polygon = selectEdge.face;
    if (this.selectedSet.has(polygon)) {
       this.setFaceSelectionOff(polygon);
+      Wings3D.log("faceSelectOff", polygon.index);
       onOff = false;
    } else {
       this.setFaceSelectionOn(polygon);
+      Wings3D.log("faceSelectOn", polygon.index);
       onOff = true;
    }
    geometryStatus("polygon face # " + polygon.index);
