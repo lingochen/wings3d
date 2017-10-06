@@ -69,9 +69,9 @@ function createGuideTour(tutor) {
        "createCube", "right");
       tutor.addExpectStep("createCube", "CreateCube", "Cube Form", "You can adjust the cube's parameter",
        "createCubeForm", "top");
-      tutor.addFaceSelectStep(1, "selectFace", "Select any Face", "Try to click around the face, see how to select face",
+      tutor.addFaceSelectStep(1, "selectFace", "Select any Face", "Try to click/select face",
        "left");
-      tutor.addStep("Congratulation", "Congratulation", "Now right click mouse button to bring up more Face tools.",
+      tutor.addStep("Congratulation", "Congratulation", "<em>R</em>, Right click mouse button will bring up Face tools. Now you know the basic steps.",
        "", "bottom");
 
        // start tour

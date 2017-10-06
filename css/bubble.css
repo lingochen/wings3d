@@ -111,6 +111,9 @@ div.tutor-bubble .close.hide-all {
 }
 
 div.tutor-bubble .tutor-actions {
+  display: flex;
+  flex-direction: row-reverse;
+  justify-content: space-between;
   margin: 10px 0 0;
   text-align: right;
 }

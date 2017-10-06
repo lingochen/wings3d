@@ -1,3 +1,41 @@
+/* slider, copy from quirksmode */
+input[type=range] {
+	-webkit-appearance: none;
+	height: 35px; /* pick your own value */
+	padding: 0;	
+	/* your slider styles */
+}
+
+input[type=range]::-webkit-slider-thumb {
+	-webkit-appearance: none;
+	box-sizing: content-box;
+	/* your thumb styles */
+}
+
+input[type=range]::-moz-range-thumb {
+	/* again your thumb styles */
+}
+
+input[type=range]::-ms-thumb { /* should come after -webkit- */
+	/* again your thumb styles */
+	/* may require different margins */
+}
+
+input[type=range]::-webkit-slider-runnable-track {
+	/* your track styles */
+}
+
+input[type=range]::-moz-range-track {
+	/* again your track styles */
+}
+
+input[type=range]::-ms-track { /* should come after -webkit- */
+	border-color: transparent;
+	color: transparent;
+	/* again your track styles */
+}
+
+
 /* The close X, (<span class="close">&times;</span>) */
 .close {
   float: right;

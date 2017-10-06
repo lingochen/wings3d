@@ -41,10 +41,10 @@ document.addEventListener('DOMContentLoaded', function() {
          _pvt.previewCage.freeBuffer();
          _pvt.previewCage = null;
       }
-      api.createCube(_pvt.cubeParams.size, _pvt.cubeParams.numberOfCut);
+      api.createCube(_pvt.cubeParams.size, _pvt.cubeParams.numberOfCut, _pvt.cubeParams.translate, _pvt.cubeParams.rotate, _pvt.cubeParams.putOnGround);
    };
 
-   api.createCube = api.createCube || function(size={x:2.0,y:2.0,z:2.0}, numberOfCut=5) {//, translate, rotate, aboveGround = false) {
+   api.createCube = api.createCube || function(size, numberOfCut, translate, rotate, onGround) {
       // create, one 
       var mesh = new WingedTopology;
       var map = {};
@@ -79,7 +79,10 @@ document.addEventListener('DOMContentLoaded', function() {
       }
 
       // setup start, end
-      var org = {x: -(size.x / 2.0), y: -(size.y / 2.0), z: -(size.z / 2.0)};
+      var org = {x: -(size.x / 2.0) + translate.x, y: -(size.y / 2.0) + translate.y, z: -(size.z / 2.0) + translate.z};
+      if (onGround) {
+         org.y = 0;
+      }
       var dest = {x: org.x+size.x, y: org.y+size.y, z: org.z+size.z};
       // creating step size for each cut
       var step = [];
@@ -142,8 +145,8 @@ document.addEventListener('DOMContentLoaded', function() {
          </div>
          <fieldset>
             <legend>Spherize</legend>
-            <label><input type='radio' name='sphere' value='true'>Yes</label>
-            <label><input type='radio' name='sphere' value='false' checked>No<label>
+            <label><input type='radio' name='sphere' value='true' disabled>Yes</label>
+            <label><input type='radio' name='sphere' value='false' checked disabled>No<label>
          </fieldset>
          <fieldset>
             <label>Rotate</label>
@@ -159,7 +162,7 @@ document.addEventListener('DOMContentLoaded', function() {
                <label>Z <input type="number" name="translate_z" value="0.0" step="0.5"></label>
             </span>
             <div>
-               <label><input type="checkbox">Put on Ground</label>
+               <label><input type="checkbox" name="ground">Put on Ground</label>
             </div>
          </fieldset>
           <button type="reset" value="Reset">Reset</button>
@@ -209,7 +212,31 @@ document.addEventListener('DOMContentLoaded', function() {
          _pvt.cubeParams.size.z = Number(ev.target.value);
          _pvt.updatePreview();
       });
-      //
+      const translate = document.querySelectorAll('#createCubeForm input[name^="translate_"]');
+      translate[0].addEventListener('change', function(ev) {
+         _pvt.cubeParams.translate.x = Number(ev.target.value);
+         _pvt.updatePreview();
+      });
+      translate[1].addEventListener('change', function(ev) {
+         _pvt.cubeParams.translate.y = Number(ev.target.value);
+         _pvt.updatePreview();
+      });
+      translate[2].addEventListener('change', function(ev) {
+         _pvt.cubeParams.translate.z = Number(ev.target.value);
+         _pvt.updatePreview();
+      });
+      // putonGround
+      const ground = document.querySelectorAll('#createCubeForm input[name="ground"]');
+      ground[0].addEventListener('change', function(ev) {
+         if (ground[0].checked) {
+            translate[1].disabled = true;
+            _pvt.cubeParams.putOnGround = true;
+         } else {
+            translate[1].disabled = false;
+            _pvt.cubeParams.putOnGround = false;
+         }
+         _pvt.updatePreview();
+      });
       form.addEventListener('change', function(ev) {
          ev.stopPropagation();
          if (ev.target.name !== null) {
