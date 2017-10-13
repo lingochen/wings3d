@@ -77,49 +77,88 @@ document.addEventListener('DOMContentLoaded', function() {
             }
          }
       }
+      // get rotation
+      let angleQ = quat.create();
+      quat.fromEuler(angleQ, rotate.x, rotate.y, rotate.z);
+      const rotateM3 = mat3.create();
+      mat3.fromQuat(rotateM3, angleQ);
 
       // setup start, end
-      var org = {x: -(size.x / 2.0) + translate.x, y: -(size.y / 2.0) + translate.y, z: -(size.z / 2.0) + translate.z};
+      const org = vec3.fromValues( -(size.x / 2.0), -(size.y / 2.0), -(size.z / 2.0));
+      const offset = vec3.fromValues(translate.x, translate.y, translate.z);
       if (onGround) {
-         org.y = 0;
+         offset[1] = -org[1];
       }
-      var dest = {x: org.x+size.x, y: org.y+size.y, z: org.z+size.z};
+      const x = vec3.fromValues(size.x, 0.0, 0.0);
+      const y = vec3.fromValues(0.0, size.y, 0.0);
+      const z = vec3.fromValues(0.0, 0.0, size.z);
+      vec3.transformMat3(org, org, rotateM3);
+      vec3.transformMat3(x, x, rotateM3);
+      vec3.transformMat3(y, y, rotateM3);
+      vec3.transformMat3(z, z, rotateM3);
+      const dest = vec3.create();
+
       // creating step size for each cut
-      var step = [];
+      const stepX = [], stepY = [], stepZ = [];
       for (i = 0; i <= numberOfCut; ++i) {
-         step.push( {x: size.x * (i/numberOfCut),
-                     y: size.y * (i/numberOfCut),
-                     z: size.z * (i/numberOfCut)
-                    });
+         const cut = i / numberOfCut;
+         const xStep = vec3.create();
+         vec3.scale(xStep, x, cut);
+         stepX.push( xStep );
+         const yStep = vec3.create();
+         vec3.scale(yStep, y, cut);
+         stepY.push( yStep );
+         const zStep = vec3.create();
+         vec3.scale(zStep, z, cut);
+         stepZ.push( zStep );
       }
-      // front faces vertex (x, -y+, z-)
-      makeFaces(function(up, rt) {
-         return [dest.x, org.y+step[up].y, dest.z-step[rt].z];
-      });
-
-      // left face (-x+, -y+, z)
-      makeFaces(function(up, rt) {
-         return [org.x+step[rt].x, org.y+step[up].y, dest.z]; 
-      });
-
       // right face (x-, -y+, -z)
+      vec3.add(dest, org, x);
       makeFaces(function(up, rt) {
-         return [dest.x-step[rt].x, org.y+step[up].y, org.z];
-      });
-
-      // back face (-x, -y+, -z+)
-      makeFaces(function(up, rt){
-         return [org.x, org.y+step[up].y, org.z+step[rt].z];
-      });
-
-      // top face (x-, y, z-)
-      makeFaces(function(up, rt){
-         return [dest.x-step[up].x, dest.y, dest.z-step[rt].z];
+         return vec3.fromValues(dest[0]-stepX[rt][0]+stepY[up][0]+offset[0], 
+                                dest[1]-stepX[rt][1]+stepY[up][1]+offset[1], 
+                                dest[2]-stepX[rt][2]+stepY[up][2]+offset[2]);
       });
 
       // bottom face (x-, -y, -z+)
       makeFaces(function(up, rt){
-         return [dest.x-step[up].x, org.y, org.z+step[rt].z];
+         return [dest[0]-stepX[up][0]+stepZ[rt][0]+offset[0], 
+                 dest[1]-stepX[up][1]+stepZ[rt][1]+offset[1], 
+                 dest[2]-stepX[up][2]+stepZ[rt][2]+offset[2]];
+      });
+
+      // front faces vertex (x, -y+, z-)
+      //vec3.add(dest, org, x);
+      vec3.add(dest, dest, z);
+      makeFaces(function(up, rt) {
+         return [dest[0]+stepY[up][0]-stepZ[rt][0]+offset[0], 
+                 dest[1]+stepY[up][1]-stepZ[rt][1]+offset[1], 
+                 dest[2]+stepY[up][2]-stepZ[rt][2]+offset[2]];
+      });
+
+      // left face (-x+, -y+, z)
+      vec3.add(dest, org, z);
+      makeFaces(function(up, rt) {
+         return [dest[0]+stepX[rt][0]+stepY[up][0]+offset[0], 
+                 dest[1]+stepX[rt][1]+stepY[up][1]+offset[1], 
+                 dest[2]+stepX[rt][2]+stepY[up][2]+offset[2]]; 
+      });
+
+      // back face (-x, -y+, -z+)
+      makeFaces(function(up, rt){
+         return [org[0]+stepY[up][0]+stepZ[rt][0]+offset[0], 
+                 org[1]+stepY[up][1]+stepZ[rt][1]+offset[1], 
+                 org[2]+stepY[up][2]+stepZ[rt][2]+offset[2]];
+      });
+
+      // top face (x-, y, z-)
+      vec3.add(dest, org, x);
+      vec3.add(dest, dest, y);
+      vec3.add(dest, dest, z);
+      makeFaces(function(up, rt){
+         return [dest[0]-stepX[up][0]-stepZ[rt][0]+offset[0], 
+                 dest[1]-stepX[up][1]-stepZ[rt][1]+offset[1], 
+                 dest[2]-stepX[up][2]-stepZ[rt][2]+offset[2]];
       });
 
       _pvt.previewCage = api.putIntoWorld(mesh);
@@ -151,9 +190,9 @@ document.addEventListener('DOMContentLoaded', function() {
          <fieldset>
             <label>Rotate</label>
             <span>
-               <label>X <input type="number" name="rotate_x" value="0.0" step="0.5"></label><br>
-               <label>Y <input type="number" name="rotate_y" value="0.0" step="0.5"></label><br>
-               <label>Z <input type="number" name="rotate_z" value="0.0" step="0.5"></label>    
+               <label>X <input type="number" name="rotate_x" value="0.0" step="1"></label><br>
+               <label>Y <input type="number" name="rotate_y" value="0.0" step="1"></label><br>
+               <label>Z <input type="number" name="rotate_z" value="0.0" step="1"></label>    
             </span>
             <label>Move</label>
             <span>
@@ -235,6 +274,20 @@ document.addEventListener('DOMContentLoaded', function() {
             translate[1].disabled = false;
             _pvt.cubeParams.putOnGround = false;
          }
+         _pvt.updatePreview();
+      });
+      // rotation
+      const rotate = document.querySelectorAll('#createCubeForm input[name^="rotate_"]');
+      rotate[0].addEventListener('change', function(ev) {
+         _pvt.cubeParams.rotate.x = Number(ev.target.value);
+         _pvt.updatePreview();
+      });
+      rotate[1].addEventListener('change', function(ev) {
+         _pvt.cubeParams.rotate.y = Number(ev.target.value);
+         _pvt.updatePreview();
+      });
+      rotate[2].addEventListener('change', function(ev) {
+         _pvt.cubeParams.rotate.z = Number(ev.target.value);
          _pvt.updatePreview();
       });
       form.addEventListener('change', function(ev) {
