@@ -3,6 +3,18 @@
 
 */
 
+/*(function (Wings3D) {
+   
+   Wings3D.ui = function() {
+          this.css( "color", "green" );
+          return this;
+   };
+
+   Wings3D.ui.mouseMove = function() {
+
+   };
+   
+}( Wings3D ));*/
 
 class TutorStep {
    constructor(tour, title, text, target, placement) {

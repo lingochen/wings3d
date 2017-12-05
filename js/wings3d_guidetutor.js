@@ -77,6 +77,13 @@ function createGuideTour(tutor) {
        // start tour
        tutor.startTour();
    };
+   tutor.tours.tableTutor = () => {
+      tutor.cancel();   // clear tours.
+      tutor.addExpectStep("Make a simple table", "Cube", "RMB (anywhere in geometry window) to display the primitives menu and select cube with LMB.", 
+      "", "top");
+
+      tutor.startTour();
+   };
    Wings3D.bindMenuItem("#about", (ev) => {
       tutor.tours.about();
    });
@@ -86,4 +93,8 @@ function createGuideTour(tutor) {
    Wings3D.bindMenuItem("#basicCommands", (ev) => {
       tutor.tours.basicCommands();
    });
+
+   Wings3D.bindMenuItem("#tableTutor", (ev) => {
+      tutor.tours.tableTutor();
+   })
 }
