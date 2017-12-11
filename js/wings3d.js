@@ -1,13 +1,14 @@
 /*
 //  wings3d.js
-//     The start module of Wings 3D. Port 
+//     The start module of Wings 3D. Port,
 //
 // Original Erlang Version from Bjorn Gustavsson's Wings 3D
 //
+// 12-11-2017: convert to es6 module.
 */
 "use strict";
 
-var Wings3D = (function () {
+export const Wings3D = (function () {
 	var my = {};
    var _pvt = {};
 
