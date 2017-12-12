@@ -7,29 +7,31 @@
 // 12-11-2017: convert to es6 module.
 */
 "use strict";
+import * as Hotkey from './wings3d_hotkey';
+import * as gl from './wings3d_gl';
+import * as camera from './wings3d_camera';
+import * as contextmenu from './wings3d_menu';
 
-export const Wings3D = (function () {
-	var my = {};
-   var _pvt = {};
+// a few polyfill
+if (NodeList.prototype[Symbol.iterator] === undefined) {
+   NodeList.prototype[Symbol.iterator] = Array.prototype[Symbol.iterator]; // Microsoft Edge not support yet.
+}
 
 
-   // log, does nothing for now, debug build?
-   my.log = function(command, value) {
+
+// log, does nothing for now, debug build?
+export function log(command, value) {
       
-   };
+};
 
-   // a few polyfill
-   if (NodeList.prototype[Symbol.iterator] === undefined) {
-      NodeList.prototype[Symbol.iterator] = Array.prototype[Symbol.iterator]; // Microsoft Edge not support yet.
-   }
+// utility function
+export function createMask() {  // from mozilla doc
+   let nMask = 0, nFlag = 0, nLen = arguments.length > 32 ? 32 : arguments.length;
+   for (nFlag; nFlag < nLen; nMask |= arguments[nFlag] << nFlag++);
+   return nMask;
+}
 
-   // utility function
-   my.createMask = function() {  // from mozilla doc
-      let nMask = 0, nFlag = 0, nLen = arguments.length > 32 ? 32 : arguments.length;
-      for (nFlag; nFlag < nLen; nMask |= arguments[nFlag] << nFlag++);
-      return nMask;
-   }
-   my.bindMenuItem = function(id, fn, hotkey, meta) {
+export function bindMenuItem(id, fn, hotkey, meta) {
       const menuItem = document.querySelector(id);
       if (menuItem) {
          menuItem.addEventListener('click', function(ev) {
@@ -44,16 +46,16 @@ export const Wings3D = (function () {
              fn(ev);
          });
       }
-      Wings3D.bindHotkey(id, fn);
+      Hotkey.bindHotkey(id, fn);
       if (hotkey !== undefined) {
-         Wings3D.setHotkey(id, hotkey, meta);
+         Hotkey.setHotkey(id, hotkey, meta);
 
       }
    }
 
-   // define constants
-   my.GROUND_GRID_SIZE = 1;
-   my.CAMERA_DIST = 8.0*my.GROUND_GRID_SIZE;
+// define constants
+export const GROUND_GRID_SIZE = 1;
+export const CAMERA_DIST = 8.0*my.GROUND_GRID_SIZE;
 
 //make_geom_window(GeomGL, St) ->
     //Props = initial_properties(),        
@@ -64,11 +66,11 @@ export const Wings3D = (function () {
     //..wings_frame:register_win(GeomGL, geom, [top, {title, geom_title(geom)}]),
     //GeomGL.
 
-   my.start = function(canvasID) {
+export function start(canvasID) {
 
-      // if we can initialize webgl context
-      my.gl = createWebGLContext(canvasID);
-      // wings_text:init(), setting font
+   // if we can initialize webgl context
+   gl.createWebGLContext(canvasID);
+   // wings_text:init(), setting font
 
 
 /*    wings_pref:init(),
@@ -88,19 +90,19 @@ export const Wings3D = (function () {
     wings_color:init(),
     wings_io:init(),
 */
-    my.cam = createCamera();
-    my.cam.init();
+   camera.createCamera();
+   camera.init();
 //    wings_vec:init();
 
-    my.view = createView();
-    my.view.init(my.gl);
+   view.createView();
+   view.init();
 
-      my.contextmenu = createMenuHandler(my.view, "content");
-      my.contextmenu.setup();
-      my.buttonbar = createButtonBarHandler();
-      my.buttonbar.setup();
-      createUi(my);
-      createGuideTour(my.ui.tutor);
+   contextmenu.createMenuHandler(view, "content");
+   contextmenu.setup();
+   buttonbar.createButtonBarHandler();
+   buttonbar.setup();
+   createUi(my);
+   createGuideTour(my.ui.tutor);
  /*   wings_u:caption(St),
     wings_file:init_autosave(),
     wings_pb:start_link(Frame),
@@ -111,27 +113,31 @@ export const Wings3D = (function () {
 
 //    open_file(File),
 */
-      requestAnimationFrame(my.render);
+      function render(timestamp) {
+         view.render(gl);
+         requestAnimationFrame(render);
+      };
+      requestAnimationFrame(render);
 
       // prompt for quitting
-      window.addEventListener("beforeunload", _pvt.confirmation);
+      window.addEventListener("beforeunload", confirmation);
 
       my.ui.tutor.tours.about();
    };
 
-   _pvt.confirmation = function(ev) {
-      // check if not saved then ask if want to quit, if nothing then just quit.
-      var confirmMessage = "Are you sure you want to quit?";
-      ev.returnValue = confirmMessage;      // Gecko, Trident, Chrome 34+
-      return confirmMessage;                 // Gecko, WebKit, Chrome <34
-   };
+function confirmation(ev) {
+   // check if not saved then ask if want to quit, if nothing then just quit.
+   const confirmMessage = "Are you sure you want to quit?";
+   ev.returnValue = confirmMessage;      // Gecko, Trident, Chrome 34+
+   return confirmMessage;                 // Gecko, WebKit, Chrome <34
+};
 
 
-   my.start_halt = function() {
+export function start_halt() {
       // closed resource
 
       // halt for other reason. probably won't happen in non-erlang environment
-   };
+};
   /* my.new_st = function() {
       Empty = gb_trees:empty(),
       return #st{shapes=Empty,
@@ -148,15 +154,10 @@ export const Wings3D = (function () {
                 }
    };*/
 
-   my.render = function(timestamp) {
-      my.view.render(my.gl);
-      requestAnimationFrame(my.render);
-   };
-
    // used this api only, for plugin export.
-   my.apiExport = {};
+export const apiExport = {};
 
-   my.callApi = function(funcParam, position) {
+export function callApi(funcParam, position) {
       var funArray = funcParam.split(',');
       var func = funArray[0];
       var param;
@@ -169,10 +170,10 @@ export const Wings3D = (function () {
       } else {
          console.log("api function: " + func + " does not exist.");
       }
-   };
+};
 
    // dialog form helper
-   my.setupDialog = function(formID, submitData) {
+export function setupDialog(formID, submitData) {
       const _pvt = {submitSuccess: false};
 
       const form = document.querySelector(formID);
@@ -211,7 +212,3 @@ export const Wings3D = (function () {
       }
       return form;
    };
-
-
-   return my;
-}());
