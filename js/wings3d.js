@@ -97,8 +97,8 @@ export function start(canvasID) {
    view.createView();
    view.init();
 
-   contextmenu.createMenuHandler(view, "content");
-   contextmenu.setup();
+   //contextmenu.createMenuHandler(view, "content");
+   contextmenu.init("content", "popupmenu");
    buttonbar.createButtonBarHandler();
    buttonbar.setup();
    createUi(my);
