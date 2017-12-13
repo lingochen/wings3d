@@ -5,7 +5,9 @@
 **
 **  Original Erlang Version:  Bjorn Gustavsson
 */
-"use strict";
+
+import { MouseMoveHandler } from './wings3d_undo.js';
+import { log, CAMERA_DIST } from './wings3d.js';
 
 
 class CameraMouseMoveHandler extends MouseMoveHandler {
@@ -29,18 +31,18 @@ class CameraMouseMoveHandler extends MouseMoveHandler {
 
    _commit(view) {
       // no redo, undo for now
-      Wings3D.log("exitCameraMode", {ok: this.camera});
+      //debugLog("exitCameraMode", {ok: this.camera});
    }
 
    _cancel() {
       // restore camera's value.
       this.camera.copyCam(this.camera.view, this.saveView);
-      Wings3D.log("exitCameraMode", {cancel: this.camera});
+      //debugLog("exitCameraMode", {cancel: this.camera});
    }
 }
 
-function createCamera() {
-   var my = { pref: {
+// module variable.
+   let pref = {
          cameraMode: "WingsCam",
          numButtons: 3,
          camRotationSpeed: 0.5,
@@ -55,12 +57,12 @@ function createCamera() {
          wheelZoom: true,
          wheelZoomFactorAlt: 0.0005,
          wheelZoomFactor: 0.005
-      },
-      view: (function(){
-         var camera = {
+      };
+   let view = (function(){
+         let camera = {
             origin: [0.0, 0.0, 0.0],
             azimuth: -45.0, elevation: 25.0,
-            distance: Wings3D.CAMERA_DIST,
+            distance: CAMERA_DIST,
             panX: 0.0, panY: 0.0,
             fov: 45.0,
             zNear: 0.1, zFar: 1000.0
@@ -151,10 +153,10 @@ function createCamera() {
                }
             },
           };
-      })(),
-   };
+      })();
 
-   my.copyCam = function(save, source) {
+// utility function
+   function copyCam(save, source) {
       save.origin[0] = source.origin[0];
       save.origin[1] = source.origin[1];
       save.origin[2] = source.origin[2];
@@ -168,7 +170,7 @@ function createCamera() {
       save.zFar = source.zFar;
    };
 
-   my.init = function() {
+   function init() {
 /*    case {wings_pref:get_value(num_buttons),wings_pref:get_value(camera_mode)} of
 	   {3,_} -> ok
 	   {_,nendo} -> ok;
@@ -176,10 +178,8 @@ function createCamera() {
 	   {_,_} -> wings_pref:set_value(camera_mode, nendo) */
    };
 
-   var _pvt = {};
-
-   my.getMouseMoveHandler = function() {
-      var ret = new CameraMouseMoveHandler(my);
+   function getMouseMoveHandler() {
+      const ret = new CameraMouseMoveHandler(my);
       return ret;
    };
 
@@ -243,9 +243,9 @@ generic_event(#mousebutton{button=5,state=?SDL_RELEASED}, _Camera, _Redraw) ->
 generic_event(_, _, _) -> keep.
 
 */
-   my.aimZoom = function(dir, St0) {
+   function aimZoom(dir, St0) {
       /*
-        if (my.pref.highLightZoomAim) {
+        if (pref.highLightZoomAim) {
         #view{origin=OriginB}=Before = wings_view:current(),
         {{_,Cmd},_} = wings:highlight_aim_setup(St0),
         wings_view:command(Cmd,St0),
@@ -263,82 +263,82 @@ generic_event(_, _, _) -> keep.
               wings_io:warp(X,Y),
               zoom_step(Dir)
       } else {
-         my.zoomStep(dir);
+         zoomStep(dir);
       } */
    };
 
-   my.rotate = function(dx, dy) {
-      //if (my.allowRotation()) {
-	      my.view.azimuth += dx * my.pref.camRotationSpeed;
-         my.view.elevation += dy * my.pref.camRotationSpeed;
+   function rotate(dx, dy) {
+      //if (allowRotation()) {
+	      view.azimuth += dx * pref.camRotationSpeed;
+         view.elevation += dy * pref.camRotationSpeed;
       //}
    };
 
-   my.wheelRotate = function(dx, dy) {
-      if (my.pref.wheelZoom && my.pref.wheelAdds) {
-         var s = 2 * my.pref.wheelRotationSpeed;
-         my.view.azimuth = my.view.azimuth + (dx * s);
-         my.view.elevation = my.view.elevation + (dy * s);
-         my.view.alongAxis = false;
+   function wheelRotate(dx, dy) {
+      if (pref.wheelZoom && pref.wheelAdds) {
+         var s = 2 * pref.wheelRotationSpeed;
+         view.azimuth = view.azimuth + (dx * s);
+         view.elevation = view.elevation + (dy * s);
+         view.alongAxis = false;
       }
       // return keep;
    };
 
 
    function wheelZoom(factor, dir) {
-      var delta = Math.max(Math.abs(my.view.distance), 0.2) * (dir * factor);
-      my.view.distance += delta;
+      var delta = Math.max(Math.abs(view.distance), 0.2) * (dir * factor);
+      view.distance += delta;
       //return keep;
    };
 
-   my.zoomStepAlt = function(dir) {
-      if (my.pref.wheelZoom) {
-		   wheelZoom(my.pref.wheelZoomFactorAlt, dir);
+   function zoomStepAlt(dir) {
+      if (pref.wheelZoom) {
+		   wheelZoom(pref.wheelZoomFactorAlt, dir);
       } 
       //return keep;
    };
 
 
-   my.zoomStep = function(dir) {
-      if (my.pref.wheelZoom) {
-         wheelZoom(my.pref.wheelZoomFactor, dir);
+   function zoomStep(dir) {
+      if (pref.wheelZoom) {
+         wheelZoom(pref.wheelZoomFactor, dir);
       }
       //return keep;
    };
 
-   my.zoom = function(delta) {
-      my.view.distance = my.view.distance + (Math.max(Math.abs(my.view.distance), 0.2) * delta / 80);
+   function zoom(delta) {
+      view.distance = view.distance + (Math.max(Math.abs(view.distance), 0.2) * delta / 80);
    };
 
-   my.pan = function(dx, dy) {
-      var s = my.view.distance * (1/20)/(101-my.pref.panSpeed);
-      my.view.panX = my.view.panX + (dx*s);
-      my.view.panY = my.view.panY + (dy*s);
+   function pan(dx, dy) {
+      const s = view.distance * (1/20)/(101-pref.panSpeed);
+      view.panX += (dx*s);
+      view.panY += (dy*s);
    };
 
-   my.keyPan = function(dx, dy) {
-      var s = my.view.distance * (my.pref.panSpeedArrowKeys/100);
-      my.view.panX = my.view.panX + (dx * s);
-      my.view.panY = my.view.panY + (dy * s);
+   function keyPan(dx, dy) {
+      const s = view.distance * (pref.panSpeedArrowKeys/100);
+      view.panX += (dx * s);
+      view.panY += (dy * s);
    };
-   my.keyPanLeftArrow = function() {
-      my.keyPan(0.05, 0.0);
+   function keyPanLeftArrow() {
+      keyPan(0.05, 0.0);
    };
-   my.keyPanRightArrow = function() {
-      my.keyPan(-0.05, 0.0);
+   function keyPanRightArrow() {
+      keyPan(-0.05, 0.0);
    }
-   my.keyPanUpArrow = function() {
-      my.keyPan(0, 0.05);
+   function keyPanUpArrow() {
+      keyPan(0, 0.05);
    };
-   my.keyPanDownArrow = function() {
-      my.keyPan(0, -0.05);
+   function keyPanDownArrow() {
+      keyPan(0, -0.05);
    }
 
-   my.wheelPan = function(dx0, dy0) {
-      if (my.pref.wheelZoom && my.pref.wheelAdds) {
-         var s = my.view.distance * (my.pref.wheelPanSpeed/100);
-         my.view.panX = my.view.panX + (dx * s);
-         my.view.panY = my.view.panY - (dy * s);
+   function wheelPan(dx0, dy0) {
+      if (pref.wheelZoom && pref.wheelAdds) {
+         const s = view.distance * (pref.wheelPanSpeed/100);
+         view.panX += (dx * s);
+         view.panY -= (dy * s);
       }
       // keep
    };
@@ -413,7 +413,4 @@ format([{Mod,But,Msg}|T]) ->
     wings_msg:join(wings_msg:mod_format(Mod, But, Msg), format(T));
 format([]) -> []. 
 */
-
-   return my;
-};
 

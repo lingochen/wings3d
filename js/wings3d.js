@@ -9,8 +9,9 @@
 "use strict";
 import * as Hotkey from './wings3d_hotkey';
 import * as gl from './wings3d_gl';
-import * as camera from './wings3d_camera';
-import * as contextmenu from './wings3d_menu';
+import * as Camera from './wings3d_camera';
+import * as View from './wings3d_view';
+import * as Contextmenu from './wings3d_menu';
 
 // a few polyfill
 if (NodeList.prototype[Symbol.iterator] === undefined) {
@@ -90,17 +91,17 @@ export function start(canvasID) {
     wings_color:init(),
     wings_io:init(),
 */
-   camera.createCamera();
-   camera.init();
+   //camera.createCamera();
+   Camera.init();
 //    wings_vec:init();
 
-   view.createView();
-   view.init();
+   //view.createView();
+   View.init();
 
    //contextmenu.createMenuHandler(view, "content");
-   contextmenu.init("content", "popupmenu");
-   buttonbar.createButtonBarHandler();
-   buttonbar.setup();
+   Contextmenu.init("content", "popupmenu");
+   Buttonbar.createButtonBarHandler();
+   Buttonbar.setup();
    createUi(my);
    createGuideTour(my.ui.tutor);
  /*   wings_u:caption(St),
