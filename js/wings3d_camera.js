@@ -414,3 +414,21 @@ format([{Mod,But,Msg}|T]) ->
 format([]) -> []. 
 */
 
+export {
+   init, 
+   getMouseMoveHandler,
+   aimZoom,
+   rotate,
+   wheelRotate,
+   wheelZoom,
+   zoomStepAlt,
+   zoomStep,
+   zoom,
+   pan,
+   keyPan,
+   keyPanLeftArrow,
+   keyPanRightArrow,
+   keyPanUpArrow,
+   keyPanDownArrow,
+   wheelPan,
+};

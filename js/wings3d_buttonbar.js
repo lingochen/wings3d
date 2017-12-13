@@ -36,11 +36,11 @@ function createButtonBarHandler() {
       }
    };
 
-   var init = function() {
-      _pvt.clickListener();
+   function init() {
+      clickListener();
    };
 
-   return {setup: init,
-           //_pvt: _pvt
-          };
-}
+
+export {
+   init
+};
