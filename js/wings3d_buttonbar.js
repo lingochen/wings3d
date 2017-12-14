@@ -1,24 +1,20 @@
 /*
 // button toolbar for geometry ...etc. 
 */
-"use strict";
 
-function createButtonBarHandler() {
    /*
    * variable 
    */   
-   var _pvt = {
-      buttonBarClassName: {
+const buttonBarClassName = {
          bar: ".button-bar",
          group: ".button-group",
          button: ".button",
          //link: , 
          //active: ".button-active",
-      },
-   };
+      };
 
-   _pvt.executeApi = function(e) {
-      var command = e.currentTarget.getAttribute("wings3d-api");
+   function executeApi(e) {
+      let command = e.currentTarget.getAttribute("wings3d-api");
       if (command) {
          //e.preventDefault();
          help( "wings3d api - " + command);
@@ -28,19 +24,15 @@ function createButtonBarHandler() {
       }
    };
 
-   _pvt.clickListener = function() {
-      var toolbar = document.querySelector(_pvt.buttonBarClassName.bar);
-      var buttons = toolbar.querySelectorAll(_pvt.buttonBarClassName.button);
+   function clickListener() {
+      const toolbar = document.querySelector(buttonBarClassName.bar);
+      const buttons = toolbar.querySelectorAll(buttonBarClassName.button);
       for (var i=0; i < buttons.length; i++) {
-         buttons[i].addEventListener('click', _pvt.executeApi, false);
+         buttons[i].addEventListener('click', executeApi, false);
       }
-   };
-
-   function init() {
-      clickListener();
    };
 
 
 export {
-   init
+   init as clickListener,
 };
