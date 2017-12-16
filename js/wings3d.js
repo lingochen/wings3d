@@ -12,6 +12,7 @@ import * as gl from './wings3d_gl';
 import * as Camera from './wings3d_camera';
 import * as View from './wings3d_view';
 import * as Contextmenu from './wings3d_menu';
+import * as Buttonbar from './wings3d_buttonbar';
 
 // a few polyfill
 if (NodeList.prototype[Symbol.iterator] === undefined) {
@@ -100,8 +101,8 @@ export function start(canvasID) {
 
    //contextmenu.createMenuHandler(view, "content");
    Contextmenu.init("content", "popupmenu");
-   Buttonbar.createButtonBarHandler();
-   Buttonbar.setup();
+   //Buttonbar.createButtonBarHandler();
+   Buttonbar.init();
    createUi(my);
    createGuideTour(my.ui.tutor);
  /*   wings_u:caption(St),
@@ -212,4 +213,8 @@ export function setupDialog(formID, submitData) {
          });
       }
       return form;
+   };
+
+   export {
+
    };

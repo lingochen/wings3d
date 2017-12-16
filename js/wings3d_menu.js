@@ -76,6 +76,16 @@ import * as view from './wings3d_view';
     clickListener(contextMenuLinkClassName);
 //    keyupListener();
 //    resizeListener();
+   // init menubar, bind on hover function (mouseEnter, mouseLeave, )
+      let dropdowns = document.querySelectorAll("#menubar .dropdown");
+      for (let dropdown of dropdowns) {
+         dropdown.addEventListener("mouseenter", function(ev) {
+            dropdown.classList.add("hover");
+         });
+         dropdown.addEventListener("mouseleave", function(ev) {
+            dropdown.classList.remove("hover");
+         });
+      }
   }
 
   /**
