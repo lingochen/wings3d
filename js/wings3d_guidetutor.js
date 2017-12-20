@@ -4,25 +4,28 @@
 /// later expand to our own tutorial format and editor?
 //
 */
-"use strict";
+import * as Tutor from './wings3d_interact';
+import * as UI from './wings3d_ui';
 
-function createGuideTour(tutor) {
+const tours = {};
+
+function createGuideTour() {
    //tutor.addStep();
 
-   tutor.tours.about = () => {
-      tutor.cancel();
-      tutor.addStep("Welcome", "", "<p>Wings3D4Web is a web implementation of Wings3D modeller</p>" +
+   tours.about = () => {
+      Tutor.cancel();
+      Tutor.addStep("Welcome", "", "<p>Wings3D4Web is a web implementation of Wings3D modeller</p>" +
        "<p>Use Help's interactive learning aid</p>" +
        "<p>Or goto <a target='_blank' href='http://www.wings3d.com/?page_id=87'>Wings3D documentation page</a> for more instruction.</p>",
        "helpMenu", "bottom"
       );
-      tutor.startTour();
+      Tutor.startTour();
    };
 
-   tutor.tours.introduction = () => {
-      tutor.cancel();
+   tours.introduction = () => {
+      Tutor.cancel();
       // add step into tutor
-      tutor.addStep("Welcome", "Interface Essential", `Wings 3D interface keeps the focus on modeling. It consists of 
+      Tutor.addStep("Welcome", "Interface Essential", `Wings 3D interface keeps the focus on modeling. It consists of 
          <ul>
           <li>Menubar</li>
           <li>Toolbar</li>
@@ -32,10 +35,10 @@ function createGuideTour(tutor) {
          </ul>`,
          "", "top"
       );
-      tutor.addStep("Status", "Geometry Info", "Shown information about the current Model if any",
+      Tutor.addStep("Status", "Geometry Info", "Shown information about the current Model if any",
        "statusbar", "bottom-start"
       );
-      tutor.addStep("Information", "Information Line", 
+      Tutor.addStep("Information", "Information Line", 
        `<ul>
          <li>Hovering over almost anything in Wings displays its function in the info line.</li>
          <li><mark>L, M</mark>, and <mark>R</mark> are used in the info line to indicate commands initiated by the <em>Left, Middle</em>, and <em>Right</em> mouse buttons.</li>
@@ -45,56 +48,60 @@ function createGuideTour(tutor) {
         </ul>`,
        "helpbar", "top-start"
       );
-      tutor.addStep("Undo", "undo/redo", "undo button revert the last operation",
+      Tutor.addStep("Undo", "undo/redo", "undo button revert the last operation",
        "undoEdit", "bottom"
       );
-      tutor.addStep("Redo", "undo/redo", "redo button revert the last undo operation",
+      Tutor.addStep("Redo", "undo/redo", "redo button revert the last undo operation",
        "redoEdit", "bottom"
      );
    
       // show 
-      tutor.startTour();
+      Tutor.startTour();
    };
-   tutor.tours.basicCommands = () => {
-      tutor.cancel();   // clear tours.
-      tutor.addStep("Welcome", "Zoom", "Mouse wheel scroll in Canvas will zoom in/out",
+   tours.basicCommands = () => {
+      Tutor.cancel();   // clear tours.
+      Tutor.addStep("Welcome", "Zoom", "Mouse wheel scroll in Canvas will zoom in/out",
        "", "top");
-      tutor.addExpectStep("enterCameraMode", "Camera", "Camera Mode", "Let <em>M</em>, click middle mouse button anywhere in the Canvas to enter camera mode",       
+      Tutor.addExpectStep("enterCameraMode", "Camera", "Camera Mode", "Let <em>M</em>, click middle mouse button anywhere in the Canvas to enter camera mode",       
        "", "right");
-      tutor.addExpectStep("exitCameraMode", "MoveCamera", "Move Camera", "Information Line shows you how to move camera, and you can still zoom in/out",
+      Tutor.addExpectStep("exitCameraMode", "MoveCamera", "Move Camera", "Information Line shows you how to move camera, and you can still zoom in/out",
        "helpbar", "top-start");
-      tutor.addExpectStep("contextMenu", "CreateMenu", "ContextMenu", "Let <em>R</em> click right mouse button in the Canvas empty place to bring up CreateObject Menu",
+      Tutor.addExpectStep("contextMenu", "CreateMenu", "ContextMenu", "Let <em>R</em> click right mouse button in the Canvas empty place to bring up CreateObject Menu",
        "", "left");
-      tutor.addExpectStep("createCubeForm", "CreateCubeForm", "Great Job", "Click Cube MenuItem to create Cube",
+      Tutor.addExpectStep("createCubeForm", "CreateCubeForm", "Great Job", "Click Cube MenuItem to create Cube",
        "createCube", "right");
-      tutor.addExpectStep("createCube", "CreateCube", "Cube Form", "You can adjust the cube's parameter",
+      Tutor.addExpectStep("createCube", "CreateCube", "Cube Form", "You can adjust the cube's parameter",
        "createCubeForm", "top");
-      tutor.addFaceSelectStep(1, "selectFace", "Select any Face", "Try to click/select face",
+      Tutor.addFaceSelectStep(1, "selectFace", "Select any Face", "Try to click/select face",
        "left");
-      tutor.addStep("Congratulation", "Congratulation", "<em>R</em>, Right click mouse button will bring up Face tools. Now you know the basic steps.",
+      Tutor.addStep("Congratulation", "Congratulation", "<em>R</em>, Right click mouse button will bring up Face tools. Now you know the basic steps.",
        "", "bottom");
 
        // start tour
-       tutor.startTour();
+       Tutor.startTour();
    };
-   tutor.tours.tableTutor = () => {
-      tutor.cancel();   // clear tours.
-      tutor.addExpectStep("Make a simple table", "Cube", "RMB (anywhere in geometry window) to display the primitives menu and select cube with LMB.", 
+   tours.tableTutor = () => {
+      Tutor.cancel();   // clear tours.
+      Tutor.addExpectStep("Make a simple table", "Cube", "RMB (anywhere in geometry window) to display the primitives menu and select cube with LMB.", 
       "", "top");
 
-      tutor.startTour();
+      Tutor.startTour();
    };
-   Wings3D.bindMenuItem("#about", (ev) => {
-      tutor.tours.about();
+   UI.bindMenuItem("#about", (ev) => {
+      tours.about();
    });
-   Wings3D.bindMenuItem("#introduction", (ev) => {
-      tutor.tours.introduction();
+   UI.bindMenuItem("#introduction", (ev) => {
+      tours.introduction();
    });
-   Wings3D.bindMenuItem("#basicCommands", (ev) => {
-      tutor.tours.basicCommands();
+   UI.bindMenuItem("#basicCommands", (ev) => {
+      tours.basicCommands();
    });
 
-   Wings3D.bindMenuItem("#tableTutor", (ev) => {
-      tutor.tours.tableTutor();
-   })
+   UI.bindMenuItem("#tableTutor", (ev) => {
+      tours.tableTutor();
+   });
+}
+
+export {
+   tours
 }

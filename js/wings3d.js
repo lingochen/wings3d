@@ -6,13 +6,12 @@
 //
 // 12-11-2017: convert to es6 module.
 */
-"use strict";
-import * as Hotkey from './wings3d_hotkey';
 import * as gl from './wings3d_gl';
 import * as Camera from './wings3d_camera';
 import * as View from './wings3d_view';
 import * as Contextmenu from './wings3d_menu';
 import * as Buttonbar from './wings3d_buttonbar';
+import * as Interact from './wings3d_interact';
 
 // a few polyfill
 if (NodeList.prototype[Symbol.iterator] === undefined) {
@@ -32,28 +31,6 @@ export function createMask() {  // from mozilla doc
    for (nFlag; nFlag < nLen; nMask |= arguments[nFlag] << nFlag++);
    return nMask;
 }
-
-export function bindMenuItem(id, fn, hotkey, meta) {
-      const menuItem = document.querySelector(id);
-      if (menuItem) {
-         menuItem.addEventListener('click', function(ev) {
-            let target = ev.target;
-            while ( target = target.parentNode ) {
-               if ( target.classList && target.classList.contains("hover") ) {
-                 target.classList.remove("hover");
-                 break;
-               }
-             }
-             // now run functions
-             fn(ev);
-         });
-      }
-      Hotkey.bindHotkey(id, fn);
-      if (hotkey !== undefined) {
-         Hotkey.setHotkey(id, hotkey, meta);
-
-      }
-   }
 
 // define constants
 export const GROUND_GRID_SIZE = 1;
@@ -103,8 +80,8 @@ export function start(canvasID) {
    Contextmenu.init("content", "popupmenu");
    //Buttonbar.createButtonBarHandler();
    Buttonbar.init();
-   createUi(my);
-   createGuideTour(my.ui.tutor);
+   Interact.init();
+   createGuideTour();
  /*   wings_u:caption(St),
     wings_file:init_autosave(),
     wings_pb:start_link(Frame),
