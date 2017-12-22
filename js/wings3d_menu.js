@@ -1,6 +1,7 @@
 
 
-import * as view from './wings3d_view';
+import * as UI from './wings3d_ui';
+import * as View from './wings3d_view';
   
   //////////////////////////////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////////////
@@ -34,25 +35,6 @@ import * as view from './wings3d_view';
     return false;
   };
 
-  /**
-   * Get's exact position of event.
-   * 
-   * @param {Object} e The event passed in
-   * @return {Object} Returns the x and y position
-   */
-  function getPosition(e) {
-   const pos = {x: 0, y: 0};
-    
-    if (e.pageX || e.pageY) {
-      pos.x = e.pageX;
-      pos.y = e.pageY;
-    } else if (e.clientX || e.clientY) {
-      pos.x = e.clientX + document.body.scrollLeft + document.documentElement.scrollLeft;
-      pos.y = e.clientY + document.body.scrollTop + document.documentElement.scrollTop;
-    }
-
-    return pos;
-  }
 
   //////////////////////////////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////////////
@@ -88,23 +70,35 @@ import * as view from './wings3d_view';
       }
   }
 
+
   /**
    * Listens for contextmenu events.
    */
-  function contextListener(className) {
+function contextListener(className) {
+    let createObjectContextMenu = {menu: document.querySelector('#context-menu')};
+    function getContextMenu(ev) {
+      let popupMenu = View.current().getContextMenu();
+      if (popupMenu && popupMenu.menu) {
+         return popupMenu;
+      } else {
+         // return default create object menu
+         return createObjectContextMenu;
+      }
+   }; 
+
     document.addEventListener( "contextmenu", function(e) {
-      var canvasInContext = clickInsideElement( e, className );
+      let  canvasInContext = clickInsideElement( e, className );
 
       if ( canvasInContext ) {
         e.preventDefault();
-        contextMenu = view.getContextMenu(e);
-        positionDom(contextMenu.menu, getPosition(e));
+        contextMenu = getContextMenu(e);
+        UI.positionDom(contextMenu.menu, UI.getPosition(e));
         toggleMenuOn();
       } else {
         toggleMenuOff();
       }
     }, false);
-  }
+};
 
   /**
    * Listens for click events.
@@ -165,30 +159,6 @@ import * as view from './wings3d_view';
     }
   }
 
-  /**
-   * Positions the menu properly. If outside the windows, tried to move backin.
-   * 
-   * @param {Object} e The event
-   */
-   function positionDom(element, mousePosition) {
-      var elementWidth = element.offsetWidth + 4;
-      var elementHeight = element.offsetHeight + 4;
-
-      var windowWidth = window.innerWidth;
-      var windowHeight = window.innerHeight;
-
-      if ( (windowWidth - mousePosition.x) < elementWidth ) {
-         element.style.left = windowWidth - elementWidth + "px";
-      } else {
-         element.style.left = mousePosition.x + "px";
-      }
-
-      if ( (windowHeight - mousePosition.y) < elementHeight ) {
-         element.style.top = windowHeight - elementHeight + "px";
-      } else {
-         element.style.top = mousePosition.y + "px";
-      }
-  };
 
   /**
    * Dummy action function that logs an action when a menu item link is clicked
@@ -198,7 +168,7 @@ import * as view from './wings3d_view';
   function menuItemListener( link, ev ) {
     toggleMenuOff();
     help( "wings3d api - " + link.getAttribute("wings3d-api"));
-    //Wings3D.callApi(link.getAttribute("wings3d-api", getPosition(ev)));
+    //Wings3D.callApi(link.getAttribute("wings3d-api", UI.getPosition(ev)));
   }
   /**
    * Run the app.
@@ -206,6 +176,4 @@ import * as view from './wings3d_view';
 
 export {
    init,
-   getPosition,
-   positionDom,
 }

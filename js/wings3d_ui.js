@@ -91,10 +91,55 @@ function placement(targetId, placement, bubble) {
       }
 };
 
+  /**
+   * Get's exact position of event.
+   * 
+   * @param {Object} e The event passed in
+   * @return {Object} Returns the x and y position
+   */
+  function getPosition(e) {
+   const pos = {x: 0, y: 0};
+    
+    if (e.pageX || e.pageY) {
+      pos.x = e.pageX;
+      pos.y = e.pageY;
+    } else if (e.clientX || e.clientY) {
+      pos.x = e.clientX + document.body.scrollLeft + document.documentElement.scrollLeft;
+      pos.y = e.clientY + document.body.scrollTop + document.documentElement.scrollTop;
+    }
+
+    return pos;
+  }
+  /**
+   * Positions the menu properly. If outside the windows, tried to move backin.
+   * 
+   * @param {Object} e The event
+   */
+  function positionDom(element, mousePosition) {
+   var elementWidth = element.offsetWidth + 4;
+   var elementHeight = element.offsetHeight + 4;
+
+   var windowWidth = window.innerWidth;
+   var windowHeight = window.innerHeight;
+
+   if ( (windowWidth - mousePosition.x) < elementWidth ) {
+      element.style.left = windowWidth - elementWidth + "px";
+   } else {
+      element.style.left = mousePosition.x + "px";
+   }
+
+   if ( (windowHeight - mousePosition.y) < elementHeight ) {
+      element.style.top = windowHeight - elementHeight + "px";
+   } else {
+      element.style.top = mousePosition.y + "px";
+   }
+};
 
 
 export {
    getArrow,
    placement,
+   getPosition,
+   positionDom,
    bindMenuItem,
 }

@@ -416,6 +416,8 @@ format([]) -> [].
 
 export {
    init, 
+   pref, 
+   view,
    getMouseMoveHandler,
    aimZoom,
    rotate,

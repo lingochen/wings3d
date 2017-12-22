@@ -3,25 +3,383 @@
 //
 // Original Erlang Version: Bjorn Gustavsson
 */
-"use strict";
+
+import * as UI from './wings3d_ui';
+import * as Render from './wings3d_render';
+import * as Camera from './wings3d_camera';
+import * as gl from '.wings3d_gl';
+
+
+// 
+// editing mode management
+//
+const mode = {             // private variable
+   face: new FaceMadsor, 
+   edge: new EdgeMadsor,
+   vertex: new VertexMadsor,
+   body: new BodyMadsor,
+   current: null,
+};
+mode.current = mode.face;
+mode.face.setWorld(world);
+mode.edge.setWorld(world);
+mode.vertex.setWorld(world);
+mode.body.setWorld(world);
+
+
+function toggleMode(mode) {
+   let button = document.getElementById('toggle'+mode+'Mode');
+   if (button) {
+      button.checked = true;
+   }
+}
+function toggleVertexMode() {
+   // change current mode to 
+   if (mode.current !== mode.vertex) {
+      mode.current.toggleFunc(mode.vertex);
+      mode.current = mode.vertex;
+      toggleMode('Vertex');
+      Render.needToRedraw();
+   }
+};
+
+function toggleFaceMode() {
+   if (mode.current !== mode.face) {
+      mode.current.toggleFunc(mode.face);
+      mode.current = mode.face;
+      toggleMode('Face');
+      Render.needToRedraw();
+   }
+};
+
+function toggleEdgeMode() {
+   if (mode.current !== mode.edge) {
+      mode.current.toggleFunc(mode.edge);
+      mode.current = mode.edge;
+      toggleMode('Edge');
+      Render.needToRedraw();
+   }
+};
+
+function toggleBodyMode() {
+   if (mode.current !== mode.body) {
+      mode.current.toggleFunc(mode.body);
+      mode.current = mode.body;
+      toggleMode('Body');
+      Render.needToRedraw();
+   }
+};
+
+function restoreVertexMode(snapshots) {
+   if (mode.current !== mode.vertex) {
+      mode.current.restoreMode(mode.vertex, snapshots);
+      mode.current = mode.vertex;
+      toggleMode('Vertex');
+      Render.needToRedraw();
+   } else {
+      // bad state. should always be in other mode. 
+   }
+};
+
+function restoreFaceMode(snapshots) {
+   if (mode.current !== mode.face) {
+      mode.current.restoreMode(mode.face, snapshots);
+      mode.current = mode.face;
+      toggleMode('Face');
+      Render.needToRedraw();
+   } else {
+      // bad state. should always be in other mode. 
+   }
+};
+
+function restoreEdgeMode(snapshots) {
+   if (mode.current !== mode.edge) {
+      mode.current.restoreMode(mode.edge, snapshots);
+      mode.current = mode.edge;
+      toggleMode('Edge');
+      Render.needToRedraw();
+   } else {
+      // bad state. should always be in other mode. 
+   }
+};
+
+function restoreBodyMode(snapshots) {
+   if (mode.current !== mode.body) {
+      mode.current.restoreMode(mode.body, snapshots);
+      mode.current = mode.body;
+      toggleMode('Body');
+      Render.needToRedraw();
+   } else {
+      // bad state. should always be in other mode. 
+   }
+};
+
+function currentMode() {
+   return mode.current;
+}
+//- End of editing Mode ----------
+
+//
+// world objects management
+//
+const world = []; // private var
+function putIntoWorld(mesh) {
+   // write point to alert windows.
+   /*var triangleSize = mesh.faces.reduce( function(acc, element) {
+      return acc + element.numberOfVertex - 2;
+      }, 0);
+   var str = "Mesh:" + mesh.faces.length + "," + triangleSize + "{\n";
+   mesh.faces.forEach(function(poly, index, arry){
+      str += "face: [\n";
+      poly.eachVertex(function(_vert){
+         var vert = _vert.vertex;
+         str += "[" + vert[0] + "," + vert[1] + "," + vert[2] + "],\n";
+      });
+      str += "},\n";
+   });
+   geometryStatus(str);*/
+   //
+   var model = new PreviewCage(mesh);
+   //
+   return my.addToWorld(model);
+};
+
+function addToWorld(model) {
+   world.push( model );
+   Render.needToRedraw();
+   return model;
+}
+
+function removeFromWorld(previewCage) {
+   var index = _pvt.world.indexOf(previewCage);
+   if (index >= 0) {
+      _pvt.world.splice(index, 1);
+      Render.needToRedraw();
+   }
+};
+function getWorld() {
+   return world;
+}
+//-- End of World objects management -------------------------
+
+//
+// mouse handling
+//
+let lastPick = null;
+
+function rayPick(ray) {
+   let pick = null;
+   for (let model of world) {
+      const newPick = model.rayPick(ray);
+      if (newPick !== null) {
+         if ((pick === null) || (pick.t > newPick.t)) {
+            pick = newPick;
+         }
+      }
+   }
+   if (pick !== null) {
+      mode.current.setPreview(pick.model);
+      //if (_pvt.lastPick !== null && _pvt.lastPick.model !== pick.model) {
+      //   _pvt.lastPick.model.setCurrentSelect(null);
+      //}
+      // now set current edge again.
+      lastPick = pick;
+      let intersect = vec3.create();
+      vec3.scaleAndAdd(intersect, ray.origin, ray.direction, pick.t);
+      mode.current.setCurrent(pick.edge, intersect, pick.center);
+      Render.needToRedraw();
+   } else {
+      if (lastPick !== null) {
+         // no current selection.
+         mode.current.setCurrent(null);
+         Render.needToRedraw();
+      }
+   }
+   // now the currentPick will be the next lastPick.
+   lastPick = pick;
+};
+
+let dragMode = null;
+function selectStart() {
+   if (lastPick !== null) {
+      dragMode = mode.current.selectStart(lastPick.model);
+      Render.needToRedraw();
+   }
+};
+
+function selectDrag() {
+   if ((dragMode !== null)) {// &&
+       if ((lastPick !== null)) {
+         dragMode.dragSelect(lastPick.model);
+         Render.needToRedraw();
+      }
+   }
+}
+
+function selectFinish() {
+   if (dragMode !== null) {
+      undoQueue(dragMode.finish());
+      dragMode = null;
+   }
+}
+
+const handler = {camera: null, mousemove: null};
+function canvasHandleMouseDown(ev) {
+   if (ev.button == 0) {
+      if (handler.camera !== null) {
+         handler.camera.commit(my);
+         handler.camera = null;
+         help('L:Select   M:Start Camera   R:Show Menu   [Alt]+R:Tweak menu');      
+      } else if (handler.mousemove !== null) {
+         handler.mousemove.commit(my);
+         handler.mousemove = null;
+      } else {
+         //e.stopImmediatePropagation();
+         // ask view to select current hilite if any.
+         selectStart();
+      }
+   }
+};
+
+function canvasHandleMouseEnter(ev) {
+   if (handler.camera !== null) {
+      help('L:Accept   M:Drag to Pan  R:Cancel/Restore to View   Move mouse to tumble');
+   } else {
+      help('L:Select   M:Start Camera   R:Show Menu   [Alt]+R:Tweak menu');
+   }
+};
+
+function canvasHandleMouseLeave(ev) {
+   selectFinish();       // we can't caputre mouseup when mouse leave, so force to finish the selection.
+};
+
+// event handling, switching state if needs to be
+function canvasHandleMouseUp(ev) {
+   if (ev.button == 0) {
+      selectFinish();
+   } else if (ev.button == 1) { // check for middle button down
+      if (handler.camera === null) {
+         ev.stopImmediatePropagation();
+         // tell tutor step, we are in camera mode
+         Wings3D.log("enterCameraMode",  Camera);
+         // let camera handle the mouse event until it quit.
+         handler.camera = Camera.getMouseMoveHandler();
+         help('L:Accept   M:Drag to Pan  R:Cancel/Restore to View   Move mouse to tumble');
+         // disable mouse cursor
+         //document.body.style.cursor = 'none';
+      } 
+   }
+};
+
+function canvasHandleMouseMove(e) {
+   if (handler.camera !== null) {
+      handler.camera.handleMouseMove(e);
+   } else if (handler.mousemove !== null) {
+      handler.mousemove.handleMouseMove(e, Camera.view);
+      Render.needToRedraw();
+   } else {
+      // handle pick selection
+      var viewport = gl.getViewport();
+      var winx = e.pageX - e.currentTarget.offsetLeft;
+      var winy = (viewport[3]+1) - (e.pageY - e.currentTarget.offsetTop);   // y is upside-down
+      // yes, sometimes mouse coordinate is outside of the viewport. firefox is larger than width, height.
+      if (winx < 0) { winx = 0; }
+      if (winx > viewport[2]) { winx = viewport[2];}
+      if (winy < 0) { winy = 0; }
+      if (winy > viewport[3]) { winy = viewport[3];}
+
+      var mat = loadMatrices(false);
+      var ptNear = gl.unProject(winx, winy, 0.0, mat.modelView, mat.projection);
+      var ptFar = gl.unProject(winx, winy, 1.0, mat.modelView, mat.projection);
+
+      vec3.sub(ptFar, ptFar, ptNear);
+      vec3.normalize(ptFar, ptFar);
+      var ray = {origin: ptNear, direction: ptFar};
+      //geometryStatus("mouse position: " + ptNear[0] + ", " + ptNear[1] + "," + ptNear[2] + ", <br />"+ ptFar[0] + ", " + ptFar[1] + ", " + ptFar[2]);
+      rayPick(ray);
+      // selectDrag if left button mousedown
+      selectDrag();
+   }
+};
+
+// contextMenu, mouse right click.
+function canvasHandleContextMenu(ev) {
+   if (handler.camera !== null || handler.mousemove !== null) {
+      // prevent propagation.
+      ev.preventDefault();
+      ev.stopImmediatePropagation();      // prevent document's contextmenu popup
+      if (handler.camera !== null) {
+         handler.camera.cancel();
+         handler.camera = null;
+         help('L:Select   M:Start Camera   R:Show Menu   [Alt]+R:Tweak menu');
+      } else {
+         handler.mousemove.cancel();
+         handler.mousemove = null;
+         Render.needToRedraw();
+      }
+      return false;
+   }
+   // let wings3d_contextmenu handle the event.
+};
+
+// handling in reverse order. the newest one will handle the event. (should be at most 2 handler)
+function attachHandlerMouseMove(handler) {
+   // should we make sure _pvt.handler.mousemove is null?
+   handler.mousemove = handler;
+};
+
+function canvasHandleWheel(e) {
+   // adjusting to scroll pixels, inspiration from facebook's estimate.
+   var px = e.deltaX, py = e.deltaY, pz = e.deltaZ;
+   if ((px || py || pz) && e.deltaMode) {
+      var scale = 360;        // page scaler
+      if (e.deltaMode == 1) {
+         scale = 18;          // line scaler, should be line height
+      }
+      px *= scale;
+      py *= scale;
+      pz *= scale;
+   }
+   
+   // asks camera to zoomIn/Out.
+   Camera.zoomStep(py);
+};
+
+//-- end of mouse handling-----------------------------------------------
+
+// 
+// context menu handling
+//
+
+
+// -- end of context menu handling
+
+export {
+   init,
+   toggleVertexMode,
+   toggleFaceMode,
+   toggleEdgeMode,
+   toggleBodyMode,
+   restoreVertexMode,
+   restoreFaceMode,
+   restoreEdgeMode,
+   restoreBodyMode,
+   currentMode,
+   // world state
+   putIntoWorld,
+   removeFromWorld,
+   getWorld,
+   // mouse handler
+   //rayPick,
+   attachHandlerMouseMove,
+}; 
+
+//
+
+
 
 function createView(gl) {
-   var my = {};
-   var _pvt = { world: [],
-                handler: {camera: null, mousemove: null},
-                faceMode: new FaceMadsor, 
-                edgeMode: new EdgeMadsor,
-                vertexMode: new VertexMadsor,
-                bodyMode: new BodyMadsor,
-                currentMode: null,
-                currentMouseHandler: null};
-   _pvt.currentMode = _pvt.faceMode;
-   _pvt.faceMode.setWorld(_pvt.world);
-   _pvt.edgeMode.setWorld(_pvt.world);
-   _pvt.vertexMode.setWorld(_pvt.world);
-   _pvt.bodyMode.setWorld(_pvt.world);
-   _pvt.curretMouseHandler = _pvt;
-      
+   // init menu
    const selectionMenu = [ {id: '#deselect', fn: 'resetSelection', hotKey: ' '},
                          {id: '#more', fn: 'moreSelection', hotKey: '+'},
                          {id: '#less', fn: 'lessSelection', hotKey: '-'},
@@ -31,111 +389,29 @@ function createView(gl) {
                          {id: '#adjacent', fn: 'adjacentSelection'}
                         ];
    for (let select of selectionMenu) {
-      Wings3D.bindMenuItem(select.id, function(ev) {
+      UI.bindMenuItem(select.id, function(ev) {
          const command = new EditCommandSimple(select.fn);
-         if(command.doIt(_pvt.currentMode)) {
+         if(command.doIt(mode.current)) {
             my.undoQueue( command );
-            my.renderWorld.needToRedraw();
+            Render.needToRedraw();
          }
       }, select.hotKey, select.meta);
    }
 
-   function toggleMode(mode) {
-      let button = document.getElementById('toggle'+mode+'Mode');
-      if (button) {
-         button.checked = true;
-      }
-   }
-   _pvt.toggleVertexMode = function() {
-      // change current mode to 
-      if (_pvt.currentMode !== _pvt.vertexMode) {
-         _pvt.currentMode.toggleFunc(_pvt.vertexMode);
-         _pvt.currentMode = _pvt.vertexMode;
-         toggleMode('Vertex');
-         my.renderWorld.needToRedraw();
-      }
-   };
+   my.init = function(gl) {
+      my.Render.init(gl, my.drawWorld);
 
-   _pvt.toggleFaceMode = function() {
-      if (_pvt.currentMode !== _pvt.faceMode) {
-         _pvt.currentMode.toggleFunc(_pvt.faceMode);
-         _pvt.currentMode = _pvt.faceMode;
-         toggleMode('Face');
-         my.renderWorld.needToRedraw();
-      }
-   };
+     // capture click mouse event.
+     Wings3D.gl.canvas.addEventListener("mouseenter", _pvt.canvasHandleMouseEnter, false);
+     Wings3D.gl.canvas.addEventListener("mousedown", _pvt.canvasHandleMouseDown, false); 
+     Wings3D.gl.canvas.addEventListener("mouseup", _pvt.canvasHandleMouseUp, false);
+     Wings3D.gl.canvas.addEventListener("mouseleave", _pvt.canvasHandleMouseLeave, false);
+     Wings3D.gl.canvas.addEventListener("mousemove", _pvt.canvasHandleMouseMove, false);
+     Wings3D.gl.canvas.addEventListener("wheel", _pvt.canvasHandleWheel, false);
+     Wings3D.gl.canvas.addEventListener("contextmenu", _pvt.canvasHandleContextMenu, false);
+  };
 
-   _pvt.toggleEdgeMode = function() {
-      if (_pvt.currentMode !== _pvt.edgeMode) {
-         _pvt.currentMode.toggleFunc(_pvt.edgeMode);
-         _pvt.currentMode = _pvt.edgeMode;
-         toggleMode('Edge');
-         my.renderWorld.needToRedraw();
-      }
-   };
 
-   _pvt.toggleBodyMode = function() {
-      if (_pvt.currentMode !== _pvt.bodyMode) {
-         _pvt.currentMode.toggleFunc(_pvt.bodyMode);
-         _pvt.currentMode = _pvt.bodyMode;
-         toggleMode('Body');
-         my.renderWorld.needToRedraw();
-      }
-   };
-
-   _pvt.restoreVertexMode = function(snapshots) {
-      if (_pvt.currentMode !== _pvt.vertexMode) {
-         _pvt.currentMode.restoreMode(_pvt.vertexMode, snapshots);
-         _pvt.currentMode = _pvt.vertexMode;
-         toggleMode('Vertex');
-         my.renderWorld.needToRedraw();
-      } else {
-         // bad state. should always be in other mode. 
-      }
-   };
-
-   _pvt.restoreFaceMode = function(snapshots) {
-      if (_pvt.currentMode !== _pvt.faceMode) {
-         _pvt.currentMode.restoreMode(_pvt.faceMode, snapshots);
-         _pvt.currentMode = _pvt.faceMode;
-         toggleMode('Face');
-         my.renderWorld.needToRedraw();
-      } else {
-         // bad state. should always be in other mode. 
-      }
-   };
-
-   _pvt.restoreEdgeMode = function(snapshots) {
-      if (_pvt.currentMode !== _pvt.edgeMode) {
-         _pvt.currentMode.restoreMode(_pvt.edgeMode, snapshots);
-         _pvt.currentMode = _pvt.edgeMode;
-         toggleMode('Edge');
-         my.renderWorld.needToRedraw();
-      } else {
-         // bad state. should always be in other mode. 
-      }
-   };
-
-   _pvt.restoreBodyMode = function(snapshots) {
-      if (_pvt.currentMode !== _pvt.bodyMode) {
-         _pvt.currentMode.restoreMode(_pvt.bodyMode, snapshots);
-         _pvt.currentMode = _pvt.bodyMode;
-         toggleMode('Body');
-         my.renderWorld.needToRedraw();
-      } else {
-         // bad state. should always be in other mode. 
-      }
-   };
-
-   Wings3D.apiExport.toggleVertexMode = _pvt.toggleVertexMode;
-   Wings3D.apiExport.toggleFaceMode = _pvt.toggleFaceMode;
-   Wings3D.apiExport.toggleEdgeMode = _pvt.toggleEdgeMode;
-   Wings3D.apiExport.toggleBodyMode = _pvt.toggleBodyMode;
-   Wings3D.apiExport.restoreVertexMode = _pvt.restoreVertexMode;
-   Wings3D.apiExport.restoreFaceMode = _pvt.restoreFaceMode;
-   Wings3D.apiExport.restoreEdgeMode = _pvt.restoreEdgeMode;
-   Wings3D.apiExport.restoreBodyMode = _pvt.restoreBodyMode;
-   Wings3D.apiExport.currentMode = function() { return _pvt.currentMode; };
 
    my.loadMatrices = function(includeLights) {
       var projection = my.projection(mat4.create()); // passed identity matrix.
@@ -189,24 +465,11 @@ function createView(gl) {
       return {useScentLights: useSceneLights, modelView: Wings3D.gl.modelView};
    };
 
-   my.init = function(gl) {
-       my.renderWorld.init(gl, my.drawWorld);
-
-      // capture click mouse event.
-      Wings3D.gl.canvas.addEventListener("mouseenter", _pvt.canvasHandleMouseEnter, false);
-      Wings3D.gl.canvas.addEventListener("mousedown", _pvt.canvasHandleMouseDown, false); 
-      Wings3D.gl.canvas.addEventListener("mouseup", _pvt.canvasHandleMouseUp, false);
-      Wings3D.gl.canvas.addEventListener("mouseleave", _pvt.canvasHandleMouseLeave, false);
-      Wings3D.gl.canvas.addEventListener("mousemove", _pvt.canvasHandleMouseMove, false);
-      Wings3D.gl.canvas.addEventListener("wheel", _pvt.canvasHandleWheel, false);
-      Wings3D.gl.canvas.addEventListener("contextmenu", _pvt.canvasHandleContextMenu, false);
-   };
-
    my.drawWorld = function(gl) {
       if (_pvt.world.length > 0) {
          gl.polygonOffset(1.0, 1.0);          // Set the polygon offset
          gl.enable(gl.POLYGON_OFFSET_FILL);
-         _pvt.currentMode.previewShader(gl);
+         mode.current.previewShader(gl);
          _pvt.world.forEach(function(model, _index, _array){
             gl.bindTransform();
             model.draw(gl);
@@ -218,248 +481,22 @@ function createView(gl) {
          gl.enable(gl.BLEND);
          gl.blendFunc(gl.SRC_COLOR, gl.DST_COLOR);
          // draw Current Select Mode (vertex, edge, or face)
-         _pvt.currentMode.draw(gl);
+         mode.current.draw(gl);
          gl.disable(gl.BLEND);
       }
    }
 
    my.render = function(gl) {
-      my.renderWorld.render(gl, my.drawWorld);
+      Render.render(gl, drawWorld);
    };
 
-   my.putIntoWorld = function(mesh) {
-      // write point to alert windows.
-      /*var triangleSize = mesh.faces.reduce( function(acc, element) {
-         return acc + element.numberOfVertex - 2;
-         }, 0);
-      var str = "Mesh:" + mesh.faces.length + "," + triangleSize + "{\n";
-      mesh.faces.forEach(function(poly, index, arry){
-         str += "face: [\n";
-         poly.eachVertex(function(_vert){
-            var vert = _vert.vertex;
-            str += "[" + vert[0] + "," + vert[1] + "," + vert[2] + "],\n";
-         });
-         str += "},\n";
-      });
-      geometryStatus(str);*/
-      //
-      var model = new PreviewCage(mesh);
-      //
-      return my.addToWorld(model);
-   };
-
-   my.addToWorld = function(model) {
-      _pvt.world.push( model );
-      my.renderWorld.needToRedraw();
-      return model;
-   }
-
-   my.removeFromWorld = function(previewCage) {
-      var index = _pvt.world.indexOf(previewCage);
-      if (index >= 0) {
-         _pvt.world.splice(index, 1);
-         my.renderWorld.needToRedraw();
-      }
-   };
-   Wings3D.apiExport.putIntoWorld = my.putIntoWorld;
-   Wings3D.apiExport.removeFromWorld = my.removeFromWorld;
-   Wings3D.apiExport.getWorld = function() { return _pvt.world; };
-   
-   _pvt.lastPick = null;
-
-   my.rayPick = function(ray) {
-      var pick = null;
-      for (var i =0; i < _pvt.world.length; ++i) {
-         var newPick = _pvt.world[i].rayPick(ray);
-         if (newPick !== null) {
-            if ((pick === null) || (pick.t > newPick.t)) {
-               pick = newPick;
-            }
-         }
-      }
-      if (pick !== null) {
-         _pvt.currentMode.setPreview(pick.model);
-         //if (_pvt.lastPick !== null && _pvt.lastPick.model !== pick.model) {
-         //   _pvt.lastPick.model.setCurrentSelect(null);
-         //}
-         // now set current edge again.
-         _pvt.lastPick = pick;
-         var intersect = vec3.create();
-         vec3.scaleAndAdd(intersect, ray.origin, ray.direction, pick.t);
-         _pvt.currentMode.setCurrent(pick.edge, intersect, pick.center);
-         my.renderWorld.needToRedraw();
-      } else {
-         if (_pvt.lastPick !== null) {
-            // no current selection.
-            _pvt.currentMode.setCurrent(null);
-            my.renderWorld.needToRedraw();
-         }
-      }
-      // now the currentPick will be the next lastPick.
-      _pvt.lastPick = pick;
-   };
-
-   _pvt.dragMode = null;
-
-   _pvt.selectStart = function() {
-      if (_pvt.lastPick !== null) {
-         _pvt.dragMode = _pvt.currentMode.selectStart(_pvt.lastPick.model);
-         my.renderWorld.needToRedraw();
-      }
-   };
-
-   _pvt.selectDrag = function() {
-      if ((_pvt.dragMode !== null) ){// &&
-          if ((_pvt.lastPick !== null)) {
-         _pvt.dragMode.dragSelect(_pvt.lastPick.model);
-         my.renderWorld.needToRedraw();
-      } }
-   }
-
-   _pvt.selectFinish = function() {
-      if (_pvt.dragMode !== null) {
-         my.undoQueue(_pvt.dragMode.finish());
-         _pvt.dragMode = null;
-      }
-   }
-
-   _pvt.canvasHandleMouseDown = function(ev) {
-      if (ev.button == 0) {
-         if (_pvt.handler.camera !== null) {
-            _pvt.handler.camera.commit(my);
-            _pvt.handler.camera = null;
-            help('L:Select   M:Start Camera   R:Show Menu   [Alt]+R:Tweak menu');      
-         } else if (_pvt.handler.mousemove !== null) {
-            _pvt.handler.mousemove.commit(my);
-            _pvt.handler.mousemove = null;
-         } else {
-            //e.stopImmediatePropagation();
-            // ask view to select current hilite if any.
-            _pvt.selectStart();
-         }
-      }
-   };
-
-   _pvt.canvasHandleMouseEnter = function(ev) {
-      if (_pvt.handler.camera !== null) {
-         help('L:Accept   M:Drag to Pan  R:Cancel/Restore to View   Move mouse to tumble');
-      } else {
-         help('L:Select   M:Start Camera   R:Show Menu   [Alt]+R:Tweak menu');
-      }
-   };
-
-   _pvt.canvasHandleMouseLeave = function(ev) {
-      _pvt.selectFinish();       // we can't caputre mouseup when mouse leave, so force to finish the selection.
-   };
-
-   // event handling, switching state if needs to be
-   _pvt.canvasHandleMouseUp = function(ev) {
-      if (ev.button == 0) {
-         _pvt.selectFinish();
-      } else if (ev.button == 1) { // check for middle button down
-         if (_pvt.handler.camera === null) {
-            ev.stopImmediatePropagation();
-            // tell tutor step, we are in camera mode
-            Wings3D.log("enterCameraMode",  Wings3D.cam);
-            // let camera handle the mouse event until it quit.
-            _pvt.handler.camera = Wings3D.cam.getMouseMoveHandler();
-            help('L:Accept   M:Drag to Pan  R:Cancel/Restore to View   Move mouse to tumble');
-            // disable mouse cursor
-            //document.body.style.cursor = 'none';
-         } 
-      }
-   };
-
-   _pvt.canvasHandleMouseMove = function(e) {
-      if (_pvt.handler.camera !== null) {
-         _pvt.handler.camera.handleMouseMove(e);
-      } else if (_pvt.handler.mousemove !== null) {
-         _pvt.handler.mousemove.handleMouseMove(e, Wings3D.cam.view);
-         my.renderWorld.needToRedraw();
-      } else {
-         // handle pick selection
-         var viewport = Wings3D.gl.getViewport();
-         var winx = e.pageX - e.currentTarget.offsetLeft;
-         var winy = (viewport[3]+1) - (e.pageY - e.currentTarget.offsetTop);   // y is upside-down
-         // yes, sometimes mouse coordinate is outside of the viewport. firefox is larger than width, height.
-         if (winx < 0) { winx = 0; }
-         if (winx > viewport[2]) { winx = viewport[2];}
-         if (winy < 0) { winy = 0; }
-         if (winy > viewport[3]) { winy = viewport[3];}
-
-         var mat = my.loadMatrices(false);
-         var ptNear = Wings3D.gl.unProject(winx, winy, 0.0, mat.modelView, mat.projection);
-         var ptFar = Wings3D.gl.unProject(winx, winy, 1.0, mat.modelView, mat.projection);
-
-         vec3.sub(ptFar, ptFar, ptNear);
-         vec3.normalize(ptFar, ptFar);
-         var ray = {origin: ptNear, direction: ptFar};
-         //geometryStatus("mouse position: " + ptNear[0] + ", " + ptNear[1] + "," + ptNear[2] + ", <br />"+ ptFar[0] + ", " + ptFar[1] + ", " + ptFar[2]);
-         my.rayPick(ray);
-         // selectDrag if left button mousedown
-         _pvt.selectDrag();
-      }
-   };
-
-   // contextMenu, mouse right click.
-   _pvt.canvasHandleContextMenu = function(ev) {
-      if (_pvt.handler.camera !== null || _pvt.handler.mousemove !== null) {
-         // prevent propagation.
-         ev.preventDefault();
-         ev.stopImmediatePropagation();      // prevent document's contextmenu popup
-         if (_pvt.handler.camera !== null) {
-            _pvt.handler.camera.cancel();
-            _pvt.handler.camera = null;
-            help('L:Select   M:Start Camera   R:Show Menu   [Alt]+R:Tweak menu');
-         } else {
-            _pvt.handler.mousemove.cancel();
-            _pvt.handler.mousemove = null;
-            my.renderWorld.needToRedraw();
-         }
-         return false;
-      }
-      // let wings3d_contextmenu handle the event.
-   };
-
-   // handling in reverse order. the newest one will handle the event. (should be at most 2 handler)
-   my.attachHandlerMouseMove = function(handler) {
-      // should we make sure _pvt.handler.mousemove is null?
-      _pvt.handler.mousemove = handler;
-   };
-   
-   _pvt.canvasHandleWheel = function(e) {
-      // adjusting to scroll pixels, inspiration from facebook's estimate.
-      var px = e.deltaX, py = e.deltaY, pz = e.deltaZ;
-      if ((px || py || pz) && e.deltaMode) {
-         var scale = 360;        // page scaler
-         if (e.deltaMode == 1) {
-            scale = 18;          // line scaler, should be line height
-         }
-         px *= scale;
-         py *= scale;
-         pz *= scale;
-      }
-      
-      // asks camera to zoomIn/Out.
-      Wings3D.cam.zoomStep(py);
-   };
 
    
-   var contextMenuClassName = "context-menu";
-   var contextMenuItemClassName = ".context-menu__item";
-   _pvt.contextMenu = {menu: document.querySelector("#context-menu")};
-   _pvt.contextMenu.menuItems = _pvt.contextMenu.menu.querySelectorAll(".context-menu__item");
 
-   my.getContextMenu = function(ev) {
-      // 
-      var contextMenu = _pvt.currentMode.getContextMenu();
-      if (contextMenu && contextMenu.menu) {
-         return contextMenu;
-      } else {
-         // return default
-         return _pvt.contextMenu;
-      }
-   };
+
+
+   
+
 
    _pvt.undo = {queue: [], current: -1};
    // undo queueCombo, convenient functions
@@ -477,20 +514,20 @@ function createView(gl) {
       // now push the new command back
       _pvt.undo.queue.push(editCommand);
       _pvt.undo.current++;
-      my.renderWorld.needToRedraw();
+      my.Render.needToRedraw();
    }
 
    my.redoEdit = function() {
       if ( (_pvt.undo.queue.length-1) > _pvt.undo.current) {
-         _pvt.undo.queue[++_pvt.undo.current].doIt(_pvt.currentMode);
-         my.renderWorld.needToRedraw();
+         _pvt.undo.queue[++_pvt.undo.current].doIt(mode.current);
+         my.Render.needToRedraw();
       }
    }
 
    my.undoEdit = function() {
       if (_pvt.undo.current >= 0) {
-         _pvt.undo.queue[_pvt.undo.current--].undo(_pvt.currentMode);
-         my.renderWorld.needToRedraw();
+         _pvt.undo.queue[_pvt.undo.current--].undo(mode.current);
+         my.Render.needToRedraw();
       }
    }
    Wings3D.apiExport.redoEdit = my.redoEdit;
@@ -557,7 +594,7 @@ function createView(gl) {
    };
    my.theme = my.nativeTheme;
    console.log("Workspace init successful");
-   my.renderWorld = createRenderWorld();
+   Render = createRenderWorld();
    my.wavefront_obj = new WavefrontObjImportExporter;
    return my;
 };
