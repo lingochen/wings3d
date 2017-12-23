@@ -7,8 +7,6 @@
 "use strict";
 
 function createRenderWorld() {
-   var my = {};
-   var _pvt = {};    // should we export private functions?
 
    // my.shader = initShaders();
    // wings_pref:set_default(multisample, true), <- why set default here? shouldn't bunch of defaults set together?

@@ -5,9 +5,74 @@
 */
 
 import * as UI from './wings3d_ui';
-import * as Render from './wings3d_render';
+import * as Renderer from './wings3d_render';
 import * as Camera from './wings3d_camera';
 import * as gl from '.wings3d_gl';
+
+
+// 
+// pref and theme
+//
+   // init Prop
+   const prop = {
+      showEdges: true,
+      showBackfaces: true,
+      showNormals: false,
+      showBB: true,
+      showBBCenter: true,
+      showColors: true,
+      showMaterials: true,
+      showTextures: true,
+      showNormalMaps: true,
+      showWireBackfaces: false,
+      showGroundplane: true,
+      showCamImagePlane: false,
+      showAxes: true,
+      constrainAxes: true,
+      clipPlane: false,
+      orthogonalView: false,
+      numberOfLights: 1,
+      activeShader: 1,
+      filterTexture: true,
+      frameDisregardsMirror: false,
+      useSceneLights: false,
+      forceOrthoAlongAxis: false,
+      workmode: true,
+      //wireFramedObjects: gb_sets:empty(),
+      //currentView: DEFAULT_VIEW,   // goes to camera
+      allowRotation: true,
+      allowInfoText: true,
+      miniAxis: true
+   };
+const nativeTheme = {
+       activeVectorColor: [0.0, 1.0, 0.0],
+       clipPlaneColor: [0.8, 0.3, 0.0],
+       consoleColor: [1.0, 1.0, 1.0],
+       consoleTextColor: [0.0, 0.0, 0.0],
+       defaultAxis: [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]],
+       edgeColor: [0.0, 0.0, 0.0],
+       gridColor: [0.3, 0.3, 0.3],
+       hardEdgeColor: [1.0, 0.5, 0.0],
+       infoBackgroundColor: [0.38, 0.38, 0.38, 0.5],
+       infoColor: [1.0, 1.0, 1.0],
+       infoLineBg: [0.33131360000000004, 0.4, 0.0],
+       infoLineText: [1.0, 1.0, 1.0],
+       maskedVertexColor: [0.5, 1.0, 0.0, 0.8],
+       materialDefault: [0.7898538076923077, 0.8133333333333334, 0.6940444444444445],
+       normalVectorColor: [0.0, 1.0, 0.0],
+       sculptMagnetColor: [0.0, 0.0, 1.0, 0.1],
+       selectedColor: [0.65, 0.0, 0.0],
+       selectedHlite: [0.7, 0.7, 0.0],
+       tweakMagnetColor: [0.0, 0.0, 1.0, 0.06],
+       tweakVectorColor: [1.0, 0.5, 0.0],
+       unselectedHlite: [0.0, 0.65, 0.0],
+       vertexColor: [0.0, 0.0, 0.0],
+       color: [[0.7, 0.0, 0.1], [0.37210077142857145, 0.82, 0.0], [0.0, 0.3, 0.8]],
+       negColor: [[0.8, 0.8, 0.8], [0.8, 0.8, 0.8], [0.8, 0.8, 0.8]]
+   };
+let theme = nativeTheme;
+
+//--  end of pref and theme --------------------------------------------------------------------------
 
 
 // 
@@ -39,7 +104,7 @@ function toggleVertexMode() {
       mode.current.toggleFunc(mode.vertex);
       mode.current = mode.vertex;
       toggleMode('Vertex');
-      Render.needToRedraw();
+      Renderer.needToRedraw();
    }
 };
 
@@ -48,7 +113,7 @@ function toggleFaceMode() {
       mode.current.toggleFunc(mode.face);
       mode.current = mode.face;
       toggleMode('Face');
-      Render.needToRedraw();
+      Renderer.needToRedraw();
    }
 };
 
@@ -57,7 +122,7 @@ function toggleEdgeMode() {
       mode.current.toggleFunc(mode.edge);
       mode.current = mode.edge;
       toggleMode('Edge');
-      Render.needToRedraw();
+      Renderer.needToRedraw();
    }
 };
 
@@ -66,7 +131,7 @@ function toggleBodyMode() {
       mode.current.toggleFunc(mode.body);
       mode.current = mode.body;
       toggleMode('Body');
-      Render.needToRedraw();
+      Renderer.needToRedraw();
    }
 };
 
@@ -75,7 +140,7 @@ function restoreVertexMode(snapshots) {
       mode.current.restoreMode(mode.vertex, snapshots);
       mode.current = mode.vertex;
       toggleMode('Vertex');
-      Render.needToRedraw();
+      Renderer.needToRedraw();
    } else {
       // bad state. should always be in other mode. 
    }
@@ -86,7 +151,7 @@ function restoreFaceMode(snapshots) {
       mode.current.restoreMode(mode.face, snapshots);
       mode.current = mode.face;
       toggleMode('Face');
-      Render.needToRedraw();
+      Renderer.needToRedraw();
    } else {
       // bad state. should always be in other mode. 
    }
@@ -97,7 +162,7 @@ function restoreEdgeMode(snapshots) {
       mode.current.restoreMode(mode.edge, snapshots);
       mode.current = mode.edge;
       toggleMode('Edge');
-      Render.needToRedraw();
+      Renderer.needToRedraw();
    } else {
       // bad state. should always be in other mode. 
    }
@@ -108,7 +173,7 @@ function restoreBodyMode(snapshots) {
       mode.current.restoreMode(mode.body, snapshots);
       mode.current = mode.body;
       toggleMode('Body');
-      Render.needToRedraw();
+      Renderer.needToRedraw();
    } else {
       // bad state. should always be in other mode. 
    }
@@ -141,20 +206,20 @@ function putIntoWorld(mesh) {
    //
    var model = new PreviewCage(mesh);
    //
-   return my.addToWorld(model);
+   return addToWorld(model);
 };
 
 function addToWorld(model) {
    world.push( model );
-   Render.needToRedraw();
+   Renderer.needToRedraw();
    return model;
 }
 
 function removeFromWorld(previewCage) {
-   var index = _pvt.world.indexOf(previewCage);
+   var index = world.indexOf(previewCage);
    if (index >= 0) {
-      _pvt.world.splice(index, 1);
-      Render.needToRedraw();
+      world.splice(index, 1);
+      Renderer.needToRedraw();
    }
 };
 function getWorld() {
@@ -179,20 +244,20 @@ function rayPick(ray) {
    }
    if (pick !== null) {
       mode.current.setPreview(pick.model);
-      //if (_pvt.lastPick !== null && _pvt.lastPick.model !== pick.model) {
-      //   _pvt.lastPick.model.setCurrentSelect(null);
+      //if (lastPick !== null && lastPick.model !== pick.model) {
+      //   lastPick.model.setCurrentSelect(null);
       //}
       // now set current edge again.
       lastPick = pick;
       let intersect = vec3.create();
       vec3.scaleAndAdd(intersect, ray.origin, ray.direction, pick.t);
       mode.current.setCurrent(pick.edge, intersect, pick.center);
-      Render.needToRedraw();
+      Renderer.needToRedraw();
    } else {
       if (lastPick !== null) {
          // no current selection.
          mode.current.setCurrent(null);
-         Render.needToRedraw();
+         Renderer.needToRedraw();
       }
    }
    // now the currentPick will be the next lastPick.
@@ -203,7 +268,7 @@ let dragMode = null;
 function selectStart() {
    if (lastPick !== null) {
       dragMode = mode.current.selectStart(lastPick.model);
-      Render.needToRedraw();
+      Renderer.needToRedraw();
    }
 };
 
@@ -211,7 +276,7 @@ function selectDrag() {
    if ((dragMode !== null)) {// &&
        if ((lastPick !== null)) {
          dragMode.dragSelect(lastPick.model);
-         Render.needToRedraw();
+         Renderer.needToRedraw();
       }
    }
 }
@@ -276,7 +341,7 @@ function canvasHandleMouseMove(e) {
       handler.camera.handleMouseMove(e);
    } else if (handler.mousemove !== null) {
       handler.mousemove.handleMouseMove(e, Camera.view);
-      Render.needToRedraw();
+      Renderer.needToRedraw();
    } else {
       // handle pick selection
       var viewport = gl.getViewport();
@@ -315,7 +380,7 @@ function canvasHandleContextMenu(ev) {
       } else {
          handler.mousemove.cancel();
          handler.mousemove = null;
-         Render.needToRedraw();
+         Renderer.needToRedraw();
       }
       return false;
    }
@@ -324,7 +389,7 @@ function canvasHandleContextMenu(ev) {
 
 // handling in reverse order. the newest one will handle the event. (should be at most 2 handler)
 function attachHandlerMouseMove(handler) {
-   // should we make sure _pvt.handler.mousemove is null?
+   // should we make sure handler.mousemove is null?
    handler.mousemove = handler;
 };
 
@@ -348,13 +413,169 @@ function canvasHandleWheel(e) {
 //-- end of mouse handling-----------------------------------------------
 
 // 
-// context menu handling
+// undo/redo handling
 //
+const undo = {queue: [], current: -1};
+// undo queueCombo, convenient functions
+function undoQueueCombo(editCommands) {
+   // wrap the array in a combo
+   const combo = new EditCommandCombo(editCommands);
+   undoQueue( combo );
+};
+// undo queue
+function undoQueue(editCommand) {
+   if ( (undo.queue.length-1) > undo.current ) {
+      // remove branch not taken
+      undo.queue.length = undo.current+1;
+   }
+   // now push the new command back
+   undo.queue.push(editCommand);
+   undo.current++;
+   Renderer.needToRedraw();
+};
+
+function redoEdit() {
+   if ( (undo.queue.length-1) > undo.current) {
+      undo.queue[++undo.current].doIt(mode.current);
+      Renderer.needToRedraw();
+   }
+};
+
+function undoEdit() {
+   if (undo.current >= 0) {
+      undo.queue[undo.current--].undo(mode.current);
+      Renderer.needToRedraw();
+   }
+};
+// -- end of undo/redo handling ----------------------------------------------------------------------------------
+
+//
+// world rendering and utility functions
+//
+function loadMatrices(includeLights) {
+   let proj = projection(mat4.create()); // passed identity matrix.
+   let tmm = modelView(includeLights);
+   return { projection: proj, modelView: tmm.modelView, useSceneLights: tmm.useSceneLights };
+};
+
+//projection() ->
+//     OP0 = gl:getDoublev(?GL_PROJECTION_MATRIX),
+//     projection(e3d_transform:init(list_to_tuple(OP0))).
+function projection(In) {
+   const size = gl.getViewport();
+   const aspect = (size[2]-size[0]) / (size[3]-size[1]);
+   const view = Camera.view;
+   const ortho = view.orthogonalView;
+   if (!ortho && view.alongAxis) {
+      ortho = prop.force_ortho_along_axis;
+   }
+   var tp = mat4.create();
+   if (ortho) {
+      const sz = view.distance * Math.tan(view.fov * Math.PI  / 180 / 2);
+      mat4.ortho(tp, -sz * aspect, sz * aspect, -sz, sz, view.zNear, view.zFar);      
+   } else {
+      mat4.perspective(tp, view.fov, aspect, view.zNear, view.zFar);
+   }
+
+   mat4.mul(gl.projection, In, tp);
+   return gl.projection;
+};
+
+function modelView(includeLights = false) {
+   const view = Camera.view;
+
+   let useSceneLights = false;
+   if (includeLights) {
+      useSceneLights = prop.useSceneLights; // && Wings3D.light.anyEnabledLights();
+      if (!useSceneLights) {
+         //Wings3D.light.cameraLights();
+      }
+   }
+
+   // fromTranslation, identity * vec3. modelView rest.
+   mat4.fromTranslation(gl.modelView, vec3.fromValues(view.panX, view.panY, -view.distance));
+   mat4.rotateX(gl.modelView, gl.modelView, view.elevation * Math.PI / 180);
+   mat4.rotateY(gl.modelView, gl.modelView, view.azimuth * Math.PI / 180);
+   mat4.translate(gl.modelView, gl.modelView, view.origin);
+
+   if (useSceneLights) {
+      //Wings3D.light.globalLights();
+   }
+   return {useScentLights: useSceneLights, modelView: gl.modelView};
+};
+
+function drawWorld(gl) {
+   if (world.length > 0) {
+      gl.polygonOffset(1.0, 1.0);          // Set the polygon offset
+      gl.enable(gl.POLYGON_OFFSET_FILL);
+      mode.current.previewShader(gl);
+      world.forEach(function(model, _index, _array){
+         gl.bindTransform();
+         model.draw(gl);
+      });
+      gl.disableShader();
+      gl.disable(gl.POLYGON_OFFSET_FILL);
 
 
-// -- end of context menu handling
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.SRC_COLOR, gl.DST_COLOR);
+      // draw Current Select Mode (vertex, edge, or face)
+      mode.current.draw(gl);
+      gl.disable(gl.BLEND);
+   }
+}
+
+function render(gl) {
+   Renderer.render(gl, drawWorld);
+};
+
+//-- end of world rendering and utility functions ---------------------------------------------------------------
+
+//
+// initialization
+//
+function init() {
+   // init menu
+   const selectionMenu = [ {id: '#deselect', fn: 'resetSelection', hotKey: ' '},
+                         {id: '#more', fn: 'moreSelection', hotKey: '+'},
+                         {id: '#less', fn: 'lessSelection', hotKey: '-'},
+                         {id: '#similar', fn: 'similarSelection', hotkey: 'i'},
+                         {id: '#all', fn: 'allSelection', hotKey: 'a', meta: 'ctrl'}, 
+                         {id: '#invert', fn: 'invertSelection', hotKey: 'i', meta: 'ctrl+shift'},
+                         {id: '#adjacent', fn: 'adjacentSelection'}
+                        ];
+   for (let select of selectionMenu) {
+      UI.bindMenuItem(select.id, function(ev) {
+         const command = new EditCommandSimple(select.fn);
+         if(command.doIt(mode.current)) {
+            undoQueue( command );
+            Renderer.needToRedraw();
+         }
+      }, select.hotKey, select.meta);
+   }
+
+   // init renderer
+   Renderer.init(gl, drawWorld);
+
+   // capture click mouse event.
+   gl.canvas.addEventListener("mouseenter", canvasHandleMouseEnter, false);
+   gl.canvas.addEventListener("mousedown", canvasHandleMouseDown, false); 
+   gl.canvas.addEventListener("mouseup", canvasHandleMouseUp, false);
+   gl.canvas.addEventListener("mouseleave", canvasHandleMouseLeave, false);
+   gl.canvas.addEventListener("mousemove", canvasHandleMouseMove, false);
+   gl.canvas.addEventListener("wheel", canvasHandleWheel, false);
+   gl.canvas.addEventListener("contextmenu", canvasHandleContextMenu, false);
+   //console.log("Workspace init successful");
+
+   //wavefront_obj = new WavefrontObjImportExporter;
+};
+
 
 export {
+   // data
+   prop,
+   theme,
+   // function
    init,
    toggleVertexMode,
    toggleFaceMode,
@@ -372,229 +593,15 @@ export {
    // mouse handler
    //rayPick,
    attachHandlerMouseMove,
+   // undo/redo
+   redoEdit,
+   undoEdit,
+   undoQueue,
+   undoQueueCombo,
+   // rendering
+   loadMatrices,
+   projection,
+   modelView,
+   drawWorld,
+   render
 }; 
-
-//
-
-
-
-function createView(gl) {
-   // init menu
-   const selectionMenu = [ {id: '#deselect', fn: 'resetSelection', hotKey: ' '},
-                         {id: '#more', fn: 'moreSelection', hotKey: '+'},
-                         {id: '#less', fn: 'lessSelection', hotKey: '-'},
-                         {id: '#similar', fn: 'similarSelection', hotkey: 'i'},
-                         {id: '#all', fn: 'allSelection', hotKey: 'a', meta: 'ctrl'}, 
-                         {id: '#invert', fn: 'invertSelection', hotKey: 'i', meta: 'ctrl+shift'},
-                         {id: '#adjacent', fn: 'adjacentSelection'}
-                        ];
-   for (let select of selectionMenu) {
-      UI.bindMenuItem(select.id, function(ev) {
-         const command = new EditCommandSimple(select.fn);
-         if(command.doIt(mode.current)) {
-            my.undoQueue( command );
-            Render.needToRedraw();
-         }
-      }, select.hotKey, select.meta);
-   }
-
-   my.init = function(gl) {
-      my.Render.init(gl, my.drawWorld);
-
-     // capture click mouse event.
-     Wings3D.gl.canvas.addEventListener("mouseenter", _pvt.canvasHandleMouseEnter, false);
-     Wings3D.gl.canvas.addEventListener("mousedown", _pvt.canvasHandleMouseDown, false); 
-     Wings3D.gl.canvas.addEventListener("mouseup", _pvt.canvasHandleMouseUp, false);
-     Wings3D.gl.canvas.addEventListener("mouseleave", _pvt.canvasHandleMouseLeave, false);
-     Wings3D.gl.canvas.addEventListener("mousemove", _pvt.canvasHandleMouseMove, false);
-     Wings3D.gl.canvas.addEventListener("wheel", _pvt.canvasHandleWheel, false);
-     Wings3D.gl.canvas.addEventListener("contextmenu", _pvt.canvasHandleContextMenu, false);
-  };
-
-
-
-   my.loadMatrices = function(includeLights) {
-      var projection = my.projection(mat4.create()); // passed identity matrix.
-      var tmm = my.modelView(includeLights);
-      return { projection: projection, modelView: tmm.modelView, useSceneLights: tmm.useSceneLights };
-   };
-
-   //projection() ->
-   //     OP0 = gl:getDoublev(?GL_PROJECTION_MATRIX),
-   //     projection(e3d_transform:init(list_to_tuple(OP0))).
-   my.projection = function(In) {
-      var size = Wings3D.gl.getViewport();
-      var aspect = (size[2]-size[0]) / (size[3]-size[1]);
-      var view = Wings3D.cam.view;
-      var ortho = view.orthogonalView;
-      if (!ortho && view.alongAxis) {
-         ortho = prop.force_ortho_along_axis;
-      }
-      var tp = mat4.create();
-      if (ortho) {
-         var sz = view.distance * Math.tan(view.fov * Math.PI  / 180 / 2);
-         mat4.ortho(tp, -sz * aspect, sz * aspect, -sz, sz, view.zNear, view.zFar);      
-      } else {
-         mat4.perspective(tp, view.fov, aspect, view.zNear, view.zFar);
-      }
-
-      mat4.mul(Wings3D.gl.projection, In, tp);
-      return Wings3D.gl.projection;
-   };
-
-   my.modelView = function(includeLights = false) {
-      var view = Wings3D.cam.view;
-
-      var useSceneLights = false;
-      if (includeLights) {
-         useSceneLights = my.prop.useSceneLights; // && Wings3D.light.anyEnabledLights();
-         if (!useSceneLights) {
-            //Wings3D.light.cameraLights();
-         }
-      }
-
-      // fromTranslation, identity * vec3. modelView rest.
-      mat4.fromTranslation(Wings3D.gl.modelView, vec3.fromValues(view.panX, view.panY, -view.distance));
-      mat4.rotateX(Wings3D.gl.modelView, Wings3D.gl.modelView, view.elevation * Math.PI / 180);
-      mat4.rotateY(Wings3D.gl.modelView, Wings3D.gl.modelView, view.azimuth * Math.PI / 180);
-      mat4.translate(Wings3D.gl.modelView, Wings3D.gl.modelView, view.origin);
-
-      if (useSceneLights) {
-         //Wings3D.light.globalLights();
-      }
-      return {useScentLights: useSceneLights, modelView: Wings3D.gl.modelView};
-   };
-
-   my.drawWorld = function(gl) {
-      if (_pvt.world.length > 0) {
-         gl.polygonOffset(1.0, 1.0);          // Set the polygon offset
-         gl.enable(gl.POLYGON_OFFSET_FILL);
-         mode.current.previewShader(gl);
-         _pvt.world.forEach(function(model, _index, _array){
-            gl.bindTransform();
-            model.draw(gl);
-         });
-         gl.disableShader();
-         gl.disable(gl.POLYGON_OFFSET_FILL);
-
-
-         gl.enable(gl.BLEND);
-         gl.blendFunc(gl.SRC_COLOR, gl.DST_COLOR);
-         // draw Current Select Mode (vertex, edge, or face)
-         mode.current.draw(gl);
-         gl.disable(gl.BLEND);
-      }
-   }
-
-   my.render = function(gl) {
-      Render.render(gl, drawWorld);
-   };
-
-
-   
-
-
-
-   
-
-
-   _pvt.undo = {queue: [], current: -1};
-   // undo queueCombo, convenient functions
-   my.undoQueueCombo = function(editCommands) {
-      // wrap the array in a combo
-      const combo = new EditCommandCombo(editCommands);
-      my.undoQueue( combo );
-   };
-   // undo queue
-   my.undoQueue = function(editCommand) {
-      if ( (_pvt.undo.queue.length-1) > _pvt.undo.current ) {
-         // remove branch not taken
-         _pvt.undo.queue.length = _pvt.undo.current+1;
-      }
-      // now push the new command back
-      _pvt.undo.queue.push(editCommand);
-      _pvt.undo.current++;
-      my.Render.needToRedraw();
-   }
-
-   my.redoEdit = function() {
-      if ( (_pvt.undo.queue.length-1) > _pvt.undo.current) {
-         _pvt.undo.queue[++_pvt.undo.current].doIt(mode.current);
-         my.Render.needToRedraw();
-      }
-   }
-
-   my.undoEdit = function() {
-      if (_pvt.undo.current >= 0) {
-         _pvt.undo.queue[_pvt.undo.current--].undo(mode.current);
-         my.Render.needToRedraw();
-      }
-   }
-   Wings3D.apiExport.redoEdit = my.redoEdit;
-   Wings3D.apiExport.undoEdit = my.undoEdit;
-   Wings3D.apiExport.undoQueue = my.undoQueue;
-   Wings3D.apiExport.undoQueueCombo = my.undoQueueCombo;
-
-   // init Prop
-   my.prop = {
-      showEdges: true,
-      showBackfaces: true,
-      showNormals: false,
-      showBB: true,
-      showBBCenter: true,
-      showColors: true,
-      showMaterials: true,
-      showTextures: true,
-      showNormalMaps: true,
-      showWireBackfaces: false,
-      showGroundplane: true,
-      showCamImagePlane: false,
-      showAxes: true,
-      constrainAxes: true,
-      clipPlane: false,
-      orthogonalView: false,
-      numberOfLights: 1,
-      activeShader: 1,
-      filterTexture: true,
-      frameDisregardsMirror: false,
-      useSceneLights: false,
-      forceOrthoAlongAxis: false,
-      workmode: true,
-      //wireFramedObjects: gb_sets:empty(),
-      //currentView: DEFAULT_VIEW,   // goes to camera
-      allowRotation: true,
-      allowInfoText: true,
-      miniAxis: true
-   };
-   my.nativeTheme = {
-       activeVectorColor: [0.0, 1.0, 0.0],
-       clipPlaneColor: [0.8, 0.3, 0.0],
-       consoleColor: [1.0, 1.0, 1.0],
-       consoleTextColor: [0.0, 0.0, 0.0],
-       defaultAxis: [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]],
-       edgeColor: [0.0, 0.0, 0.0],
-       gridColor: [0.3, 0.3, 0.3],
-       hardEdgeColor: [1.0, 0.5, 0.0],
-       infoBackgroundColor: [0.38, 0.38, 0.38, 0.5],
-       infoColor: [1.0, 1.0, 1.0],
-       infoLineBg: [0.33131360000000004, 0.4, 0.0],
-       infoLineText: [1.0, 1.0, 1.0],
-       maskedVertexColor: [0.5, 1.0, 0.0, 0.8],
-       materialDefault: [0.7898538076923077, 0.8133333333333334, 0.6940444444444445],
-       normalVectorColor: [0.0, 1.0, 0.0],
-       sculptMagnetColor: [0.0, 0.0, 1.0, 0.1],
-       selectedColor: [0.65, 0.0, 0.0],
-       selectedHlite: [0.7, 0.7, 0.0],
-       tweakMagnetColor: [0.0, 0.0, 1.0, 0.06],
-       tweakVectorColor: [1.0, 0.5, 0.0],
-       unselectedHlite: [0.0, 0.65, 0.0],
-       vertexColor: [0.0, 0.0, 0.0],
-       color: [[0.7, 0.0, 0.1], [0.37210077142857145, 0.82, 0.0], [0.0, 0.3, 0.8]],
-       negColor: [[0.8, 0.8, 0.8], [0.8, 0.8, 0.8], [0.8, 0.8, 0.8]]
-   };
-   my.theme = my.nativeTheme;
-   console.log("Workspace init successful");
-   Render = createRenderWorld();
-   my.wavefront_obj = new WavefrontObjImportExporter;
-   return my;
-};

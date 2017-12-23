@@ -170,9 +170,6 @@ function contextListener(className) {
     help( "wings3d api - " + link.getAttribute("wings3d-api"));
     //Wings3D.callApi(link.getAttribute("wings3d-api", UI.getPosition(ev)));
   }
-  /**
-   * Run the app.
-   */
 
 export {
    init,

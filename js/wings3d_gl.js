@@ -5,8 +5,8 @@
 */
 "use strict";
 
+let gl = null;
 function createWebGLContext(canvasID, attrib) {
-   var gl = undefined;
    var _pvt = {currentShader: null};
 
    // initialization
@@ -311,7 +311,7 @@ function createWebGLContext(canvasID, attrib) {
 
 /**input to ShaderProgram.
  */
-var ShaderData = function() {
+const ShaderData = function() {
    this.attribute = {};
    this.uniform = {};
 };
@@ -526,3 +526,11 @@ ShaderProgram.prototype.getTypeByName = function(type) {
 	  var TEXTURE_2D_ARRAY = 0x8C1A;*/
 
 };
+
+
+export {
+   createWebGLContext,
+   gl,
+   ShaderData,
+   ShaderProgram,
+}
