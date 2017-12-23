@@ -2,6 +2,7 @@
 // Wavefront Obj Loader and Writer.
 //
 //
+import ImportExporter from "../wings3d_importexport"
 
 
 class WavefrontObjImportExporter extends ImportExporter {
@@ -110,6 +111,7 @@ class WavefrontObjImportExporter extends ImportExporter {
    }
 }
 
-//document.addEventListener('DOMContentLoaded', function() {
 
-//}, false);
+export {
+   WavefrontObjImportExporter,
+}

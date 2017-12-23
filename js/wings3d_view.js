@@ -7,7 +7,9 @@
 import * as UI from './wings3d_ui';
 import * as Renderer from './wings3d_render';
 import * as Camera from './wings3d_camera';
-import * as gl from '.wings3d_gl';
+import * as gl from './wings3d_gl';
+import * as wavefront from 'plugins/wavefront_obj'; 
+import { WavefrontObjImportExporter } from './plugins/wavefront_obj';
 
 
 // 
@@ -566,8 +568,7 @@ function init() {
    gl.canvas.addEventListener("wheel", canvasHandleWheel, false);
    gl.canvas.addEventListener("contextmenu", canvasHandleContextMenu, false);
    //console.log("Workspace init successful");
-
-   //wavefront_obj = new WavefrontObjImportExporter;
+   let wavefront = new WavefrontObjImportExporter();
 };
 
 

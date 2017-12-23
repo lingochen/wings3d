@@ -121,3 +121,7 @@ class ImportExporter {
       this.non_manifold = [];
    }
 }
+
+export {
+   ImportExporter
+}
