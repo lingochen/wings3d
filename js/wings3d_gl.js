@@ -1,6 +1,6 @@
 /*
 //
-//     Append a few utilities and convenience functions. Probably going to rename to glu?
+//     Append a few utilities and convenience functions. now to es6 module.
 //
 */
 "use strict";
