@@ -3,7 +3,7 @@
  * MADS (Modify, Add, Delete, Select) operation. 
  *
 **/
-"use strict";
+
 
 class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
    constructor(mode) {
@@ -312,3 +312,6 @@ class ToggleModeCommand extends EditCommand {
    }
 }
 
+export {
+   Madsor,
+}

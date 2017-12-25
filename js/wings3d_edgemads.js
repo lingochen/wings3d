@@ -3,7 +3,7 @@
 //
 //    
 **/
-
+import Madsor from './wings3d_mads';
 
 
 // 
@@ -369,4 +369,8 @@ class CollapseEdgeCommand extends EditCommand {
       Wings3D.apiExport.restoreEdgeMode();
       this.madsor.restoreEdge(this.collapse);
    }
+}
+
+export {
+   EdgeMadsor,
 }

@@ -3,6 +3,8 @@
 //
 //    
 **/
+import Madsor from './wings3d_mads';
+
 
 
 class VertexMadsor extends Madsor {
@@ -304,4 +306,9 @@ class VertexCollapseCommand extends EditCommand {
       Wings3D.apiExport.restoreVertexMode();
       this.madsor.undoDissolve(this.undoArray);
    }
+}
+
+
+export {
+   VertexMadsor,
 }

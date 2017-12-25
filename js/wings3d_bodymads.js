@@ -2,6 +2,9 @@
 // bodymadsor. 
 //
 
+import Madsor from './wings3d_mads';
+
+
 class BodyMadsor extends Madsor {
    constructor() {
       super('body');
@@ -361,4 +364,8 @@ class DuplicateMoveFreePositionHandler extends MoveFreePositionHandler {
       this.duplicateBodyCommand.undo();
    }
 
+}
+
+export {
+   BodyMadsor,
 }

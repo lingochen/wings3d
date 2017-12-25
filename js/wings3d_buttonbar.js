@@ -13,24 +13,24 @@ const buttonBarClassName = {
          //active: ".button-active",
       };
 
-   function executeApi(e) {
-      let command = e.currentTarget.getAttribute("wings3d-api");
-      if (command) {
-         //e.preventDefault();
-         help( "wings3d api - " + command);
-         Wings3D.callApi(command);
-      } else {
-         console.log("no wings3d-api attribute defined");
-      }
-   };
+function executeApi(e) {
+   let command = e.currentTarget.getAttribute("wings3d-api");
+   if (command) {
+      //e.preventDefault();
+      help( "wings3d api - " + command);
+      Wings3D.callApi(command);
+   } else {
+      console.log("no wings3d-api attribute defined");
+   }
+};
 
-   function clickListener() {
-      const toolbar = document.querySelector(buttonBarClassName.bar);
-      const buttons = toolbar.querySelectorAll(buttonBarClassName.button);
-      for (var i=0; i < buttons.length; i++) {
-         buttons[i].addEventListener('click', executeApi, false);
-      }
-   };
+function clickListener() {
+   const toolbar = document.querySelector(buttonBarClassName.bar);
+   const buttons = toolbar.querySelectorAll(buttonBarClassName.button);
+   for (let button of buttons) {
+      button.addEventListener('click', executeApi, false);
+   }
+};
 
 
 export {

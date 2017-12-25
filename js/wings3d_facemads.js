@@ -3,6 +3,9 @@
 //
 //    
 **/
+import Madsor from './wings3d_mads';
+
+
 
 class FaceMadsor extends Madsor {
    constructor() {
@@ -386,4 +389,9 @@ class CollapseFaceCommand extends EditCommand {
       this.madsor.undoCollapse(this.collapse);
       Wings3D.apiExport.restoreFaceMode(this.selectedFace);
    }   
+}
+
+
+export {
+   FaceMadsor,
 }
