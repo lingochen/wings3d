@@ -6,7 +6,7 @@
 //
 // 12-11-2017: convert to es6 module.
 */
-import * as gl from './wings3d_gl';
+import {createWebGLContext} from './wings3d_gl';
 import * as Camera from './wings3d_camera';
 import * as View from './wings3d_view';
 import * as Contextmenu from './wings3d_menu';
@@ -48,7 +48,7 @@ export const CAMERA_DIST = 8.0*my.GROUND_GRID_SIZE;
 export function start(canvasID) {
 
    // if we can initialize webgl context
-   gl.createWebGLContext(canvasID);
+   createWebGLContext(canvasID);
    // wings_text:init(), setting font
 
 

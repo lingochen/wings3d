@@ -15,12 +15,75 @@ import * as ShaderProg from '.wings3d_shaderprog';
 // my.shader = initShaders();
 // wings_pref:set_default(multisample, true), <- why set default here? shouldn't bunch of defaults set together?
 // initPolygonStipple(); no webgl support. shader replacement? ignore for now
+let lineProg;        // to be replaced
+let groundAxisProg;  // to be replaced
+let textProg;        // to be replaced
+
+function init(gl) {
+   redrawFlag = true;
+   gl.enable(gl.DEPTH_TEST);
+   // initialized glsl program, update data
+   // program source ShaderProg
+   // drawGrid, using LineProgram
+   // compile and link program
+   lineProg = gl.createShaderProgram(ShaderProg.uColorArray.vertexShader, ShaderProg.uColorArray.fragShader);
+
+   // compile and link program.
+   groundAxisProg = {handle: gl.compileGLSL(ShaderProg.colorArray.vertexShader, ShaderProg.colorArray.fragShader)};
+
+   // get attribute handle.
+   groundAxisProg.vertexPosition = gl.getAttribLocation(groundAxisProg.handle, "aVertexPosition");
+   groundAxisProg.vertexColor = gl.getAttribLocation(groundAxisProg.handle, "aVertexColor");
+   groundAxisProg.uPMatrix = gl.getUniformLocation(groundAxisProg.handle, "uPMatrix");
+   groundAxisProg.uMVMatrix = gl.getUniformLocation(groundAxisProg.handle, "uMVMatrix");
+
+   // compute grid and axis, and write to vbo.
+   var mat = View.loadMatrices(true);
+   var yon = computeGroundAndAxes(gl, mat.projection, mat.modelView);    
+   initMiniAxis(gl, mat.modelView);
+
+   // init simpleText.
+   // compile and link program.
+   textProg = {handle: gl.compileGLSL(ShaderProg.textArray.vertexShader, ShaderProg.textArray.fragShader)};
+
+   // get attribute handle.
+   textProg.vertexPosition = gl.getAttribLocation(textProg.handle, "aVertexPosition");
+   textProg.texCoord = gl.getAttribLocation(textProg.handle, "aTexCoord");
+   textProg.uMVMatrix = gl.getUniformLocation(textProg.handle, "uMVMatrix");
+   textProg.uPMatrix = gl.getUniformLocation(textProg.handle, "uPMatrix");
+   textProg.uTexture = gl.getUniformLocation(textProg.handle, "u_texture");
+   
+   initSimpleASCII(gl);
+
+   // render shaded object.
+   ShaderProg.cameraLight = gl.createShaderProgram(ShaderProg.cameraLight.vertex, ShaderProg.cameraLight.fragment);
+
+   ShaderProg.solidColor = gl.createShaderProgram(ShaderProg.solidColor.vertex, ShaderProg.solidColor.fragment);
+
+   ShaderProg.simplePoint = gl.createShaderProgram(ShaderProg.simplePoint.vertex, ShaderProg.simplePoint.fragment);
+
+   ShaderProg.colorPoint = gl.createShaderProgram(ShaderProg.colorPoint.vertex, ShaderProg.colorPoint.fragment);
+
+   ShaderProg.solidWireframe = gl.createShaderProgram(ShaderProg.solidWireframe.vertex, ShaderProg.solidWireframe.fragment);
+
+   ShaderProg.colorWireframe = gl.createShaderProgram(ShaderProg.colorWireframe.vertex, ShaderProg.colorWireframe.fragment);
+
+   ShaderProg.colorSolidWireframe = gl.createShaderProgram(ShaderProg.colorSolidWireframe.vertex, ShaderProg.colorSolidWireframe.fragment);
+
+   ShaderProg.selectedColorLine = gl.createShaderProgram(ShaderProg.selectedColorLine.vertex, ShaderProg.selectedColorLine.fragment);
+
+   ShaderProg.selectedColorPoint = gl.createShaderProgram(ShaderProg.selectedColorPoint.vertex, ShaderProg.selectedColorPoint.fragment);
+
+   //console.log("Render.init() success");
+};
+
+
 
 function makeVerticesForString(s) {
    var len = s.length;
    var numVertices = len * 6;
-   var positions = my.textProg.bitmapTextVBO.verticesData;
-   var texcoords = my.textProg.bitmapTextVBO.texCoordData;
+   var positions = textProg.bitmapTextVBO.verticesData;
+   var texcoords = textProg.bitmapTextVBO.texCoordData;
    var numElements = positions.length / 2;
    if (numVertices > numElements) {
       // reallocated
@@ -30,15 +93,15 @@ function makeVerticesForString(s) {
 
    var offset = 0;
    var x = 0;
-   var maxX = my.textProg.bitmapTextVBO.fontInfo.textureWidth;
-   var maxY = my.textProg.bitmapTextVBO.fontInfo.textureHeight;
+   var maxX = textProg.bitmapTextVBO.fontInfo.textureWidth;
+   var maxY = textProg.bitmapTextVBO.fontInfo.textureHeight;
    for (var ii = 0; ii < len; ++ii) {
       var letter = s[ii];
-      var glyphInfo = my.textProg.bitmapTextVBO.fontInfo.glyphInfos[letter];
+      var glyphInfo = textProg.bitmapTextVBO.fontInfo.glyphInfos[letter];
       if (glyphInfo) {
          var x2 = x + glyphInfo.width;
          var u1 = glyphInfo.x / maxX;
-         var v1 = (glyphInfo.y + my.textProg.bitmapTextVBO.fontInfo.letterHeight - 1) / maxY;
+         var v1 = (glyphInfo.y + textProg.bitmapTextVBO.fontInfo.letterHeight - 1) / maxY;
          var u2 = (glyphInfo.x + glyphInfo.width - 1) / maxX;
          var v2 = glyphInfo.y / maxY;
 
@@ -54,12 +117,12 @@ function makeVerticesForString(s) {
          texcoords[offset + 3] = v1;
 
          positions[offset + 4] = x;
-         positions[offset + 5] = my.textProg.bitmapTextVBO.fontInfo.letterHeight;
+         positions[offset + 5] = textProg.bitmapTextVBO.fontInfo.letterHeight;
          texcoords[offset + 4] = u1;
          texcoords[offset + 5] = v2;
 
          positions[offset + 6] = x;
-         positions[offset + 7] = my.textProg.bitmapTextVBO.fontInfo.letterHeight;
+         positions[offset + 7] = textProg.bitmapTextVBO.fontInfo.letterHeight;
          texcoords[offset + 6] = u1;
          texcoords[offset + 7] = v2;
 
@@ -69,51 +132,51 @@ function makeVerticesForString(s) {
          texcoords[offset + 9] = v1;
 
          positions[offset + 10] = x2;
-         positions[offset + 11] = my.textProg.bitmapTextVBO.fontInfo.letterHeight;
+         positions[offset + 11] = textProg.bitmapTextVBO.fontInfo.letterHeight;
          texcoords[offset + 10] = u2;
          texcoords[offset + 11] = v2;
 
-         x += glyphInfo.width + my.textProg.bitmapTextVBO.fontInfo.spacing;
+         x += glyphInfo.width + textProg.bitmapTextVBO.fontInfo.spacing;
          offset += 12;
       } else {
          // we don't have this character so just advance
-         x += my.textProg.bitmapTextVBO.fontInfo.spaceWidth;
+         x += textProg.bitmapTextVBO.fontInfo.spaceWidth;
       }
    }
 
    // return ArrayBufferViews for the portion of the TypedArrays
    // that were actually used.
-   my.textProg.bitmapTextVBO.verticesData = positions;
-   my.textProg.bitmapTextVBO.texCoordData = texcoords;
-   my.textProg.bitmapTextVBO.numElements = offset / 2;
+   textProg.bitmapTextVBO.verticesData = positions;
+   textProg.bitmapTextVBO.texCoordData = texcoords;
+   textProg.bitmapTextVBO.numElements = offset / 2;
 }
 // 
 function renderText(gl, x, y, color, s) {
-   gl.useProgram(my.textProg.handle);
-   gl.setBufferAndAttrib(my.textProg.bitmapTextVBO.position, my.textProg.vertexPosition, 2);
-   gl.setBufferAndAttrib(my.textProg.bitmapTextVBO.texCoord, my.textProg.texCoord, 2);
+   gl.useProgram(textProg.handle);
+   gl.setBufferAndAttrib(textProg.bitmapTextVBO.position, textProg.vertexPosition, 2);
+   gl.setBufferAndAttrib(textProg.bitmapTextVBO.texCoord, textProg.texCoord, 2);
 
    makeVerticesForString(s);
 
    // update the buffers
-   gl.bindBuffer(gl.ARRAY_BUFFER, my.textProg.bitmapTextVBO.position);
-   gl.bufferData(gl.ARRAY_BUFFER, my.textProg.bitmapTextVBO.verticesData, gl.DYNAMIC_DRAW);
-   gl.bindBuffer(gl.ARRAY_BUFFER, my.textProg.bitmapTextVBO.texCoord);
-   gl.bufferData(gl.ARRAY_BUFFER, my.textProg.bitmapTextVBO.texCoordData, gl.DYNAMIC_DRAW);
+   gl.bindBuffer(gl.ARRAY_BUFFER, textProg.bitmapTextVBO.position);
+   gl.bufferData(gl.ARRAY_BUFFER, textProg.bitmapTextVBO.verticesData, gl.DYNAMIC_DRAW);
+   gl.bindBuffer(gl.ARRAY_BUFFER, textProg.bitmapTextVBO.texCoord);
+   gl.bufferData(gl.ARRAY_BUFFER, textProg.bitmapTextVBO.texCoordData, gl.DYNAMIC_DRAW);
 
    // setup modelView
-   my.textProg.bitmapTextVBO.modelView[12] = x;
-   my.textProg.bitmapTextVBO.modelView[13] = y;
-   my.textProg.bitmapTextVBO.modelView[14] = 0.0;
+   textProg.bitmapTextVBO.modelView[12] = x;
+   textProg.bitmapTextVBO.modelView[13] = y;
+   textProg.bitmapTextVBO.modelView[14] = 0.0;
    // set uniforms
-   gl.uniformMatrix4fv(my.textProg.uPMatrix, false, my.textProg.bitmapTextVBO.projection);
-   gl.uniformMatrix4fv(my.textProg.uMVMatrix, false, my.textProg.bitmapTextVBO.modelView);
+   gl.uniformMatrix4fv(textProg.uPMatrix, false, textProg.bitmapTextVBO.projection);
+   gl.uniformMatrix4fv(textProg.uMVMatrix, false, textProg.bitmapTextVBO.modelView);
    gl.activeTexture(gl.TEXTURE0);
-   gl.bindTexture(gl.TEXTURE_2D, my.textProg.bitmapTextVBO.uTexture);
-   gl.uniform1i(my.textProg.uTexture, 0);
+   gl.bindTexture(gl.TEXTURE_2D, textProg.bitmapTextVBO.uTexture);
+   gl.uniform1i(textProg.uTexture, 0);
 
    // Draw the text.
-   gl.drawArrays(gl.TRIANGLES, 0, my.textProg.bitmapTextVBO.numElements);
+   gl.drawArrays(gl.TRIANGLES, 0, textProg.bitmapTextVBO.numElements);
 };
 
 function initSimpleASCII(gl) {
@@ -167,7 +230,7 @@ function initSimpleASCII(gl) {
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
    };   
-   my.textProg.bitmapTextVBO = {
+   textProg.bitmapTextVBO = {
       verticesData: vertices,
       texCoordData: texCoord,
       numElements: 0,
@@ -236,7 +299,7 @@ function renderASCII(gl, origin, end, c, color, viewport) {
       var x = Math.trunc((0.5*end[0]/end[3]+0.5)*(viewport[2]-20) + 10);
       var y = viewport[3] - Math.trunc((0.5*end[1]/end[3]+0.5)*(viewport[3]-16) + 7);
       //console.log("x:", x, "y:", y);
-      my.renderText(gl, x, y, color, c);
+      renderText(gl, x, y, color, c);
    }
 };
 
@@ -250,7 +313,7 @@ function renderAxisLetter(gl, zFar) {
       //gl:loadIdentity(),
       //{_,_,W,H} = ViewPort,
       //glu:ortho2D(0.0, W, H, 0.0, -1, 1);
-      mat4.ortho(my.textProg.bitmapTextVBO.projection, 0.0, viewPort[2], viewPort[3], 0.0, -1.0,  1.0);
+      mat4.ortho(textProg.bitmapTextVBO.projection, 0.0, viewPort[2], viewPort[3], 0.0, -1.0,  1.0);
       //gl:matrixMode(?GL_MODELVIEW),
       //gl:loadIdentity(),
       zFar = zFar + GROUND_GRID_SIZE;
@@ -288,7 +351,7 @@ function initMiniAxis(gl, inModelView) {
    }
    color = color.concat(arrow);
    // bindVBO
-   my.groundAxisProg.miniAxisVBO = {
+   groundAxisProg.miniAxisVBO = {
        position: gl.createBufferHandle(new Float32Array(arry)),
        color: gl.createBufferHandle(new Float32Array(color)),
        length: 3*2 + 3*4
@@ -299,29 +362,29 @@ function initMiniAxis(gl, inModelView) {
    modelView[12] = 0.11-ratio;
    modelView[13] = -1.0+0.11;
    modelView[14] = 0.0;
-   my.groundAxisProg.miniAxisVBO.modelView = modelView;
-   my.groundAxisProg.miniAxisVBO.projection = mat4.create();
-   mat4.ortho(my.groundAxisProg.miniAxisVBO.projection, -ratio, ratio, -1.0, 1.0, 0.00001,  10000000.0);
+   groundAxisProg.miniAxisVBO.modelView = modelView;
+   groundAxisProg.miniAxisVBO.projection = mat4.create();
+   mat4.ortho(groundAxisProg.miniAxisVBO.projection, -ratio, ratio, -1.0, 1.0, 0.00001,  10000000.0);
 }
 function renderMiniAxis(gl, inModelView) {
    if (View.prop.miniAxis) {
       var ratio = gl.canvas.clientWidth / gl.canvas.clientHeight;
       // set current rotation.
-      var modelView = my.groundAxisProg.miniAxisVBO.modelView;
+      var modelView = groundAxisProg.miniAxisVBO.modelView;
       mat4.copy(modelView, inModelView);
       modelView[12] = 0.11-ratio;
       modelView[13] = -1.0+0.11;
       modelView[14] = 0.0;
       // save attribute
-      var length = my.groundAxisProg.miniAxisVBO.length;
+      var length = groundAxisProg.miniAxisVBO.length;
 
       // render mini axis, use groundAxisProg
-      gl.useProgram(my.groundAxisProg.handle);
+      gl.useProgram(groundAxisProg.handle);
       // bind attribute, vertex, color, matrix
-      gl.uniformMatrix4fv(my.groundAxisProg.uPMatrix, false, my.groundAxisProg.miniAxisVBO.projection);
-      gl.uniformMatrix4fv(my.groundAxisProg.uMVMatrix, false, my.groundAxisProg.miniAxisVBO.modelView);
-      gl.setBufferAndAttrib(my.groundAxisProg.miniAxisVBO.position, my.groundAxisProg.vertexPosition);
-      gl.setBufferAndAttrib(my.groundAxisProg.miniAxisVBO.color, my.groundAxisProg.vertexColor);
+      gl.uniformMatrix4fv(groundAxisProg.uPMatrix, false, groundAxisProg.miniAxisVBO.projection);
+      gl.uniformMatrix4fv(groundAxisProg.uMVMatrix, false, groundAxisProg.miniAxisVBO.modelView);
+      gl.setBufferAndAttrib(groundAxisProg.miniAxisVBO.position, groundAxisProg.vertexPosition);
+      gl.setBufferAndAttrib(groundAxisProg.miniAxisVBO.color, groundAxisProg.vertexColor);
       // draw line segments
       gl.drawArrays(gl.LINES, 0, length);
       // pop attribute
@@ -358,13 +421,13 @@ function computeGroundAndAxes(gl, projection, modelView) {
    //console.log("gridsize " + gridSize.toString());
    var data = computeGroundGrid(gridSize, GROUND_GRID_SIZE);
    // bindVBO.
-   my.lineProg.groundGridVBO = {
+   lineProg.groundGridVBO = {
       position: gl.createBufferHandle(new Float32Array(data)),
       length: data.length/3
    };
 
    // compute Axes, bindVBO.
-   my.groundAxisProg.axisVBO = {
+   groundAxisProg.axisVBO = {
       position: gl.createBufferHandle(getAxis()),
       color: gl.createBufferHandle(getAxisColor()),
       length: 3*2*2
@@ -401,18 +464,18 @@ function renderGroundAndAxes(gl, projection, modelView) {
          // x -> gl:rotatef(90.0, 0.0, 1.0, 0.0);
          // z -> ok;
          // _ -> gl:rotatef(90.0, 1.0, 0.0, 0.0)
-      var length = my.lineProg.groundGridVBO.length;
+      var length = lineProg.groundGridVBO.length;
       if (showAxes) {
          length -= 4;            // skip the axes line
       }
       // data
       // use line segment program
-      gl.useProgram(my.lineProg.progHandle);
+      gl.useProgram(lineProg.progHandle);
       // bind attribute, vertex, color, matrix
-      gl.setBufferAndAttrib(my.lineProg.groundGridVBO.position, my.lineProg.attribute.position.loc);
-      gl.uniform4fv(my.lineProg.uniform.uColor.loc, new Float32Array([color[0], color[1], color[2], 1.0]));
-      gl.uniformMatrix4fv(my.lineProg.transform.projection, false, projection);
-      gl.uniformMatrix4fv(my.lineProg.transform.worldView, false, modelView);
+      gl.setBufferAndAttrib(lineProg.groundGridVBO.position, lineProg.attribute.position.loc);
+      gl.uniform4fv(lineProg.uniform.uColor.loc, new Float32Array([color[0], color[1], color[2], 1.0]));
+      gl.uniformMatrix4fv(lineProg.transform.projection, false, projection);
+      gl.uniformMatrix4fv(lineProg.transform.worldView, false, modelView);
       // draw line segments
       gl.drawArrays(gl.LINES, 0, length);
    }
@@ -425,14 +488,14 @@ function renderGroundAndAxes(gl, projection, modelView) {
    //}
    if (showAxes) {
       // use line segment program
-      gl.useProgram(my.groundAxisProg.handle);
+      gl.useProgram(groundAxisProg.handle);
       // bind attribute, vertex, color, matrix
-      gl.uniformMatrix4fv(my.groundAxisProg.uPMatrix, false, projection);
-      gl.uniformMatrix4fv(my.groundAxisProg.uMVMatrix, false, modelView);
-      gl.setBufferAndAttrib(my.groundAxisProg.axisVBO.position, my.groundAxisProg.vertexPosition);
-      gl.setBufferAndAttrib(my.groundAxisProg.axisVBO.color, my.groundAxisProg.vertexColor);
+      gl.uniformMatrix4fv(groundAxisProg.uPMatrix, false, projection);
+      gl.uniformMatrix4fv(groundAxisProg.uMVMatrix, false, modelView);
+      gl.setBufferAndAttrib(groundAxisProg.axisVBO.position, groundAxisProg.vertexPosition);
+      gl.setBufferAndAttrib(groundAxisProg.axisVBO.color, groundAxisProg.vertexColor);
       // draw line segment
-      gl.drawArrays(gl.LINES, 0, my.groundAxisProg.axisVBO.length);
+      gl.drawArrays(gl.LINES, 0, groundAxisProg.axisVBO.length);
    }
 
    return yon;
@@ -477,64 +540,6 @@ function render(gl, drawWorldFn) {
    }
 };
 
-function init(gl) {
-   redrawFlag = true;
-   gl.enable(gl.DEPTH_TEST);
-   // initialized glsl program, update data
-   // program source
-   var prog = ShaderProg;
-   // drawGrid, using LineProgram
-   // compile and link program
-   my.lineProg = gl.createShaderProgram(prog.uColorArray.vertexShader, prog.uColorArray.fragShader);
-
-   // compile and link program.
-   my.groundAxisProg = {handle: gl.compileGLSL(prog.colorArray.vertexShader, prog.colorArray.fragShader)};
-
-   // get attribute handle.
-   my.groundAxisProg.vertexPosition = gl.getAttribLocation(my.groundAxisProg.handle, "aVertexPosition");
-   my.groundAxisProg.vertexColor = gl.getAttribLocation(my.groundAxisProg.handle, "aVertexColor");
-   my.groundAxisProg.uPMatrix = gl.getUniformLocation(my.groundAxisProg.handle, "uPMatrix");
-   my.groundAxisProg.uMVMatrix = gl.getUniformLocation(my.groundAxisProg.handle, "uMVMatrix");
-
-   // compute grid and axis, and write to vbo.
-   var mat = View.loadMatrices(true);
-   var yon = computeGroundAndAxes(gl, mat.projection, mat.modelView);    
-   initMiniAxis(gl, mat.modelView);
-
-   // init simpleText.
-   // compile and link program.
-   my.textProg = {handle: gl.compileGLSL(prog.textArray.vertexShader, prog.textArray.fragShader)};
-
-   // get attribute handle.
-   my.textProg.vertexPosition = gl.getAttribLocation(my.textProg.handle, "aVertexPosition");
-   my.textProg.texCoord = gl.getAttribLocation(my.textProg.handle, "aTexCoord");
-   my.textProg.uMVMatrix = gl.getUniformLocation(my.textProg.handle, "uMVMatrix");
-   my.textProg.uPMatrix = gl.getUniformLocation(my.textProg.handle, "uPMatrix");
-   my.textProg.uTexture = gl.getUniformLocation(my.textProg.handle, "u_texture");
-   
-   initSimpleASCII(gl);
-
-   // render shaded object.
-   prog.cameraLight = gl.createShaderProgram(prog.cameraLight.vertex, prog.cameraLight.fragment);
-
-   prog.solidColor = gl.createShaderProgram(prog.solidColor.vertex, prog.solidColor.fragment);
-
-   prog.simplePoint = gl.createShaderProgram(prog.simplePoint.vertex, prog.simplePoint.fragment);
-
-   prog.colorPoint = gl.createShaderProgram(prog.colorPoint.vertex, prog.colorPoint.fragment);
-
-   prog.solidWireframe = gl.createShaderProgram(prog.solidWireframe.vertex, prog.solidWireframe.fragment);
-
-   prog.colorWireframe = gl.createShaderProgram(prog.colorWireframe.vertex, prog.colorWireframe.fragment);
-
-   prog.colorSolidWireframe = gl.createShaderProgram(prog.colorSolidWireframe.vertex, prog.colorSolidWireframe.fragment);
-
-   prog.selectedColorLine = gl.createShaderProgram(prog.selectedColorLine.vertex, prog.selectedColorLine.fragment);
-
-   prog.selectedColorPoint = gl.createShaderProgram(prog.selectedColorPoint.vertex, prog.selectedColorPoint.fragment);
-
-   console.log("Render.init() success");
-};
 
 
 
