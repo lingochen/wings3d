@@ -1,10 +1,9 @@
 /*
    require glmatrix
 */
-"use strict";
 
 
-var BoundingSphere = function(center, radius, polygon) {
+const BoundingSphere = function(center, radius, polygon) {
    this.center = center;
    this.radius = radius;
    this.radius2 = radius*radius;
@@ -60,4 +59,8 @@ BoundingSphere.computeSphere = function(polygon, center) {  // vec3
 BoundingSphere.create = function(polygon, center) {
    var sphere = BoundingSphere.computeSphere(polygon, center);
    return new BoundingSphere(sphere.center, sphere.radius, polygon);
+}
+
+export {
+   BoundingSphere,
 }
