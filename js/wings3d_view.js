@@ -15,8 +15,8 @@ import { WavefrontObjImportExporter } from './plugins/wavefront_obj';
 // 
 // pref and theme
 //
-   // init Prop
-   const prop = {
+// init Prop
+const prop = {
       showEdges: true,
       showBackfaces: true,
       showNormals: false,

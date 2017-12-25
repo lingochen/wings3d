@@ -5,7 +5,10 @@
 // 2) dropbox, yandex.
 // 3) google drive, microsoft onedrive, baidupan to come later.
 //
-
+import {PreviewCage, CreatePreviewCageCommand} from './wings3d_model';
+import * as UI from './wings3d_model';
+import {setupDialog} from './wings3d';
+import * as View from './wings3d_view';
 
 
 
@@ -55,7 +58,7 @@ class ImportExporter {
          a.textContent = exportMenuText;
          menuItem.appendChild(a);
          submenu.appendChild(menuItem);
-         const form = Wings3D.setupDialog('#exportFile', function(data) {
+         const form = setupDialog('#exportFile', function(data) {
             if (data['Filename']) {
                self.export(data['Filename']);
             }
@@ -72,7 +75,7 @@ class ImportExporter {
                }
                // popup dialog.
                // position then show form;
-               Wings3D.contextmenu.positionDom(form, Wings3D.contextmenu.getPosition(ev));
+               UI.positionDom(form, UI.getPosition(ev));
                form.style.display = 'block';
                form.reset();
             });
@@ -84,7 +87,7 @@ class ImportExporter {
 
 
    export(filename) {
-      const blob = this._export(Wings3D.apiExport.getWorld());
+      const blob = this._export(View.getWorld());
       saveAs(blob, filename + '.' + this.extension());
    }
 
@@ -97,14 +100,14 @@ class ImportExporter {
          const meshes = self._import(text);
          const cages = [];
          for (let mesh of meshes) {
-            let cage = Wings3D.apiExport.putIntoWorld(mesh);
+            let cage = View.putIntoWorld(mesh);
             cages.push( new CreatePreviewCageCommand(cage) );
          }
          if (cages.length > 1) {
             // combo
-            Wings3D.apiExport.undoQueueCombo( cages );
+            View.undoQueueCombo( cages );
          } else if (cages.length > 0) {
-            Wings3D.apiExport.undoQueue(cages[0]);
+            View.undoQueue(cages[0]);
          }
          // after we finisehd _reset too.
          self._reset();

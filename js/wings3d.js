@@ -152,7 +152,7 @@ export function callApi(funcParam, position) {
 };
 
    // dialog form helper
-export function setupDialog(formID, submitData) {
+function setupDialog(formID, submitData) {
       const _pvt = {submitSuccess: false};
 
       const form = document.querySelector(formID);
@@ -192,6 +192,6 @@ export function setupDialog(formID, submitData) {
       return form;
    };
 
-   export {
-
-   };
+export {
+   setupDialog,
+};

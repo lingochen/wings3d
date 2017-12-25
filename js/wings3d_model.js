@@ -7,13 +7,16 @@
 #  no worst case non linear runtimes.
 * 
 */
-"use strict"; 
+"use strict";
+import {gl} from './wings3d_gl'; 
+import * as View from './wings3d_view';
+import * as Wings3D from './wings3d';
+import {EditCommand} from './wings3d_undo';
 
 
-var PreviewCage = function(mesh) {
+const PreviewCage = function(mesh) {
    this.geometry = mesh;
    this.preview = {centroid: {}};
-   var gl = Wings3D.gl;
    this.preview.shaderData = gl.createShaderData();
    this.preview.shaderData.setUniform3fv("faceColor", [0.5, 0.5, 0.5]);
    this.preview.shaderData.setUniform3fv("selectedColor", [1.0, 0.0, 0.0]);
@@ -1994,10 +1997,16 @@ class CreatePreviewCageCommand extends EditCommand {
    }
 
    doIt() {
-      Wings3D.view.addToWorld(this.previewCage);
+      View.addToWorld(this.previewCage);
    }
 
    undo() {
-      Wings3D.view.removeFromWorld(this.previewCage);
+      View.removeFromWorld(this.previewCage);
    }
+}
+
+
+export {
+   PreviewCage,
+   CreatePreviewCageCommand,
 }
