@@ -2,8 +2,13 @@
    n cube create. Use Dialog to create the cube.
    todo: to support spherize, rotate, translate, putOnGround. currently only numberOfCuts and size is working.
 */
+import * as UI from './wings3d_ui';
+import * as Wings3D from './wings3d';
+import * as View from './wings3d_view';
+
+
+let createCube, createCubeDialog;
 document.addEventListener('DOMContentLoaded', function() {
-   var api = Wings3D.apiExport;
    var _pvt = {previewCage: null};
    _pvt.cubeParams = { numberOfCut: 1,
                        spherize: false,
@@ -28,7 +33,7 @@ document.addEventListener('DOMContentLoaded', function() {
    _pvt.cancelPreview = function() {
       if (_pvt.previewCage !== null) {
          // remove it from world.
-         api.removeFromWorld(_pvt.previewCage);
+         View.removeFromWorld(_pvt.previewCage);
          _pvt.previewCage.freeBuffer();
          _pvt.previewCage = null;
       } 
@@ -37,14 +42,14 @@ document.addEventListener('DOMContentLoaded', function() {
    _pvt.updatePreview = function() {
       if (_pvt.previewCage !== null) {
          // remove it from world.
-         api.removeFromWorld(_pvt.previewCage);
+         View.removeFromWorld(_pvt.previewCage);
          _pvt.previewCage.freeBuffer();
          _pvt.previewCage = null;
       }
-      api.createCube(_pvt.cubeParams.size, _pvt.cubeParams.numberOfCut, _pvt.cubeParams.translate, _pvt.cubeParams.rotate, _pvt.cubeParams.putOnGround);
+      createCube(_pvt.cubeParams.size, _pvt.cubeParams.numberOfCut, _pvt.cubeParams.translate, _pvt.cubeParams.rotate, _pvt.cubeParams.putOnGround);
    };
 
-   api.createCube = api.createCube || function(size, numberOfCut, translate, rotate, onGround) {
+   createCube = function(size, numberOfCut, translate, rotate, onGround) {
       // create, one 
       var mesh = new WingedTopology;
       var map = {};
@@ -161,7 +166,7 @@ document.addEventListener('DOMContentLoaded', function() {
                  dest[2]-stepX[up][2]-stepZ[rt][2]+offset[2]];
       });
 
-      _pvt.previewCage = api.putIntoWorld(mesh);
+      _pvt.previewCage = View.putIntoWorld(mesh);
    }; 
 
    // insert a hidden form into document
@@ -224,7 +229,7 @@ document.addEventListener('DOMContentLoaded', function() {
          ev.preventDefault();
          form.style.display = 'none';
          // accept previewCage to the world
-         api.undoQueue( new CreatePreviewCageCommand(_pvt.previewCage) );
+         View.undoQueue( new CreatePreviewCageCommand(_pvt.previewCage) );
          _pvt.previewCage.name = "Cube" + (_pvt.creationCount+1);
          Wings3D.log("createCube", _pvt.previewCage);
          _pvt.previewCage = null;
@@ -308,18 +313,18 @@ document.addEventListener('DOMContentLoaded', function() {
    if (menuItem) {
       menuItem.addEventListener("click", function(ev) {
          // get exact position,
-         var position = Wings3D.contextmenu.getPosition(ev);
+         var position = UI.getPosition(ev);
          // run createCube dialog
-         api.createCubeDialog(position);
+         createCubeDialog(position);
          Wings3D.log("createCubeForm");
       })
    }
    //
-   api.createCubeDialog = api.createCubeDialog || function(mousePosition) {
+   createCubeDialog = function(mousePosition) {
       // display dialog, shown at the mouse location.
       form.style.display = 'block';
       // position form.
-      Wings3D.contextmenu.positionDom(form, mousePosition);
+      UI.positionDom(form, mousePosition);
       _pvt.previewCage = null;
       // reset dialog value.
       form.reset();
@@ -327,3 +332,9 @@ document.addEventListener('DOMContentLoaded', function() {
       // _pvt.cubeParams.spherize = form.querySelector('input[name="sphere"]:checked').value;
    };
 }, false);
+
+
+export {
+   createCube,
+   createCubeDialog,
+}
