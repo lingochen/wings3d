@@ -205,3 +205,10 @@ class SimilarVertex extends SimilarGeometry {
       }
    }
 }
+
+export {
+   SimilarFace,
+//   SimilarGeometry,
+   SimilarVertex,
+   SimilarWingedEdge
+}

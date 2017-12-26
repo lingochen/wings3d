@@ -2,7 +2,6 @@
  *  abstract EditCommand class for undo, redo handling. also MouseMoveHandler class.
  * 
  */
-"use strict";
 
 class MouseMoveHandler {
 
@@ -74,4 +73,12 @@ class EditCommandCombo extends EditCommand {
          this.editCommands[i].undo();
       }
    }
+}
+
+
+export {
+   MouseMoveHandler,
+   EditCommand,
+   EditCommandCombo,
+   EditCommandSimple
 }
