@@ -12,15 +12,17 @@ const buttonBarClassName = {
          //link: , 
          //active: ".button-active",
       };
+const id2Func = new Map;
 
-function executeApi(e) {
-   let command = e.currentTarget.getAttribute("wings3d-api");
+function executeApi(ev) {
+   let command = ev.currentTarget.id;
    if (command) {
       //e.preventDefault();
-      help( "wings3d api - " + command);
-      Wings3D.callApi(command);
+      help( "wings3d - " + command);
+      const func = id2Func.get(command);
+      func(ev);
    } else {
-      console.log("no wings3d-api attribute defined");
+      console.log("no id attribute defined");
    }
 };
 
@@ -35,4 +37,5 @@ function clickListener() {
 
 export {
    init as clickListener,
+   id2Func,
 };

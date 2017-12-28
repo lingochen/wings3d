@@ -13,28 +13,61 @@ import * as Contextmenu from './wings3d_menu';
 import * as Buttonbar from './wings3d_buttonbar';
 import * as Interact from './wings3d_interact';
 
+//
+// onReady. 
+//
+let isDocumentReady = false;
+let deferredList = [];
+function onReady(fn) {
+   // If the DOM is already ready
+   if ( isDocumentReady ) {
+      fn();
+   } else {
+     // Add the function to the wait list
+     deferredList.push( fn );
+   }
+   return this;
+ };
+// The ready event handler and self cleanup method
+let _canvasID = '';
+function onLoad(ev) {
+	document.removeEventListener( "DOMContentLoaded", onLoad);
+	//window.removeEventListener( "load", onLoad);
+	init(_canvasID);
+}
+function start(canvas) {
+   // automatically start
+   if (document.readyState != 'loading'){
+      init(canvas);
+   } else {
+      _canvasID = canvas;
+      document.addEventListener('DOMContentLoaded', onLoad );
+   }
+}
+
+//-- end of ready --------------
+
 // a few polyfill
 if (NodeList.prototype[Symbol.iterator] === undefined) {
    NodeList.prototype[Symbol.iterator] = Array.prototype[Symbol.iterator]; // Microsoft Edge not support yet.
 }
 
 
-
 // log, does nothing for now, debug build?
-export function log(command, value) {
+function log(command, value) {
       
 };
 
 // utility function
-export function createMask() {  // from mozilla doc
+function createMask() {  // from mozilla doc
    let nMask = 0, nFlag = 0, nLen = arguments.length > 32 ? 32 : arguments.length;
    for (nFlag; nFlag < nLen; nMask |= arguments[nFlag] << nFlag++);
    return nMask;
 }
 
 // define constants
-export const GROUND_GRID_SIZE = 1;
-export const CAMERA_DIST = 8.0*my.GROUND_GRID_SIZE;
+const GROUND_GRID_SIZE = 1;
+const CAMERA_DIST = 8.0*my.GROUND_GRID_SIZE;
 
 //make_geom_window(GeomGL, St) ->
     //Props = initial_properties(),        
@@ -45,13 +78,16 @@ export const CAMERA_DIST = 8.0*my.GROUND_GRID_SIZE;
     //..wings_frame:register_win(GeomGL, geom, [top, {title, geom_title(geom)}]),
     //GeomGL.
 
-export function start(canvasID) {
-
-   // if we can initialize webgl context
+function init(canvasID) {
+   // webgl context, handle first, and available.
    createWebGLContext(canvasID);
    // wings_text:init(), setting font
+   isDocumentReady = true;
 
-
+   // now run through the defered list.
+   for (let fn of deferredList) {
+      fn();
+   }
 /*    wings_pref:init(),
     wings_hotkey:set_default(),
     wings_pref:load(),
@@ -133,23 +169,6 @@ export function start_halt() {
                 }
    };*/
 
-   // used this api only, for plugin export.
-export const apiExport = {};
-
-export function callApi(funcParam, position) {
-      var funArray = funcParam.split(',');
-      var func = funArray[0];
-      var param;
-      if (funArray.length > 1) {
-         param = funArray[1];
-      }
-      if (my.apiExport[func]) {
-         my.apiExport[func](position, param);
-         help(func + " called");
-      } else {
-         console.log("api function: " + func + " does not exist.");
-      }
-};
 
    // dialog form helper
 function setupDialog(formID, submitData) {
@@ -192,6 +211,13 @@ function setupDialog(formID, submitData) {
       return form;
    };
 
+
 export {
    setupDialog,
+   onReady,
+   start,
+   log,
+   createMask,
+   GROUND_GRID_SIZE,
+   CAMERA_DIST
 };

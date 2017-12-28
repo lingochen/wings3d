@@ -4,6 +4,8 @@
 */
 import * as Hotkey from './wings3d_hotkey';
 
+
+
 function bindMenuItem(id, fn, hotkey, meta) {
    const menuItem = document.querySelector(id);
    if (menuItem) {
@@ -25,6 +27,7 @@ function bindMenuItem(id, fn, hotkey, meta) {
 
    }
 }
+
 
 function getArrow(placement) {
       if (placement === "bottom") {
@@ -134,6 +137,7 @@ function placement(targetId, placement, bubble) {
       element.style.top = mousePosition.y + "px";
    }
 };
+
 
 
 export {
