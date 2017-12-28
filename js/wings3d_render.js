@@ -7,7 +7,7 @@
 import {gl} from './wings3d_gl';
 import * as View from './wings3d_view';
 import * as Camera from './wings3d_camera';
-import {GROUND_GRID_SIZE0} from './wings3d';
+import {onReady, GROUND_GRID_SIZE0} from './wings3d';
 import * as ShaderProg from '.wings3d_shaderprog';
 
 
@@ -19,7 +19,7 @@ let lineProg;        // to be replaced
 let groundAxisProg;  // to be replaced
 let textProg;        // to be replaced
 
-function init(gl) {
+onReady(function() {
    redrawFlag = true;
    gl.enable(gl.DEPTH_TEST);
    // initialized glsl program, update data
@@ -75,7 +75,7 @@ function init(gl) {
    ShaderProg.selectedColorPoint = gl.createShaderProgram(ShaderProg.selectedColorPoint.vertex, ShaderProg.selectedColorPoint.fragment);
 
    //console.log("Render.init() success");
-};
+});
 
 
 

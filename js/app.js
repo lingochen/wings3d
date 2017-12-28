@@ -12,6 +12,7 @@ import "../css/bubble.css";
 // import js
 import * as Wings3D from "./wings3d"
 import './wings3d_ui';
+
 // plugins
 import "../js/plugins/cubeshape.js";
 import "../js/plugins/wavefront_obj.js";
