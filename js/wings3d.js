@@ -170,50 +170,7 @@ export function start_halt() {
    };*/
 
 
-   // dialog form helper
-function setupDialog(formID, submitData) {
-      const _pvt = {submitSuccess: false};
-
-      const form = document.querySelector(formID);
-      if (form) {
-         const submits = document.querySelectorAll(formID + ' [type="submit"]');
-         for (let submit of submits) {
-            if ('ok'.localeCompare(submit.value, 'en', {'sensitivity': 'base'}) == 0) {
-               submit.addEventListener('click', function(ev) {
-                  _pvt.submitSuccess = true;
-               });
-            } else if ('cancel'.localeCompare(submit.value, 'en', {'sensitivity': 'base'}) == 0) {
-
-            } else {
-               console.log('submit ' + submit.value + ' type not supported');
-            }
-         }
-         // 
-
-         // now handling event.
-         form.addEventListener('submit', function(ev) {
-            if (_pvt.submitSuccess) {
-               // get form's input data.
-               const elements = form.elements;
-               const obj = {};
-               for (let element of elements) {
-                  if ((element.name) && (element.value)) {  // should we check the existence of .name? no name elements automatically excludede? needs to find out.
-                     obj[element.name] = element.value;
-                  }
-               }
-               submitData(obj);     // ask function to handle value
-            }
-            // hide the dialog, prevent default.
-            ev.preventDefault();
-            form.style.display = 'none';
-         });
-      }
-      return form;
-   };
-
-
 export {
-   setupDialog,
    onReady,
    start,
    log,

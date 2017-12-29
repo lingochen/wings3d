@@ -74,7 +74,7 @@ onReady(function() {
 
    ShaderProg.selectedColorPoint = gl.createShaderProgram(ShaderProg.selectedColorPoint.vertex, ShaderProg.selectedColorPoint.fragment);
 
-   //console.log("Render.init() success");
+   console.log("Render.init() success");
 });
 
 

@@ -7,7 +7,7 @@
 //
 import {PreviewCage, CreatePreviewCageCommand} from './wings3d_model';
 import * as UI from './wings3d_model';
-import {setupDialog} from './wings3d';
+import {setupDialog} from './wings3d_ui';
 import * as View from './wings3d_view';
 
 

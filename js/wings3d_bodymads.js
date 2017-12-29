@@ -3,6 +3,9 @@
 //
 
 import Madsor from './wings3d_mads';
+import * as ShaderProg from './wings3d_shaderprog';
+import * as View from './wings3d_view';
+import * as UI from './wings3d_ui';
 
 
 class BodyMadsor extends Madsor {
@@ -13,15 +16,15 @@ class BodyMadsor extends Madsor {
       if (menuItem) {
          menuItem.addEventListener('click', function(ev) {
             const command = new DeleteBodyCommand(self.getSelected());
-            Wings3D.apiExport.undoQueue( command );
+            View.undoQueue( command );
             command.doIt(); // delete current selected.
          });
       }
       menuItem = document.querySelector('#bodyRename');
       if (menuItem) {
-         const form = Wings3D.setupDialog('#renameDialog', function(data) {
+         const form = UI.setupDialog('#renameDialog', function(data) {
             const command = new RenameBodyCommand(self.getSelected(), data);
-            Wings3D.apiExport.undoQueue( command );
+            View.undoQueue( command );
             command.doIt();   // rename
          });
          if (form) {
@@ -29,7 +32,7 @@ class BodyMadsor extends Madsor {
             const content = document.querySelector('#renameDialog div');
             menuItem.addEventListener('click', function(ev) {
                // position then show form;
-               Wings3D.contextmenu.positionDom(form, Wings3D.contextmenu.getPosition(ev));
+               UI.positionDom(form, UI.getPosition(ev));
                form.style.display = 'block';
                // remove old label
                form.reset();
@@ -58,14 +61,14 @@ class BodyMadsor extends Madsor {
          menuItem = document.querySelector('#bodyDuplicateMove' + axisName[axis]);
          if (menuItem) {
             menuItem.addEventListener("click", function(ev) {
-               Wings3D.view.attachHandlerMouseMove(new DuplicateMouseMoveAlongAxis(self, axis, self.getSelected()));
+               View.attachHandlerMouseMove(new DuplicateMouseMoveAlongAxis(self, axis, self.getSelected()));
             });
          } 
       }
       menuItem = document.querySelector('#bodyDuplicateMoveFree');
       if (menuItem) {
          menuItem.addEventListener('click', function(ev) {
-            Wings3D.view.attachHandlerMouseMove(new DuplicateMoveFreePositionHandler(self, self.getSelected()));
+            View.attachHandlerMouseMove(new DuplicateMoveFreePositionHandler(self, self.getSelected()));
          });
       }
    }
@@ -170,25 +173,25 @@ class BodyMadsor extends Madsor {
       var redoFn;
       var snapshots = [];
       if (toMadsor instanceof FaceMadsor) {
-         redoFn = Wings3D.apiExport.restoreFaceMode;
+         redoFn = View.restoreFaceMode;
          this.eachPreviewCage( function(cage) {
             snapshots.push( cage.snapshotSelection() );
             cage.changeFromBodyToFaceSelect();
          });
       } else if (toMadsor instanceof VertexMadsor) {
-         redoFn = Wings3D.apiExport.restoreVertexMode;
+         redoFn = View.restoreVertexMode;
          this.eachPreviewCage( function(cage) {
             snapshots.push( cage.snapshotSelection() );
             cage.changeFromBodyToVertexSelect();
          });
       } else {
-         redoFn = Wings3D.apiExport.restoreEdgeMode;
+         redoFn = View.restoreEdgeMode;
          this.eachPreviewCage( function(cage) {
             snapshots.push( cage.snapshotSelection() );
             cage.changeFromBodyToEdgeSelect();
          });
       }
-      Wings3D.apiExport.undoQueue(new ToggleModeCommand(redoFn, Wings3D.apiExport.restoreBodyMode, snapshots));
+      View.undoQueue(new ToggleModeCommand(redoFn, View.restoreBodyMode, snapshots));
    }
 
    restoreMode(toMadsor, snapshots) {
@@ -210,7 +213,7 @@ class BodyMadsor extends Madsor {
    draw(gl) {} // override draw
 
    previewShader(gl) {
-      gl.useShader(Wings3D.shaderProg.colorSolidWireframe);
+      gl.useShader(ShaderProg.colorSolidWireframe);
    }
 }
 
@@ -253,13 +256,13 @@ class DeleteBodyCommand extends EditCommand {
 
    doIt() {
       for (let previewCage of this.previewCages) {
-         Wings3D.view.removeFromWorld(previewCage);
+         View.removeFromWorld(previewCage);
       }
    }
 
    undo() {
       for (let previewCage of this.previewCages) {
-         Wings3D.view.addToWorld(previewCage);
+         View.addToWorld(previewCage);
       }
    }
 }
@@ -312,7 +315,7 @@ class DuplicateBodyCommand extends EditCommand {
 
    doIt() {
       for (let cage of this.duplicateCages) {
-         Wings3D.view.addToWorld(cage);
+         View.addToWorld(cage);
          cage.selectBody();
       }
       this._toggleOriginalSelected();
@@ -321,7 +324,7 @@ class DuplicateBodyCommand extends EditCommand {
    undo() {
       for (let cage of this.duplicateCages) {
          cage.selectBody();                  // deselection before out
-         Wings3D.view.removeFromWorld(cage);
+         View.removeFromWorld(cage);
       }
       this._toggleOriginalSelected();        // reselected the original
    }
