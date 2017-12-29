@@ -316,7 +316,7 @@ const ShaderData = function() {
    this.uniform = {};
 };
 
-ShaderData.attribLayout = function(attribSize=3, attribType=Wings3D.gl.FLOAT, normalized=false, stride=0, offset=0) {
+ShaderData.attribLayout = function(attribSize=3, attribType=gl.FLOAT, normalized=false, stride=0, offset=0) {
    return {size: attribSize, type: attribType, normalized: normalized, stride: stride, offset: offset};
 }
 
@@ -329,7 +329,7 @@ ShaderData.prototype.setupAttribute = function(name, layout, buffer, usage) {
 
 ShaderData.prototype.createAttribute = function(name, layout, usage) {
    if (!this.attribute[name]) {
-      var handle = Wings3D.gl.createBuffer();
+      var handle = gl.createBuffer();
       this.attribute[name] = {handle: handle,
                               byteLength: 0,
                               usage: usage,
@@ -347,7 +347,6 @@ ShaderData.prototype.createAttribute = function(name, layout, usage) {
 ShaderData.prototype.resizeAttribute = function(name, byteLength) {//, usage) {
    var attrib = this.attribute[name];
    if (attrib && attrib.byteLength != byteLength) {
-      var gl = Wings3D.gl;
       gl.bindBuffer(gl.ARRAY_BUFFER, attrib.handle);
       gl.bufferData(gl.ARRAY_BUFFER, byteLength, attrib.usage);
       attrib.byteLength = byteLength;
@@ -357,7 +356,7 @@ ShaderData.prototype.resizeAttribute = function(name, byteLength) {//, usage) {
 ShaderData.prototype.deleteAttribute = function(name) {
    var attribute = this.attribute[name];
    if (attribute) {
-      Wings3D.gl.deleteBuffer(attribute.handle);
+      gl.deleteBuffer(attribute.handle);
       this.attribute[name] = null;
    }
 };
@@ -376,7 +375,6 @@ ShaderData.prototype.freeAllAttributes = function() {
 ShaderData.prototype.uploadAttribute = function(name, byteOffset, typedArray)  {
    var attrb = this.attribute[name];
    if (attrb) {
-      var gl = Wings3D.gl;
       gl.bindBuffer(gl.ARRAY_BUFFER, attrb.handle);
       gl.bufferSubData(gl.ARRAY_BUFFER, byteOffset, typedArray);
    } else {
@@ -389,10 +387,10 @@ ShaderData.prototype.uploadAttribute = function(name, byteOffset, typedArray)  {
 // index is used for drawElement, not used for input to shaderProgram
 ShaderData.prototype.setIndex = function(index) {
    if ((typeof(this.index)!=="undefined") && (this.index !== null)) {
-      Wings3D.gl.deleteBuffer(this.index.handle);
+      gl.deleteBuffer(this.index.handle);
    }
    if (index !== null) {
-      var handle = Wings3D.gl.createBufferHandle(index, Wings3D.gl.ELEMENT_ARRAY_BUFFER);
+      var handle = gl.createBufferHandle(index, gl.ELEMENT_ARRAY_BUFFER);
       this.index = {handle: handle};
    }
 };

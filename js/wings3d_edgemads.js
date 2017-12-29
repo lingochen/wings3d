@@ -4,6 +4,9 @@
 //    
 **/
 import Madsor from './wings3d_mads';
+import * as UI from './wings3d_ui';
+import * as View from './wings3d_view';
+import * as ShaderProg from './wings3d_shaderprog';
 
 
 // 
@@ -23,7 +26,7 @@ class EdgeMadsor extends Madsor {
       // cutEdge Dialog
       let menuItem = document.querySelector('#cutAsk');
       if (menuItem) {
-         const form = Wings3D.setupDialog('#cutLineDialog', function(data) {
+         const form = UI.setupDialog('#cutLineDialog', function(data) {
             if (data['Segments']) {
                const number = parseInt(data['Segments'], 10);
                if ((number != NaN) && (number > 0) && (number < 100)) { // sane input
@@ -35,7 +38,7 @@ class EdgeMadsor extends Madsor {
             // show Form when menuItem clicked
             menuItem.addEventListener('click', function(ev) {
                // position then show form;
-               Wings3D.contextmenu.positionDom(form, Wings3D.contextmenu.getPosition(ev));
+               UI.positionDom(form, UI.getPosition(ev));
                form.style.display = 'block';
                form.reset();
             });
@@ -54,7 +57,7 @@ class EdgeMadsor extends Madsor {
          menuItem.addEventListener('click', function(ev) {
             const dissolve = self.dissolve();
             if (dissolve.count > 0) {
-               Wings3D.view.undoQueue(new DissolveEdgeCommand(self, dissolve.record));
+               View.undoQueue(new DissolveEdgeCommand(self, dissolve.record));
             } else {
                // should not happened.
             }
@@ -66,7 +69,7 @@ class EdgeMadsor extends Madsor {
          menuItem.addEventListener('click', function(ev) {
             const command = new CollapseEdgeCommand(self);
             if (command.doIt()) {
-               Wings3D.view.undoQueue(command);
+               View.undoQueue(command);
             } else {
                // should not happened.
             }
@@ -97,19 +100,19 @@ class EdgeMadsor extends Madsor {
 
    cutEdge(numberOfSegments) {
       const cutEdge = new CutEdgeCommand(this, numberOfSegments);
-      Wings3D.apiExport.undoQueue(cutEdge);
+      View.undoQueue(cutEdge);
       cutEdge.doIt();
    }
 
    cutAndConnect() {
       const cutEdge = new CutEdgeCommand(this, 2);
       cutEdge.doIt();
-      let vertexMadsor = Wings3D.apiExport.currentMode();   // assurely it vertexMode
+      let vertexMadsor = View.currentMode();   // assurely it vertexMode
       let result = vertexMadsor.connect();
       if (result) {
          const vertexConnect = new VertexConnectCommand(vertexMadsor, result);
-         Wings3D.apiExport.undoQueueCombo([cutEdge, vertexConnect]);
-         Wings3D.apiExport.restoreEdgeMode(result.wingedEdgeList);
+         View.undoQueueCombo([cutEdge, vertexConnect]);
+         View.restoreEdgeMode(result.wingedEdgeList);
       } else { // no connection possible
          cutEdge.undo();
          // post on geomoetryStatus
@@ -211,25 +214,25 @@ class EdgeMadsor extends Madsor {
       var redoFn;
       var snapshots = [];
       if (toMadsor instanceof FaceMadsor) {
-         redoFn = Wings3D.apiExport.restoreFaceMode;
+         redoFn = View.restoreFaceMode;
          this.eachPreviewCage( function(cage) {
             snapshots.push( cage.snapshotSelection() );
             cage.changeFromEdgeToFaceSelect();
          });
       } else if (toMadsor instanceof VertexMadsor) {
-         redoFn = Wings3D.apiExport.restoreVertexMode;
+         redoFn = View.restoreVertexMode;
          this.eachPreviewCage( function(cage) {
             snapshots.push( cage.snapshotSelection() );
             cage.changeFromEdgeToVertexSelect();
          });         
       } else {
-         redoFn = Wings3D.apiExport.restoreBodyMode;
+         redoFn = View.restoreBodyMode;
          this.eachPreviewCage( function(cage) {
             snapshots.push( cage.snapshotSelection() );
             cage.changeFromEdgeToBodySelect();
          });
       }
-      Wings3D.apiExport.undoQueue(new ToggleModeCommand(redoFn, Wings3D.apiExport.restoreEdgeMode, snapshots));
+      View.undoQueue(new ToggleModeCommand(redoFn, View.restoreEdgeMode, snapshots));
    }
 
    restoreMode(toMadsor, snapshots) {
@@ -260,12 +263,12 @@ class EdgeMadsor extends Madsor {
    }
 
    previewShader(gl) {
-      gl.useShader(Wings3D.shaderProg.solidWireframe);
+      gl.useShader(ShaderProg.solidWireframe);
    }
 
    useShader(gl) {
-      //gl.useShader(Wings3D.shaderProg.solidColor);
-      gl.useShader(Wings3D.shaderProg.selectedColorLine);
+      //gl.useShader(ShaderProg.solidColor);
+      gl.useShader(ShaderProg.selectedColorLine);
    }
 }
 
@@ -318,14 +321,14 @@ class CutEdgeCommand extends EditCommand {
 
    doIt() {
       const snapshots = this.madsor.cut(this.numberOfSegments);
-      Wings3D.apiExport.restoreVertexMode(snapshots.vertices);    // abusing the api?
+      View.restoreVertexMode(snapshots.vertices);    // abusing the api?
       this.splitEdges = snapshots.splitEdges;
    }
 
    undo() {
       // restoreToEdgeMode
       this.madsor.collapseEdge(this.splitEdges);
-      Wings3D.apiExport.restoreEdgeMode(this.selectedEdges);
+      View.restoreEdgeMode(this.selectedEdges);
    }
 }
 
@@ -356,7 +359,7 @@ class CollapseEdgeCommand extends EditCommand {
    doIt() {
       const collapse = this.madsor.collapse();
       if (collapse.count > 0) {
-         Wings3D.apiExport.restoreVertexMode(collapse.vertexArray);
+         View.restoreVertexMode(collapse.vertexArray);
          this.collapse = collapse.collapseArray;
          return true;
       } else {
@@ -365,8 +368,8 @@ class CollapseEdgeCommand extends EditCommand {
    }
 
    undo() {
-      Wings3D.apiExport.currentMode().resetSelection();
-      Wings3D.apiExport.restoreEdgeMode();
+      View.currentMode().resetSelection();
+      View.restoreEdgeMode();
       this.madsor.restoreEdge(this.collapse);
    }
 }
