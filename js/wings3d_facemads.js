@@ -4,6 +4,9 @@
 //    
 **/
 import Madsor from './wings3d_mads';
+import * as View from './wings3d_view';
+import {gl} from './wings3d_gl';
+import * as ShaderProg from './wings3d_shaderprog';
 
 
 
@@ -20,20 +23,20 @@ class FaceMadsor extends Madsor {
          var menuItem = document.querySelector('#faceExtrude' + axisName[axis]);
          if (menuItem) {
             menuItem.addEventListener("click", function(ev) {
-               Wings3D.view.attachHandlerMouseMove(new FaceExtrudeHandler(self, axis));
+               View.attachHandlerMouseMove(new FaceExtrudeHandler(self, axis));
             });
          }
       }
       var menuItem = document.querySelector('#faceExtrudeFree');
       if (menuItem) {
          menuItem.addEventListener('click', function(ev) {
-            Wings3D.view.attachHandlerMouseMove(new FaceExtrudeFreeHandler(self));
+            View.attachHandlerMouseMove(new FaceExtrudeFreeHandler(self));
          });
       }
       menuItem = document.querySelector('#faceExtrudeNormal');
       if (menuItem) {
          menuItem.addEventListener('click', function(ev) {
-            Wings3D.view.attachHandlerMouseMove(new FaceExtrudeNormalHandler(self));
+            View.attachHandlerMouseMove(new FaceExtrudeNormalHandler(self));
          });
       }
       menuItem = document.querySelector('#faceDissolve');
@@ -41,7 +44,7 @@ class FaceMadsor extends Madsor {
          menuItem.addEventListener('click', function(ev) {
             const command = new DissolveFaceCommand(self);
             if (command.doIt()) {
-               Wings3D.view.undoQueue(command);
+               View.undoQueue(command);
             } else {
                geometryStatus('Selected Face not dissolveable');
             }
@@ -52,14 +55,14 @@ class FaceMadsor extends Madsor {
             menuItem.addEventListener('click', function(ev) {
             const command = new CollapseFaceCommand(self);
             command.doIt();
-            Wings3D.view.undoQueue(command);
+            View.undoQueue(command);
          });
       }
       // setup highlite face, at most 28 triangles.
       var buf = new Float32Array(3*30);
       this.trianglefan = {data: buf, length: 0};
       var layout = ShaderData.attribLayout();
-      this.shaderData.setupAttribute('position', layout, this.trianglefan.data, Wings3D.gl.DYNAMIC_DRAW);      
+      this.shaderData.setupAttribute('position', layout, this.trianglefan.data, gl.DYNAMIC_DRAW);      
    }
 
    modeName() {
@@ -186,25 +189,25 @@ class FaceMadsor extends Madsor {
       var redoFn;
       var snapshots = [];
       if (toMadsor instanceof EdgeMadsor) {
-         redoFn = Wings3D.apiExport.restoreEdgeMode;
+         redoFn = View.restoreEdgeMode;
          this.eachPreviewCage( function(cage) {
             snapshots.push( cage.snapshotSelection() );
             cage.changeFromFaceToEdgeSelect();
          });
       } else if (toMadsor instanceof VertexMadsor) {
-         redoFn = Wings3D.apiExport.restoreVertexMode;
+         redoFn = View.restoreVertexMode;
          this.eachPreviewCage( function(cage) {
             snapshots.push( cage.snapshotSelection() );
             cage.changeFromFaceToVertexSelect();
          });
       } else {
-         redoFn = Wings3D.apiExport.restoreBodyMode;
+         redoFn = View.restoreBodyMode;
          this.eachPreviewCage( function(cage) {
             snapshots.push( cage.snapshotSelection() );
             cage.changeFromFaceToBodySelect();
          });
       }
-      Wings3D.apiExport.undoQueue(new ToggleModeCommand(redoFn, Wings3D.apiExport.restoreFaceMode, snapshots));
+      View.undoQueue(new ToggleModeCommand(redoFn, View.restoreFaceMode, snapshots));
    }
 
    restoreMode(toMadsor, snapshots) {
@@ -229,11 +232,11 @@ class FaceMadsor extends Madsor {
    }
 
    previewShader(gl) {
-      gl.useShader(Wings3D.shaderProg.colorSolidWireframe);
+      gl.useShader(ShaderProg.colorSolidWireframe);
    }
 
    useShader(gl) {
-      gl.useShader(Wings3D.shaderProg.solidColor);
+      gl.useShader(ShaderProg.solidColor);
    }
 }
 
@@ -375,7 +378,7 @@ class CollapseFaceCommand extends EditCommand {
    doIt() {
       const collapse = this.madsor.collapse();
       if (collapse.count > 0) {
-         Wings3D.apiExport.restoreVertexMode(collapse.vertexArray);
+         View.restoreVertexMode(collapse.vertexArray);
          this.collapse = collapse.collapseArray;
          this.selectedFace = collapse.faceArray;
          return true;
@@ -385,9 +388,9 @@ class CollapseFaceCommand extends EditCommand {
    }
 
    undo() {
-      Wings3D.apiExport.currentMode().resetSelection();
+      View.currentMode().resetSelection();
       this.madsor.undoCollapse(this.collapse);
-      Wings3D.apiExport.restoreFaceMode(this.selectedFace);
+      View.restoreFaceMode(this.selectedFace);
    }   
 }
 

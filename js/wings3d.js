@@ -54,7 +54,7 @@ if (NodeList.prototype[Symbol.iterator] === undefined) {
 
 
 // log, does nothing for now, debug build?
-function log(command, value) {
+let log = function(command, value) {
       
 };
 

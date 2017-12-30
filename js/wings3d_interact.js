@@ -1,6 +1,9 @@
 //
 // interact. tutoring.
 //
+import * as UI from './wings3d_ui';
+import * as Wings3D from './wings3d';
+
 
 class TutorStep {
    constructor(tour, title, text, target, placement) {
@@ -21,9 +24,9 @@ class TutorStep {
       popUp.title.textContent = this.title;
       popUp.content.innerHTML = this.content;
       popUp.bubble.classList.remove("left", "right", "top", "bottom");
-      popUp.bubble.classList.add(Wings3D.ui.getArrow(this.placement));
+      popUp.bubble.classList.add(UI.getArrow(this.placement));
       // now place it
-      const placement = Wings3D.ui.placement(this.target, this.placement, popUp.bubble);
+      const placement = UI.placement(this.target, this.placement, popUp.bubble);
       popUp.bubble.style.top = placement.top.toString() + "px";
       popUp.bubble.style.left = placement.left.toString() + "px"; 
    }

@@ -4,6 +4,8 @@
 //    
 **/
 import Madsor from './wings3d_mads';
+import * as View from './wings3d_view';
+import * as ShaderPro from './wings3d_shaderprog';
 
 
 
@@ -23,7 +25,7 @@ class VertexMadsor extends Madsor {
          menuItem.addEventListener('click', function(ev) {
             const dissolve = new VertexDissolveCommand(self);
             dissolve.doIt();
-            Wings3D.apiExport.undoQueue(dissolve);
+            View.undoQueue(dissolve);
          });
       }
       menuItem = document.querySelector('#vertexCollapse');
@@ -31,7 +33,7 @@ class VertexMadsor extends Madsor {
          menuItem.addEventListener('click', function(ev) {
             const dissolve = new VertexCollapseCommand(self);
             dissolve.doIt();
-            Wings3D.apiExport.undoQueue(dissolve);
+            View.undoQueue(dissolve);
          });  
       }
     }
@@ -61,8 +63,8 @@ class VertexMadsor extends Madsor {
       const cageArray = this.connect();
       if (cageArray) {
          const vertexConnect = new VertexConnectCommand(this, cageArray);
-         Wings3D.apiExport.undoQueue(vertexConnect);
-         Wings3D.apiExport.restoreEdgeMode(cageArray.wingedEdgeList);    // abusing the api?
+         View.undoQueue(vertexConnect);
+         View.restoreEdgeMode(cageArray.wingedEdgeList);    // abusing the api?
       } else {
          // show no connection possible message.
 
@@ -160,25 +162,25 @@ class VertexMadsor extends Madsor {
       var redoFn;
       var snapshots = [];
       if (toMadsor instanceof FaceMadsor) {
-         redoFn = Wings3D.apiExport.restoreFaceMode;
+         redoFn = View.restoreFaceMode;
          this.eachPreviewCage( function(cage) {
             snapshots.push( cage.snapshotSelection() );
             cage.changeFromVertexToFaceSelect();
          } );
       } else if (toMadsor instanceof EdgeMadsor) {
-         redoFn = Wings3D.apiExport.restoreEdgeMode;
+         redoFn = View.restoreEdgeMode;
          this.eachPreviewCage( function(cage) {
             snapshots.push( cage.snapshotSelection() );
             cage.changeFromVertexToEdgeSelect();
          });
       } else {
-         redoFn = Wings3D.apiExport.restoreEdgeMode;
+         redoFn = View.restoreEdgeMode;
          this.eachPreviewCage( function(cage) {
             snapshots.push( cage.snapshotSelection() );
             cage.changeFromVertexToBodySelect();
          });      
       }
-      Wings3D.apiExport.undoQueue( new ToggleModeCommand(redoFn, Wings3D.apiExport.restoreVertexMode, snapshots) );
+      View.undoQueue( new ToggleModeCommand(redoFn, View.restoreVertexMode, snapshots) );
    }
 
 
@@ -211,11 +213,11 @@ class VertexMadsor extends Madsor {
    }
 
    previewShader(gl) {
-      gl.useShader(Wings3D.shaderProg.solidWireframe);
+      gl.useShader(ShaderProg.solidWireframe);
    }
 
    useShader(gl) {
-      gl.useShader(Wings3D.shaderProg.selectedColorPoint);
+      gl.useShader(ShaderProg.selectedColorPoint);
    }
 } 
 
@@ -260,12 +262,12 @@ class VertexConnectCommand extends EditCommand {
       // reconnect
       this.cageArray = this.madsor.connect();
       // goes to edgeMode.
-      Wings3D.apiExport.restoreEdgeMode(this.cageArray.wingedEdgeList);    // abusing the api?
+      View.restoreEdgeMode(this.cageArray.wingedEdgeList);    // abusing the api?
    }
 
    undo() {
       // restore to vertexMode.
-      Wings3D.apiExport.restoreVertexMode();
+      View.restoreVertexMode();
       // dissolve the connect edges.
       this.madsor.dissolveConnect(this.cageArray.edgeList);
    }  
@@ -298,12 +300,12 @@ class VertexCollapseCommand extends EditCommand {
       // collapse, is just like dissolve, but switch to facemode
       const dissolve = this.madsor.dissolve();
       this.undoArray = dissolve.undoArray;
-      Wings3D.apiExport.restoreFaceMode(dissolve.selectedFace);
+      View.restoreFaceMode(dissolve.selectedFace);
    }
 
    undo() {
       this.madsor.resetSelection();
-      Wings3D.apiExport.restoreVertexMode();
+      View.restoreVertexMode();
       this.madsor.undoDissolve(this.undoArray);
    }
 }

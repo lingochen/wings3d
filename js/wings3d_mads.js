@@ -3,12 +3,14 @@
  * MADS (Modify, Add, Delete, Select) operation. 
  *
 **/
+import {gl} from './wings3d_gl';
+import *as View form './wings3d_view';
 
 
 class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
    constructor(mode) {
       this.currentEdge = null;
-      this.shaderData = Wings3D.gl.createShaderData();
+      this.shaderData = gl.createShaderData();
       this.shaderData.setUniform4fv("uColor", [0.0, 1.0, 0.0, 0.3]); // hilite green, selected hilite yellow.
       // contextMenu
       this.contextMenu = {menu: document.querySelector("#"+mode+"-context-menu")};
@@ -23,7 +25,7 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
          let menuItem = document.querySelector('#' + mode + 'Move' + axisName[axis]);
          if (menuItem) {
             menuItem.addEventListener("click", function(ev) {
-               Wings3D.view.attachHandlerMouseMove(new MouseMoveAlongAxis(self, axis));
+               View.attachHandlerMouseMove(new MouseMoveAlongAxis(self, axis));
             });
          } 
       }
@@ -31,14 +33,14 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       let menuItem = document.querySelector('#' + mode + 'MoveFree');
       if (menuItem) {
          menuItem.addEventListener('click', function(ev) {
-            Wings3D.view.attachHandlerMouseMove(new MoveFreePositionHandler(self));
+            View.attachHandlerMouseMove(new MoveFreePositionHandler(self));
          });
       }
       // normal Movement.
       menuItem = document.querySelector('#' + mode + 'MoveNormal');
       if (menuItem) {
          menuItem.addEventListener('click', function(ev) {
-            Wings3D.view.attachHandlerMouseMove(new MoveAlongNormal(self));
+            View.attachHandlerMouseMove(new MoveAlongNormal(self));
          });
       }
    }
