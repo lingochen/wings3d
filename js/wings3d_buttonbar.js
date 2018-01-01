@@ -2,6 +2,8 @@
 // button toolbar for geometry ...etc. 
 */
 
+import * as Wings3D from './wings3d';
+
    /*
    * variable 
    */   
@@ -26,7 +28,7 @@ function executeApi(ev) {
    }
 };
 
-function clickListener() {
+function init() {
    const toolbar = document.querySelector(buttonBarClassName.bar);
    const buttons = toolbar.querySelectorAll(buttonBarClassName.button);
    for (let button of buttons) {
@@ -36,6 +38,7 @@ function clickListener() {
 
 
 export {
-   init as clickListener,
    id2Func,
 };
+
+Wings3D.onReady(init);

@@ -3,9 +3,10 @@
 //
 //    
 **/
-import Madsor from './wings3d_mads';
+import {Madsor, DragSelect, MouseMoveAlongAxis, MoveAlongNormal, MoveFreePositionHandler} from './wings3d_mads';
+import { EditCommand } from './wings3d_undo';
 import * as View from './wings3d_view';
-import {gl} from './wings3d_gl';
+import {gl, ShaderData} from './wings3d_gl';
 import * as ShaderProg from './wings3d_shaderprog';
 
 
@@ -62,7 +63,7 @@ class FaceMadsor extends Madsor {
       var buf = new Float32Array(3*30);
       this.trianglefan = {data: buf, length: 0};
       var layout = ShaderData.attribLayout();
-      this.shaderData.setupAttribute('position', layout, this.trianglefan.data, gl.DYNAMIC_DRAW);      
+      this.shaderData.setupAttribute('position', layout, this.trianglefan.data, gl.DYNAMIC_DRAW);  // needs to import gl.DYNAMIC_DRAW. 
    }
 
    modeName() {

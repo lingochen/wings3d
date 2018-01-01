@@ -121,7 +121,7 @@ let popUp = {};
 // init() popup.bubble.
 function init(idName) {
    // default 
-   popUp.bubble = document.getElementById('tutorGuide') };
+   popUp.bubble = document.getElementById('tutorGuide');
    if (popUp.bubble) {
       popUp.close = extractElement("close");
       if (popUp.close) { // get close

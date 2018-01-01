@@ -7,8 +7,8 @@
 import {gl} from './wings3d_gl';
 import * as View from './wings3d_view';
 import * as Camera from './wings3d_camera';
-import {onReady, GROUND_GRID_SIZE0} from './wings3d';
-import * as ShaderProg from '.wings3d_shaderprog';
+import {onReady, GROUND_GRID_SIZE} from './wings3d';
+import * as ShaderProg from './wings3d_shaderprog';
 
 
 
@@ -55,6 +55,7 @@ onReady(function() {
    
    initSimpleASCII(gl);
 
+/* move to shaderprog.js
    // render shaded object.
    ShaderProg.cameraLight = gl.createShaderProgram(ShaderProg.cameraLight.vertex, ShaderProg.cameraLight.fragment);
 
@@ -72,7 +73,7 @@ onReady(function() {
 
    ShaderProg.selectedColorLine = gl.createShaderProgram(ShaderProg.selectedColorLine.vertex, ShaderProg.selectedColorLine.fragment);
 
-   ShaderProg.selectedColorPoint = gl.createShaderProgram(ShaderProg.selectedColorPoint.vertex, ShaderProg.selectedColorPoint.fragment);
+   ShaderProg.selectedColorPoint = gl.createShaderProgram(ShaderProg.selectedColorPoint.vertex, ShaderProg.selectedColorPoint.fragment);*/
 
    console.log("Render.init() success");
 });
@@ -548,6 +549,5 @@ export {
    renderText,
    needToRedraw,
    render,
-   init,
 };
 

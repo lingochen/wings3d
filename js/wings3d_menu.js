@@ -2,6 +2,7 @@
 
 import * as UI from './wings3d_ui';
 import * as View from './wings3d_view';
+import * as Wings3D from './wings3d';
   
   //////////////////////////////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////////////
@@ -77,7 +78,7 @@ import * as View from './wings3d_view';
 function contextListener(className) {
     let createObjectContextMenu = {menu: document.querySelector('#context-menu')};
     function getContextMenu(ev) {
-      let popupMenu = View.current().getContextMenu();
+      let popupMenu = View.currentMode().getContextMenu();
       if (popupMenu && popupMenu.menu) {
          return popupMenu;
       } else {
@@ -171,6 +172,4 @@ function contextListener(className) {
     //Wings3D.callApi(link.getAttribute("wings3d-api", UI.getPosition(ev)));
   }
 
-export {
-   init,
-}
+Wings3D.onReady(init);

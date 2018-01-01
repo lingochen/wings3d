@@ -1,6 +1,9 @@
 // program as text .
 
-const uColorArray = {
+import {gl} from './wings3d_gl';
+import * as Wings3D from './wings3d';
+
+let uColorArray = {
    vertexShader:[
       'attribute vec3 position;',
       'uniform mat4 worldView;',
@@ -14,7 +17,7 @@ const uColorArray = {
       '   gl_FragColor = uColor;',
       '}'].join("\n"),
 };
-const colorArray = {
+let colorArray = {
    vertexShader: [
       'attribute vec3 aVertexPosition;',
       'attribute vec3 aVertexColor;',
@@ -35,7 +38,7 @@ const colorArray = {
       '   gl_FragColor = vColor;',
       '}'].join("\n"),
 };
-const selectedColorLine = {
+let selectedColorLine = {
    vertex: [
       'attribute vec3 position;',
       'attribute float color;',
@@ -66,7 +69,7 @@ const selectedColorLine = {
       '   }',
       '}'].join("\n"),
 };
-const selectedColorPoint = {
+let selectedColorPoint = {
    vertex: [
       'attribute vec3 position;',
       'attribute float color;',
@@ -98,7 +101,7 @@ const selectedColorPoint = {
       '   }',
       '}'].join("\n"),
 };
-const textArray = {
+let textArray = {
    vertexShader:[
       'attribute vec4 aVertexPosition;',
       'attribute vec2 aTexCoord;',
@@ -117,7 +120,7 @@ const textArray = {
          'gl_FragColor = texture2D(u_texture, v_texcoord);',
       '}'].join("\n")
 };
-const cameraLight = {
+let cameraLight = {
    vertex:[
       'attribute vec3 position;',
 
@@ -153,7 +156,7 @@ const cameraLight = {
       '  }',
       '}'].join("\n"),
 };
-const solidColor = {
+let solidColor = {
    vertex:[
       'attribute vec3 position;',
 
@@ -170,7 +173,7 @@ const solidColor = {
       '  gl_FragColor = uColor;',
       '}'].join("\n")
 };
-const simplePoint = { 
+let simplePoint = { 
    vertex: [
       'attribute vec3 position;',
       'attribute vec3 color;',
@@ -191,7 +194,7 @@ const simplePoint = {
          ' gl_FragColor = vec4(vColor, 1.0);',
       '}'].join("\n")
 };
-const colorPoint = {
+let colorPoint = {
    vertex: [
       'attribute vec3 position;',
       'uniform mat4 worldView;',
@@ -214,7 +217,7 @@ const colorPoint = {
          'gl_FragColor = uColor;',
       '}'].join("\n"),
 };
-const solidWireframe = {  // we don't have geometry shader, so we have to manually pass barycentric to do 'single pass wireframe' 
+let solidWireframe = {  // we don't have geometry shader, so we have to manually pass barycentric to do 'single pass wireframe' 
    vertex: [       // http://codeflow.org/entries/2012/aug/02/easy-wireframe-display-with-barycentric-coordinates/
       'attribute vec3 position;', 
       'attribute vec3 barycentric;',
@@ -244,7 +247,7 @@ const solidWireframe = {  // we don't have geometry shader, so we have to manual
          'gl_FragColor.a = 1.0;',
       '}'].join("\n"),
 };
-const colorWireframe = {  // we don't have geometry shader, so we have to manually pass barycentric to do 'single pass wireframe' 
+let colorWireframe = {  // we don't have geometry shader, so we have to manually pass barycentric to do 'single pass wireframe' 
    vertex: [       // http://codeflow.org/entries/2012/aug/02/easy-wireframe-display-with-barycentric-coordinates/
       'attribute vec3 position;', 
       'attribute vec3 barycentric;',
@@ -283,7 +286,7 @@ const colorWireframe = {  // we don't have geometry shader, so we have to manual
          'gl_FragColor.a = 1.0;',
       '}'].join("\n"),
 };
-const colorSolidWireframe = {  // we don't have geometry shader, so we have to manually pass barycentric to do 'single pass wireframe' 
+let colorSolidWireframe = {  // we don't have geometry shader, so we have to manually pass barycentric to do 'single pass wireframe' 
    vertex: [       // http://codeflow.org/entries/2012/aug/02/easy-wireframe-display-with-barycentric-coordinates/
       'attribute vec3 position;', 
       'attribute vec3 barycentric;',
@@ -323,6 +326,27 @@ const colorSolidWireframe = {  // we don't have geometry shader, so we have to m
          'gl_FragColor.a = 1.0;',
       '}'].join("\n"),
 };
+
+Wings3D.onReady(function() {
+   // compiled the program
+   cameraLight = gl.createShaderProgram(cameraLight.vertex, cameraLight.fragment);
+
+   solidColor = gl.createShaderProgram(solidColor.vertex, solidColor.fragment);
+
+   simplePoint = gl.createShaderProgram(simplePoint.vertex, simplePoint.fragment);
+
+   colorPoint = gl.createShaderProgram(colorPoint.vertex, colorPoint.fragment);
+
+   solidWireframe = gl.createShaderProgram(solidWireframe.vertex, solidWireframe.fragment);
+
+   colorWireframe = gl.createShaderProgram(colorWireframe.vertex, colorWireframe.fragment);
+
+   colorSolidWireframe = gl.createShaderProgram(colorSolidWireframe.vertex, colorSolidWireframe.fragment);
+
+   selectedColorLine = gl.createShaderProgram(selectedColorLine.vertex, selectedColorLine.fragment);
+
+   selectedColorPoint = gl.createShaderProgram(selectedColorPoint.vertex, selectedColorPoint.fragment);
+});
 
 export {
    uColorArray,

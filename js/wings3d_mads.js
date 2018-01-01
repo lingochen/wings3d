@@ -4,7 +4,8 @@
  *
 **/
 import {gl} from './wings3d_gl';
-import *as View form './wings3d_view';
+import { EditCommand, MouseMoveHandler } from './wings3d_undo';
+import * as View from './wings3d_view';
 
 
 class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
@@ -316,4 +317,12 @@ class ToggleModeCommand extends EditCommand {
 
 export {
    Madsor,
+   DragSelect,
+   MovePositionHandler,
+   MouseMoveAlongAxis,
+   MoveAlongNormal,
+   MoveFreePositionHandler,
+   EditCommand,   // re export
+   MoveCommand,
+   ToggleModeCommand,
 }

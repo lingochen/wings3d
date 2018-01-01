@@ -1467,3 +1467,11 @@ WingedTopology.prototype.dissolveVertex = function(vertex) {
       }};
    }
 };
+
+export {
+   WingedEdge,
+   HalfEdge,
+   Vertex,
+   Polygon,
+   WingedTopology,
+}

@@ -2,9 +2,9 @@
    n cube create. Use Dialog to create the cube.
    todo: to support spherize, rotate, translate, putOnGround. currently only numberOfCuts and size is working.
 */
-import * as UI from './wings3d_ui';
-import * as Wings3D from './wings3d';
-import * as View from './wings3d_view';
+import * as UI from '../wings3d_ui';
+import * as Wings3D from '../wings3d';
+import * as View from '../wings3d_view';
 
 
 let createCube, createCubeDialog;

@@ -304,7 +304,6 @@ function createWebGLContext(canvasID, attrib) {
 };
 
 
-
 //
 // define ShaderProgram, ShaderData.
 //
@@ -528,7 +527,7 @@ ShaderProgram.prototype.getTypeByName = function(type) {
 
 export {
    createWebGLContext,
-   gl,
    ShaderData,
    ShaderProgram,
+   gl
 }

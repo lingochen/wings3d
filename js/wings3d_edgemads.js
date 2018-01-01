@@ -3,7 +3,8 @@
 //
 //    
 **/
-import Madsor from './wings3d_mads';
+import {Madsor, DragSelect} from './wings3d_mads';
+import { EditCommand } from './wings3d_undo';
 import * as UI from './wings3d_ui';
 import * as View from './wings3d_view';
 import * as ShaderProg from './wings3d_shaderprog';

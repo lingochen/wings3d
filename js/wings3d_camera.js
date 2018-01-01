@@ -7,24 +7,23 @@
 */
 
 import { MouseMoveHandler } from './wings3d_undo.js';
-import { log, CAMERA_DIST } from './wings3d.js';
+import * as Wings3D from './wings3d.js';
 
 
 class CameraMouseMoveHandler extends MouseMoveHandler {
-   constructor(camera) {
+   constructor() {
       super();
-      this.camera = camera;
       this.saveView = { origin: [0, 0, 0], };
-      this.camera.copyCam(this.saveView, this.camera.view);
+      copyCam(this.saveView, view);
    }
 
    handleMouseMove(ev) {
       // if middle button down, pan 
       if (ev.buttons == 4) {
-         this.camera.pan(ev.movementX, 0);
+         pan(ev.movementX, 0);
       } else {
          // rotated
-         this.camera.rotate(ev.movementX, ev.movementY);
+         rotate(ev.movementX, ev.movementY);
          //help(e.button + "," + e.buttons);
       }
    }
@@ -36,7 +35,7 @@ class CameraMouseMoveHandler extends MouseMoveHandler {
 
    _cancel() {
       // restore camera's value.
-      this.camera.copyCam(this.camera.view, this.saveView);
+      copyCam(view, this.saveView);
       //debugLog("exitCameraMode", {cancel: this.camera});
    }
 }
@@ -62,7 +61,7 @@ class CameraMouseMoveHandler extends MouseMoveHandler {
          let camera = {
             origin: [0.0, 0.0, 0.0],
             azimuth: -45.0, elevation: 25.0,
-            distance: CAMERA_DIST,
+            distance: Wings3D.CAMERA_DIST,
             panX: 0.0, panY: 0.0,
             fov: 45.0,
             zNear: 0.1, zFar: 1000.0
@@ -153,7 +152,7 @@ class CameraMouseMoveHandler extends MouseMoveHandler {
                }
             },
           };
-      })();
+      }());
 
 // utility function
    function copyCam(save, source) {
@@ -175,11 +174,11 @@ class CameraMouseMoveHandler extends MouseMoveHandler {
 	   {3,_} -> ok
 	   {_,nendo} -> ok;
 	   {_,blender} -> ok;
-	   {_,_} -> wings_pref:set_value(camera_mode, nendo) */
+      {_,_} -> wings_pref:set_value(camera_mode, nendo) */
    };
 
    function getMouseMoveHandler() {
-      const ret = new CameraMouseMoveHandler(my);
+      const ret = new CameraMouseMoveHandler();
       return ret;
    };
 
@@ -415,7 +414,6 @@ format([]) -> [].
 */
 
 export {
-   init, 
    pref, 
    view,
    getMouseMoveHandler,
@@ -434,3 +432,5 @@ export {
    keyPanDownArrow,
    wheelPan,
 };
+
+Wings3D.onReady(init);

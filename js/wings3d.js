@@ -6,12 +6,11 @@
 //
 // 12-11-2017: convert to es6 module.
 */
-import {createWebGLContext} from './wings3d_gl';
-import * as Camera from './wings3d_camera';
-import * as View from './wings3d_view';
-import * as Contextmenu from './wings3d_menu';
-import * as Buttonbar from './wings3d_buttonbar';
-import * as Interact from './wings3d_interact';
+import {gl, createWebGLContext} from './wings3d_gl';
+//import * as View from './wings3d_view';
+//import * as Contextmenu from './wings3d_menu';
+//import * as Buttonbar from './wings3d_buttonbar';
+//import * as Interact from './wings3d_interact';
 
 //
 // onReady. 
@@ -67,7 +66,7 @@ function createMask() {  // from mozilla doc
 
 // define constants
 const GROUND_GRID_SIZE = 1;
-const CAMERA_DIST = 8.0*my.GROUND_GRID_SIZE;
+const CAMERA_DIST = 8.0*GROUND_GRID_SIZE;
 
 //make_geom_window(GeomGL, St) ->
     //Props = initial_properties(),        
@@ -106,17 +105,17 @@ function init(canvasID) {
     wings_io:init(),
 */
    //camera.createCamera();
-   Camera.init();
+   //Camera.init();
 //    wings_vec:init();
 
    //view.createView();
-   View.init();
+//   View.init();
 
    //contextmenu.createMenuHandler(view, "content");
-   Contextmenu.init("content", "popupmenu");
+//   Contextmenu.init("content", "popupmenu");
    //Buttonbar.createButtonBarHandler();
-   Buttonbar.init();
-   Interact.init();
+//   Buttonbar.init();
+//   Interact.init();
    createGuideTour();
  /*   wings_u:caption(St),
     wings_file:init_autosave(),
@@ -137,7 +136,7 @@ function init(canvasID) {
       // prompt for quitting
       window.addEventListener("beforeunload", confirmation);
 
-      my.ui.tutor.tours.about();
+      //my.ui.tutor.tours.about();
    };
 
 function confirmation(ev) {

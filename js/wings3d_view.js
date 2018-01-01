@@ -7,9 +7,13 @@
 import * as UI from './wings3d_ui';
 import * as Renderer from './wings3d_render';
 import * as Camera from './wings3d_camera';
-import * as gl from './wings3d_gl';
-import * as wavefront from 'plugins/wavefront_obj'; 
+import {gl} from './wings3d_gl';
 import { WavefrontObjImportExporter } from './plugins/wavefront_obj';
+import * as Wings3D from './wings3d';
+import {FaceMadsor} from './wings3d_facemads';
+import {EdgeMadsor} from './wings3d_edgemads';
+import {VertexMadsor} from './wings3d_vertexmads';
+import {BodyMadsor} from './wings3d_bodymads';
 
 
 // 
@@ -80,18 +84,24 @@ let theme = nativeTheme;
 // 
 // editing mode management
 //
-const mode = {             // private variable
-   face: new FaceMadsor, 
-   edge: new EdgeMadsor,
-   vertex: new VertexMadsor,
-   body: new BodyMadsor,
+const mode = {             // private variable, needed to initialize after gl, 
+   face: null,//new FaceMadsor, 
+   edge: null,//new EdgeMadsor,
+   vertex: null,//new VertexMadsor,
+   body: null,//new BodyMadsor,
    current: null,
 };
-mode.current = mode.face;
-mode.face.setWorld(world);
-mode.edge.setWorld(world);
-mode.vertex.setWorld(world);
-mode.body.setWorld(world);
+function initMode() {
+   mode.face = new FaceMadsor;
+   mode.edge = new EdgeMadsor;
+   mode.vertex = new VertexMadsor;
+   mode.body = new BodyMadsor;
+   mode.current = mode.face;
+   mode.face.setWorld(world);
+   mode.edge.setWorld(world);
+   mode.vertex.setWorld(world);
+   mode.body.setWorld(world);
+};
 
 
 function toggleMode(mode) {
@@ -537,6 +547,7 @@ function render(gl) {
 // initialization
 //
 function init() {
+   initMode();
    // init menu
    const selectionMenu = [ {id: '#deselect', fn: 'resetSelection', hotKey: ' '},
                          {id: '#more', fn: 'moreSelection', hotKey: '+'},
@@ -556,8 +567,7 @@ function init() {
       }, select.hotKey, select.meta);
    }
 
-   // init renderer
-   Renderer.init(gl, drawWorld);
+   //Renderer.init(gl, drawWorld);  // init by itself
 
    // capture click mouse event.
    gl.canvas.addEventListener("mouseenter", canvasHandleMouseEnter, false);
@@ -577,7 +587,6 @@ export {
    prop,
    theme,
    // function
-   init,
    toggleVertexMode,
    toggleFaceMode,
    toggleEdgeMode,
@@ -589,6 +598,7 @@ export {
    currentMode,
    // world state
    putIntoWorld,
+   addToWorld,
    removeFromWorld,
    getWorld,
    // mouse handler
@@ -606,3 +616,6 @@ export {
    drawWorld,
    render
 }; 
+
+// register for initialization
+Wings3D.onReady(init);

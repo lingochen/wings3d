@@ -2,7 +2,8 @@
 // bodymadsor. 
 //
 
-import Madsor from './wings3d_mads';
+import {Madsor, DragSelect, MouseMoveAlongAxis, MoveFreePositionHandler } from './wings3d_mads';
+import { EditCommand } from './wings3d_undo';
 import * as ShaderProg from './wings3d_shaderprog';
 import * as View from './wings3d_view';
 import * as UI from './wings3d_ui';

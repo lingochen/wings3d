@@ -6,8 +6,8 @@
 // 3) google drive, microsoft onedrive, baidupan to come later.
 //
 import {PreviewCage, CreatePreviewCageCommand} from './wings3d_model';
-import * as UI from './wings3d_model';
-import {setupDialog} from './wings3d_ui';
+import {WingedTopology} from './wings3d_wingededge';
+import * as UI from './wings3d_ui';
 import * as View from './wings3d_view';
 
 
@@ -58,7 +58,7 @@ class ImportExporter {
          a.textContent = exportMenuText;
          menuItem.appendChild(a);
          submenu.appendChild(menuItem);
-         const form = setupDialog('#exportFile', function(data) {
+         const form = UI.setupDialog('#exportFile', function(data) {
             if (data['Filename']) {
                self.export(data['Filename']);
             }
@@ -123,8 +123,8 @@ class ImportExporter {
       this.vertexCount = 0;
       this.non_manifold = [];
    }
-}
+};
 
 export {
    ImportExporter
-}
+};
