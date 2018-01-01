@@ -116,7 +116,7 @@ function init(canvasID) {
    //Buttonbar.createButtonBarHandler();
 //   Buttonbar.init();
 //   Interact.init();
-   createGuideTour();
+   //createGuideTour();
  /*   wings_u:caption(St),
     wings_file:init_autosave(),
     wings_pb:start_link(Frame),
@@ -127,12 +127,6 @@ function init(canvasID) {
 
 //    open_file(File),
 */
-      function render(timestamp) {
-         view.render(gl);
-         requestAnimationFrame(render);
-      };
-      requestAnimationFrame(render);
-
       // prompt for quitting
       window.addEventListener("beforeunload", confirmation);
 

@@ -6,6 +6,7 @@
 */
 import * as Tutor from './wings3d_interact';
 import * as UI from './wings3d_ui';
+import * as Wings3D from './wings3d';
 
 const tours = {};
 
@@ -101,6 +102,8 @@ function createGuideTour() {
       tours.tableTutor();
    });
 }
+
+Wings3D.onReady(createGuideTour);
 
 export {
    tours

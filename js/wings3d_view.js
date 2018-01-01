@@ -579,6 +579,13 @@ function init() {
    gl.canvas.addEventListener("contextmenu", canvasHandleContextMenu, false);
    //console.log("Workspace init successful");
    let wavefront = new WavefrontObjImportExporter();
+
+   // handle redrawingLoop
+   function updateFrame(timestamp) {
+      render(gl);
+      requestAnimationFrame(updateFrame);
+   };
+   requestAnimationFrame(updateFrame);
 };
 
 
