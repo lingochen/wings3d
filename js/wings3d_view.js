@@ -14,6 +14,7 @@ import {FaceMadsor} from './wings3d_facemads';
 import {EdgeMadsor} from './wings3d_edgemads';
 import {VertexMadsor} from './wings3d_vertexmads';
 import {BodyMadsor} from './wings3d_bodymads';
+import {PreviewCage} from './wings3d_model';
 
 
 // 

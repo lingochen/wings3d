@@ -25,7 +25,7 @@ import * as Wings3D from './wings3d';
     if ( e.target.classList.contains(className) ) {
       return e.target;
     } else {
-      const target = e.target;
+      let target = e.target;
       while ( target = target.parentNode ) {
         if ( target.classList && target.classList.contains(className) ) {
           return target;
@@ -87,7 +87,7 @@ function contextListener(className) {
       }
    }; 
 
-    document.addEventListener( "contextmenu", function(e) {
+    document.addEventListener("contextmenu", function(e) {
       let  canvasInContext = clickInsideElement( e, className );
 
       if ( canvasInContext ) {
@@ -172,4 +172,6 @@ function contextListener(className) {
     //Wings3D.callApi(link.getAttribute("wings3d-api", UI.getPosition(ev)));
   }
 
-Wings3D.onReady(init);
+Wings3D.onReady(function() {
+   init('content', 'popupmenu');
+});

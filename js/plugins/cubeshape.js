@@ -5,6 +5,8 @@
 import * as UI from '../wings3d_ui';
 import * as Wings3D from '../wings3d';
 import * as View from '../wings3d_view';
+import {WingedTopology} from '../wings3d_wingededge';
+import {CreatePreviewCageCommand} from '../wings3d_model';
 
 
 let createCube, createCubeDialog;
@@ -65,12 +67,12 @@ document.addEventListener('DOMContentLoaded', function() {
          var offset = 0;
          var vertexIndex = [];
          var polygon = [];
-         for (up = 0; up <= numberOfCut; ++up) {
-            for (rt = 0; rt <= numberOfCut; ++rt) { // add vertex and get vertices index.
+         for (let up = 0; up <= numberOfCut; ++up) {
+            for (let rt = 0; rt <= numberOfCut; ++rt) { // add vertex and get vertices index.
                vertexIndex.push( addVertexUnique(getVertexFN(up, rt)) );
             }
             if (up > 0) {   // add polygon faces, ccw order
-               for (i = 0 ; i<numberOfCut; ++i) {
+               for (let i = 0 ; i<numberOfCut; ++i) {
                   polygon.push( vertexIndex[offset+i] );
                   polygon.push( vertexIndex[offset+i+1] );
                   polygon.push( vertexIndex[offset+i+1+numberOfCut+1] );
@@ -105,7 +107,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
       // creating step size for each cut
       const stepX = [], stepY = [], stepZ = [];
-      for (i = 0; i <= numberOfCut; ++i) {
+      for (let i = 0; i <= numberOfCut; ++i) {
          const cut = i / numberOfCut;
          const xStep = vec3.create();
          vec3.scale(xStep, x, cut);

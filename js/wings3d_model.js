@@ -8,7 +8,9 @@
 * 
 */
 "use strict";
-import {gl} from './wings3d_gl'; 
+import {gl, ShaderData} from './wings3d_gl'; 
+import {BoundingSphere} from './wings3d_boundingvolume';
+import {WingedTopology} from './wings3d_wingededge';
 import * as View from './wings3d_view';
 import * as Wings3D from './wings3d';
 import {EditCommand} from './wings3d_undo';
