@@ -401,9 +401,9 @@ function canvasHandleContextMenu(ev) {
 };
 
 // handling in reverse order. the newest one will handle the event. (should be at most 2 handler)
-function attachHandlerMouseMove(handler) {
+function attachHandlerMouseMove(mousemoveHandler) {
    // should we make sure handler.mousemove is null?
-   handler.mousemove = handler;
+   handler.mousemove = mousemoveHandler;
 };
 
 function canvasHandleWheel(e) {
