@@ -1,0 +1,525 @@
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+}
+
+.box {
+  display: flex;
+  flex-flow: column;
+  height: 100%;
+}
+
+.box .row {
+    border: 1px dotted grey;
+}
+
+.box .row.header {
+    flex: 0 1 auto;
+    /* short hand for flex-grow:0, flex-shrink:1, flex-basis:auto; */
+}
+
+.box .row.content {
+    flex: 1 1 auto;
+}
+
+.box .row.footer {
+    flex: 0 1 auto;
+}
+
+#canvas {
+display: flex; flex-direction: column;
+}
+#glcanvas {
+    flex-grow: 1;
+    background-color: black;
+}
+#statusbar {
+  position:absolute;
+  left:0;
+  width: 100%;
+  background: rgba(255,255,255,.5);
+}
+footer {
+    background-color:red;
+/*    position:fixed;
+    bottom:0px;
+    left:0px;
+    right:0px;
+    height:30px;
+    margin-bottom:0px;*/
+}
+footer:before {
+    content:  "\A0"; /* none-breaking space, prevent empty help text shrinking */
+    float: right;
+}
+#helpbar {
+  white-space: pre;
+}
+
+/* global class */
+.unselectable {
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+
+  -webkit-user-drag: none; /* Prevents dragging of images/divs etc */
+  user-drag: none;
+}
+.not-implemented { cursor: not-allowed; } /* for temporary disabled selection */
+
+nav.menu {
+    background-color: #333;
+/*    border: 1px solid #333; */
+    color: #fff;
+    display: block;
+    margin: 0;
+    padding: 0;
+/*    overflow: hidden; */
+}
+ul.menubar, ul.popupmenu {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+ul.menubar li {
+    margin: 0;
+    padding: 0;
+    display: inline-block;
+    list-style-type: none;
+    transition: all 0s;
+}
+
+ul.menubar > li.menuItem > a {
+    color: #aaa;
+}
+
+ul.menubar > li > a,
+ul.popupmenu > li > a {
+  display: block;
+  line-height: 1em;
+  padding: 0.5em 2em;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+ul.menubar > li:hover,
+ul.popupmenu > li:hover {
+  background-color: #666;
+}
+
+
+/* dropdown menu */
+ul.popupmenu {
+  display : none;
+  /*margin-top:1px;*/
+  background-color: #bbb;
+  list-style: none;
+  z-index: 100;
+}
+
+/* menuItem */
+ul.popupmenu > li {
+  display: block;
+}
+ul.popupmenu > li > a {
+  color: #111;
+  display: block;
+  line-height: 1em;
+  padding: 0.5em 2em;
+  text-decoration: none;
+}
+
+/* popup shown */
+li.dropdown.hover > ul.popupmenu {
+   position:absolute;
+   display : block;
+}
+li.dropside:hover > ul.popupmenu {
+    position: absolute;
+    display : block;
+    margin-left:100%;
+    margin-top:-2em;
+}
+/* added attribute for showing extra menu available. */
+li.dropdown::before {
+  content: "\2304";
+  float: right;
+  padding: 0.0em 0.5em;
+}
+li.dropside::before {
+  content: "\203A";
+  float: right;
+  padding: 0.5em 0.5em;
+}
+/*nav.menu ul > li.drop {
+    background: url(/img/ic_keyboard_arrow_down_white_18dp.png) right center no-repeat;
+}nav.menu ul > li.sub li.sub {
+        background: url(/img/ic_keyboard_arrow_right_white_18dp.png) right center no-repeat;
+}*/
+
+/* context menu */
+
+nav.menu > ul.popupmenu {
+  position: absolute;
+}
+
+/*.context-menu__item:last-child {
+  margin-bottom: 0;
+}*/
+
+/* slider, copy from quirksmode */
+input[type=range] {
+	-webkit-appearance: none;
+	height: 35px; /* pick your own value */
+	padding: 0;	
+	/* your slider styles */
+}
+
+input[type=range]::-webkit-slider-thumb {
+	-webkit-appearance: none;
+	box-sizing: content-box;
+	/* your thumb styles */
+}
+
+input[type=range]::-moz-range-thumb {
+	/* again your thumb styles */
+}
+
+input[type=range]::-ms-thumb { /* should come after -webkit- */
+	/* again your thumb styles */
+	/* may require different margins */
+}
+
+input[type=range]::-webkit-slider-runnable-track {
+	/* your track styles */
+}
+
+input[type=range]::-moz-range-track {
+	/* again your track styles */
+}
+
+input[type=range]::-ms-track { /* should come after -webkit- */
+	border-color: transparent;
+	color: transparent;
+	/* again your track styles */
+}
+
+
+/* The close X, (<span class="close">&times;</span>) */
+.close {
+  float: right;
+  font-size: 1.5em;
+  font-weight: bold;
+  line-height: 1;
+  color: #000;
+  text-shadow: 0 1px 0 #fff;
+  opacity: .5;
+}
+
+.close:focus, .close:hover {
+  color: #000;
+  text-decoration: none;
+  opacity: .75;
+  cursor: pointer;
+}
+
+button.close {
+  padding: 0;
+  background: transparent;
+  border: 0;
+  -webkit-appearance: none;
+}
+
+.button-bar {
+  display: flex;                  /* establish flex container */
+  flex-direction: row;            /* default value; can be omitted */
+  flex-wrap: nowrap;              /* default value; can be omitted */
+  justify-content: space-between; /* switched from default (flex-start, see below) */
+  background-color: white;
+}
+.button-bar > div {
+    display: flex;
+}
+.button-bar a,
+.button-bar label {
+  display: inline-block;
+  appearance: none;
+  box-shadow: none;
+  border-style: solid;
+  text-decoration: none;
+}
+.button-bar input {
+  display: none;
+}
+label.button:hover,
+.button-bar input:checked + label.button {
+  border-style: ridge;
+  border-color: black;
+}
+label.button {
+    display: flex;
+    flex-direction: column;
+}
+label.button {
+  position: relative;
+  width: 3.5em;
+  height: 2.5em;
+  border-style: solid;
+  border-color: white; 
+}
+label.button:active {
+  top: 1px;
+  left: 1px;
+}
+label.button img {
+  display: block;
+  align-self: center;
+  pointer-events: none;	/*disable img draggin*/
+}
+label.button:hover span {
+  opacity: 0.8;
+}
+label.button span {
+    opacity: 0;
+    font-size: 0.8em;
+    position: absolute;
+    left: 0px;
+    right: 0px;
+    bottom: 0px;
+    color: black;
+    text-shadow:		/* stroke font */
+    -1px -1px 0 gold,
+    1px -1px 0 gold,
+    -1px 1px 0 gold,
+    1px 1px 0 gold;  
+    text-decoration: none;
+    text-align: center;
+}
+.dialog {
+  background-color:  #fff;
+  border: solid 1px #dfdfdf;
+  box-shadow: 1px 1px 2px #cfcfcf;
+  width: 340px;
+}
+
+.dialog input[type=number] {
+   width: 60px;
+}
+
+.dialog span {
+    display: inline-block;
+}
+
+/* all form dialog start in hiding */
+form {
+  display: none;
+  flex-direction: column;
+  position: absolute;
+}
+
+#cutLineDialog {
+  background-color:  #fff;
+  border: solid 1px #dfdfdf;
+  box-shadow: 1px 1px 2px #cfcfcf;
+  width: 240px;
+}
+/*
+interactive Tutor's speech bubble css. like hopscotch js's thick border style. like how shepherd js's bubble arrow is inside the bubble's box, should make position calculation easier.
+Use flex-box ability to move arrow around(up,down,left,right) easier.
+*/
+
+div.tutor-bubble .tutor-nav-button {
+  /* borrowed from katy styles */
+  font-weight: bold;
+  border-width: 1px;
+  border-style: solid;
+  cursor: pointer;
+  margin: 0;
+  overflow: visible;
+  text-decoration: none;
+  width: auto;
+  padding: 0 10px;
+  height: 26px;
+  line-height: 24px;
+  font-size: 12px;
+  white-space: nowrap;
+  display: inline-block;
+  vertical-align: middle;
+  border-radius: 3px;
+  box-sizing: border-box;
+}
+div.tutor-bubble .tutor-nav-button:hover {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+div.tutor-bubble .tutor-nav-button:active {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25) inset;
+}
+div.tutor-bubble .tutor-nav-button.next {
+  border-color: #1b5480;
+  color: #fff;
+  margin: 0 0 0 10px;
+  /* HS specific*/
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.35);
+  background-color: #287bbc;
+  background-image: linear-gradient(to bottom, #287bbc 0%, #23639a 100%);
+}
+div.tutor-bubble .tutor-nav-button.next:hover {
+  background-color: #2672ae;
+  background-image: linear-gradient(to bottom, #2672ae 0%, #1e4f7e 100%);
+}
+div.tutor-bubble .tutor-nav-button.prev {
+  border-color: #a7a7a7;
+  color: #444;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.75);
+  background-color: #f2f2f2;
+  background-image: linear-gradient(to bottom, #f2f2f2 0%, #e9e9e9 100%);
+}
+div.tutor-bubble .tutor-nav-button.prev:hover {
+  background-color: #e8e8e8;
+  background-image: linear-gradient(to bottom, #e8e8e8 0%, #e3e3e3 13%, #d7d7d7 32%, #b9b9b9 71%, #a9a9a9 100%);
+}
+div.tutor-bubble {
+  position: absolute;
+  width: auto;
+  max-width: 350px;
+  display: inline-flex;
+  flex-wrap: nowrap;
+  flex-direction: row;
+  align-items: center;
+}
+div.tutor-bubble .tutor-container {
+  border: 5px solid rgba(0, 0, 0, 0.5);
+  border-radius: 10px;
+  width: 100%;
+  min-width: 200px;
+  padding: 10px;
+  color: #333;
+  background-color: #ffffff;
+  font-family: Helvetica, Arial;
+  font-size: 13px;
+  background-clip: padding-box;
+}
+div.tutor-bubble * {
+  box-sizing: border-box;
+}
+div.tutor-bubble.invisible {
+  opacity: 0;
+}
+div.tutor-bubble.hide,
+div.tutor-bubble .hide,
+div.tutor-bubble .hide-all {
+  display: none;
+}
+div.tutor-bubble h3 {
+  color: #000;
+  font-family: Helvetica, Arial;
+  font-size: 16px;
+  font-weight: bold;
+  line-height: 19px;
+  margin: -1px 15px 0 0;
+  padding: 0;
+}
+
+div.tutor-bubble .tutor-content {
+  font-family: Helvetica, Arial;
+  font-weight: normal;
+  line-height: 17px;
+  margin: 0 0 11px 5px;
+  padding-top: 8px;
+}
+div.tutor-bubble .tutor-content em {
+  color: red;
+}
+div.tutor-bubble .close.hide,
+div.tutor-bubble .close.hide-all {
+  display: none;
+}
+
+div.tutor-bubble .tutor-actions {
+  display: flex;
+  flex-direction: row-reverse;
+  justify-content: space-between;
+  margin: 10px 0 0;
+  text-align: right;
+}
+div.tutor-bubble .tutor-container {
+  order: 2;
+}
+div.tutor-bubble .tutor-arrow {
+  order: 1;
+  width: 0;
+  height: 0;
+  font-size: 0px;
+  position: relative;
+  content: '';
+  border-style: solid;
+  border-width: 16px;
+  border-color: LightSkyBlue;
+  z-index: 1;
+}
+div.tutor-bubble .tutor-arrow::after {
+  content: '';
+  width: 0;
+  height: 0;
+  position: relative;
+  border-style: solid;
+  border-width: 14px;
+  border-color: white;
+}
+
+div.tutor-bubble.left {
+  flex-direction: row;
+}
+div.tutor-bubble.left .tutor-arrow {
+  border-width: 16px 16px 16px 0px;
+  border-color: transparent rgba(0, 0, 0, 0.5);
+}
+div.tutor-bubble.left .tutor-arrow::after {
+  border-width: 14px 14px 14px 0px;
+  border-color: transparent white;
+  left: 7px;
+}
+
+div.tutor-bubble.right {
+  flex-direction: row-reverse;
+}
+div.tutor-bubble.right .tutor-arrow {
+  border-width: 16px 0px 16px 16px;
+  border-color: transparent rgba(0, 0, 0, 0.5);
+}
+div.tutor-bubble.right .tutor-arrow:after {
+  border-width: 14px 0px 14px 14px;
+  border-color: transparent white;
+  right: 21px; /* 14+7 */
+}
+
+div.tutor-bubble.top {
+  flex-direction: column;
+}
+div.tutor-bubble.top .tutor-arrow {
+  border-width: 0px 16px 16px 16px;
+  border-color: rgba(0, 0, 0, 0.5) transparent;
+}
+div.tutor-bubble.top .tutor-arrow::after {
+  border-width: 0px 14px 14px 14px;
+  border-color: white transparent;
+  top: 7px;
+  left: -14px;
+}
+
+
+div.tutor-bubble.bottom {
+  flex-direction: column-reverse;
+}
+div.tutor-bubble.bottom .tutor-arrow {
+  border-width: 16px 16px 0px 16px;
+  border-color: rgba(0, 0, 0, 0.5) transparent;
+}
+div.tutor-bubble.bottom .tutor-arrow::after {
+  border-width: 14px 14px 0px 14px;
+  border-color: white transparent;
+  bottom: 7px;
+  left: -14px;
+}
