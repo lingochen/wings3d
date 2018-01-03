@@ -53,8 +53,21 @@ if (NodeList.prototype[Symbol.iterator] === undefined) {
 
 
 // log, does nothing for now, debug build?
-let log = function(command, value) {
-      
+let interpose = []; 
+function log(command, value) {
+   for (let logFn of interpose) {
+      logFn(command, value);
+   }
+};
+function interposeLog(logFn, insert) {
+   if (insert) {
+      interpose.push( logFn );
+   } else {
+      let index = interpose.indexOf(logFn);
+      if (index > -1) {
+         interpose.splice(index, 1);
+      }
+   }
 };
 
 // utility function
@@ -167,6 +180,7 @@ export {
    onReady,
    start,
    log,
+   interposeLog,
    createMask,
    GROUND_GRID_SIZE,
    CAMERA_DIST

@@ -6,8 +6,7 @@ import * as Wings3D from './wings3d';
 
 
 class TutorStep {
-   constructor(tour, title, text, target, placement) {
-     this.tour = tour;
+   constructor(title, text, target, placement) {
      this.target = target;
      this.placement = placement;
      this.title = title;
@@ -19,7 +18,6 @@ class TutorStep {
    expect(action, value) {}
 
    show() {
-      const popUp = this.tour.popUp;
       // place on  the world.
       popUp.title.textContent = this.title;
       popUp.content.innerHTML = this.content;
@@ -34,14 +32,14 @@ class TutorStep {
 }
 
 class ExpectStep extends TutorStep {
-   constructor(tour, expect, title, text, target, placement) {
-      super(tour, title, text, target, placement);
+   constructor(expect, title, text, target, placement) {
+      super(title, text, target, placement);
       this.expectAction = expect;
    }
 
    expect(action, value) {
       if (this.expectAction === action) { // yes, great, now we can goto next step
-         this.tour.goNext();
+         goNext();
       }
    }
 }
@@ -63,7 +61,7 @@ class SelectStep extends TutorStep {
          // now check inside the array. if the array is empty. check number.
          if (this.count !== undefined) {
             if(--this.countDown === 0) {
-               this.tour.goNext();
+               goNext();
             } else {
                this.showSelectionCount();
             }
@@ -77,7 +75,7 @@ class SelectStep extends TutorStep {
    }
 
    done() {
-      this.tour.popUp.select.textContent = "";    
+      popUp.select.textContent = "";    
    }
 
    show() {
@@ -86,7 +84,6 @@ class SelectStep extends TutorStep {
    }
 
    showSelectionCount() {
-      const popUp = this.tour.popUp;
       if (this.count !== undefined) {
          popUp.select.textContent = "selection " + (this.count - this.countDown).toString() + " of " + (this.count).toString();
       } else {
@@ -117,7 +114,7 @@ let targetCage = null;
 // internal accounting.
 //
 const rail = {stops: new Map, routes: [], currentStation: -1};
-let popUp = {};
+var popUp = {};   // needs to be hoist, so var.
 // init() popup.bubble.
 function init(idName) {
    // default 
@@ -148,9 +145,7 @@ function init(idName) {
 }
 
 
-let oldLog;
 function interceptLog(command, value) {
-   oldLog(command, value);
    expect(command, value);
 };
 
@@ -179,21 +174,21 @@ function _addStep(nameId, step) {
 function addStep(nameId, title, text, target, placement, stepOptions) {
    if (noDuplicate(nameId)) {
       // create a new step, and put it into rail
-      _addStep(nameId, new TutorStep(this, title, text, target, placement));
+      _addStep(nameId, new TutorStep(title, text, target, placement));
    }
 };
 
 function addExpectStep(expect, nameId, title, text, target, placement, stepOptions) {
    if (noDuplicate(nameId)) {
       // create a new step, and put it into rail
-      _addStep(nameId, new ExpectStep(this, expect, title, text, target, placement));
+      _addStep(nameId, new ExpectStep(expect, title, text, target, placement));
    }
 };
 
 function addFaceSelectStep(selection, nameId, title, text, placement, stepOptions) {
    if (noDuplicate(nameId)) {
       // create a new step, and put it into rail
-      _addStep(nameId, new FaceSelectStep(this, selection, title, text, placement));
+      _addStep(nameId, new FaceSelectStep(selection, title, text, placement));
    }
 };
 
@@ -217,8 +212,7 @@ function _play(stepNumber) {
 };
     
 function startTour(stepArray) {
-   oldLog = Wings3D.log;
-   Wings3D.log = interceptLog;
+   Wings3D.interposeLog(interceptLog, true);
    //myObj.hasOwnProperty('key')
    if (stepArray) {
 
@@ -239,13 +233,11 @@ function cancel() {
    rail.stops.clear();
    rail.routes.length = 0;
    rail.currentStation = -1;
-   if (oldLog) {
-      Wings3D.log = oldLog;
-   }
+   Wings3D.interposeLog(interceptLog, false);   // remove interceptLog
 };
-function goNext() { _play(_rail.currentStation+1); };
+function goNext() { _play(rail.currentStation+1); };
     
-function goBack() { _play(_rail.currentStation-1); };
+function goBack() { _play(rail.currentStation-1); };
     
 function goTo(id) {};
 
@@ -259,10 +251,12 @@ function expect(action, value) {
    }
 };
 
+// register for 
+Wings3D.onReady(init);
+
 export {
    tours, targetCage,         // variable
    // functions
-   init,
    addStep, addExpectStep, addFaceSelectStep,
    cancel, complete, 
    startTour,

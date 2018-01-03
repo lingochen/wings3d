@@ -279,8 +279,8 @@ class FaceExtrudeHandler extends MouseMoveAlongAxis {
       this.contourEdges = contourEdges;
    }
 
-   _commit(view) {
-      view.undoQueue(new ExtrudeFaceCommand(this.madsor, this.movement, this.snapshots, this.contourEdges));
+   _commit() {
+      View.undoQueue(new ExtrudeFaceCommand(this.madsor, this.movement, this.snapshots, this.contourEdges));
    }
 
    _cancel() {
@@ -296,8 +296,8 @@ class FaceExtrudeFreeHandler extends MoveFreePositionHandler {
       this.contourEdges = contourEdges;
    }
 
-   _commit(view) {
-      view.undoQueue(new ExtrudeFaceCommand(this.madsor, this.movement, this.snapshots, this.contourEdges));
+   _commit() {
+      View.undoQueue(new ExtrudeFaceCommand(this.madsor, this.movement, this.snapshots, this.contourEdges));
    }
 
    _cancel() {
@@ -313,8 +313,8 @@ class FaceExtrudeNormalHandler extends MoveAlongNormal {
       this.contourEdges = contourEdges;
    }
 
-   _commit(view) {
-      view.undoQueue(new ExtrudeFaceCommand(this.madsor, this.movement, this.snapshots, this.contourEdges, true));
+   _commit() {
+      View.undoQueue(new ExtrudeFaceCommand(this.madsor, this.movement, this.snapshots, this.contourEdges, true));
    }
 
    _cancel() {

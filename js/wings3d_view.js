@@ -305,11 +305,11 @@ const handler = {camera: null, mousemove: null};
 function canvasHandleMouseDown(ev) {
    if (ev.button == 0) {
       if (handler.camera !== null) {
-         handler.camera.commit(my);
+         handler.camera.commit();  
          handler.camera = null;
          help('L:Select   M:Start Camera   R:Show Menu   [Alt]+R:Tweak menu');      
       } else if (handler.mousemove !== null) {
-         handler.mousemove.commit(my);
+         handler.mousemove.commit();
          handler.mousemove = null;
       } else {
          //e.stopImmediatePropagation();

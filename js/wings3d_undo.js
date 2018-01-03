@@ -22,8 +22,8 @@ class MouseMoveHandler {
       document.body.style.cursor = 'auto';
    }
 
-   commit(view) {
-      this._commit(view);
+   commit() {
+      this._commit();
       // enable mouse cursor
       document.body.style.cursor = 'auto';
    }

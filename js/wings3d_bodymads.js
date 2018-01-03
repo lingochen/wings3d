@@ -339,9 +339,9 @@ class DuplicateMouseMoveAlongAxis extends MouseMoveAlongAxis {
       this.duplicateBodyCommand = duplicateBodyCommand;
    }
 
-   _commit(view) {
+   _commit() {
       const movement = new MoveCommand(this.madsor, this.snapshots, this.movement);
-      view.undoQueueCombo([this.duplicateBodyCommand, movement]);
+      View.undoQueueCombo([this.duplicateBodyCommand, movement]);
    }
 
    _cancel() {
@@ -358,9 +358,9 @@ class DuplicateMoveFreePositionHandler extends MoveFreePositionHandler {
       this.duplicateBodyCommand = duplicateBodyCommand;
    }
 
-   _commit(view) {
+   _commit() {
       const movement = new MoveCommand(this.madsor, this.snapshots, this.movement);
-      view.undoQueueCombo([this.duplicateBodyCommand, movement]);
+      View.undoQueueCombo([this.duplicateBodyCommand, movement]);
    }
 
    _cancel() {
