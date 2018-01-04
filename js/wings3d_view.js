@@ -83,6 +83,20 @@ let theme = nativeTheme;
 
 
 // 
+// id2Fn()
+//
+let idMapping = new Map;
+function id2Fn(inputID) {
+   return idMapping.get(inputID);
+}
+function setId2Fn(fn) {
+   idMapping.set(fn.name, fn);   // populate the support functions
+}
+
+// --- end of id mapping to functions ----------------------------------------------------------------------------
+
+
+// 
 // editing mode management
 //
 const mode = {             // private variable, needed to initialize after gl, 
@@ -120,6 +134,7 @@ function toggleVertexMode() {
       Renderer.needToRedraw();
    }
 };
+setId2Fn(toggleVertexMode);
 
 function toggleFaceMode() {
    if (mode.current !== mode.face) {
@@ -129,6 +144,7 @@ function toggleFaceMode() {
       Renderer.needToRedraw();
    }
 };
+setId2Fn(toggleFaceMode);
 
 function toggleEdgeMode() {
    if (mode.current !== mode.edge) {
@@ -138,6 +154,7 @@ function toggleEdgeMode() {
       Renderer.needToRedraw();
    }
 };
+setId2Fn(toggleEdgeMode);
 
 function toggleBodyMode() {
    if (mode.current !== mode.body) {
@@ -147,6 +164,7 @@ function toggleBodyMode() {
       Renderer.needToRedraw();
    }
 };
+setId2Fn(toggleBodyMode);
 
 function restoreVertexMode(snapshots) {
    if (mode.current !== mode.vertex) {
@@ -453,6 +471,7 @@ function redoEdit() {
       Renderer.needToRedraw();
    }
 };
+setId2Fn(redoEdit);
 
 function undoEdit() {
    if (undo.current >= 0) {
@@ -460,7 +479,10 @@ function undoEdit() {
       Renderer.needToRedraw();
    }
 };
+setId2Fn(undoEdit);
+
 // -- end of undo/redo handling ----------------------------------------------------------------------------------
+
 
 //
 // world rendering and utility functions
@@ -617,6 +639,8 @@ export {
    undoEdit,
    undoQueue,
    undoQueueCombo,
+   // id2fn
+   id2Fn,
    // rendering
    loadMatrices,
    projection,

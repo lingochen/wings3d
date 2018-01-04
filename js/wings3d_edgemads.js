@@ -3,7 +3,10 @@
 //
 //    
 **/
-import {Madsor, DragSelect} from './wings3d_mads';
+import {Madsor, DragSelect, ToggleModeCommand} from './wings3d_mads';
+import {FaceMadsor} from './wings3d_facemads';   // for switching
+import {BodyMadsor} from './wings3d_bodymads';
+import {VertexMadsor} from './wings3d_vertexmads';
 import { EditCommand } from './wings3d_undo';
 import * as UI from './wings3d_ui';
 import * as View from './wings3d_view';

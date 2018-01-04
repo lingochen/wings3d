@@ -2,6 +2,7 @@
 // button toolbar for geometry ...etc. 
 */
 
+import * as View from './wings3d_view';
 import * as Wings3D from './wings3d';
 
    /*
@@ -14,31 +15,22 @@ const buttonBarClassName = {
          //link: , 
          //active: ".button-active",
       };
-const id2Func = new Map;
 
-function executeApi(ev) {
-   let command = ev.currentTarget.id;
-   if (command) {
-      //e.preventDefault();
-      help( "wings3d - " + command);
-      const func = id2Func.get(command);
-      func(ev);
-   } else {
-      console.log("no id attribute defined");
-   }
-};
 
 function init() {
    const toolbar = document.querySelector(buttonBarClassName.bar);
-   const buttons = toolbar.querySelectorAll(buttonBarClassName.button);
+   const buttons = toolbar.querySelectorAll('div input');
    for (let button of buttons) {
-      button.addEventListener('click', executeApi, false);
+      const func = View.id2Fn(button.id);
+      if (func) {
+         button.addEventListener('click', function(ev) {
+            //ev.preventDefault();
+            help( "wings3d - " + ev.currentTarget.id);
+            func();
+         }, false);
+      }
    }
 };
 
-
-export {
-   id2Func,
-};
 
 Wings3D.onReady(init);
