@@ -927,6 +927,7 @@ __WEBPACK_IMPORTED_MODULE_5__wings3d__["onReady"](init);
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "styleSheet", function() { return styleSheet; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getArrow", function() { return getArrow; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "placement", function() { return placement; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getPosition", function() { return getPosition; });
@@ -938,7 +939,6 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
    wings3d, ui and ui utility functions. including tutor.
 
 */
-
 
 
 
@@ -1115,6 +1115,14 @@ function setupDialog(formID, submitData) {
    return form;
 };
 
+
+let styleSheet = (function(){
+   let style = document.createElement('style');
+   document.head.appendChild(style);
+   // webkit hack, still needs in 2018?
+   style.appendChild(document.createTextNode(''));
+   return style.sheet;
+}());
 
 
 
@@ -8110,7 +8118,6 @@ function init(idName) {
       popUp.content = extractElement("tutor-content");
       popUp.select = extractElement("tutor-selection");
    }
-
 }
 
 
@@ -8180,12 +8187,16 @@ function _play(stepNumber) {
    }
 };
     
+// let add blur Rule
+let blurIndex = -1;
 function startTour(stepArray) {
    __WEBPACK_IMPORTED_MODULE_1__wings3d__["interposeLog"](interceptLog, true);
    //myObj.hasOwnProperty('key')
    if (stepArray) {
 
    }
+   // add blur rule
+   blurIndex = __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["styleSheet"].insertRule('body > :not(.exclude) { filter: blur(1px) grayscale(100%)}');
    // onto the world
    popUp.bubble.classList.remove("hide");
    // display firstStep
@@ -8197,6 +8208,11 @@ function complete() {
 };
     
 function cancel() {
+   // remove blur effect
+   if (blurIndex > -1) {
+      __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["styleSheet"].deleteRule(blurIndex);
+   }
+   // restore to original condition
    popUp.bubble.classList.add("hide");
    popUp.next.textContent = "Next";
    rail.stops.clear();
