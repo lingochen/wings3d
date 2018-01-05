@@ -141,7 +141,6 @@ function init(idName) {
       popUp.content = extractElement("tutor-content");
       popUp.select = extractElement("tutor-selection");
    }
-
 }
 
 
@@ -211,12 +210,16 @@ function _play(stepNumber) {
    }
 };
     
+// let add blur Rule
+let blurIndex = -1;
 function startTour(stepArray) {
    Wings3D.interposeLog(interceptLog, true);
    //myObj.hasOwnProperty('key')
    if (stepArray) {
 
    }
+   // add blur rule
+   blurIndex = UI.styleSheet.insertRule('body > :not(.exclude) { filter: blur(1px) grayscale(100%)}');
    // onto the world
    popUp.bubble.classList.remove("hide");
    // display firstStep
@@ -228,6 +231,11 @@ function complete() {
 };
     
 function cancel() {
+   // remove blur effect
+   if (blurIndex > -1) {
+      UI.styleSheet.deleteRule(blurIndex);
+   }
+   // restore to original condition
    popUp.bubble.classList.add("hide");
    popUp.next.textContent = "Next";
    rail.stops.clear();

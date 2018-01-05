@@ -5,7 +5,6 @@
 import * as Hotkey from './wings3d_hotkey';
 
 
-
 function bindMenuItem(id, fn, hotkey, meta) {
    const menuItem = document.querySelector(id);
    if (menuItem) {
@@ -180,8 +179,17 @@ function setupDialog(formID, submitData) {
 };
 
 
+let styleSheet = (function(){
+   let style = document.createElement('style');
+   document.head.appendChild(style);
+   // webkit hack, still needs in 2018?
+   style.appendChild(document.createTextNode(''));
+   return style.sheet;
+}());
+
 
 export {
+   styleSheet,
    getArrow,
    placement,
    getPosition,

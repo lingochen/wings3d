@@ -4,6 +4,7 @@ html, body {
     height: 100%;
 }
 
+
 .box {
   display: flex;
   flex-flow: column;
