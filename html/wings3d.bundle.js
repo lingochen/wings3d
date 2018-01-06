@@ -7983,14 +7983,41 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 
 class TutorStep {
-   constructor(title, text, target, placement) {
-     this.target = target;
+   constructor(title, text, targetID, placement) {
+     this.targetID = targetID;
      this.placement = placement;
      this.title = title;
      this.content = text;
    }
 
-   done() {}
+   // do functions along recursively up the parent
+   static walkupDoms(target, ancestorTarget, fn) {
+      if (target) {
+         const parent = target.parentNode;
+         for (let element = parent.firstElementChild; element; element = element.nextElementSibling) {
+            if (element !==target) {
+               fn(element);
+            }           
+         }
+         if (parent !== ancestorTarget) {
+            this.walkupDoms(parent, ancestorTarget, fn);
+         }
+
+      } else { // select all parent's childern
+         for (let element = ancestorTarget.firstElementChild; element; element = element.nextElementSibling) {
+            fn(element);
+         }
+      }
+   }
+
+   done() {
+      // unblur all other id
+      let target;
+      if (this.targetID !== '') {
+         target = document.getElementById(this.targetID);
+      }
+      TutorStep.walkupDoms(target, document.body, function(element) {element.classList.remove('unfocus');});
+   }
 
    expect(action, value) {}
 
@@ -8001,16 +8028,21 @@ class TutorStep {
       popUp.bubble.classList.remove("left", "right", "top", "bottom");
       popUp.bubble.classList.add(__WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["getArrow"](this.placement));
       // now place it
-      const placement = __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["placement"](this.target, this.placement, popUp.bubble);
+      const placement = __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["placement"](this.targetID, this.placement, popUp.bubble);
       popUp.bubble.style.top = placement.top.toString() + "px";
       popUp.bubble.style.left = placement.left.toString() + "px"; 
+      // blur all not ide.
+      let target;
+      if (this.targetID !== '') {
+         target = document.getElementById(this.targetID);
+      }
+      TutorStep.walkupDoms(target, document.body, function(node) {node.classList.add('unfocus')});
    }
-
 }
 
 class ExpectStep extends TutorStep {
-   constructor(expect, title, text, target, placement) {
-      super(title, text, target, placement);
+   constructor(expect, title, text, targetID, placement) {
+      super(title, text, targetID, placement);
       this.expectAction = expect;
    }
 
@@ -8147,17 +8179,17 @@ function _addStep(nameId, step) {
 };
     
 //
-function addStep(nameId, title, text, target, placement, stepOptions) {
+function addStep(nameId, title, text, targetID, placement, stepOptions) {
    if (noDuplicate(nameId)) {
       // create a new step, and put it into rail
-      _addStep(nameId, new TutorStep(title, text, target, placement));
+      _addStep(nameId, new TutorStep(title, text, targetID, placement));
    }
 };
 
-function addExpectStep(expect, nameId, title, text, target, placement, stepOptions) {
+function addExpectStep(expect, nameId, title, text, targetID, placement, stepOptions) {
    if (noDuplicate(nameId)) {
       // create a new step, and put it into rail
-      _addStep(nameId, new ExpectStep(expect, title, text, target, placement));
+      _addStep(nameId, new ExpectStep(expect, title, text, targetID, placement));
    }
 };
 
@@ -8187,16 +8219,12 @@ function _play(stepNumber) {
    }
 };
     
-// let add blur Rule
-let blurIndex = -1;
 function startTour(stepArray) {
    __WEBPACK_IMPORTED_MODULE_1__wings3d__["interposeLog"](interceptLog, true);
    //myObj.hasOwnProperty('key')
    if (stepArray) {
 
    }
-   // add blur rule
-   blurIndex = __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["styleSheet"].insertRule('body > :not(.exclude) { filter: blur(1px) grayscale(100%)}');
    // onto the world
    popUp.bubble.classList.remove("hide");
    // display firstStep
@@ -8208,9 +8236,9 @@ function complete() {
 };
     
 function cancel() {
-   // remove blur effect
-   if (blurIndex > -1) {
-      __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["styleSheet"].deleteRule(blurIndex);
+   // remove all unfocus class
+   if (rail.currentStation > -1) {
+      rail.routes[rail.currentStation].done();
    }
    // restore to original condition
    popUp.bubble.classList.add("hide");
@@ -9415,7 +9443,7 @@ const buttonBarClassName = {
 
 function init() {
    const toolbar = document.querySelector(buttonBarClassName.bar);
-   const buttons = toolbar.querySelectorAll('div input');
+   const buttons = toolbar.querySelectorAll('div label');
    for (let button of buttons) {
       const func = __WEBPACK_IMPORTED_MODULE_0__wings3d_view__["id2Fn"](button.id);
       if (func) {

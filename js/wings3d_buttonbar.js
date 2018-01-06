@@ -19,7 +19,7 @@ const buttonBarClassName = {
 
 function init() {
    const toolbar = document.querySelector(buttonBarClassName.bar);
-   const buttons = toolbar.querySelectorAll('div input');
+   const buttons = toolbar.querySelectorAll('div label');
    for (let button of buttons) {
       const func = View.id2Fn(button.id);
       if (func) {

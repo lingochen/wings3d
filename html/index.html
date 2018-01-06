@@ -107,45 +107,45 @@
   </nav>
   <div class="button-bar unselectable" id="toolbar">
     <div class="button-group system-group">
-      <input type="button" id="openCloundButton">
-      <label for="openFileButton" class="button not-implemented">
+      <label id="openFileButton" class="button not-implemented">
+     	<input type="button">
         <img src="../img/bluecube/open.png" >
         <span>Open</span>
       </label>
-      <input type="button" id="saveCloudButton">
-      <label for="saveCloudButton" class="button not-implemented" >
+      <label id="saveCloudButton" class="button not-implemented" >
+      	<input type="button">
         <img src="../img/bluecube/save.png" >
         <span>Save</span>
       </label>
-      <input type="button" id="undoEdit">
-      <label for="undoEdit" class="button" wings3d-api="undoEdit">
+      <label class="button" id="undoEdit">
+      	<input type="button">
         <img src="../img/bluecube/undo.png" >
         <span>Undo</span>
       </label>
-      <input type="button" id="redoEdit">
-      <label for="redoEdit" class="button" wings3d-api="redoEdit">
+      <label class="button" id="redoEdit">
+     	<input type="button">
         <img src="../img/bluecube/redo.png" >
         <span>Redo</span>
       </label>
     </div>
     <div class="button-group object-select">
-      <input type="radio" name="toggleMode" id="toggleVertexMode">
-      <label for="toggleVertexMode" class="button" wings3d-api="toggleVertexMode" onmouseover="help('Change to vertex selection mode')">
+      <input type="radio" name="toggleMode" id="toggleVertexModeInput">
+      <label id="toggleVertexMode" class="button" for="toggleVertexModeInput" onmouseover="help('Change to vertex selection mode')">
         <img src="../img/bluecube/vertex.png" >
         <span >Vertex</span>
       </label>
-      <input type="radio" name="toggleMode" id="toggleEdgeMode">
-      <label for="toggleEdgeMode" class="button" wings3d-api="toggleEdgeMode">
+      <input type="radio" name="toggleMode" id="toggleEdgeModeInput">
+      <label id="toggleEdgeMode" class="button" for="toggleEdgeModeInput">
         <img src="../img/bluecube/edge.png" >
         <span>Edge</span>
       </label>
-      <input type="radio" name="toggleMode" id="toggleFaceMode" checked>
-      <label for="toggleFaceMode" class="button" wings3d-api="toggleFaceMode">
+      <input type="radio" name="toggleMode" id="toggleFaceModeInput" checked>
+      <label id="toggleFaceMode" class="button" for="toggleFaceModeInput">
         <img src="../img/bluecube/face.png" >
         <span>Face</span>
       </label>
-      <input type="radio" name="toggleMode" id="toggleBodyMode">
-      <label for="toggleBodyMode" class="button" wings3d-api="toggleBodyMode">
+      <input type="radio" name="toggleMode" id="toggleBodyModeInput">
+      <label id="toggleBodyMode" class="button" for="toggleBodyModeInput">
         <img src="../img/bluecube/body.png" >
         <span>Body</span>
       </label>
@@ -180,11 +180,11 @@
     </div>
   </header>
   <div id="canvas" class="row content">
-  <div id="statusbar"> Wings3D Geometry </div>
-  <canvas id="glcanvas">
-    Your browser doesn't appear to support the 
-    <code>&lt;canvas&gt;</code> element.
-  </canvas>
+    <div id="statusbar"> Wings3D Geometry </div>
+    <canvas id="glcanvas">
+      Your browser doesn't appear to support the 
+      <code>&lt;canvas&gt;</code> element.
+    </canvas>
   </div>
   <footer id="helpbar" class="row footer">This is help bar</footer>
 
