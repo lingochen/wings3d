@@ -4,6 +4,9 @@ html, body {
     height: 100%;
 }
 
+.unfocus:not(.exclude) {
+  opacity: 0.5;
+}
 
 .box {
   display: flex;
@@ -255,7 +258,7 @@ button.close {
   display: none;
 }
 label.button:hover,
-.button-bar input:checked + label.button {
+.button-bar input:checked+label.button {
   border-style: ridge;
   border-color: black;
 }
