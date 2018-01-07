@@ -77,6 +77,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "createMask", function() { return createMask; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "GROUND_GRID_SIZE", function() { return GROUND_GRID_SIZE; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "CAMERA_DIST", function() { return CAMERA_DIST; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "action", function() { return action; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__ = __webpack_require__(3);
 /*
 //  wings3d.js
@@ -134,9 +135,9 @@ if (NodeList.prototype[Symbol.iterator] === undefined) {
 
 // log, does nothing for now, debug build?
 let interpose = []; 
-function log(command, value) {
+function log(action, value) {
    for (let logFn of interpose) {
-      logFn(command, value);
+      logFn(action, value);
    }
 };
 function interposeLog(logFn, insert) {
@@ -255,6 +256,13 @@ function start_halt() {
                 }
    };*/
 
+// log action constant
+const action = {
+   cameraModeEnter: "CameraModeEnter",
+   cameraModeExit: "CameraModeExit",
+   contextMenu: "ContextMenu",
+   createCubeDialog: "CreateCubeDialog",
+};
 
 
 
@@ -629,6 +637,7 @@ function canvasHandleMouseDown(ev) {
       if (handler.camera !== null) {
          handler.camera.commit();  
          handler.camera = null;
+         __WEBPACK_IMPORTED_MODULE_5__wings3d__["log"](__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].cameraModeExit, __WEBPACK_IMPORTED_MODULE_2__wings3d_camera__["view"]);
          help('L:Select   M:Start Camera   R:Show Menu   [Alt]+R:Tweak menu');      
       } else if (handler.mousemove !== null) {
          handler.mousemove.commit();
@@ -660,10 +669,10 @@ function canvasHandleMouseUp(ev) {
    } else if (ev.button == 1) { // check for middle button down
       if (handler.camera === null) {
          ev.stopImmediatePropagation();
-         // tell tutor step, we are in camera mode
-         __WEBPACK_IMPORTED_MODULE_5__wings3d__["log"]("enterCameraMode",  __WEBPACK_IMPORTED_MODULE_2__wings3d_camera__);
          // let camera handle the mouse event until it quit.
          handler.camera = __WEBPACK_IMPORTED_MODULE_2__wings3d_camera__["getMouseMoveHandler"]();
+         // tell tutor step, we are in camera mode
+         __WEBPACK_IMPORTED_MODULE_5__wings3d__["log"](__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].cameraModeEnter, __WEBPACK_IMPORTED_MODULE_2__wings3d_camera__["view"]);
          help('L:Accept   M:Drag to Pan  R:Cancel/Restore to View   Move mouse to tumble');
          // disable mouse cursor
          //document.body.style.cursor = 'none';
@@ -711,6 +720,7 @@ function canvasHandleContextMenu(ev) {
       if (handler.camera !== null) {
          handler.camera.cancel();
          handler.camera = null;
+         __WEBPACK_IMPORTED_MODULE_5__wings3d__["log"](__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].cameraModeExit, __WEBPACK_IMPORTED_MODULE_2__wings3d_camera__["view"]);   // log action
          help('L:Select   M:Start Camera   R:Show Menu   [Alt]+R:Tweak menu');
       } else {
          handler.mousemove.cancel();
@@ -2620,8 +2630,9 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       });
       if (hasSelection) {
          return this.contextMenu;
+      } else {
+         return null;
       }
-      return null;
    }
 
    // can be use arguments object?
@@ -8153,10 +8164,6 @@ function init(idName) {
 }
 
 
-function interceptLog(command, value) {
-   expect(command, value);
-};
-
 function extractElement(className) {
    const nodeList = popUp.bubble.getElementsByClassName(className);
    if (nodeList.length > 0) {
@@ -8220,7 +8227,7 @@ function _play(stepNumber) {
 };
     
 function startTour(stepArray) {
-   __WEBPACK_IMPORTED_MODULE_1__wings3d__["interposeLog"](interceptLog, true);
+   __WEBPACK_IMPORTED_MODULE_1__wings3d__["interposeLog"](expect, true);
    //myObj.hasOwnProperty('key')
    if (stepArray) {
 
@@ -8246,7 +8253,7 @@ function cancel() {
    rail.stops.clear();
    rail.routes.length = 0;
    rail.currentStation = -1;
-   __WEBPACK_IMPORTED_MODULE_1__wings3d__["interposeLog"](interceptLog, false);   // remove interceptLog
+   __WEBPACK_IMPORTED_MODULE_1__wings3d__["interposeLog"](expect, false);   // remove interceptLog
 };
 function goNext() { _play(rail.currentStation+1); };
     
@@ -8254,10 +8261,10 @@ function goBack() { _play(rail.currentStation-1); };
     
 function goTo(id) {};
 
-function expect(action, value) {
+function expect(action, log) {
    if (rail.currentStation >= 0) {
       const step =  rail.routes[rail.currentStation];
-      step.expect(action, value);
+      step.expect(action, log);
       if (action === "createCube") {   // 
          targetCage = value;
       }
@@ -8426,7 +8433,7 @@ function contextListener(className) {
     if ( menuState !== 1 ) {
       menuState = 1;
       contextMenu.menu.style.display = "block";
-      //Wings3D.log("contextMenu", contextMenu.menu.id);
+      __WEBPACK_IMPORTED_MODULE_2__wings3d__["log"](__WEBPACK_IMPORTED_MODULE_2__wings3d__["action"].contextMenu, contextMenu.menu.id);   // needs to 
     }
   }
 
@@ -9903,7 +9910,7 @@ document.addEventListener('DOMContentLoaded', function() {
          var position = __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["getPosition"](ev);
          // run createCube dialog
          createCubeDialog(position);
-         __WEBPACK_IMPORTED_MODULE_1__wings3d__["log"]("createCubeForm");
+         __WEBPACK_IMPORTED_MODULE_1__wings3d__["log"](__WEBPACK_IMPORTED_MODULE_1__wings3d__["action"].createCubeDialog);
       })
    }
    //
@@ -9998,13 +10005,13 @@ function createGuideTour() {
       __WEBPACK_IMPORTED_MODULE_0__wings3d_interact__["cancel"]();   // clear tours.
       __WEBPACK_IMPORTED_MODULE_0__wings3d_interact__["addStep"]("Welcome", "Zoom", "Mouse wheel scroll in Canvas will zoom in/out",
        "", "top");
-      __WEBPACK_IMPORTED_MODULE_0__wings3d_interact__["addExpectStep"]("enterCameraMode", "Camera", "Camera Mode", "Let <em>M</em>, click middle mouse button anywhere in the Canvas to enter camera mode",       
+      __WEBPACK_IMPORTED_MODULE_0__wings3d_interact__["addExpectStep"](__WEBPACK_IMPORTED_MODULE_2__wings3d__["action"].cameraModeEnter, "Camera", "Camera Mode", "Let <em>M</em>, click middle mouse button anywhere in the Canvas to enter camera mode",       
        "", "right");
-      __WEBPACK_IMPORTED_MODULE_0__wings3d_interact__["addExpectStep"]("exitCameraMode", "MoveCamera", "Move Camera", "Information Line shows you how to move camera, and you can still zoom in/out",
+      __WEBPACK_IMPORTED_MODULE_0__wings3d_interact__["addExpectStep"](__WEBPACK_IMPORTED_MODULE_2__wings3d__["action"].cameraModeExit, "MoveCamera", "Move Camera", "Information Line shows you how to move camera, exit Camera Mode, and you can still zoom in/out",
        "helpbar", "top-start");
-      __WEBPACK_IMPORTED_MODULE_0__wings3d_interact__["addExpectStep"]("contextMenu", "CreateMenu", "ContextMenu", "Let <em>R</em> click right mouse button in the Canvas empty place to bring up CreateObject Menu",
+      __WEBPACK_IMPORTED_MODULE_0__wings3d_interact__["addExpectStep"](__WEBPACK_IMPORTED_MODULE_2__wings3d__["action"].contextMenu, "CreateMenu", "ContextMenu", "Let <em>R</em> click right mouse button in the Canvas empty place to bring up CreateObject Menu",
        "", "left");
-      __WEBPACK_IMPORTED_MODULE_0__wings3d_interact__["addExpectStep"]("createCubeForm", "CreateCubeForm", "Great Job", "Click Cube MenuItem to create Cube",
+      __WEBPACK_IMPORTED_MODULE_0__wings3d_interact__["addExpectStep"](__WEBPACK_IMPORTED_MODULE_2__wings3d__["action"].createCubeDialog, "CreateCubeForm", "Great Job", "Click Cube MenuItem to create Cube",
        "createCube", "right");
       __WEBPACK_IMPORTED_MODULE_0__wings3d_interact__["addExpectStep"]("createCube", "CreateCube", "Cube Form", "You can adjust the cube's parameter",
        "createCubeForm", "top");
