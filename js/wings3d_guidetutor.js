@@ -63,13 +63,13 @@ function createGuideTour() {
       Tutor.cancel();   // clear tours.
       Tutor.addStep("Welcome", "Zoom", "Mouse wheel scroll in Canvas will zoom in/out",
        "", "top");
-      Tutor.addExpectStep("enterCameraMode", "Camera", "Camera Mode", "Let <em>M</em>, click middle mouse button anywhere in the Canvas to enter camera mode",       
+      Tutor.addExpectStep(Wings3D.action.cameraModeEnter, "Camera", "Camera Mode", "Let <em>M</em>, click middle mouse button anywhere in the Canvas to enter camera mode",       
        "", "right");
-      Tutor.addExpectStep("exitCameraMode", "MoveCamera", "Move Camera", "Information Line shows you how to move camera, and you can still zoom in/out",
+      Tutor.addExpectStep(Wings3D.action.cameraModeExit, "MoveCamera", "Move Camera", "Information Line shows you how to move camera, exit Camera Mode, and you can still zoom in/out",
        "helpbar", "top-start");
-      Tutor.addExpectStep("contextMenu", "CreateMenu", "ContextMenu", "Let <em>R</em> click right mouse button in the Canvas empty place to bring up CreateObject Menu",
+      Tutor.addExpectStep(Wings3D.action.contextMenu, "CreateMenu", "ContextMenu", "Let <em>R</em> click right mouse button in the Canvas empty place to bring up CreateObject Menu",
        "", "left");
-      Tutor.addExpectStep("createCubeForm", "CreateCubeForm", "Great Job", "Click Cube MenuItem to create Cube",
+      Tutor.addExpectStep(Wings3D.action.createCubeDialog, "CreateCubeForm", "Great Job", "Click Cube MenuItem to create Cube",
        "createCube", "right");
       Tutor.addExpectStep("createCube", "CreateCube", "Cube Form", "You can adjust the cube's parameter",
        "createCubeForm", "top");

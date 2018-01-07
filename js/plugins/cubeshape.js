@@ -318,7 +318,7 @@ document.addEventListener('DOMContentLoaded', function() {
          var position = UI.getPosition(ev);
          // run createCube dialog
          createCubeDialog(position);
-         Wings3D.log("createCubeForm");
+         Wings3D.log(Wings3D.action.createCubeDialog);
       })
    }
    //

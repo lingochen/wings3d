@@ -53,8 +53,9 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       });
       if (hasSelection) {
          return this.contextMenu;
+      } else {
+         return null;
       }
-      return null;
    }
 
    // can be use arguments object?

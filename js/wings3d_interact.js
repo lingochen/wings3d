@@ -176,10 +176,6 @@ function init(idName) {
 }
 
 
-function interceptLog(command, value) {
-   expect(command, value);
-};
-
 function extractElement(className) {
    const nodeList = popUp.bubble.getElementsByClassName(className);
    if (nodeList.length > 0) {
@@ -243,7 +239,7 @@ function _play(stepNumber) {
 };
     
 function startTour(stepArray) {
-   Wings3D.interposeLog(interceptLog, true);
+   Wings3D.interposeLog(expect, true);
    //myObj.hasOwnProperty('key')
    if (stepArray) {
 
@@ -269,7 +265,7 @@ function cancel() {
    rail.stops.clear();
    rail.routes.length = 0;
    rail.currentStation = -1;
-   Wings3D.interposeLog(interceptLog, false);   // remove interceptLog
+   Wings3D.interposeLog(expect, false);   // remove interceptLog
 };
 function goNext() { _play(rail.currentStation+1); };
     
@@ -277,10 +273,10 @@ function goBack() { _play(rail.currentStation-1); };
     
 function goTo(id) {};
 
-function expect(action, value) {
+function expect(action, log) {
    if (rail.currentStation >= 0) {
       const step =  rail.routes[rail.currentStation];
-      step.expect(action, value);
+      step.expect(action, log);
       if (action === "createCube") {   // 
          targetCage = value;
       }

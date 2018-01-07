@@ -146,7 +146,7 @@ function contextListener(className) {
     if ( menuState !== 1 ) {
       menuState = 1;
       contextMenu.menu.style.display = "block";
-      //Wings3D.log("contextMenu", contextMenu.menu.id);
+      Wings3D.log(Wings3D.action.contextMenu, contextMenu.menu.id);   // needs to 
     }
   }
 

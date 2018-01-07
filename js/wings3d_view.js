@@ -325,6 +325,7 @@ function canvasHandleMouseDown(ev) {
       if (handler.camera !== null) {
          handler.camera.commit();  
          handler.camera = null;
+         Wings3D.log(Wings3D.action.cameraModeExit, Camera.view);
          help('L:Select   M:Start Camera   R:Show Menu   [Alt]+R:Tweak menu');      
       } else if (handler.mousemove !== null) {
          handler.mousemove.commit();
@@ -356,10 +357,10 @@ function canvasHandleMouseUp(ev) {
    } else if (ev.button == 1) { // check for middle button down
       if (handler.camera === null) {
          ev.stopImmediatePropagation();
-         // tell tutor step, we are in camera mode
-         Wings3D.log("enterCameraMode",  Camera);
          // let camera handle the mouse event until it quit.
          handler.camera = Camera.getMouseMoveHandler();
+         // tell tutor step, we are in camera mode
+         Wings3D.log(Wings3D.action.cameraModeEnter, Camera.view);
          help('L:Accept   M:Drag to Pan  R:Cancel/Restore to View   Move mouse to tumble');
          // disable mouse cursor
          //document.body.style.cursor = 'none';
@@ -407,6 +408,7 @@ function canvasHandleContextMenu(ev) {
       if (handler.camera !== null) {
          handler.camera.cancel();
          handler.camera = null;
+         Wings3D.log(Wings3D.action.cameraModeExit, Camera.view);   // log action
          help('L:Select   M:Start Camera   R:Show Menu   [Alt]+R:Tweak menu');
       } else {
          handler.mousemove.cancel();

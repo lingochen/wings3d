@@ -54,9 +54,9 @@ if (NodeList.prototype[Symbol.iterator] === undefined) {
 
 // log, does nothing for now, debug build?
 let interpose = []; 
-function log(command, value) {
+function log(action, value) {
    for (let logFn of interpose) {
-      logFn(command, value);
+      logFn(action, value);
    }
 };
 function interposeLog(logFn, insert) {
@@ -175,6 +175,13 @@ export function start_halt() {
                 }
    };*/
 
+// log action constant
+const action = {
+   cameraModeEnter: "CameraModeEnter",
+   cameraModeExit: "CameraModeExit",
+   contextMenu: "ContextMenu",
+   createCubeDialog: "CreateCubeDialog",
+};
 
 export {
    onReady,
@@ -183,5 +190,6 @@ export {
    interposeLog,
    createMask,
    GROUND_GRID_SIZE,
-   CAMERA_DIST
+   CAMERA_DIST,
+   action,
 };
