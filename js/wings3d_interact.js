@@ -5,6 +5,7 @@ import * as UI from './wings3d_ui';
 import * as Wings3D from './wings3d';
 
 
+
 class TutorStep {
    constructor(title, text, targetID, placement) {
      this.targetID = targetID;
@@ -31,6 +32,10 @@ class TutorStep {
             fn(element);
          }
       }
+   }
+
+   cancel() {
+      this.done();
    }
 
    done() {
@@ -63,6 +68,65 @@ class TutorStep {
    }
 }
 
+
+class MultiStep extends TutorStep {
+   constructor(title, text, targetID, placement, steps) {
+      super(title, text, targetID, placement);
+      this.steps = steps;
+      this.endStep = steps[steps.length-1].step;
+   }
+
+   cancel() {
+      super.cancel();
+      // remember to clean up.
+      setMultiStep(null);
+   }
+
+   done() {
+      const realStep = getRealCurrentStep();
+      if (realStep  === this) {
+         super.done();
+      } else { // let substep handle it.
+         realStep.done();
+         if (realStep === this.endStep) {
+            // should we insert an repeat again? congratulation? or something?
+            setMultiStep(null);
+            popUp.progressBar.style.display = 'none';
+            popUp.progressDone.style.width = '0%';
+            popUp.progressIndicator.style.width = '0%';
+         }
+      }
+   }
+
+   // let substep handle it.
+   expect(action, value) {
+      const realStep = getRealCurrentStep();
+      if (realStep !== this) {
+         realStep.expect(action, value);
+      }
+   }
+
+   show() {
+      const realStep = getRealCurrentStep();
+      if (realStep === this) {
+         super.show();
+         setMultiStep(this);
+         this.begin = getCurrentStation() + 1;
+         this.end = this.begin + this.steps.length;
+         const percent = (1 / this.steps.length) * 100;
+         popUp.progressIndicator.style.width = percent + '%';
+         popUp.progressBar.style.display = 'flex';
+      } else { // run the real things
+         realStep.show();
+         // update the x/y progress bar.
+         const x = getCurrentStation() - this.begin;
+         const percent = (x / this.steps.length)*100;
+         popUp.progressDone.style.width = percent + '%';   // set the progress bar's percentage.
+      }
+   }
+}
+
+
 class ExpectStep extends TutorStep {
    constructor(expect, title, text, targetID, placement) {
       super(title, text, targetID, placement);
@@ -72,6 +136,8 @@ class ExpectStep extends TutorStep {
    expect(action, value) {
       if (this.expectAction === action) { // yes, great, now we can goto next step
          goNext();
+      } else {
+         // sho
       }
    }
 }
@@ -146,7 +212,8 @@ let targetCage = null;
 // internal accounting.
 //
 const rail = {stops: new Map, routes: [], currentStation: -1};
-var popUp = {};   // needs to be hoist, so var.
+let multiStep = null;   // current multistep if any
+let popUp = {};
 // init() popup.bubble.
 function init(idName) {
    // default 
@@ -172,9 +239,31 @@ function init(idName) {
       popUp.title = extractElement("tutor-title");
       popUp.content = extractElement("tutor-content");
       popUp.select = extractElement("tutor-selection");
+      popUp.progressBar = extractElement("tutor-progress");
+      popUp.progressDone = extractElement("tutor-progress-done");
+      popUp.progressIndicator = extractElement('tutor-progress-indicator');
    }
 }
 
+function setMultiStep(obj) {
+   multiStep = obj;
+};
+
+function getCurrentStep() {
+   if (multiStep) {  // let multiStep handle it
+      return multiStep;
+   } else {
+      return rail.routes[rail.currentStation];
+   }
+};
+
+function getRealCurrentStep() {
+   return rail.routes[rail.currentStation];
+};
+
+function getCurrentStation() {
+   return rail.currentStation;
+}
 
 function extractElement(className) {
    const nodeList = popUp.bubble.getElementsByClassName(className);
@@ -192,34 +281,49 @@ function noDuplicate(nameId) {
    return true;
 };
 
-function _addStep(nameId, step) {
-   rail.stops.set(nameId, rail.routes.length);
-   rail.routes.push(step);
+function add(nameStep) {  // rename from _addStep, also return success or failure.
+   if (noDuplicate(nameStep.nameId)) {
+      rail.stops.set(nameStep.nameId, rail.routes.length);
+      rail.routes.push(nameStep.step);
+      return true;
+   } else {
+      return false;
+   }
 };
     
 //
-function addStep(nameId, title, text, targetID, placement, stepOptions) {
-   if (noDuplicate(nameId)) {
-      // create a new step, and put it into rail
-      _addStep(nameId, new TutorStep(title, text, targetID, placement));
-   }
+function step(nameId, title, text, targetID, placement, stepOptions) {
+   return {nameId: nameId, step: new TutorStep(title, text, targetID, placement)};
+};
+function addStep(nameId, title, text, targetID, placement, stepOtions) {
+   add(step(nameId, title, text, targetID, placement, stepOtions));
 };
 
+function expectStep(expect, nameId, title, text, targetID, placement, stepOptions) {
+   return {nameId: nameId, step: new ExpectStep(expect, title, text, targetID, placement)};
+};
 function addExpectStep(expect, nameId, title, text, targetID, placement, stepOptions) {
-   if (noDuplicate(nameId)) {
-      // create a new step, and put it into rail
-      _addStep(nameId, new ExpectStep(expect, title, text, targetID, placement));
-   }
+   add(expectStep(expect, nameId, title, text, targetID, placement, stepOptions));
 };
 
+function faceSelectStep(selection, nameId, title, text, placement, stepOptions) {
+   return {nameId: nameId, step: new FaceSelectStep(selection, title, text, placement)};
+};
 function addFaceSelectStep(selection, nameId, title, text, placement, stepOptions) {
-   if (noDuplicate(nameId)) {
-      // create a new step, and put it into rail
-      _addStep(nameId, new FaceSelectStep(selection, title, text, placement));
-   }
+   add(faceSelectStep(selection, nameId, title, text, placement, stepOptions));
 };
 
-function _play(stepNumber) {
+// add MultiStep.
+function addMultiStep(nameId, title, text, target, placement, steps) {
+   //
+   const multiStep = new MultiStep(title, text, target, placement, steps);
+   add({nameId: nameId, step: multiStep}); // begin;
+   for (let step of steps) {
+      add(step);
+   }
+}
+
+let _play = function(stepNumber) {
    if ((stepNumber < 0) || (stepNumber >= rail.routes.length)) {
       console.log("bad step number in tutor guide");
    } else {
@@ -228,11 +332,11 @@ function _play(stepNumber) {
          popUp.next.textContent = "Done";
       }
       if ((rail.currentStation >= 0) && (rail.currentStation < rail.routes.length)) {
-         const prevStep = rail.routes[rail.currentStation];
+         const prevStep = getCurrentStep();//rail.routes[rail.currentStation];
          prevStep.done();
       }
       rail.currentStation = stepNumber;
-      const step = rail.routes[stepNumber];
+      const step = getCurrentStep();//rail.routes[stepNumber];
       // apply data
       step.show();
    }
@@ -251,14 +355,6 @@ function startTour(stepArray) {
 };
     
 function complete() {
-   cancel();
-};
-    
-function cancel() {
-   // remove all unfocus class
-   if (rail.currentStation > -1) {
-      rail.routes[rail.currentStation].done();
-   }
    // restore to original condition
    popUp.bubble.classList.add("hide");
    popUp.next.textContent = "Next";
@@ -266,6 +362,14 @@ function cancel() {
    rail.routes.length = 0;
    rail.currentStation = -1;
    Wings3D.interposeLog(expect, false);   // remove interceptLog
+};
+    
+function cancel() {
+   // remove all unfocus class
+   if (rail.currentStation > -1) {
+      rail.routes[rail.currentStation].done();
+   }
+   complete();
 };
 function goNext() { _play(rail.currentStation+1); };
     
@@ -275,7 +379,7 @@ function goTo(id) {};
 
 function expect(action, log) {
    if (rail.currentStation >= 0) {
-      const step =  rail.routes[rail.currentStation];
+      const step = getCurrentStep();
       step.expect(action, log);
       if (action === "createCube") {   // 
          targetCage = value;
@@ -289,7 +393,9 @@ Wings3D.onReady(init);
 export {
    tours, targetCage,         // variable
    // functions
+   step, expectStep, faceSelectStep,
    addStep, addExpectStep, addFaceSelectStep,
+   add, addMultiStep,
    cancel, complete, 
    startTour,
 };

@@ -7978,9 +7978,14 @@ WingedTopology.prototype.dissolveVertex = function(vertex) {
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "tours", function() { return tours; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "targetCage", function() { return targetCage; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "step", function() { return step; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "expectStep", function() { return expectStep; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "faceSelectStep", function() { return faceSelectStep; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "addStep", function() { return addStep; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "addExpectStep", function() { return addExpectStep; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "addFaceSelectStep", function() { return addFaceSelectStep; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "add", function() { return add; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "addMultiStep", function() { return addMultiStep; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "cancel", function() { return cancel; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "complete", function() { return complete; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "startTour", function() { return startTour; });
@@ -7989,6 +7994,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 //
 // interact. tutoring.
 //
+
 
 
 
@@ -8021,6 +8027,10 @@ class TutorStep {
       }
    }
 
+   cancel() {
+      this.done();
+   }
+
    done() {
       // unblur all other id
       let target;
@@ -8051,6 +8061,65 @@ class TutorStep {
    }
 }
 
+
+class MultiStep extends TutorStep {
+   constructor(title, text, targetID, placement, steps) {
+      super(title, text, targetID, placement);
+      this.steps = steps;
+      this.endStep = steps[steps.length-1].step;
+   }
+
+   cancel() {
+      super.cancel();
+      // remember to clean up.
+      setMultiStep(null);
+   }
+
+   done() {
+      const realStep = getRealCurrentStep();
+      if (realStep  === this) {
+         super.done();
+      } else { // let substep handle it.
+         realStep.done();
+         if (realStep === this.endStep) {
+            // should we insert an repeat again? congratulation? or something?
+            setMultiStep(null);
+            popUp.progressBar.style.display = 'none';
+            popUp.progressDone.style.width = '0%';
+            popUp.progressIndicator.style.width = '0%';
+         }
+      }
+   }
+
+   // let substep handle it.
+   expect(action, value) {
+      const realStep = getRealCurrentStep();
+      if (realStep !== this) {
+         realStep.expect(action, value);
+      }
+   }
+
+   show() {
+      const realStep = getRealCurrentStep();
+      if (realStep === this) {
+         super.show();
+         setMultiStep(this);
+         this.begin = getCurrentStation() + 1;
+         this.end = this.begin + this.steps.length;
+         const percent = (1 / this.steps.length) * 100;
+         popUp.progressIndicator.style.width = percent + '%';
+         popUp.progressBar.style.display = 'flex';
+      } else { // run the real things
+         realStep.show();
+         // update the x/y progress bar.
+         const x = getCurrentStation() - this.begin;
+         const percent = (x / this.steps.length)*100;
+         popUp.progressDone.style.width = percent + '%';   // set the progress bar's percentage.
+      }
+   }
+}
+
+
 class ExpectStep extends TutorStep {
    constructor(expect, title, text, targetID, placement) {
       super(title, text, targetID, placement);
@@ -8060,6 +8129,8 @@ class ExpectStep extends TutorStep {
    expect(action, value) {
       if (this.expectAction === action) { // yes, great, now we can goto next step
          goNext();
+      } else {
+         // sho
       }
    }
 }
@@ -8134,7 +8205,8 @@ let targetCage = null;
 // internal accounting.
 //
 const rail = {stops: new Map, routes: [], currentStation: -1};
-var popUp = {};   // needs to be hoist, so var.
+let multiStep = null;   // current multistep if any
+let popUp = {};
 // init() popup.bubble.
 function init(idName) {
    // default 
@@ -8160,9 +8232,31 @@ function init(idName) {
       popUp.title = extractElement("tutor-title");
       popUp.content = extractElement("tutor-content");
       popUp.select = extractElement("tutor-selection");
+      popUp.progressBar = extractElement("tutor-progress");
+      popUp.progressDone = extractElement("tutor-progress-done");
+      popUp.progressIndicator = extractElement('tutor-progress-indicator');
    }
 }
 
+function setMultiStep(obj) {
+   multiStep = obj;
+};
+
+function getCurrentStep() {
+   if (multiStep) {  // let multiStep handle it
+      return multiStep;
+   } else {
+      return rail.routes[rail.currentStation];
+   }
+};
+
+function getRealCurrentStep() {
+   return rail.routes[rail.currentStation];
+};
+
+function getCurrentStation() {
+   return rail.currentStation;
+}
 
 function extractElement(className) {
    const nodeList = popUp.bubble.getElementsByClassName(className);
@@ -8180,34 +8274,49 @@ function noDuplicate(nameId) {
    return true;
 };
 
-function _addStep(nameId, step) {
-   rail.stops.set(nameId, rail.routes.length);
-   rail.routes.push(step);
+function add(nameStep) {  // rename from _addStep, also return success or failure.
+   if (noDuplicate(nameStep.nameId)) {
+      rail.stops.set(nameStep.nameId, rail.routes.length);
+      rail.routes.push(nameStep.step);
+      return true;
+   } else {
+      return false;
+   }
 };
     
 //
-function addStep(nameId, title, text, targetID, placement, stepOptions) {
-   if (noDuplicate(nameId)) {
-      // create a new step, and put it into rail
-      _addStep(nameId, new TutorStep(title, text, targetID, placement));
-   }
+function step(nameId, title, text, targetID, placement, stepOptions) {
+   return {nameId: nameId, step: new TutorStep(title, text, targetID, placement)};
+};
+function addStep(nameId, title, text, targetID, placement, stepOtions) {
+   add(step(nameId, title, text, targetID, placement, stepOtions));
 };
 
+function expectStep(expect, nameId, title, text, targetID, placement, stepOptions) {
+   return {nameId: nameId, step: new ExpectStep(expect, title, text, targetID, placement)};
+};
 function addExpectStep(expect, nameId, title, text, targetID, placement, stepOptions) {
-   if (noDuplicate(nameId)) {
-      // create a new step, and put it into rail
-      _addStep(nameId, new ExpectStep(expect, title, text, targetID, placement));
-   }
+   add(expectStep(expect, nameId, title, text, targetID, placement, stepOptions));
 };
 
+function faceSelectStep(selection, nameId, title, text, placement, stepOptions) {
+   return {nameId: nameId, step: new FaceSelectStep(selection, title, text, placement)};
+};
 function addFaceSelectStep(selection, nameId, title, text, placement, stepOptions) {
-   if (noDuplicate(nameId)) {
-      // create a new step, and put it into rail
-      _addStep(nameId, new FaceSelectStep(selection, title, text, placement));
-   }
+   add(faceSelectStep(selection, nameId, title, text, placement, stepOptions));
 };
 
-function _play(stepNumber) {
+// add MultiStep.
+function addMultiStep(nameId, title, text, target, placement, steps) {
+   //
+   const multiStep = new MultiStep(title, text, target, placement, steps);
+   add({nameId: nameId, step: multiStep}); // begin;
+   for (let step of steps) {
+      add(step);
+   }
+}
+
+let _play = function(stepNumber) {
    if ((stepNumber < 0) || (stepNumber >= rail.routes.length)) {
       console.log("bad step number in tutor guide");
    } else {
@@ -8216,11 +8325,11 @@ function _play(stepNumber) {
          popUp.next.textContent = "Done";
       }
       if ((rail.currentStation >= 0) && (rail.currentStation < rail.routes.length)) {
-         const prevStep = rail.routes[rail.currentStation];
+         const prevStep = getCurrentStep();//rail.routes[rail.currentStation];
          prevStep.done();
       }
       rail.currentStation = stepNumber;
-      const step = rail.routes[stepNumber];
+      const step = getCurrentStep();//rail.routes[stepNumber];
       // apply data
       step.show();
    }
@@ -8239,14 +8348,6 @@ function startTour(stepArray) {
 };
     
 function complete() {
-   cancel();
-};
-    
-function cancel() {
-   // remove all unfocus class
-   if (rail.currentStation > -1) {
-      rail.routes[rail.currentStation].done();
-   }
    // restore to original condition
    popUp.bubble.classList.add("hide");
    popUp.next.textContent = "Next";
@@ -8254,6 +8355,14 @@ function cancel() {
    rail.routes.length = 0;
    rail.currentStation = -1;
    __WEBPACK_IMPORTED_MODULE_1__wings3d__["interposeLog"](expect, false);   // remove interceptLog
+};
+    
+function cancel() {
+   // remove all unfocus class
+   if (rail.currentStation > -1) {
+      rail.routes[rail.currentStation].done();
+   }
+   complete();
 };
 function goNext() { _play(rail.currentStation+1); };
     
@@ -8263,7 +8372,7 @@ function goTo(id) {};
 
 function expect(action, log) {
    if (rail.currentStation >= 0) {
-      const step =  rail.routes[rail.currentStation];
+      const step = getCurrentStep();
       step.expect(action, log);
       if (action === "createCube") {   // 
          targetCage = value;
@@ -10009,16 +10118,30 @@ function createGuideTour() {
        "", "right");
       __WEBPACK_IMPORTED_MODULE_0__wings3d_interact__["addExpectStep"](__WEBPACK_IMPORTED_MODULE_2__wings3d__["action"].cameraModeExit, "MoveCamera", "Move Camera", "Information Line shows you how to move camera, exit Camera Mode, and you can still zoom in/out",
        "helpbar", "top-start");
-      __WEBPACK_IMPORTED_MODULE_0__wings3d_interact__["addExpectStep"](__WEBPACK_IMPORTED_MODULE_2__wings3d__["action"].contextMenu, "CreateMenu", "ContextMenu", "Let <em>R</em> click right mouse button in the Canvas empty place to bring up CreateObject Menu",
-       "", "left");
-      __WEBPACK_IMPORTED_MODULE_0__wings3d_interact__["addExpectStep"](__WEBPACK_IMPORTED_MODULE_2__wings3d__["action"].createCubeDialog, "CreateCubeForm", "Great Job", "Click Cube MenuItem to create Cube",
-       "createCube", "right");
-      __WEBPACK_IMPORTED_MODULE_0__wings3d_interact__["addExpectStep"]("createCube", "CreateCube", "Cube Form", "You can adjust the cube's parameter",
-       "createCubeForm", "top");
+      __WEBPACK_IMPORTED_MODULE_0__wings3d_interact__["addMultiStep"]("Cube Creation", "Create Cube Steps", "Steps to create a Cube", "", "top",
+         [__WEBPACK_IMPORTED_MODULE_0__wings3d_interact__["expectStep"](__WEBPACK_IMPORTED_MODULE_2__wings3d__["action"].contextMenu, "CreateMenu", "ContextMenu", "Let <em>R</em> click right mouse button in the Canvas empty place to bring up CreateObject Menu",
+           "", "left"),
+          __WEBPACK_IMPORTED_MODULE_0__wings3d_interact__["expectStep"](__WEBPACK_IMPORTED_MODULE_2__wings3d__["action"].createCubeDialog, "CreateCubeForm", "Great Job", "Click Cube MenuItem to create Cube",
+           "createCube", "right"),
+          __WEBPACK_IMPORTED_MODULE_0__wings3d_interact__["expectStep"]("createCube", "CreateCube", "Cube Form", "You can adjust the cube's parameter",
+           "createCubeForm", "top")]
+         );
       __WEBPACK_IMPORTED_MODULE_0__wings3d_interact__["addFaceSelectStep"](1, "selectFace", "Select any Face", "Try to click/select face",
-       "left");
+         "left");
       __WEBPACK_IMPORTED_MODULE_0__wings3d_interact__["addStep"]("Congratulation", "Congratulation", "<em>R</em>, Right click mouse button will bring up Face tools. Now you know the basic steps.",
-       "", "bottom");
+           "", "bottom");
+
+/*
+      Tutor.addExpectStep(Wings3D.action.contextMenu, "CreateMenu", "ContextMenu", "Let <em>R</em> click right mouse button in the Canvas empty place to bring up CreateObject Menu",
+       "", "left");
+      Tutor.addExpectStep(Wings3D.action.createCubeDialog, "CreateCubeForm", "Great Job", "Click Cube MenuItem to create Cube",
+       "createCube", "right");
+      Tutor.addExpectStep("createCube", "CreateCube", "Cube Form", "You can adjust the cube's parameter",
+       "createCubeForm", "top");
+      Tutor.addFaceSelectStep(1, "selectFace", "Select any Face", "Try to click/select face",
+       "left");
+      Tutor.addStep("Congratulation", "Congratulation", "<em>R</em>, Right click mouse button will bring up Face tools. Now you know the basic steps.",
+       "", "bottom"); */
 
        // start tour
        __WEBPACK_IMPORTED_MODULE_0__wings3d_interact__["startTour"]();

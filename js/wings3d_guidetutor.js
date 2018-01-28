@@ -67,6 +67,20 @@ function createGuideTour() {
        "", "right");
       Tutor.addExpectStep(Wings3D.action.cameraModeExit, "MoveCamera", "Move Camera", "Information Line shows you how to move camera, exit Camera Mode, and you can still zoom in/out",
        "helpbar", "top-start");
+      Tutor.addMultiStep("Cube Creation", "Create Cube Steps", "Steps to create a Cube", "", "top",
+         [Tutor.expectStep(Wings3D.action.contextMenu, "CreateMenu", "ContextMenu", "Let <em>R</em> click right mouse button in the Canvas empty place to bring up CreateObject Menu",
+           "", "left"),
+          Tutor.expectStep(Wings3D.action.createCubeDialog, "CreateCubeForm", "Great Job", "Click Cube MenuItem to create Cube",
+           "createCube", "right"),
+          Tutor.expectStep("createCube", "CreateCube", "Cube Form", "You can adjust the cube's parameter",
+           "createCubeForm", "top")]
+         );
+      Tutor.addFaceSelectStep(1, "selectFace", "Select any Face", "Try to click/select face",
+         "left");
+      Tutor.addStep("Congratulation", "Congratulation", "<em>R</em>, Right click mouse button will bring up Face tools. Now you know the basic steps.",
+           "", "bottom");
+
+/*
       Tutor.addExpectStep(Wings3D.action.contextMenu, "CreateMenu", "ContextMenu", "Let <em>R</em> click right mouse button in the Canvas empty place to bring up CreateObject Menu",
        "", "left");
       Tutor.addExpectStep(Wings3D.action.createCubeDialog, "CreateCubeForm", "Great Job", "Click Cube MenuItem to create Cube",
@@ -76,7 +90,7 @@ function createGuideTour() {
       Tutor.addFaceSelectStep(1, "selectFace", "Select any Face", "Try to click/select face",
        "left");
       Tutor.addStep("Congratulation", "Congratulation", "<em>R</em>, Right click mouse button will bring up Face tools. Now you know the basic steps.",
-       "", "bottom");
+       "", "bottom"); */
 
        // start tour
        Tutor.startTour();

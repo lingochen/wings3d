@@ -527,3 +527,21 @@ div.tutor-bubble.bottom .tutor-arrow::after {
   bottom: 7px;
   left: -14px;
 }
+
+div.tutor-progress {
+    display: none;
+    width: 100%;
+    background-color: grey;
+}
+span.tutor-progress-done {
+    display: inline-block;
+    width: 0%;
+    height: 1em;
+    background-color: green;
+}
+span.tutor-progress-indicator {
+    display: inline-block;
+    width: 0%;
+    height: 1em;
+    background-color: blue;
+}
