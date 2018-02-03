@@ -8130,7 +8130,8 @@ class ExpectStep extends TutorStep {
       if (this.expectAction === action) { // yes, great, now we can goto next step
          goNext();
       } else {
-         // sho
+         // show error, and try to rewind?
+         
       }
    }
 }
@@ -9564,9 +9565,11 @@ function init() {
       const func = __WEBPACK_IMPORTED_MODULE_0__wings3d_view__["id2Fn"](button.id);
       if (func) {
          button.addEventListener('click', function(ev) {
-            //ev.preventDefault();
-            help( "wings3d - " + ev.currentTarget.id);
-            func();
+            if (!button.classList.contains('unfocus')) {    // not inactive
+               //ev.preventDefault();
+               help( "wings3d - " + ev.currentTarget.id);
+               func();
+            }
          }, false);
       }
    }
