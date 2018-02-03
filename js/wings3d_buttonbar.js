@@ -24,9 +24,11 @@ function init() {
       const func = View.id2Fn(button.id);
       if (func) {
          button.addEventListener('click', function(ev) {
-            //ev.preventDefault();
-            help( "wings3d - " + ev.currentTarget.id);
-            func();
+            if (!button.classList.contains('unfocus')) {    // not inactive
+               //ev.preventDefault();
+               help( "wings3d - " + ev.currentTarget.id);
+               func();
+            }
          }, false);
       }
    }

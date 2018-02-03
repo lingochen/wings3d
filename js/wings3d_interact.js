@@ -137,7 +137,8 @@ class ExpectStep extends TutorStep {
       if (this.expectAction === action) { // yes, great, now we can goto next step
          goNext();
       } else {
-         // sho
+         // show error, and try to rewind?
+         
       }
    }
 }
