@@ -27,9 +27,11 @@ class TutorStep {
             this.walkupDoms(parent, ancestorTarget, fn);
          }
 
-      } else { // select all parent's childern
+      } else { // select all parent's childern, except canvas
          for (let element = ancestorTarget.firstElementChild; element; element = element.nextElementSibling) {
-            fn(element);
+            if (element.id !== "canvas") {
+               fn(element);
+            }
          }
       }
    }

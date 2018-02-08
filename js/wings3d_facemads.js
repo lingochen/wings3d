@@ -11,6 +11,7 @@ import { EditCommand } from './wings3d_undo';
 import * as View from './wings3d_view';
 import {gl, ShaderData} from './wings3d_gl';
 import * as ShaderProg from './wings3d_shaderprog';
+import * as UI from './wings3d_ui';
 
 
 
@@ -24,28 +25,17 @@ class FaceMadsor extends Madsor {
       var self = this;
       // movement for (x, y, z)
       for (let axis=0; axis < 3; ++axis) {
-         var menuItem = document.querySelector('#faceExtrude' + axisName[axis]);
-         if (menuItem) {
-            menuItem.addEventListener("click", function(ev) {
+         UI.bindMenuItem('#faceExtrude' + axisName[axis], function(ev) {
                View.attachHandlerMouseMove(new FaceExtrudeHandler(self, axis));
             });
-         }
       }
-      var menuItem = document.querySelector('#faceExtrudeFree');
-      if (menuItem) {
-         menuItem.addEventListener('click', function(ev) {
+      UI.bindMenuItem('#faceExtrudeFree', function(ev) {
             View.attachHandlerMouseMove(new FaceExtrudeFreeHandler(self));
          });
-      }
-      menuItem = document.querySelector('#faceExtrudeNormal');
-      if (menuItem) {
-         menuItem.addEventListener('click', function(ev) {
+      UI.bindMenuItem('#faceExtrudeNormal', function(ev) {
             View.attachHandlerMouseMove(new FaceExtrudeNormalHandler(self));
          });
-      }
-      menuItem = document.querySelector('#faceDissolve');
-      if (menuItem) {
-         menuItem.addEventListener('click', function(ev) {
+      UI.bindMenuItem('#faceDissolve', function(ev) {
             const command = new DissolveFaceCommand(self);
             if (command.doIt()) {
                View.undoQueue(command);
@@ -53,15 +43,11 @@ class FaceMadsor extends Madsor {
                geometryStatus('Selected Face not dissolveable');
             }
          });
-      }
-      menuItem = document.querySelector('#faceCollapse');
-      if (menuItem) {
-            menuItem.addEventListener('click', function(ev) {
+      UI.bindMenuItem('#faceCollapse', function(ev) {
             const command = new CollapseFaceCommand(self);
             command.doIt();
             View.undoQueue(command);
          });
-      }
       // setup highlite face, at most 28 triangles.
       var buf = new Float32Array(3*30);
       this.trianglefan = {data: buf, length: 0};

@@ -16,25 +16,20 @@ class BodyMadsor extends Madsor {
    constructor() {
       super('body');
       const self = this;
-      let menuItem = document.querySelector('#bodyDelete');
-      if (menuItem) {
-         menuItem.addEventListener('click', function(ev) {
+      UI.bindMenuItem('#bodyDelete', function(ev) {
             const command = new DeleteBodyCommand(self.getSelected());
             View.undoQueue( command );
             command.doIt(); // delete current selected.
          });
-      }
-      menuItem = document.querySelector('#bodyRename');
-      if (menuItem) {
-         const form = UI.setupDialog('#renameDialog', function(data) {
-            const command = new RenameBodyCommand(self.getSelected(), data);
+      const form = UI.setupDialog('#renameDialog', function(data) {
+         const command = new RenameBodyCommand(self.getSelected(), data);
             View.undoQueue( command );
             command.doIt();   // rename
          });
-         if (form) {
-            // show Form when menuItem clicked
-            const content = document.querySelector('#renameDialog div');
-            menuItem.addEventListener('click', function(ev) {
+      if (form) {
+         // show Form when menuItem clicked
+         const content = document.querySelector('#renameDialog div');
+         UI.bindMenuItem('#bodyRename', function(ev) {
                // position then show form;
                UI.positionDom(form, UI.getPosition(ev));
                form.style.display = 'block';
@@ -57,24 +52,17 @@ class BodyMadsor extends Madsor {
                   content.appendChild(label);
                }
             });
-         }
       }
       const axisName = ['X', 'Y', 'Z'];
       // movement for (x, y, z)
       for (let axis=0; axis < 3; ++axis) {
-         menuItem = document.querySelector('#bodyDuplicateMove' + axisName[axis]);
-         if (menuItem) {
-            menuItem.addEventListener("click", function(ev) {
+         UI.bindMenuItem('#bodyDuplicateMove' + axisName[axis], function(ev) {
                View.attachHandlerMouseMove(new DuplicateMouseMoveAlongAxis(self, axis, self.getSelected()));
             });
-         } 
       }
-      menuItem = document.querySelector('#bodyDuplicateMoveFree');
-      if (menuItem) {
-         menuItem.addEventListener('click', function(ev) {
+      UI.bindMenuItem('#bodyDuplicateMoveFree', function(ev) {
             View.attachHandlerMouseMove(new DuplicateMoveFreePositionHandler(self, self.getSelected()));
          });
-      }
    }
 
    modeName() {

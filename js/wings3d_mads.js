@@ -6,6 +6,7 @@
 import {gl} from './wings3d_gl';
 import { EditCommand, MouseMoveHandler } from './wings3d_undo';
 import * as View from './wings3d_view';
+import * as UI from './wings3d_ui';
 
 
 class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
@@ -23,27 +24,18 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       var self = this;
       // movement for (x, y, z)
       for (let axis=0; axis < 3; ++axis) {
-         let menuItem = document.querySelector('#' + mode + 'Move' + axisName[axis]);
-         if (menuItem) {
-            menuItem.addEventListener("click", function(ev) {
+         UI.bindMenuItem('#' + mode + 'Move' + axisName[axis], function(ev) {
                View.attachHandlerMouseMove(new MouseMoveAlongAxis(self, axis));
             });
-         } 
       }
       // free Movement.
-      let menuItem = document.querySelector('#' + mode + 'MoveFree');
-      if (menuItem) {
-         menuItem.addEventListener('click', function(ev) {
+      UI.bindMenuItem('#' + mode + 'MoveFree', function(ev) {
             View.attachHandlerMouseMove(new MoveFreePositionHandler(self));
          });
-      }
       // normal Movement.
-      menuItem = document.querySelector('#' + mode + 'MoveNormal');
-      if (menuItem) {
-         menuItem.addEventListener('click', function(ev) {
+      UI.bindMenuItem('#' + mode + 'MoveNormal', function(ev) {
             View.attachHandlerMouseMove(new MoveAlongNormal(self));
          });
-      }
    }
 
    getContextMenu() {

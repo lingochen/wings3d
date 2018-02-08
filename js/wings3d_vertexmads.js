@@ -10,6 +10,7 @@ import {EdgeMadsor} from './wings3d_edgemads';
 import { EditCommand } from './wings3d_undo';
 import * as View from './wings3d_view';
 import * as ShaderProg from './wings3d_shaderprog';
+import * as UI from './wings3d_ui';
 
 
 
@@ -18,29 +19,20 @@ class VertexMadsor extends Madsor {
       super('vertex');
       this.currentVertex = null;
       const self = this;
-      let menuItem = document.querySelector('#vertexConnect');
-      if (menuItem) {
-         menuItem.addEventListener('click', function(ev) {
+      UI.bindMenuItem('#vertexConnect', function(ev) {
             self.connectVertex();
          });
-      }
-      menuItem = document.querySelector('#vertexDissolve');
-      if (menuItem) {
-         menuItem.addEventListener('click', function(ev) {
+      UI.bindMenuItem('#vertexDissolve', function(ev) {
             const dissolve = new VertexDissolveCommand(self);
             dissolve.doIt();
             View.undoQueue(dissolve);
          });
-      }
-      menuItem = document.querySelector('#vertexCollapse');
-      if (menuItem) {
-         menuItem.addEventListener('click', function(ev) {
+      UI.bindMenuItem('#vertexCollapse', function(ev) {
             const dissolve = new VertexCollapseCommand(self);
             dissolve.doIt();
             View.undoQueue(dissolve);
-         });  
-      }
-    }
+         });
+   }
 
    modeName() {
       return 'Vertex';

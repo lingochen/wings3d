@@ -20,45 +20,34 @@ class EdgeMadsor extends Madsor {
       // cut commands
       const self = this;
       for (let numberOfSegments of [2, 3, 4, 5, 10]) {
-         let menuItem = document.querySelector('#cutLine'+numberOfSegments);
-         if (menuItem) {
-            menuItem.addEventListener('click', function(ev) {
+         UI.bindMenuItem('#cutLine'+numberOfSegments, function(ev) {
                self.cutEdge(numberOfSegments);
             });
-         }
       }
       // cutEdge Dialog
-      let menuItem = document.querySelector('#cutAsk');
-      if (menuItem) {
-         const form = UI.setupDialog('#cutLineDialog', function(data) {
-            if (data['Segments']) {
-               const number = parseInt(data['Segments'], 10);
-               if ((number != NaN) && (number > 0) && (number < 100)) { // sane input
-                  self.cutEdge(number);
-               }
+      const form = UI.setupDialog('#cutLineDialog', function(data) {
+         if (data['Segments']) {
+            const number = parseInt(data['Segments'], 10);
+            if ((number != NaN) && (number > 0) && (number < 100)) { // sane input
+               self.cutEdge(number);
             }
-         });
-         if (form) {
-            // show Form when menuItem clicked
-            menuItem.addEventListener('click', function(ev) {
+         }
+      });
+      if (form) {
+         // show form when click
+         UI.bindMenuItem('#cutAsk', function(ev) {
                // position then show form;
                UI.positionDom(form, UI.getPosition(ev));
                form.style.display = 'block';
                form.reset();
             });
-         }
       }
       // cutAndConnect
-      menuItem = document.querySelector('#cutAndConnect');
-      if (menuItem) {
-         menuItem.addEventListener('click', function(ev) {
+      UI.bindMenuItem('#cutAndConnect', function(ev) {
             self.cutAndConnect();
          });
-      }
       // Dissolve
-      menuItem = document.querySelector('#edgeDissolve');
-      if (menuItem) {
-         menuItem.addEventListener('click', function(ev) {
+      UI.bindMenuItem('#edgeDissolve', function(ev) {
             const dissolve = self.dissolve();
             if (dissolve.count > 0) {
                View.undoQueue(new DissolveEdgeCommand(self, dissolve.record));
@@ -66,11 +55,8 @@ class EdgeMadsor extends Madsor {
                // should not happened.
             }
          });
-      }
       // Collapse
-      menuItem = document.querySelector('#edgeCollapse');
-        if (menuItem) {
-         menuItem.addEventListener('click', function(ev) {
+      UI.bindMenuItem('#edgeCollapse', function(ev) {
             const command = new CollapseEdgeCommand(self);
             if (command.doIt()) {
                View.undoQueue(command);
@@ -78,7 +64,6 @@ class EdgeMadsor extends Madsor {
                // should not happened.
             }
          });
-      }    
    }
 
    modeName() {
