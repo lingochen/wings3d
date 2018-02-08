@@ -6,6 +6,7 @@ html, body {
 
 .unfocus:not(.exclude) {
   opacity: 0.5;
+  pointer-events: none;
 }
 
 .box {
