@@ -74,8 +74,10 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "placement", function() { return placement; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getPosition", function() { return getPosition; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "positionDom", function() { return positionDom; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "addMenuItem", function() { return addMenuItem; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "bindMenuItem", function() { return bindMenuItem; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "setupDialog", function() { return setupDialog; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "openFile", function() { return openFile; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_hotkey__ = __webpack_require__(16);
 /*
    wings3d, ui and ui utility functions. including tutor.
@@ -84,26 +86,45 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 
 
-function bindMenuItem(id, fn, hotkey, meta) {
-   const menuItem = document.querySelector(id);
-   if (menuItem) {
-      menuItem.addEventListener('click', function(ev) {
-         let target = ev.target;
-         while ( target = target.parentNode ) {
-            if ( target.classList && target.classList.contains("hover") ) {
-              target.classList.remove("hover");
-              break;
-            }
-          }
-          // now run functions
-          fn(ev);
-      });
-   }
+function _bindMenuItem(menuItem, id, fn, hotkey, meta) {
+   menuItem.addEventListener('click', function(ev) {
+      let target = ev.target;
+      while ( target = target.parentNode ) {
+         if ( target.classList && target.classList.contains("hover") ) {
+            target.classList.remove("hover");
+            break;
+         }
+      }
+      // now run functions
+      fn(ev);
+   });
    __WEBPACK_IMPORTED_MODULE_0__wings3d_hotkey__["bindHotkey"](id, fn);
    if (hotkey !== undefined) {
       __WEBPACK_IMPORTED_MODULE_0__wings3d_hotkey__["setHotkey"](id, hotkey, meta);
-
    }
+}
+
+
+function bindMenuItem(id, fn, hotkey, meta) {
+   const menuItem = document.querySelector(id);
+   if (menuItem) {
+      _bindMenuItem(menuItem, id, fn, hotkey, meta);
+   }
+
+}
+
+
+function addMenuItem(menuId, id, menuItemText, fn, hotkey, meta) {
+   const menu = document.querySelector(menuId);
+   // insert the menuItem 
+   const menuItem = document.createElement('li');
+   const a = document.createElement('a');
+   //a.setAttribute('onmouseover', '');
+   a.textContent = menuItemText;
+   // append to subment
+   menuItem.appendChild(a);
+   menu.appendChild(menuItem);
+   _bindMenuItem(menuItem, id, fn, hotkey, meta);
 }
 
 
@@ -255,6 +276,20 @@ function setupDialog(formID, submitData) {
       });
    }
    return form;
+};
+
+// fileInput helper
+function openFile(fn) {
+   const fileInput = document.querySelector('#importFile');    // <input type="file" id="wavefrontObj" style="display:none"/> 
+   if (fileInput) {
+      fileInput.click();
+      fileInput.addEventListener('change', function(ev) {
+         let fileList = this.files;    // = ev.target.files;
+         for (let file of fileList) {
+            fn(file);
+         }
+      });
+   }
 };
 
 
@@ -9298,46 +9333,13 @@ class ImportExporter {
       // plug into import/export menu
       if (importMenuText) {
          // first get import Submenu.
-         const submenu = document.querySelector('#fileImport');
-         // insert the menuItem 
-         const menuItem = document.createElement('li');
-         const a = document.createElement('a');
-         const fileInput = document.createElement('input');    // <input type="file" id="wavefrontObj" style="display:none"/> 
-         fileInput.setAttribute('type', 'file');
-         fileInput.style.display = 'none';
-         //a.setAttribute('onmouseover', '');
-         a.textContent = importMenuText;
-         // append to subment.
-         menuItem.appendChild(fileInput);
-         menuItem.appendChild(a);
-         submenu.appendChild(menuItem);
-         // capture click
-         a.addEventListener('click', function(ev) {
-            ev.preventDefault();
-            fileInput.click();      // open file Dialog
-            let target = ev.target;
-            while ( target = target.parentNode ) {
-               if ( target.classList && target.classList.contains("hover") ) {
-                 target.classList.remove("hover");
-                 break;
-               }
-            }
-         });
-         fileInput.addEventListener('change', function(ev) {
-            let fileList = this.files;    // = ev.target.files;
-            for (let file of fileList) {
-               self.import(file);
-            }
-         });
+         __WEBPACK_IMPORTED_MODULE_2__wings3d_ui__["addMenuItem"]('#fileImport', '#import' + importMenuText, importMenuText, function(ev) {
+               __WEBPACK_IMPORTED_MODULE_2__wings3d_ui__["openFile"](function(file) { // open file Dialog, and retrive data
+                     self.import(file);
+                  });      
+            });
       }
       if (exportMenuText) {
-         const submenu = document.querySelector('#fileExport');
-         // insert simple menuItem.
-         const menuItem = document.createElement('li');
-         const a = document.createElement('a');
-         a.textContent = exportMenuText;
-         menuItem.appendChild(a);
-         submenu.appendChild(menuItem);
          const form = __WEBPACK_IMPORTED_MODULE_2__wings3d_ui__["setupDialog"]('#exportFile', function(data) {
             if (data['Filename']) {
                self.export(data['Filename']);
@@ -9345,20 +9347,13 @@ class ImportExporter {
          });
 
          if (form) {
-            menuItem.addEventListener('click', function(ev){
-               let target = ev.target;
-               while ( target = target.parentNode ) {
-                  if ( target.classList && target.classList.contains("hover") ) {
-                    target.classList.remove("hover");
-                    break;
-                  }
-               }
-               // popup dialog.
-               // position then show form;
-               __WEBPACK_IMPORTED_MODULE_2__wings3d_ui__["positionDom"](form, __WEBPACK_IMPORTED_MODULE_2__wings3d_ui__["getPosition"](ev));
-               form.style.display = 'block';
-               form.reset();
-            });
+            __WEBPACK_IMPORTED_MODULE_2__wings3d_ui__["addMenuItem"]('#fileExport', '#export' + exportMenuText, exportMenuText, function(ev) {
+                  // popup dialog.
+                  // position then show form;
+                  __WEBPACK_IMPORTED_MODULE_2__wings3d_ui__["positionDom"](form, __WEBPACK_IMPORTED_MODULE_2__wings3d_ui__["getPosition"](ev));
+                  form.style.display = 'block';
+                  form.reset();
+               });
          }
       }
       // init at beginning.

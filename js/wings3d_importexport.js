@@ -18,46 +18,13 @@ class ImportExporter {
       // plug into import/export menu
       if (importMenuText) {
          // first get import Submenu.
-         const submenu = document.querySelector('#fileImport');
-         // insert the menuItem 
-         const menuItem = document.createElement('li');
-         const a = document.createElement('a');
-         const fileInput = document.createElement('input');    // <input type="file" id="wavefrontObj" style="display:none"/> 
-         fileInput.setAttribute('type', 'file');
-         fileInput.style.display = 'none';
-         //a.setAttribute('onmouseover', '');
-         a.textContent = importMenuText;
-         // append to subment.
-         menuItem.appendChild(fileInput);
-         menuItem.appendChild(a);
-         submenu.appendChild(menuItem);
-         // capture click
-         a.addEventListener('click', function(ev) {
-            ev.preventDefault();
-            fileInput.click();      // open file Dialog
-            let target = ev.target;
-            while ( target = target.parentNode ) {
-               if ( target.classList && target.classList.contains("hover") ) {
-                 target.classList.remove("hover");
-                 break;
-               }
-            }
-         });
-         fileInput.addEventListener('change', function(ev) {
-            let fileList = this.files;    // = ev.target.files;
-            for (let file of fileList) {
-               self.import(file);
-            }
-         });
+         UI.addMenuItem('#fileImport', '#import' + importMenuText, importMenuText, function(ev) {
+               UI.openFile(function(file) { // open file Dialog, and retrive data
+                     self.import(file);
+                  });      
+            });
       }
       if (exportMenuText) {
-         const submenu = document.querySelector('#fileExport');
-         // insert simple menuItem.
-         const menuItem = document.createElement('li');
-         const a = document.createElement('a');
-         a.textContent = exportMenuText;
-         menuItem.appendChild(a);
-         submenu.appendChild(menuItem);
          const form = UI.setupDialog('#exportFile', function(data) {
             if (data['Filename']) {
                self.export(data['Filename']);
@@ -65,20 +32,13 @@ class ImportExporter {
          });
 
          if (form) {
-            menuItem.addEventListener('click', function(ev){
-               let target = ev.target;
-               while ( target = target.parentNode ) {
-                  if ( target.classList && target.classList.contains("hover") ) {
-                    target.classList.remove("hover");
-                    break;
-                  }
-               }
-               // popup dialog.
-               // position then show form;
-               UI.positionDom(form, UI.getPosition(ev));
-               form.style.display = 'block';
-               form.reset();
-            });
+            UI.addMenuItem('#fileExport', '#export' + exportMenuText, exportMenuText, function(ev) {
+                  // popup dialog.
+                  // position then show form;
+                  UI.positionDom(form, UI.getPosition(ev));
+                  form.style.display = 'block';
+                  form.reset();
+               });
          }
       }
       // init at beginning.

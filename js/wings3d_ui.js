@@ -5,26 +5,45 @@
 import * as Hotkey from './wings3d_hotkey';
 
 
-function bindMenuItem(id, fn, hotkey, meta) {
-   const menuItem = document.querySelector(id);
-   if (menuItem) {
-      menuItem.addEventListener('click', function(ev) {
-         let target = ev.target;
-         while ( target = target.parentNode ) {
-            if ( target.classList && target.classList.contains("hover") ) {
-              target.classList.remove("hover");
-              break;
-            }
-          }
-          // now run functions
-          fn(ev);
-      });
-   }
+function _bindMenuItem(menuItem, id, fn, hotkey, meta) {
+   menuItem.addEventListener('click', function(ev) {
+      let target = ev.target;
+      while ( target = target.parentNode ) {
+         if ( target.classList && target.classList.contains("hover") ) {
+            target.classList.remove("hover");
+            break;
+         }
+      }
+      // now run functions
+      fn(ev);
+   });
    Hotkey.bindHotkey(id, fn);
    if (hotkey !== undefined) {
       Hotkey.setHotkey(id, hotkey, meta);
-
    }
+}
+
+
+function bindMenuItem(id, fn, hotkey, meta) {
+   const menuItem = document.querySelector(id);
+   if (menuItem) {
+      _bindMenuItem(menuItem, id, fn, hotkey, meta);
+   }
+
+}
+
+
+function addMenuItem(menuId, id, menuItemText, fn, hotkey, meta) {
+   const menu = document.querySelector(menuId);
+   // insert the menuItem 
+   const menuItem = document.createElement('li');
+   const a = document.createElement('a');
+   //a.setAttribute('onmouseover', '');
+   a.textContent = menuItemText;
+   // append to subment
+   menuItem.appendChild(a);
+   menu.appendChild(menuItem);
+   _bindMenuItem(menuItem, id, fn, hotkey, meta);
 }
 
 
@@ -178,6 +197,20 @@ function setupDialog(formID, submitData) {
    return form;
 };
 
+// fileInput helper
+function openFile(fn) {
+   const fileInput = document.querySelector('#importFile');    // <input type="file" id="wavefrontObj" style="display:none"/> 
+   if (fileInput) {
+      fileInput.click();
+      fileInput.addEventListener('change', function(ev) {
+         let fileList = this.files;    // = ev.target.files;
+         for (let file of fileList) {
+            fn(file);
+         }
+      });
+   }
+};
+
 
 let styleSheet = (function(){
    let style = document.createElement('style');
@@ -194,6 +227,8 @@ export {
    placement,
    getPosition,
    positionDom,
+   addMenuItem,
    bindMenuItem,
    setupDialog,
+   openFile,
 }
