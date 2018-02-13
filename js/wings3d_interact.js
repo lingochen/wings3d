@@ -12,6 +12,8 @@ class TutorStep {
      this.placement = placement;
      this.title = title;
      this.content = text;
+     this.options = {};
+     this.options.showNext = true;
    }
 
    // do functions along recursively up the parent
@@ -50,6 +52,10 @@ class TutorStep {
    }
 
    expect(action, value) {}
+
+   option(name) {
+      return this.options[name];
+   }
 
    show() {
       // place on  the world.
@@ -133,17 +139,35 @@ class ExpectStep extends TutorStep {
    constructor(expect, title, text, targetID, placement) {
       super(title, text, targetID, placement);
       this.expectAction = expect;
+      this.options.showNext = false;
+   }
+
+   action(value) {
+      goNext();
    }
 
    expect(action, value) {
       if (this.expectAction === action) { // yes, great, now we can goto next step
-         goNext();
+         this.action(value);
       } else {
          // show error, and try to rewind?
          
       }
    }
 }
+
+
+class ExpectZoomStep extends ExpectStep {
+   constructor(title, text, targetID, placement) {
+      super(Wings3D.action.cameraZoom, title, text, targetID, placement);
+   }
+
+   action(value) {
+      // now zoom step is done, we can show next button.
+      nextButton(true);
+   }
+}
+
 
 class SelectStep extends TutorStep {
    constructor(tour, selections, title, text, placement) {
@@ -248,6 +272,16 @@ function init(idName) {
    }
 }
 
+function nextButton(shown) {
+   if (popUp.next) {
+      if (shown) {
+         popUp.next.style.display = 'inline-block';
+      } else {
+         popUp.next.style.display = 'none';
+      }
+   }
+}
+
 function setMultiStep(obj) {
    multiStep = obj;
 };
@@ -341,6 +375,7 @@ let _play = function(stepNumber) {
       rail.currentStation = stepNumber;
       const step = getCurrentStep();//rail.routes[stepNumber];
       // apply data
+      nextButton(step.option('showNext'));
       step.show();
    }
 };
@@ -358,6 +393,10 @@ function startTour(stepArray) {
 };
     
 function complete() {
+   // remove all unfocus class
+   if (rail.currentStation > -1) {
+      rail.routes[rail.currentStation].done();
+   }
    // restore to original condition
    popUp.bubble.classList.add("hide");
    popUp.next.textContent = "Next";
@@ -368,10 +407,6 @@ function complete() {
 };
     
 function cancel() {
-   // remove all unfocus class
-   if (rail.currentStation > -1) {
-      rail.routes[rail.currentStation].done();
-   }
    complete();
 };
 function goNext() { _play(rail.currentStation+1); };

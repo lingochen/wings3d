@@ -179,6 +179,7 @@ export function start_halt() {
 const action = {
    cameraModeEnter: "CameraModeEnter",
    cameraModeExit: "CameraModeExit",
+   cameraZoom: "CameraZoom",
    contextMenu: "ContextMenu",
    createCubeDialog: "CreateCubeDialog",
 };
