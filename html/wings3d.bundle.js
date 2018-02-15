@@ -4138,6 +4138,7 @@ class CameraMouseMoveHandler extends __WEBPACK_IMPORTED_MODULE_0__wings3d_undo_j
             get distance() { return camera.distance; },
             set distance(dist) {
                if (camera.distance != dist) {
+                  __WEBPACK_IMPORTED_MODULE_1__wings3d_js__["log"](__WEBPACK_IMPORTED_MODULE_1__wings3d_js__["action"].cameraZoom, dist - camera.distance);
                   camera.distance = dist;
                   this.isModified = true;
                }
@@ -7968,6 +7969,8 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "addFaceSelectStep", function() { return addFaceSelectStep; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "add", function() { return add; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "addMultiStep", function() { return addMultiStep; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "addZoomStep", function() { return addZoomStep; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "zoomStep", function() { return zoomStep; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "cancel", function() { return cancel; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "complete", function() { return complete; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "startTour", function() { return startTour; });
@@ -8325,6 +8328,14 @@ function addFaceSelectStep(selection, nameId, title, text, placement, stepOption
    add(faceSelectStep(selection, nameId, title, text, placement, stepOptions));
 };
 
+function zoomStep(nameId, title, text, targetID, placement, stepOptions) {
+   return {nameId: nameId, step: new ExpectZoomStep(title, text, targetID, placement, stepOptions)};
+}
+
+function addZoomStep(nameId, title, text, targetID, placement, stepOptions) {
+   add(zoomStep(nameId, title, text, targetID, placement, stepOptions));
+}
+
 // add MultiStep.
 function addMultiStep(nameId, title, text, target, placement, steps) {
    //
@@ -8334,6 +8345,7 @@ function addMultiStep(nameId, title, text, target, placement, steps) {
       add(step);
    }
 }
+
 
 let _play = function(stepNumber) {
    if ((stepNumber < 0) || (stepNumber >= rail.routes.length)) {
@@ -10095,7 +10107,7 @@ function createGuideTour() {
    };
    tours.basicCommands = () => {
       __WEBPACK_IMPORTED_MODULE_0__wings3d_interact__["cancel"]();   // clear tours.
-      __WEBPACK_IMPORTED_MODULE_0__wings3d_interact__["addStep"]("Welcome", "Zoom", "Mouse wheel scroll in Canvas will zoom in/out",
+      __WEBPACK_IMPORTED_MODULE_0__wings3d_interact__["addZoomStep"]("Welcome", "Zoom", "Mouse wheel scroll in Canvas will zoom in/out",
        "", "top");
       __WEBPACK_IMPORTED_MODULE_0__wings3d_interact__["addExpectStep"](__WEBPACK_IMPORTED_MODULE_2__wings3d__["action"].cameraModeEnter, "Camera", "Camera Mode", "Let <em>M</em>, click middle mouse button anywhere in the Canvas to enter camera mode",       
        "", "right");

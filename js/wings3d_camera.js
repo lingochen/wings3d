@@ -112,6 +112,7 @@ class CameraMouseMoveHandler extends MouseMoveHandler {
             get distance() { return camera.distance; },
             set distance(dist) {
                if (camera.distance != dist) {
+                  Wings3D.log(Wings3D.action.cameraZoom, dist - camera.distance);
                   camera.distance = dist;
                   this.isModified = true;
                }

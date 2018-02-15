@@ -61,7 +61,7 @@ function createGuideTour() {
    };
    tours.basicCommands = () => {
       Tutor.cancel();   // clear tours.
-      Tutor.addStep("Welcome", "Zoom", "Mouse wheel scroll in Canvas will zoom in/out",
+      Tutor.addZoomStep("Welcome", "Zoom", "Mouse wheel scroll in Canvas will zoom in/out",
        "", "top");
       Tutor.addExpectStep(Wings3D.action.cameraModeEnter, "Camera", "Camera Mode", "Let <em>M</em>, click middle mouse button anywhere in the Canvas to enter camera mode",       
        "", "right");

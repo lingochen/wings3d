@@ -350,6 +350,14 @@ function addFaceSelectStep(selection, nameId, title, text, placement, stepOption
    add(faceSelectStep(selection, nameId, title, text, placement, stepOptions));
 };
 
+function zoomStep(nameId, title, text, targetID, placement, stepOptions) {
+   return {nameId: nameId, step: new ExpectZoomStep(title, text, targetID, placement, stepOptions)};
+}
+
+function addZoomStep(nameId, title, text, targetID, placement, stepOptions) {
+   add(zoomStep(nameId, title, text, targetID, placement, stepOptions));
+}
+
 // add MultiStep.
 function addMultiStep(nameId, title, text, target, placement, steps) {
    //
@@ -359,6 +367,7 @@ function addMultiStep(nameId, title, text, target, placement, steps) {
       add(step);
    }
 }
+
 
 let _play = function(stepNumber) {
    if ((stepNumber < 0) || (stepNumber >= rail.routes.length)) {
@@ -433,7 +442,7 @@ export {
    // functions
    step, expectStep, faceSelectStep,
    addStep, addExpectStep, addFaceSelectStep,
-   add, addMultiStep,
+   add, addMultiStep, addZoomStep, zoomStep,
    cancel, complete, 
    startTour,
 };
