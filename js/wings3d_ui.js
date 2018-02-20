@@ -15,9 +15,9 @@ function _bindMenuItem(menuItem, id, fn, hotkey, meta) {
          }
       }
       // now run functions
-      fn(ev);
+      Wings3D.runAction(id, ev);
    });
-   Hotkey.bindHotkey(id, fn);
+   Wings3D.bindAction(id, fn);
    if (hotkey !== undefined) {
       Hotkey.setHotkey(id, hotkey, meta);
    }

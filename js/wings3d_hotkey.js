@@ -6,7 +6,7 @@
 import {createMask} from './wings3d';
 
 
-const _private = {keyMap: new Map, idMap: new Map};
+const keyMap = new Map;
 
 document.addEventListener('keydown', function(event) {
    event.preventDefault();
@@ -18,15 +18,12 @@ document.addEventListener('keydown', function(event) {
    // extract key
    const hotkey = event.key.toLowerCase();
    // run the binding function
-    if (_private.keyMap.has(hotkey)) {
-      const metaSet = _private.keyMap.get(hotkey);
+    if (keyMap.has(hotkey)) {
+      const metaSet = keyMap.get(hotkey);
       for (let value of metaSet) {
          if ( (value.meta & meta) == value.meta) { // has all the meta
-            if (_private.idMap.has(value.id)) {
-               const fn = _private.idMap.get(value.id);
-               fn(event);
-               break;
-            }
+            Wings3D.runAction(valueId);
+            break;
          }
       }
    }
@@ -36,16 +33,13 @@ function setHotkey(id, hotkey, meta='') {
       hotkey = hotkey.toLowerCase();
       meta = meta.toLowerCase();
       const metaMask = createMask(meta.indexOf('alt') > -1, meta.indexOf('ctrl') > -1, meta.indexOf('shift') > -1);
-      if (!_private.keyMap.has(hotkey)) {
-         _private.keyMap.set(hotkey, []);
+      if (!keyMap.has(hotkey)) {
+         keyMap.set(hotkey, []);
       }
-      _private.keyMap.get(hotkey).unshift({id: id, meta: metaMask});
-};
-function bindHotkey(id, fn) {
-   _private.idMap.set(id, fn);
+      keyMap.get(hotkey).unshift({id: id, meta: metaMask});
 };
 
+
 export {
-   setHotkey,
-   bindHotkey,
+   setHotkey
 }

@@ -108,10 +108,7 @@ function contextListener(className) {
     document.addEventListener( "click", function(e) {
       let clickeElIsLink = clickInsideElement( e, contextMenuLinkClassName );
 
-      if ( clickeElIsLink ) {
-        //e.preventDefault();
-        menuItemListener( clickeElIsLink, e );
-      } else {
+      if ( !clickeElIsLink ) {
         if ( (e.button == 0) || (e.button == 1) ) {
           toggleMenuOff();
         }
@@ -160,17 +157,6 @@ function contextListener(className) {
     }
   }
 
-
-  /**
-   * Dummy action function that logs an action when a menu item link is clicked
-   * 
-   * @param {HTMLElement} link The link that was clicked
-   */
-  function menuItemListener( link, ev ) {
-    toggleMenuOff();
-    help( "wings3d api - " + link.getAttribute("wings3d-api"));
-    //Wings3D.callApi(link.getAttribute("wings3d-api", UI.getPosition(ev)));
-  }
 
 Wings3D.onReady(function() {
    init('content', 'popupmenu');

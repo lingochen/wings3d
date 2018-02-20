@@ -175,13 +175,29 @@ export function start_halt() {
                 }
    };*/
 
+function bindAction(id, fn) {
+   if (action.hasOwnProperty(id)) {
+      action[id] = fn;
+   }
+};
+function runAction(id, event) {
+   if (action.hasOwnProperty(id)) {
+      const fn = action[id];
+      fn(event);
+   }
+}
+
+function notImplemented(obj) {
+   console.log( obj.name + " action is not implemented");
+}
 // log action constant
 const action = {
-   cameraModeEnter: "CameraModeEnter",
-   cameraModeExit: "CameraModeExit",
-   cameraZoom: "CameraZoom",
-   contextMenu: "ContextMenu",
-   createCubeDialog: "CreateCubeDialog",
+   cameraModeEnter: () => {notImplemented(this);},
+   cameraModeExit: () => {notImplemented(this);},
+   cameraZoom: () => {notImplemented(this);},
+   contextMenu: () => {notImplemented(this);},
+   createCubeDialog: () => {notImplemented(this);},
+   //menu action
 };
 
 export {
@@ -193,4 +209,6 @@ export {
    GROUND_GRID_SIZE,
    CAMERA_DIST,
    action,
+   bindAction,
+   runAction,
 };
