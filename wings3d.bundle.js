@@ -96,9 +96,9 @@ function _bindMenuItem(menuItem, id, fn, hotkey, meta) {
          }
       }
       // now run functions
-      fn(ev);
+      Wings3D.runAction(id, ev);
    });
-   __WEBPACK_IMPORTED_MODULE_0__wings3d_hotkey__["bindHotkey"](id, fn);
+   Wings3D.bindAction(id, fn);
    if (hotkey !== undefined) {
       __WEBPACK_IMPORTED_MODULE_0__wings3d_hotkey__["setHotkey"](id, hotkey, meta);
    }
@@ -319,6 +319,8 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "GROUND_GRID_SIZE", function() { return GROUND_GRID_SIZE; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "CAMERA_DIST", function() { return CAMERA_DIST; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "action", function() { return action; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "bindAction", function() { return bindAction; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "runAction", function() { return runAction; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__ = __webpack_require__(3);
 /*
 //  wings3d.js
@@ -497,13 +499,30 @@ function start_halt() {
                 }
    };*/
 
+function bindAction(id, fn) {
+   if (action.hasOwnProperty(id)) {
+      action[id] = fn;
+   }
+};
+function runAction(id, event) {
+   if (action.hasOwnProperty(id)) {
+      const fn = action[id];
+      fn(event);
+   }
+}
+
+function notImplemented(obj) {
+   console.log( obj.name + " action is not implemented");
+}
 // log action constant
 const action = {
-   cameraModeEnter: "CameraModeEnter",
-   cameraModeExit: "CameraModeExit",
-   cameraZoom: "CameraZoom",
-   contextMenu: "ContextMenu",
-   createCubeDialog: "CreateCubeDialog",
+   cameraModeEnter: () => {notImplemented(this);},
+   cameraModeExit: () => {notImplemented(this);},
+   cameraZoom: () => {notImplemented(this);},
+   contextMenu: () => {notImplemented(this);},
+   createCubeDialog: () => {notImplemented(this);},
+   //menu action
+         
 };
 
 
@@ -8536,10 +8555,7 @@ function contextListener(className) {
     document.addEventListener( "click", function(e) {
       let clickeElIsLink = clickInsideElement( e, contextMenuLinkClassName );
 
-      if ( clickeElIsLink ) {
-        //e.preventDefault();
-        menuItemListener( clickeElIsLink, e );
-      } else {
+      if ( !clickeElIsLink ) {
         if ( (e.button == 0) || (e.button == 1) ) {
           toggleMenuOff();
         }
@@ -8589,17 +8605,6 @@ function contextListener(className) {
   }
 
 
-  /**
-   * Dummy action function that logs an action when a menu item link is clicked
-   * 
-   * @param {HTMLElement} link The link that was clicked
-   */
-  function menuItemListener( link, ev ) {
-    toggleMenuOff();
-    help( "wings3d api - " + link.getAttribute("wings3d-api"));
-    //Wings3D.callApi(link.getAttribute("wings3d-api", UI.getPosition(ev)));
-  }
-
 __WEBPACK_IMPORTED_MODULE_2__wings3d__["onReady"](function() {
    init('content', 'popupmenu');
 });
@@ -8611,7 +8616,6 @@ __WEBPACK_IMPORTED_MODULE_2__wings3d__["onReady"](function() {
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "setHotkey", function() { return setHotkey; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "bindHotkey", function() { return bindHotkey; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d__ = __webpack_require__(1);
 //
 // hotkey handling and remapping.
@@ -8621,7 +8625,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 
 
-const _private = {keyMap: new Map, idMap: new Map};
+const keyMap = new Map;
 
 document.addEventListener('keydown', function(event) {
    event.preventDefault();
@@ -8633,15 +8637,12 @@ document.addEventListener('keydown', function(event) {
    // extract key
    const hotkey = event.key.toLowerCase();
    // run the binding function
-    if (_private.keyMap.has(hotkey)) {
-      const metaSet = _private.keyMap.get(hotkey);
+    if (keyMap.has(hotkey)) {
+      const metaSet = keyMap.get(hotkey);
       for (let value of metaSet) {
          if ( (value.meta & meta) == value.meta) { // has all the meta
-            if (_private.idMap.has(value.id)) {
-               const fn = _private.idMap.get(value.id);
-               fn(event);
-               break;
-            }
+            Wings3D.runAction(valueId);
+            break;
          }
       }
    }
@@ -8651,14 +8652,12 @@ function setHotkey(id, hotkey, meta='') {
       hotkey = hotkey.toLowerCase();
       meta = meta.toLowerCase();
       const metaMask = Object(__WEBPACK_IMPORTED_MODULE_0__wings3d__["createMask"])(meta.indexOf('alt') > -1, meta.indexOf('ctrl') > -1, meta.indexOf('shift') > -1);
-      if (!_private.keyMap.has(hotkey)) {
-         _private.keyMap.set(hotkey, []);
+      if (!keyMap.has(hotkey)) {
+         keyMap.set(hotkey, []);
       }
-      _private.keyMap.get(hotkey).unshift({id: id, meta: metaMask});
+      keyMap.get(hotkey).unshift({id: id, meta: metaMask});
 };
-function bindHotkey(id, fn) {
-   _private.idMap.set(id, fn);
-};
+
 
 
 
