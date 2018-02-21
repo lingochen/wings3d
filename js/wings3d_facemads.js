@@ -12,6 +12,7 @@ import * as View from './wings3d_view';
 import {gl, ShaderData} from './wings3d_gl';
 import * as ShaderProg from './wings3d_shaderprog';
 import * as UI from './wings3d_ui';
+import {action} from './wings3d';
 
 
 
@@ -20,22 +21,20 @@ class FaceMadsor extends Madsor {
       super('face');
       var self = this;
       // extrude
-      const axisName = ['X', 'Y', 'Z'];
-      // type handler 
-      var self = this;
+      const axisName = [action.faceExtrudeX, action.faceExtrudeY, action.faceExtrudeZ];
       // movement for (x, y, z)
       for (let axis=0; axis < 3; ++axis) {
-         UI.bindMenuItem('#faceExtrude' + axisName[axis], function(ev) {
+         UI.bindMenuItem(axisName[axis].name, function(ev) {
                View.attachHandlerMouseMove(new FaceExtrudeHandler(self, axis));
             });
       }
-      UI.bindMenuItem('#faceExtrudeFree', function(ev) {
+      UI.bindMenuItem(action.faceExtrudeFree.name, function(ev) {
             View.attachHandlerMouseMove(new FaceExtrudeFreeHandler(self));
          });
-      UI.bindMenuItem('#faceExtrudeNormal', function(ev) {
+      UI.bindMenuItem(action.faceExtrudeNormal.name, function(ev) {
             View.attachHandlerMouseMove(new FaceExtrudeNormalHandler(self));
          });
-      UI.bindMenuItem('#faceDissolve', function(ev) {
+      UI.bindMenuItem(action.faceDissolve.name, function(ev) {
             const command = new DissolveFaceCommand(self);
             if (command.doIt()) {
                View.undoQueue(command);
@@ -43,7 +42,7 @@ class FaceMadsor extends Madsor {
                geometryStatus('Selected Face not dissolveable');
             }
          });
-      UI.bindMenuItem('#faceCollapse', function(ev) {
+      UI.bindMenuItem(action.faceCollapse.name, function(ev) {
             const command = new CollapseFaceCommand(self);
             command.doIt();
             View.undoQueue(command);

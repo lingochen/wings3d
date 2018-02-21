@@ -11,6 +11,7 @@ import { EditCommand } from './wings3d_undo';
 import * as View from './wings3d_view';
 import * as ShaderProg from './wings3d_shaderprog';
 import * as UI from './wings3d_ui';
+import {action} from './wings3d';
 
 
 
@@ -19,15 +20,15 @@ class VertexMadsor extends Madsor {
       super('vertex');
       this.currentVertex = null;
       const self = this;
-      UI.bindMenuItem('#vertexConnect', function(ev) {
+      UI.bindMenuItem(action.vertexConnect.name, function(ev) {
             self.connectVertex();
          });
-      UI.bindMenuItem('#vertexDissolve', function(ev) {
+      UI.bindMenuItem(action.vertexDissolve.name, function(ev) {
             const dissolve = new VertexDissolveCommand(self);
             dissolve.doIt();
             View.undoQueue(dissolve);
          });
-      UI.bindMenuItem('#vertexCollapse', function(ev) {
+      UI.bindMenuItem(action.vertexCollapse.name, function(ev) {
             const dissolve = new VertexCollapseCommand(self);
             dissolve.doIt();
             View.undoQueue(dissolve);

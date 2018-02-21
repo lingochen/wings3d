@@ -574,13 +574,13 @@ function render(gl) {
 function init() {
    initMode();
    // init menu
-   const selectionMenu = [ {id: '#deselect', fn: 'resetSelection', hotKey: ' '},
-                         {id: '#more', fn: 'moreSelection', hotKey: '+'},
-                         {id: '#less', fn: 'lessSelection', hotKey: '-'},
-                         {id: '#similar', fn: 'similarSelection', hotkey: 'i'},
-                         {id: '#all', fn: 'allSelection', hotKey: 'a', meta: 'ctrl'}, 
-                         {id: '#invert', fn: 'invertSelection', hotKey: 'i', meta: 'ctrl+shift'},
-                         {id: '#adjacent', fn: 'adjacentSelection'}
+   const selectionMenu = [ {id: 'deselect', fn: 'resetSelection', hotKey: ' '},
+                         {id: 'more', fn: 'moreSelection', hotKey: '+'},
+                         {id: 'less', fn: 'lessSelection', hotKey: '-'},
+                         {id: 'similar', fn: 'similarSelection', hotkey: 'i'},
+                         {id: 'all', fn: 'allSelection', hotKey: 'a', meta: 'ctrl'}, 
+                         {id: 'invert', fn: 'invertSelection', hotKey: 'i', meta: 'ctrl+shift'},
+                         {id: 'adjacent', fn: 'adjacentSelection'}
                         ];
    for (let select of selectionMenu) {
       UI.bindMenuItem(select.id, function(ev) {

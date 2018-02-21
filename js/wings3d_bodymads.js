@@ -10,13 +10,14 @@ import { EditCommand } from './wings3d_undo';
 import * as ShaderProg from './wings3d_shaderprog';
 import * as View from './wings3d_view';
 import * as UI from './wings3d_ui';
+import {action} from './wings3d';
 
 
 class BodyMadsor extends Madsor {
    constructor() {
       super('body');
       const self = this;
-      UI.bindMenuItem('#bodyDelete', function(ev) {
+      UI.bindMenuItem(action.bodyDelete.name, function(ev) {
             const command = new DeleteBodyCommand(self.getSelected());
             View.undoQueue( command );
             command.doIt(); // delete current selected.
@@ -29,7 +30,7 @@ class BodyMadsor extends Madsor {
       if (form) {
          // show Form when menuItem clicked
          const content = document.querySelector('#renameDialog div');
-         UI.bindMenuItem('#bodyRename', function(ev) {
+         UI.bindMenuItem(action.bodyRename.name, function(ev) {
                // position then show form;
                UI.positionDom(form, UI.getPosition(ev));
                form.style.display = 'block';
@@ -53,14 +54,14 @@ class BodyMadsor extends Madsor {
                }
             });
       }
-      const axisName = ['X', 'Y', 'Z'];
+      const duplicateMove = [action.bodyDuplicateMoveX, action.bodyDuplicateMoveY, action.bodyDuplicateMoveZ];
       // movement for (x, y, z)
       for (let axis=0; axis < 3; ++axis) {
-         UI.bindMenuItem('#bodyDuplicateMove' + axisName[axis], function(ev) {
+         UI.bindMenuItem(duplicateMove[axis].name, function(ev) { //action.bodyDulipcateMoveX(Y,Z)
                View.attachHandlerMouseMove(new DuplicateMouseMoveAlongAxis(self, axis, self.getSelected()));
             });
       }
-      UI.bindMenuItem('#bodyDuplicateMoveFree', function(ev) {
+      UI.bindMenuItem(action.bodyDuplicateMoveFree.name, function(ev) {
             View.attachHandlerMouseMove(new DuplicateMoveFreePositionHandler(self, self.getSelected()));
          });
    }

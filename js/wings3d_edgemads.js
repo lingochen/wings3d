@@ -11,6 +11,7 @@ import { EditCommand } from './wings3d_undo';
 import * as UI from './wings3d_ui';
 import * as View from './wings3d_view';
 import * as ShaderProg from './wings3d_shaderprog';
+import {action} from './wings3d';
 
 
 // 
@@ -19,9 +20,11 @@ class EdgeMadsor extends Madsor {
       super('edge');
       // cut commands
       const self = this;
-      for (let numberOfSegments of [2, 3, 4, 5, 10]) {
-         UI.bindMenuItem('#cutLine'+numberOfSegments, function(ev) {
-               self.cutEdge(numberOfSegments);
+      for (let numberOfSegments of [action.cutLine2, action.cutLine3, action.cutLine4, action.cutLine5, action.cutLine10]) {
+         const name = numberOfSegments.name;
+         const count = name.substring('cutLine'.length);
+         UI.bindMenuItem(name, function(ev) {
+               self.cutEdge(count);
             });
       }
       // cutEdge Dialog
@@ -35,7 +38,7 @@ class EdgeMadsor extends Madsor {
       });
       if (form) {
          // show form when click
-         UI.bindMenuItem('#cutAsk', function(ev) {
+         UI.bindMenuItem(action.cutAsk.name, function(ev) {
                // position then show form;
                UI.positionDom(form, UI.getPosition(ev));
                form.style.display = 'block';
@@ -43,11 +46,11 @@ class EdgeMadsor extends Madsor {
             });
       }
       // cutAndConnect
-      UI.bindMenuItem('#cutAndConnect', function(ev) {
+      UI.bindMenuItem(action.cutAndConnect.name, function(ev) {
             self.cutAndConnect();
          });
       // Dissolve
-      UI.bindMenuItem('#edgeDissolve', function(ev) {
+      UI.bindMenuItem(action.edgeDissolve.name, function(ev) {
             const dissolve = self.dissolve();
             if (dissolve.count > 0) {
                View.undoQueue(new DissolveEdgeCommand(self, dissolve.record));
@@ -56,7 +59,7 @@ class EdgeMadsor extends Madsor {
             }
          });
       // Collapse
-      UI.bindMenuItem('#edgeCollapse', function(ev) {
+      UI.bindMenuItem(action.edgeCollapse.name, function(ev) {
             const command = new CollapseEdgeCommand(self);
             if (command.doIt()) {
                View.undoQueue(command);

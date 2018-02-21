@@ -3,6 +3,7 @@
 
 */
 import * as Hotkey from './wings3d_hotkey';
+import * as Wings3D from './wings3d';
 
 
 function _bindMenuItem(menuItem, id, fn, hotkey, meta) {
@@ -25,11 +26,10 @@ function _bindMenuItem(menuItem, id, fn, hotkey, meta) {
 
 
 function bindMenuItem(id, fn, hotkey, meta) {
-   const menuItem = document.querySelector(id);
+   const menuItem = document.querySelector('#' + id);
    if (menuItem) {
       _bindMenuItem(menuItem, id, fn, hotkey, meta);
    }
-
 }
 
 

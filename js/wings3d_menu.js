@@ -108,11 +108,11 @@ function contextListener(className) {
     document.addEventListener( "click", function(e) {
       let clickeElIsLink = clickInsideElement( e, contextMenuLinkClassName );
 
-      if ( !clickeElIsLink ) {
+      //if ( !clickeElIsLink ) {
         if ( (e.button == 0) || (e.button == 1) ) {
           toggleMenuOff();
         }
-      }
+      //}
     }, false);
   }
 

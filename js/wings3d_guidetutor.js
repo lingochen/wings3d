@@ -102,17 +102,17 @@ function createGuideTour() {
 
       Tutor.startTour();
    };
-   UI.bindMenuItem("#about", (ev) => {
+   UI.bindMenuItem("about", (ev) => {
       tours.about();
    });
-   UI.bindMenuItem("#introduction", (ev) => {
+   UI.bindMenuItem("introduction", (ev) => {
       tours.introduction();
    });
-   UI.bindMenuItem("#basicCommands", (ev) => {
+   UI.bindMenuItem("basicCommands", (ev) => {
       tours.basicCommands();
    });
 
-   UI.bindMenuItem("#tableTutor", (ev) => {
+   UI.bindMenuItem("tableTutor", (ev) => {
       tours.tableTutor();
    });
 }
