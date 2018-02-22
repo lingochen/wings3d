@@ -748,7 +748,7 @@ function initMode() {
 
 
 function toggleMode(mode) {
-   let button = document.getElementById('toggle'+mode+'Mode');
+   let button = document.getElementById('toggle'+mode+'ModeInput');  // :checked property only existed on <input>
    if (button) {
       button.checked = true;
    }
