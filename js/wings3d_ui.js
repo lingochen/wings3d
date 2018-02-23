@@ -8,6 +8,7 @@ import * as Wings3D from './wings3d';
 
 function _bindMenuItem(menuItem, id, fn, hotkey, meta) {
    menuItem.addEventListener('click', function(ev) {
+      //ev.stopPropagation();
       let target = ev.target;
       while ( target = target.parentNode ) {
          if ( target.classList && target.classList.contains("hover") ) {

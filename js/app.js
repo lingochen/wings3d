@@ -12,7 +12,6 @@ import "../css/bubble.css";
 // import js
 import './wings3d_menu';
 import './wings3d_view';
-import './wings3d_buttonbar';
 import './wings3d_camera';
 import './wings3d_interact';
 import * as Wings3D from "./wings3d"

@@ -60,7 +60,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 22);
+/******/ 	return __webpack_require__(__webpack_require__.s = 21);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -92,7 +92,6 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 //import * as View from './wings3d_view';
 //import * as Contextmenu from './wings3d_menu';
-//import * as Buttonbar from './wings3d_buttonbar';
 //import * as Interact from './wings3d_interact';
 
 //
@@ -368,6 +367,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 function _bindMenuItem(menuItem, id, fn, hotkey, meta) {
    menuItem.addEventListener('click', function(ev) {
+      //ev.stopPropagation();
       let target = ev.target;
       while ( target = target.parentNode ) {
          if ( target.classList && target.classList.contains("hover") ) {
@@ -609,7 +609,6 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "undoEdit", function() { return undoEdit; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "undoQueue", function() { return undoQueue; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "undoQueueCombo", function() { return undoQueueCombo; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "id2Fn", function() { return id2Fn; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "loadMatrices", function() { return loadMatrices; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "projection", function() { return projection; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "modelView", function() { return modelView; });
@@ -709,21 +708,6 @@ let theme = nativeTheme;
 
 //--  end of pref and theme --------------------------------------------------------------------------
 
-
-// 
-// id2Fn()
-//
-let idMapping = new Map;
-function id2Fn(inputID) {
-   return idMapping.get(inputID);
-}
-function setId2Fn(fn) {
-   idMapping.set(fn.name, fn);   // populate the support functions
-}
-
-// --- end of id mapping to functions ----------------------------------------------------------------------------
-
-
 // 
 // editing mode management
 //
@@ -762,7 +746,6 @@ function toggleVertexMode() {
       __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
    }
 };
-setId2Fn(toggleVertexMode);
 
 function toggleFaceMode() {
    if (mode.current !== mode.face) {
@@ -772,7 +755,6 @@ function toggleFaceMode() {
       __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
    }
 };
-setId2Fn(toggleFaceMode);
 
 function toggleEdgeMode() {
    if (mode.current !== mode.edge) {
@@ -782,7 +764,6 @@ function toggleEdgeMode() {
       __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
    }
 };
-setId2Fn(toggleEdgeMode);
 
 function toggleBodyMode() {
    if (mode.current !== mode.body) {
@@ -792,7 +773,6 @@ function toggleBodyMode() {
       __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
    }
 };
-setId2Fn(toggleBodyMode);
 
 function restoreVertexMode(snapshots) {
    if (mode.current !== mode.vertex) {
@@ -1101,7 +1081,6 @@ function redoEdit() {
       __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
    }
 };
-setId2Fn(redoEdit);
 
 function undoEdit() {
    if (undo.current >= 0) {
@@ -1109,7 +1088,6 @@ function undoEdit() {
       __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
    }
 };
-setId2Fn(undoEdit);
 
 // -- end of undo/redo handling ----------------------------------------------------------------------------------
 
@@ -1219,6 +1197,38 @@ function init() {
          }
       }, select.hotKey, select.meta);
    }
+
+   // bindMenu toolbar
+   __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].undoEdit.name, function(ev) {
+      //ev.preventDefault();
+      help( "wings3d - " + ev.currentTarget.id);
+      undoEdit();
+    });
+   __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].redoEdit.name, function(ev) {
+      //ev.preventDefault();
+      help( "wings3d - " + ev.currentTarget.id);
+      redoEdit();
+    });
+    __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].toggleVertexMode.name, function(ev) {
+      //ev.preventDefault();
+      help( "wings3d - " + ev.currentTarget.id);
+      toggleVertexMode();
+    });
+    __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].toggleEdgeMode.name, function(ev) {
+      //ev.preventDefault();
+      help( "wings3d - " + ev.currentTarget.id);
+      toggleEdgeMode();
+    });
+    __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].toggleFaceMode.name, function(ev) {
+      //ev.preventDefault();
+      help( "wings3d - " + ev.currentTarget.id);
+      toggleFaceMode();
+    });
+    __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].toggleBodyMode.name, function(ev) {
+      //ev.preventDefault();
+      help( "wings3d - " + ev.currentTarget.id);
+      toggleBodyMode();
+    });
 
    //Renderer.init(gl, drawWorld);  // init by itself
 
@@ -9590,65 +9600,16 @@ BoundingSphere.create = function(polygon, center) {
 
 /***/ }),
 /* 21 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_view__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_ui__ = __webpack_require__(1);
-/*
-// button toolbar for geometry ...etc. 
-*/
-
-
-
-
-
-   /*
-   * variable 
-   */   
-const buttonBarClassName = {
-         bar: ".button-bar",
-         group: ".button-group",
-         button: ".button",
-         //link: , 
-         //active: ".button-active",
-      };
-
-//
-// needs refactoring.
-function init() {
-   const toolbar = document.querySelector(buttonBarClassName.bar);
-   const buttons = toolbar.querySelectorAll('div label');
-   for (let button of buttons) {
-      const func = __WEBPACK_IMPORTED_MODULE_0__wings3d_view__["id2Fn"](button.id);
-      if (func) {
-         __WEBPACK_IMPORTED_MODULE_2__wings3d_ui__["bindMenuItem"](button.id, function(ev) {
-            //ev.preventDefault();
-            help( "wings3d - " + ev.currentTarget.id);
-            func();
-          });
-      }
-   }
-};
-
-
-__WEBPACK_IMPORTED_MODULE_1__wings3d__["onReady"](init);
-
-/***/ }),
-/* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(23);
+__webpack_require__(22);
 __webpack_require__(9);
 __webpack_require__(20);
-__webpack_require__(21);
 __webpack_require__(11);
 __webpack_require__(8);
 __webpack_require__(6);
 __webpack_require__(3);
-__webpack_require__(30);
+__webpack_require__(29);
 __webpack_require__(16);
 __webpack_require__(19);
 __webpack_require__(14);
@@ -9657,7 +9618,7 @@ __webpack_require__(15);
 __webpack_require__(12);
 __webpack_require__(17);
 __webpack_require__(5);
-__webpack_require__(31);
+__webpack_require__(30);
 __webpack_require__(1);
 __webpack_require__(4);
 __webpack_require__(10);
@@ -9667,30 +9628,29 @@ module.exports = __webpack_require__(0);
 
 
 /***/ }),
-/* 23 */
+/* 22 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__css_default_css__ = __webpack_require__(24);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__css_default_css__ = __webpack_require__(23);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__css_default_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__css_default_css__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__css_menu_css__ = __webpack_require__(25);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__css_menu_css__ = __webpack_require__(24);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__css_menu_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__css_menu_css__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__css_button_css__ = __webpack_require__(26);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__css_button_css__ = __webpack_require__(25);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__css_button_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__css_button_css__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__css_form_css__ = __webpack_require__(27);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__css_form_css__ = __webpack_require__(26);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__css_form_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3__css_form_css__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__css_bubble_css__ = __webpack_require__(28);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__css_bubble_css__ = __webpack_require__(27);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__css_bubble_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4__css_bubble_css__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_menu__ = __webpack_require__(15);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_view__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_buttonbar__ = __webpack_require__(21);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d_camera__ = __webpack_require__(11);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__wings3d_interact__ = __webpack_require__(14);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__wings3d__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__wings3d_ui__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12__js_plugins_cubeshape_js__ = __webpack_require__(29);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_13__js_plugins_wavefront_obj_js__ = __webpack_require__(18);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_camera__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d_interact__ = __webpack_require__(14);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__wings3d__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__wings3d_ui__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__js_plugins_cubeshape_js__ = __webpack_require__(28);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12__js_plugins_wavefront_obj_js__ = __webpack_require__(18);
 // app.js
 //  for bundling and initialization
 //
@@ -9710,13 +9670,18 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 
 
-
 // plugins
 
 
 
 
-__WEBPACK_IMPORTED_MODULE_10__wings3d__["start"]('glcanvas');
+__WEBPACK_IMPORTED_MODULE_9__wings3d__["start"]('glcanvas');
+
+/***/ }),
+/* 23 */
+/***/ (function(module, exports) {
+
+// removed by extract-text-webpack-plugin
 
 /***/ }),
 /* 24 */
@@ -9744,12 +9709,6 @@ __WEBPACK_IMPORTED_MODULE_10__wings3d__["start"]('glcanvas');
 
 /***/ }),
 /* 28 */
-/***/ (function(module, exports) {
-
-// removed by extract-text-webpack-plugin
-
-/***/ }),
-/* 29 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -10101,7 +10060,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 /***/ }),
-/* 30 */
+/* 29 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -10234,7 +10193,7 @@ __WEBPACK_IMPORTED_MODULE_2__wings3d__["onReady"](createGuideTour);
 
 
 /***/ }),
-/* 31 */
+/* 30 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";

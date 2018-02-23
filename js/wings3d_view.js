@@ -81,21 +81,6 @@ let theme = nativeTheme;
 
 //--  end of pref and theme --------------------------------------------------------------------------
 
-
-// 
-// id2Fn()
-//
-let idMapping = new Map;
-function id2Fn(inputID) {
-   return idMapping.get(inputID);
-}
-function setId2Fn(fn) {
-   idMapping.set(fn.name, fn);   // populate the support functions
-}
-
-// --- end of id mapping to functions ----------------------------------------------------------------------------
-
-
 // 
 // editing mode management
 //
@@ -134,7 +119,6 @@ function toggleVertexMode() {
       Renderer.needToRedraw();
    }
 };
-setId2Fn(toggleVertexMode);
 
 function toggleFaceMode() {
    if (mode.current !== mode.face) {
@@ -144,7 +128,6 @@ function toggleFaceMode() {
       Renderer.needToRedraw();
    }
 };
-setId2Fn(toggleFaceMode);
 
 function toggleEdgeMode() {
    if (mode.current !== mode.edge) {
@@ -154,7 +137,6 @@ function toggleEdgeMode() {
       Renderer.needToRedraw();
    }
 };
-setId2Fn(toggleEdgeMode);
 
 function toggleBodyMode() {
    if (mode.current !== mode.body) {
@@ -164,7 +146,6 @@ function toggleBodyMode() {
       Renderer.needToRedraw();
    }
 };
-setId2Fn(toggleBodyMode);
 
 function restoreVertexMode(snapshots) {
    if (mode.current !== mode.vertex) {
@@ -473,7 +454,6 @@ function redoEdit() {
       Renderer.needToRedraw();
    }
 };
-setId2Fn(redoEdit);
 
 function undoEdit() {
    if (undo.current >= 0) {
@@ -481,7 +461,6 @@ function undoEdit() {
       Renderer.needToRedraw();
    }
 };
-setId2Fn(undoEdit);
 
 // -- end of undo/redo handling ----------------------------------------------------------------------------------
 
@@ -592,6 +571,38 @@ function init() {
       }, select.hotKey, select.meta);
    }
 
+   // bindMenu toolbar
+   UI.bindMenuItem(Wings3D.action.undoEdit.name, function(ev) {
+      //ev.preventDefault();
+      help( "wings3d - " + ev.currentTarget.id);
+      undoEdit();
+    });
+   UI.bindMenuItem(Wings3D.action.redoEdit.name, function(ev) {
+      //ev.preventDefault();
+      help( "wings3d - " + ev.currentTarget.id);
+      redoEdit();
+    });
+    UI.bindMenuItem(Wings3D.action.toggleVertexMode.name, function(ev) {
+      //ev.preventDefault();
+      help( "wings3d - " + ev.currentTarget.id);
+      toggleVertexMode();
+    });
+    UI.bindMenuItem(Wings3D.action.toggleEdgeMode.name, function(ev) {
+      //ev.preventDefault();
+      help( "wings3d - " + ev.currentTarget.id);
+      toggleEdgeMode();
+    });
+    UI.bindMenuItem(Wings3D.action.toggleFaceMode.name, function(ev) {
+      //ev.preventDefault();
+      help( "wings3d - " + ev.currentTarget.id);
+      toggleFaceMode();
+    });
+    UI.bindMenuItem(Wings3D.action.toggleBodyMode.name, function(ev) {
+      //ev.preventDefault();
+      help( "wings3d - " + ev.currentTarget.id);
+      toggleBodyMode();
+    });
+
    //Renderer.init(gl, drawWorld);  // init by itself
 
    // capture click mouse event.
@@ -641,8 +652,6 @@ export {
    undoEdit,
    undoQueue,
    undoQueueCombo,
-   // id2fn
-   id2Fn,
    // rendering
    loadMatrices,
    projection,
