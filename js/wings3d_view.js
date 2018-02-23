@@ -10,6 +10,7 @@ import * as Camera from './wings3d_camera';
 import {gl} from './wings3d_gl';
 import { WavefrontObjImportExporter } from './plugins/wavefront_obj';
 import * as Wings3D from './wings3d';
+import {EditCommandSimple} from './wings3d_undo';
 import {FaceMadsor} from './wings3d_facemads';
 import {EdgeMadsor} from './wings3d_edgemads';
 import {VertexMadsor} from './wings3d_vertexmads';
@@ -553,16 +554,16 @@ function render(gl) {
 function init() {
    initMode();
    // init menu
-   const selectionMenu = [ {id: 'deselect', fn: 'resetSelection', hotKey: ' '},
-                         {id: 'more', fn: 'moreSelection', hotKey: '+'},
-                         {id: 'less', fn: 'lessSelection', hotKey: '-'},
-                         {id: 'similar', fn: 'similarSelection', hotkey: 'i'},
-                         {id: 'all', fn: 'allSelection', hotKey: 'a', meta: 'ctrl'}, 
-                         {id: 'invert', fn: 'invertSelection', hotKey: 'i', meta: 'ctrl+shift'},
-                         {id: 'adjacent', fn: 'adjacentSelection'}
+   const selectionMenu = [ {id: Wings3D.action.deselect, fn: 'resetSelection', hotKey: ' '},
+                         {id: Wings3D.action.more, fn: 'moreSelection', hotKey: '+'},
+                         {id: Wings3D.action.less, fn: 'lessSelection', hotKey: '-'},
+                         {id: Wings3D.action.similar, fn: 'similarSelection', hotkey: 'i'},
+                         {id: Wings3D.action.all, fn: 'allSelection', hotKey: 'a', meta: 'ctrl'}, 
+                         {id: Wings3D.action.invert, fn: 'invertSelection', hotKey: 'i', meta: 'ctrl+shift'},
+                         {id: Wings3D.action.adjacent, fn: 'adjacentSelection'}
                         ];
    for (let select of selectionMenu) {
-      UI.bindMenuItem(select.id, function(ev) {
+      UI.bindMenuItem(select.id.name, function(ev) {
          const command = new EditCommandSimple(select.fn);
          if(command.doIt(mode.current)) {
             undoQueue( command );
@@ -571,37 +572,21 @@ function init() {
       }, select.hotKey, select.meta);
    }
 
+   const toolBar = [ {id: Wings3D.action.undoEdit, fn: undoEdit, hotKey: ' '},
+                     {id: Wings3D.action.redoEdit, fn: redoEdit, hotKey: ' '},
+                     {id: Wings3D.action.toggleVertexMode, fn: toggleVertexMode, hotKey: ' '},
+                     {id: Wings3D.action.toggleEdgeMode, fn: toggleEdgeMode, hotKey: ' '},
+                     {id: Wings3D.action.toggleFaceMode, fn: toggleFaceMode, hotKey: ' '},
+                     {id: Wings3D.action.toggleBodyMode, fn: toggleBodyMode, hotKey: ' '},
+                   ];
    // bindMenu toolbar
-   UI.bindMenuItem(Wings3D.action.undoEdit.name, function(ev) {
-      //ev.preventDefault();
-      help( "wings3d - " + ev.currentTarget.id);
-      undoEdit();
-    });
-   UI.bindMenuItem(Wings3D.action.redoEdit.name, function(ev) {
-      //ev.preventDefault();
-      help( "wings3d - " + ev.currentTarget.id);
-      redoEdit();
-    });
-    UI.bindMenuItem(Wings3D.action.toggleVertexMode.name, function(ev) {
-      //ev.preventDefault();
-      help( "wings3d - " + ev.currentTarget.id);
-      toggleVertexMode();
-    });
-    UI.bindMenuItem(Wings3D.action.toggleEdgeMode.name, function(ev) {
-      //ev.preventDefault();
-      help( "wings3d - " + ev.currentTarget.id);
-      toggleEdgeMode();
-    });
-    UI.bindMenuItem(Wings3D.action.toggleFaceMode.name, function(ev) {
-      //ev.preventDefault();
-      help( "wings3d - " + ev.currentTarget.id);
-      toggleFaceMode();
-    });
-    UI.bindMenuItem(Wings3D.action.toggleBodyMode.name, function(ev) {
-      //ev.preventDefault();
-      help( "wings3d - " + ev.currentTarget.id);
-      toggleBodyMode();
-    });
+   for (let button of toolBar) {
+      UI.bindMenuItem(button.id.name, function(ev) {
+         //ev.preventDefault();
+         help( "wings3d - " + ev.currentTarget.id);
+         button.fn();
+       });
+   }
 
    //Renderer.init(gl, drawWorld);  // init by itself
 

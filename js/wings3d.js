@@ -203,6 +203,14 @@ const action = {
    toggleBodyMode: () => {notImplemented(this);},
    redoEdit: () => {notImplemented(this);},
    undoEdit: () => {notImplemented(this);},
+   // selection menu
+   deselect: () => {notImplemented(this);},
+   more: () => {notImplemented(this);},
+   less: () => {notImplemented(this);},
+   similar: () => {notImplemented(this);},
+   all: () => {notImplemented(this);},
+   invert: () => {notImplemented(this);},
+   adjacent: () => {notImplemented(this);},
    //menu action
    bodyDelete: () => {notImplemented(this);},
    bodyRename: () => {notImplemented(this);},
