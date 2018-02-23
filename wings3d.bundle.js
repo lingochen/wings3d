@@ -80,7 +80,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "action", function() { return action; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "bindAction", function() { return bindAction; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "runAction", function() { return runAction; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__ = __webpack_require__(4);
 /*
 //  wings3d.js
 //     The start module of Wings 3D. Port,
@@ -286,6 +286,14 @@ const action = {
    toggleBodyMode: () => {notImplemented(this);},
    redoEdit: () => {notImplemented(this);},
    undoEdit: () => {notImplemented(this);},
+   // selection menu
+   deselect: () => {notImplemented(this);},
+   more: () => {notImplemented(this);},
+   less: () => {notImplemented(this);},
+   similar: () => {notImplemented(this);},
+   all: () => {notImplemented(this);},
+   invert: () => {notImplemented(this);},
+   adjacent: () => {notImplemented(this);},
    //menu action
    bodyDelete: () => {notImplemented(this);},
    bodyRename: () => {notImplemented(this);},
@@ -617,19 +625,21 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_render__ = __webpack_require__(17);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_camera__ = __webpack_require__(11);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_gl__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_gl__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__plugins_wavefront_obj__ = __webpack_require__(18);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_facemads__ = __webpack_require__(6);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_edgemads__ = __webpack_require__(8);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d_vertexmads__ = __webpack_require__(10);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__wings3d_bodymads__ = __webpack_require__(9);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__wings3d_model__ = __webpack_require__(12);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_undo__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_facemads__ = __webpack_require__(6);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d_edgemads__ = __webpack_require__(8);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__wings3d_vertexmads__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__wings3d_bodymads__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__wings3d_model__ = __webpack_require__(12);
 /*
 //     This module implements most of the commands in the View menu. 
 //
 // Original Erlang Version: Bjorn Gustavsson
 */
+
 
 
 
@@ -719,10 +729,10 @@ const mode = {             // private variable, needed to initialize after gl,
    current: null,
 };
 function initMode() {
-   mode.face = new __WEBPACK_IMPORTED_MODULE_6__wings3d_facemads__["FaceMadsor"];
-   mode.edge = new __WEBPACK_IMPORTED_MODULE_7__wings3d_edgemads__["EdgeMadsor"];
-   mode.vertex = new __WEBPACK_IMPORTED_MODULE_8__wings3d_vertexmads__["VertexMadsor"];
-   mode.body = new __WEBPACK_IMPORTED_MODULE_9__wings3d_bodymads__["BodyMadsor"];
+   mode.face = new __WEBPACK_IMPORTED_MODULE_7__wings3d_facemads__["FaceMadsor"];
+   mode.edge = new __WEBPACK_IMPORTED_MODULE_8__wings3d_edgemads__["EdgeMadsor"];
+   mode.vertex = new __WEBPACK_IMPORTED_MODULE_9__wings3d_vertexmads__["VertexMadsor"];
+   mode.body = new __WEBPACK_IMPORTED_MODULE_10__wings3d_bodymads__["BodyMadsor"];
    mode.current = mode.face;
    mode.face.setWorld(world);
    mode.edge.setWorld(world);
@@ -843,7 +853,7 @@ function putIntoWorld(mesh) {
    });
    geometryStatus(str);*/
    //
-   var model = new __WEBPACK_IMPORTED_MODULE_10__wings3d_model__["PreviewCage"](mesh);
+   var model = new __WEBPACK_IMPORTED_MODULE_11__wings3d_model__["PreviewCage"](mesh);
    //
    return addToWorld(model);
 };
@@ -1180,17 +1190,17 @@ function render(gl) {
 function init() {
    initMode();
    // init menu
-   const selectionMenu = [ {id: 'deselect', fn: 'resetSelection', hotKey: ' '},
-                         {id: 'more', fn: 'moreSelection', hotKey: '+'},
-                         {id: 'less', fn: 'lessSelection', hotKey: '-'},
-                         {id: 'similar', fn: 'similarSelection', hotkey: 'i'},
-                         {id: 'all', fn: 'allSelection', hotKey: 'a', meta: 'ctrl'}, 
-                         {id: 'invert', fn: 'invertSelection', hotKey: 'i', meta: 'ctrl+shift'},
-                         {id: 'adjacent', fn: 'adjacentSelection'}
+   const selectionMenu = [ {id: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].deselect, fn: 'resetSelection', hotKey: ' '},
+                         {id: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].more, fn: 'moreSelection', hotKey: '+'},
+                         {id: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].less, fn: 'lessSelection', hotKey: '-'},
+                         {id: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].similar, fn: 'similarSelection', hotkey: 'i'},
+                         {id: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].all, fn: 'allSelection', hotKey: 'a', meta: 'ctrl'}, 
+                         {id: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].invert, fn: 'invertSelection', hotKey: 'i', meta: 'ctrl+shift'},
+                         {id: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].adjacent, fn: 'adjacentSelection'}
                         ];
    for (let select of selectionMenu) {
-      __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["bindMenuItem"](select.id, function(ev) {
-         const command = new EditCommandSimple(select.fn);
+      __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["bindMenuItem"](select.id.name, function(ev) {
+         const command = new __WEBPACK_IMPORTED_MODULE_6__wings3d_undo__["EditCommandSimple"](select.fn);
          if(command.doIt(mode.current)) {
             undoQueue( command );
             __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
@@ -1198,37 +1208,21 @@ function init() {
       }, select.hotKey, select.meta);
    }
 
+   const toolBar = [ {id: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].undoEdit, fn: undoEdit, hotKey: ' '},
+                     {id: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].redoEdit, fn: redoEdit, hotKey: ' '},
+                     {id: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].toggleVertexMode, fn: toggleVertexMode, hotKey: ' '},
+                     {id: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].toggleEdgeMode, fn: toggleEdgeMode, hotKey: ' '},
+                     {id: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].toggleFaceMode, fn: toggleFaceMode, hotKey: ' '},
+                     {id: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].toggleBodyMode, fn: toggleBodyMode, hotKey: ' '},
+                   ];
    // bindMenu toolbar
-   __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].undoEdit.name, function(ev) {
-      //ev.preventDefault();
-      help( "wings3d - " + ev.currentTarget.id);
-      undoEdit();
-    });
-   __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].redoEdit.name, function(ev) {
-      //ev.preventDefault();
-      help( "wings3d - " + ev.currentTarget.id);
-      redoEdit();
-    });
-    __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].toggleVertexMode.name, function(ev) {
-      //ev.preventDefault();
-      help( "wings3d - " + ev.currentTarget.id);
-      toggleVertexMode();
-    });
-    __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].toggleEdgeMode.name, function(ev) {
-      //ev.preventDefault();
-      help( "wings3d - " + ev.currentTarget.id);
-      toggleEdgeMode();
-    });
-    __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].toggleFaceMode.name, function(ev) {
-      //ev.preventDefault();
-      help( "wings3d - " + ev.currentTarget.id);
-      toggleFaceMode();
-    });
-    __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].toggleBodyMode.name, function(ev) {
-      //ev.preventDefault();
-      help( "wings3d - " + ev.currentTarget.id);
-      toggleBodyMode();
-    });
+   for (let button of toolBar) {
+      __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["bindMenuItem"](button.id.name, function(ev) {
+         //ev.preventDefault();
+         help( "wings3d - " + ev.currentTarget.id);
+         button.fn();
+       });
+   }
 
    //Renderer.init(gl, drawWorld);  // init by itself
 
@@ -1259,6 +1253,96 @@ __WEBPACK_IMPORTED_MODULE_5__wings3d__["onReady"](init);
 
 /***/ }),
 /* 3 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "MouseMoveHandler", function() { return MouseMoveHandler; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "EditCommand", function() { return EditCommand; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "EditCommandCombo", function() { return EditCommandCombo; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "EditCommandSimple", function() { return EditCommandSimple; });
+/**
+ *  abstract EditCommand class for undo, redo handling. also MouseMoveHandler class.
+ * 
+ */
+
+class MouseMoveHandler {
+
+   _calibrateMovement(mouseMove) {
+      // todo: instead of magic constant. should supply a scaling factor.
+      var move = mouseMove/20.0;
+      if (move >= 2) {
+         move = 2;
+      }
+      return move;
+   }
+
+   //handleMouseMove(ev) {}
+
+   cancel() {
+      this._cancel();     // called descendant handler
+      // enable mouse cursor
+      document.body.style.cursor = 'auto';
+   }
+
+   commit() {
+      this._commit();
+      // enable mouse cursor
+      document.body.style.cursor = 'auto';
+   }
+}
+
+class EditCommand {
+
+
+   //doIt() {}
+
+   //undo() {}
+
+}
+
+class EditCommandSimple extends EditCommand {
+   constructor(command) {
+      super();
+      this.commandName = command;
+   }
+
+   doIt(currentMadsor) {
+      this.undo = currentMadsor[this.commandName]();
+      return (this.undo !== null);
+   }
+
+   undo(currentMadsor) {
+      this.undo(currentMadsor);
+   }
+}
+
+class EditCommandCombo extends EditCommand {
+   constructor(editCommands) {
+      super();
+      this.editCommands = editCommands;
+   }
+
+   doIt() {
+      // start from beginning
+      for (let cmd of this.editCommands) {
+         cmd.doIt();
+      }
+   }
+
+   undo() {
+      // walk from last to first
+      for (let i = this.editCommands.length-1; i >= 0; --i) {
+         this.editCommands[i].undo();
+      }
+   }
+}
+
+
+
+
+/***/ }),
+/* 4 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -1798,96 +1882,6 @@ ShaderProgram.prototype.getTypeByName = function(type) {
 
 
 /***/ }),
-/* 4 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "MouseMoveHandler", function() { return MouseMoveHandler; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "EditCommand", function() { return EditCommand; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "EditCommandCombo", function() { return EditCommandCombo; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "EditCommandSimple", function() { return EditCommandSimple; });
-/**
- *  abstract EditCommand class for undo, redo handling. also MouseMoveHandler class.
- * 
- */
-
-class MouseMoveHandler {
-
-   _calibrateMovement(mouseMove) {
-      // todo: instead of magic constant. should supply a scaling factor.
-      var move = mouseMove/20.0;
-      if (move >= 2) {
-         move = 2;
-      }
-      return move;
-   }
-
-   //handleMouseMove(ev) {}
-
-   cancel() {
-      this._cancel();     // called descendant handler
-      // enable mouse cursor
-      document.body.style.cursor = 'auto';
-   }
-
-   commit() {
-      this._commit();
-      // enable mouse cursor
-      document.body.style.cursor = 'auto';
-   }
-}
-
-class EditCommand {
-
-
-   //doIt() {}
-
-   //undo() {}
-
-}
-
-class EditCommandSimple extends EditCommand {
-   constructor(command) {
-      super();
-      this.commandName = command;
-   }
-
-   doIt(currentMadsor) {
-      this.undo = currentMadsor[this.commandName]();
-      return (this.undo !== null);
-   }
-
-   undo(currentMadsor) {
-      this.undo(currentMadsor);
-   }
-}
-
-class EditCommandCombo extends EditCommand {
-   constructor(editCommands) {
-      super();
-      this.editCommands = editCommands;
-   }
-
-   doIt() {
-      // start from beginning
-      for (let cmd of this.editCommands) {
-         cmd.doIt();
-      }
-   }
-
-   undo() {
-      // walk from last to first
-      for (let i = this.editCommands.length-1; i >= 0; --i) {
-         this.editCommands[i].undo();
-      }
-   }
-}
-
-
-
-
-/***/ }),
 /* 5 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -1905,7 +1899,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "solidWireframe", function() { return solidWireframe; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "colorWireframe", function() { return colorWireframe; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "colorSolidWireframe", function() { return colorSolidWireframe; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d__ = __webpack_require__(0);
 // program as text .
 
@@ -2270,9 +2264,9 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_edgemads__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_bodymads__ = __webpack_require__(9);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__ = __webpack_require__(10);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_view__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_gl__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_gl__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_shaderprog__ = __webpack_require__(5);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__wings3d__ = __webpack_require__(0);
@@ -2678,8 +2672,8 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "MoveFreePositionHandler", function() { return MoveFreePositionHandler; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "MoveCommand", function() { return MoveCommand; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ToggleModeCommand", function() { return ToggleModeCommand; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__ = __webpack_require__(3);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_view__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_ui__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d__ = __webpack_require__(0);
@@ -3010,7 +3004,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__ = __webpack_require__(6);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_bodymads__ = __webpack_require__(9);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__ = __webpack_require__(10);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_ui__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_view__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_shaderprog__ = __webpack_require__(5);
@@ -3396,7 +3390,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__ = __webpack_require__(6);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_edgemads__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__ = __webpack_require__(10);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_shaderprog__ = __webpack_require__(5);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_view__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_ui__ = __webpack_require__(1);
@@ -3778,7 +3772,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__ = __webpack_require__(6);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_bodymads__ = __webpack_require__(9);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_edgemads__ = __webpack_require__(8);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_view__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_shaderprog__ = __webpack_require__(5);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_ui__ = __webpack_require__(1);
@@ -4118,7 +4112,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "keyPanUpArrow", function() { return keyPanUpArrow; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "keyPanDownArrow", function() { return keyPanDownArrow; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "wheelPan", function() { return wheelPan; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_undo_js__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_undo_js__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_js__ = __webpack_require__(0);
 /*
 **
@@ -4548,12 +4542,12 @@ __WEBPACK_IMPORTED_MODULE_1__wings3d_js__["onReady"](init);
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "PreviewCage", function() { return PreviewCage; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "CreatePreviewCageCommand", function() { return CreatePreviewCageCommand; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_boundingvolume__ = __webpack_require__(20);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_wingededge__ = __webpack_require__(13);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_view__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_undo__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_undo__ = __webpack_require__(3);
 /*
 *  hold onto a WingedEdgeTopology. adds index, texture, etc....
 *  bounding box, picking.
@@ -8747,7 +8741,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "renderText", function() { return renderText; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "needToRedraw", function() { return needToRedraw; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "render", function() { return render; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_view__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_camera__ = __webpack_require__(11);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d__ = __webpack_require__(0);
@@ -9608,7 +9602,7 @@ __webpack_require__(20);
 __webpack_require__(11);
 __webpack_require__(8);
 __webpack_require__(6);
-__webpack_require__(3);
+__webpack_require__(4);
 __webpack_require__(29);
 __webpack_require__(16);
 __webpack_require__(19);
@@ -9620,7 +9614,7 @@ __webpack_require__(17);
 __webpack_require__(5);
 __webpack_require__(30);
 __webpack_require__(1);
-__webpack_require__(4);
+__webpack_require__(3);
 __webpack_require__(10);
 __webpack_require__(2);
 __webpack_require__(13);
