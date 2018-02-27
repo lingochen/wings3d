@@ -23,9 +23,8 @@
     }
   </script> 
 </head>
-<body class="box">
-  <header class="row header">
-  <nav class="menu">
+<body class="page-layout">
+  <nav class="menu marginal">
     <ul id="menubar" class="menubar">
       <li class="dropdown">
         <a>File</a>
@@ -105,7 +104,7 @@
       </li>
     </ul>
   </nav>
-  <div class="button-bar unselectable" id="toolbar">
+  <nav class="button-bar unselectable marginal" id="toolbar">
     <div class="button-group system-group">
       <label id="openFileButton" class="button not-implemented">
      	<input type="button">
@@ -177,16 +176,15 @@
         <span>Axes</span>
       </label>
     </div>
-    </div>
-  </header>
-  <div id="canvas" class="row content">
+  </nav>
+  <div id="viewport" class="content">
     <div id="statusbar"> Wings3D Geometry </div>
     <canvas id="glcanvas">
       Your browser doesn't appear to support the 
       <code>&lt;canvas&gt;</code> element.
     </canvas>
   </div>
-  <footer id="helpbar" class="row footer">This is help bar</footer>
+  <footer id="helpbar" class="marginal">This is help bar</footer>
 
   <!-- Hidden context menu -->
   <nav class="menu">
@@ -310,7 +308,7 @@
   </form>
   <form id="renameDialog" class="dialog">
      <h2>Rename</h2>
-       <div class="content">
+       <div class="content-dummy">
        </div>
        <button type="submit" value="Cancel">Cancel</button>
        <button type="submit" value="Ok">Ok</button>
