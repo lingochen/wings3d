@@ -343,6 +343,11 @@ const action = {
    vertexMoveZ: () => {notImplemented(this);},
    vertexMoveFree: () => {notImplemented(this);},
    vertexMoveNormal: () => {notImplemented(this);},
+   // guide tour
+   about: () => {notImplemented(this);},
+   introduction: () => {notImplemented(this);},
+   basicCommands: () => {notImplemented(this);},
+   tableTutor: () => {notImplemented(this);},
 };
 
 
@@ -10167,17 +10172,17 @@ function createGuideTour() {
 
       __WEBPACK_IMPORTED_MODULE_0__wings3d_interact__["startTour"]();
    };
-   __WEBPACK_IMPORTED_MODULE_1__wings3d_ui__["bindMenuItem"]("about", (ev) => {
+   __WEBPACK_IMPORTED_MODULE_1__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_2__wings3d__["action"].about.name, (ev) => {
       tours.about();
    });
-   __WEBPACK_IMPORTED_MODULE_1__wings3d_ui__["bindMenuItem"]("introduction", (ev) => {
+   __WEBPACK_IMPORTED_MODULE_1__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_2__wings3d__["action"].introduction.name, (ev) => {
       tours.introduction();
    });
-   __WEBPACK_IMPORTED_MODULE_1__wings3d_ui__["bindMenuItem"]("basicCommands", (ev) => {
+   __WEBPACK_IMPORTED_MODULE_1__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_2__wings3d__["action"].basicCommands.name, (ev) => {
       tours.basicCommands();
    });
 
-   __WEBPACK_IMPORTED_MODULE_1__wings3d_ui__["bindMenuItem"]("tableTutor", (ev) => {
+   __WEBPACK_IMPORTED_MODULE_1__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_2__wings3d__["action"].tableTutor.name, (ev) => {
       tours.tableTutor();
    });
 }
