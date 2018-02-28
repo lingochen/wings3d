@@ -102,17 +102,17 @@ function createGuideTour() {
 
       Tutor.startTour();
    };
-   UI.bindMenuItem("about", (ev) => {
+   UI.bindMenuItem(Wings3D.action.about.name, (ev) => {
       tours.about();
    });
-   UI.bindMenuItem("introduction", (ev) => {
+   UI.bindMenuItem(Wings3D.action.introduction.name, (ev) => {
       tours.introduction();
    });
-   UI.bindMenuItem("basicCommands", (ev) => {
+   UI.bindMenuItem(Wings3D.action.basicCommands.name, (ev) => {
       tours.basicCommands();
    });
 
-   UI.bindMenuItem("tableTutor", (ev) => {
+   UI.bindMenuItem(Wings3D.action.tableTutor.name, (ev) => {
       tours.tableTutor();
    });
 }

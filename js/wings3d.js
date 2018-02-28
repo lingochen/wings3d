@@ -260,6 +260,11 @@ const action = {
    vertexMoveZ: () => {notImplemented(this);},
    vertexMoveFree: () => {notImplemented(this);},
    vertexMoveNormal: () => {notImplemented(this);},
+   // guide tour
+   about: () => {notImplemented(this);},
+   introduction: () => {notImplemented(this);},
+   basicCommands: () => {notImplemented(this);},
+   tableTutor: () => {notImplemented(this);},
 };
 
 export {
