@@ -50,10 +50,10 @@ function createGuideTour() {
        "helpbar", "top-start"
       );
       Tutor.addStep("Undo", "undo/redo", "undo button revert the last operation",
-       "undoEdit", "bottom"
+       "undoEditLabel", "bottom"
       );
       Tutor.addStep("Redo", "undo/redo", "redo button revert the last undo operation",
-       "redoEdit", "bottom"
+       "redoEditLabel", "bottom"
      );
    
       // show 
