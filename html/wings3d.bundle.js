@@ -10120,10 +10120,10 @@ function createGuideTour() {
        "helpbar", "top-start"
       );
       __WEBPACK_IMPORTED_MODULE_0__wings3d_interact__["addStep"]("Undo", "undo/redo", "undo button revert the last operation",
-       "undoEditLabel", "bottom"
+       "undoEdit", "bottom"
       );
       __WEBPACK_IMPORTED_MODULE_0__wings3d_interact__["addStep"]("Redo", "undo/redo", "redo button revert the last undo operation",
-       "redoEditLabel", "bottom"
+       "redoEdit", "bottom"
      );
    
       // show 
