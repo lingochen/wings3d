@@ -41,11 +41,12 @@ ul.popupmenu > li:hover {
 
 /* dropdown menu */
 ul.popupmenu {
-  display : none;
+  visibility : hidden;
   /*margin-top:1px;*/
   background-color: #bbb;
   list-style: none;
   z-index: 100;
+  position: absolute;
 }
 
 /* menuItem */
@@ -60,17 +61,6 @@ ul.popupmenu > li > a {
   text-decoration: none;
 }
 
-/* popup shown */
-li.dropdown.hover > ul.popupmenu {
-   position:absolute;
-   display : block;
-}
-li.dropside:hover > ul.popupmenu {
-    position: absolute;
-    display : block;
-    margin-left:100%;
-    margin-top:-2em;
-}
 /* added attribute for showing extra menu available. */
 li.dropdown::before {
   content: "\2304";
@@ -82,19 +72,4 @@ li.dropside::before {
   float: right;
   padding: 0.5em 0.5em;
 }
-/*nav.menu ul > li.drop {
-    background: url(/img/ic_keyboard_arrow_down_white_18dp.png) right center no-repeat;
-}nav.menu ul > li.sub li.sub {
-        background: url(/img/ic_keyboard_arrow_right_white_18dp.png) right center no-repeat;
-}*/
-
-/* context menu */
-
-nav.menu > ul.popupmenu {
-  position: absolute;
-}
-
-/*.context-menu__item:last-child {
-  margin-bottom: 0;
-}*/
 

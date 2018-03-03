@@ -12,6 +12,7 @@ import {action} from './wings3d';
 
 class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
    constructor(mode) {
+      const self = this;
       this.currentEdge = null;
       this.shaderData = gl.createShaderData();
       this.shaderData.setUniform4fv("uColor", [0.0, 1.0, 0.0, 0.3]); // hilite green, selected hilite yellow.
@@ -22,7 +23,6 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       }
       const axisName = ['X', 'Y', 'Z'];
       // type handler 
-      var self = this;
       // movement for (x, y, z)
       for (let axis=0; axis < 3; ++axis) {
          UI.bindMenuItem(mode + 'Move' + axisName[axis], function(ev) {

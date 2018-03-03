@@ -27,7 +27,7 @@
   <nav class="menu marginal">
     <ul id="menubar" class="menubar">
       <li class="dropdown">
-        <a>File</a>
+        <a id="fileMenu">File</a>
         <ul class="popupmenu">
           <li class="not-implemented"><a onmouseover="help('Create a new, empty scene')" onmouseleave="help()">New</a></li>
           <li class="not-implemented"><a onmouseover="help('Open a previously saved scene')" onmouseleave="help()">Open...</a></li>
@@ -186,7 +186,7 @@
 
   <!-- Hidden context menu -->
   <nav class="menu">
-    <ul id="context-menu" class="popupmenu">
+    <ul id="create-context-menu" class="popupmenu">
       <li><a id="createCube">Cube</a></li>
       <hr/>
       <li class="not-implemented"><a id="createPlane">Various Planes</a></li>
@@ -237,7 +237,7 @@
       </li>
       <hr />
       <li class="dropside">
-	<a>Move</a>
+	<a id="faceMove">Move</a>
         <ul class="popupmenu">
           <li><a id="faceMoveNormal">Normal</a></li>
           <li><a id="faceMoveFree">Free</a></li>

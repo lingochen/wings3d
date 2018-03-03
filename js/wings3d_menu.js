@@ -159,5 +159,5 @@ function contextListener(className) {
 
 
 Wings3D.onReady(function() {
-   init('content', 'popupmenu');
+//   init('content', 'popupmenu');
 });

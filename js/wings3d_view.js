@@ -397,9 +397,10 @@ function canvasHandleContextMenu(ev) {
          handler.mousemove = null;
          Renderer.needToRedraw();
       }
-      return false;
+      return true;
    }
    // let wings3d_contextmenu handle the event.
+   return false;
 };
 
 // handling in reverse order. the newest one will handle the event. (should be at most 2 handler)
@@ -587,6 +588,33 @@ function init() {
          button.fn();
        });
    }
+   // bind .dropdown, .dropside click event.
+   let buttons = document.querySelectorAll("li.dropdown > a");
+   for (let button of buttons) {
+      if (button.id) {
+         let ul = button.nextElementSibling;  // popupMenu
+         if (ul && ul.classList.contains("popupmenu")) {
+            UI.bindMenuItem(button.id, function(ev) {
+               ev.stopImmediatePropagation();
+               // show popupMenu
+               UI.showPopupMenu(ul);
+             });
+         }
+      }
+   }
+   buttons = document.querySelectorAll("li.dropside > a");
+   for (let button of buttons) {
+      if (button.id) {
+         let ul = button.nextElementSibling;  // popupMenu
+         if (ul && ul.classList.contains("popupmenu")) {
+            UI.bindMenuItem(button.id, function(ev) {
+               // show popupMenu
+               UI.queuePopupMenu(ul);
+             });
+         }
+      }
+   }
+
 
    //Renderer.init(gl, drawWorld);  // init by itself
 
@@ -597,7 +625,19 @@ function init() {
    gl.canvas.addEventListener("mouseleave", canvasHandleMouseLeave, false);
    gl.canvas.addEventListener("mousemove", canvasHandleMouseMove, false);
    gl.canvas.addEventListener("wheel", canvasHandleWheel, false);
-   gl.canvas.addEventListener("contextmenu", canvasHandleContextMenu, false);
+   // bind context-menu
+   let createObjectContextMenu = {menu: document.querySelector('#create-context-menu')};
+   gl.canvas.addEventListener("contextmenu", function(e) {
+      if(!canvasHandleContextMenu(e)) {
+         e.preventDefault();
+         let contextMenu = currentMode().getContextMenu();
+         if (!contextMenu || !contextMenu.menu) {
+            contextMenu = createObjectContextMenu;
+         }
+         UI.positionDom(contextMenu.menu, UI.getPosition(e));
+         UI.showPopupMenu(contextMenu.menu);
+      }
+   }, false);
    //console.log("Workspace init successful");
    let wavefront = new WavefrontObjImportExporter();
 

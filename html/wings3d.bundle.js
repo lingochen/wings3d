@@ -279,6 +279,8 @@ const action = {
    cameraZoom: () => {notImplemented(this);},
    contextMenu: () => {notImplemented(this);},
    createCubeDialog: () => {notImplemented(this);},
+   // fileMenu
+   fileMenu: () => {notImplemented(this);},
    // view action, button bar
    toggleVertexMode: () => {notImplemented(this);},
    toggleEdgeMode: () => {notImplemented(this);},
@@ -329,6 +331,7 @@ const action = {
    faceExtrudeNormal: () =>{notImplemented(this);},
    faceDissolve: () =>{notImplemented(this);},
    faceCollapse: () =>{notImplemented(this);},
+   faceMove: () =>{notImplemented(this);},
    faceMoveX: () => {notImplemented(this);},
    faceMoveY: () => {notImplemented(this);},
    faceMoveZ: () => {notImplemented(this);},
@@ -368,6 +371,8 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "bindMenuItem", function() { return bindMenuItem; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "setupDialog", function() { return setupDialog; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "openFile", function() { return openFile; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "showPopupMenu", function() { return showPopupMenu; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "queuePopupMenu", function() { return queuePopupMenu; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_hotkey__ = __webpack_require__(16);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d__ = __webpack_require__(0);
 /*
@@ -592,6 +597,61 @@ let styleSheet = (function(){
    style.appendChild(document.createTextNode(''));
    return style.sheet;
 }());
+
+
+// show popupMenu
+function clickInsideElement( e, className ) {
+   let target = e.target;
+   do {
+      if ( target.classList && target.classList.contains(className) ) {
+         return target;
+      }
+   } while ( target = target.parentNode )
+   return false;
+};
+
+let currentMenu=false;
+let nextPopup=false;
+function toggleMenuOff() {
+   if (currentMenu) {
+      currentMenu.style.visibility = "hidden";
+      currentMenu=false;
+      if (nextPopup) {
+         currentMenu = nextPopup;
+         nextPopup=false;
+         currentMenu.style.visibility = "visible";   // toggleMenuOn
+      }
+   }
+};
+function clickListener() {
+   function callBack(e) {
+      //let clickeElIsLink = clickInsideElement( e, popupMenuClass );
+      //if ( !clickeElIsLink ) {
+         if ( (e.button == 0) || (e.button == 1) ) {  // somehow, any click should 
+            toggleMenuOff();
+            if (!currentMenu) {
+               // remove listening event
+               document.removeEventListener("click", callBack);
+            }
+         }
+      }
+
+   document.addEventListener( "click", callBack, false);
+};
+function showPopupMenu(popupMenu) {
+   if (currentMenu) {
+      nextPopup = popupMenu;
+   } else {
+      currentMenu = popupMenu;
+      currentMenu.style.visibility = "visible";   // toggleMenuOn
+      clickListener();
+   }
+};
+function queuePopupMenu(popupMenu) {
+   nextPopup = popupMenu;
+};
+
+
 
 
 
@@ -1038,9 +1098,10 @@ function canvasHandleContextMenu(ev) {
          handler.mousemove = null;
          __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
       }
-      return false;
+      return true;
    }
    // let wings3d_contextmenu handle the event.
+   return false;
 };
 
 // handling in reverse order. the newest one will handle the event. (should be at most 2 handler)
@@ -1228,6 +1289,33 @@ function init() {
          button.fn();
        });
    }
+   // bind .dropdown, .dropside click event.
+   let buttons = document.querySelectorAll("li.dropdown > a");
+   for (let button of buttons) {
+      if (button.id) {
+         let ul = button.nextElementSibling;  // popupMenu
+         if (ul && ul.classList.contains("popupmenu")) {
+            __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["bindMenuItem"](button.id, function(ev) {
+               ev.stopImmediatePropagation();
+               // show popupMenu
+               __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["showPopupMenu"](ul);
+             });
+         }
+      }
+   }
+   buttons = document.querySelectorAll("li.dropside > a");
+   for (let button of buttons) {
+      if (button.id) {
+         let ul = button.nextElementSibling;  // popupMenu
+         if (ul && ul.classList.contains("popupmenu")) {
+            __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["bindMenuItem"](button.id, function(ev) {
+               // show popupMenu
+               __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["queuePopupMenu"](ul);
+             });
+         }
+      }
+   }
+
 
    //Renderer.init(gl, drawWorld);  // init by itself
 
@@ -1238,7 +1326,19 @@ function init() {
    __WEBPACK_IMPORTED_MODULE_3__wings3d_gl__["gl"].canvas.addEventListener("mouseleave", canvasHandleMouseLeave, false);
    __WEBPACK_IMPORTED_MODULE_3__wings3d_gl__["gl"].canvas.addEventListener("mousemove", canvasHandleMouseMove, false);
    __WEBPACK_IMPORTED_MODULE_3__wings3d_gl__["gl"].canvas.addEventListener("wheel", canvasHandleWheel, false);
-   __WEBPACK_IMPORTED_MODULE_3__wings3d_gl__["gl"].canvas.addEventListener("contextmenu", canvasHandleContextMenu, false);
+   // bind context-menu
+   let createObjectContextMenu = {menu: document.querySelector('#create-context-menu')};
+   __WEBPACK_IMPORTED_MODULE_3__wings3d_gl__["gl"].canvas.addEventListener("contextmenu", function(e) {
+      if(!canvasHandleContextMenu(e)) {
+         e.preventDefault();
+         let contextMenu = currentMode().getContextMenu();
+         if (!contextMenu || !contextMenu.menu) {
+            contextMenu = createObjectContextMenu;
+         }
+         __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["positionDom"](contextMenu.menu, __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["getPosition"](e));
+         __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["showPopupMenu"](contextMenu.menu);
+      }
+   }, false);
    //console.log("Workspace init successful");
    let wavefront = new __WEBPACK_IMPORTED_MODULE_4__plugins_wavefront_obj__["a" /* WavefrontObjImportExporter */]();
 
@@ -2697,6 +2797,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
    constructor(mode) {
+      const self = this;
       this.currentEdge = null;
       this.shaderData = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].createShaderData();
       this.shaderData.setUniform4fv("uColor", [0.0, 1.0, 0.0, 0.3]); // hilite green, selected hilite yellow.
@@ -2707,7 +2808,6 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       }
       const axisName = ['X', 'Y', 'Z'];
       // type handler 
-      var self = this;
       // movement for (x, y, z)
       for (let axis=0; axis < 3; ++axis) {
          __WEBPACK_IMPORTED_MODULE_3__wings3d_ui__["bindMenuItem"](mode + 'Move' + axisName[axis], function(ev) {
@@ -8682,7 +8782,7 @@ function contextListener(className) {
 
 
 __WEBPACK_IMPORTED_MODULE_2__wings3d__["onReady"](function() {
-   init('content', 'popupmenu');
+//   init('content', 'popupmenu');
 });
 
 /***/ }),

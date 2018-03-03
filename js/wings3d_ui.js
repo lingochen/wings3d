@@ -222,6 +222,61 @@ let styleSheet = (function(){
 }());
 
 
+// show popupMenu
+function clickInsideElement( e, className ) {
+   let target = e.target;
+   do {
+      if ( target.classList && target.classList.contains(className) ) {
+         return target;
+      }
+   } while ( target = target.parentNode )
+   return false;
+};
+
+let currentMenu=false;
+let nextPopup=false;
+function toggleMenuOff() {
+   if (currentMenu) {
+      currentMenu.style.visibility = "hidden";
+      currentMenu=false;
+      if (nextPopup) {
+         currentMenu = nextPopup;
+         nextPopup=false;
+         currentMenu.style.visibility = "visible";   // toggleMenuOn
+      }
+   }
+};
+function clickListener() {
+   function callBack(e) {
+      //let clickeElIsLink = clickInsideElement( e, popupMenuClass );
+      //if ( !clickeElIsLink ) {
+         if ( (e.button == 0) || (e.button == 1) ) {  // somehow, any click should 
+            toggleMenuOff();
+            if (!currentMenu) {
+               // remove listening event
+               document.removeEventListener("click", callBack);
+            }
+         }
+      }
+
+   document.addEventListener( "click", callBack, false);
+};
+function showPopupMenu(popupMenu) {
+   if (currentMenu) {
+      nextPopup = popupMenu;
+   } else {
+      currentMenu = popupMenu;
+      currentMenu.style.visibility = "visible";   // toggleMenuOn
+      clickListener();
+   }
+};
+function queuePopupMenu(popupMenu) {
+   nextPopup = popupMenu;
+};
+
+
+
+
 export {
    styleSheet,
    getArrow,
@@ -232,4 +287,6 @@ export {
    bindMenuItem,
    setupDialog,
    openFile,
+   showPopupMenu,
+   queuePopupMenu,
 }

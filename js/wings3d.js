@@ -196,6 +196,8 @@ const action = {
    cameraZoom: () => {notImplemented(this);},
    contextMenu: () => {notImplemented(this);},
    createCubeDialog: () => {notImplemented(this);},
+   // fileMenu
+   fileMenu: () => {notImplemented(this);},
    // view action, button bar
    toggleVertexMode: () => {notImplemented(this);},
    toggleEdgeMode: () => {notImplemented(this);},
@@ -246,6 +248,7 @@ const action = {
    faceExtrudeNormal: () =>{notImplemented(this);},
    faceDissolve: () =>{notImplemented(this);},
    faceCollapse: () =>{notImplemented(this);},
+   faceMove: () =>{notImplemented(this);},
    faceMoveX: () => {notImplemented(this);},
    faceMoveY: () => {notImplemented(this);},
    faceMoveZ: () => {notImplemented(this);},
