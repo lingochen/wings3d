@@ -589,27 +589,13 @@ function init() {
        });
    }
    // bind .dropdown, .dropside click event.
-   let buttons = document.querySelectorAll("li.dropdown > a");
+   let buttons = document.querySelectorAll("li.dropdown > a, li.dropside > a");
    for (let button of buttons) {
       if (button.id) {
          let ul = button.nextElementSibling;  // popupMenu
          if (ul && ul.classList.contains("popupmenu")) {
             UI.bindMenuItem(button.id, function(ev) {
-               //ev.stopImmediatePropagation();
-               // show popupMenu
-               UI.queuePopupMenu(ul);
-             });
-         }
-      }
-   }
-   buttons = document.querySelectorAll("li.dropside > a");
-   for (let button of buttons) {
-      if (button.id) {
-         let ul = button.nextElementSibling;  // popupMenu
-         if (ul && ul.classList.contains("popupmenu")) {
-            UI.bindMenuItem(button.id, function(ev) {
-               // show popupMenu
-               UI.queuePopupMenu(ul);
+               UI.queuePopupMenu(ul);  // show popupMenu
              });
          }
       }
