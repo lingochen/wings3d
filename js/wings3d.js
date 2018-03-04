@@ -8,7 +8,6 @@
 */
 import {gl, createWebGLContext} from './wings3d_gl';
 //import * as View from './wings3d_view';
-//import * as Contextmenu from './wings3d_menu';
 //import * as Interact from './wings3d_interact';
 
 //
