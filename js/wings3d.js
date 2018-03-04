@@ -173,6 +173,10 @@ export function start_halt() {
                 }
    };*/
 
+let interactFn;
+function setInteractaction(interact) {
+   interactFn = interact;
+}
 function bindAction(id, fn) {
    if (action.hasOwnProperty(id)) {
       action[id] = fn;
@@ -181,10 +185,15 @@ function bindAction(id, fn) {
 function runAction(id, event) {
    if (action.hasOwnProperty(id)) {
       const fn = action[id];
-      fn(event);
+      if (interactFn) {
+         if (interactFn(id, event)) {
+            fn(event);
+         }
+      } else {
+         fn(event);
+      }
    }
 }
-
 function notImplemented(obj) {
    console.log( obj.name + " action is not implemented");
 }
@@ -228,7 +237,6 @@ const action = {
    bodyMoveY: () => {notImplemented(this);},
    bodyMoveZ: () => {notImplemented(this);},
    bodyMoveFree: () => {notImplemented(this);},
-   bodyMoveNormal: () => {notImplemented(this);},
    // edge
    cutMenu: () => {notImplemented(this);},
    cutLine2: () => {notImplemented(this);},
@@ -290,4 +298,5 @@ export {
    action,
    bindAction,
    runAction,
+   setInteraction,
 };

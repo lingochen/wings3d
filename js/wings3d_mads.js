@@ -35,10 +35,12 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
             View.attachHandlerMouseMove(new MoveFreePositionHandler(self));
          });
       // normal Movement.
-      const moveNormal = {body: action.bodyMoveNormal, face: action.faceMoveNormal, edge: action.edgeMoveNormal, vertex: action.vertexMoveNormal};
-      UI.bindMenuItem(moveNormal[mode].name, function(ev) {
+      const moveNormal = {face: action.faceMoveNormal, edge: action.edgeMoveNormal, vertex: action.vertexMoveNormal};
+      if (moveNormal[mode]) {
+         UI.bindMenuItem(moveNormal[mode].name, function(ev) {
             View.attachHandlerMouseMove(new MoveAlongNormal(self));
-         });
+          });
+      }
    }
 
    getContextMenu() {

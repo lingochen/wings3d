@@ -80,6 +80,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "action", function() { return action; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "bindAction", function() { return bindAction; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "runAction", function() { return runAction; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "setInteraction", function() { return setInteraction; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__ = __webpack_require__(4);
 /*
 //  wings3d.js
@@ -256,6 +257,10 @@ function start_halt() {
                 }
    };*/
 
+let interactFn;
+function setInteractaction(interact) {
+   interactFn = interact;
+}
 function bindAction(id, fn) {
    if (action.hasOwnProperty(id)) {
       action[id] = fn;
@@ -264,10 +269,15 @@ function bindAction(id, fn) {
 function runAction(id, event) {
    if (action.hasOwnProperty(id)) {
       const fn = action[id];
-      fn(event);
+      if (interactFn) {
+         if (interactFn(id, event)) {
+            fn(event);
+         }
+      } else {
+         fn(event);
+      }
    }
 }
-
 function notImplemented(obj) {
    console.log( obj.name + " action is not implemented");
 }
@@ -311,7 +321,6 @@ const action = {
    bodyMoveY: () => {notImplemented(this);},
    bodyMoveZ: () => {notImplemented(this);},
    bodyMoveFree: () => {notImplemented(this);},
-   bodyMoveNormal: () => {notImplemented(this);},
    // edge
    cutMenu: () => {notImplemented(this);},
    cutLine2: () => {notImplemented(this);},
@@ -394,14 +403,6 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 function _bindMenuItem(menuItem, id, fn, hotkey, meta) {
    menuItem.addEventListener('click', function(ev) {
-      //ev.stopPropagation();
-      let target = ev.target;
-      while ( target = target.parentNode ) {
-         if ( target.classList && target.classList.contains("hover") ) {
-            target.classList.remove("hover");
-            break;
-         }
-      }
       // now run functions
       __WEBPACK_IMPORTED_MODULE_1__wings3d__["runAction"](id, ev);
    });
@@ -1310,9 +1311,7 @@ function init() {
          let ul = button.nextElementSibling;  // popupMenu
          if (ul && ul.classList.contains("popupmenu")) {
             __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["bindMenuItem"](button.id, function(ev) {
-               //ev.stopImmediatePropagation();
-               // show popupMenu
-               __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["queuePopupMenu"](ul);
+               __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["queuePopupMenu"](ul);  // show popupMenu
              });
          }
       }
@@ -2822,10 +2821,12 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
             __WEBPACK_IMPORTED_MODULE_2__wings3d_view__["attachHandlerMouseMove"](new MoveFreePositionHandler(self));
          });
       // normal Movement.
-      const moveNormal = {body: __WEBPACK_IMPORTED_MODULE_4__wings3d__["action"].bodyMoveNormal, face: __WEBPACK_IMPORTED_MODULE_4__wings3d__["action"].faceMoveNormal, edge: __WEBPACK_IMPORTED_MODULE_4__wings3d__["action"].edgeMoveNormal, vertex: __WEBPACK_IMPORTED_MODULE_4__wings3d__["action"].vertexMoveNormal};
-      __WEBPACK_IMPORTED_MODULE_3__wings3d_ui__["bindMenuItem"](moveNormal[mode].name, function(ev) {
+      const moveNormal = {face: __WEBPACK_IMPORTED_MODULE_4__wings3d__["action"].faceMoveNormal, edge: __WEBPACK_IMPORTED_MODULE_4__wings3d__["action"].edgeMoveNormal, vertex: __WEBPACK_IMPORTED_MODULE_4__wings3d__["action"].vertexMoveNormal};
+      if (moveNormal[mode]) {
+         __WEBPACK_IMPORTED_MODULE_3__wings3d_ui__["bindMenuItem"](moveNormal[mode].name, function(ev) {
             __WEBPACK_IMPORTED_MODULE_2__wings3d_view__["attachHandlerMouseMove"](new MoveAlongNormal(self));
-         });
+          });
+      }
    }
 
    getContextMenu() {

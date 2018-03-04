@@ -8,14 +8,6 @@ import * as Wings3D from './wings3d';
 
 function _bindMenuItem(menuItem, id, fn, hotkey, meta) {
    menuItem.addEventListener('click', function(ev) {
-      //ev.stopPropagation();
-      let target = ev.target;
-      while ( target = target.parentNode ) {
-         if ( target.classList && target.classList.contains("hover") ) {
-            target.classList.remove("hover");
-            break;
-         }
-      }
       // now run functions
       Wings3D.runAction(id, ev);
    });
