@@ -595,9 +595,9 @@ function init() {
          let ul = button.nextElementSibling;  // popupMenu
          if (ul && ul.classList.contains("popupmenu")) {
             UI.bindMenuItem(button.id, function(ev) {
-               ev.stopImmediatePropagation();
+               //ev.stopImmediatePropagation();
                // show popupMenu
-               UI.showPopupMenu(ul);
+               UI.queuePopupMenu(ul);
              });
          }
       }
@@ -635,7 +635,7 @@ function init() {
             contextMenu = createObjectContextMenu;
          }
          UI.positionDom(contextMenu.menu, UI.getPosition(e));
-         UI.showPopupMenu(contextMenu.menu);
+         UI.showContextMenu(contextMenu.menu);
       }
    }, false);
    //console.log("Workspace init successful");

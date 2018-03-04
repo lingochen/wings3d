@@ -30,6 +30,8 @@ function bindMenuItem(id, fn, hotkey, meta) {
    const menuItem = document.querySelector('#' + id);
    if (menuItem) {
       _bindMenuItem(menuItem, id, fn, hotkey, meta);
+   } else {
+      console.log("could not find menuItem " + id);
    }
 }
 
@@ -239,11 +241,11 @@ function toggleMenuOff() {
    if (currentMenu) {
       currentMenu.style.visibility = "hidden";
       currentMenu=false;
-      if (nextPopup) {
-         currentMenu = nextPopup;
-         nextPopup=false;
-         currentMenu.style.visibility = "visible";   // toggleMenuOn
-      }
+   }
+   if (nextPopup) {
+      currentMenu = nextPopup;
+      nextPopup=false;
+      currentMenu.style.visibility = "visible";   // toggleMenuOn
    }
 };
 function clickListener() {
@@ -261,17 +263,20 @@ function clickListener() {
 
    document.addEventListener( "click", callBack, false);
 };
-function showPopupMenu(popupMenu) {
+function showContextMenu(popupMenu) {
    if (currentMenu) {
-      nextPopup = popupMenu;
+      toggleMenuOff();
    } else {
-      currentMenu = popupMenu;
-      currentMenu.style.visibility = "visible";   // toggleMenuOn
       clickListener();
    }
+   currentMenu = popupMenu;
+   currentMenu.style.visibility = "visible";   // toggleMenuOn
 };
 function queuePopupMenu(popupMenu) {
    nextPopup = popupMenu;
+   if (!currentMenu) {
+      clickListener();
+   }
 };
 
 
@@ -287,6 +292,6 @@ export {
    bindMenuItem,
    setupDialog,
    openFile,
-   showPopupMenu,
+   showContextMenu,
    queuePopupMenu,
 }
