@@ -41,8 +41,8 @@
           <hr/>
           <li class="not-implemented"><a onmouseover="help('Revert current scene to the saved contents')" onmouseleave="help()">Revert</a></li>
           <hr/>
-          <li class="dropside"><a>Import</a><ul id="fileImport" class="popupmenu"> </ul></li>
-          <li class="dropside"><a>Export</a><ul id="fileExport" class="popupmenu"> </ul></li>
+          <li class="dropside"><a id="importMenu">Import</a><ul id="fileImport" class="popupmenu"> </ul></li>
+          <li class="dropside"><a id="exportMenu">Export</a><ul id="fileExport" class="popupmenu"> </ul></li>
           <li class="not-implemented"><a>Export Selected</a></li>
           <hr/>
           <li class="not-implemented"><a onmouseover="help('Import an image file')" onmouseleave="help()">Import Image...</a></li>
@@ -63,7 +63,7 @@
         <a>Edit</a>
       </li>
       <li class="dropdown">
-        <a>Select</a>
+        <a id="selectMenu">Select</a>
         <ul class="popupmenu">
           <li><a onmouseover="help('Deselect selection')" onmouseleave="help()" id="deselect">Deselect space</a></li>
           <li><a onmouseover="help('More selection')" onmouseleave="help()" id="more">More +</a></li>
@@ -127,7 +127,7 @@
     </div>
     <div class="button-group object-select">
       <input type="radio" name="toggleMode" id="toggleVertexModeFor">
-      <label id="toggleVertexModel" class="button" for="toggleVertexModeFor" onmouseover="help('Change to vertex selection mode')">
+      <label id="toggleVertexMode" class="button" for="toggleVertexModeFor" onmouseover="help('Change to vertex selection mode')">
         <img src="../img/bluecube/vertex.png" >
         <span >Vertex</span>
       </label>
@@ -194,7 +194,7 @@
     </ul>
     <ul id="edge-context-menu" class="popupmenu">
       <li class="dropside">
-	<a>Move</a>
+	<a id="edgeMoveMenu">Move</a>
         <ul class="popupmenu">
           <li><a id="edgeMoveNormal">Normal</a></li>
           <li><a id="edgeMoveFree">Free</a></li>
@@ -205,7 +205,7 @@
       </li>
       <hr />
       <li class="dropside">
-        <a>Cut</a>
+        <a id="cutMenu">Cut</a>
         <ul class="popupmenu">
           <li><a id="cutLine2">2 Segments</a></li>
           <li><a id="cutLine3">3 Segments</a></li>
@@ -226,7 +226,7 @@
     </ul>
     <ul id="face-context-menu" class="context-menu popupmenu">
       <li class="dropside">
-        <a id="faceExtrude">Extrude</a>
+        <a id="faceExtrudeMenu">Extrude</a>
         <ul class="popupmenu">
           <li><a id="faceExtrudeNormal">Normal</a></li>
           <li><a id="faceExtrudeFree">Free</a></li>
@@ -237,7 +237,7 @@
       </li>
       <hr />
       <li class="dropside">
-	<a id="faceMove">Move</a>
+	<a id="faceMoveMenu">Move</a>
         <ul class="popupmenu">
           <li><a id="faceMoveNormal">Normal</a></li>
           <li><a id="faceMoveFree">Free</a></li>
@@ -256,7 +256,7 @@
       <li><a id="vertexCollapse">Collapse   Bksp</a></li>
       <hr>
       <li class="dropside">
-	<a>Move</a>
+	<a id="vertexMoveMenu">Move</a>
         <ul class="popupmenu">
           <li><a id="vertexMoveNormal">Normal</a></li>
           <li><a id="vertexMoveFree">Free</a></li>
@@ -268,7 +268,7 @@
     </ul>
     <ul id="body-context-menu" class="popupmenu">
       <li class="dropside">
-	<a>Move</a>
+	<a id="bodyMoveMenu">Move</a>
         <ul class="popupmenu">
           <li><a id="bodyMoveFree">Free</a></li>
           <li><a id="bodyMoveX">X</a></li>
@@ -278,7 +278,7 @@
       </li>
       <hr>
       <li class="dropside">
-        <a>Duplicate</a>
+        <a id="bodyDuplicateMoveMenu">Duplicate</a>
         <ul class="popupmenu">
           <li><a id="bodyDuplicateMoveFree">Free</a></li>
           <li><a id="bodyDuplicateMoveX">X</a></li>
