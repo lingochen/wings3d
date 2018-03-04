@@ -1304,25 +1304,13 @@ function init() {
        });
    }
    // bind .dropdown, .dropside click event.
-   let buttons = document.querySelectorAll("li.dropdown > a");
+   let buttons = document.querySelectorAll("li.dropdown > a, li.dropside > a");
    for (let button of buttons) {
       if (button.id) {
          let ul = button.nextElementSibling;  // popupMenu
          if (ul && ul.classList.contains("popupmenu")) {
             __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["bindMenuItem"](button.id, function(ev) {
                //ev.stopImmediatePropagation();
-               // show popupMenu
-               __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["queuePopupMenu"](ul);
-             });
-         }
-      }
-   }
-   buttons = document.querySelectorAll("li.dropside > a");
-   for (let button of buttons) {
-      if (button.id) {
-         let ul = button.nextElementSibling;  // popupMenu
-         if (ul && ul.classList.contains("popupmenu")) {
-            __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["bindMenuItem"](button.id, function(ev) {
                // show popupMenu
                __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["queuePopupMenu"](ul);
              });
