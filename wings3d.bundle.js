@@ -380,7 +380,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "bindMenuItem", function() { return bindMenuItem; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "setupDialog", function() { return setupDialog; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "openFile", function() { return openFile; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "showPopupMenu", function() { return showPopupMenu; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "showContextMenu", function() { return showContextMenu; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "queuePopupMenu", function() { return queuePopupMenu; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_hotkey__ = __webpack_require__(15);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d__ = __webpack_require__(0);
@@ -416,6 +416,8 @@ function bindMenuItem(id, fn, hotkey, meta) {
    const menuItem = document.querySelector('#' + id);
    if (menuItem) {
       _bindMenuItem(menuItem, id, fn, hotkey, meta);
+   } else {
+      console.log("could not find menuItem " + id);
    }
 }
 
@@ -625,11 +627,11 @@ function toggleMenuOff() {
    if (currentMenu) {
       currentMenu.style.visibility = "hidden";
       currentMenu=false;
-      if (nextPopup) {
-         currentMenu = nextPopup;
-         nextPopup=false;
-         currentMenu.style.visibility = "visible";   // toggleMenuOn
-      }
+   }
+   if (nextPopup) {
+      currentMenu = nextPopup;
+      nextPopup=false;
+      currentMenu.style.visibility = "visible";   // toggleMenuOn
    }
 };
 function clickListener() {
@@ -647,17 +649,20 @@ function clickListener() {
 
    document.addEventListener( "click", callBack, false);
 };
-function showPopupMenu(popupMenu) {
+function showContextMenu(popupMenu) {
    if (currentMenu) {
-      nextPopup = popupMenu;
+      toggleMenuOff();
    } else {
-      currentMenu = popupMenu;
-      currentMenu.style.visibility = "visible";   // toggleMenuOn
       clickListener();
    }
+   currentMenu = popupMenu;
+   currentMenu.style.visibility = "visible";   // toggleMenuOn
 };
 function queuePopupMenu(popupMenu) {
    nextPopup = popupMenu;
+   if (!currentMenu) {
+      clickListener();
+   }
 };
 
 
@@ -1305,9 +1310,9 @@ function init() {
          let ul = button.nextElementSibling;  // popupMenu
          if (ul && ul.classList.contains("popupmenu")) {
             __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["bindMenuItem"](button.id, function(ev) {
-               ev.stopImmediatePropagation();
+               //ev.stopImmediatePropagation();
                // show popupMenu
-               __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["showPopupMenu"](ul);
+               __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["queuePopupMenu"](ul);
              });
          }
       }
@@ -1345,7 +1350,7 @@ function init() {
             contextMenu = createObjectContextMenu;
          }
          __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["positionDom"](contextMenu.menu, __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["getPosition"](e));
-         __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["showPopupMenu"](contextMenu.menu);
+         __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["showContextMenu"](contextMenu.menu);
       }
    }, false);
    //console.log("Workspace init successful");
