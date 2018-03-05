@@ -12,14 +12,28 @@ ul.menubar, ul.popupmenu {
     padding: 0;
     list-style: none;
 }
-ul.menubar li {
+/* dropdown menu */
+ul.popupmenu {
+  visibility : hidden;
+  /*margin-top:1px;*/
+  background-color: #bbb;
+  list-style: none;
+  z-index: 100;
+  position: absolute;
+}
+
+ul.menubar > li {
     margin: 0;
     padding: 0;
     display: inline-block;
     list-style-type: none;
-    transition: all 0s;
+    transition: all 0s; 
 }
 
+/* menuItem */
+ul.popupmenu > li > a {
+  color: #111;
+}
 ul.menubar > li.menuItem > a {
     color: #aaa;
 }
@@ -36,29 +50,6 @@ ul.popupmenu > li > a {
 ul.menubar > li:hover,
 ul.popupmenu > li:hover {
   background-color: #666;
-}
-
-
-/* dropdown menu */
-ul.popupmenu {
-  visibility : hidden;
-  /*margin-top:1px;*/
-  background-color: #bbb;
-  list-style: none;
-  z-index: 100;
-  position: absolute;
-}
-
-/* menuItem */
-ul.popupmenu > li {
-  display: block;
-}
-ul.popupmenu > li > a {
-  color: #111;
-  display: block;
-  line-height: 1em;
-  padding: 0.5em 2em;
-  text-decoration: none;
 }
 
 /* added attribute for showing extra menu available. */
