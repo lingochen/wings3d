@@ -69,12 +69,12 @@ ul.menubar, ul.popupmenu {
     padding: 0;
     list-style: none;
 }
-ul.menubar li {
+ul.menubar > li {
     margin: 0;
     padding: 0;
     display: inline-block;
     list-style-type: none;
-    transition: all 0s;
+    transition: all 0s; 
 }
 
 ul.menubar > li.menuItem > a {
@@ -107,15 +107,8 @@ ul.popupmenu {
 }
 
 /* menuItem */
-ul.popupmenu > li {
-  display: block;
-}
 ul.popupmenu > li > a {
   color: #111;
-  display: block;
-  line-height: 1em;
-  padding: 0.5em 2em;
-  text-decoration: none;
 }
 
 /* added attribute for showing extra menu available. */
