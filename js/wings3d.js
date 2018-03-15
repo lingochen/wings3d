@@ -246,6 +246,7 @@ const action = {
    cutLine10: () => {notImplemented(this);},
    cutAsk: () => {notImplemented(this);},
    cutAndConnect: () =>{notImplemented(this);},
+   edgeBevel: () =>{notImplemented(this);},
    edgeDissolve: () =>{notImplemented(this);},
    edgeCollapse: () =>{notImplemented(this);},
    edgeMoveMenu: () => {notImplemented(this);},

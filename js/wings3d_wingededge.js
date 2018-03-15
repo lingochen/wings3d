@@ -195,7 +195,7 @@ Vertex.prototype.oneRing = function* () {
 };
 
 Vertex.prototype.edgeRing = function* () {
-   const start = this.outEdge; // we want inEdge.
+   const start = this.outEdge;
    let current = start;
    do {
       yield current;
@@ -840,6 +840,167 @@ WingedTopology.prototype.splitEdge = function(outEdge, pt, delOut) {
    this.affected.edges.add( outEdge.wingedEdge );     // edge changed.
    // return the newOut
    return newOut;
+};
+
+
+
+
+// create new edge, but no new vertex.
+WingedTopology.prototype.simpleSplit = function(inEdge) {
+   // check(inEdge.destination() !== inEdge.next.origin)
+   const outEdge = this._createEdge(inEdge.destination(), inEdge.next.origin);
+   // now break it up.
+   outEdge.next = inEdge.next;
+   inEdge.next = outEdge;
+   // outEdge.pair.next have to wait 
+
+   return outEdge; 
+};
+// add vertex and one new edge.
+WingedTopology.prototype.prepVertex = function(inStart, outStop, adjacentRed, vertexLimit, origin) {
+   if (!origin) {
+      origin = inStart.destination();
+   }
+   const pt = vertexLimit.get(origin);
+   let inEdge = inStart;
+   let notDone = 1;
+   do {
+      let outEdge = inEdge.next;
+      outEdge.origin = origin;
+      inEdge = outEdge.pair;
+      if (notDone) {
+         const destination = outEdge.destination();
+         if (!adjacentRed(outEdge.wingedEdge)) { // white edge, definite walk along this edge
+            if( vertexLimit.has(destination) )   {  // add and average
+               vec3.add(pt, origin.vertex, destination);
+               ve3.scale(pt, pt, 0.5);
+            } else { // limit is detination
+               pt = destination;
+            }  
+            notDone = 0;
+         } else {
+            if ((notDone === 1) && (vertexLimit.has(destination)) {
+               notDone = 2;         // vertex limit it in the middle.
+            }
+            vec3.add(pt, pt, destination);
+         }
+      }
+   } while (outEdge !== outStop);
+   if (notDone > 0) {   // case of 2 red wings
+      vec3.scale(pt, pt, 0.5);
+      if (notDone === 2) {    // limit to half the length
+         vec3.add(pt, pt, origin.vertex);
+         vec3.scale(pt, pt, 0.5);
+      }
+   }
+};
+WingedTopology.prototype.prepVertexAdd = function(inStart, outStop, adjacentRed, vertexLimit) {
+   const origin = this.addVertex(inStart.destination());
+   vertextLimit.set(origin, vec3.create());
+   this.prepVertex(inStart, outStop, adjacentRed, vertexLimit);
+   return origin;
+}
+// nice explanation.
+// https://stackoverflow.com/questions/35378378/multi-edge-bevel-on-half-edge-structure
+//
+// We can split the operation into two conceptual steps. First, double the red edges. Second, explode the vertices incident to at least one red edge.
+//
+// The first step can be accomplished one edge at a time. Given a red edge e, create another edge e'. For one half edge of e, 
+// insert one half edge of e' as the next half-edge with the same head in clockwise order. For the other half edge of e, 
+// insert the other half edge of e' as the next half edge with the same head in counterclockwise order.
+//
+// The second step can be accomplished one vertex at a time. Given a vertex v incident to at least one red edge, 
+// group the half edges with head v as follows. Break that circular list (1) between every adjacent pair of red half edges that arose from the same original edge 
+// (2) between every adjacent pair of white edges (adjacent means that the two half edges are next/previous in clockwise/counterclockwise order). 
+// For each break, create a new edge. Splice everything together.
+//
+WingedTopology.prototype.bevelEdge = function(wingedEdges) {   // wingedEdges(selected) is a set
+   let ret = {vertexLimit: new Map, edges: [],};
+   let vertices = new Set;
+   let adjacentRed = new Map;
+   // double selected edge, and add face. 
+   for (let wingedEdge of wingedEdges) {
+      const outEdge = this.insertEdge(wingedEdge.left.prev(), wingedEdge.left.next);   // add edge and faces
+      vertices.add( outEdge.origin );
+      ret.vertexLimit.set(outEdge.origin, vec3.create());
+      //ret.edges.push(wingedEdge.left);    // start of new face. also can be use for undo.
+      // we create a new tag.
+      adjacentRed.add(wingedEdge, outEdge.wingedEdge);
+      adjacentRed.add(outEdge.wingedEdge, wingedEdge);
+   }
+
+   // for every vertex, add edge and chamfer vertex for 1)adjacent red edges, 2) adjacent white edges.
+   for (let vertex of vertices) {
+      let edgeInsertion = [];
+      const start = vertex.outEdge;    // walk the ring
+      let current = start;
+      do {
+         let next = current.pair.next;  // save 
+         // check if current && prev are the same color edge, (white,white, red,red)
+         if (adjacentRed.has(current.wingedEdge)) {
+            if (adjacentRed.get(current.wingedEdge) === next.wingedEdge) {  // original red+expansion pair.
+               edgeInsertion.push( current.pair ); // insertion point
+            }
+         } else if (!adjacentRed.has(next.wingedEdge)) {   // (white, white) pair
+            edgeInsertion.push( current.pair );
+         }
+         current = next;
+      } while(current !== start);   // save the last pair (end, start) for special processing.
+      // real expandsion of vertex, and edge
+      let insertion;
+      for (let nextStop of edgeInsertion) {
+         if (insertion) {
+            const origin = this.prepVertexAdd(insertion, nextStop, adjacentRed, ret.vertexLimit);
+            const edge = this.simpleSplit(insertion);
+            origin.outEdge = edge.pair;
+            ret.edges.push( edge );
+         }
+         insertion = nextStop;
+      }
+      // last edge
+      if (edgeInsertion.length === 1) {   // must be splitEdge, special case. needs to create an extra triangle face.
+         // create another edge
+         const splitOut = insertion.next.pair.next;
+         const outEdge = this.insertEdge(splitOut.pair.prev() , splitOut.pair.next);
+         // now we have 4 edge. expand.
+         this.prepVertex(insertion, insertion.next, adjacentRed, ret.vertexLimit);
+         const edge = this.simpleSplit(insertion);
+         ret.edges.push( edge );
+         // remember to fix the last edge
+         splitOut.pair.next = edgeInsertion[0].next.pair;
+         edgeInsertion[0].next.pair.next = outEdge.pair;
+         // fix the face pointer
+         edge.face = spliteOut.pair.face;
+         // this vertexLimit is special, we will redo it.
+
+
+      } else if (edgeInsertion.length === 2) {   // 2 edges, so they should be sharing the same edge.
+         // breakup the insertion point, to reuse the lone edge
+         const edge = edgeInsertion[0].next.pair;
+         edge.next = insertion.next;
+         insertion.next = edge;
+         // fix the face ptr
+         edge.face = insertion.face;
+      } else { // normal expansion
+         // add the last one, simple split
+         // check(insertion.destination !== insertion.next.origin);
+         this.prepVertex(insertion, edgeInsertion[0], adjacentRed, ret.vertexLimit);
+         const edge = this.simpleSplit(insertion);
+         ret.edges.push(edge);
+         // create a new innerface, and fix the edge to point to it
+         const polygon = this._createPolygon(edge, edgeInsertion.length);
+         //  and fix the edges to point to it
+         let prev = edge.pair;
+         for (let insert of edgeInsertion) {
+            let current = insert.next.pair;
+            current.face = polygon; // point to inner face
+            current.next = prev;    // fix edge's next pointer.
+            prev = current;
+         }
+      }
+   }
+
+   return ret;
 };
 
 

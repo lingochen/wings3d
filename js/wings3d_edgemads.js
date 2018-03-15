@@ -3,7 +3,7 @@
 //
 //    
 **/
-import {Madsor, DragSelect, ToggleModeCommand} from './wings3d_mads';
+import {Madsor, DragSelect, ToggleModeCommand, MovePositionHandler} from './wings3d_mads';
 import {FaceMadsor} from './wings3d_facemads';   // for switching
 import {BodyMadsor} from './wings3d_bodymads';
 import {VertexMadsor} from './wings3d_vertexmads';
@@ -67,10 +67,28 @@ class EdgeMadsor extends Madsor {
                // should not happened.
             }
          });
+      // Bevel
+      UI.bindMenuItem(action.edgeBevel.name, function(ev) {
+            const command = new BevelEdgeCommand(self);
+            if (command.doIt()) {
+               View.undoQueue(command);
+            } else {
+               // should not happened.
+            }
+       });
+
    }
 
    modeName() {
       return 'Edge';
+   }
+
+   snapshotSelection() {
+      const snapshots = [];
+      this.eachPreviewCage( function(cage) {
+         snapshots.push( cage.snapshotSelection() );
+      });
+      return snapshots;
    }
 
    // get selected Edge's vertex snapshot. for doing, and redo queue. 
@@ -88,6 +106,22 @@ class EdgeMadsor extends Madsor {
          snapshots.push( preview.snapshotEdgePositionAndNormal() );
       });
       return snapshots;
+   }
+
+   bevel() {
+      var snapshots = {edges: [], faces: []};
+      this.eachPreviewCage( function(preview) {
+         const snapshot = preview.bevelEdge();
+         snapshots.edges.push( snapshot.edges );
+         snapshots.faces.push( snapshot.faces );
+      });
+      return snapshots;
+   }
+
+   bevelEdge() {
+      const bevelEdge = new BevelEdgeCommand(this);
+      View.undoQueue(bevelEdge);
+      bevelEdge.doIt();
    }
 
    cutEdge(numberOfSegments) {
@@ -303,12 +337,8 @@ class CutEdgeCommand extends EditCommand {
    constructor(madsor, numberOfSegments) {
       super();
       this.madsor = madsor;
-      this.selectedEdges = [];
       this.numberOfSegments = numberOfSegments;
-      const self = this;
-      this.madsor.eachPreviewCage( function(cage) {
-         self.selectedEdges.push( cage.snapshotSelection() );
-      });
+      this.selectedEdges = madsor.snapshotSelection();
    }
 
    doIt() {
@@ -363,6 +393,53 @@ class CollapseEdgeCommand extends EditCommand {
       View.currentMode().resetSelection();
       View.restoreEdgeMode();
       this.madsor.restoreEdge(this.collapse);
+   }
+}
+
+class BevelEdgeCommand extends EditCommand {
+   constructor(madsor, selectedEdges, movement, snapshots, useNormal = false) {
+      super();
+      this.madsor = madsor;
+      this.selectedEdges = selectedEdges;
+      this.snapshots = snapshots;
+   }
+
+   doIt() {
+      this.snapshots = this.bevel();
+      View.restoreFaceMode(snapshots.faces);    // abusing the api?
+      this.madsor.moveSelection(this.movement, this.snapshots);
+   }
+
+   undo() {
+      // restoreToEdgeMode
+      this.madsor.collapseEdge(this.snapshots.edges);
+      View.restoreEdgeMode(this.selectedEdges);
+   }
+}
+
+class EdgeBevelHandler extends MovePositionHandler {
+   constructor(madsor) {
+      super(madsor);
+      this.selectedEdges = madsor.snapshotSelection();
+      this.snapshots = madsor.bevel();
+      //this.snapshots
+      this.movement = 0;
+   }
+
+   handleMouseMove(ev) {
+      const move = this._calibrateMovement(ev.movementX);
+      this.madsor.moveSelection(move, this.snapshots);
+      this.movement += move;
+   }
+
+   _commit() {
+      View.undoQueue(new BevelFaceCommand(this.madsor, this.movement, this.selectedEdges, this.snapshots));
+   }
+
+   _cancel() {
+      this.madsor.restoreMoveSelection(this.snapshots);
+      this.madsor.collapseEdge(this.snapshots.edges);
+      this.restoreEdgeMode(this.selectedEdges);
    }
 }
 

@@ -941,6 +941,8 @@ PreviewCage.prototype.restoreMoveSelection = function(snapshot) {
    this.computeSnapshot(snapshot);
 };
 
+//
+// 3-15 - add limit to movement.
 PreviewCage.prototype.moveSelection = function(movement, snapshot) {
    // first move geometry's position
    if (snapshot.normal) {
@@ -959,6 +961,7 @@ PreviewCage.prototype.moveSelection = function(movement, snapshot) {
    this.previewVertex.shaderData.uploadAttribute('position', 0, vertices);
    this.computeSnapshot(snapshot);
 };
+
 
 
 PreviewCage.prototype.snapshotPosition = function(vertices, normalArray) {
@@ -1938,6 +1941,27 @@ PreviewCage.prototype.undoDissolveVertex = function(undoArray) {
    this._resizePreview(size.vertex, size.face);
    this._resizePreviewEdge(size.edge);   
    this._resizePreviewVertex(size.vertex);
+};
+
+
+// Bevelling of edge.
+PreviewCage.prototype.bevelEdge = function() {
+   const size = this._getGeometrySize();
+   const edges = this.selectedSet;
+
+   // cut bevelEdge
+   const result = this.geometry.bevelEdge(edges);       // input edge will take the new vertex as origin.
+   // update previewEdge position.
+   //this._updatePreviewEdge(edge, true);
+
+      // after deletion of faces and edges. update
+   this._updateAffected(this.geometry.affected);
+   //
+   this._resizePreview(vertexSize, faceSize);
+   this._resizePreviewEdge(edgeSize);
+   this._resizePreviewVertex(vertexSize);
+   // returns created vertices.
+   return {vertices: vertices, edges: edges};
 };
 
 

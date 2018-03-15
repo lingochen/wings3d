@@ -277,6 +277,7 @@ class MoveFreePositionHandler extends MovePositionHandler {
 }
 
 
+
 class MoveCommand extends EditCommand {
    constructor(madsor, snapshots, movement) {
       super();
