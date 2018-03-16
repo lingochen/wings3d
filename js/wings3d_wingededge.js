@@ -879,7 +879,7 @@ WingedTopology.prototype.prepVertex = function(inStart, outStop, adjacentRed, ve
             }  
             notDone = 0;
          } else {
-            if ((notDone === 1) && (vertexLimit.has(destination)) {
+            if ((notDone === 1) && vertexLimit.has(destination)) {
                notDone = 2;         // vertex limit it in the middle.
             }
             vec3.add(pt, pt, destination);
@@ -915,15 +915,17 @@ WingedTopology.prototype.prepVertexAdd = function(inStart, outStop, adjacentRed,
 // For each break, create a new edge. Splice everything together.
 //
 WingedTopology.prototype.bevelEdge = function(wingedEdges) {   // wingedEdges(selected) is a set
-   let ret = {vertexLimit: new Map, edges: [],};
+   let ret = {vertices: [], halfEdges: [], faces: []};
    let vertices = new Set;
+   let vertextLimit = new Map;
    let adjacentRed = new Map;
    // double selected edge, and add face. 
    for (let wingedEdge of wingedEdges) {
       const outEdge = this.insertEdge(wingedEdge.left.prev(), wingedEdge.left.next);   // add edge and faces
+      ret.faces.push(outEdge.face);
       vertices.add( outEdge.origin );
-      ret.vertexLimit.set(outEdge.origin, vec3.create());
-      //ret.edges.push(wingedEdge.left);    // start of new face. also can be use for undo.
+      vertexLimit.set(outEdge.origin, vec3.create());
+      //ret.halfEdges.push(wingedEdge.left);    // start of new face. also can be use for undo.
       // we create a new tag.
       adjacentRed.add(wingedEdge, outEdge.wingedEdge);
       adjacentRed.add(outEdge.wingedEdge, wingedEdge);
@@ -931,6 +933,7 @@ WingedTopology.prototype.bevelEdge = function(wingedEdges) {   // wingedEdges(se
 
    // for every vertex, add edge and chamfer vertex for 1)adjacent red edges, 2) adjacent white edges.
    for (let vertex of vertices) {
+      ret.vertices.push(vertex);       // affected vertex one
       let edgeInsertion = [];
       const start = vertex.outEdge;    // walk the ring
       let current = start;
@@ -950,10 +953,11 @@ WingedTopology.prototype.bevelEdge = function(wingedEdges) {   // wingedEdges(se
       let insertion;
       for (let nextStop of edgeInsertion) {
          if (insertion) {
-            const origin = this.prepVertexAdd(insertion, nextStop, adjacentRed, ret.vertexLimit);
+            const origin = this.prepVertexAdd(insertion, nextStop, adjacentRed, vertexLimit);
             const edge = this.simpleSplit(insertion);
             origin.outEdge = edge.pair;
-            ret.edges.push( edge );
+            ret.vertices.push( origin );
+            ret.halfEdges.push( edge );
          }
          insertion = nextStop;
       }
@@ -962,16 +966,17 @@ WingedTopology.prototype.bevelEdge = function(wingedEdges) {   // wingedEdges(se
          // create another edge
          const splitOut = insertion.next.pair.next;
          const outEdge = this.insertEdge(splitOut.pair.prev() , splitOut.pair.next);
+         ret.faces.push(outEdge.face);
          // now we have 4 edge. expand.
          this.prepVertex(insertion, insertion.next, adjacentRed, ret.vertexLimit);
          const edge = this.simpleSplit(insertion);
-         ret.edges.push( edge );
+         ret.halfEdges.push( edge );
          // remember to fix the last edge
          splitOut.pair.next = edgeInsertion[0].next.pair;
          edgeInsertion[0].next.pair.next = outEdge.pair;
          // fix the face pointer
          edge.face = spliteOut.pair.face;
-         // this vertexLimit is special, we will redo it.
+         // this vertexLimit is special, limit to middle of face?
 
 
       } else if (edgeInsertion.length === 2) {   // 2 edges, so they should be sharing the same edge.
@@ -984,9 +989,9 @@ WingedTopology.prototype.bevelEdge = function(wingedEdges) {   // wingedEdges(se
       } else { // normal expansion
          // add the last one, simple split
          // check(insertion.destination !== insertion.next.origin);
-         this.prepVertex(insertion, edgeInsertion[0], adjacentRed, ret.vertexLimit);
+         this.prepVertex(insertion, edgeInsertion[0], adjacentRed, vertexLimit);
          const edge = this.simpleSplit(insertion);
-         ret.edges.push(edge);
+         ret.halfEdges.push(edge);
          // create a new innerface, and fix the edge to point to it
          const polygon = this._createPolygon(edge, edgeInsertion.length);
          //  and fix the edges to point to it
@@ -997,9 +1002,27 @@ WingedTopology.prototype.bevelEdge = function(wingedEdges) {   // wingedEdges(se
             current.next = prev;    // fix edge's next pointer.
             prev = current;
          }
+         ret.faces.push( polygon );
       }
    }
+   // compute vertexLimit magnitude, and expanding direction. (reuse normal), 
+   // now (vertexLimit - vertex) = direction. 
+   ret.vertexLimit = Number.MAX_SAFE_INTEGER;       // magnitude
+   ret.position = new Float32Array(vertices.size*3);     // saved the original position
+   ret.direction = new Float32Array(vertices.size*3);    // also add direction.
+   let i = 0;
+   for (let vertex of ret.vertices) {
+      let position = ret.position.subarray(i, i+3);
+      let direction = ret.direction.subarray(i, i+3);
+      vec3.copy(direction, vertexLimit.has(vertex).vertex);
+      vec3.copy(position, vertext.vertex);
+      vec3.sub(direction, direction, position);
+      vertexLimit = Math.min(vec3.magnitude(direction), vertexLimit);
+      vec3.normalize(direction, direction);
+      i+=3;
+   }
 
+   // we needs faces, we needs
    return ret;
 };
 

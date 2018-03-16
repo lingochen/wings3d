@@ -55,6 +55,14 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       }
    }
 
+   snapshotSelection() {
+      const snapshots = [];
+      this.eachPreviewCage( function(cage) {
+         snapshots.push( cage.snapshotSelection() );
+      });
+      return snapshots;
+   }
+
    // can be use arguments object?
    eachPreviewCage(func, items) {
       if (items) {

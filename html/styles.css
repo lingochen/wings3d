@@ -69,6 +69,16 @@ ul.menubar, ul.popupmenu {
     padding: 0;
     list-style: none;
 }
+/* dropdown menu */
+ul.popupmenu {
+  visibility : hidden;
+  /*margin-top:1px;*/
+  background-color: #bbb;
+  list-style: none;
+  z-index: 100;
+  position: absolute;
+}
+
 ul.menubar > li {
     margin: 0;
     padding: 0;
@@ -77,6 +87,10 @@ ul.menubar > li {
     transition: all 0s; 
 }
 
+/* menuItem */
+ul.popupmenu > li > a {
+  color: #111;
+}
 ul.menubar > li.menuItem > a {
     color: #aaa;
 }
@@ -93,22 +107,6 @@ ul.popupmenu > li > a {
 ul.menubar > li:hover,
 ul.popupmenu > li:hover {
   background-color: #666;
-}
-
-
-/* dropdown menu */
-ul.popupmenu {
-  visibility : hidden;
-  /*margin-top:1px;*/
-  background-color: #bbb;
-  list-style: none;
-  z-index: 100;
-  position: absolute;
-}
-
-/* menuItem */
-ul.popupmenu > li > a {
-  color: #111;
 }
 
 /* added attribute for showing extra menu available. */

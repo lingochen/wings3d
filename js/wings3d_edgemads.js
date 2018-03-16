@@ -69,26 +69,12 @@ class EdgeMadsor extends Madsor {
          });
       // Bevel
       UI.bindMenuItem(action.edgeBevel.name, function(ev) {
-            const command = new BevelEdgeCommand(self);
-            if (command.doIt()) {
-               View.undoQueue(command);
-            } else {
-               // should not happened.
-            }
-       });
-
+            View.attachHandlerMouseMove(new EdgeBevelHandler(self));
+         });
    }
 
    modeName() {
       return 'Edge';
-   }
-
-   snapshotSelection() {
-      const snapshots = [];
-      this.eachPreviewCage( function(cage) {
-         snapshots.push( cage.snapshotSelection() );
-      });
-      return snapshots;
    }
 
    // get selected Edge's vertex snapshot. for doing, and redo queue. 
@@ -109,19 +95,11 @@ class EdgeMadsor extends Madsor {
    }
 
    bevel() {
-      var snapshots = {edges: [], faces: []};
+      var snapshots = [];
       this.eachPreviewCage( function(preview) {
-         const snapshot = preview.bevelEdge();
-         snapshots.edges.push( snapshot.edges );
-         snapshots.faces.push( snapshot.faces );
+         snapshots.push[ preview.bevelEdge() ];
       });
       return snapshots;
-   }
-
-   bevelEdge() {
-      const bevelEdge = new BevelEdgeCommand(this);
-      View.undoQueue(bevelEdge);
-      bevelEdge.doIt();
    }
 
    cutEdge(numberOfSegments) {
@@ -405,8 +383,8 @@ class BevelEdgeCommand extends EditCommand {
    }
 
    doIt() {
-      this.snapshots = this.bevel();
-      View.restoreFaceMode(snapshots.faces);    // abusing the api?
+      this.snapshots = this.bevel();   // should test for current snapshots and prev snapshots?
+      View.restoreFaceMode(snapshots.faces);
       this.madsor.moveSelection(this.movement, this.snapshots);
    }
 
@@ -421,24 +399,33 @@ class EdgeBevelHandler extends MovePositionHandler {
    constructor(madsor) {
       super(madsor);
       this.selectedEdges = madsor.snapshotSelection();
+      // snapshot.
       this.snapshots = madsor.bevel();
+      // remember to get the lowest magnitude
+      this.vertexLimit = Number.MAX_SAFE_INTEGER;
+      for (let snapshot of snapshots) {
+         this.vertexLimit = Math.min(this.vertexLimit, snapshot.vertexLimit);
+      } 
       //this.snapshots
       this.movement = 0;
    }
 
    handleMouseMove(ev) {
-      const move = this._calibrateMovement(ev.movementX);
+      let move = this._calibrateMovement(ev.movementX);
+      if ((this.movement+move) > this.vertexLimit) {
+         move = this.vertexLimit - this.movement;
+      }
       this.madsor.moveSelection(move, this.snapshots);
       this.movement += move;
    }
 
    _commit() {
-      View.undoQueue(new BevelFaceCommand(this.madsor, this.movement, this.selectedEdges, this.snapshots));
+      View.undoQueue(new BevelEdgeCommand(this.madsor, this.movement, this.selectedEdges, this.snapshots));
    }
 
    _cancel() {
       this.madsor.restoreMoveSelection(this.snapshots);
-      this.madsor.collapseEdge(this.snapshots.edges);
+      this.madsor.collapseEdge(this.snapshots.halfEdges);
       this.restoreEdgeMode(this.selectedEdges);
    }
 }

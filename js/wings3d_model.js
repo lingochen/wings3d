@@ -1946,22 +1946,32 @@ PreviewCage.prototype.undoDissolveVertex = function(undoArray) {
 
 // Bevelling of edge.
 PreviewCage.prototype.bevelEdge = function() {
-   const size = this._getGeometrySize();
-   const edges = this.selectedSet;
+   const oldSize = this._getGeometrySize();
+   const wingedEdges = this.selectedSet;
 
    // cut bevelEdge
-   const result = this.geometry.bevelEdge(edges);       // input edge will take the new vertex as origin.
-   // update previewEdge position.
-   //this._updatePreviewEdge(edge, true);
+   const result = this.geometry.bevelEdge(wingedEdges);       // input edge will take the new vertex as origin.
+   result.wingedEdges = [];
+   for (let halfEdge of result.halfEdges) {
+      result.wingedEdges.push[halfEdge.wingedEdge];
+   }
 
-      // after deletion of faces and edges. update
-   this._updateAffected(this.geometry.affected);
-   //
-   this._resizePreview(vertexSize, faceSize);
-   this._resizePreviewEdge(edgeSize);
-   this._resizePreviewVertex(vertexSize);
-   // returns created vertices.
-   return {vertices: vertices, edges: edges};
+   // add the new Faces, new edges and new vertices to the preview
+   this._resizeBoundingSphere(oldSize.face);
+   this._resizePreview(oldSize.vertex, oldSize.face);
+   this._resizePreviewEdge(oldSize.edge);
+   this._resizePreviewVertex(oldSize.vertex);
+   // update vertices created vertices.
+   return result;
+   //let ret = {
+   //   faces: [],
+   //   vertices: [],
+   //   wingedEdge: [],
+   //   halfEdges: [],
+   //   position: float32array,
+   //   direction: float32array,
+   //   vertexLimit: magnitude,
+   //};
 };
 
 
