@@ -330,6 +330,7 @@ const action = {
    cutLine10: () => {notImplemented(this);},
    cutAsk: () => {notImplemented(this);},
    cutAndConnect: () =>{notImplemented(this);},
+   edgeBevel: () =>{notImplemented(this);},
    edgeDissolve: () =>{notImplemented(this);},
    edgeCollapse: () =>{notImplemented(this);},
    edgeMoveMenu: () => {notImplemented(this);},
@@ -2841,6 +2842,14 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       }
    }
 
+   snapshotSelection() {
+      const snapshots = [];
+      this.eachPreviewCage( function(cage) {
+         snapshots.push( cage.snapshotSelection() );
+      });
+      return snapshots;
+   }
+
    // can be use arguments object?
    eachPreviewCage(func, items) {
       if (items) {
@@ -3063,6 +3072,7 @@ class MoveFreePositionHandler extends MovePositionHandler {
 }
 
 
+
 class MoveCommand extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["EditCommand"] {
    constructor(madsor, snapshots, movement) {
       super();
@@ -3186,6 +3196,10 @@ class EdgeMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
                // should not happened.
             }
          });
+      // Bevel
+      __WEBPACK_IMPORTED_MODULE_5__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_8__wings3d__["action"].edgeBevel.name, function(ev) {
+            __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["attachHandlerMouseMove"](new EdgeBevelHandler(self));
+         });
    }
 
    modeName() {
@@ -3205,6 +3219,14 @@ class EdgeMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
       var snapshots = [];
       this.eachPreviewCage( function(preview) {
          snapshots.push( preview.snapshotEdgePositionAndNormal() );
+      });
+      return snapshots;
+   }
+
+   bevel() {
+      var snapshots = [];
+      this.eachPreviewCage( function(preview) {
+         snapshots.push[ preview.bevelEdge() ];
       });
       return snapshots;
    }
@@ -3422,12 +3444,8 @@ class CutEdgeCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCo
    constructor(madsor, numberOfSegments) {
       super();
       this.madsor = madsor;
-      this.selectedEdges = [];
       this.numberOfSegments = numberOfSegments;
-      const self = this;
-      this.madsor.eachPreviewCage( function(cage) {
-         self.selectedEdges.push( cage.snapshotSelection() );
-      });
+      this.selectedEdges = madsor.snapshotSelection();
    }
 
    doIt() {
@@ -3482,6 +3500,62 @@ class CollapseEdgeCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["E
       __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["currentMode"]().resetSelection();
       __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreEdgeMode"]();
       this.madsor.restoreEdge(this.collapse);
+   }
+}
+
+class BevelEdgeCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
+   constructor(madsor, selectedEdges, movement, snapshots, useNormal = false) {
+      super();
+      this.madsor = madsor;
+      this.selectedEdges = selectedEdges;
+      this.snapshots = snapshots;
+   }
+
+   doIt() {
+      this.snapshots = this.bevel();   // should test for current snapshots and prev snapshots?
+      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreFaceMode"](snapshots.faces);
+      this.madsor.moveSelection(this.movement, this.snapshots);
+   }
+
+   undo() {
+      // restoreToEdgeMode
+      this.madsor.collapseEdge(this.snapshots.edges);
+      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreEdgeMode"](this.selectedEdges);
+   }
+}
+
+class EdgeBevelHandler extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["MovePositionHandler"] {
+   constructor(madsor) {
+      super(madsor);
+      this.selectedEdges = madsor.snapshotSelection();
+      // snapshot.
+      this.snapshots = madsor.bevel();
+      // remember to get the lowest magnitude
+      this.vertexLimit = Number.MAX_SAFE_INTEGER;
+      for (let snapshot of snapshots) {
+         this.vertexLimit = Math.min(this.vertexLimit, snapshot.vertexLimit);
+      } 
+      //this.snapshots
+      this.movement = 0;
+   }
+
+   handleMouseMove(ev) {
+      let move = this._calibrateMovement(ev.movementX);
+      if ((this.movement+move) > this.vertexLimit) {
+         move = this.vertexLimit - this.movement;
+      }
+      this.madsor.moveSelection(move, this.snapshots);
+      this.movement += move;
+   }
+
+   _commit() {
+      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"](new BevelEdgeCommand(this.madsor, this.movement, this.selectedEdges, this.snapshots));
+   }
+
+   _cancel() {
+      this.madsor.restoreMoveSelection(this.snapshots);
+      this.madsor.collapseEdge(this.snapshots.halfEdges);
+      this.restoreEdgeMode(this.selectedEdges);
    }
 }
 
@@ -5599,6 +5673,8 @@ PreviewCage.prototype.restoreMoveSelection = function(snapshot) {
    this.computeSnapshot(snapshot);
 };
 
+//
+// 3-15 - add limit to movement.
 PreviewCage.prototype.moveSelection = function(movement, snapshot) {
    // first move geometry's position
    if (snapshot.normal) {
@@ -5617,6 +5693,7 @@ PreviewCage.prototype.moveSelection = function(movement, snapshot) {
    this.previewVertex.shaderData.uploadAttribute('position', 0, vertices);
    this.computeSnapshot(snapshot);
 };
+
 
 
 PreviewCage.prototype.snapshotPosition = function(vertices, normalArray) {
@@ -6599,6 +6676,37 @@ PreviewCage.prototype.undoDissolveVertex = function(undoArray) {
 };
 
 
+// Bevelling of edge.
+PreviewCage.prototype.bevelEdge = function() {
+   const oldSize = this._getGeometrySize();
+   const wingedEdges = this.selectedSet;
+
+   // cut bevelEdge
+   const result = this.geometry.bevelEdge(wingedEdges);       // input edge will take the new vertex as origin.
+   result.wingedEdges = [];
+   for (let halfEdge of result.halfEdges) {
+      result.wingedEdges.push[halfEdge.wingedEdge];
+   }
+
+   // add the new Faces, new edges and new vertices to the preview
+   this._resizeBoundingSphere(oldSize.face);
+   this._resizePreview(oldSize.vertex, oldSize.face);
+   this._resizePreviewEdge(oldSize.edge);
+   this._resizePreviewVertex(oldSize.vertex);
+   // update vertices created vertices.
+   return result;
+   //let ret = {
+   //   faces: [],
+   //   vertices: [],
+   //   wingedEdge: [],
+   //   halfEdges: [],
+   //   position: float32array,
+   //   direction: float32array,
+   //   vertexLimit: magnitude,
+   //};
+};
+
+
 PreviewCage.prototype.EPSILON = 0.000001;
 // Möller–Trumbore ray-triangle intersection algorithm
 // should I use float64array? 
@@ -6876,7 +6984,7 @@ Vertex.prototype.oneRing = function* () {
 };
 
 Vertex.prototype.edgeRing = function* () {
-   const start = this.outEdge; // we want inEdge.
+   const start = this.outEdge;
    let current = start;
    do {
       yield current;
@@ -7521,6 +7629,190 @@ WingedTopology.prototype.splitEdge = function(outEdge, pt, delOut) {
    this.affected.edges.add( outEdge.wingedEdge );     // edge changed.
    // return the newOut
    return newOut;
+};
+
+
+
+
+// create new edge, but no new vertex.
+WingedTopology.prototype.simpleSplit = function(inEdge) {
+   // check(inEdge.destination() !== inEdge.next.origin)
+   const outEdge = this._createEdge(inEdge.destination(), inEdge.next.origin);
+   // now break it up.
+   outEdge.next = inEdge.next;
+   inEdge.next = outEdge;
+   // outEdge.pair.next have to wait 
+
+   return outEdge; 
+};
+// add vertex and one new edge.
+WingedTopology.prototype.prepVertex = function(inStart, outStop, adjacentRed, vertexLimit, origin) {
+   if (!origin) {
+      origin = inStart.destination();
+   }
+   const pt = vertexLimit.get(origin);
+   let inEdge = inStart;
+   let notDone = 1;
+   do {
+      let outEdge = inEdge.next;
+      outEdge.origin = origin;
+      inEdge = outEdge.pair;
+      if (notDone) {
+         const destination = outEdge.destination();
+         if (!adjacentRed(outEdge.wingedEdge)) { // white edge, definite walk along this edge
+            if( vertexLimit.has(destination) )   {  // add and average
+               vec3.add(pt, origin.vertex, destination);
+               ve3.scale(pt, pt, 0.5);
+            } else { // limit is detination
+               pt = destination;
+            }  
+            notDone = 0;
+         } else {
+            if ((notDone === 1) && vertexLimit.has(destination)) {
+               notDone = 2;         // vertex limit it in the middle.
+            }
+            vec3.add(pt, pt, destination);
+         }
+      }
+   } while (outEdge !== outStop);
+   if (notDone > 0) {   // case of 2 red wings
+      vec3.scale(pt, pt, 0.5);
+      if (notDone === 2) {    // limit to half the length
+         vec3.add(pt, pt, origin.vertex);
+         vec3.scale(pt, pt, 0.5);
+      }
+   }
+};
+WingedTopology.prototype.prepVertexAdd = function(inStart, outStop, adjacentRed, vertexLimit) {
+   const origin = this.addVertex(inStart.destination());
+   vertextLimit.set(origin, vec3.create());
+   this.prepVertex(inStart, outStop, adjacentRed, vertexLimit);
+   return origin;
+}
+// nice explanation.
+// https://stackoverflow.com/questions/35378378/multi-edge-bevel-on-half-edge-structure
+//
+// We can split the operation into two conceptual steps. First, double the red edges. Second, explode the vertices incident to at least one red edge.
+//
+// The first step can be accomplished one edge at a time. Given a red edge e, create another edge e'. For one half edge of e, 
+// insert one half edge of e' as the next half-edge with the same head in clockwise order. For the other half edge of e, 
+// insert the other half edge of e' as the next half edge with the same head in counterclockwise order.
+//
+// The second step can be accomplished one vertex at a time. Given a vertex v incident to at least one red edge, 
+// group the half edges with head v as follows. Break that circular list (1) between every adjacent pair of red half edges that arose from the same original edge 
+// (2) between every adjacent pair of white edges (adjacent means that the two half edges are next/previous in clockwise/counterclockwise order). 
+// For each break, create a new edge. Splice everything together.
+//
+WingedTopology.prototype.bevelEdge = function(wingedEdges) {   // wingedEdges(selected) is a set
+   let ret = {vertices: [], halfEdges: [], faces: []};
+   let vertices = new Set;
+   let vertextLimit = new Map;
+   let adjacentRed = new Map;
+   // double selected edge, and add face. 
+   for (let wingedEdge of wingedEdges) {
+      const outEdge = this.insertEdge(wingedEdge.left.prev(), wingedEdge.left.next);   // add edge and faces
+      ret.faces.push(outEdge.face);
+      vertices.add( outEdge.origin );
+      vertexLimit.set(outEdge.origin, vec3.create());
+      //ret.halfEdges.push(wingedEdge.left);    // start of new face. also can be use for undo.
+      // we create a new tag.
+      adjacentRed.add(wingedEdge, outEdge.wingedEdge);
+      adjacentRed.add(outEdge.wingedEdge, wingedEdge);
+   }
+
+   // for every vertex, add edge and chamfer vertex for 1)adjacent red edges, 2) adjacent white edges.
+   for (let vertex of vertices) {
+      ret.vertices.push(vertex);       // affected vertex one
+      let edgeInsertion = [];
+      const start = vertex.outEdge;    // walk the ring
+      let current = start;
+      do {
+         let next = current.pair.next;  // save 
+         // check if current && prev are the same color edge, (white,white, red,red)
+         if (adjacentRed.has(current.wingedEdge)) {
+            if (adjacentRed.get(current.wingedEdge) === next.wingedEdge) {  // original red+expansion pair.
+               edgeInsertion.push( current.pair ); // insertion point
+            }
+         } else if (!adjacentRed.has(next.wingedEdge)) {   // (white, white) pair
+            edgeInsertion.push( current.pair );
+         }
+         current = next;
+      } while(current !== start);   // save the last pair (end, start) for special processing.
+      // real expandsion of vertex, and edge
+      let insertion;
+      for (let nextStop of edgeInsertion) {
+         if (insertion) {
+            const origin = this.prepVertexAdd(insertion, nextStop, adjacentRed, vertexLimit);
+            const edge = this.simpleSplit(insertion);
+            origin.outEdge = edge.pair;
+            ret.vertices.push( origin );
+            ret.halfEdges.push( edge );
+         }
+         insertion = nextStop;
+      }
+      // last edge
+      if (edgeInsertion.length === 1) {   // must be splitEdge, special case. needs to create an extra triangle face.
+         // create another edge
+         const splitOut = insertion.next.pair.next;
+         const outEdge = this.insertEdge(splitOut.pair.prev() , splitOut.pair.next);
+         ret.faces.push(outEdge.face);
+         // now we have 4 edge. expand.
+         this.prepVertex(insertion, insertion.next, adjacentRed, ret.vertexLimit);
+         const edge = this.simpleSplit(insertion);
+         ret.halfEdges.push( edge );
+         // remember to fix the last edge
+         splitOut.pair.next = edgeInsertion[0].next.pair;
+         edgeInsertion[0].next.pair.next = outEdge.pair;
+         // fix the face pointer
+         edge.face = spliteOut.pair.face;
+         // this vertexLimit is special, limit to middle of face?
+
+
+      } else if (edgeInsertion.length === 2) {   // 2 edges, so they should be sharing the same edge.
+         // breakup the insertion point, to reuse the lone edge
+         const edge = edgeInsertion[0].next.pair;
+         edge.next = insertion.next;
+         insertion.next = edge;
+         // fix the face ptr
+         edge.face = insertion.face;
+      } else { // normal expansion
+         // add the last one, simple split
+         // check(insertion.destination !== insertion.next.origin);
+         this.prepVertex(insertion, edgeInsertion[0], adjacentRed, vertexLimit);
+         const edge = this.simpleSplit(insertion);
+         ret.halfEdges.push(edge);
+         // create a new innerface, and fix the edge to point to it
+         const polygon = this._createPolygon(edge, edgeInsertion.length);
+         //  and fix the edges to point to it
+         let prev = edge.pair;
+         for (let insert of edgeInsertion) {
+            let current = insert.next.pair;
+            current.face = polygon; // point to inner face
+            current.next = prev;    // fix edge's next pointer.
+            prev = current;
+         }
+         ret.faces.push( polygon );
+      }
+   }
+   // compute vertexLimit magnitude, and expanding direction. (reuse normal), 
+   // now (vertexLimit - vertex) = direction. 
+   ret.vertexLimit = Number.MAX_SAFE_INTEGER;       // magnitude
+   ret.position = new Float32Array(vertices.size*3);     // saved the original position
+   ret.direction = new Float32Array(vertices.size*3);    // also add direction.
+   let i = 0;
+   for (let vertex of ret.vertices) {
+      let position = ret.position.subarray(i, i+3);
+      let direction = ret.direction.subarray(i, i+3);
+      vec3.copy(direction, vertexLimit.has(vertex).vertex);
+      vec3.copy(position, vertext.vertex);
+      vec3.sub(direction, direction, position);
+      vertexLimit = Math.min(vec3.magnitude(direction), vertexLimit);
+      vec3.normalize(direction, direction);
+      i+=3;
+   }
+
+   // we needs faces, we needs
+   return ret;
 };
 
 
