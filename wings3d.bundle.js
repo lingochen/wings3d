@@ -1152,7 +1152,7 @@ const undo = {queue: [], current: -1};
 // undo queueCombo, convenient functions
 function undoQueueCombo(editCommands) {
    // wrap the array in a combo
-   const combo = new EditCommandCombo(editCommands);
+   const combo = new __WEBPACK_IMPORTED_MODULE_6__wings3d_undo__["EditCommandCombo"](editCommands);
    undoQueue( combo );
 };
 // undo queue
@@ -3248,11 +3248,9 @@ class EdgeMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
       const cutEdge = new CutEdgeCommand(this, 2);
       cutEdge.doIt();
       let vertexMadsor = __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["currentMode"]();   // assurely it vertexMode
-      let result = vertexMadsor.connect();
-      if (result) {
-         const vertexConnect = new VertexConnectCommand(vertexMadsor, result);
+      const vertexConnect = new __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__["VertexConnectCommand"](vertexMadsor);
+      if (vertexConnect.doIt()) {
          __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueueCombo"]([cutEdge, vertexConnect]);
-         __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreEdgeMode"](result.wingedEdgeList);
       } else { // no connection possible
          cutEdge.undo();
          // post on geomoetryStatus
@@ -3960,6 +3958,7 @@ class DuplicateMoveFreePositionHandler extends __WEBPACK_IMPORTED_MODULE_0__wing
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "VertexMadsor", function() { return VertexMadsor; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "VertexConnectCommand", function() { return VertexConnectCommand; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__ = __webpack_require__(7);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__ = __webpack_require__(6);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_bodymads__ = __webpack_require__(9);
