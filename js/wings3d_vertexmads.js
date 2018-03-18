@@ -61,14 +61,11 @@ class VertexMadsor extends Madsor {
    }
 
    connectVertex() {
-      const cageArray = this.connect();
-      if (cageArray) {
-         const vertexConnect = new VertexConnectCommand(this, cageArray);
-         View.undoQueue(vertexConnect);
-         View.restoreEdgeMode(cageArray);    // abusing the api?
+      const vertexConnect = new VertexConnectCommand(this);
+      if (vertexConnect.doIt()) {
+         View.undoQueue(vertexConnect);   // saved for undo
       } else {
          // show no connection possible message.
-
       }
    }
 
@@ -78,9 +75,7 @@ class VertexMadsor extends Madsor {
       this.eachPreviewCage( function(cage) {
          const snapshot = cage.connectVertex();
          total += snapshot.halfEdges.length;
-         console.log("half " + snapshot.halfEdges.length);
          snapshots.push( snapshot );
-         console.log("winged " + snapshot.wingedEdges.length);
       });
       if (total > 0) {
          return snapshots;
@@ -254,17 +249,19 @@ class VertexSelectCommand extends EditCommand {
 
 
 class VertexConnectCommand extends EditCommand {
-   constructor(madsor, cageArray) {
+   constructor(madsor) {
       super();
       this.madsor = madsor;
-      this.cageArray = cageArray;
    }
 
    doIt() {
       // reconnect
       this.cageArray = this.madsor.connect();
-      // goes to edgeMode.
-      View.restoreEdgeMode(this.cageArray);    // abusing the api?
+      if (this.cageArray) { // goes to edgeMode.
+         View.restoreEdgeMode(this.cageArray);    // abusing the api?
+         return true;
+      }
+      return false;
    }
 
    undo() {
