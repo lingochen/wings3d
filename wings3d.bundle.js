@@ -2491,19 +2491,17 @@ class FaceMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
 
    // face collapse 
    collapse() {
-      const collapse = {count: 0, collapseArray: [], vertexArray: [], faceArray: []};
+      const collapse = {count: 0, collapse: []};
       this.eachPreviewCage(function(cage) {
          const record = cage.collapseSelectedFace();
-         collapse.count += record.collapse.edge.length;
-         collapse.collapseArray.push( record.collapse );
-         collapse.vertexArray.push( record.selectedVertex );
-         collapse.faceArray.push( record.selectedFace );
+         collapse.count += record.collapse.edges.length;
+         collapse.collapse.push( record );
       });
       return collapse;
    }
    undoCollapse(collapseArray) {
-      this.eachPreviewCage( function(cage, collapseEdge) {
-         cage.undoCollapseFace(collapseEdge);
+      this.eachPreviewCage( function(cage, collapse) {
+         cage.undoCollapseFace(collapse);
       }, collapseArray);
    }
 
@@ -2586,15 +2584,15 @@ class FaceMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
    restoreMode(toMadsor, snapshots) {
       if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_1__wings3d_edgemads__["EdgeMadsor"]) {
          this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromFaceToEdgeSelect(snapshot ? snapshot.wingedEdges : snapshot);
+            cage.restoreFromFaceToEdgeSelect(snapshot);
          }, snapshots);
       } else if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__["VertexMadsor"]) {
          this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromFaceToVertexSelect(snapshot ? snapshot.vertices : snapshot);
+            cage.restoreFromFaceToVertexSelect(snapshot);
          }, snapshots);
       } else {
          this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromFaceToBodySelect(snapshot ? snapshot.body : snapshot);
+            cage.restoreFromFaceToBodySelect(snapshot);
          }, snapshots);
       }
    }
@@ -2749,11 +2747,10 @@ class CollapseFaceCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["E
    }
 
    doIt() {
-      const collapse = this.madsor.collapse();
-      if (collapse.count > 0) {
-         __WEBPACK_IMPORTED_MODULE_5__wings3d_view__["restoreVertexMode"](collapse.vertexArray);
-         this.collapse = collapse.collapseArray;
-         this.selectedFace = collapse.faceArray;
+      let collapseCount;
+      ({count: collapseCount, collapse: this.collapse} = this.madsor.collapse());
+      if (collapseCount > 0) {
+         __WEBPACK_IMPORTED_MODULE_5__wings3d_view__["restoreVertexMode"](this.collapse);
          return true;
       } else {
          return false;
@@ -2763,7 +2760,7 @@ class CollapseFaceCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["E
    undo() {
       __WEBPACK_IMPORTED_MODULE_5__wings3d_view__["currentMode"]().resetSelection();
       this.madsor.undoCollapse(this.collapse);
-      __WEBPACK_IMPORTED_MODULE_5__wings3d_view__["restoreFaceMode"](this.selectedFace);
+      __WEBPACK_IMPORTED_MODULE_5__wings3d_view__["restoreFaceMode"](this.collapse);
    }   
 }
 
@@ -3379,15 +3376,15 @@ class EdgeMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
    restoreMode(toMadsor, snapshots) {
       if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__["FaceMadsor"]) {
          this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromEdgeToFaceSelect(snapshot ? snapshot.faces : snapshot);
+            cage.restoreFromEdgeToFaceSelect(snapshot);
          }, snapshots);
       } else if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__["VertexMadsor"]) {
          this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromEdgeToVertexSelect(snapshot ? snapshot.vertices : snapshot);
+            cage.restoreFromEdgeToVertexSelect(snapshot);
          }, snapshots);
       } else {
            this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromEdgeToBodySelect(snapshot ? snapshot.body : snapshot);
+            cage.restoreFromEdgeToBodySelect(snapshot);
          }, snapshots);       
       }
    }
@@ -3782,15 +3779,15 @@ class BodyMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
    restoreMode(toMadsor, snapshots) {
       if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__["FaceMadsor"]) {
          this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromBodyToFaceSelect(snapshot ? snapshot.faces : snapshot);
+            cage.restoreFromBodyToFaceSelect(snapshot);
          }, snapshots);
       } else if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__["VertexMadsor"]) {
          this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromBodyToVertexSelect(snapshot ? snapshot.vertices : snapshot);
+            cage.restoreFromBodyToVertexSelect(snapshot);
          }, snapshots);
       } else {
          this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromBodyToEdgeSelect(snapshot ? snapshot.wingedEdges : snapshot);
+            cage.restoreFromBodyToEdgeSelect(snapshot);
          }, snapshots);
       }
    }
@@ -4158,15 +4155,15 @@ class VertexMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"]
    restoreMode(toMadsor, snapshots) {
       if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__["FaceMadsor"]) {
          this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromVertexToFaceSelect(snapshot ? snapshot.faces : snapshot);
+            cage.restoreFromVertexToFaceSelect(snapshot);
          }, snapshots);
       } else if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_3__wings3d_edgemads__["EdgeMadsor"]) {
          this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromVertexToEdgeSelect(snapshot ? snapshot.wingedEdges : snapshot);
+            cage.restoreFromVertexToEdgeSelect(snapshot);
          }, snapshots);
       } else {
          this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromVertexToBodySelect(snapshot ? snapshot.body : snapshot);
+            cage.restoreFromVertexToBodySelect(snapshot);
          }, snapshots);
       }
    }
@@ -5242,25 +5239,25 @@ PreviewCage.prototype.changeFromBodyToVertexSelect = function() {
 };
 
 PreviewCage.prototype.restoreFaceSelection = function(snapshot) {
-   for (let polygon of snapshot) {
+   for (let polygon of snapshot.faces) {
       this.selectFace(polygon.halfEdge);
    }
 };
 
 PreviewCage.prototype.restoreEdgeSelection = function(snapshot) {
-   for (let wingedEdge of snapshot) {
+   for (let wingedEdge of snapshot.wingedEdges) {
       this.selectEdge(wingedEdge.left);
    }
 };
 
 PreviewCage.prototype.restoreVertexSelection = function(snapshot) {
-   for (let vertex of snapshot) {
+   for (let vertex of snapshot.vertices) {
       this.selectVertex(vertex);
    }
 };
 
 PreviewCage.prototype.restoreBodySelection = function(snapshot) {
-   if (snapshot.size > 0) {
+   if (snapshot.body.size > 0) {
       this.selectBody();
    }
 };
@@ -6551,15 +6548,16 @@ PreviewCage.prototype.collapseSelectedEdge = function() {
    return { collapse: {edges: collapseEdges, vertices: restoreVertex}, vertices: selectedVertex };
 };
 
-PreviewCage.prototype.restoreCollapseEdge = function(collapse) {
+PreviewCage.prototype.restoreCollapseEdge = function(data) {
+   const collapse = data.collapse;
    const size = this._getGeometrySize();
    // walk form last to first.
    this.selectedSet.clear();
 
    const collapseEdges = collapse.edges;
    for (let i = (collapseEdges.length-1); i >= 0; --i) {
-      let collapse = collapseEdges[i];
-      collapse.undo();
+      let collapseEdge = collapseEdges[i];
+      collapseEdge.undo();
    }
    for (let collapseEdge of collapseEdges) { // selectedge should be in order
       this.selectEdge(collapseEdge.halfEdge);
@@ -6648,7 +6646,7 @@ PreviewCage.prototype.collapseSelectedFace = function() {
    this.changeFromFaceToEdgeSelect();
    // reuse collapseEdge
    const collapse = this.collapseSelectedEdge();
-   collapse.selectedFace = saveSet;
+   collapse.faces = saveSet;
    return collapse;
 };
 PreviewCage.prototype.undoCollapseFace = function(collapse) {
