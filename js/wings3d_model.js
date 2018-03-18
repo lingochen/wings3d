@@ -497,25 +497,25 @@ PreviewCage.prototype.changeFromBodyToVertexSelect = function() {
 };
 
 PreviewCage.prototype.restoreFaceSelection = function(snapshot) {
-   for (let polygon of snapshot) {
+   for (let polygon of snapshot.faces) {
       this.selectFace(polygon.halfEdge);
    }
 };
 
 PreviewCage.prototype.restoreEdgeSelection = function(snapshot) {
-   for (let wingedEdge of snapshot) {
+   for (let wingedEdge of snapshot.wingedEdges) {
       this.selectEdge(wingedEdge.left);
    }
 };
 
 PreviewCage.prototype.restoreVertexSelection = function(snapshot) {
-   for (let vertex of snapshot) {
+   for (let vertex of snapshot.vertices) {
       this.selectVertex(vertex);
    }
 };
 
 PreviewCage.prototype.restoreBodySelection = function(snapshot) {
-   if (snapshot.size > 0) {
+   if (snapshot.body.size > 0) {
       this.selectBody();
    }
 };
@@ -1806,15 +1806,16 @@ PreviewCage.prototype.collapseSelectedEdge = function() {
    return { collapse: {edges: collapseEdges, vertices: restoreVertex}, vertices: selectedVertex };
 };
 
-PreviewCage.prototype.restoreCollapseEdge = function(collapse) {
+PreviewCage.prototype.restoreCollapseEdge = function(data) {
+   const collapse = data.collapse;
    const size = this._getGeometrySize();
    // walk form last to first.
    this.selectedSet.clear();
 
    const collapseEdges = collapse.edges;
    for (let i = (collapseEdges.length-1); i >= 0; --i) {
-      let collapse = collapseEdges[i];
-      collapse.undo();
+      let collapseEdge = collapseEdges[i];
+      collapseEdge.undo();
    }
    for (let collapseEdge of collapseEdges) { // selectedge should be in order
       this.selectEdge(collapseEdge.halfEdge);
@@ -1903,7 +1904,7 @@ PreviewCage.prototype.collapseSelectedFace = function() {
    this.changeFromFaceToEdgeSelect();
    // reuse collapseEdge
    const collapse = this.collapseSelectedEdge();
-   collapse.selectedFace = saveSet;
+   collapse.faces = saveSet;
    return collapse;
 };
 PreviewCage.prototype.undoCollapseFace = function(collapse) {

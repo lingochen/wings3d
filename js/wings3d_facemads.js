@@ -112,19 +112,17 @@ class FaceMadsor extends Madsor {
 
    // face collapse 
    collapse() {
-      const collapse = {count: 0, collapseArray: [], vertexArray: [], faceArray: []};
+      const collapse = {count: 0, collapse: []};
       this.eachPreviewCage(function(cage) {
          const record = cage.collapseSelectedFace();
-         collapse.count += record.collapse.edge.length;
-         collapse.collapseArray.push( record.collapse );
-         collapse.vertexArray.push( record.selectedVertex );
-         collapse.faceArray.push( record.selectedFace );
+         collapse.count += record.collapse.edges.length;
+         collapse.collapse.push( record );
       });
       return collapse;
    }
    undoCollapse(collapseArray) {
-      this.eachPreviewCage( function(cage, collapseEdge) {
-         cage.undoCollapseFace(collapseEdge);
+      this.eachPreviewCage( function(cage, collapse) {
+         cage.undoCollapseFace(collapse);
       }, collapseArray);
    }
 
@@ -207,15 +205,15 @@ class FaceMadsor extends Madsor {
    restoreMode(toMadsor, snapshots) {
       if (toMadsor instanceof EdgeMadsor) {
          this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromFaceToEdgeSelect(snapshot ? snapshot.wingedEdges : snapshot);
+            cage.restoreFromFaceToEdgeSelect(snapshot);
          }, snapshots);
       } else if (toMadsor instanceof VertexMadsor) {
          this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromFaceToVertexSelect(snapshot ? snapshot.vertices : snapshot);
+            cage.restoreFromFaceToVertexSelect(snapshot);
          }, snapshots);
       } else {
          this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromFaceToBodySelect(snapshot ? snapshot.body : snapshot);
+            cage.restoreFromFaceToBodySelect(snapshot);
          }, snapshots);
       }
    }
@@ -370,11 +368,10 @@ class CollapseFaceCommand extends EditCommand {
    }
 
    doIt() {
-      const collapse = this.madsor.collapse();
-      if (collapse.count > 0) {
-         View.restoreVertexMode(collapse.vertexArray);
-         this.collapse = collapse.collapseArray;
-         this.selectedFace = collapse.faceArray;
+      let collapseCount;
+      ({count: collapseCount, collapse: this.collapse} = this.madsor.collapse());
+      if (collapseCount > 0) {
+         View.restoreVertexMode(this.collapse);
          return true;
       } else {
          return false;
@@ -384,7 +381,7 @@ class CollapseFaceCommand extends EditCommand {
    undo() {
       View.currentMode().resetSelection();
       this.madsor.undoCollapse(this.collapse);
-      View.restoreFaceMode(this.selectedFace);
+      View.restoreFaceMode(this.collapse);
    }   
 }
 
