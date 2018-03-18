@@ -4035,14 +4035,11 @@ class VertexMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"]
    }
 
    connectVertex() {
-      const cageArray = this.connect();
-      if (cageArray) {
-         const vertexConnect = new VertexConnectCommand(this, cageArray);
-         __WEBPACK_IMPORTED_MODULE_5__wings3d_view__["undoQueue"](vertexConnect);
-         __WEBPACK_IMPORTED_MODULE_5__wings3d_view__["restoreEdgeMode"](cageArray);    // abusing the api?
+      const vertexConnect = new VertexConnectCommand(this);
+      if (vertexConnect.doIt()) {
+         __WEBPACK_IMPORTED_MODULE_5__wings3d_view__["undoQueue"](vertexConnect);   // saved for undo
       } else {
          // show no connection possible message.
-
       }
    }
 
@@ -4052,9 +4049,7 @@ class VertexMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"]
       this.eachPreviewCage( function(cage) {
          const snapshot = cage.connectVertex();
          total += snapshot.halfEdges.length;
-         console.log("half " + snapshot.halfEdges.length);
          snapshots.push( snapshot );
-         console.log("winged " + snapshot.wingedEdges.length);
       });
       if (total > 0) {
          return snapshots;
@@ -4228,17 +4223,19 @@ class VertexSelectCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["E
 
 
 class VertexConnectCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
-   constructor(madsor, cageArray) {
+   constructor(madsor) {
       super();
       this.madsor = madsor;
-      this.cageArray = cageArray;
    }
 
    doIt() {
       // reconnect
       this.cageArray = this.madsor.connect();
-      // goes to edgeMode.
-      __WEBPACK_IMPORTED_MODULE_5__wings3d_view__["restoreEdgeMode"](this.cageArray);    // abusing the api?
+      if (this.cageArray) { // goes to edgeMode.
+         __WEBPACK_IMPORTED_MODULE_5__wings3d_view__["restoreEdgeMode"](this.cageArray);    // abusing the api?
+         return true;
+      }
+      return false;
    }
 
    undo() {
