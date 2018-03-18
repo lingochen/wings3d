@@ -1913,11 +1913,11 @@ PreviewCage.prototype.undoCollapseFace = function(collapse) {
 
 PreviewCage.prototype.dissolveSelectedVertex = function() {
    const size = this._getGeometrySize();
-   const undoArray = {array: [], selectedFace: []};
+   const undoArray = {array: [], faces: []};
    for (let vertex of this.selectedSet) {
       let result = this.geometry.dissolveVertex(vertex);
       undoArray.array.unshift( result.undo );
-      undoArray.selectedFace.push( result.polygon );
+      undoArray.faces.push( result.polygon );
    }
    this._resetSelectVertex();
    // update previewBox.

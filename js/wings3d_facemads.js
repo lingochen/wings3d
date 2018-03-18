@@ -207,15 +207,15 @@ class FaceMadsor extends Madsor {
    restoreMode(toMadsor, snapshots) {
       if (toMadsor instanceof EdgeMadsor) {
          this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromFaceToEdgeSelect(snapshot.wingedEdges);
+            cage.restoreFromFaceToEdgeSelect(snapshot ? snapshot.wingedEdges : snapshot);
          }, snapshots);
       } else if (toMadsor instanceof VertexMadsor) {
          this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromFaceToVertexSelect(snapshot.vertices);
+            cage.restoreFromFaceToVertexSelect(snapshot ? snapshot.vertices : snapshot);
          }, snapshots);
       } else {
          this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromFaceToBodySelect(snapshot.body);
+            cage.restoreFromFaceToBodySelect(snapshot ? snapshot.body : snapshot);
          }, snapshots);
       }
    }
