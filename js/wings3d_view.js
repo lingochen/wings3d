@@ -10,7 +10,7 @@ import * as Camera from './wings3d_camera';
 import {gl} from './wings3d_gl';
 import { WavefrontObjImportExporter } from './plugins/wavefront_obj';
 import * as Wings3D from './wings3d';
-import {EditCommandSimple} from './wings3d_undo';
+import {EditCommandSimple, EditCommandCombo} from './wings3d_undo';
 import {FaceMadsor} from './wings3d_facemads';
 import {EdgeMadsor} from './wings3d_edgemads';
 import {VertexMadsor} from './wings3d_vertexmads';

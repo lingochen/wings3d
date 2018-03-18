@@ -310,4 +310,5 @@ class VertexCollapseCommand extends EditCommand {
 
 export {
    VertexMadsor,
+   VertexConnectCommand,
 }

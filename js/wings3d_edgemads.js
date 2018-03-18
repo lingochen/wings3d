@@ -6,7 +6,7 @@
 import {Madsor, DragSelect, ToggleModeCommand, MovePositionHandler} from './wings3d_mads';
 import {FaceMadsor} from './wings3d_facemads';   // for switching
 import {BodyMadsor} from './wings3d_bodymads';
-import {VertexMadsor} from './wings3d_vertexmads';
+import {VertexMadsor, VertexConnectCommand} from './wings3d_vertexmads';
 import { EditCommand } from './wings3d_undo';
 import * as UI from './wings3d_ui';
 import * as View from './wings3d_view';
@@ -116,11 +116,9 @@ class EdgeMadsor extends Madsor {
       const cutEdge = new CutEdgeCommand(this, 2);
       cutEdge.doIt();
       let vertexMadsor = View.currentMode();   // assurely it vertexMode
-      let result = vertexMadsor.connect();
-      if (result) {
-         const vertexConnect = new VertexConnectCommand(vertexMadsor, result);
+      const vertexConnect = new VertexConnectCommand(vertexMadsor);
+      if (vertexConnect.doIt()) {
          View.undoQueueCombo([cutEdge, vertexConnect]);
-         View.restoreEdgeMode(result.wingedEdgeList);
       } else { // no connection possible
          cutEdge.undo();
          // post on geomoetryStatus
