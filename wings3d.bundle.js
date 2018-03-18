@@ -2437,6 +2437,10 @@ class FaceMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
       return 'Face';
    }
 
+   getSelection(cage) {
+      return {faces: cage.snapshotSelection() };
+   }
+
    // get selected Face's vertex snapshot. for doing, and redo queue. 
    snapshotPosition() {
       var snapshots = [];
@@ -2554,24 +2558,25 @@ class FaceMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
    }
 
    toggleFunc(toMadsor) {
+      const self = this;
       var redoFn;
       var snapshots = [];
       if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_1__wings3d_edgemads__["EdgeMadsor"]) {
          redoFn = __WEBPACK_IMPORTED_MODULE_5__wings3d_view__["restoreEdgeMode"];
          this.eachPreviewCage( function(cage) {
-            snapshots.push( cage.snapshotSelection() );
+            snapshots.push( self.getSelection(cage) );
             cage.changeFromFaceToEdgeSelect();
          });
       } else if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__["VertexMadsor"]) {
          redoFn = __WEBPACK_IMPORTED_MODULE_5__wings3d_view__["restoreVertexMode"];
          this.eachPreviewCage( function(cage) {
-            snapshots.push( cage.snapshotSelection() );
+            snapshots.push(  self.getSelection(cage) );
             cage.changeFromFaceToVertexSelect();
          });
       } else {
          redoFn = __WEBPACK_IMPORTED_MODULE_5__wings3d_view__["restoreBodyMode"];
          this.eachPreviewCage( function(cage) {
-            snapshots.push( cage.snapshotSelection() );
+            snapshots.push(  self.getSelection(cage) );
             cage.changeFromFaceToBodySelect();
          });
       }
@@ -2581,15 +2586,15 @@ class FaceMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
    restoreMode(toMadsor, snapshots) {
       if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_1__wings3d_edgemads__["EdgeMadsor"]) {
          this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromFaceToEdgeSelect(snapshot);
+            cage.restoreFromFaceToEdgeSelect(snapshot.wingedEdges);
          }, snapshots);
       } else if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__["VertexMadsor"]) {
          this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromFaceToVertexSelect(snapshot);
+            cage.restoreFromFaceToVertexSelect(snapshot.vertices);
          }, snapshots);
       } else {
          this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromFaceToBodySelect(snapshot);
+            cage.restoreFromFaceToBodySelect(snapshot.body);
          }, snapshots);
       }
    }
@@ -2844,8 +2849,9 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
 
    snapshotSelection() {
       const snapshots = [];
+      const self = this;
       this.eachPreviewCage( function(cage) {
-         snapshots.push( cage.snapshotSelection() );
+         snapshots.push( self.getSelection(cage) );
       });
       return snapshots;
    }
@@ -3206,6 +3212,10 @@ class EdgeMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
       return 'Edge';
    }
 
+   getSelection(cage) {
+      return {wingedEdges: cage.snapshotSelection() };
+   }
+
    // get selected Edge's vertex snapshot. for doing, and redo queue. 
    snapshotPosition() {
       var snapshots = [];
@@ -3226,7 +3236,7 @@ class EdgeMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
    bevel() {
       var snapshots = [];
       this.eachPreviewCage( function(preview) {
-         snapshots.push[ preview.bevelEdge() ];
+         snapshots.push( preview.bevelEdge() );
       });
       return snapshots;
    }
@@ -3254,19 +3264,17 @@ class EdgeMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
    }
 
    cut(numberOfSegments) {
-      var snapshots = {vertices: [], splitEdges: []};
+      var snapshots = [];
       this.eachPreviewCage( function(preview) {
-         const snapshot = preview.cutEdge(numberOfSegments);
-         snapshots.vertices.push( snapshot.vertices );
-         snapshots.splitEdges.push( snapshot.splitEdges );
+         snapshots.push( preview.cutEdge(numberOfSegments) );
       });
       return snapshots;
    }
 
-   collapseEdge(splitEdgesArray) {  // undo of splitEdge.
-      this.eachPreviewCage(function(cage, splitEdges) {
-         cage.collapseSplitEdge(splitEdges);
-      }, splitEdgesArray);
+   collapseEdge(collapseArray) {  // undo of splitEdge.
+      this.eachPreviewCage(function(cage, collapse) {
+         cage.collapseSplitEdge(collapse.splitEdges);
+      }, collapseArray);
    }
 
    // dissolve edge
@@ -3287,20 +3295,19 @@ class EdgeMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
 
    // collapse edge
    collapse() {
-      const collapse = {count: 0, collapseArray: [], vertexArray: []};
+      const collapse = {count: 0, array: []};
       const selectedVertex = [];
       this.eachPreviewCage(function(cage) {
          const record = cage.collapseSelectedEdge();
          collapse.count += record.collapse.edge.length;
-         collapse.collapseArray.push( record.collapse );
-         collapse.vertexArray.push( record.selectedVertex );
+         collapse.array.push( record );
       });
       return collapse;
    }
 
    restoreEdge(collapseEdgesArray) {
       this.eachPreviewCage(function(cage, collapseEdges) {
-         cage.restoreCollapseEdge(collapseEdges);
+         cage.restoreCollapseEdge(collapseEdges.collapse);
       }, collapseEdgesArray);
    }
 
@@ -3344,24 +3351,25 @@ class EdgeMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
    }
 
    toggleFunc(toMadsor) {
+      const self = this;
       var redoFn;
       var snapshots = [];
       if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__["FaceMadsor"]) {
          redoFn = __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreFaceMode"];
          this.eachPreviewCage( function(cage) {
-            snapshots.push( cage.snapshotSelection() );
+            snapshots.push( self.getSelection(cage) );
             cage.changeFromEdgeToFaceSelect();
          });
       } else if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__["VertexMadsor"]) {
          redoFn = __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreVertexMode"];
          this.eachPreviewCage( function(cage) {
-            snapshots.push( cage.snapshotSelection() );
+            snapshots.push( self.getSelection(cage) );
             cage.changeFromEdgeToVertexSelect();
          });         
       } else {
          redoFn = __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreBodyMode"];
          this.eachPreviewCage( function(cage) {
-            snapshots.push( cage.snapshotSelection() );
+            snapshots.push( self.getSelection(cage) );
             cage.changeFromEdgeToBodySelect();
          });
       }
@@ -3371,15 +3379,15 @@ class EdgeMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
    restoreMode(toMadsor, snapshots) {
       if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__["FaceMadsor"]) {
          this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromEdgeToFaceSelect(snapshot);
+            cage.restoreFromEdgeToFaceSelect(snapshot.faces);
          }, snapshots);
       } else if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__["VertexMadsor"]) {
          this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromEdgeToVertexSelect(snapshot);
+            cage.restoreFromEdgeToVertexSelect(snapshot.vertices);
          }, snapshots);
       } else {
            this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromEdgeToBodySelect(snapshot);
+            cage.restoreFromEdgeToBodySelect(snapshot.body);
          }, snapshots);       
       }
    }
@@ -3450,13 +3458,13 @@ class CutEdgeCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCo
 
    doIt() {
       const snapshots = this.madsor.cut(this.numberOfSegments);
-      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreVertexMode"](snapshots.vertices);    // abusing the api?
-      this.splitEdges = snapshots.splitEdges;
+      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreVertexMode"](snapshots);    // abusing the api?
+      this.snapshots = snapshots;
    }
 
    undo() {
       // restoreToEdgeMode
-      this.madsor.collapseEdge(this.splitEdges);
+      this.madsor.collapseEdge(this.snapshots);
       __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreEdgeMode"](this.selectedEdges);
    }
 }
@@ -3488,8 +3496,8 @@ class CollapseEdgeCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["E
    doIt() {
       const collapse = this.madsor.collapse();
       if (collapse.count > 0) {
-         __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreVertexMode"](collapse.vertexArray);
-         this.collapse = collapse.collapseArray;
+         this.collapse = collapse.array;
+         __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreVertexMode"](this.collapse);
          return true;
       } else {
          return false;
@@ -3519,7 +3527,7 @@ class BevelEdgeCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["Edit
 
    undo() {
       // restoreToEdgeMode
-      this.madsor.collapseEdge(this.snapshots.edges);
+      this.madsor.collapseEdge(this.snapshots);
       __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreEdgeMode"](this.selectedEdges);
    }
 }
@@ -3554,7 +3562,7 @@ class EdgeBevelHandler extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Move
 
    _cancel() {
       this.madsor.restoreMoveSelection(this.snapshots);
-      this.madsor.collapseEdge(this.snapshots.halfEdges);
+      this.madsor.collapseEdge(this.snapshots);
       this.restoreEdgeMode(this.selectedEdges);
    }
 }
@@ -3647,6 +3655,10 @@ class BodyMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
 
    modeName() {
       return 'Body';
+   }
+
+   getSelection(cage) {
+      return {body: cage.snapshotSelection() };
    }
 
    getSelected() {
@@ -3742,24 +3754,25 @@ class BodyMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
    }
 
    toggleFunc(toMadsor) {
+      const self = this;
       var redoFn;
       var snapshots = [];
       if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__["FaceMadsor"]) {
          redoFn = __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreFaceMode"];
          this.eachPreviewCage( function(cage) {
-            snapshots.push( cage.snapshotSelection() );
+            snapshots.push( self.getSelection(cage) );
             cage.changeFromBodyToFaceSelect();
          });
       } else if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__["VertexMadsor"]) {
          redoFn = __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreVertexMode"];
          this.eachPreviewCage( function(cage) {
-            snapshots.push( cage.snapshotSelection() );
+            snapshots.push( self.getSelection(cage) );
             cage.changeFromBodyToVertexSelect();
          });
       } else {
          redoFn = __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreEdgeMode"];
          this.eachPreviewCage( function(cage) {
-            snapshots.push( cage.snapshotSelection() );
+            snapshots.push( self.getSelection(cage) );
             cage.changeFromBodyToEdgeSelect();
          });
       }
@@ -3769,15 +3782,15 @@ class BodyMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
    restoreMode(toMadsor, snapshots) {
       if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__["FaceMadsor"]) {
          this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromBodyToFaceSelect(snapshot);
+            cage.restoreFromBodyToFaceSelect(snapshot.faces);
          }, snapshots);
       } else if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__["VertexMadsor"]) {
          this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromBodyToVertexSelect(snapshot);
+            cage.restoreFromBodyToVertexSelect(snapshot.vertices);
          }, snapshots);
       } else {
          this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromBodyToEdgeSelect(snapshot);
+            cage.restoreFromBodyToEdgeSelect(snapshot.wingedEdges);;
          }, snapshots);
       }
    }
@@ -4000,6 +4013,10 @@ class VertexMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"]
       return 'Vertex';
    }
 
+   getSelection(cage) {
+      return {vertices: cage.snapshotSelection()};
+   }
+
    // get selected vertex snapshot. for doing, and redo queue. 
    snapshotPosition() {
       var snapshots = [];
@@ -4030,13 +4047,12 @@ class VertexMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"]
    }
 
    connect() {
-      let snapshots = {edgeList: [], wingedEdgeList: []};
+      let snapshots = [];
       let total = 0;
       this.eachPreviewCage( function(cage) {
          const snapshot = cage.connectVertex();
          total += snapshot.edgeList.length;
-         snapshots.edgeList.push( snapshot.edgeList );
-         snapshots.wingedEdgeList.push( snapshot.wingedEdgeList );
+         snapshots.push( snapshot );
       });
       if (total > 0) {
          return snapshots;
@@ -4047,7 +4063,7 @@ class VertexMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"]
 
    dissolveConnect(edgesArray) {
       this.eachPreviewCage( function(cage, edges) {
-         cage.dissolveConnect(edges);
+         cage.dissolveConnect(edges.halfEdges);
       }, edgesArray);
    }
 
@@ -4117,24 +4133,25 @@ class VertexMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"]
    }
 
    toggleFunc(toMadsor) {
+      const self = this;
       var redoFn;
       var snapshots = [];
       if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__["FaceMadsor"]) {
          redoFn = __WEBPACK_IMPORTED_MODULE_5__wings3d_view__["restoreFaceMode"];
          this.eachPreviewCage( function(cage) {
-            snapshots.push( cage.snapshotSelection() );
+            snapshots.push( self.getSelection(cage) );
             cage.changeFromVertexToFaceSelect();
          } );
       } else if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_3__wings3d_edgemads__["EdgeMadsor"]) {
          redoFn = __WEBPACK_IMPORTED_MODULE_5__wings3d_view__["restoreEdgeMode"];
          this.eachPreviewCage( function(cage) {
-            snapshots.push( cage.snapshotSelection() );
+            snapshots.push( self.getSelection(cage)  );
             cage.changeFromVertexToEdgeSelect();
          });
       } else {
          redoFn = __WEBPACK_IMPORTED_MODULE_5__wings3d_view__["restoreEdgeMode"];
          this.eachPreviewCage( function(cage) {
-            snapshots.push( cage.snapshotSelection() );
+            snapshots.push( self.getSelection(cage)  );
             cage.changeFromVertexToBodySelect();
          });      
       }
@@ -4145,15 +4162,15 @@ class VertexMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"]
    restoreMode(toMadsor, snapshots) {
       if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__["FaceMadsor"]) {
          this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromVertexToFaceSelect(snapshot);
+            cage.restoreFromVertexToFaceSelect(snapshot.faces);
          }, snapshots);
       } else if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_3__wings3d_edgemads__["EdgeMadsor"]) {
          this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromVertexToEdgeSelect(snapshot);
+            cage.restoreFromVertexToEdgeSelect(snapshot.wingedEdges);
          }, snapshots);
       } else {
          this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromVertexToBodySelect(snapshot);
+            cage.restoreFromVertexToBodySelect(snapshot.body);
          }, snapshots);
       }
    }
@@ -4220,14 +4237,14 @@ class VertexConnectCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["
       // reconnect
       this.cageArray = this.madsor.connect();
       // goes to edgeMode.
-      __WEBPACK_IMPORTED_MODULE_5__wings3d_view__["restoreEdgeMode"](this.cageArray.wingedEdgeList);    // abusing the api?
+      __WEBPACK_IMPORTED_MODULE_5__wings3d_view__["restoreEdgeMode"](this.cageArray);    // abusing the api?
    }
 
    undo() {
       // restore to vertexMode.
       __WEBPACK_IMPORTED_MODULE_5__wings3d_view__["restoreVertexMode"]();
       // dissolve the connect edges.
-      this.madsor.dissolveConnect(this.cageArray.edgeList);
+      this.madsor.dissolveConnect(this.cageArray);
    }  
 }
 
@@ -6393,8 +6410,8 @@ PreviewCage.prototype.collapseSplitEdge = function(splitEdges) {
    const vertexSize = this.geometry.vertices.length;
    const edgeSize = this.geometry.edges.length;
    const faceSize = this.geometry.faces.length;
-   for (let edge of splitEdges) {
-      this.geometry.collapseEdge(edge);
+   for (let halfEdge of splitEdges) {
+      this.geometry.collapseEdge(halfEdge);
    }
    // recompute the smaller size
    this._updateAffected(this.geometry.affected);
@@ -6427,7 +6444,7 @@ PreviewCage.prototype.connectVertex = function() {
    this._resizePreviewEdge(edgeSize);
    this._resizePreviewVertex(vertexSize);
 
-   return {edgeList: edgeList, wingedEdgeList: wingedEdgeList};
+   return {halfEdges: edgeList, wingedEdges: wingedEdgeList};
 };
 // pair with connectVertex.
 PreviewCage.prototype.dissolveConnect = function(insertEdges) {
@@ -6446,7 +6463,6 @@ PreviewCage.prototype.dissolveConnect = function(insertEdges) {
    this._resizeBoundingSphere(size.face);
    this._resizePreview(size.vertex, size.face);
    this._resizePreviewEdge(size.edge);
-
 };
 
 
@@ -6536,7 +6552,7 @@ PreviewCage.prototype.collapseSelectedEdge = function() {
    this._resizePreview(size.vertex, size.face);
    this._resizePreviewEdge(size.edge);
    this._resizePreviewVertex(size.vertex);
-   return { collapse: {edge: collapseEdges, vertex: restoreVertex}, selectedVertex: selectedVertex};
+   return { collapse: {edges: collapseEdges, vertices: restoreVertex}, vertices: selectedVertex };
 };
 
 PreviewCage.prototype.restoreCollapseEdge = function(collapse) {
@@ -6544,7 +6560,7 @@ PreviewCage.prototype.restoreCollapseEdge = function(collapse) {
    // walk form last to first.
    this.selectedSet.clear();
 
-   const collapseEdges = collapse.edge;
+   const collapseEdges = collapse.edges;
    for (let i = (collapseEdges.length-1); i >= 0; --i) {
       let collapse = collapseEdges[i];
       collapse.undo();
@@ -6552,7 +6568,7 @@ PreviewCage.prototype.restoreCollapseEdge = function(collapse) {
    for (let collapseEdge of collapseEdges) { // selectedge should be in order
       this.selectEdge(collapseEdge.halfEdge);
    }
-   const restoreVertex = collapse.vertex;
+   const restoreVertex = collapse.vertices;
    for (let restore of restoreVertex) {   // restore position
       vec3.copy(restore.vertex.vertex, restore.savePt);
       this.geometry.addAffectedEdgeAndFace(restore.vertex);
@@ -6683,10 +6699,6 @@ PreviewCage.prototype.bevelEdge = function() {
 
    // cut bevelEdge
    const result = this.geometry.bevelEdge(wingedEdges);       // input edge will take the new vertex as origin.
-   result.wingedEdges = [];
-   for (let halfEdge of result.halfEdges) {
-      result.wingedEdges.push[halfEdge.wingedEdge];
-   }
 
    // add the new Faces, new edges and new vertices to the preview
    this._resizeBoundingSphere(oldSize.face);
