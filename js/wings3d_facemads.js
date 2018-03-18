@@ -58,6 +58,10 @@ class FaceMadsor extends Madsor {
       return 'Face';
    }
 
+   getSelection(cage) {
+      return {faces: cage.snapshotSelection() };
+   }
+
    // get selected Face's vertex snapshot. for doing, and redo queue. 
    snapshotPosition() {
       var snapshots = [];
@@ -175,24 +179,25 @@ class FaceMadsor extends Madsor {
    }
 
    toggleFunc(toMadsor) {
+      const self = this;
       var redoFn;
       var snapshots = [];
       if (toMadsor instanceof EdgeMadsor) {
          redoFn = View.restoreEdgeMode;
          this.eachPreviewCage( function(cage) {
-            snapshots.push( cage.snapshotSelection() );
+            snapshots.push( self.getSelection(cage) );
             cage.changeFromFaceToEdgeSelect();
          });
       } else if (toMadsor instanceof VertexMadsor) {
          redoFn = View.restoreVertexMode;
          this.eachPreviewCage( function(cage) {
-            snapshots.push( cage.snapshotSelection() );
+            snapshots.push(  self.getSelection(cage) );
             cage.changeFromFaceToVertexSelect();
          });
       } else {
          redoFn = View.restoreBodyMode;
          this.eachPreviewCage( function(cage) {
-            snapshots.push( cage.snapshotSelection() );
+            snapshots.push(  self.getSelection(cage) );
             cage.changeFromFaceToBodySelect();
          });
       }
@@ -202,15 +207,15 @@ class FaceMadsor extends Madsor {
    restoreMode(toMadsor, snapshots) {
       if (toMadsor instanceof EdgeMadsor) {
          this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromFaceToEdgeSelect(snapshot);
+            cage.restoreFromFaceToEdgeSelect(snapshot.wingedEdges);
          }, snapshots);
       } else if (toMadsor instanceof VertexMadsor) {
          this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromFaceToVertexSelect(snapshot);
+            cage.restoreFromFaceToVertexSelect(snapshot.vertices);
          }, snapshots);
       } else {
          this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromFaceToBodySelect(snapshot);
+            cage.restoreFromFaceToBodySelect(snapshot.body);
          }, snapshots);
       }
    }

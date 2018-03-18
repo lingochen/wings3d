@@ -57,8 +57,9 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
 
    snapshotSelection() {
       const snapshots = [];
+      const self = this;
       this.eachPreviewCage( function(cage) {
-         snapshots.push( cage.snapshotSelection() );
+         snapshots.push( self.getSelection(cage) );
       });
       return snapshots;
    }

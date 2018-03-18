@@ -77,6 +77,10 @@ class EdgeMadsor extends Madsor {
       return 'Edge';
    }
 
+   getSelection(cage) {
+      return {wingedEdges: cage.snapshotSelection() };
+   }
+
    // get selected Edge's vertex snapshot. for doing, and redo queue. 
    snapshotPosition() {
       var snapshots = [];
@@ -97,7 +101,7 @@ class EdgeMadsor extends Madsor {
    bevel() {
       var snapshots = [];
       this.eachPreviewCage( function(preview) {
-         snapshots.push[ preview.bevelEdge() ];
+         snapshots.push( preview.bevelEdge() );
       });
       return snapshots;
    }
@@ -125,19 +129,17 @@ class EdgeMadsor extends Madsor {
    }
 
    cut(numberOfSegments) {
-      var snapshots = {vertices: [], splitEdges: []};
+      var snapshots = [];
       this.eachPreviewCage( function(preview) {
-         const snapshot = preview.cutEdge(numberOfSegments);
-         snapshots.vertices.push( snapshot.vertices );
-         snapshots.splitEdges.push( snapshot.splitEdges );
+         snapshots.push( preview.cutEdge(numberOfSegments) );
       });
       return snapshots;
    }
 
-   collapseEdge(splitEdgesArray) {  // undo of splitEdge.
-      this.eachPreviewCage(function(cage, splitEdges) {
-         cage.collapseSplitEdge(splitEdges);
-      }, splitEdgesArray);
+   collapseEdge(collapseArray) {  // undo of splitEdge.
+      this.eachPreviewCage(function(cage, collapse) {
+         cage.collapseSplitEdge(collapse.splitEdges);
+      }, collapseArray);
    }
 
    // dissolve edge
@@ -158,20 +160,19 @@ class EdgeMadsor extends Madsor {
 
    // collapse edge
    collapse() {
-      const collapse = {count: 0, collapseArray: [], vertexArray: []};
+      const collapse = {count: 0, array: []};
       const selectedVertex = [];
       this.eachPreviewCage(function(cage) {
          const record = cage.collapseSelectedEdge();
          collapse.count += record.collapse.edge.length;
-         collapse.collapseArray.push( record.collapse );
-         collapse.vertexArray.push( record.selectedVertex );
+         collapse.array.push( record );
       });
       return collapse;
    }
 
    restoreEdge(collapseEdgesArray) {
       this.eachPreviewCage(function(cage, collapseEdges) {
-         cage.restoreCollapseEdge(collapseEdges);
+         cage.restoreCollapseEdge(collapseEdges.collapse);
       }, collapseEdgesArray);
    }
 
@@ -215,24 +216,25 @@ class EdgeMadsor extends Madsor {
    }
 
    toggleFunc(toMadsor) {
+      const self = this;
       var redoFn;
       var snapshots = [];
       if (toMadsor instanceof FaceMadsor) {
          redoFn = View.restoreFaceMode;
          this.eachPreviewCage( function(cage) {
-            snapshots.push( cage.snapshotSelection() );
+            snapshots.push( self.getSelection(cage) );
             cage.changeFromEdgeToFaceSelect();
          });
       } else if (toMadsor instanceof VertexMadsor) {
          redoFn = View.restoreVertexMode;
          this.eachPreviewCage( function(cage) {
-            snapshots.push( cage.snapshotSelection() );
+            snapshots.push( self.getSelection(cage) );
             cage.changeFromEdgeToVertexSelect();
          });         
       } else {
          redoFn = View.restoreBodyMode;
          this.eachPreviewCage( function(cage) {
-            snapshots.push( cage.snapshotSelection() );
+            snapshots.push( self.getSelection(cage) );
             cage.changeFromEdgeToBodySelect();
          });
       }
@@ -242,15 +244,15 @@ class EdgeMadsor extends Madsor {
    restoreMode(toMadsor, snapshots) {
       if (toMadsor instanceof FaceMadsor) {
          this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromEdgeToFaceSelect(snapshot);
+            cage.restoreFromEdgeToFaceSelect(snapshot.faces);
          }, snapshots);
       } else if (toMadsor instanceof VertexMadsor) {
          this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromEdgeToVertexSelect(snapshot);
+            cage.restoreFromEdgeToVertexSelect(snapshot.vertices);
          }, snapshots);
       } else {
            this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromEdgeToBodySelect(snapshot);
+            cage.restoreFromEdgeToBodySelect(snapshot.body);
          }, snapshots);       
       }
    }
@@ -321,13 +323,13 @@ class CutEdgeCommand extends EditCommand {
 
    doIt() {
       const snapshots = this.madsor.cut(this.numberOfSegments);
-      View.restoreVertexMode(snapshots.vertices);    // abusing the api?
-      this.splitEdges = snapshots.splitEdges;
+      View.restoreVertexMode(snapshots);    // abusing the api?
+      this.snapshots = snapshots;
    }
 
    undo() {
       // restoreToEdgeMode
-      this.madsor.collapseEdge(this.splitEdges);
+      this.madsor.collapseEdge(this.snapshots);
       View.restoreEdgeMode(this.selectedEdges);
    }
 }
@@ -359,8 +361,8 @@ class CollapseEdgeCommand extends EditCommand {
    doIt() {
       const collapse = this.madsor.collapse();
       if (collapse.count > 0) {
-         View.restoreVertexMode(collapse.vertexArray);
-         this.collapse = collapse.collapseArray;
+         this.collapse = collapse.array;
+         View.restoreVertexMode(this.collapse);
          return true;
       } else {
          return false;
@@ -390,7 +392,7 @@ class BevelEdgeCommand extends EditCommand {
 
    undo() {
       // restoreToEdgeMode
-      this.madsor.collapseEdge(this.snapshots.edges);
+      this.madsor.collapseEdge(this.snapshots);
       View.restoreEdgeMode(this.selectedEdges);
    }
 }
@@ -425,7 +427,7 @@ class EdgeBevelHandler extends MovePositionHandler {
 
    _cancel() {
       this.madsor.restoreMoveSelection(this.snapshots);
-      this.madsor.collapseEdge(this.snapshots.halfEdges);
+      this.madsor.collapseEdge(this.snapshots);
       this.restoreEdgeMode(this.selectedEdges);
    }
 }

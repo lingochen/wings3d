@@ -1661,8 +1661,8 @@ PreviewCage.prototype.collapseSplitEdge = function(splitEdges) {
    const vertexSize = this.geometry.vertices.length;
    const edgeSize = this.geometry.edges.length;
    const faceSize = this.geometry.faces.length;
-   for (let edge of splitEdges) {
-      this.geometry.collapseEdge(edge);
+   for (let halfEdge of splitEdges) {
+      this.geometry.collapseEdge(halfEdge);
    }
    // recompute the smaller size
    this._updateAffected(this.geometry.affected);
@@ -1695,7 +1695,7 @@ PreviewCage.prototype.connectVertex = function() {
    this._resizePreviewEdge(edgeSize);
    this._resizePreviewVertex(vertexSize);
 
-   return {edgeList: edgeList, wingedEdgeList: wingedEdgeList};
+   return {halfEdges: edgeList, wingedEdges: wingedEdgeList};
 };
 // pair with connectVertex.
 PreviewCage.prototype.dissolveConnect = function(insertEdges) {
@@ -1714,7 +1714,6 @@ PreviewCage.prototype.dissolveConnect = function(insertEdges) {
    this._resizeBoundingSphere(size.face);
    this._resizePreview(size.vertex, size.face);
    this._resizePreviewEdge(size.edge);
-
 };
 
 
@@ -1804,7 +1803,7 @@ PreviewCage.prototype.collapseSelectedEdge = function() {
    this._resizePreview(size.vertex, size.face);
    this._resizePreviewEdge(size.edge);
    this._resizePreviewVertex(size.vertex);
-   return { collapse: {edge: collapseEdges, vertex: restoreVertex}, selectedVertex: selectedVertex};
+   return { collapse: {edges: collapseEdges, vertices: restoreVertex}, vertices: selectedVertex };
 };
 
 PreviewCage.prototype.restoreCollapseEdge = function(collapse) {
@@ -1812,7 +1811,7 @@ PreviewCage.prototype.restoreCollapseEdge = function(collapse) {
    // walk form last to first.
    this.selectedSet.clear();
 
-   const collapseEdges = collapse.edge;
+   const collapseEdges = collapse.edges;
    for (let i = (collapseEdges.length-1); i >= 0; --i) {
       let collapse = collapseEdges[i];
       collapse.undo();
@@ -1820,7 +1819,7 @@ PreviewCage.prototype.restoreCollapseEdge = function(collapse) {
    for (let collapseEdge of collapseEdges) { // selectedge should be in order
       this.selectEdge(collapseEdge.halfEdge);
    }
-   const restoreVertex = collapse.vertex;
+   const restoreVertex = collapse.vertices;
    for (let restore of restoreVertex) {   // restore position
       vec3.copy(restore.vertex.vertex, restore.savePt);
       this.geometry.addAffectedEdgeAndFace(restore.vertex);
@@ -1951,10 +1950,6 @@ PreviewCage.prototype.bevelEdge = function() {
 
    // cut bevelEdge
    const result = this.geometry.bevelEdge(wingedEdges);       // input edge will take the new vertex as origin.
-   result.wingedEdges = [];
-   for (let halfEdge of result.halfEdges) {
-      result.wingedEdges.push[halfEdge.wingedEdge];
-   }
 
    // add the new Faces, new edges and new vertices to the preview
    this._resizeBoundingSphere(oldSize.face);
