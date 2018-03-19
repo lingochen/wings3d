@@ -3247,7 +3247,7 @@ class EdgeMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
    cutAndConnect() {
       const cutEdge = new CutEdgeCommand(this, 2);
       cutEdge.doIt();
-      let vertexMadsor = __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["currentMode"]();   // assurely it vertexMode
+      const vertexMadsor = __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["currentMode"]();   // assurely it vertexMode
       const vertexConnect = new __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__["VertexConnectCommand"](vertexMadsor);
       if (vertexConnect.doIt()) {
          __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueueCombo"]([cutEdge, vertexConnect]);
@@ -3268,7 +3268,7 @@ class EdgeMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
 
    collapseEdge(collapseArray) {  // undo of splitEdge.
       this.eachPreviewCage(function(cage, collapse) {
-         cage.collapseSplitEdge(collapse.splitEdges);
+         cage.collapseSplitEdge(collapse);
       }, collapseArray);
    }
 
@@ -3294,15 +3294,15 @@ class EdgeMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
       const selectedVertex = [];
       this.eachPreviewCage(function(cage) {
          const record = cage.collapseSelectedEdge();
-         collapse.count += record.collapse.edge.length;
+         collapse.count += record.collapse.edges.length;
          collapse.array.push( record );
       });
       return collapse;
    }
 
    restoreEdge(collapseEdgesArray) {
-      this.eachPreviewCage(function(cage, collapseEdges) {
-         cage.restoreCollapseEdge(collapseEdges.collapse);
+      this.eachPreviewCage(function(cage, collapse) {
+         cage.restoreCollapseEdge(collapse);
       }, collapseEdgesArray);
    }
 
@@ -6398,11 +6398,11 @@ PreviewCage.prototype.cutEdge = function(numberOfSegments) {
 };
 
 // collapse list of edges, pair with CutEdge.
-PreviewCage.prototype.collapseSplitEdge = function(splitEdges) {
+PreviewCage.prototype.collapseSplitEdge = function(collapse) {
    const vertexSize = this.geometry.vertices.length;
    const edgeSize = this.geometry.edges.length;
    const faceSize = this.geometry.faces.length;
-   for (let halfEdge of splitEdges) {
+   for (let halfEdge of collapse.splitEdges) {
       this.geometry.collapseEdge(halfEdge);
    }
    // recompute the smaller size
