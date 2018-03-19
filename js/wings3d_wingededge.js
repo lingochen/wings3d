@@ -882,7 +882,7 @@ WingedTopology.prototype.simpleSplit = function(inEdge) {
 // prepare adding vertex
 WingedTopology.prototype.prepVertex = function(inStart, outStop, adjacentRed, vertexLimit, origin) {
    if (!origin) {
-      origin = inStart.destination();
+      origin = outStop.origin;
    }
    const pt = vertexLimit.get(origin);
    let inEdge = inStart;
@@ -896,7 +896,7 @@ WingedTopology.prototype.prepVertex = function(inStart, outStop, adjacentRed, ve
          const destination = outEdge.destination();
          if (!adjacentRed.has(outEdge.wingedEdge)) { // white edge, definite walk along this edge
             if( vertexLimit.has(destination) )   {  // add and average
-               vec3.add(pt, origin.vertex, destination);
+               vec3.add(pt, origin.vertex, destination.vertex);
                vec3.scale(pt, pt, 0.5);
             } else { // limit is destination
                vec3.copy(pt, destination.vertex);
@@ -948,7 +948,7 @@ WingedTopology.prototype.bevelEdge = function(wingedEdges) {   // wingedEdges(se
       const outEdge = this.doubleEdge(wingedEdge.left);   // add edge and faces
       ret.faces.add(outEdge.face);
       vertices.add( outEdge.origin );
-      //vertices.add( outEdge.destination() );
+      vertices.add( outEdge.destination() );
       //ret.halfEdges.push(wingedEdge.left);    // start of new face. also can be use for undo.
       // we create a new tag.
       adjacentRed.set(wingedEdge, outEdge.wingedEdge);
@@ -1018,13 +1018,13 @@ WingedTopology.prototype.bevelEdge = function(wingedEdges) {   // wingedEdges(se
       } else { // normal expansion
          // add the last one, simple split
          // check(insertion.destination !== insertion.next.origin);
-         this.prepVertex(insertion, edgeInsertion[0], adjacentRed, vertexLimit);
+         this.prepVertex(insertion, edgeInsertion[0].pair, adjacentRed, vertexLimit);
          const edge = this.simpleSplit(insertion);
          ret.halfEdges.push(edge);
          // create a new innerface, and fix the edge to point to it
-         const polygon = this._createPolygon(edge, edgeInsertion.length);
-         //  and fix the edges to point to it
          let prev = edge.pair;
+         const polygon = this._createPolygon(prev, edgeInsertion.length);
+         //  and fix the edges to point to it
          for (let insert of edgeInsertion) {
             let current = insert.next.pair;
             current.face = polygon; // point to inner face
