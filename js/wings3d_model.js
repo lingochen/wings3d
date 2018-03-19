@@ -1657,11 +1657,11 @@ PreviewCage.prototype.cutEdge = function(numberOfSegments) {
 };
 
 // collapse list of edges, pair with CutEdge.
-PreviewCage.prototype.collapseSplitEdge = function(splitEdges) {
+PreviewCage.prototype.collapseSplitEdge = function(collapse) {
    const vertexSize = this.geometry.vertices.length;
    const edgeSize = this.geometry.edges.length;
    const faceSize = this.geometry.faces.length;
-   for (let halfEdge of splitEdges) {
+   for (let halfEdge of collapse.splitEdges) {
       this.geometry.collapseEdge(halfEdge);
    }
    // recompute the smaller size

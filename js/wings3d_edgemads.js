@@ -115,7 +115,7 @@ class EdgeMadsor extends Madsor {
    cutAndConnect() {
       const cutEdge = new CutEdgeCommand(this, 2);
       cutEdge.doIt();
-      let vertexMadsor = View.currentMode();   // assurely it vertexMode
+      const vertexMadsor = View.currentMode();   // assurely it vertexMode
       const vertexConnect = new VertexConnectCommand(vertexMadsor);
       if (vertexConnect.doIt()) {
          View.undoQueueCombo([cutEdge, vertexConnect]);
@@ -136,7 +136,7 @@ class EdgeMadsor extends Madsor {
 
    collapseEdge(collapseArray) {  // undo of splitEdge.
       this.eachPreviewCage(function(cage, collapse) {
-         cage.collapseSplitEdge(collapse.splitEdges);
+         cage.collapseSplitEdge(collapse);
       }, collapseArray);
    }
 
@@ -162,15 +162,15 @@ class EdgeMadsor extends Madsor {
       const selectedVertex = [];
       this.eachPreviewCage(function(cage) {
          const record = cage.collapseSelectedEdge();
-         collapse.count += record.collapse.edge.length;
+         collapse.count += record.collapse.edges.length;
          collapse.array.push( record );
       });
       return collapse;
    }
 
    restoreEdge(collapseEdgesArray) {
-      this.eachPreviewCage(function(cage, collapseEdges) {
-         cage.restoreCollapseEdge(collapseEdges.collapse);
+      this.eachPreviewCage(function(cage, collapse) {
+         cage.restoreCollapseEdge(collapse);
       }, collapseEdgesArray);
    }
 
