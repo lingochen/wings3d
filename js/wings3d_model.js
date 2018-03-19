@@ -1955,6 +1955,7 @@ PreviewCage.prototype.bevelEdge = function() {
    }
 
    // add the new Faces, new edges and new vertices to the preview
+   this._updateAffected(this.geometry.affected);
    this._resizeBoundingSphere(oldSize.face);
    this._resizePreview(oldSize.vertex, oldSize.face);
    this._resizePreviewEdge(oldSize.edge);

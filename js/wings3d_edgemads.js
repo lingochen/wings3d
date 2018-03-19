@@ -401,6 +401,7 @@ class EdgeBevelHandler extends MovePositionHandler {
       this.selectedEdges = madsor.snapshotSelection();
       // snapshot.
       this.snapshots = madsor.bevel();
+      View.restoreFaceMode(this.snapshots);
       // remember to get the lowest magnitude
       this.vertexLimit = Number.MAX_SAFE_INTEGER;
       for (let snapshot of this.snapshots) {
@@ -414,6 +415,8 @@ class EdgeBevelHandler extends MovePositionHandler {
       let move = this._calibrateMovement(ev.movementX);
       if ((this.movement+move) > this.vertexLimit) {
          move = this.vertexLimit - this.movement;
+      } else if ((this.movement+move) < 0) {
+         move = 0 - this.movement;
       }
       this.madsor.moveSelection(move, this.snapshots);
       this.movement += move;
