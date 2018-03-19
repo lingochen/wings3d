@@ -3507,7 +3507,7 @@ class CollapseEdgeCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["E
 }
 
 class BevelEdgeCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
-   constructor(madsor, selectedEdges, movement, snapshots, useNormal = false) {
+   constructor(madsor, selectedEdges, movement, snapshots) {
       super();
       this.madsor = madsor;
       this.selectedEdges = selectedEdges;
@@ -3515,8 +3515,8 @@ class BevelEdgeCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["Edit
    }
 
    doIt() {
-      this.snapshots = this.bevel();   // should test for current snapshots and prev snapshots?
-      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreFaceMode"](snapshots.faces);
+      this.snapshots = this.madsor.bevel();   // should test for current snapshots and prev snapshots?
+      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreFaceMode"](this.snapshots);
       this.madsor.moveSelection(this.movement, this.snapshots);
    }
 
@@ -3535,7 +3535,7 @@ class EdgeBevelHandler extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Move
       this.snapshots = madsor.bevel();
       // remember to get the lowest magnitude
       this.vertexLimit = Number.MAX_SAFE_INTEGER;
-      for (let snapshot of snapshots) {
+      for (let snapshot of this.snapshots) {
          this.vertexLimit = Math.min(this.vertexLimit, snapshot.vertexLimit);
       } 
       //this.snapshots
@@ -5686,10 +5686,11 @@ PreviewCage.prototype.restoreMoveSelection = function(snapshot) {
 // 3-15 - add limit to movement.
 PreviewCage.prototype.moveSelection = function(movement, snapshot) {
    // first move geometry's position
-   if (snapshot.normal) {
+   if (snapshot.direction) {
       let i = 0; 
       for (let vertex of snapshot.vertices) {
-         vec3.scaleAndAdd(vertex.vertex, vertex.vertex, snapshot.normal[i++], movement);  // movement is magnitude
+         vec3.scaleAndAdd(vertex.vertex, vertex.vertex, snapshot.direction.subarray(i, i+3), movement);  // movement is magnitude
+         i+=3;
       }
    } else {
       for (let vertex of snapshot.vertices) {
@@ -5711,7 +5712,7 @@ PreviewCage.prototype.snapshotPosition = function(vertices, normalArray) {
       vertices: null,
       wingedEdges: new Set,
       position: null,
-      normal: normalArray,
+      direction: normalArray,
    };
    ret.vertices = vertices;
    // allocated save position data.
@@ -5796,27 +5797,23 @@ PreviewCage.prototype.snapshotFacePositionAndNormal = function() {
    }
    // copy normal;
    const normalArray = new Float32Array(vertices.size*3);
-   const retArray = [];
    let i = 0;
    for (let [_vert, normal] of normalMap) {
       let inputNormal = normalArray.subarray(i, i+3);
       vec3.copy(inputNormal, normal);
-      retArray.push(inputNormal);
       i+=3;
    }
-   return this.snapshotPosition(vertices, retArray);
+   return this.snapshotPosition(vertices, normalArray);
 };
 
 PreviewCage.prototype.snapshotVertexPositionAndNormal = function() {
    const vertices = new Set(this.selectedSet);
-   const normalArray = [];
    const array = new Float32Array(vertices.size*3);
    array.fill(0.0);
    // copy normal
    let i = 0;
    for (let vertex of vertices) {
       let normal = array.subarray(i, i+3);
-      normalArray.push( normal );
       vertex.eachOutEdge( function(outEdge) {
          if (outEdge.isNotBoundary()) {
             vec3.add(normal, normal, outEdge.face.normal);
@@ -5826,7 +5823,7 @@ PreviewCage.prototype.snapshotVertexPositionAndNormal = function() {
       i +=3;
    }
 
-   return this.snapshotPosition(vertices, normalArray);
+   return this.snapshotPosition(vertices, array);
 };
 
 PreviewCage.prototype.snapshotEdgePositionAndNormal = function() {
@@ -5859,17 +5856,15 @@ PreviewCage.prototype.snapshotEdgePositionAndNormal = function() {
    // copy normal
    const normalArray = new Float32Array(vertices.size*3);
    normalArray.fill(0.0);
-   const retArray = [];
    let i = 0;
    for (let [_vert, normal] of normalMap) {
       let inputNormal = normalArray.subarray(i, i+3);
       for (let poly of normal) {
          vec3.add(inputNormal, inputNormal, poly.normal);
       }
-      retArray.push(inputNormal);
       i+=3;
    }
-   return this.snapshotPosition(vertices, retArray);
+   return this.snapshotPosition(vertices, normalArray);
 };
 
 
@@ -6692,6 +6687,13 @@ PreviewCage.prototype.bevelEdge = function() {
 
    // cut bevelEdge
    const result = this.geometry.bevelEdge(wingedEdges);       // input edge will take the new vertex as origin.
+   // get all effected wingedEdge
+   result.wingedEdges = new Set;
+   for (let vertex of result.vertices) {
+      for (let hEdge of vertex.edgeRing()) {
+         result.wingedEdges.add( hEdge.wingedEdge );
+      }
+   }
 
    // add the new Faces, new edges and new vertices to the preview
    this._resizeBoundingSphere(oldSize.face);
@@ -6703,7 +6705,7 @@ PreviewCage.prototype.bevelEdge = function() {
    //let ret = {
    //   faces: [],
    //   vertices: [],
-   //   wingedEdge: [],
+   //   wingedEdge: new set,
    //   halfEdges: [],
    //   position: float32array,
    //   direction: float32array,
@@ -7638,7 +7640,27 @@ WingedTopology.prototype.splitEdge = function(outEdge, pt, delOut) {
 
 
 
+// used by bevel
+WingedTopology.prototype.doubleEdge = function(inEdge) {
+   // the edge to be cloned.
+   const prev = inEdge.prev();
 
+   // reassign pointer
+   const newOut = this._createEdge(inEdge.destination(), inEdge.origin);
+   const newIn = newOut.pair;
+   newOut.next = inEdge;
+   newIn.next = inEdge.next;
+   inEdge.next = newOut;
+   prev.next = newIn;
+
+   // reassign polygon
+   const newPolygon = this._createPolygon(newOut, 2);
+   newIn.face = inEdge.face;
+   newOut.face = newPolygon;
+   inEdge.face = newPolygon;
+
+   return newOut;
+};
 // create new edge, but no new vertex.
 WingedTopology.prototype.simpleSplit = function(inEdge) {
    // check(inEdge.destination() !== inEdge.next.origin)
@@ -7658,25 +7680,26 @@ WingedTopology.prototype.prepVertex = function(inStart, outStop, adjacentRed, ve
    const pt = vertexLimit.get(origin);
    let inEdge = inStart;
    let notDone = 1;
+   let outEdge;
    do {
-      let outEdge = inEdge.next;
+      outEdge = inEdge.next;
       outEdge.origin = origin;
       inEdge = outEdge.pair;
       if (notDone) {
          const destination = outEdge.destination();
-         if (!adjacentRed(outEdge.wingedEdge)) { // white edge, definite walk along this edge
+         if (!adjacentRed.has(outEdge.wingedEdge)) { // white edge, definite walk along this edge
             if( vertexLimit.has(destination) )   {  // add and average
                vec3.add(pt, origin.vertex, destination);
-               ve3.scale(pt, pt, 0.5);
-            } else { // limit is detination
-               pt = destination;
+               vec3.scale(pt, pt, 0.5);
+            } else { // limit is destination
+               vec3.copy(pt, destination.vertex);
             }  
             notDone = 0;
          } else {
             if ((notDone === 1) && vertexLimit.has(destination)) {
                notDone = 2;         // vertex limit it in the middle.
             }
-            vec3.add(pt, pt, destination);
+            vec3.add(pt, pt, destination.vertex);
          }
       }
    } while (outEdge !== outStop);
@@ -7690,7 +7713,7 @@ WingedTopology.prototype.prepVertex = function(inStart, outStop, adjacentRed, ve
 };
 WingedTopology.prototype.prepVertexAdd = function(inStart, outStop, adjacentRed, vertexLimit) {
    const origin = this.addVertex(inStart.destination());
-   vertextLimit.set(origin, vec3.create());
+   vertexLimit.set(origin, vec3.create());
    this.prepVertex(inStart, outStop, adjacentRed, vertexLimit);
    return origin;
 }
@@ -7711,18 +7734,19 @@ WingedTopology.prototype.prepVertexAdd = function(inStart, outStop, adjacentRed,
 WingedTopology.prototype.bevelEdge = function(wingedEdges) {   // wingedEdges(selected) is a set
    let ret = {vertices: [], halfEdges: [], faces: []};
    let vertices = new Set;
-   let vertextLimit = new Map;
+   let vertexLimit = new Map;
    let adjacentRed = new Map;
    // double selected edge, and add face. 
    for (let wingedEdge of wingedEdges) {
-      const outEdge = this.insertEdge(wingedEdge.left.prev(), wingedEdge.left.next);   // add edge and faces
+      const outEdge = this.doubleEdge(wingedEdge.left);   // add edge and faces
       ret.faces.push(outEdge.face);
       vertices.add( outEdge.origin );
+      //vertices.add( outEdge.destination() );
       vertexLimit.set(outEdge.origin, vec3.create());
       //ret.halfEdges.push(wingedEdge.left);    // start of new face. also can be use for undo.
       // we create a new tag.
-      adjacentRed.add(wingedEdge, outEdge.wingedEdge);
-      adjacentRed.add(outEdge.wingedEdge, wingedEdge);
+      adjacentRed.set(wingedEdge, outEdge.wingedEdge);
+      adjacentRed.set(outEdge.wingedEdge, wingedEdge);
    }
 
    // for every vertex, add edge and chamfer vertex for 1)adjacent red edges, 2) adjacent white edges.
@@ -7747,7 +7771,7 @@ WingedTopology.prototype.bevelEdge = function(wingedEdges) {   // wingedEdges(se
       let insertion;
       for (let nextStop of edgeInsertion) {
          if (insertion) {
-            const origin = this.prepVertexAdd(insertion, nextStop, adjacentRed, vertexLimit);
+            const origin = this.prepVertexAdd(insertion, nextStop.pair, adjacentRed, vertexLimit);
             const edge = this.simpleSplit(insertion);
             origin.outEdge = edge.pair;
             ret.vertices.push( origin );
@@ -7802,16 +7826,16 @@ WingedTopology.prototype.bevelEdge = function(wingedEdges) {   // wingedEdges(se
    // compute vertexLimit magnitude, and expanding direction. (reuse normal), 
    // now (vertexLimit - vertex) = direction. 
    ret.vertexLimit = Number.MAX_SAFE_INTEGER;       // magnitude
-   ret.position = new Float32Array(vertices.size*3);     // saved the original position
-   ret.direction = new Float32Array(vertices.size*3);    // also add direction.
+   ret.position = new Float32Array(ret.vertices.length*3);     // saved the original position
+   ret.direction = new Float32Array(ret.vertices.length*3);    // also add direction.
    let i = 0;
    for (let vertex of ret.vertices) {
-      let position = ret.position.subarray(i, i+3);
-      let direction = ret.direction.subarray(i, i+3);
-      vec3.copy(direction, vertexLimit.has(vertex).vertex);
-      vec3.copy(position, vertext.vertex);
+      const position = ret.position.subarray(i, i+3);
+      const direction = ret.direction.subarray(i, i+3);
+      vec3.copy(direction, vertexLimit.get(vertex));
+      vec3.copy(position, vertex.vertex);
       vec3.sub(direction, direction, position);
-      vertexLimit = Math.min(vec3.magnitude(direction), vertexLimit);
+      ret.vertexLimit = Math.min(vec3.length(direction), ret.vertexLimit);
       vec3.normalize(direction, direction);
       i+=3;
    }
@@ -8183,7 +8207,7 @@ WingedTopology.prototype.removeEdge = function(outEdge) {
    outPrev.next = inNext;
    inPrev.next = outEdge.next;
 
-   //correct vertext.outEdge if needed.
+   //correct vertex.outEdge if needed.
    if (outEdge.origin.outEdge === outEdge) {
       outEdge.origin.outEdge = outPrev.pair;
    }

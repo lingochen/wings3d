@@ -375,7 +375,7 @@ class CollapseEdgeCommand extends EditCommand {
 }
 
 class BevelEdgeCommand extends EditCommand {
-   constructor(madsor, selectedEdges, movement, snapshots, useNormal = false) {
+   constructor(madsor, selectedEdges, movement, snapshots) {
       super();
       this.madsor = madsor;
       this.selectedEdges = selectedEdges;
@@ -383,8 +383,8 @@ class BevelEdgeCommand extends EditCommand {
    }
 
    doIt() {
-      this.snapshots = this.bevel();   // should test for current snapshots and prev snapshots?
-      View.restoreFaceMode(snapshots.faces);
+      this.snapshots = this.madsor.bevel();   // should test for current snapshots and prev snapshots?
+      View.restoreFaceMode(this.snapshots);
       this.madsor.moveSelection(this.movement, this.snapshots);
    }
 
@@ -403,7 +403,7 @@ class EdgeBevelHandler extends MovePositionHandler {
       this.snapshots = madsor.bevel();
       // remember to get the lowest magnitude
       this.vertexLimit = Number.MAX_SAFE_INTEGER;
-      for (let snapshot of snapshots) {
+      for (let snapshot of this.snapshots) {
          this.vertexLimit = Math.min(this.vertexLimit, snapshot.vertexLimit);
       } 
       //this.snapshots

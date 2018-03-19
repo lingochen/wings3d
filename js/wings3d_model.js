@@ -945,10 +945,11 @@ PreviewCage.prototype.restoreMoveSelection = function(snapshot) {
 // 3-15 - add limit to movement.
 PreviewCage.prototype.moveSelection = function(movement, snapshot) {
    // first move geometry's position
-   if (snapshot.normal) {
+   if (snapshot.direction) {
       let i = 0; 
       for (let vertex of snapshot.vertices) {
-         vec3.scaleAndAdd(vertex.vertex, vertex.vertex, snapshot.normal[i++], movement);  // movement is magnitude
+         vec3.scaleAndAdd(vertex.vertex, vertex.vertex, snapshot.direction.subarray(i, i+3), movement);  // movement is magnitude
+         i+=3;
       }
    } else {
       for (let vertex of snapshot.vertices) {
@@ -970,7 +971,7 @@ PreviewCage.prototype.snapshotPosition = function(vertices, normalArray) {
       vertices: null,
       wingedEdges: new Set,
       position: null,
-      normal: normalArray,
+      direction: normalArray,
    };
    ret.vertices = vertices;
    // allocated save position data.
@@ -1055,27 +1056,23 @@ PreviewCage.prototype.snapshotFacePositionAndNormal = function() {
    }
    // copy normal;
    const normalArray = new Float32Array(vertices.size*3);
-   const retArray = [];
    let i = 0;
    for (let [_vert, normal] of normalMap) {
       let inputNormal = normalArray.subarray(i, i+3);
       vec3.copy(inputNormal, normal);
-      retArray.push(inputNormal);
       i+=3;
    }
-   return this.snapshotPosition(vertices, retArray);
+   return this.snapshotPosition(vertices, normalArray);
 };
 
 PreviewCage.prototype.snapshotVertexPositionAndNormal = function() {
    const vertices = new Set(this.selectedSet);
-   const normalArray = [];
    const array = new Float32Array(vertices.size*3);
    array.fill(0.0);
    // copy normal
    let i = 0;
    for (let vertex of vertices) {
       let normal = array.subarray(i, i+3);
-      normalArray.push( normal );
       vertex.eachOutEdge( function(outEdge) {
          if (outEdge.isNotBoundary()) {
             vec3.add(normal, normal, outEdge.face.normal);
@@ -1085,7 +1082,7 @@ PreviewCage.prototype.snapshotVertexPositionAndNormal = function() {
       i +=3;
    }
 
-   return this.snapshotPosition(vertices, normalArray);
+   return this.snapshotPosition(vertices, array);
 };
 
 PreviewCage.prototype.snapshotEdgePositionAndNormal = function() {
@@ -1118,17 +1115,15 @@ PreviewCage.prototype.snapshotEdgePositionAndNormal = function() {
    // copy normal
    const normalArray = new Float32Array(vertices.size*3);
    normalArray.fill(0.0);
-   const retArray = [];
    let i = 0;
    for (let [_vert, normal] of normalMap) {
       let inputNormal = normalArray.subarray(i, i+3);
       for (let poly of normal) {
          vec3.add(inputNormal, inputNormal, poly.normal);
       }
-      retArray.push(inputNormal);
       i+=3;
    }
-   return this.snapshotPosition(vertices, retArray);
+   return this.snapshotPosition(vertices, normalArray);
 };
 
 
@@ -1951,6 +1946,13 @@ PreviewCage.prototype.bevelEdge = function() {
 
    // cut bevelEdge
    const result = this.geometry.bevelEdge(wingedEdges);       // input edge will take the new vertex as origin.
+   // get all effected wingedEdge
+   result.wingedEdges = new Set;
+   for (let vertex of result.vertices) {
+      for (let hEdge of vertex.edgeRing()) {
+         result.wingedEdges.add( hEdge.wingedEdge );
+      }
+   }
 
    // add the new Faces, new edges and new vertices to the preview
    this._resizeBoundingSphere(oldSize.face);
@@ -1962,7 +1964,7 @@ PreviewCage.prototype.bevelEdge = function() {
    //let ret = {
    //   faces: [],
    //   vertices: [],
-   //   wingedEdge: [],
+   //   wingedEdge: new set,
    //   halfEdges: [],
    //   position: float32array,
    //   direction: float32array,
