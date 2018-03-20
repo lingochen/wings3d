@@ -405,14 +405,16 @@ Polygon.prototype.update = function() {
    do {
       current.face = this;
       ++this.numberOfVertex;
-      if (this.numberOfVertex > 1000) {   // break;   
+      if (this.numberOfVertex > 1001) {   // break;   
          console.log("something is wrong with polygon link list");
          return;
       }
       current = current.next;
    } while (current !== begin);
    // compute normal.
-   this.computeNormal();
+   if (this.numberOfVertex > 2) {
+      this.computeNormal();
+   }
 };
 
 
@@ -858,11 +860,14 @@ WingedTopology.prototype.doubleEdge = function(inEdge) {
    prev.next = newIn;
 
    // reassign polygon
-   const newPolygon = this._createPolygon(newOut, 2);
    newIn.face = inEdge.face;
+   if (inEdge.face.halfEdge === inEdge) {
+      newIn.face.halfEdge = newIn;
+   }
    this.affected.faces.add(newIn.face);
-   newOut.face = newPolygon;
-   inEdge.face = newPolygon;
+   const newPolygon = this._createPolygon(newOut, 2);
+//   newOut.face = newPolygon;
+//   inEdge.face = newPolygon;
 
    return newOut;
 };
@@ -976,13 +981,21 @@ WingedTopology.prototype.bevelEdge = function(wingedEdges) {   // wingedEdges(se
       } while(current !== start);   // save the last pair (end, start) for special processing.
       // real expandsion of vertex, and edge
       let insertion;
+      let prevOut;
+      let firstOut;
       for (let nextStop of edgeInsertion) {
          if (insertion) {
             const origin = this.prepVertexAdd(insertion, nextStop.pair, adjacentRed, vertexLimit);
-            const edge = this.simpleSplit(insertion);
-            origin.outEdge = edge.pair;
+            let out = this.simpleSplit(insertion);
+            origin.outEdge = out.pair;
             ret.vertices.push( origin );
-            ret.halfEdges.push( edge );
+            ret.halfEdges.push( out );
+            if (prevOut) {
+               out.pair.next = prevOut.pair;
+            } else {
+               firstOut = out;
+            }
+            prevOut = out;
          }
          insertion = nextStop;
       }
@@ -1022,15 +1035,9 @@ WingedTopology.prototype.bevelEdge = function(wingedEdges) {   // wingedEdges(se
          const edge = this.simpleSplit(insertion);
          ret.halfEdges.push(edge);
          // create a new innerface, and fix the edge to point to it
-         let prev = edge.pair;
-         const polygon = this._createPolygon(prev, edgeInsertion.length);
-         //  and fix the edges to point to it
-         for (let insert of edgeInsertion) {
-            let current = insert.next.pair;
-            current.face = polygon; // point to inner face
-            current.next = prev;    // fix edge's next pointer.
-            prev = current;
-         }
+         edge.pair.next = prevOut.pair;
+         firstOut.pair.next = edge.pair;
+         const polygon = this._createPolygon(edge.pair, edgeInsertion.length);
          ret.faces.add( polygon );
       }
    }
