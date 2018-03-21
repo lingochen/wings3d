@@ -375,44 +375,25 @@ class CollapseEdgeCommand extends EditCommand {
 }
 
 class BevelEdgeCommand extends EditCommand {
-   constructor(madsor, selectedEdges, movement, snapshots) {
+   constructor(madsor) {
       super();
       this.madsor = madsor;
-      this.selectedEdges = selectedEdges;
-      this.snapshots = snapshots;
+      this.selectedEdges = madsor.snapshotSelection();
+      this.movement = 0;
    }
 
    doIt() {
       this.snapshots = this.madsor.bevel();   // should test for current snapshots and prev snapshots?
       View.restoreFaceMode(this.snapshots);
       this.madsor.moveSelection(this.movement, this.snapshots);
-   }
-
-   undo() {
-      // restoreToEdgeMode
-      this.madsor.collapseEdge(this.snapshots);
-      View.restoreEdgeMode(this.selectedEdges);
-   }
-}
-
-class EdgeBevelHandler extends MovePositionHandler {
-   constructor(madsor) {
-      super(madsor);
-      this.selectedEdges = madsor.snapshotSelection();
-      // snapshot.
-      this.snapshots = madsor.bevel();
-      View.restoreFaceMode(this.snapshots);
-      // remember to get the lowest magnitude
+      // get limit
       this.vertexLimit = Number.MAX_SAFE_INTEGER;
       for (let snapshot of this.snapshots) {
          this.vertexLimit = Math.min(this.vertexLimit, snapshot.vertexLimit);
       } 
-      //this.snapshots
-      this.movement = 0;
    }
 
-   handleMouseMove(ev) {
-      let move = this._calibrateMovement(ev.movementX);
+   update(move) {
       if ((this.movement+move) > this.vertexLimit) {
          move = this.vertexLimit - this.movement;
       } else if ((this.movement+move) < 0) {
@@ -422,14 +403,32 @@ class EdgeBevelHandler extends MovePositionHandler {
       this.movement += move;
    }
 
+   undo() {
+      //  this.madsor.restoreMoveSelection(this.snapshots);
+      this.madsor.collapseEdge(this.snapshots);
+      View.restoreEdgeMode(this.selectedEdges);
+      this.snapshots = undefined;
+   }
+}
+
+class EdgeBevelHandler extends MovePositionHandler {
+   constructor(madsor) {
+      super(madsor);
+      this.bevelEdge = new BevelEdgeCommand(this.madsor); 
+      this.bevelEdge.doIt();
+   }
+
+   handleMouseMove(ev) {
+      let move = this._calibrateMovement(ev.movementX);
+      this.bevelEdge.update(move);
+   }
+
    _commit() {
-      View.undoQueue(new BevelEdgeCommand(this.madsor, this.movement, this.selectedEdges, this.snapshots));
+      View.undoQueue(this.bevelEdge);
    }
 
    _cancel() {
-      this.madsor.restoreMoveSelection(this.snapshots);
-      this.madsor.collapseEdge(this.snapshots);
-      this.restoreEdgeMode(this.selectedEdges);
+      this.bevelEdge.undo();
    }
 }
 

@@ -3507,44 +3507,25 @@ class CollapseEdgeCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["E
 }
 
 class BevelEdgeCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
-   constructor(madsor, selectedEdges, movement, snapshots) {
+   constructor(madsor) {
       super();
       this.madsor = madsor;
-      this.selectedEdges = selectedEdges;
-      this.snapshots = snapshots;
+      this.selectedEdges = madsor.snapshotSelection();
+      this.movement = 0;
    }
 
    doIt() {
       this.snapshots = this.madsor.bevel();   // should test for current snapshots and prev snapshots?
       __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreFaceMode"](this.snapshots);
       this.madsor.moveSelection(this.movement, this.snapshots);
-   }
-
-   undo() {
-      // restoreToEdgeMode
-      this.madsor.collapseEdge(this.snapshots);
-      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreEdgeMode"](this.selectedEdges);
-   }
-}
-
-class EdgeBevelHandler extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["MovePositionHandler"] {
-   constructor(madsor) {
-      super(madsor);
-      this.selectedEdges = madsor.snapshotSelection();
-      // snapshot.
-      this.snapshots = madsor.bevel();
-      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreFaceMode"](this.snapshots);
-      // remember to get the lowest magnitude
+      // get limit
       this.vertexLimit = Number.MAX_SAFE_INTEGER;
       for (let snapshot of this.snapshots) {
          this.vertexLimit = Math.min(this.vertexLimit, snapshot.vertexLimit);
       } 
-      //this.snapshots
-      this.movement = 0;
    }
 
-   handleMouseMove(ev) {
-      let move = this._calibrateMovement(ev.movementX);
+   update(move) {
       if ((this.movement+move) > this.vertexLimit) {
          move = this.vertexLimit - this.movement;
       } else if ((this.movement+move) < 0) {
@@ -3554,14 +3535,32 @@ class EdgeBevelHandler extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Move
       this.movement += move;
    }
 
+   undo() {
+      //  this.madsor.restoreMoveSelection(this.snapshots);
+      this.madsor.collapseEdge(this.snapshots);
+      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreEdgeMode"](this.selectedEdges);
+      this.snapshots = undefined;
+   }
+}
+
+class EdgeBevelHandler extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["MovePositionHandler"] {
+   constructor(madsor) {
+      super(madsor);
+      this.bevelEdge = new BevelEdgeCommand(this.madsor); 
+      this.bevelEdge.doIt();
+   }
+
+   handleMouseMove(ev) {
+      let move = this._calibrateMovement(ev.movementX);
+      this.bevelEdge.update(move);
+   }
+
    _commit() {
-      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"](new BevelEdgeCommand(this.madsor, this.movement, this.selectedEdges, this.snapshots));
+      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"](this.bevelEdge);
    }
 
    _cancel() {
-      this.madsor.restoreMoveSelection(this.snapshots);
-      this.madsor.collapseEdge(this.snapshots);
-      this.restoreEdgeMode(this.selectedEdges);
+      this.bevelEdge.undo();
    }
 }
 
