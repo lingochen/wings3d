@@ -59,7 +59,7 @@ class FaceMadsor extends Madsor {
    }
 
    getSelection(cage) {
-      return {faces: cage.snapshotSelection() };
+      return {selectedFaces: cage.snapshotSelection() };
    }
 
    // get selected Face's vertex snapshot. for doing, and redo queue. 

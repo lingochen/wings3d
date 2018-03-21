@@ -497,7 +497,7 @@ PreviewCage.prototype.changeFromBodyToVertexSelect = function() {
 };
 
 PreviewCage.prototype.restoreFaceSelection = function(snapshot) {
-   for (let polygon of snapshot.faces) {
+   for (let polygon of snapshot.selectedFaces) {
       this.selectFace(polygon.halfEdge);
    }
 };
@@ -1899,7 +1899,7 @@ PreviewCage.prototype.collapseSelectedFace = function() {
    this.changeFromFaceToEdgeSelect();
    // reuse collapseEdge
    const collapse = this.collapseSelectedEdge();
-   collapse.faces = saveSet;
+   collapse.selectedFaces = saveSet;
    return collapse;
 };
 PreviewCage.prototype.undoCollapseFace = function(collapse) {
@@ -1909,11 +1909,11 @@ PreviewCage.prototype.undoCollapseFace = function(collapse) {
 
 PreviewCage.prototype.dissolveSelectedVertex = function() {
    const size = this._getGeometrySize();
-   const undoArray = {array: [], faces: []};
+   const undoArray = {array: [], selectedFaces: []};
    for (let vertex of this.selectedSet) {
       let result = this.geometry.dissolveVertex(vertex);
       undoArray.array.unshift( result.undo );
-      undoArray.faces.push( result.polygon );
+      undoArray.selectedFaces.push( result.polygon );
    }
    this._resetSelectVertex();
    // update previewBox.
@@ -1948,9 +1948,11 @@ PreviewCage.prototype.bevelEdge = function() {
    const result = this.geometry.bevelEdge(wingedEdges);       // input edge will take the new vertex as origin.
    // get all effected wingedEdge
    result.wingedEdges = new Set;
+   result.faces = new Set;
    for (let vertex of result.vertices) {
       for (let hEdge of vertex.edgeRing()) {
          result.wingedEdges.add( hEdge.wingedEdge );
+         result.faces.add( hEdge.face );
       }
    }
 
