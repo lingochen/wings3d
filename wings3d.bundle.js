@@ -2438,7 +2438,7 @@ class FaceMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
    }
 
    getSelection(cage) {
-      return {faces: cage.snapshotSelection() };
+      return {selectedFaces: cage.snapshotSelection() };
    }
 
    // get selected Face's vertex snapshot. for doing, and redo queue. 
@@ -5240,7 +5240,7 @@ PreviewCage.prototype.changeFromBodyToVertexSelect = function() {
 };
 
 PreviewCage.prototype.restoreFaceSelection = function(snapshot) {
-   for (let polygon of snapshot.faces) {
+   for (let polygon of snapshot.selectedFaces) {
       this.selectFace(polygon.halfEdge);
    }
 };
@@ -6642,7 +6642,7 @@ PreviewCage.prototype.collapseSelectedFace = function() {
    this.changeFromFaceToEdgeSelect();
    // reuse collapseEdge
    const collapse = this.collapseSelectedEdge();
-   collapse.faces = saveSet;
+   collapse.selectedFaces = saveSet;
    return collapse;
 };
 PreviewCage.prototype.undoCollapseFace = function(collapse) {
@@ -6652,11 +6652,11 @@ PreviewCage.prototype.undoCollapseFace = function(collapse) {
 
 PreviewCage.prototype.dissolveSelectedVertex = function() {
    const size = this._getGeometrySize();
-   const undoArray = {array: [], faces: []};
+   const undoArray = {array: [], selectedFaces: []};
    for (let vertex of this.selectedSet) {
       let result = this.geometry.dissolveVertex(vertex);
       undoArray.array.unshift( result.undo );
-      undoArray.faces.push( result.polygon );
+      undoArray.selectedFaces.push( result.polygon );
    }
    this._resetSelectVertex();
    // update previewBox.
@@ -6691,9 +6691,11 @@ PreviewCage.prototype.bevelEdge = function() {
    const result = this.geometry.bevelEdge(wingedEdges);       // input edge will take the new vertex as origin.
    // get all effected wingedEdge
    result.wingedEdges = new Set;
+   result.faces = new Set;
    for (let vertex of result.vertices) {
       for (let hEdge of vertex.edgeRing()) {
          result.wingedEdges.add( hEdge.wingedEdge );
+         result.faces.add( hEdge.face );
       }
    }
 
@@ -7743,14 +7745,14 @@ WingedTopology.prototype.prepVertexAdd = function(inStart, outStop, adjacentRed,
 // For each break, create a new edge. Splice everything together.
 //
 WingedTopology.prototype.bevelEdge = function(wingedEdges) {   // wingedEdges(selected) is a set
-   let ret = {vertices: [], halfEdges: [], faces: new Set};
+   let ret = {vertices: [], halfEdges: [], selectedFaces: new Set};
    let vertices = new Set;
    let vertexLimit = new Map;
    let adjacentRed = new Map;
    // double selected edge, and add face. 
    for (let wingedEdge of wingedEdges) {
       const outEdge = this.doubleEdge(wingedEdge.left);   // add edge and faces
-      ret.faces.add(outEdge.face);
+      ret.selectedFaces.add(outEdge.face);
       vertices.add( outEdge.origin );
       vertices.add( outEdge.destination() );
       //ret.halfEdges.push(wingedEdge.left);    // start of new face. also can be use for undo.
@@ -7803,7 +7805,7 @@ WingedTopology.prototype.bevelEdge = function(wingedEdges) {   // wingedEdges(se
          // create another edge
          const splitOut = insertion.next.pair.next;
          const outEdge = this.insertEdge(splitOut.pair.prev() , splitOut.pair.next);
-         ret.faces.add(outEdge.face);
+         ret.selectedFaces.add(outEdge.face);
          // now we have 4 edge. expand.
          this.prepVertex(insertion, insertion.next, adjacentRed, ret.vertexLimit);
          const edge = this.simpleSplit(insertion);
@@ -7839,7 +7841,7 @@ WingedTopology.prototype.bevelEdge = function(wingedEdges) {   // wingedEdges(se
          edge.pair.next = prevOut.pair;
          firstOut.pair.next = edge.pair;
          const polygon = this._createPolygon(edge.pair, edgeInsertion.length);
-         ret.faces.add( polygon );
+         ret.selectedFaces.add( polygon );
       }
    }
    // compute vertexLimit magnitude, and expanding direction. (reuse normal), 
