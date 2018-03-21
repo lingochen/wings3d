@@ -889,43 +889,34 @@ WingedTopology.prototype.prepVertex = function(inStart, outStop, adjacentRed, ve
    if (!origin) {
       origin = outStop.origin;
    }
-   const pt = vertexLimit.get(origin);
+   const pts = vertexLimit.get(origin);
    let inEdge = inStart;
-   let notDone = 1;
+   let notDone = true;
    let outEdge;
    do {
       outEdge = inEdge.next;
       outEdge.origin = origin;
       inEdge = outEdge.pair;
       if (notDone) {
+         const pt = vec3.create();
          const destination = outEdge.destination();
+         if( vertexLimit.has(destination) )   {  // add and average
+            vec3.add(pt, origin.vertex, destination.vertex);
+            vec3.scale(pt, pt, 0.5);
+         } else { // limit to destination
+            vec3.copy(pt, destination.vertex);
+         }  
          if (!adjacentRed.has(outEdge.wingedEdge)) { // white edge, definite walk along this edge
-            if( vertexLimit.has(destination) )   {  // add and average
-               vec3.add(pt, origin.vertex, destination.vertex);
-               vec3.scale(pt, pt, 0.5);
-            } else { // limit is destination
-               vec3.copy(pt, destination.vertex);
-            }  
-            notDone = 0;
-         } else {
-            if ((notDone === 1) && vertexLimit.has(destination)) {
-               notDone = 2;         // vertex limit it in the middle.
-            }
-            vec3.add(pt, pt, destination.vertex);
+            notDone = false;
+            pts.length = 0;      // make sure we only have one.
          }
+         pts.push( pt );
       }
    } while (outEdge !== outStop);
-   if (notDone > 0) {   // case of 2 red wings
-      vec3.scale(pt, pt, 0.5);
-      if (notDone === 2) {    // limit to half the length
-         vec3.add(pt, pt, origin.vertex);
-         vec3.scale(pt, pt, 0.5);
-      }
-   }
 };
 WingedTopology.prototype.prepVertexAdd = function(inStart, outStop, adjacentRed, vertexLimit) {
    const origin = this.addVertex(inStart.destination().vertex);
-   vertexLimit.set(origin, vec3.create());
+   vertexLimit.set(origin, []);
    this.prepVertex(inStart, outStop, adjacentRed, vertexLimit, origin);
    return origin;
 }
@@ -963,7 +954,7 @@ WingedTopology.prototype.bevelEdge = function(wingedEdges) {   // wingedEdges(se
    // for every vertex, add edge and chamfer vertex for 1)adjacent red edges, 2) adjacent white edges.
    for (let vertex of vertices) {
       ret.vertices.push(vertex);       // affected vertex original
-      vertexLimit.set(vertex, vec3.create());
+      vertexLimit.set(vertex, []);
       let edgeInsertion = [];
       const start = vertex.outEdge;    // walk the ring
       let current = start;
@@ -1006,7 +997,7 @@ WingedTopology.prototype.bevelEdge = function(wingedEdges) {   // wingedEdges(se
          const outEdge = this.insertEdge(splitOut.pair.prev() , splitOut.pair.next);
          ret.selectedFaces.add(outEdge.face);
          // now we have 4 edge. expand.
-         this.prepVertex(insertion, insertion.next, adjacentRed, ret.vertexLimit);
+         this.prepVertex(insertion, insertion.next, adjacentRed, vertexLimit);
          const edge = this.simpleSplit(insertion);
          ret.halfEdges.push( edge );
          // remember to fix the last edge
@@ -1027,7 +1018,8 @@ WingedTopology.prototype.bevelEdge = function(wingedEdges) {   // wingedEdges(se
          hEdge.face.numberOfVertex++;
          this.affected.faces.add(hEdge.face);
          // fix the vertexLimit.
-         const pt = vertexLimit.get(hEdge.next.origin); // to limit the original vertex
+         const pts = vertexLimit.get(hEdge.next.origin); // to limit the original vertex
+         const pt = vec3.create();  pts.push(pt);
          while (adjacentRed.has(hEdge.next.wingedEdge)) { hEdge = hEdge.next.pair; }  // we move along non-selected edge
          vec3.copy(pt, hEdge.next.destination().vertex);
       } else { // normal expansion
@@ -1052,11 +1044,14 @@ WingedTopology.prototype.bevelEdge = function(wingedEdges) {   // wingedEdges(se
    for (let vertex of ret.vertices) {
       const position = ret.position.subarray(i, i+3);
       const direction = ret.direction.subarray(i, i+3);
-      vec3.copy(direction, vertexLimit.get(vertex));
-      vec3.copy(position, vertex.vertex);
-      vec3.sub(direction, direction, position);
-      ret.vertexLimit = Math.min(vec3.length(direction), ret.vertexLimit);
-      vec3.normalize(direction, direction);
+      const pts = vertexLimit.get(vertex);
+      for (let pt of pts) {
+         vec3.copy(position, vertex.vertex);
+         vec3.sub(pt, pt, position);
+         ret.vertexLimit = Math.min(vec3.length(pt), ret.vertexLimit);
+         vec3.normalize(pt, pt);
+         vec3.add(direction, direction, pt);
+      }
       i+=3;
    }
 
