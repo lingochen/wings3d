@@ -1019,15 +1019,17 @@ WingedTopology.prototype.bevelEdge = function(wingedEdges) {   // wingedEdges(se
 
       } else if (edgeInsertion.length === 2) {   // 2 edges, so they should be sharing the same edge.
          // breakup the insertion point, to reuse the lone edge
-         const hEdge = edgeInsertion[0].next.pair;
+         let hEdge = edgeInsertion[0].next.pair;
          hEdge.next = insertion.next;
          insertion.next = hEdge;
-         const pt = vertexLimit.get(edgeInsertion[0].destination()); // to limit the original vertex
-         vec3.copy(pt, hEdge.next.destination().vertex);
          // fix the face ptr
          hEdge.face = insertion.face;
          hEdge.face.numberOfVertex++;
          this.affected.faces.add(hEdge.face);
+         // fix the vertexLimit.
+         const pt = vertexLimit.get(hEdge.next.origin); // to limit the original vertex
+         while (adjacentRed.has(hEdge.next.wingedEdge)) { hEdge = hEdge.next.pair; }  // we move along non-selected edge
+         vec3.copy(pt, hEdge.next.destination().vertex);
       } else { // normal expansion
          // add the last one, simple split
          // check(insertion.destination !== insertion.next.origin);
