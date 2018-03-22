@@ -848,7 +848,6 @@ WingedTopology.prototype.splitEdge = function(outEdge, pt, delOut) {
 
 // used by bevel
 WingedTopology.prototype.doubleEdge = function(inEdge) {
-   // the edge to be cloned.
    const prev = inEdge.prev();
 
    // reassign pointer
@@ -991,20 +990,29 @@ WingedTopology.prototype.bevelEdge = function(wingedEdges) {   // wingedEdges(se
       if (edgeInsertion.length === 1) {   // must be splitEdge, special case. needs to create an extra triangle face.
          // create another edge
          const splitOut = insertion.next.pair.next;
-         const outEdge = this.insertEdge(splitOut.pair.prev() , splitOut.pair.next);
+         const outEdge = this.doubleEdge(splitOut.pair);
+         adjacentRed.set(splitOut.wingedEdge, outEdge.wingedEdge);
+         adjacentRed.set(outEdge.wingedEdge, splitOut.wingedEdge);
          ret.selectedFaces.add(outEdge.face);
          // now we have 4 edge. expand.
-         this.prepVertex(insertion, insertion.next, adjacentRed, vertexLimit, slideEdge);
+         const orig = this.prepVertexAdd(insertion, splitOut, adjacentRed, vertexLimit, slideEdge);
          const edge = this.simpleSplit(insertion);
+         orig.outEdge = edge.pair;
+         ret.vertices.push( orig );
          ret.halfEdges.push( edge );
          // remember to fix the last edge
-         splitOut.pair.next = edgeInsertion[0].next.pair;
-         edgeInsertion[0].next.pair.next = outEdge.pair;
+         const hEdge = edge.pair;
+         hEdge.next = outEdge;
+         splitOut.pair.next = hEdge;
          // fix the face pointer
-         edge.face = spliteOut.pair.face;
-         // this vertexLimit is special, limit to middle of face?
-
-
+         hEdge.face = outEdge.face;
+         hEdge.face.numberOfVertex++;
+         // this vertexLimit will limit to outer ring
+         let pts = vertexLimit.get(vertex);
+         pts.push(outEdge.pair);
+         pts.push(insertion.pair.next.pair);
+         pts = vertexLimit.get(orig);
+         pts[0] = pts[0].prev(); // readjust
       } else if (edgeInsertion.length === 2) {   // 2 edges, so they should be sharing the same edge.
          // breakup the insertion point, to reuse the lone edge
          let hEdge = edgeInsertion[0].next.pair;
