@@ -525,7 +525,7 @@ WingedTopology.prototype.addVertex = function(pt, delVertex) {
       this.affected.vertices.add( vertex );
       return vertex;
    } else {
-      if (this.buf.len >= (this.buf.data.length)) {
+      if ((this.buf.len+3) >= (this.buf.data.length)) {
          // reached maximum buff size, resize, double the size
          var buffer = new ArrayBuffer(Float32Array.BYTES_PER_ELEMENT*this.buf.len*2);
          var data = new Float32Array(buffer);

@@ -225,6 +225,15 @@ PreviewCage.prototype._computePreviewIndex = function() {
    this.preview.indexLength = length;
 };
 
+
+PreviewCage.prototype._updatePreviewAll = function(oldSize, affected) {
+   this._resizeBoundingSphere(oldSize.face);
+   this._resizePreview(oldSize.vertex, oldSize.face);
+   this._resizePreviewEdge(oldSize.edge);
+   this._resizePreviewVertex(oldSize.vertex);
+   this._updateAffected(affected);
+};
+
 PreviewCage.prototype._updateAffected = function(affected) {
    if (affected.vertices.size > 0) {
       for (let vertex of affected.vertices) {
@@ -238,7 +247,7 @@ PreviewCage.prototype._updateAffected = function(affected) {
    }
    if (affected.faces.size > 0) {
       for (let face of affected.faces) {
-         this._updatePreview(face);
+         this._updatePreviewFace(face);
       }
       // update index
 
@@ -270,7 +279,7 @@ PreviewCage.prototype._updateVertex = function(vertex, affected) {
    }
 };
 
-PreviewCage.prototype._updatePreview = function(polygon) {
+PreviewCage.prototype._updatePreviewFace = function(polygon) {
    // recompute boundingSphere centroid, and if numberOfVertex changed, needs to recompute index.
    if ((polygon.index < this.boundingSpheres.length) && polygon.isReal()) { // will be get recompute on resize
       const sphere = this.boundingSpheres[ polygon.index ];
@@ -1553,9 +1562,7 @@ PreviewCage.prototype.extractFace = function() {
 //
 // extrudeFace - will create a list of 
 PreviewCage.prototype.extrudeFace = function(contours) {
-   const vertexSize = this.geometry.vertices.length;
-   const edgeSize = this.geometry.edges.length;
-   const faceSize = this.geometry.faces.length;
+   const oldSize = this._getGeometrySize();
    // array of edgeLoop. 
    if (!contours) {
       contours = {};
@@ -1565,10 +1572,7 @@ PreviewCage.prototype.extrudeFace = function(contours) {
    contours.extrudeEdges = this.geometry.extrudeContours(contours.edgeLoops);
    //const edgeLoops = this.geometry.extrudePolygon(this.selectedSet);
    // add the new Faces. and new vertices to the preview
-   this._resizeBoundingSphere(faceSize);
-   this._resizePreview(vertexSize, faceSize);
-   this._resizePreviewEdge(edgeSize);
-   this._resizePreviewVertex(vertexSize);
+   this._updatePreviewAll(oldSize, this.geometry.affected);
    // reselect face
    const oldSelected = this._resetSelectFace();
    for (let polygon of oldSelected) {
@@ -1582,9 +1586,7 @@ PreviewCage.prototype.extrudeFace = function(contours) {
 // collapse list of edges
 PreviewCage.prototype.collapseExtrudeEdge = function(edges) {
    const affectedPolygon = new Set;
-   const vertexSize = this.geometry.vertices.length;
-   const edgeSize = this.geometry.edges.length;
-   const faceSize = this.geometry.faces.length;
+   const oldSize = this._getGeometrySize();
    for (let edge of edges) {
       edge.origin.eachOutEdge( function(edge) {
          affectedPolygon.add(edge.face);
@@ -1592,11 +1594,8 @@ PreviewCage.prototype.collapseExtrudeEdge = function(edges) {
       this.geometry.collapseEdge(edge);
    }
    // recompute the smaller size
-   this._resizeBoundingSphere(faceSize);
-   this._resizePreview(vertexSize, faceSize);
-   this._resizePreviewEdge(edgeSize);
-   this._resizePreviewVertex(vertexSize);
-      // reselect face
+   this._updatePreviewAll(oldSize,  this.geometry.affected);
+   // reselect face
    const oldSelected = this._resetSelectFace();
    for (let polygon of oldSelected) {
       this.selectFace(polygon.halfEdge);
@@ -1619,9 +1618,7 @@ PreviewCage.prototype.collapseExtrudeEdge = function(edges) {
 PreviewCage.prototype.cutEdge = function(numberOfSegments) {
    const edges = this.selectedSet;
 
-   const faceSize = this.geometry.faces.length;
-   const edgeSize = this.geometry.edges.length;
-   const vertexSize = this.geometry.vertices.length;
+   const oldSize = this._getGeometrySize();
    const vertices = [];
    const splitEdges = [];              // added edges list
    // cut edge by numberOfCuts
@@ -1642,37 +1639,25 @@ PreviewCage.prototype.cutEdge = function(numberOfSegments) {
       //this._updatePreviewEdge(edge, true);
    }
       // after deletion of faces and edges. update
-   this._updateAffected(this.geometry.affected);
-   //
-   this._resizePreview(vertexSize, faceSize);
-   this._resizePreviewEdge(edgeSize);
-   this._resizePreviewVertex(vertexSize);
+   this._updatePreviewAll(oldSize, this.geometry.affected);
    // returns created vertices.
    return {vertices: vertices, splitEdges: splitEdges};
 };
 
 // collapse list of edges, pair with CutEdge.
 PreviewCage.prototype.collapseSplitEdge = function(collapse) {
-   const vertexSize = this.geometry.vertices.length;
-   const edgeSize = this.geometry.edges.length;
-   const faceSize = this.geometry.faces.length;
+   const oldSize = this._getGeometrySize();
    for (let halfEdge of collapse.splitEdges) {
       this.geometry.collapseEdge(halfEdge);
    }
    // recompute the smaller size
-   this._updateAffected(this.geometry.affected);
-   this._resizeBoundingSphere(faceSize);
-   this._resizePreview(vertexSize, faceSize);
-   this._resizePreviewEdge(edgeSize);
-   this._resizePreviewVertex(vertexSize);
+   this._updatePreviewAll(oldSize, this.geometry.affected);
 };
 
 
 // connect selected Vertex,
 PreviewCage.prototype.connectVertex = function() {
-   const faceSize = this.geometry.faces.length;
-   const edgeSize = this.geometry.edges.length;
-   const vertexSize = this.geometry.vertices.length;
+   const oldSize = this._getGeometrySize();
    
    //this.geometry.clearAffected();
    const edgeList = this.geometry.connectVertex(this.selectedSet);
@@ -1681,20 +1666,14 @@ PreviewCage.prototype.connectVertex = function() {
       wingedEdgeList.push( edge.wingedEdge );
    }
 
-   // updateAffected.
-   this._updateAffected(this.geometry.affected);
-
-   // addition.
-   this._resizeBoundingSphere(faceSize);
-   this._resizePreview(vertexSize, faceSize);
-   this._resizePreviewEdge(edgeSize);
-   this._resizePreviewVertex(vertexSize);
+   // updatePreviewbox
+   this._updatePreviewAll(oldSize, this.geometry.affected);
 
    return {halfEdges: edgeList, wingedEdges: wingedEdgeList};
 };
 // pair with connectVertex.
 PreviewCage.prototype.dissolveConnect = function(insertEdges) {
-   const size = this._getGeometrySize();
+   const oldSize = this._getGeometrySize();
 
    // dissolve in reverse direction
    for (let i = insertEdges.length-1; i >= 0; --i) {
@@ -1702,20 +1681,14 @@ PreviewCage.prototype.dissolveConnect = function(insertEdges) {
       this.geometry.removeEdge(halfEdge.pair);
    }
 
-   // after deletion of faces and edges. update
-   this._updateAffected(this.geometry.affected);
-
-   // let _resize, to update preview
-   this._resizeBoundingSphere(size.face);
-   this._resizePreview(size.vertex, size.face);
-   this._resizePreviewEdge(size.edge);
+   this._updatePreviewAll(oldSize, this.geometry.affected);
 };
 
 
 //
 PreviewCage.prototype.dissolveSelectedEdge = function() {
    const dissolveEdges = [];
-   const size = this._getGeometrySize();
+   const oldSize = this._getGeometrySize();
    for (let edge of this.selectedSet) {
       let undo = this.geometry.dissolveEdge(edge.left);
       let dissolve = { halfEdge: edge.left, undo: undo};
@@ -1723,32 +1696,26 @@ PreviewCage.prototype.dissolveSelectedEdge = function() {
    }
    this.selectedSet.clear();
    // after deletion of faces and edges. update
-   this._updateAffected(this.geometry.affected);
-   this._resizeBoundingSphere(size.face);
-   this._resizePreview(size.vertex, size.face);
-   this._resizePreviewEdge(size.edge);
+   this._updatePreviewAll(oldSize, this.geometry.affected);
    // return affected.
    return dissolveEdges;
 };
 PreviewCage.prototype.reinsertDissolveEdge = function(dissolveEdges) {
-   const size = this._getGeometrySize();
+   const oldSize = this._getGeometrySize();
    // walk form last to first.
    for (let i = (dissolveEdges.length-1); i >= 0; --i) {
       let dissolve = dissolveEdges[i];
       dissolve.undo();
       this.selectEdge(dissolve.halfEdge);
    }
-   this._updateAffected(this.geometry.affected);
-   this._resizeBoundingSphere(size.face);
-   this._resizePreview(size.vertex, size.face);
-   this._resizePreviewEdge(size.edge);
+   this._updatePreviewAll(oldSize, this.geometry.affected);
 };
 
 
 PreviewCage.prototype.collapseSelectedEdge = function() {
    const restoreVertex = [];
    const collapseEdges = [];
-   const size = this._getGeometrySize();
+   const oldSize = this._getGeometrySize();
    const selected = new Map();
    for (let edge of this.selectedSet) {
       let undo = function() {};
@@ -1793,17 +1760,13 @@ PreviewCage.prototype.collapseSelectedEdge = function() {
       this.geometry.addAffectedEdgeAndFace(vertex);
    }
    // after deletion of
-   this._updateAffected(this.geometry.affected);
-   this._resizeBoundingSphere(size.face);
-   this._resizePreview(size.vertex, size.face);
-   this._resizePreviewEdge(size.edge);
-   this._resizePreviewVertex(size.vertex);
+   this._updatePreviewAll(oldSize, this.geometry.affected);
    return { collapse: {edges: collapseEdges, vertices: restoreVertex}, vertices: selectedVertex };
 };
 
 PreviewCage.prototype.restoreCollapseEdge = function(data) {
    const collapse = data.collapse;
-   const size = this._getGeometrySize();
+   const oldSize = this._getGeometrySize();
    // walk form last to first.
    this.selectedSet.clear();
 
@@ -1821,16 +1784,12 @@ PreviewCage.prototype.restoreCollapseEdge = function(data) {
       this.geometry.addAffectedEdgeAndFace(restore.vertex);
    }
    // 
-   this._updateAffected(this.geometry.affected);
-   this._resizeBoundingSphere(size.face);
-   this._resizePreview(size.vertex, size.face);
-   this._resizePreviewEdge(size.edge);   
-   this._resizePreviewVertex(size.vertex);
+   this._updatePreviewAll(oldSize, this.geometry.affected);
 };
 
 
 PreviewCage.prototype.dissolveSelectedFace = function() {
-   const size = this._getGeometrySize();
+   const oldSize = this._getGeometrySize();
    const selectedEdges = new Set;
    // the all the selectedFace's edge.
    for (let polygon of this.selectedSet) {
@@ -1864,16 +1823,12 @@ PreviewCage.prototype.dissolveSelectedFace = function() {
    }
    this.selectedSet = selectedSet;
    // update previewBox.
-   this._updateAffected(this.geometry.affected);
-   this._resizeBoundingSphere(size.face);
-   this._resizePreview(size.vertex, size.face);
-   this._resizePreviewEdge(size.edge);   
-   this._resizePreviewVertex(size.vertex);
+   this._updatePreviewAll(oldSize, this.geometry.affected);
    // return undo function
    return {edges: substract, selection: selectedFace};
 };
 PreviewCage.prototype.undoDissolveFace = function(dissolve) {
-   const size = this._getGeometrySize();
+   const oldSize = this._getGeometrySize();
    for (let dissolveUndo of dissolve.edges) {
       dissolveUndo();
    }
@@ -1883,11 +1838,7 @@ PreviewCage.prototype.undoDissolveFace = function(dissolve) {
       this.selectFace(polygon.halfEdge);
    }
    // update previewBox.
-   this._updateAffected(this.geometry.affected);
-   this._resizeBoundingSphere(size.face);
-   this._resizePreview(size.vertex, size.face);
-   this._resizePreviewEdge(size.edge);   
-   this._resizePreviewVertex(size.vertex);
+   this._updatePreviewAll(oldSize, this.geometry.affected);
 }
 
 
@@ -1908,7 +1859,7 @@ PreviewCage.prototype.undoCollapseFace = function(collapse) {
 
 
 PreviewCage.prototype.dissolveSelectedVertex = function() {
-   const size = this._getGeometrySize();
+   const oldSize = this._getGeometrySize();
    const undoArray = {array: [], selectedFaces: []};
    for (let vertex of this.selectedSet) {
       let result = this.geometry.dissolveVertex(vertex);
@@ -1917,25 +1868,17 @@ PreviewCage.prototype.dissolveSelectedVertex = function() {
    }
    this._resetSelectVertex();
    // update previewBox.
-   this._updateAffected(this.geometry.affected);
-   this._resizeBoundingSphere(size.face);
-   this._resizePreview(size.vertex, size.face);
-   this._resizePreviewEdge(size.edge);   
-   this._resizePreviewVertex(size.vertex);
+   this._updatePreviewAll(oldSize, this.geometry.affected);
    return undoArray;
 };
 PreviewCage.prototype.undoDissolveVertex = function(undoArray) {
-   const size = this._getGeometrySize();
+   const oldSize = this._getGeometrySize();
    for (let undo of undoArray) {
       let vertex = undo();
       this.selectVertex(vertex);
    }
    // update previewBox.
-   this._updateAffected(this.geometry.affected);
-   this._resizeBoundingSphere(size.face);
-   this._resizePreview(size.vertex, size.face);
-   this._resizePreviewEdge(size.edge);   
-   this._resizePreviewVertex(size.vertex);
+   this._updatePreviewAll(oldSize, this.geometry.affected);
 };
 
 
@@ -1957,11 +1900,7 @@ PreviewCage.prototype.bevelEdge = function() {
    }
 
    // add the new Faces, new edges and new vertices to the preview
-   this._updateAffected(this.geometry.affected);
-   this._resizeBoundingSphere(oldSize.face);
-   this._resizePreview(oldSize.vertex, oldSize.face);
-   this._resizePreviewEdge(oldSize.edge);
-   this._resizePreviewVertex(oldSize.vertex);
+   this._updatePreviewAll(oldSize, this.geometry.affected);
    // update vertices created vertices.
    return result;
    //let ret = {
