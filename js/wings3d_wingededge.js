@@ -313,6 +313,18 @@ Vertex.prototype.isIsolated = function() {
    return (this.outEdge === null);
 };
 
+Vertex.prototype.numberOfEdge = function() {
+   const limits = 1001;
+   let count = 0;
+   const start = this.outEdge;
+   let current = start;
+   do {
+      count++;
+      current = current.pair.next;
+   } while ((current !== start) || (count > limits));
+   return count;
+};
+
 
 
 
@@ -915,6 +927,24 @@ WingedTopology.prototype.prepVertexAdd = function(inStart, outStop, adjacentRed,
    this.prepVertex(inStart, outStop, adjacentRed, vertexLimit, slideEdge, origin);
    return origin;
 }
+WingedTopology.prototype.isSplitEdgeSelected = function(origin, dest, adjacentRed) {
+   for (let vertex of [origin, dest]) {
+      let count = 0;
+      let redCount = 0;
+      for (let hEdge of vertex.edgeRing()) {
+         count++;
+         if (adjacentRed.has(hEdge.wingedEdge)) {
+            redCount++;
+         }
+      }
+      if (count !== 3) {
+         return false;
+      } else if (redCount !== 2) {
+         return false;
+      }
+   }
+   return true;
+}
 // nice explanation.
 // https://stackoverflow.com/questions/35378378/multi-edge-bevel-on-half-edge-structure
 //
@@ -1016,7 +1046,6 @@ WingedTopology.prototype.bevelEdge = function(wingedEdges) {   // wingedEdges(se
          pts[0] = pts[0].prev(); // readjust
       } else if (edgeInsertion.length === 2) {   // 2 edges, so they should be sharing the same edge.
          const inStart = edgeInsertion[0];
-         const splitEdge = (inStart.next.pair.next.pair.next.pair.next.pair === inStart);   // is special split-edge (4-red edges)
          // breakup the insertion point, to reuse the lone edge
          let hEdge = inStart.next.pair;
          hEdge.next = insertion.next;
@@ -1026,10 +1055,20 @@ WingedTopology.prototype.bevelEdge = function(wingedEdges) {   // wingedEdges(se
          hEdge.face.numberOfVertex++;
          this.affected.faces.add(hEdge.face);
          // fix the vertexLimit.
-         const pts = vertexLimit.get(hEdge.next.origin); // to limit the original vertex
-         while (adjacentRed.has(hEdge.next.wingedEdge)) { hEdge = hEdge.next.pair; }  // we move along non-selected edge
-         pts.push( hEdge.next.pair );
-         slideEdge.add(hEdge.next.pair);
+         let pts = vertexLimit.get(hEdge.next.origin); // to limit the original vertex
+         if (!this.isSplitEdgeSelected(hEdge.next.origin, hEdge.origin, adjacentRed)) { 
+            while (adjacentRed.has(hEdge.next.wingedEdge)) { hEdge = hEdge.next.pair; }  // we move along non-selected edge
+            pts.push( hEdge.next.pair );
+            slideEdge.add(hEdge.next.pair);
+         } else {  // adjust vertex
+            const hEdge2 = hEdge.next.pair;
+            let prev = hEdge2.prev(); pts.push( prev ); slideEdge.add(prev);
+            let temp = hEdge2.next.next; pts.push(temp); slideEdge.add(temp);
+            //pts[1] = pts[1].pair.next.pair;
+            pts = vertexLimit.get(hEdge.origin);
+            prev = pts[0].prev(); pts[0] = prev; slideEdge.add(prev);
+            temp = pts[1].pair.next.pair; pts[1] = temp; slideEdge.add(temp);
+         }
       } else { // normal expansion
          // add the last one, simple split
          // check(insertion.destination !== insertion.next.origin);
