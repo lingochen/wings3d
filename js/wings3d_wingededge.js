@@ -990,12 +990,13 @@ WingedTopology.prototype.bevelEdge = function(wingedEdges) {   // wingedEdges(se
       if (edgeInsertion.length === 1) {   // must be splitEdge, special case. needs to create an extra triangle face.
          // create another edge
          const splitOut = insertion.next.pair.next;
-         const outEdge = this.doubleEdge(splitOut.pair);
+         const outEdge = this.doubleEdge(splitOut.pair); // now we have 4 edge to expand, won't get into strange shape
          adjacentRed.set(splitOut.wingedEdge, outEdge.wingedEdge);
          adjacentRed.set(outEdge.wingedEdge, splitOut.wingedEdge);
          ret.selectedFaces.add(outEdge.face);
-         // now we have 4 edge. expand.
          const orig = this.prepVertexAdd(insertion, splitOut, adjacentRed, vertexLimit, slideEdge);
+         //adjacentRed.delete(splitOut.wingedEdge);
+         //adjacentRed.delete(outEdge.wingedEdge);
          const edge = this.simpleSplit(insertion);
          orig.outEdge = edge.pair;
          ret.vertices.push( orig );
@@ -1014,8 +1015,10 @@ WingedTopology.prototype.bevelEdge = function(wingedEdges) {   // wingedEdges(se
          pts = vertexLimit.get(orig);
          pts[0] = pts[0].prev(); // readjust
       } else if (edgeInsertion.length === 2) {   // 2 edges, so they should be sharing the same edge.
+         const inStart = edgeInsertion[0];
+         const splitEdge = (inStart.next.pair.next.pair.next.pair.next.pair === inStart);   // is special split-edge (4-red edges)
          // breakup the insertion point, to reuse the lone edge
-         let hEdge = edgeInsertion[0].next.pair;
+         let hEdge = inStart.next.pair;
          hEdge.next = insertion.next;
          insertion.next = hEdge;
          // fix the face ptr
