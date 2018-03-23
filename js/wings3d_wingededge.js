@@ -917,8 +917,10 @@ WingedTopology.prototype.prepVertex = function(inStart, outStop, adjacentRed, ve
          }
       }
    } while (outEdge !== outStop);
-   for (let hEdge of pts) {
-      slideEdge.add(hEdge);   // 
+   if (slideEdge) {
+      for (let hEdge of pts) {
+         slideEdge.add(hEdge);   // 
+      }
    }
 };
 WingedTopology.prototype.prepVertexAdd = function(inStart, outStop, adjacentRed, vertexLimit, slideEdge) {
@@ -1024,7 +1026,7 @@ WingedTopology.prototype.bevelEdge = function(wingedEdges) {   // wingedEdges(se
          adjacentRed.set(splitOut.wingedEdge, outEdge.wingedEdge);
          adjacentRed.set(outEdge.wingedEdge, splitOut.wingedEdge);
          ret.selectedFaces.add(outEdge.face);
-         const orig = this.prepVertexAdd(insertion, splitOut, adjacentRed, vertexLimit, slideEdge);
+         const orig = this.prepVertexAdd(insertion, splitOut, adjacentRed, vertexLimit);
          //adjacentRed.delete(splitOut.wingedEdge);
          //adjacentRed.delete(outEdge.wingedEdge);
          const edge = this.simpleSplit(insertion);

@@ -824,8 +824,8 @@ function initMode() {
 
 function toggleMode(mode) {
    let button = document.getElementById('toggle'+mode+'Mode');  // :checked property only existed on <input>
-   if (button) {
-      button.checked = true;
+   if (button && !button.checked) {
+      button.click();         // https://stackoverflow.com/questions/8206565/check-uncheck-checkbox-with-javascript
    }
 }
 function toggleVertexMode() {
@@ -7657,8 +7657,10 @@ WingedTopology.prototype.prepVertex = function(inStart, outStop, adjacentRed, ve
          }
       }
    } while (outEdge !== outStop);
-   for (let hEdge of pts) {
-      slideEdge.add(hEdge);   // 
+   if (slideEdge) {
+      for (let hEdge of pts) {
+         slideEdge.add(hEdge);   // 
+      }
    }
 };
 WingedTopology.prototype.prepVertexAdd = function(inStart, outStop, adjacentRed, vertexLimit, slideEdge) {
@@ -7764,7 +7766,7 @@ WingedTopology.prototype.bevelEdge = function(wingedEdges) {   // wingedEdges(se
          adjacentRed.set(splitOut.wingedEdge, outEdge.wingedEdge);
          adjacentRed.set(outEdge.wingedEdge, splitOut.wingedEdge);
          ret.selectedFaces.add(outEdge.face);
-         const orig = this.prepVertexAdd(insertion, splitOut, adjacentRed, vertexLimit, slideEdge);
+         const orig = this.prepVertexAdd(insertion, splitOut, adjacentRed, vertexLimit);
          //adjacentRed.delete(splitOut.wingedEdge);
          //adjacentRed.delete(outEdge.wingedEdge);
          const edge = this.simpleSplit(insertion);
@@ -7799,7 +7801,7 @@ WingedTopology.prototype.bevelEdge = function(wingedEdges) {   // wingedEdges(se
          if (!this.isSplitEdgeSelected(hEdge.next.origin, hEdge.origin, adjacentRed)) { 
             while (adjacentRed.has(hEdge.next.wingedEdge)) { hEdge = hEdge.next.pair; }  // we move along non-selected edge
             pts.push( hEdge.next.pair );
-            //slideEdge.add(hEdge.next.pair);
+            slideEdge.add(hEdge.next.pair);
          } else {  // adjust vertex
             const hEdge2 = hEdge.next.pair;
             let prev = hEdge2.prev(); pts.push( prev ); slideEdge.add(prev);
