@@ -962,11 +962,12 @@ WingedTopology.prototype.isSplitEdgeSelected = function(origin, dest, adjacentRe
 // For each break, create a new edge. Splice everything together.
 //
 WingedTopology.prototype.bevelEdge = function(wingedEdges) {   // wingedEdges(selected) is a set
-   let ret = {vertices: [], halfEdges: [], selectedFaces: new Set};
-   let vertices = new Set;
-   let vertexLimit = new Map;
-   let adjacentRed = new Map;
-   let slideEdge = new Set;      // halfEdge, where we will slide the bevel edge
+   const ret = {vertices: [], halfEdges: [], selectedFaces: new Set};
+   const vertices = new Set;
+   const vertexLimit = new Map;
+   const adjacentRed = new Map;
+   const slideEdge = new Set;      // halfEdge, where we will slide the bevel edge
+   const twoEdgeVertexHack = new Set;
    // double selected edge, and add face. 
    for (let wingedEdge of wingedEdges) {
       const outEdge = this.doubleEdge(wingedEdge.left);   // add edge and faces
@@ -1057,19 +1058,20 @@ WingedTopology.prototype.bevelEdge = function(wingedEdges) {   // wingedEdges(se
          hEdge.face.numberOfVertex++;
          this.affected.faces.add(hEdge.face);
          // fix the vertexLimit.
-         let pts = vertexLimit.get(hEdge.next.origin); // to limit the original vertex
+         const pts = vertexLimit.get(hEdge.next.origin); // to limit the original vertex
          if (!this.isSplitEdgeSelected(hEdge.next.origin, hEdge.origin, adjacentRed)) { 
             while (adjacentRed.has(hEdge.next.wingedEdge)) { hEdge = hEdge.next.pair; }  // we move along non-selected edge
             pts.push( hEdge.next.pair );
             slideEdge.add(hEdge.next.pair);
-         } else {  // adjust vertex
+         } else {  // adjust vertex, a lot of hacks.
             const hEdge2 = hEdge.next.pair;
             let prev = hEdge2.prev(); pts.push( prev ); slideEdge.add(prev);
-            let temp = hEdge2.next.next; pts.push(temp); slideEdge.add(temp);
-            //pts[1] = pts[1].pair.next.pair;
-            pts = vertexLimit.get(hEdge.origin);
-            prev = pts[0].prev(); pts[0] = prev; slideEdge.add(prev);
-            temp = pts[1].pair.next.pair; pts[1] = temp; slideEdge.add(temp);
+            let temp = hEdge2.next.next.pair; pts.push(temp); slideEdge.add(temp);
+            // readjust original
+            const pts2 = vertexLimit.get(hEdge.origin);
+            prev = pts2[0].prev(); pts2[0] = prev; slideEdge.add(prev);
+            temp = pts2[1].pair.next.pair; pts2[1] = temp; slideEdge.add(temp);
+            twoEdgeVertexHack.add(hEdge.origin).add(hEdge.destination());
          }
       } else { // normal expansion
          // add the last one, simple split
@@ -1095,17 +1097,24 @@ WingedTopology.prototype.bevelEdge = function(wingedEdges) {   // wingedEdges(se
       const position = ret.position.subarray(i, i+3);
       const direction = ret.direction.subarray(i, i+3);
       const hEdges = vertexLimit.get(vertex);
+      let avg = 1.0;
+      if (twoEdgeVertexHack.has(vertex)) {
+         avg = 0.4;
+      }
       for (let hEdge of hEdges) {
          vec3.copy(pt, hEdge.origin.vertex);
          vec3.copy(position, vertex.vertex);
          vec3.sub(pt, pt, position);
-         let average = 1.0;
+         let average = avg;
          if (slideEdge.has(hEdge.pair)) { // yep, we can only go as far as half point.
             average = 0.5;
-         }
+         } 
          ret.vertexLimit = Math.min(vec3.length(pt)*average, ret.vertexLimit);
          vec3.normalize(pt, pt);
          vec3.add(direction, direction, pt);
+      }
+      if (avg == 0.4) {
+         vec3.normalize(direction, direction, direction);
       }
       i+=3;
    }
