@@ -136,7 +136,7 @@ class EdgeMadsor extends Madsor {
 
    collapseEdge(collapseArray) {  // undo of splitEdge.
       this.eachPreviewCage(function(cage, collapse) {
-         cage.collapseSplitEdge(collapse);
+         cage.collapseSplitOrBevelEdge(collapse);
       }, collapseArray);
    }
 
@@ -404,10 +404,10 @@ class BevelEdgeCommand extends EditCommand {
    }
 
    undo() {
-      //  this.madsor.restoreMoveSelection(this.snapshots);
+      this.madsor.restoreMoveSelection(this.snapshots);
       this.madsor.collapseEdge(this.snapshots);
       View.restoreEdgeMode(this.selectedEdges);
-      this.snapshots = undefined;
+      //this.snapshots = undefined;
    }
 }
 

@@ -3268,7 +3268,7 @@ class EdgeMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
 
    collapseEdge(collapseArray) {  // undo of splitEdge.
       this.eachPreviewCage(function(cage, collapse) {
-         cage.collapseSplitEdge(collapse);
+         cage.collapseSplitOrBevelEdge(collapse);
       }, collapseArray);
    }
 
@@ -3536,10 +3536,10 @@ class BevelEdgeCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["Edit
    }
 
    undo() {
-      //  this.madsor.restoreMoveSelection(this.snapshots);
+      this.madsor.restoreMoveSelection(this.snapshots);
       this.madsor.collapseEdge(this.snapshots);
       __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreEdgeMode"](this.selectedEdges);
-      this.snapshots = undefined;
+      //this.snapshots = undefined;
    }
 }
 
@@ -6384,14 +6384,14 @@ PreviewCage.prototype.cutEdge = function(numberOfSegments) {
       // after deletion of faces and edges. update
    this._updatePreviewAll(oldSize, this.geometry.affected);
    // returns created vertices.
-   return {vertices: vertices, splitEdges: splitEdges};
+   return {vertices: vertices, halfEdges: splitEdges};
 };
 
-// collapse list of edges, pair with CutEdge.
-PreviewCage.prototype.collapseSplitEdge = function(collapse) {
+// collapse list of edges, pair with CutEdge, bevelEdge.
+PreviewCage.prototype.collapseSplitOrBevelEdge = function(collapse) {
    const oldSize = this._getGeometrySize();
-   for (let halfEdge of collapse.splitEdges) {
-      this.geometry.collapseEdge(halfEdge);
+   for (let halfEdge of collapse.halfEdges) {
+      this.geometry.collapseEdge(halfEdge, collapse.collapsibleWings);
    }
    // recompute the smaller size
    this._updatePreviewAll(oldSize, this.geometry.affected);
@@ -7702,7 +7702,7 @@ WingedTopology.prototype.isSplitEdgeSelected = function(origin, dest, adjacentRe
 // For each break, create a new edge. Splice everything together.
 //
 WingedTopology.prototype.bevelEdge = function(wingedEdges) {   // wingedEdges(selected) is a set
-   const ret = {vertices: [], halfEdges: [], selectedFaces: new Set};
+   const ret = {vertices: [], halfEdges: [], collapsibleWings: new Set, selectedFaces: new Set};
    const vertices = new Set;
    const vertexLimit = new Map;
    const adjacentRed = new Map;
@@ -7718,6 +7718,7 @@ WingedTopology.prototype.bevelEdge = function(wingedEdges) {   // wingedEdges(se
       // we create a new tag.
       adjacentRed.set(wingedEdge, outEdge.wingedEdge);
       adjacentRed.set(outEdge.wingedEdge, wingedEdge);
+      ret.collapsibleWings.add(outEdge.wingedEdge);
    }
 
    // for every vertex, add edge and chamfer vertex for 1)adjacent red edges, 2) adjacent white edges.
@@ -7854,7 +7855,7 @@ WingedTopology.prototype.bevelEdge = function(wingedEdges) {   // wingedEdges(se
          vec3.add(direction, direction, pt);
       }
       if (avg == 0.4) {
-         vec3.normalize(direction, direction, direction);
+         vec3.normalize(direction, direction);
       }
       i+=3;
    }
@@ -8139,7 +8140,10 @@ WingedTopology.prototype._restoreLoop = function(halfEdge, delEdge, delPolygon) 
    //    self._collapseLoop(outEdge);      
    //}
 };
-WingedTopology.prototype._collapseLoop = function(halfEdge) {
+WingedTopology.prototype._collapseLoop = function(halfEdge, collapsibleWings) {
+   if (collapsibleWings && !collapsibleWings.has(halfEdge.wingsEdge)) {   // if not collapsible, move to next.
+      halfEdge = halfEdge.next;  // need not check, if both are collapsible, either one are ok.
+   }
    const next = halfEdge.next;
    const pair = halfEdge.pair;
    const nextPair = next.pair;
@@ -8178,7 +8182,7 @@ WingedTopology.prototype._collapseLoop = function(halfEdge) {
 };
 
 
-WingedTopology.prototype.collapseEdge = function(halfEdge) {
+WingedTopology.prototype.collapseEdge = function(halfEdge, collapsibleWings) {
    const next = halfEdge.next;
    const pair = halfEdge.pair;
    const pairNext = pair.next;
@@ -8190,10 +8194,10 @@ WingedTopology.prototype.collapseEdge = function(halfEdge) {
    let undoCollapseLeft;
    let undoCollapseRight;
    if (next.next.next === next) {
-      undoCollapseLeft = this._collapseLoop(next.next);
+      undoCollapseLeft = this._collapseLoop(next.next, collapsibleWings);
    }
    if (pairNext.next.next === pairNext) {
-      undoCollapseRight = this._collapseLoop(pairNext);
+      undoCollapseRight = this._collapseLoop(pairNext, collapsibleWings);
    }
    return function() {
       if (typeof undoCollapseRight !== 'undefined') {

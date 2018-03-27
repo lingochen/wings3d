@@ -1641,14 +1641,14 @@ PreviewCage.prototype.cutEdge = function(numberOfSegments) {
       // after deletion of faces and edges. update
    this._updatePreviewAll(oldSize, this.geometry.affected);
    // returns created vertices.
-   return {vertices: vertices, splitEdges: splitEdges};
+   return {vertices: vertices, halfEdges: splitEdges};
 };
 
-// collapse list of edges, pair with CutEdge.
-PreviewCage.prototype.collapseSplitEdge = function(collapse) {
+// collapse list of edges, pair with CutEdge, bevelEdge.
+PreviewCage.prototype.collapseSplitOrBevelEdge = function(collapse) {
    const oldSize = this._getGeometrySize();
-   for (let halfEdge of collapse.splitEdges) {
-      this.geometry.collapseEdge(halfEdge);
+   for (let halfEdge of collapse.halfEdges) {
+      this.geometry.collapseEdge(halfEdge, collapse.collapsibleWings);
    }
    // recompute the smaller size
    this._updatePreviewAll(oldSize, this.geometry.affected);
