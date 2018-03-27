@@ -1010,7 +1010,7 @@ WingedTopology.prototype.bevelEdge = function(wingedEdges) {   // wingedEdges(se
             let out = this.simpleSplit(insertion);
             origin.outEdge = out.pair;
             ret.vertices.push( origin );
-            ret.halfEdges.push( out );
+            ret.halfEdges.push( out.pair );
             if (prevOut) {
                out.pair.next = prevOut.pair;
             } else {
@@ -1034,7 +1034,7 @@ WingedTopology.prototype.bevelEdge = function(wingedEdges) {   // wingedEdges(se
          const edge = this.simpleSplit(insertion);
          orig.outEdge = edge.pair;
          ret.vertices.push( orig );
-         ret.halfEdges.push( edge );
+         ret.halfEdges.push( edge.pair );
          // remember to fix the last edge
          const hEdge = edge.pair;
          hEdge.next = outEdge;
@@ -1079,7 +1079,7 @@ WingedTopology.prototype.bevelEdge = function(wingedEdges) {   // wingedEdges(se
          // check(insertion.destination !== insertion.next.origin);
          this.prepVertex(insertion, edgeInsertion[0].pair, adjacentRed, vertexLimit, slideEdge);
          const edge = this.simpleSplit(insertion);
-         ret.halfEdges.push(edge);
+         ret.halfEdges.push(edge.pair);
          // create a new innerface, and fix the edge to point to it
          edge.pair.next = prevOut.pair;
          firstOut.pair.next = edge.pair;
@@ -1401,7 +1401,7 @@ WingedTopology.prototype._restoreLoop = function(halfEdge, delEdge, delPolygon) 
    //}
 };
 WingedTopology.prototype._collapseLoop = function(halfEdge, collapsibleWings) {
-   if (collapsibleWings && !collapsibleWings.has(halfEdge.wingsEdge)) {   // if not collapsible, move to next.
+   if (collapsibleWings && !collapsibleWings.has(halfEdge.wingedEdge)) {   // if not collapsible, move to next.
       halfEdge = halfEdge.next;  // need not check, if both are collapsible, either one are ok.
    }
    const next = halfEdge.next;
