@@ -1915,7 +1915,7 @@ PreviewCage.prototype.bevelEdge = function() {
 };
 
 //
-// iterated through selectedEdge, and expand it along the edges, edge loop only possible on 4 edges vertex.wwww
+// iterated through selectedEdge, and expand it along the edges, edge loop only possible on 4 edges vertex
 //
 PreviewCage.prototype.edgeLoop = function(nth) {
    let count = 0;
@@ -1929,6 +1929,31 @@ PreviewCage.prototype.edgeLoop = function(nth) {
          while (hEdge = hEdge.next.pair.next) { // next edge
             if (this.selectedSet.has(hEdge.wingedEdge) || (hEdge.destination().numberOfEdge() !== 4) ) {
                break;   // already at end, or non-4 edge vertex.
+            }
+            ++count;
+            this.selectEdge(hEdge);
+            ret.push(hEdge);
+         }
+      }
+   }
+   return ret;
+};
+
+//
+// iterated through selectedEdge, and expand it along 2 side of loop, edge Ring only possible on 4 edges face
+//
+PreviewCage.prototype.edgeRing = function(nth) {
+   let count = 0;
+   const selection = new Set(this.selectedSet);
+   const ret = [];
+   for (let wingedEdge of selection) {
+      // walk forward, then backward.
+      for (let hEdge of wingedEdge) {
+         const end = hEdge;
+         // walking along the loop
+         while (hEdge = hEdge.pair.next.next) { // next edge
+            if (this.selectedSet.has(hEdge.wingedEdge) || (hEdge.next.next.next.next !== hEdge) ) {
+               break;   // already at end, or non-4 edge face.
             }
             ++count;
             this.selectEdge(hEdge);

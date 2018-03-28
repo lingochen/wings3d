@@ -73,15 +73,22 @@ class EdgeMadsor extends Madsor {
          });
       // EdgeLoop.
       UI.bindMenuItem(action.edgeLoop.name, function(ev) {
-         const command = new EdgeLoopCommand(self, 1);
-         if (command.doIt()) {
+            const command = new EdgeLoopCommand(self, 1);
+            if (command.doIt()) {
                View.undoQueue(command);
             } else { // should not happened, make some noise
 
             }
          }, "l");
-
       // EdgeRing
+      UI.bindMenuItem(action.edgeRing.name, function(ev) {
+            const command = new EdgeRingCommand(self, 1);
+            if (command.doIt()) {
+               View.undoQueue(command);
+            } else { // should not happened, make some noise
+      
+            }
+         }, "l");
    }
 
    modeName() {
@@ -151,6 +158,15 @@ class EdgeMadsor extends Madsor {
       return loop;
    }
 
+   edgeRing(nth) {
+      const loop = {count: 0, selection: []};
+      this.eachPreviewCage( function(preview) {
+         const record = preview.edgeRing(nth);
+         loop.count += record.length;
+         loop.selection.push( record );
+      });
+      return loop;
+   }
    collapseEdge(collapseArray) {  // undo of splitEdge.
       this.eachPreviewCage(function(cage, collapse) {
          cage.collapseSplitOrBevelEdge(collapse);
@@ -470,7 +486,25 @@ class EdgeLoopCommand extends EditCommand {
       this.madsor.resetSelection();
       this.madsor.restoreSelection(this.selectedEdges);
    }
+}
 
+class EdgeRingCommand extends EditCommand {
+   constructor(madsor, nth) {
+      super();
+      this.madsor = madsor;
+      this.nth = nth;
+      this.selectedEdges = madsor.snapshotSelection();
+   }
+
+   doIt() {
+      this.loopSelection = this.madsor.edgeRing(this.nth);
+      return (this.loopSelection.count > 0);
+   }
+
+   undo() {
+      this.madsor.resetSelection();
+      this.madsor.restoreSelection(this.selectedEdges);
+   } 
 }
 
 export {
