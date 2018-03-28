@@ -39,10 +39,6 @@ class VertexMadsor extends Madsor {
       return 'Vertex';
    }
 
-   getSelection(cage) {
-      return {vertices: cage.snapshotSelection()};
-   }
-
    // get selected vertex snapshot. for doing, and redo queue. 
    snapshotPosition() {
       var snapshots = [];
@@ -147,11 +143,15 @@ class VertexMadsor extends Madsor {
    }
 
    _resetSelection(cage) {
-      return cage._resetSelectVertex();
+      return this._wrapSelection(cage._resetSelectVertex());
    }
 
    _restoreSelection(cage, snapshot) {
       cage.restoreVertexSelection(snapshot);
+   }
+
+   _wrapSelection(selection) {
+      return {vertices: selection};
    }
 
    toggleFunc(toMadsor) {
@@ -161,19 +161,19 @@ class VertexMadsor extends Madsor {
       if (toMadsor instanceof FaceMadsor) {
          redoFn = View.restoreFaceMode;
          this.eachPreviewCage( function(cage) {
-            snapshots.push( self.getSelection(cage) );
+            snapshots.push( self._wrapSelection(cage.snapshotSelection()) );
             cage.changeFromVertexToFaceSelect();
          } );
       } else if (toMadsor instanceof EdgeMadsor) {
          redoFn = View.restoreEdgeMode;
          this.eachPreviewCage( function(cage) {
-            snapshots.push( self.getSelection(cage)  );
+            snapshots.push( self._wrapSelection(cage.snapshotSelection())  );
             cage.changeFromVertexToEdgeSelect();
          });
       } else {
          redoFn = View.restoreEdgeMode;
          this.eachPreviewCage( function(cage) {
-            snapshots.push( self.getSelection(cage)  );
+            snapshots.push( self._wrapSelection(cage.snapshotSelection())  );
             cage.changeFromVertexToBodySelect();
          });      
       }

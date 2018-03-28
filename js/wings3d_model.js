@@ -1914,6 +1914,31 @@ PreviewCage.prototype.bevelEdge = function() {
    //};
 };
 
+//
+// iterated through selectedEdge, and expand it along the edges, edge loop only possible on 4 edges vertex.wwww
+//
+PreviewCage.prototype.edgeLoop = function(nth) {
+   let count = 0;
+   const selection = new Set(this.selectedSet);
+   const ret = [];
+   for (let wingedEdge of selection) {
+      // walk forward, then backward.
+      for (let hEdge of wingedEdge) {
+         const end = hEdge;
+         // walking along the loop
+         while (hEdge = hEdge.next.pair.next) { // next edge
+            if (this.selectedSet.has(hEdge.wingedEdge) || (hEdge.destination().numberOfEdge() !== 4) ) {
+               break;   // already at end, or non-4 edge vertex.
+            }
+            ++count;
+            this.selectEdge(hEdge);
+            ret.push(hEdge);
+         }
+      }
+   }
+   return ret;
+};
+
 
 PreviewCage.prototype.EPSILON = 0.000001;
 // Möller–Trumbore ray-triangle intersection algorithm

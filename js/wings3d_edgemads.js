@@ -71,14 +71,21 @@ class EdgeMadsor extends Madsor {
       UI.bindMenuItem(action.edgeBevel.name, function(ev) {
             View.attachHandlerMouseMove(new EdgeBevelHandler(self));
          });
+      // EdgeLoop.
+      UI.bindMenuItem(action.edgeLoop.name, function(ev) {
+         const command = new EdgeLoopCommand(self, 1);
+         if (command.doIt()) {
+               View.undoQueue(command);
+            } else { // should not happened, make some noise
+
+            }
+         });
+
+      // EdgeRing
    }
 
    modeName() {
       return 'Edge';
-   }
-
-   getSelection(cage) {
-      return {wingedEdges: cage.snapshotSelection() };
    }
 
    // get selected Edge's vertex snapshot. for doing, and redo queue. 
@@ -132,6 +139,16 @@ class EdgeMadsor extends Madsor {
          snapshots.push( preview.cutEdge(numberOfSegments) );
       });
       return snapshots;
+   }
+
+   edgeLoop(nth) {
+      const loop = {count: 0, selection: []};
+      this.eachPreviewCage( function(preview) {
+         const record = cage.edgeLoop(nth);
+         loop.count += record.length;
+         loop.selection.push( record );
+      });
+      return loop;
    }
 
    collapseEdge(collapseArray) {  // undo of splitEdge.
@@ -205,8 +222,12 @@ class EdgeMadsor extends Madsor {
       //}
    }
 
+   _wrapSelection(selection) {
+      return {wingedEdges: selection};
+   }
+
    _resetSelection(cage) {
-      return cage._resetSelectEdge();
+      return {wingedEdges: cage._resetSelectEdge()};
    }
 
    _restoreSelection(cage, snapshot) {
@@ -220,19 +241,19 @@ class EdgeMadsor extends Madsor {
       if (toMadsor instanceof FaceMadsor) {
          redoFn = View.restoreFaceMode;
          this.eachPreviewCage( function(cage) {
-            snapshots.push( self.getSelection(cage) );
+            snapshots.push( self._wrapSelection(cage.snapshotSelection()) );
             cage.changeFromEdgeToFaceSelect();
          });
       } else if (toMadsor instanceof VertexMadsor) {
          redoFn = View.restoreVertexMode;
          this.eachPreviewCage( function(cage) {
-            snapshots.push( self.getSelection(cage) );
+            snapshots.push( self._wrapSelection(cage.snapshotSelection()) );
             cage.changeFromEdgeToVertexSelect();
          });         
       } else {
          redoFn = View.restoreBodyMode;
          this.eachPreviewCage( function(cage) {
-            snapshots.push( self.getSelection(cage) );
+            snapshots.push( self._wrapSelection(cage.snapshotSelection()) );
             cage.changeFromEdgeToBodySelect();
          });
       }
@@ -430,6 +451,25 @@ class EdgeBevelHandler extends MovePositionHandler {
    _cancel() {
       this.bevelEdge.undo();
    }
+}
+
+class EdgeLoopCommand extends EditCommand {
+   constructor(madsor, nth) {
+      super();
+      this.madsor = madsor;
+      this.nth = nth;
+      this.selectedEdges = madsor.snapshotSelection();
+   }
+
+   doIt() {
+      this.loopSelection = this.madsor.edgeLoop(nth);
+      return (this.loopSelection.count > 0);
+   }
+
+   undo() {
+      this.madsor.restoreSelection(this.selectedEdges);
+   }
+
 }
 
 export {

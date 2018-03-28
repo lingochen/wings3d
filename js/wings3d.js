@@ -255,6 +255,7 @@ const action = {
    edgeMoveZ: () => {notImplemented(this);},
    edgeMoveFree: () => {notImplemented(this);},
    edgeMoveNormal: () => {notImplemented(this);},
+   edgeLoop:  () => {notImplemented(this);},
    // face
    faceExtrudeMenu: () =>{notImplemented(this);},
    faceExtrudeX: () =>{notImplemented(this);},

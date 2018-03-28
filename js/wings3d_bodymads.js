@@ -70,10 +70,6 @@ class BodyMadsor extends Madsor {
       return 'Body';
    }
 
-   getSelection(cage) {
-      return {body: cage.snapshotSelection() };
-   }
-
    getSelected() {
       const selection = [];
       this.eachPreviewCage( function(cage) {
@@ -159,11 +155,15 @@ class BodyMadsor extends Madsor {
    }
 
    _resetSelection(cage) {
-      return cage._resetBody();
+      return this._wrapSelection(cage._resetBody());
    }
 
    _restoreSelection(cage, snapshot) {
       cage.restoreBodySelection(snapshot);
+   }
+
+   _wrapSelection(selection) {
+      return {body: selection};
    }
 
    toggleFunc(toMadsor) {
@@ -173,19 +173,19 @@ class BodyMadsor extends Madsor {
       if (toMadsor instanceof FaceMadsor) {
          redoFn = View.restoreFaceMode;
          this.eachPreviewCage( function(cage) {
-            snapshots.push( self.getSelection(cage) );
+            snapshots.push( self._wrapSelection(cage.snapshotSelection()) );
             cage.changeFromBodyToFaceSelect();
          });
       } else if (toMadsor instanceof VertexMadsor) {
          redoFn = View.restoreVertexMode;
          this.eachPreviewCage( function(cage) {
-            snapshots.push( self.getSelection(cage) );
+            snapshots.push( self._wrapSelection(cage.snapshotSelection()) );
             cage.changeFromBodyToVertexSelect();
          });
       } else {
          redoFn = View.restoreEdgeMode;
          this.eachPreviewCage( function(cage) {
-            snapshots.push( self.getSelection(cage) );
+            snapshots.push( self._wrapSelection(cage.snapshotSelection()) );
             cage.changeFromBodyToEdgeSelect();
          });
       }

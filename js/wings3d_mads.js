@@ -59,7 +59,7 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       const snapshots = [];
       const self = this;
       this.eachPreviewCage( function(cage) {
-         snapshots.push( self.getSelection(cage) );
+         snapshots.push( self._wrapSelection(cage.snapshotSelection()) );
       });
       return snapshots;
    }
@@ -128,7 +128,7 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       let count = initialCount;        // set initialCount, so we can force undo
       this.eachPreviewCage( function(cage) {
          const selection = cage[doName]();
-         snapshots.push( selection );
+         snapshots.push( self._wrapSelection(selection) );
          count += selection.size;
       });
       if (count != 0) {
