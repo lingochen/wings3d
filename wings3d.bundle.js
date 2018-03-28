@@ -310,6 +310,7 @@ const action = {
    adjacent: () => {notImplemented(this);},
    edgeLoopMenu: () => {notImplemented(this);},
    edgeLoop:  () => {notImplemented(this);},
+   edgeRing:  () => {notImplemented(this);},
    //menu action
    bodyDelete: () => {notImplemented(this);},
    bodyRename: () => {notImplemented(this);},
@@ -3207,15 +3208,22 @@ class EdgeMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
          });
       // EdgeLoop.
       __WEBPACK_IMPORTED_MODULE_5__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_8__wings3d__["action"].edgeLoop.name, function(ev) {
-         const command = new EdgeLoopCommand(self, 1);
-         if (command.doIt()) {
+            const command = new EdgeLoopCommand(self, 1);
+            if (command.doIt()) {
                __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"](command);
             } else { // should not happened, make some noise
 
             }
          }, "l");
-
       // EdgeRing
+      __WEBPACK_IMPORTED_MODULE_5__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_8__wings3d__["action"].edgeRing.name, function(ev) {
+            const command = new EdgeRingCommand(self, 1);
+            if (command.doIt()) {
+               __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"](command);
+            } else { // should not happened, make some noise
+      
+            }
+         }, "l");
    }
 
    modeName() {
@@ -3285,6 +3293,15 @@ class EdgeMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
       return loop;
    }
 
+   edgeRing(nth) {
+      const loop = {count: 0, selection: []};
+      this.eachPreviewCage( function(preview) {
+         const record = preview.edgeRing(nth);
+         loop.count += record.length;
+         loop.selection.push( record );
+      });
+      return loop;
+   }
    collapseEdge(collapseArray) {  // undo of splitEdge.
       this.eachPreviewCage(function(cage, collapse) {
          cage.collapseSplitOrBevelEdge(collapse);
@@ -3604,7 +3621,25 @@ class EdgeLoopCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditC
       this.madsor.resetSelection();
       this.madsor.restoreSelection(this.selectedEdges);
    }
+}
 
+class EdgeRingCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
+   constructor(madsor, nth) {
+      super();
+      this.madsor = madsor;
+      this.nth = nth;
+      this.selectedEdges = madsor.snapshotSelection();
+   }
+
+   doIt() {
+      this.loopSelection = this.madsor.edgeRing(this.nth);
+      return (this.loopSelection.count > 0);
+   }
+
+   undo() {
+      this.madsor.resetSelection();
+      this.madsor.restoreSelection(this.selectedEdges);
+   } 
 }
 
 
@@ -6701,7 +6736,7 @@ PreviewCage.prototype.bevelEdge = function() {
 };
 
 //
-// iterated through selectedEdge, and expand it along the edges, edge loop only possible on 4 edges vertex.wwww
+// iterated through selectedEdge, and expand it along the edges, edge loop only possible on 4 edges vertex
 //
 PreviewCage.prototype.edgeLoop = function(nth) {
    let count = 0;
@@ -6715,6 +6750,31 @@ PreviewCage.prototype.edgeLoop = function(nth) {
          while (hEdge = hEdge.next.pair.next) { // next edge
             if (this.selectedSet.has(hEdge.wingedEdge) || (hEdge.destination().numberOfEdge() !== 4) ) {
                break;   // already at end, or non-4 edge vertex.
+            }
+            ++count;
+            this.selectEdge(hEdge);
+            ret.push(hEdge);
+         }
+      }
+   }
+   return ret;
+};
+
+//
+// iterated through selectedEdge, and expand it along 2 side of loop, edge Ring only possible on 4 edges face
+//
+PreviewCage.prototype.edgeRing = function(nth) {
+   let count = 0;
+   const selection = new Set(this.selectedSet);
+   const ret = [];
+   for (let wingedEdge of selection) {
+      // walk forward, then backward.
+      for (let hEdge of wingedEdge) {
+         const end = hEdge;
+         // walking along the loop
+         while (hEdge = hEdge.pair.next.next) { // next edge
+            if (this.selectedSet.has(hEdge.wingedEdge) || (hEdge.next.next.next.next !== hEdge) ) {
+               break;   // already at end, or non-4 edge face.
             }
             ++count;
             this.selectEdge(hEdge);
