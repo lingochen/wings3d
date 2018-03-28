@@ -224,6 +224,9 @@ const action = {
    all: () => {notImplemented(this);},
    invert: () => {notImplemented(this);},
    adjacent: () => {notImplemented(this);},
+   edgeLoopMenu: () => {notImplemented(this);},
+   edgeLoop:  () => {notImplemented(this);},
+   edgeRing:  () => {notImplemented(this);},
    //menu action
    bodyDelete: () => {notImplemented(this);},
    bodyRename: () => {notImplemented(this);},
@@ -255,7 +258,6 @@ const action = {
    edgeMoveZ: () => {notImplemented(this);},
    edgeMoveFree: () => {notImplemented(this);},
    edgeMoveNormal: () => {notImplemented(this);},
-   edgeLoop:  () => {notImplemented(this);},
    // face
    faceExtrudeMenu: () =>{notImplemented(this);},
    faceExtrudeX: () =>{notImplemented(this);},

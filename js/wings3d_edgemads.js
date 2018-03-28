@@ -79,7 +79,7 @@ class EdgeMadsor extends Madsor {
             } else { // should not happened, make some noise
 
             }
-         });
+         }, "l");
 
       // EdgeRing
    }
@@ -144,7 +144,7 @@ class EdgeMadsor extends Madsor {
    edgeLoop(nth) {
       const loop = {count: 0, selection: []};
       this.eachPreviewCage( function(preview) {
-         const record = cage.edgeLoop(nth);
+         const record = preview.edgeLoop(nth);
          loop.count += record.length;
          loop.selection.push( record );
       });
@@ -462,11 +462,12 @@ class EdgeLoopCommand extends EditCommand {
    }
 
    doIt() {
-      this.loopSelection = this.madsor.edgeLoop(nth);
+      this.loopSelection = this.madsor.edgeLoop(this.nth);
       return (this.loopSelection.count > 0);
    }
 
    undo() {
+      this.madsor.resetSelection();
       this.madsor.restoreSelection(this.selectedEdges);
    }
 
