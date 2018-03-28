@@ -88,7 +88,7 @@ class EdgeMadsor extends Madsor {
             } else { // should not happened, make some noise
       
             }
-         }, "l");
+         }, "g");
    }
 
    modeName() {

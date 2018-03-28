@@ -3,7 +3,7 @@
 //
 //
 //
-import {createMask} from './wings3d';
+import {createMask, runAction} from './wings3d';
 
 
 const keyMap = new Map;
@@ -18,11 +18,11 @@ document.addEventListener('keydown', function(event) {
    // extract key
    const hotkey = event.key.toLowerCase();
    // run the binding function
-    if (keyMap.has(hotkey)) {
+   if (keyMap.has(hotkey)) {
       const metaSet = keyMap.get(hotkey);
       for (let value of metaSet) {
          if ( (value.meta & meta) == value.meta) { // has all the meta
-            Wings3D.runAction(valueId);
+            runAction(value.id);
             break;
          }
       }
