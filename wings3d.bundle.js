@@ -308,6 +308,8 @@ const action = {
    all: () => {notImplemented(this);},
    invert: () => {notImplemented(this);},
    adjacent: () => {notImplemented(this);},
+   edgeLoopMenu: () => {notImplemented(this);},
+   edgeLoop:  () => {notImplemented(this);},
    //menu action
    bodyDelete: () => {notImplemented(this);},
    bodyRename: () => {notImplemented(this);},
@@ -339,7 +341,6 @@ const action = {
    edgeMoveZ: () => {notImplemented(this);},
    edgeMoveFree: () => {notImplemented(this);},
    edgeMoveNormal: () => {notImplemented(this);},
-   edgeLoop:  () => {notImplemented(this);},
    // face
    faceExtrudeMenu: () =>{notImplemented(this);},
    faceExtrudeX: () =>{notImplemented(this);},
@@ -3212,7 +3213,7 @@ class EdgeMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
             } else { // should not happened, make some noise
 
             }
-         });
+         }, "l");
 
       // EdgeRing
    }
@@ -3277,7 +3278,7 @@ class EdgeMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
    edgeLoop(nth) {
       const loop = {count: 0, selection: []};
       this.eachPreviewCage( function(preview) {
-         const record = cage.edgeLoop(nth);
+         const record = preview.edgeLoop(nth);
          loop.count += record.length;
          loop.selection.push( record );
       });
@@ -3595,11 +3596,12 @@ class EdgeLoopCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditC
    }
 
    doIt() {
-      this.loopSelection = this.madsor.edgeLoop(nth);
+      this.loopSelection = this.madsor.edgeLoop(this.nth);
       return (this.loopSelection.count > 0);
    }
 
    undo() {
+      this.madsor.resetSelection();
       this.madsor.restoreSelection(this.selectedEdges);
    }
 
