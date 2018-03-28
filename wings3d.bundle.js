@@ -3223,7 +3223,7 @@ class EdgeMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
             } else { // should not happened, make some noise
       
             }
-         }, "l");
+         }, "g");
    }
 
    modeName() {
@@ -9119,11 +9119,11 @@ document.addEventListener('keydown', function(event) {
    // extract key
    const hotkey = event.key.toLowerCase();
    // run the binding function
-    if (keyMap.has(hotkey)) {
+   if (keyMap.has(hotkey)) {
       const metaSet = keyMap.get(hotkey);
       for (let value of metaSet) {
          if ( (value.meta & meta) == value.meta) { // has all the meta
-            Wings3D.runAction(valueId);
+            Object(__WEBPACK_IMPORTED_MODULE_0__wings3d__["runAction"])(value.id);
             break;
          }
       }
