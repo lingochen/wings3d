@@ -6752,8 +6752,10 @@ PreviewCage.prototype.edgeLoop = function(nth) {
                break;   // already at end, or non-4 edge vertex.
             }
             ++count;
-            this.selectEdge(hEdge);
-            ret.push(hEdge);
+            if ((count % nth) === 0) {
+               this.selectEdge(hEdge);
+               ret.push(hEdge);
+            }
          }
       }
    }
@@ -6777,8 +6779,10 @@ PreviewCage.prototype.edgeRing = function(nth) {
                break;   // already at end, or non-4 edge face.
             }
             ++count;
-            this.selectEdge(hEdge);
-            ret.push(hEdge);
+            if ((count % nth) === 0) {
+               this.selectEdge(hEdge);
+               ret.push(hEdge);
+            }
          }
       }
    }
