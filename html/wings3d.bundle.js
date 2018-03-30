@@ -631,12 +631,20 @@ function slideBack() {
    // now toggle parent sibling
    const dropside = ul.parentElement;  
    // hide all dropside sibling 
-   let element = dropside.parentElement.firstElementChild;
+   const grandParent = dropside.parentElement;
+   let element = grandParent.firstElementChild;
    do {
-      if (element !== dropside) {
+      //if (element !== dropside) {
          element.style.display = "block";
-      }
+      //}
    } while (element = element.nextElementSibling);
+   if (submenu.length > 0) {
+      const grandA = grandParent.previousElementSibling;
+      if (grandA && grandA.tagName == "A") { 
+         //grandA.classList.remove("collapse");
+         grandA.style.display = "block";
+      }
+   }
    return true;
 };
 //dropside, slide in/out
@@ -646,8 +654,17 @@ function toggleSubmenu(ul) {
    } else {
       // now toggle on
       const dropside = ul.parentElement;  
-      // hide all dropside sibling 
-      let element = dropside.parentElement.firstElementChild;
+      // hide grandParent if needed 
+      const grandParent = dropside.parentElement;
+      if (submenu.length > 0) {
+         const grandA = grandParent.previousElementSibling;
+         if (grandA && grandA.tagName == "A") {
+            //grandA.classList.add("collapse");
+            grandA.style.display = "none";
+         }
+      }
+      // hide all dropside Siblig
+      let element = grandParent.firstElementChild;
       do {
          if (element !== dropside) {
             element.style.display = "none";
