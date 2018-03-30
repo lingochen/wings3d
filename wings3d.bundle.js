@@ -395,6 +395,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "openFile", function() { return openFile; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "showContextMenu", function() { return showContextMenu; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "queuePopupMenu", function() { return queuePopupMenu; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "toggleSubmenu", function() { return toggleSubmenu; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_hotkey__ = __webpack_require__(15);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d__ = __webpack_require__(0);
 /*
@@ -615,6 +616,44 @@ let styleSheet = (function(){
 }());
 
 
+const submenu = [];
+function slideBack() {
+   if (submenu.length === 0) {
+      return false;
+   }
+   // hide current ul
+   const ul = submenu.pop();
+   ul.style.visibility = "hidden";
+   // now toggle parent sibling
+   const dropside = ul.parentElement;  
+   // hide all dropside sibling 
+   let element = dropside.parentElement.firstElementChild;
+   do {
+      if (element !== dropside) {
+         element.style.display = "block";
+      }
+   } while (element = element.nextElementSibling);
+   return true;
+};
+//dropside, slide in/out
+function toggleSubmenu(ul) {
+   if ((submenu.length > 0) && (submenu[submenu.length-1] === ul)) { // is toggling
+      slideBack();
+   } else {
+      // now toggle on
+      const dropside = ul.parentElement;  
+      // hide all dropside sibling 
+      let element = dropside.parentElement.firstElementChild;
+      do {
+         if (element !== dropside) {
+            element.style.display = "none";
+         }
+      } while (element = element.nextElementSibling);
+      submenu.push(ul);
+      ul.style.visibility = "visible";
+   }
+};
+
 // show popupMenu
 function clickInsideElement( e, className ) {
    let target = e.target;
@@ -632,6 +671,7 @@ function toggleMenuOff() {
    if (currentMenu) {
       currentMenu.style.visibility = "hidden";
       currentMenu=false;
+      while (slideBack()) {}
    }
    if (nextPopup) {
       currentMenu = nextPopup;
@@ -664,9 +704,11 @@ function showContextMenu(popupMenu) {
    currentMenu.style.visibility = "visible";   // toggleMenuOn
 };
 function queuePopupMenu(popupMenu) {
-   nextPopup = popupMenu;
-   if (!currentMenu) {
-      clickListener();
+   if (popupMenu !==currentMenu) {
+      nextPopup = popupMenu;
+      if (!currentMenu) {
+         clickListener();
+      }
    }
 };
 
@@ -1309,13 +1351,26 @@ function init() {
        });
    }
    // bind .dropdown, .dropside click event.
-   let buttons = document.querySelectorAll("li.dropdown > a, li.dropside > a");
+   let buttons = document.querySelectorAll("li.dropdown > a");
    for (let button of buttons) {
       if (button.id) {
          let ul = button.nextElementSibling;  // popupMenu
          if (ul && ul.classList.contains("popupmenu")) {
             __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["bindMenuItem"](button.id, function(ev) {
                __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["queuePopupMenu"](ul);  // show popupMenu
+             });
+         }
+      }
+   }
+   // bind li.dropside > a.
+   buttons = document.querySelectorAll("li.dropside > a");
+   for (let button of buttons) {
+      if (button.id) {
+         let ul = button.nextElementSibling;  // popupMenu
+         if (ul && ul.classList.contains("popupmenu")) {
+            __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["bindMenuItem"](button.id, function(ev) {
+               __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["toggleSubmenu"](ul);  // slide in popup menu, replace the original one
+               ev.stopPropagation();
              });
          }
       }
