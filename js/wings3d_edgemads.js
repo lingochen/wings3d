@@ -84,6 +84,8 @@ class EdgeMadsor extends Madsor {
             }
          }, hotkey);
       }
+      // EdgeLoop Nth.
+
       // EdgeRing
       for (let [numberOfSegments, hotkey] of [[action.edgeRing1,"g"], [action.edgeRing2,undefined], [action.edgeRing3,undefined]]) {
          const name = numberOfSegments.name;

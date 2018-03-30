@@ -9,8 +9,8 @@ import {createMask, runAction} from './wings3d';
 const keyMap = new Map;
 
 document.addEventListener('keydown', function(event) {
-   event.preventDefault();
-   event.stopPropagation();
+   //event.preventDefault();
+   //event.stopPropagation();
    //      Don't fire in text-accepting inputs that we didn't directly bind to
 
    // extract alt, ctrl, shift key
@@ -27,7 +27,7 @@ document.addEventListener('keydown', function(event) {
          }
       }
    }
-}, true);
+});
 
 function setHotkey(id, hotkey, meta='') {
       hotkey = hotkey.toLowerCase();

@@ -3299,6 +3299,8 @@ class EdgeMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
             }
          }, hotkey);
       }
+      // EdgeLoop Nth.
+
       // EdgeRing
       for (let [numberOfSegments, hotkey] of [[__WEBPACK_IMPORTED_MODULE_8__wings3d__["action"].edgeRing1,"g"], [__WEBPACK_IMPORTED_MODULE_8__wings3d__["action"].edgeRing2,undefined], [__WEBPACK_IMPORTED_MODULE_8__wings3d__["action"].edgeRing3,undefined]]) {
          const name = numberOfSegments.name;
@@ -9199,8 +9201,8 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 const keyMap = new Map;
 
 document.addEventListener('keydown', function(event) {
-   event.preventDefault();
-   event.stopPropagation();
+   //event.preventDefault();
+   //event.stopPropagation();
    //      Don't fire in text-accepting inputs that we didn't directly bind to
 
    // extract alt, ctrl, shift key
@@ -9217,7 +9219,7 @@ document.addEventListener('keydown', function(event) {
          }
       }
    }
-}, true);
+});
 
 function setHotkey(id, hotkey, meta='') {
       hotkey = hotkey.toLowerCase();
