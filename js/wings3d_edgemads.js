@@ -72,7 +72,7 @@ class EdgeMadsor extends Madsor {
             View.attachHandlerMouseMove(new EdgeBevelHandler(self));
          });
       // EdgeLoop.
-      UI.bindMenuItem(action.edgeLoop.name, function(ev) {
+      UI.bindMenuItem(action.edgeLoop1.name, function(ev) {
             const command = new EdgeLoopCommand(self, 1);
             if (command.doIt()) {
                View.undoQueue(command);
@@ -81,14 +81,19 @@ class EdgeMadsor extends Madsor {
             }
          }, "l");
       // EdgeRing
-      UI.bindMenuItem(action.edgeRing.name, function(ev) {
-            const command = new EdgeRingCommand(self, 1);
+      for (let [numberOfSegments, hotkey] of [[action.edgeRing1,"g"], [action.edgeRing2,undefined], [action.edgeRing3,undefined]]) {
+         const name = numberOfSegments.name;
+         const count = name.substring('edgeRing'.length);
+         UI.bindMenuItem(name, function(ev) {
+            const command = new EdgeRingCommand(self, count);
             if (command.doIt()) {
                View.undoQueue(command);
             } else { // should not happened, make some noise
       
             }
-         }, "g");
+         }, hotkey);
+      }
+      // EdgeRing Nth
    }
 
    modeName() {
