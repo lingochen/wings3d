@@ -589,13 +589,26 @@ function init() {
        });
    }
    // bind .dropdown, .dropside click event.
-   let buttons = document.querySelectorAll("li.dropdown > a, li.dropside > a");
+   let buttons = document.querySelectorAll("li.dropdown > a");
    for (let button of buttons) {
       if (button.id) {
          let ul = button.nextElementSibling;  // popupMenu
          if (ul && ul.classList.contains("popupmenu")) {
             UI.bindMenuItem(button.id, function(ev) {
                UI.queuePopupMenu(ul);  // show popupMenu
+             });
+         }
+      }
+   }
+   // bind li.dropside > a.
+   buttons = document.querySelectorAll("li.dropside > a");
+   for (let button of buttons) {
+      if (button.id) {
+         let ul = button.nextElementSibling;  // popupMenu
+         if (ul && ul.classList.contains("popupmenu")) {
+            UI.bindMenuItem(button.id, function(ev) {
+               UI.toggleSubmenu(ul);  // slide in popup menu, replace the original one
+               ev.stopPropagation();
              });
          }
       }

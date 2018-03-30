@@ -1,3 +1,10 @@
+/*
+*,
+*:after,
+*:before {
+  box-sizing: border-box;
+}*/
+
 html, body {
     margin: 0;
     padding: 0;
@@ -72,17 +79,21 @@ ul.menubar, ul.popupmenu {
 /* dropdown menu */
 ul.popupmenu {
   visibility : hidden;
+  position: absolute;
   /*margin-top:1px;*/
   background-color: #bbb;
   list-style: none;
   z-index: 100;
-  position: absolute;
+}
+ul.menubar {
+  display: flex;
+  flex-direction: row;
 }
 
 ul.menubar > li {
     margin: 0;
     padding: 0;
-    display: inline-block;
+/*    display: inline-block; */
     list-style-type: none;
     transition: all 0s; 
 }
@@ -111,9 +122,9 @@ ul.popupmenu > li:hover {
 
 /* added attribute for showing extra menu available. */
 li.dropdown::before {
-  content: "\2304";
+  content: "v"; /* "\2304";*/
   float: right;
-  padding: 0.0em 0.5em;
+  /*padding: 0.0em 0.5em;*/
 }
 li.dropside::before {
   content: "\203A";

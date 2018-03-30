@@ -216,6 +216,44 @@ let styleSheet = (function(){
 }());
 
 
+const submenu = [];
+function slideBack() {
+   if (submenu.length === 0) {
+      return false;
+   }
+   // hide current ul
+   const ul = submenu.pop();
+   ul.style.visibility = "hidden";
+   // now toggle parent sibling
+   const dropside = ul.parentElement;  
+   // hide all dropside sibling 
+   let element = dropside.parentElement.firstElementChild;
+   do {
+      if (element !== dropside) {
+         element.style.display = "block";
+      }
+   } while (element = element.nextElementSibling);
+   return true;
+};
+//dropside, slide in/out
+function toggleSubmenu(ul) {
+   if ((submenu.length > 0) && (submenu[submenu.length-1] === ul)) { // is toggling
+      slideBack();
+   } else {
+      // now toggle on
+      const dropside = ul.parentElement;  
+      // hide all dropside sibling 
+      let element = dropside.parentElement.firstElementChild;
+      do {
+         if (element !== dropside) {
+            element.style.display = "none";
+         }
+      } while (element = element.nextElementSibling);
+      submenu.push(ul);
+      ul.style.visibility = "visible";
+   }
+};
+
 // show popupMenu
 function clickInsideElement( e, className ) {
    let target = e.target;
@@ -233,6 +271,7 @@ function toggleMenuOff() {
    if (currentMenu) {
       currentMenu.style.visibility = "hidden";
       currentMenu=false;
+      while (slideBack()) {}
    }
    if (nextPopup) {
       currentMenu = nextPopup;
@@ -265,9 +304,11 @@ function showContextMenu(popupMenu) {
    currentMenu.style.visibility = "visible";   // toggleMenuOn
 };
 function queuePopupMenu(popupMenu) {
-   nextPopup = popupMenu;
-   if (!currentMenu) {
-      clickListener();
+   if (popupMenu !==currentMenu) {
+      nextPopup = popupMenu;
+      if (!currentMenu) {
+         clickListener();
+      }
    }
 };
 
@@ -286,4 +327,5 @@ export {
    openFile,
    showContextMenu,
    queuePopupMenu,
+   toggleSubmenu,
 }
