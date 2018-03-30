@@ -72,14 +72,18 @@ class EdgeMadsor extends Madsor {
             View.attachHandlerMouseMove(new EdgeBevelHandler(self));
          });
       // EdgeLoop.
-      UI.bindMenuItem(action.edgeLoop1.name, function(ev) {
-            const command = new EdgeLoopCommand(self, 1);
+      for (let [numberOfSegments, hotkey] of [[action.edgeLoop1,"l"], [action.edgeLoop2,undefined], [action.edgeLoop3,undefined]]) {
+         const name = numberOfSegments.name;
+         const count = name.substring('edgeLoop'.length);        
+         UI.bindMenuItem(name, function(ev) {
+            const command = new EdgeLoopCommand(self, count);
             if (command.doIt()) {
                View.undoQueue(command);
             } else { // should not happened, make some noise
 
             }
-         }, "l");
+         }, hotkey);
+      }
       // EdgeRing
       for (let [numberOfSegments, hotkey] of [[action.edgeRing1,"g"], [action.edgeRing2,undefined], [action.edgeRing3,undefined]]) {
          const name = numberOfSegments.name;
