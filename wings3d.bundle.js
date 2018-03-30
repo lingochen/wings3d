@@ -310,11 +310,15 @@ const action = {
    adjacent: () => {notImplemented(this);},
    edgeLoopMenu: () => {notImplemented(this);},
    edgeLoop1:  () => {notImplemented(this);},
+   nthEdgeLoopMenu: () => {notImplemented(this);},
+   edgeLoop2: () => {notImplemented(this);},
+   edgeLoop3: () => {notImplemented(this);},
+   edgeLoopN: () => {notImplemented(this);},
    edgeRing1:  () => {notImplemented(this);},
    nthEdgeRingMenu: () => {notImplemented(this);},
    edgeRing2: () => {notImplemented(this);},
    edgeRing3: () => {notImplemented(this);},
-   edgeRingNth: () => {notImplemented(this);},
+   edgeRingN: () => {notImplemented(this);},
    //menu action
    bodyDelete: () => {notImplemented(this);},
    bodyRename: () => {notImplemented(this);},
@@ -3283,14 +3287,18 @@ class EdgeMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
             __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["attachHandlerMouseMove"](new EdgeBevelHandler(self));
          });
       // EdgeLoop.
-      __WEBPACK_IMPORTED_MODULE_5__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_8__wings3d__["action"].edgeLoop1.name, function(ev) {
-            const command = new EdgeLoopCommand(self, 1);
+      for (let [numberOfSegments, hotkey] of [[__WEBPACK_IMPORTED_MODULE_8__wings3d__["action"].edgeLoop1,"l"], [__WEBPACK_IMPORTED_MODULE_8__wings3d__["action"].edgeLoop2,undefined], [__WEBPACK_IMPORTED_MODULE_8__wings3d__["action"].edgeLoop3,undefined]]) {
+         const name = numberOfSegments.name;
+         const count = name.substring('edgeLoop'.length);        
+         __WEBPACK_IMPORTED_MODULE_5__wings3d_ui__["bindMenuItem"](name, function(ev) {
+            const command = new EdgeLoopCommand(self, count);
             if (command.doIt()) {
                __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"](command);
             } else { // should not happened, make some noise
 
             }
-         }, "l");
+         }, hotkey);
+      }
       // EdgeRing
       for (let [numberOfSegments, hotkey] of [[__WEBPACK_IMPORTED_MODULE_8__wings3d__["action"].edgeRing1,"g"], [__WEBPACK_IMPORTED_MODULE_8__wings3d__["action"].edgeRing2,undefined], [__WEBPACK_IMPORTED_MODULE_8__wings3d__["action"].edgeRing3,undefined]]) {
          const name = numberOfSegments.name;
