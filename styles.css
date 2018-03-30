@@ -132,6 +132,11 @@ li.dropside::before {
   padding: 0.5em 0.5em;
 }
 
+li.collapse,
+a.collapse {
+  display: none;
+}
+
 /* slider, copy from quirksmode */
 input[type=range] {
 	-webkit-appearance: none;
