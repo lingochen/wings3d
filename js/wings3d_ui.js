@@ -38,6 +38,7 @@ function addMenuItem(menuId, id, menuItemText, fn, hotkey, meta) {
    // append to subment
    menuItem.appendChild(a);
    menu.appendChild(menuItem);
+   Wings3D.addActionConstant(id);
    _bindMenuItem(menuItem, id, fn, hotkey, meta);
 }
 

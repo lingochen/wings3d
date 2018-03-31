@@ -192,6 +192,8 @@ function runAction(id, event) {
       } else {
          fn(event);
       }
+   } else {
+      console.log("unrecognized action: " + id);
    }
 }
 function notImplemented(obj) {
@@ -298,6 +300,9 @@ const action = {
    basicCommands: () => {notImplemented(this);},
    tableTutor: () => {notImplemented(this);},
 };
+function addActionConstant(id) {
+   action[id] = () => {notImplemented(this);}
+}
 
 export {
    onReady,
@@ -308,6 +313,7 @@ export {
    GROUND_GRID_SIZE,
    CAMERA_DIST,
    action,
+   addActionConstant,
    bindAction,
    runAction,
    setInteraction,

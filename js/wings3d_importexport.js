@@ -18,14 +18,14 @@ class ImportExporter {
       // plug into import/export menu
       if (importMenuText) {
          // first get import Submenu.
-         UI.addMenuItem('#fileImport', '#import' + importMenuText, importMenuText, function(ev) {
+         UI.addMenuItem('#fileImport', 'import' + importMenuText.split(" ")[0], importMenuText, function(ev) {
                UI.openFile(function(file) { // open file Dialog, and retrive data
                      self.import(file);
                   });      
             });
       }
       if (exportMenuText) {
-         UI.addMenuItem('#fileExport', '#export' + exportMenuText, exportMenuText, function(ev) {
+         UI.addMenuItem('#fileExport', 'export' + exportMenuText.split(" ")[0], exportMenuText, function(ev) {
             UI.runDialog('#exportFile', ev, function(data) {
                if (data['Filename']) {
                   self.export(data['Filename']);

@@ -78,6 +78,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "GROUND_GRID_SIZE", function() { return GROUND_GRID_SIZE; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "CAMERA_DIST", function() { return CAMERA_DIST; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "action", function() { return action; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "addActionConstant", function() { return addActionConstant; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "bindAction", function() { return bindAction; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "runAction", function() { return runAction; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "setInteraction", function() { return setInteraction; });
@@ -276,6 +277,8 @@ function runAction(id, event) {
       } else {
          fn(event);
       }
+   } else {
+      console.log("unrecognized action: " + id);
    }
 }
 function notImplemented(obj) {
@@ -382,6 +385,9 @@ const action = {
    basicCommands: () => {notImplemented(this);},
    tableTutor: () => {notImplemented(this);},
 };
+function addActionConstant(id) {
+   action[id] = () => {notImplemented(this);}
+}
 
 
 
@@ -447,6 +453,7 @@ function addMenuItem(menuId, id, menuItemText, fn, hotkey, meta) {
    // append to subment
    menuItem.appendChild(a);
    menu.appendChild(menuItem);
+   __WEBPACK_IMPORTED_MODULE_1__wings3d__["addActionConstant"](id);
    _bindMenuItem(menuItem, id, fn, hotkey, meta);
 }
 
@@ -606,53 +613,13 @@ function runDialog(formID, ev, submitCallback, setup) {
    }
 };
 
-// dialog helper
-function setupDialog(formID, submitData) {
-   const _pvt = {submitSuccess: false};
-
-   const form = document.querySelector(formID);
-   if (form) {
-      const submits = document.querySelectorAll(formID + ' [type="submit"]');
-      for (let submit of submits) {
-         if ('ok'.localeCompare(submit.value, 'en', {'sensitivity': 'base'}) == 0) {
-            submit.addEventListener('click', function(ev) {
-               _pvt.submitSuccess = true;
-            });
-         } else if ('cancel'.localeCompare(submit.value, 'en', {'sensitivity': 'base'}) == 0) {
-
-         } else {
-            console.log('submit ' + submit.value + ' type not supported');
-         }
-      }
-      // 
-
-      // now handling event.
-      form.addEventListener('submit', function(ev) {
-         if (_pvt.submitSuccess) {
-            // get form's input data.
-            const elements = form.elements;
-            const obj = {};
-            for (let element of elements) {
-               if ((element.name) && (element.value)) {  // should we check the existence of .name? no name elements automatically excludede? needs to find out.
-                  obj[element.name] = element.value;
-               }
-            }
-            submitData(obj);     // ask function to handle value
-         }
-         // hide the dialog, prevent default.
-         ev.preventDefault();
-         form.style.display = 'none';
-      });
-   }
-   return form;
-};
 
 // fileInput helper
 function openFile(fn) {
    const fileInput = document.querySelector('#importFile');    // <input type="file" id="wavefrontObj" style="display:none"/> 
    if (fileInput) {
       fileInput.click();
-      fileInput.addEventListener('change', function(ev) {
+      fileInput.addEventListener('change', function ok(ev) {
          let fileList = this.files;    // = ev.target.files;
          for (let file of fileList) {
             fn(file);
@@ -10015,14 +9982,14 @@ class ImportExporter {
       // plug into import/export menu
       if (importMenuText) {
          // first get import Submenu.
-         __WEBPACK_IMPORTED_MODULE_2__wings3d_ui__["addMenuItem"]('#fileImport', '#import' + importMenuText, importMenuText, function(ev) {
+         __WEBPACK_IMPORTED_MODULE_2__wings3d_ui__["addMenuItem"]('#fileImport', 'import' + importMenuText.split(" ")[0], importMenuText, function(ev) {
                __WEBPACK_IMPORTED_MODULE_2__wings3d_ui__["openFile"](function(file) { // open file Dialog, and retrive data
                      self.import(file);
                   });      
             });
       }
       if (exportMenuText) {
-         __WEBPACK_IMPORTED_MODULE_2__wings3d_ui__["addMenuItem"]('#fileExport', '#export' + exportMenuText, exportMenuText, function(ev) {
+         __WEBPACK_IMPORTED_MODULE_2__wings3d_ui__["addMenuItem"]('#fileExport', 'export' + exportMenuText.split(" ")[0], exportMenuText, function(ev) {
             __WEBPACK_IMPORTED_MODULE_2__wings3d_ui__["runDialog"]('#exportFile', ev, function(data) {
                if (data['Filename']) {
                   self.export(data['Filename']);
