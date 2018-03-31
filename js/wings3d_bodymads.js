@@ -22,20 +22,14 @@ class BodyMadsor extends Madsor {
             View.undoQueue( command );
             command.doIt(); // delete current selected.
          });
-      const form = UI.setupDialog('#renameDialog', function(data) {
-         const command = new RenameBodyCommand(self.getSelected(), data);
-            View.undoQueue( command );
-            command.doIt();   // rename
-         });
-      if (form) {
-         // show Form when menuItem clicked
-         const content = document.querySelector('#renameDialog div');
-         UI.bindMenuItem(action.bodyRename.name, function(ev) {
-               // position then show form;
-               UI.positionDom(form, UI.getPosition(ev));
-               form.style.display = 'block';
-               // remove old label
-               form.reset();
+
+      UI.bindMenuItem(action.bodyRename.name, function(ev) {
+         UI.runDialog('#renameDialog', ev, function(data) {
+               const command = new RenameBodyCommand(self.getSelected(), data);
+               View.undoQueue( command );
+               command.doIt();   // rename
+            }, function() {
+               const content = document.querySelector('#renameDialog div');
                let labels = document.querySelectorAll('#renameDialog label');
                for (let label of labels) {
                   content.removeChild(label);
@@ -53,7 +47,7 @@ class BodyMadsor extends Madsor {
                   content.appendChild(label);
                }
             });
-      }
+       });
       const duplicateMove = [action.bodyDuplicateMoveX, action.bodyDuplicateMoveY, action.bodyDuplicateMoveZ];
       // movement for (x, y, z)
       for (let axis=0; axis < 3; ++axis) {

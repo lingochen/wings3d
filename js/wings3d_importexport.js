@@ -25,21 +25,13 @@ class ImportExporter {
             });
       }
       if (exportMenuText) {
-         const form = UI.setupDialog('#exportFile', function(data) {
-            if (data['Filename']) {
-               self.export(data['Filename']);
-            }
+         UI.addMenuItem('#fileExport', '#export' + exportMenuText, exportMenuText, function(ev) {
+            UI.runDialog('#exportFile', ev, function(data) {
+               if (data['Filename']) {
+                  self.export(data['Filename']);
+               }
+             });
          });
-
-         if (form) {
-            UI.addMenuItem('#fileExport', '#export' + exportMenuText, exportMenuText, function(ev) {
-                  // popup dialog.
-                  // position then show form;
-                  UI.positionDom(form, UI.getPosition(ev));
-                  form.style.display = 'block';
-                  form.reset();
-               });
-         }
       }
       // init at beginning.
       this._reset();
