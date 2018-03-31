@@ -560,7 +560,7 @@ function placement(targetId, placement, bubble) {
    }
 };
 
-function runDialog(formID, ev, submitCallback) {
+function runDialog(formID, ev, submitCallback, setup) {
    const _pvt = {submitSuccess: false};
 
    const form = document.querySelector(formID);
@@ -568,6 +568,9 @@ function runDialog(formID, ev, submitCallback) {
       positionDom(form, getPosition(ev));
       form.style.display = 'block';
       form.reset();
+      if (setup) {
+         setup();
+      }
       const submits = document.querySelectorAll(formID + ' [type="submit"]');
       for (let submit of submits) {
          if ('ok'.localeCompare(submit.value, 'en', {'sensitivity': 'base'}) == 0) {
@@ -3840,20 +3843,14 @@ class BodyMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
             __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"]( command );
             command.doIt(); // delete current selected.
          });
-      const form = __WEBPACK_IMPORTED_MODULE_7__wings3d_ui__["setupDialog"]('#renameDialog', function(data) {
-         const command = new RenameBodyCommand(self.getSelected(), data);
-            __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"]( command );
-            command.doIt();   // rename
-         });
-      if (form) {
-         // show Form when menuItem clicked
-         const content = document.querySelector('#renameDialog div');
-         __WEBPACK_IMPORTED_MODULE_7__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_8__wings3d__["action"].bodyRename.name, function(ev) {
-               // position then show form;
-               __WEBPACK_IMPORTED_MODULE_7__wings3d_ui__["positionDom"](form, __WEBPACK_IMPORTED_MODULE_7__wings3d_ui__["getPosition"](ev));
-               form.style.display = 'block';
-               // remove old label
-               form.reset();
+
+      __WEBPACK_IMPORTED_MODULE_7__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_8__wings3d__["action"].bodyRename.name, function(ev) {
+         __WEBPACK_IMPORTED_MODULE_7__wings3d_ui__["runDialog"]('#renameDialog', ev, function(data) {
+               const command = new RenameBodyCommand(self.getSelected(), data);
+               __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"]( command );
+               command.doIt();   // rename
+            }, function() {
+               const content = document.querySelector('#renameDialog div');
                let labels = document.querySelectorAll('#renameDialog label');
                for (let label of labels) {
                   content.removeChild(label);
@@ -3871,7 +3868,7 @@ class BodyMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
                   content.appendChild(label);
                }
             });
-      }
+       });
       const duplicateMove = [__WEBPACK_IMPORTED_MODULE_8__wings3d__["action"].bodyDuplicateMoveX, __WEBPACK_IMPORTED_MODULE_8__wings3d__["action"].bodyDuplicateMoveY, __WEBPACK_IMPORTED_MODULE_8__wings3d__["action"].bodyDuplicateMoveZ];
       // movement for (x, y, z)
       for (let axis=0; axis < 3; ++axis) {
@@ -10025,21 +10022,13 @@ class ImportExporter {
             });
       }
       if (exportMenuText) {
-         const form = __WEBPACK_IMPORTED_MODULE_2__wings3d_ui__["setupDialog"]('#exportFile', function(data) {
-            if (data['Filename']) {
-               self.export(data['Filename']);
-            }
+         __WEBPACK_IMPORTED_MODULE_2__wings3d_ui__["addMenuItem"]('#fileExport', '#export' + exportMenuText, exportMenuText, function(ev) {
+            __WEBPACK_IMPORTED_MODULE_2__wings3d_ui__["runDialog"]('#exportFile', ev, function(data) {
+               if (data['Filename']) {
+                  self.export(data['Filename']);
+               }
+             });
          });
-
-         if (form) {
-            __WEBPACK_IMPORTED_MODULE_2__wings3d_ui__["addMenuItem"]('#fileExport', '#export' + exportMenuText, exportMenuText, function(ev) {
-                  // popup dialog.
-                  // position then show form;
-                  __WEBPACK_IMPORTED_MODULE_2__wings3d_ui__["positionDom"](form, __WEBPACK_IMPORTED_MODULE_2__wings3d_ui__["getPosition"](ev));
-                  form.style.display = 'block';
-                  form.reset();
-               });
-         }
       }
       // init at beginning.
       this._reset();
