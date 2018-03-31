@@ -400,6 +400,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "addMenuItem", function() { return addMenuItem; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "bindMenuItem", function() { return bindMenuItem; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "setupDialog", function() { return setupDialog; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "runDialog", function() { return runDialog; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "openFile", function() { return openFile; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "showContextMenu", function() { return showContextMenu; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "queuePopupMenu", function() { return queuePopupMenu; });
@@ -556,6 +557,49 @@ function placement(targetId, placement, bubble) {
       element.style.top = windowHeight - elementHeight + "px";
    } else {
       element.style.top = mousePosition.y + "px";
+   }
+};
+
+function runDialog(formID, ev, submitCallback) {
+   const _pvt = {submitSuccess: false};
+
+   const form = document.querySelector(formID);
+   if (form) {
+      positionDom(form, getPosition(ev));
+      form.style.display = 'block';
+      form.reset();
+      const submits = document.querySelectorAll(formID + ' [type="submit"]');
+      for (let submit of submits) {
+         if ('ok'.localeCompare(submit.value, 'en', {'sensitivity': 'base'}) == 0) {
+            submit.addEventListener('click', function oked(ev) {
+               _pvt.submitSuccess = true;
+               submit.removeEventListener('click', oked);
+            });
+         } else if ('cancel'.localeCompare(submit.value, 'en', {'sensitivity': 'base'}) == 0) {
+
+         } else {
+            console.log('submit ' + submit.value + ' type not supported');
+         }
+      }
+      
+      // wait for handling event.
+      form.addEventListener('submit', function submitted(ev) {
+         if (_pvt.submitSuccess) {
+            // get form's input data.
+            const elements = form.elements;
+            const obj = {};
+            for (let element of elements) {
+               if ((element.name) && (element.value)) {  // should we check the existence of .name? no name elements automatically excludede? needs to find out.
+                  obj[element.name] = element.value;
+               }
+            }
+            submitCallback(obj);     // ask function to handle value
+         }
+         // hide the dialog, prevent default.
+         ev.preventDefault();
+         form.style.display = 'none';
+         form.removeEventListener('submit', submitted);
+      });
    }
 };
 
@@ -3242,24 +3286,18 @@ class EdgeMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
                self.cutEdge(count);
             });
       }
-      // cutEdge Dialog
-      const form = __WEBPACK_IMPORTED_MODULE_5__wings3d_ui__["setupDialog"]('#cutLineDialog', function(data) {
-         if (data['Segments']) {
-            const number = parseInt(data['Segments'], 10);
-            if ((number != NaN) && (number > 0) && (number < 100)) { // sane input
-               self.cutEdge(number);
-            }
-         }
-      });
-      if (form) {
-         // show form when click
-         __WEBPACK_IMPORTED_MODULE_5__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_8__wings3d__["action"].cutAsk.name, function(ev) {
-               // position then show form;
-               __WEBPACK_IMPORTED_MODULE_5__wings3d_ui__["positionDom"](form, __WEBPACK_IMPORTED_MODULE_5__wings3d_ui__["getPosition"](ev));
-               form.style.display = 'block';
-               form.reset();
+      // cutEdge Dialog, show form when click
+      __WEBPACK_IMPORTED_MODULE_5__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_8__wings3d__["action"].cutAsk.name, function(ev) {
+            // position then show form;
+            __WEBPACK_IMPORTED_MODULE_5__wings3d_ui__["runDialog"]("#cutLineDialog", ev, function(data) {
+               if (data['Segments']) {
+                  const number = parseInt(data['Segments'], 10);
+                  if ((number != NaN) && (number > 0) && (number < 100)) { // sane input
+                     self.cutEdge(number);
+                  }
+               }
             });
-      }
+        });
       // cutAndConnect
       __WEBPACK_IMPORTED_MODULE_5__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_8__wings3d__["action"].cutAndConnect.name, function(ev) {
             self.cutAndConnect();
@@ -3299,8 +3337,21 @@ class EdgeMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
             }
          }, hotkey);
       }
-      // EdgeLoop Nth.
-
+      // EdgeLoop Nth., show form when click
+      __WEBPACK_IMPORTED_MODULE_5__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_8__wings3d__["action"].edgeLoopN.name, function(ev) {
+         __WEBPACK_IMPORTED_MODULE_5__wings3d_ui__["runDialog"]('#cutLineDialog', ev, function(data) {
+            if (data['Segments']) {
+               const number = parseInt(data['Segments'], 10);
+               if ((number != NaN) && (number > 0) && (number < 100)) { // sane input
+                  const command = new EdgeLoopCommand(self, number);
+                  if (command.doIt()) {
+                     __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"](command);
+                  } else { // should not happened, make some noise
+                  }
+               }
+            }
+          });
+       });
       // EdgeRing
       for (let [numberOfSegments, hotkey] of [[__WEBPACK_IMPORTED_MODULE_8__wings3d__["action"].edgeRing1,"g"], [__WEBPACK_IMPORTED_MODULE_8__wings3d__["action"].edgeRing2,undefined], [__WEBPACK_IMPORTED_MODULE_8__wings3d__["action"].edgeRing3,undefined]]) {
          const name = numberOfSegments.name;
@@ -3315,6 +3366,20 @@ class EdgeMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
          }, hotkey);
       }
       // EdgeRing Nth
+      __WEBPACK_IMPORTED_MODULE_5__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_8__wings3d__["action"].edgeRingN.name, function(ev) {
+         __WEBPACK_IMPORTED_MODULE_5__wings3d_ui__["runDialog"]('#cutLineDialog', ev, function(data) {
+            if (data['Segments']) {
+               const number = parseInt(data['Segments'], 10);
+               if ((number != NaN) && (number > 0) && (number < 100)) { // sane input
+                  const command = new EdgeRingCommand(self, number);
+                  if (command.doIt()) {
+                     __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"](command);
+                  } else { // should not happened, make some noise
+                  }
+               }
+            }
+          });
+       });
    }
 
    modeName() {

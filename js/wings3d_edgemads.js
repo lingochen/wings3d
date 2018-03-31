@@ -27,24 +27,18 @@ class EdgeMadsor extends Madsor {
                self.cutEdge(count);
             });
       }
-      // cutEdge Dialog
-      const form = UI.setupDialog('#cutLineDialog', function(data) {
-         if (data['Segments']) {
-            const number = parseInt(data['Segments'], 10);
-            if ((number != NaN) && (number > 0) && (number < 100)) { // sane input
-               self.cutEdge(number);
-            }
-         }
-      });
-      if (form) {
-         // show form when click
-         UI.bindMenuItem(action.cutAsk.name, function(ev) {
-               // position then show form;
-               UI.positionDom(form, UI.getPosition(ev));
-               form.style.display = 'block';
-               form.reset();
+      // cutEdge Dialog, show form when click
+      UI.bindMenuItem(action.cutAsk.name, function(ev) {
+            // position then show form;
+            UI.runDialog("#cutLineDialog", ev, function(data) {
+               if (data['Segments']) {
+                  const number = parseInt(data['Segments'], 10);
+                  if ((number != NaN) && (number > 0) && (number < 100)) { // sane input
+                     self.cutEdge(number);
+                  }
+               }
             });
-      }
+        });
       // cutAndConnect
       UI.bindMenuItem(action.cutAndConnect.name, function(ev) {
             self.cutAndConnect();
@@ -84,8 +78,21 @@ class EdgeMadsor extends Madsor {
             }
          }, hotkey);
       }
-      // EdgeLoop Nth.
-
+      // EdgeLoop Nth., show form when click
+      UI.bindMenuItem(action.edgeLoopN.name, function(ev) {
+         UI.runDialog('#cutLineDialog', ev, function(data) {
+            if (data['Segments']) {
+               const number = parseInt(data['Segments'], 10);
+               if ((number != NaN) && (number > 0) && (number < 100)) { // sane input
+                  const command = new EdgeLoopCommand(self, number);
+                  if (command.doIt()) {
+                     View.undoQueue(command);
+                  } else { // should not happened, make some noise
+                  }
+               }
+            }
+          });
+       });
       // EdgeRing
       for (let [numberOfSegments, hotkey] of [[action.edgeRing1,"g"], [action.edgeRing2,undefined], [action.edgeRing3,undefined]]) {
          const name = numberOfSegments.name;
@@ -100,6 +107,20 @@ class EdgeMadsor extends Madsor {
          }, hotkey);
       }
       // EdgeRing Nth
+      UI.bindMenuItem(action.edgeRingN.name, function(ev) {
+         UI.runDialog('#cutLineDialog', ev, function(data) {
+            if (data['Segments']) {
+               const number = parseInt(data['Segments'], 10);
+               if ((number != NaN) && (number > 0) && (number < 100)) { // sane input
+                  const command = new EdgeRingCommand(self, number);
+                  if (command.doIt()) {
+                     View.undoQueue(command);
+                  } else { // should not happened, make some noise
+                  }
+               }
+            }
+          });
+       });
    }
 
    modeName() {

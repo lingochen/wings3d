@@ -151,6 +151,49 @@ function placement(targetId, placement, bubble) {
    }
 };
 
+function runDialog(formID, ev, submitCallback) {
+   const _pvt = {submitSuccess: false};
+
+   const form = document.querySelector(formID);
+   if (form) {
+      positionDom(form, getPosition(ev));
+      form.style.display = 'block';
+      form.reset();
+      const submits = document.querySelectorAll(formID + ' [type="submit"]');
+      for (let submit of submits) {
+         if ('ok'.localeCompare(submit.value, 'en', {'sensitivity': 'base'}) == 0) {
+            submit.addEventListener('click', function oked(ev) {
+               _pvt.submitSuccess = true;
+               submit.removeEventListener('click', oked);
+            });
+         } else if ('cancel'.localeCompare(submit.value, 'en', {'sensitivity': 'base'}) == 0) {
+
+         } else {
+            console.log('submit ' + submit.value + ' type not supported');
+         }
+      }
+      
+      // wait for handling event.
+      form.addEventListener('submit', function submitted(ev) {
+         if (_pvt.submitSuccess) {
+            // get form's input data.
+            const elements = form.elements;
+            const obj = {};
+            for (let element of elements) {
+               if ((element.name) && (element.value)) {  // should we check the existence of .name? no name elements automatically excludede? needs to find out.
+                  obj[element.name] = element.value;
+               }
+            }
+            submitCallback(obj);     // ask function to handle value
+         }
+         // hide the dialog, prevent default.
+         ev.preventDefault();
+         form.style.display = 'none';
+         form.removeEventListener('submit', submitted);
+      });
+   }
+};
+
 // dialog helper
 function setupDialog(formID, submitData) {
    const _pvt = {submitSuccess: false};
@@ -341,6 +384,7 @@ export {
    addMenuItem,
    bindMenuItem,
    setupDialog,
+   runDialog,
    openFile,
    showContextMenu,
    queuePopupMenu,
