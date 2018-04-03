@@ -973,6 +973,37 @@ PreviewCage.prototype.moveSelection = function(movement, snapshot) {
 };
 
 
+//
+// scale selection, by moving vertices
+//
+PreviewCage.prototype.scaleSelection = function(snapshot, scale) {
+   // construct the matrix
+   const scaleV = vec3.create();
+   vec3.set(scaleV, scale, scale, scale);
+   const mat = mat4.create();
+   mat4.fromScaling(mat, scaleV);
+
+   const vArry = snapshot.vertices[Symbol.iterator]();
+   for (let group of snapshot.matrixGroup) {
+      for (let index = 0; index < group.count; index++) {
+         const vertex = vArry.next().value;
+         // change basis
+         vec3.sub(vertex.vertex, vertex.vertex, group.center);
+         // scale 
+         vec3.transformMat4(vertex.vertex, vertex.vertex, mat);
+         // change basis back
+         vec3.add(vertex.vertex, vertex.vertex, group.center);
+      }
+   }
+
+   //
+   // todo: we really should update as little as possible.
+   const vertices = this.geometry.buf.data.subarray(0, this.geometry.buf.len);
+   this.preview.shaderData.uploadAttribute('position', 0, vertices);
+   this.previewVertex.shaderData.uploadAttribute('position', 0, vertices);
+   this.computeSnapshot(snapshot);
+};
+
 
 PreviewCage.prototype.snapshotPosition = function(vertices, normalArray) {
    var ret = {
@@ -1134,6 +1165,38 @@ PreviewCage.prototype.snapshotEdgePositionAndNormal = function() {
    }
    return this.snapshotPosition(vertices, normalArray);
 };
+
+PreviewCage.prototype.snapshotFaceScalePosition = function() {
+   const oldSize = this._getGeometrySize();
+
+   const vertices = new Set;
+   const matrixGroup = [];
+   // array of edgeLoop. 
+   let faceGroup = this.geometry.findFaceGroup(this.selectedSet);
+   // compute center of loop, gather all the vertices, create the scaling matrix
+   const center = vec3.create();
+   for (let group of faceGroup) {
+      let count = 0;
+      for (let face of group) {
+         face.eachVertex(function(vertex) {
+            if (!vertices.has(vertex)){
+               vertices.add(vertex);
+               count++;
+               vec3.add(center, center, vertex.vertex);
+            }
+          });
+      }
+      vec3.scale(center, center, 1.0/count); // get the center
+      // now construct the group
+      matrixGroup.push( {center: center, count: count});
+   }
+
+   // now construct all the effected data and save position.
+   const ret = this.snapshotPosition(vertices);
+   ret.matrixGroup = matrixGroup;
+   return ret;
+};
+
 
 
 PreviewCage.prototype._resetSelectEdge = function() {

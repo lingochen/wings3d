@@ -283,6 +283,7 @@ const action = {
    faceMoveZ: () => {notImplemented(this);},
    faceMoveFree: () => {notImplemented(this);},
    faceMoveNormal: () => {notImplemented(this);},
+   faceScaleUniform: () => {notImplemented(this);},
    // vertex
    vertexConnect: () => {notImplemented(this);},
    vertexDissolve: () => {notImplemented(this);},

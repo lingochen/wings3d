@@ -14,6 +14,11 @@ class MouseMoveHandler {
       return move;
    }
 
+   _xPercentMovement(ev) {
+      let width = window.innertWidth || document.documentElement.clientWidth || document.body.clientWidth;
+      return (ev.movementX / width);
+   }
+
    //handleMouseMove(ev) {}
 
    cancel() {

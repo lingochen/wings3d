@@ -5,6 +5,7 @@
 **/
 import {gl} from './wings3d_gl';
 import { EditCommand, MouseMoveHandler } from './wings3d_undo';
+import { PreviewCage } from './wings3d_model';
 import * as View from './wings3d_view';
 import * as UI from './wings3d_ui';
 import {action} from './wings3d';
@@ -41,6 +42,13 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
             View.attachHandlerMouseMove(new MoveAlongNormal(self));
           });
       }
+      // scale uniform
+      const scaleUniform = {face: action.faceScaleUniform};
+      if (scaleUniform[mode]) {
+         UI.bindMenuItem(scaleUniform[mode].name, function(ev) {
+            View.attachHandlerMouseMove(new ScaleUniformHandler(self));
+          });
+      }
    }
 
    getContextMenu() {
@@ -62,6 +70,20 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
          snapshots.push( self._wrapSelection(cage.snapshotSelection()) );
       });
       return snapshots;
+   }
+
+   snapshotAll(func, ...args) {
+      const snapshots = [];
+      for (let preview of this.world) {
+         snapshots.push( {preview: preview, snapshot: func.call(preview, ...args)} );
+      }
+      return snapshots;
+   }
+
+   doAll(snapshots, func, ...args) {
+      for (let obj of snapshots) {
+         func.call(obj.preview, obj.snapshot, ...args);
+      }
    }
 
    // can be use arguments object?
@@ -97,6 +119,11 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       this.eachPreviewCage( function(cage, snapshot) {
          cage.restoreMoveSelection(snapshot);
       }, snapshots);
+   }
+
+   // scale vertices along axis
+   scaleSelection(snapshots, scale) {
+      this.doAll(snapshots, PreviewCage.prototype.scaleSelection, scale);
    }
 
    setWorld(world) {
@@ -286,6 +313,35 @@ class MoveFreePositionHandler extends MovePositionHandler {
 }
 
 
+class ScaleUniformHandler extends MouseMoveHandler {
+   constructor(madsor) {
+      super();
+      this.madsor = madsor;
+      this.snapshots = madsor.snapshotScalePosition();
+      this.scale = 1.0;                    // cumulative movement.
+   }
+
+   handleMouseMove(ev) {
+      let scale = this._xPercentMovement(ev);   // return (100% to -100%)
+      if (scale > 0) {
+         scale += 1.0;
+      } else {
+         scale = 1.0 + (scale*0.5);
+      }
+      this.madsor.scaleSelection(this.snapshots, scale);
+      this.scale *= scale;
+   }
+
+   _commit() {
+      View.undoQueue(new ScaleCommand(this.madsor, this.snapshots, this.scale));
+   }
+
+   _cancel() {
+      this.madsor.restoreMoveSelection(this.snapshots);
+   }
+}
+
+
 
 class MoveCommand extends EditCommand {
    constructor(madsor, snapshots, movement) {
@@ -301,6 +357,25 @@ class MoveCommand extends EditCommand {
 
    undo() {
       this.madsor.restoreMoveSelection(this.snapshots);
+   }
+}
+
+
+class ScaleCommand extends EditCommand {
+   constructor(madsor, snapshots, scale) {
+      super();
+      this.madsor = madsor;
+      this.snapshots = snapshots;
+      this.scale = scale;
+   }
+
+   doIt() {
+      this.madsor.scaleSelection(this.snapshots, this.movement);
+   }
+
+   undo() {
+      // all works now
+      //this.madsor.restoreMoveSelection(this.snapshots);
    }
 }
 

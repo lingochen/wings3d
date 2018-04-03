@@ -1143,6 +1143,37 @@ WingedTopology.prototype.extrudeContours = function(edgeLoops) {
    return extrudeContours;
 };
 
+//
+// similar to findContours. but return a list of faces.
+//
+WingedTopology.prototype.findFaceGroup = function(selectedPolygon) {
+   const processPolygon = new Set(selectedPolygon);
+   let faceGroup = null;
+
+   function processNeighbors(polygon) {
+      processPolygon.delete(polygon);
+      faceGroup.add(polygon);
+      polygon.eachVertex( (vertex) => {   // polygon sharing the same vertex will be group together
+         vertex.eachOutEdge( (outEdge) => {
+            const face = outEdge.pair.face;
+            if (processPolygon.has(face)) {
+               // depth first search
+               processNeighbors(face);
+            }
+          });
+      });
+   };
+
+   let list = [];
+   for (let polygon of processPolygon) {
+      faceGroup = new Set;
+      processNeighbors(polygon);
+      list.push( faceGroup );
+   }
+
+   return list;
+}
+
 
 
 WingedTopology.prototype.findContours = function(selectedPolygon) {
