@@ -5339,10 +5339,10 @@ class ScaleUniformHandler extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["M
 
    handleMouseMove(ev) {
       let scale = this._xPercentMovement(ev);   // return (100% to -100%)
-      if (scale > 0) {
-         scale += 1.0;
+      if (scale < 0) {
+         scale = 1.0 + Math.abs(scale);
       } else {
-         scale = 1.0 + (scale*0.5);
+         scale = 1.0 / (1.0 + scale);
       }
       this.madsor.scaleSelection(this.snapshots, scale);
       this.scale *= scale;
