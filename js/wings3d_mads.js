@@ -121,6 +121,10 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       }, snapshots);
    }
 
+   restoreSelectionPosition(snapshots) {
+      this.doAll(snapshots, PreviewCage.prototype.restoreMoveSelection);
+   }
+
    // scale vertices along axis
    scaleSelection(snapshots, scale) {
       this.doAll(snapshots, PreviewCage.prototype.scaleSelection, scale);
@@ -337,7 +341,7 @@ class ScaleUniformHandler extends MouseMoveHandler {
    }
 
    _cancel() {
-      this.madsor.restoreMoveSelection(this.snapshots);
+      this.madsor.restoreSelectionPosition(this.snapshots);
    }
 }
 
@@ -374,8 +378,7 @@ class ScaleCommand extends EditCommand {
    }
 
    undo() {
-      // all works now
-      //this.madsor.restoreMoveSelection(this.snapshots);
+      this.madsor.restoreSelectionPosition(this.snapshots);
    }
 }
 

@@ -5137,6 +5137,10 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       }, snapshots);
    }
 
+   restoreSelectionPosition(snapshots) {
+      this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_2__wings3d_model__["PreviewCage"].prototype.restoreMoveSelection);
+   }
+
    // scale vertices along axis
    scaleSelection(snapshots, scale) {
       this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_2__wings3d_model__["PreviewCage"].prototype.scaleSelection, scale);
@@ -5353,7 +5357,7 @@ class ScaleUniformHandler extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["M
    }
 
    _cancel() {
-      this.madsor.restoreMoveSelection(this.snapshots);
+      this.madsor.restoreSelectionPosition(this.snapshots);
    }
 }
 
@@ -5390,8 +5394,7 @@ class ScaleCommand extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["EditComm
    }
 
    undo() {
-      // all works now
-      //this.madsor.restoreMoveSelection(this.snapshots);
+      this.madsor.restoreSelectionPosition(this.snapshots);
    }
 }
 
