@@ -7,6 +7,7 @@ import {FaceMadsor} from './wings3d_facemads';   // for switching
 import {EdgeMadsor} from './wings3d_edgemads';
 import {VertexMadsor} from './wings3d_vertexmads';
 import { EditCommand } from './wings3d_undo';
+import {PreviewCage} from './wings3d_model';
 import * as ShaderProg from './wings3d_shaderprog';
 import * as View from './wings3d_view';
 import * as UI from './wings3d_ui';
@@ -80,6 +81,10 @@ class BodyMadsor extends Madsor {
          snapshots.push( preview.snapshotBodyPosition() );
       });
       return snapshots;
+   }
+
+   snapshotTransformGroup() {
+      return this.snapshotAll(PreviewCage.prototype.snapshotTransformBodyGroup);
    }
 
    dragSelect(cage, selectArray, onOff) {

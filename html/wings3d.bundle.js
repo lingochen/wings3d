@@ -335,6 +335,11 @@ const action = {
    bodyMoveY: () => {notImplemented(this);},
    bodyMoveZ: () => {notImplemented(this);},
    bodyMoveFree: () => {notImplemented(this);},
+   bodyRotateMenu: () => {notImplemented(this);},
+   bodyRotateX: () => {notImplemented(this);},
+   bodyRotateY: () => {notImplemented(this);},
+   bodyRotateZ: () => {notImplemented(this);},
+   bodyRotateFree: () => {notImplemented(this);},
    // edge
    cutMenu: () => {notImplemented(this);},
    cutLine2: () => {notImplemented(this);},
@@ -799,7 +804,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d_edgemads__ = __webpack_require__(9);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__wings3d_vertexmads__ = __webpack_require__(11);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__wings3d_bodymads__ = __webpack_require__(10);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__wings3d_model__ = __webpack_require__(6);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__wings3d_model__ = __webpack_require__(5);
 /*
 //     This module implements most of the commands in the View menu. 
 //
@@ -2097,378 +2102,6 @@ ShaderProgram.prototype.getTypeByName = function(type) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "uColorArray", function() { return uColorArray; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "colorArray", function() { return colorArray; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "selectedColorLine", function() { return selectedColorLine; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "selectedColorPoint", function() { return selectedColorPoint; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "textArray", function() { return textArray; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "cameraLight", function() { return cameraLight; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "solidColor", function() { return solidColor; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "simplePoint", function() { return simplePoint; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "colorPoint", function() { return colorPoint; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "solidWireframe", function() { return solidWireframe; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "colorWireframe", function() { return colorWireframe; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "colorSolidWireframe", function() { return colorSolidWireframe; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__ = __webpack_require__(4);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d__ = __webpack_require__(0);
-// program as text .
-
-
-
-
-let uColorArray = {
-   vertexShader:[
-      'attribute vec3 position;',
-      'uniform mat4 worldView;',
-      'uniform mat4 projection;',
-      'void main(void) {',
-      '   gl_Position = projection * worldView * vec4(position, 1.0);',
-      '}'].join("\n"),
-   fragShader:[
-      'uniform lowp vec4 uColor;',
-      'void main(void) {',
-      '   gl_FragColor = uColor;',
-      '}'].join("\n"),
-};
-let colorArray = {
-   vertexShader: [
-      'attribute vec3 aVertexPosition;',
-      'attribute vec3 aVertexColor;',
-
-      'uniform mat4 uMVMatrix;',
-      'uniform mat4 uPMatrix;',
-
-      'varying lowp vec4 vColor;',
-
-      'void main(void) {',
-      '   gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);',
-      '   vColor = vec4(aVertexColor, 1.0);',
-      '}'].join("\n"),
-   fragShader: [
-      'varying lowp vec4 vColor;',
-
-      'void main(void) {',
-      '   gl_FragColor = vColor;',
-      '}'].join("\n"),
-};
-let selectedColorLine = {
-   vertex: [
-      'attribute vec3 position;',
-      'attribute float color;',
-      'uniform mat4 worldView;',
-      'uniform mat4 projection;',
-
-      'varying lowp float vColor;',
-
-      'void main(void) {',
-      '   gl_Position = projection * worldView * vec4(position, 1.0);',
-      '   vColor = color;',
-      '}'].join("\n"),
-   fragment: [
-      'precision lowp float;',
-      'varying lowp float vColor;',
-      'uniform vec4 hiliteColor;',
-      'uniform vec4 selectedColor;',
-
-      'void main(void) {',
-      '   if (vColor == 0.0) {',
-      '      discard;',             
-      '   } else if (vColor == 0.25) {',
-      '      gl_FragColor = selectedColor;',
-      '   } else if (vColor == 0.5) {',
-      '      gl_FragColor = hiliteColor;',
-      '   } else {',
-      '      gl_FragColor = vec4(hiliteColor.xyz+selectedColor.xyz, 1.0);',     // blended 
-      '   }',
-      '}'].join("\n"),
-};
-let selectedColorPoint = {
-   vertex: [
-      'attribute vec3 position;',
-      'attribute float color;',
-      'uniform mat4 worldView;',
-      'uniform mat4 projection;',
-
-      'varying lowp float vColor;',
-
-      'void main(void) {',
-      '   gl_Position = projection * worldView * vec4(position, 1.0);',
-      '   vColor = color;',
-      '  gl_PointSize = 8.8;',
-      '}'].join("\n"),
-   fragment: [
-      'precision lowp float;',
-      'varying lowp float vColor;',
-      'uniform vec4 hiliteColor;',
-      'uniform vec4 selectedColor;',
-
-      'void main(void) {',
-      '   if (vColor == 0.0) {',
-      '      gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);',     // black dotted.             
-      '   } else if (vColor == 0.25) {',
-      '      gl_FragColor = selectedColor;',
-      '   } else if (vColor == 0.5) {',
-      '      gl_FragColor = hiliteColor;',
-      '   } else {',
-      '      gl_FragColor = vec4(hiliteColor.xyz+selectedColor.xyz, 1.0);',     // blended 
-      '   }',
-      '}'].join("\n"),
-};
-let textArray = {
-   vertexShader:[
-      'attribute vec4 aVertexPosition;',
-      'attribute vec2 aTexCoord;',
-      'uniform mat4 uMVMatrix;',
-      'uniform mat4 uPMatrix;',
-      'varying vec2 v_texcoord;',
-      'void main() {',
-         'gl_Position =  uPMatrix * uMVMatrix * aVertexPosition;',
-         'v_texcoord = aTexCoord;',
-      '}'].join("\n"),
-   fragShader:[
-      'precision mediump float;',
-      'varying vec2 v_texcoord;',
-      'uniform sampler2D u_texture;',
-      'void main() {',
-         'gl_FragColor = texture2D(u_texture, v_texcoord);',
-      '}'].join("\n")
-};
-let cameraLight = {
-   vertex:[
-      'attribute vec3 position;',
-
-      'uniform vec3 faceColor;',
-      'uniform mat4 worldView;',
-      'uniform mat4 projection;',
-
-      'varying vec3 vPosition;',
-      'varying vec3 vLight;',
-      'varying vec3 vColor;',
-
-      'void main(void) {',
-      '   gl_Position = projection * worldView * vec4(position, 1.0);',
-      '   vPosition =  (worldView * vec4(position, 1.0)).xyz;',
-      '   vColor = faceColor;',
-      '   vLight = vec3(0.0, 0.0, -1.0);',
-      '}'].join("\n"),
-   fragment:[
-      '#extension GL_OES_standard_derivatives : enable',
-      'precision mediump float;\n',
-      'varying vec3 vPosition;',
-      'varying vec3 vLight;',  // light direction
-      'varying vec3 vColor;',
-
-      'void main() {',
-      '  vec3 n = normalize(cross(dFdy(vPosition), dFdx(vPosition)));', // N is the world normal
-      //'  vec3 l = normalize(v_Light);' + // no needs, v_Light is always normalized.
-      '  float diffuseFactor = dot(normalize(n), vLight);',
-      '  if (diffuseFactor > 0.0) {',
-      '    gl_FragColor = vec4(vColor * diffuseFactor, 1.0);',
-      '  } else {',
-      '    gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);',
-      '  }',
-      '}'].join("\n"),
-};
-let solidColor = {
-   vertex:[
-      'attribute vec3 position;',
-
-      'uniform mat4 worldView;',
-      'uniform mat4 projection;',
-
-      'void main(void) {',
-      '  gl_Position = projection * worldView * vec4(position, 1.0);',
-      '}'].join("\n"),
-   fragment:[
-      'precision mediump float;',
-      'uniform vec4 uColor;',
-      'void main(void) {',
-      '  gl_FragColor = uColor;',
-      '}'].join("\n")
-};
-let simplePoint = { 
-   vertex: [
-      'attribute vec3 position;',
-      'attribute vec3 color;',
-      'uniform mat4 worldView;',
-      'uniform mat4 projection;',			
-      
-      'varying vec3 vColor;',
-      'void main() {',
-      '  vColor = color;',
-      '  gl_Position = projection * worldView * vec4(position, 1.0);',
-      '  gl_PointSize = 8.8;',
-      '}'].join("\n"),
-   fragment: [
-      'precision mediump float;',
-      'varying vec3 vColor;',
-
-      'void main() {',
-         ' gl_FragColor = vec4(vColor, 1.0);',
-      '}'].join("\n")
-};
-let colorPoint = {
-   vertex: [
-      'attribute vec3 position;',
-      'uniform mat4 worldView;',
-      'uniform mat4 projection;',			
-      
-      'void main() {',
-      '  gl_Position = projection * worldView * vec4(position, 1.0);',
-      '  gl_PointSize = 8.8;',
-      '}'].join("\n"),
-   fragment: [
-      'precision lowp float;',
-      'uniform vec4 uColor;',
-
-      'void main() {',
-      // http://stackoverflow.com/questions/17274820/drawing-round-points-using-modern-opengl
-         'float distance = distance( gl_PointCoord, vec2(0.5,0.5) );',
-         'if ( distance >= 0.5 ) {',
-            'discard;',  
-         '}',
-         'gl_FragColor = uColor;',
-      '}'].join("\n"),
-};
-let solidWireframe = {  // we don't have geometry shader, so we have to manually pass barycentric to do 'single pass wireframe' 
-   vertex: [       // http://codeflow.org/entries/2012/aug/02/easy-wireframe-display-with-barycentric-coordinates/
-      'attribute vec3 position;', 
-      'attribute vec3 barycentric;',
-      'uniform mat4 projection;', 
-      'uniform mat4 worldView;',
-
-      'varying vec3 vBC;',
-      'void main(){',
-         'vBC = barycentric;',
-         'gl_Position = projection * worldView * vec4(position, 1.0);',
-      '}'].join("\n"),
-
-   fragment:[
-      '#extension GL_OES_standard_derivatives : enable',
-      'precision mediump float;',
-      'varying vec3 vBC;',
-
-      'float edgeFactor(){',
-         'vec3 d = fwidth(vBC);',
-         'vec3 a3 = smoothstep(vec3(0.0), d*1.5, vBC);',
-         'return min(min(a3.x, a3.y), a3.z);',
-      '}',
-
-      'void main(){',
-         // coloring by edge
-         'gl_FragColor.rgb = mix(vec3(0.0), vec3(0.5), edgeFactor());',
-         'gl_FragColor.a = 1.0;',
-      '}'].join("\n"),
-};
-let colorWireframe = {  // we don't have geometry shader, so we have to manually pass barycentric to do 'single pass wireframe' 
-   vertex: [       // http://codeflow.org/entries/2012/aug/02/easy-wireframe-display-with-barycentric-coordinates/
-      'attribute vec3 position;', 
-      'attribute vec3 barycentric;',
-      'attribute float hilite;',  // (x,y), x is for edge, y is for interior. (y>0 is turnon), (x==1 is turnon).
-      'uniform mat4 projection;', 
-      'uniform mat4 worldView;',
-
-      'varying vec3 vBC;',
-      'varying float vHilite;',
-      'void main(){',
-         'vHilite = hilite;',
-         'vBC = barycentric;',
-         'gl_Position = projection * worldView * vec4(position, 1.0);',
-      '}'].join("\n"),
-
-   fragment:[
-      '#extension GL_OES_standard_derivatives : enable',
-      'precision mediump float;',
-      'uniform vec3 hiliteColor;',  // hilite color
-      'varying vec3 vBC;',
-      'varying float vHilite;',
-
-      'float edgeFactor(){',
-         'vec3 d = fwidth(vBC);',
-         'vec3 a3 = smoothstep(vec3(0.0), d*1.5, vBC);',
-         'return min(min(a3.x, a3.y), a3.z);',
-      '}',
-
-      'void main(){',
-         // coloring by edge
-         'vec3 edgeColor = vec3(0.0);',
-         'if (vHilite >= 1.0) {',
-         '  edgeColor = hiliteColor;',
-         '}',
-         'gl_FragColor.rgb = mix(edgeColor, vec3(0.5), edgeFactor());',
-         'gl_FragColor.a = 1.0;',
-      '}'].join("\n"),
-};
-let colorSolidWireframe = {  // we don't have geometry shader, so we have to manually pass barycentric to do 'single pass wireframe' 
-   vertex: [       // http://codeflow.org/entries/2012/aug/02/easy-wireframe-display-with-barycentric-coordinates/
-      'attribute vec3 position;', 
-      'attribute vec3 barycentric;',
-      'attribute float selected;',  // (x,y), x is for edge, y is for interior. (y>0 is turnon), (x==1 is turnon).
-      'uniform mat4 projection;', 
-      'uniform mat4 worldView;',
-
-      'varying vec3 vBC;',
-      'varying float vSelected;',
-      'void main(){',
-         'vSelected = selected;',
-         'vBC = barycentric;',
-         'gl_Position = projection * worldView * vec4(position, 1.0);',
-      '}'].join("\n"),
-
-   fragment:[
-      '#extension GL_OES_standard_derivatives : enable',
-      'precision mediump float;',
-      'uniform vec3 faceColor;',
-      'uniform vec3 selectedColor;',  // hilite color
-      'varying vec3 vBC;',
-      'varying float vSelected;',
-
-      'float edgeFactor(){',
-         'vec3 d = fwidth(vBC);',
-         'vec3 a3 = smoothstep(vec3(0.0), d*1.5, vBC);',
-         'return min(min(a3.x, a3.y), a3.z);',
-      '}',
-
-      'void main(){',
-         'vec3 interiorColor = faceColor;',
-         'if (vSelected == 1.0) {',
-         '  interiorColor = selectedColor;',
-         '}',
-         // coloring by edge
-         'gl_FragColor.rgb = mix(vec3(0.0), interiorColor, edgeFactor());',
-         'gl_FragColor.a = 1.0;',
-      '}'].join("\n"),
-};
-
-__WEBPACK_IMPORTED_MODULE_1__wings3d__["onReady"](function() {
-   // compiled the program
-   cameraLight = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].createShaderProgram(cameraLight.vertex, cameraLight.fragment);
-
-   solidColor = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].createShaderProgram(solidColor.vertex, solidColor.fragment);
-
-   simplePoint = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].createShaderProgram(simplePoint.vertex, simplePoint.fragment);
-
-   colorPoint = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].createShaderProgram(colorPoint.vertex, colorPoint.fragment);
-
-   solidWireframe = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].createShaderProgram(solidWireframe.vertex, solidWireframe.fragment);
-
-   colorWireframe = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].createShaderProgram(colorWireframe.vertex, colorWireframe.fragment);
-
-   colorSolidWireframe = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].createShaderProgram(colorSolidWireframe.vertex, colorSolidWireframe.fragment);
-
-   selectedColorLine = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].createShaderProgram(selectedColorLine.vertex, selectedColorLine.fragment);
-
-   selectedColorPoint = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].createShaderProgram(selectedColorPoint.vertex, selectedColorPoint.fragment);
-});
-
-
-
-/***/ }),
-/* 6 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "PreviewCage", function() { return PreviewCage; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "CreatePreviewCageCommand", function() { return CreatePreviewCageCommand; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__ = __webpack_require__(4);
@@ -3451,27 +3084,41 @@ PreviewCage.prototype.moveSelection = function(movement, snapshot) {
    this.computeSnapshot(snapshot);
 };
 
+//
+// rotate selection, with a center
+//
+PreviewCage.prototype.rotateSelection = function(snapshot, quatRotate) {
+   const translate = vec3.create();
+   const scale = vec3.fromValues(1, 1, 1);
+   this.transformSelection(snapshot, (transform, origin) => {
+      mat4.fromRotationTranslationScaleOrigin(transform, quatRotate, translate, scale, origin);   
+    });
+};
 
 //
 // scale selection, by moving vertices
 //
 PreviewCage.prototype.scaleSelection = function(snapshot, scale) {
+   const scaleV = vec3.fromValues(scale, scale, scale);
+   this.transformSelection(snapshot, (transform, origin) => {
+      mat4.fromScaling(transform, scaleV);   
+    });
+};
+
+//
+// transform selection,
+//
+PreviewCage.prototype.transformSelection = function(snapshot, transformFn) {
    // construct the matrix
-   const scaleV = vec3.create();
-   vec3.set(scaleV, scale, scale, scale);
-   const mat = mat4.create();
-   mat4.fromScaling(mat, scaleV);
+   const transform = mat4.create();
 
    const vArry = snapshot.vertices[Symbol.iterator]();
    for (let group of snapshot.matrixGroup) {
+      //mat4.fromRotationTranslationScaleOrigin(transform, quatRotation, translate, scale, group.center); // origin should not be modified by scale, glmatrix seems to get the order wrong.
+      transformFn(transform, group.center);
       for (let index = 0; index < group.count; index++) {
          const vertex = vArry.next().value;
-         // change basis
-         vec3.sub(vertex.vertex, vertex.vertex, group.center);
-         // scale 
-         vec3.transformMat4(vertex.vertex, vertex.vertex, mat);
-         // change basis back
-         vec3.add(vertex.vertex, vertex.vertex, group.center);
+         vec3.transformMat4(vertex.vertex, vertex.vertex, transform);
       }
    }
 
@@ -3645,7 +3292,7 @@ PreviewCage.prototype.snapshotEdgePositionAndNormal = function() {
    return this.snapshotPosition(vertices, normalArray);
 };
 
-PreviewCage.prototype.snapshotFaceScalePosition = function() {
+PreviewCage.prototype.snapshotTransformFaceGroup = function() {
    const oldSize = this._getGeometrySize();
 
    const vertices = new Set;
@@ -3673,6 +3320,24 @@ PreviewCage.prototype.snapshotFaceScalePosition = function() {
    // now construct all the effected data and save position.
    const ret = this.snapshotPosition(vertices);
    ret.matrixGroup = matrixGroup;
+   return ret;
+};
+
+PreviewCage.prototype.snapshotTransformBodyGroup = function() {
+   let vertices = new Set;
+   const center = vec3.create();
+   if (this.hasSelection()) {
+      for (let vertex of this.geometry.vertices) {
+         if (vertex.isReal()) {
+            vertices.add(vertex);
+            vec3.add(center, center, vertex.vertex);
+         }
+      }
+      vec3.scale(center, center, 1.0/vertices.size);
+   }
+
+   const ret = this.snapshotPosition(vertices);
+   ret.matrixGroup = [{center: center, count: vertices.size}];
    return ret;
 };
 
@@ -4581,6 +4246,378 @@ class CreatePreviewCageCommand extends __WEBPACK_IMPORTED_MODULE_5__wings3d_undo
 
 
 /***/ }),
+/* 6 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "uColorArray", function() { return uColorArray; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "colorArray", function() { return colorArray; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "selectedColorLine", function() { return selectedColorLine; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "selectedColorPoint", function() { return selectedColorPoint; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "textArray", function() { return textArray; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "cameraLight", function() { return cameraLight; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "solidColor", function() { return solidColor; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "simplePoint", function() { return simplePoint; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "colorPoint", function() { return colorPoint; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "solidWireframe", function() { return solidWireframe; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "colorWireframe", function() { return colorWireframe; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "colorSolidWireframe", function() { return colorSolidWireframe; });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d__ = __webpack_require__(0);
+// program as text .
+
+
+
+
+let uColorArray = {
+   vertexShader:[
+      'attribute vec3 position;',
+      'uniform mat4 worldView;',
+      'uniform mat4 projection;',
+      'void main(void) {',
+      '   gl_Position = projection * worldView * vec4(position, 1.0);',
+      '}'].join("\n"),
+   fragShader:[
+      'uniform lowp vec4 uColor;',
+      'void main(void) {',
+      '   gl_FragColor = uColor;',
+      '}'].join("\n"),
+};
+let colorArray = {
+   vertexShader: [
+      'attribute vec3 aVertexPosition;',
+      'attribute vec3 aVertexColor;',
+
+      'uniform mat4 uMVMatrix;',
+      'uniform mat4 uPMatrix;',
+
+      'varying lowp vec4 vColor;',
+
+      'void main(void) {',
+      '   gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);',
+      '   vColor = vec4(aVertexColor, 1.0);',
+      '}'].join("\n"),
+   fragShader: [
+      'varying lowp vec4 vColor;',
+
+      'void main(void) {',
+      '   gl_FragColor = vColor;',
+      '}'].join("\n"),
+};
+let selectedColorLine = {
+   vertex: [
+      'attribute vec3 position;',
+      'attribute float color;',
+      'uniform mat4 worldView;',
+      'uniform mat4 projection;',
+
+      'varying lowp float vColor;',
+
+      'void main(void) {',
+      '   gl_Position = projection * worldView * vec4(position, 1.0);',
+      '   vColor = color;',
+      '}'].join("\n"),
+   fragment: [
+      'precision lowp float;',
+      'varying lowp float vColor;',
+      'uniform vec4 hiliteColor;',
+      'uniform vec4 selectedColor;',
+
+      'void main(void) {',
+      '   if (vColor == 0.0) {',
+      '      discard;',             
+      '   } else if (vColor == 0.25) {',
+      '      gl_FragColor = selectedColor;',
+      '   } else if (vColor == 0.5) {',
+      '      gl_FragColor = hiliteColor;',
+      '   } else {',
+      '      gl_FragColor = vec4(hiliteColor.xyz+selectedColor.xyz, 1.0);',     // blended 
+      '   }',
+      '}'].join("\n"),
+};
+let selectedColorPoint = {
+   vertex: [
+      'attribute vec3 position;',
+      'attribute float color;',
+      'uniform mat4 worldView;',
+      'uniform mat4 projection;',
+
+      'varying lowp float vColor;',
+
+      'void main(void) {',
+      '   gl_Position = projection * worldView * vec4(position, 1.0);',
+      '   vColor = color;',
+      '  gl_PointSize = 8.8;',
+      '}'].join("\n"),
+   fragment: [
+      'precision lowp float;',
+      'varying lowp float vColor;',
+      'uniform vec4 hiliteColor;',
+      'uniform vec4 selectedColor;',
+
+      'void main(void) {',
+      '   if (vColor == 0.0) {',
+      '      gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);',     // black dotted.             
+      '   } else if (vColor == 0.25) {',
+      '      gl_FragColor = selectedColor;',
+      '   } else if (vColor == 0.5) {',
+      '      gl_FragColor = hiliteColor;',
+      '   } else {',
+      '      gl_FragColor = vec4(hiliteColor.xyz+selectedColor.xyz, 1.0);',     // blended 
+      '   }',
+      '}'].join("\n"),
+};
+let textArray = {
+   vertexShader:[
+      'attribute vec4 aVertexPosition;',
+      'attribute vec2 aTexCoord;',
+      'uniform mat4 uMVMatrix;',
+      'uniform mat4 uPMatrix;',
+      'varying vec2 v_texcoord;',
+      'void main() {',
+         'gl_Position =  uPMatrix * uMVMatrix * aVertexPosition;',
+         'v_texcoord = aTexCoord;',
+      '}'].join("\n"),
+   fragShader:[
+      'precision mediump float;',
+      'varying vec2 v_texcoord;',
+      'uniform sampler2D u_texture;',
+      'void main() {',
+         'gl_FragColor = texture2D(u_texture, v_texcoord);',
+      '}'].join("\n")
+};
+let cameraLight = {
+   vertex:[
+      'attribute vec3 position;',
+
+      'uniform vec3 faceColor;',
+      'uniform mat4 worldView;',
+      'uniform mat4 projection;',
+
+      'varying vec3 vPosition;',
+      'varying vec3 vLight;',
+      'varying vec3 vColor;',
+
+      'void main(void) {',
+      '   gl_Position = projection * worldView * vec4(position, 1.0);',
+      '   vPosition =  (worldView * vec4(position, 1.0)).xyz;',
+      '   vColor = faceColor;',
+      '   vLight = vec3(0.0, 0.0, -1.0);',
+      '}'].join("\n"),
+   fragment:[
+      '#extension GL_OES_standard_derivatives : enable',
+      'precision mediump float;\n',
+      'varying vec3 vPosition;',
+      'varying vec3 vLight;',  // light direction
+      'varying vec3 vColor;',
+
+      'void main() {',
+      '  vec3 n = normalize(cross(dFdy(vPosition), dFdx(vPosition)));', // N is the world normal
+      //'  vec3 l = normalize(v_Light);' + // no needs, v_Light is always normalized.
+      '  float diffuseFactor = dot(normalize(n), vLight);',
+      '  if (diffuseFactor > 0.0) {',
+      '    gl_FragColor = vec4(vColor * diffuseFactor, 1.0);',
+      '  } else {',
+      '    gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);',
+      '  }',
+      '}'].join("\n"),
+};
+let solidColor = {
+   vertex:[
+      'attribute vec3 position;',
+
+      'uniform mat4 worldView;',
+      'uniform mat4 projection;',
+
+      'void main(void) {',
+      '  gl_Position = projection * worldView * vec4(position, 1.0);',
+      '}'].join("\n"),
+   fragment:[
+      'precision mediump float;',
+      'uniform vec4 uColor;',
+      'void main(void) {',
+      '  gl_FragColor = uColor;',
+      '}'].join("\n")
+};
+let simplePoint = { 
+   vertex: [
+      'attribute vec3 position;',
+      'attribute vec3 color;',
+      'uniform mat4 worldView;',
+      'uniform mat4 projection;',			
+      
+      'varying vec3 vColor;',
+      'void main() {',
+      '  vColor = color;',
+      '  gl_Position = projection * worldView * vec4(position, 1.0);',
+      '  gl_PointSize = 8.8;',
+      '}'].join("\n"),
+   fragment: [
+      'precision mediump float;',
+      'varying vec3 vColor;',
+
+      'void main() {',
+         ' gl_FragColor = vec4(vColor, 1.0);',
+      '}'].join("\n")
+};
+let colorPoint = {
+   vertex: [
+      'attribute vec3 position;',
+      'uniform mat4 worldView;',
+      'uniform mat4 projection;',			
+      
+      'void main() {',
+      '  gl_Position = projection * worldView * vec4(position, 1.0);',
+      '  gl_PointSize = 8.8;',
+      '}'].join("\n"),
+   fragment: [
+      'precision lowp float;',
+      'uniform vec4 uColor;',
+
+      'void main() {',
+      // http://stackoverflow.com/questions/17274820/drawing-round-points-using-modern-opengl
+         'float distance = distance( gl_PointCoord, vec2(0.5,0.5) );',
+         'if ( distance >= 0.5 ) {',
+            'discard;',  
+         '}',
+         'gl_FragColor = uColor;',
+      '}'].join("\n"),
+};
+let solidWireframe = {  // we don't have geometry shader, so we have to manually pass barycentric to do 'single pass wireframe' 
+   vertex: [       // http://codeflow.org/entries/2012/aug/02/easy-wireframe-display-with-barycentric-coordinates/
+      'attribute vec3 position;', 
+      'attribute vec3 barycentric;',
+      'uniform mat4 projection;', 
+      'uniform mat4 worldView;',
+
+      'varying vec3 vBC;',
+      'void main(){',
+         'vBC = barycentric;',
+         'gl_Position = projection * worldView * vec4(position, 1.0);',
+      '}'].join("\n"),
+
+   fragment:[
+      '#extension GL_OES_standard_derivatives : enable',
+      'precision mediump float;',
+      'varying vec3 vBC;',
+
+      'float edgeFactor(){',
+         'vec3 d = fwidth(vBC);',
+         'vec3 a3 = smoothstep(vec3(0.0), d*1.5, vBC);',
+         'return min(min(a3.x, a3.y), a3.z);',
+      '}',
+
+      'void main(){',
+         // coloring by edge
+         'gl_FragColor.rgb = mix(vec3(0.0), vec3(0.5), edgeFactor());',
+         'gl_FragColor.a = 1.0;',
+      '}'].join("\n"),
+};
+let colorWireframe = {  // we don't have geometry shader, so we have to manually pass barycentric to do 'single pass wireframe' 
+   vertex: [       // http://codeflow.org/entries/2012/aug/02/easy-wireframe-display-with-barycentric-coordinates/
+      'attribute vec3 position;', 
+      'attribute vec3 barycentric;',
+      'attribute float hilite;',  // (x,y), x is for edge, y is for interior. (y>0 is turnon), (x==1 is turnon).
+      'uniform mat4 projection;', 
+      'uniform mat4 worldView;',
+
+      'varying vec3 vBC;',
+      'varying float vHilite;',
+      'void main(){',
+         'vHilite = hilite;',
+         'vBC = barycentric;',
+         'gl_Position = projection * worldView * vec4(position, 1.0);',
+      '}'].join("\n"),
+
+   fragment:[
+      '#extension GL_OES_standard_derivatives : enable',
+      'precision mediump float;',
+      'uniform vec3 hiliteColor;',  // hilite color
+      'varying vec3 vBC;',
+      'varying float vHilite;',
+
+      'float edgeFactor(){',
+         'vec3 d = fwidth(vBC);',
+         'vec3 a3 = smoothstep(vec3(0.0), d*1.5, vBC);',
+         'return min(min(a3.x, a3.y), a3.z);',
+      '}',
+
+      'void main(){',
+         // coloring by edge
+         'vec3 edgeColor = vec3(0.0);',
+         'if (vHilite >= 1.0) {',
+         '  edgeColor = hiliteColor;',
+         '}',
+         'gl_FragColor.rgb = mix(edgeColor, vec3(0.5), edgeFactor());',
+         'gl_FragColor.a = 1.0;',
+      '}'].join("\n"),
+};
+let colorSolidWireframe = {  // we don't have geometry shader, so we have to manually pass barycentric to do 'single pass wireframe' 
+   vertex: [       // http://codeflow.org/entries/2012/aug/02/easy-wireframe-display-with-barycentric-coordinates/
+      'attribute vec3 position;', 
+      'attribute vec3 barycentric;',
+      'attribute float selected;',  // (x,y), x is for edge, y is for interior. (y>0 is turnon), (x==1 is turnon).
+      'uniform mat4 projection;', 
+      'uniform mat4 worldView;',
+
+      'varying vec3 vBC;',
+      'varying float vSelected;',
+      'void main(){',
+         'vSelected = selected;',
+         'vBC = barycentric;',
+         'gl_Position = projection * worldView * vec4(position, 1.0);',
+      '}'].join("\n"),
+
+   fragment:[
+      '#extension GL_OES_standard_derivatives : enable',
+      'precision mediump float;',
+      'uniform vec3 faceColor;',
+      'uniform vec3 selectedColor;',  // hilite color
+      'varying vec3 vBC;',
+      'varying float vSelected;',
+
+      'float edgeFactor(){',
+         'vec3 d = fwidth(vBC);',
+         'vec3 a3 = smoothstep(vec3(0.0), d*1.5, vBC);',
+         'return min(min(a3.x, a3.y), a3.z);',
+      '}',
+
+      'void main(){',
+         'vec3 interiorColor = faceColor;',
+         'if (vSelected == 1.0) {',
+         '  interiorColor = selectedColor;',
+         '}',
+         // coloring by edge
+         'gl_FragColor.rgb = mix(vec3(0.0), interiorColor, edgeFactor());',
+         'gl_FragColor.a = 1.0;',
+      '}'].join("\n"),
+};
+
+__WEBPACK_IMPORTED_MODULE_1__wings3d__["onReady"](function() {
+   // compiled the program
+   cameraLight = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].createShaderProgram(cameraLight.vertex, cameraLight.fragment);
+
+   solidColor = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].createShaderProgram(solidColor.vertex, solidColor.fragment);
+
+   simplePoint = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].createShaderProgram(simplePoint.vertex, simplePoint.fragment);
+
+   colorPoint = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].createShaderProgram(colorPoint.vertex, colorPoint.fragment);
+
+   solidWireframe = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].createShaderProgram(solidWireframe.vertex, solidWireframe.fragment);
+
+   colorWireframe = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].createShaderProgram(colorWireframe.vertex, colorWireframe.fragment);
+
+   colorSolidWireframe = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].createShaderProgram(colorSolidWireframe.vertex, colorSolidWireframe.fragment);
+
+   selectedColorLine = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].createShaderProgram(selectedColorLine.vertex, selectedColorLine.fragment);
+
+   selectedColorPoint = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].createShaderProgram(selectedColorPoint.vertex, selectedColorPoint.fragment);
+});
+
+
+
+/***/ }),
 /* 7 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -4592,10 +4629,10 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_bodymads__ = __webpack_require__(10);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__ = __webpack_require__(11);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__ = __webpack_require__(3);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_model__ = __webpack_require__(6);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_model__ = __webpack_require__(5);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_view__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_gl__ = __webpack_require__(4);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d_shaderprog__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d_shaderprog__ = __webpack_require__(6);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__wings3d_ui__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__wings3d__ = __webpack_require__(0);
 /**
@@ -4676,8 +4713,8 @@ class FaceMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
       return snapshots;
    }
 
-   snapshotScalePosition() {
-      return this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.snapshotFaceScalePosition);
+   snapshotTransformGroup() {
+      return this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.snapshotTransformFaceGroup);
    }
 
    // extrude Face
@@ -5009,7 +5046,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ToggleModeCommand", function() { return ToggleModeCommand; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__ = __webpack_require__(3);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_model__ = __webpack_require__(6);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_model__ = __webpack_require__(5);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_view__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_ui__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d__ = __webpack_require__(0);
@@ -5063,6 +5100,12 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       if (scaleUniform[mode]) {
          __WEBPACK_IMPORTED_MODULE_4__wings3d_ui__["bindMenuItem"](scaleUniform[mode].name, function(ev) {
             __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["attachHandlerMouseMove"](new ScaleUniformHandler(self));
+          });
+      }
+      // rotate x, y, z
+      for (let axis = 0; axis < 3; ++axis) {
+         __WEBPACK_IMPORTED_MODULE_4__wings3d_ui__["bindMenuItem"](mode + 'Rotate' + axisName[axis], function(ev) {
+            __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["attachHandlerMouseMove"](new MouseRotateAlongAxis(self, axis));
           });
       }
    }
@@ -5144,6 +5187,11 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
    // scale vertices along axis
    scaleSelection(snapshots, scale) {
       this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_2__wings3d_model__["PreviewCage"].prototype.scaleSelection, scale);
+   }
+
+   // rotate vertices
+   rotateSelection(snapshots, quatRotate) {
+      this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_2__wings3d_model__["PreviewCage"].prototype.rotateSelection, quatRotate);
    }
 
    setWorld(world) {
@@ -5337,7 +5385,7 @@ class ScaleUniformHandler extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["M
    constructor(madsor) {
       super();
       this.madsor = madsor;
-      this.snapshots = madsor.snapshotScalePosition();
+      this.snapshots = madsor.snapshotTransformGroup();
       this.scale = 1.0;                    // cumulative movement.
    }
 
@@ -5361,6 +5409,35 @@ class ScaleUniformHandler extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["M
    }
 }
 
+
+// movement handler.
+class MouseRotateAlongAxis extends MovePositionHandler {
+   constructor(madsor, axis) {   // 0 = x axis, 1 = y axis, 2 = z axis.
+      super(madsor);
+      this.snapshots = madsor.snapshotTransformGroup();
+      this.movement = 0.0;             // cumulative movement.
+      this.axisVec3 = vec3.create();
+      this.axisVec3[axis] = 1.0;
+   }
+
+   handleMouseMove(ev) {
+      const move = this._xPercentMovement(ev)*5;
+      const quatRotate = quat.create();
+      quat.setAxisAngle(quatRotate, this.axisVec3, move);
+      this.madsor.rotateSelection(this.snapshots, quatRotate);
+      this.movement += move;
+   }
+
+   _commit() {
+      const quatRotate = quat.create();
+      quat.setAxisAngle(quatRotate, this.axisVec3, this.movement);
+      __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["undoQueue"](new RotateCommand(this.madsor, this.snapshots, quatRotate));
+   }
+
+   _cancel() {
+      this.madsor.restoreSelectionPosition(this.snapshots);
+   }
+}
 
 
 class MoveCommand extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["EditCommand"] {
@@ -5399,6 +5476,23 @@ class ScaleCommand extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["EditComm
 }
 
 
+class RotateCommand extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["EditCommand"] {
+   constructor(madsor, snapshots, quatRotate) {
+      super();
+      this.madsor = madsor;
+      this.snapshots = snapshots;
+      this.quat = quatRotate;
+   }
+
+   doIt() {
+      this.madsor.rotateSelection(this.snapshots, this.quat);
+   }
+
+   undo() {
+      this.madsor.restoreSelectionPosition(this.snapshots);
+   }
+}
+
 class ToggleModeCommand extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["EditCommand"] {
    constructor(doFn, undoFn, snapshots) {
       super();
@@ -5433,7 +5527,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_ui__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_view__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_shaderprog__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_shaderprog__ = __webpack_require__(6);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d__ = __webpack_require__(0);
 /**
 //    This module contains most edge command and edge utility functions.
@@ -5990,10 +6084,11 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_edgemads__ = __webpack_require__(9);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__ = __webpack_require__(11);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__ = __webpack_require__(3);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_shaderprog__ = __webpack_require__(5);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_view__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_ui__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_model__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_shaderprog__ = __webpack_require__(6);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_view__ = __webpack_require__(2);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__wings3d__ = __webpack_require__(0);
 //
 // bodymadsor. 
 //
@@ -6009,20 +6104,21 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 
 
+
 class BodyMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
    constructor() {
       super('body');
       const self = this;
-      __WEBPACK_IMPORTED_MODULE_7__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_8__wings3d__["action"].bodyDelete.name, function(ev) {
+      __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].bodyDelete.name, function(ev) {
             const command = new DeleteBodyCommand(self.getSelected());
-            __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"]( command );
+            __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["undoQueue"]( command );
             command.doIt(); // delete current selected.
          });
 
-      __WEBPACK_IMPORTED_MODULE_7__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_8__wings3d__["action"].bodyRename.name, function(ev) {
-         __WEBPACK_IMPORTED_MODULE_7__wings3d_ui__["runDialog"]('#renameDialog', ev, function(data) {
+      __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].bodyRename.name, function(ev) {
+         __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["runDialog"]('#renameDialog', ev, function(data) {
                const command = new RenameBodyCommand(self.getSelected(), data);
-               __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"]( command );
+               __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["undoQueue"]( command );
                command.doIt();   // rename
             }, function() {
                const content = document.querySelector('#renameDialog div');
@@ -6044,15 +6140,15 @@ class BodyMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
                }
             });
        });
-      const duplicateMove = [__WEBPACK_IMPORTED_MODULE_8__wings3d__["action"].bodyDuplicateMoveX, __WEBPACK_IMPORTED_MODULE_8__wings3d__["action"].bodyDuplicateMoveY, __WEBPACK_IMPORTED_MODULE_8__wings3d__["action"].bodyDuplicateMoveZ];
+      const duplicateMove = [__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].bodyDuplicateMoveX, __WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].bodyDuplicateMoveY, __WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].bodyDuplicateMoveZ];
       // movement for (x, y, z)
       for (let axis=0; axis < 3; ++axis) {
-         __WEBPACK_IMPORTED_MODULE_7__wings3d_ui__["bindMenuItem"](duplicateMove[axis].name, function(ev) { //action.bodyDulipcateMoveX(Y,Z)
-               __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["attachHandlerMouseMove"](new DuplicateMouseMoveAlongAxis(self, axis, self.getSelected()));
+         __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](duplicateMove[axis].name, function(ev) { //action.bodyDulipcateMoveX(Y,Z)
+               __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["attachHandlerMouseMove"](new DuplicateMouseMoveAlongAxis(self, axis, self.getSelected()));
             });
       }
-      __WEBPACK_IMPORTED_MODULE_7__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_8__wings3d__["action"].bodyDuplicateMoveFree.name, function(ev) {
-            __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["attachHandlerMouseMove"](new DuplicateMoveFreePositionHandler(self, self.getSelected()));
+      __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].bodyDuplicateMoveFree.name, function(ev) {
+            __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["attachHandlerMouseMove"](new DuplicateMoveFreePositionHandler(self, self.getSelected()));
          });
    }
 
@@ -6076,6 +6172,10 @@ class BodyMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
          snapshots.push( preview.snapshotBodyPosition() );
       });
       return snapshots;
+   }
+
+   snapshotTransformGroup() {
+      return this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.snapshotTransformBodyGroup);
    }
 
    dragSelect(cage, selectArray, onOff) {
@@ -6161,25 +6261,25 @@ class BodyMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
       var redoFn;
       var snapshots = [];
       if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__["FaceMadsor"]) {
-         redoFn = __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreFaceMode"];
+         redoFn = __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["restoreFaceMode"];
          this.eachPreviewCage( function(cage) {
             snapshots.push( self._wrapSelection(cage.snapshotSelection()) );
             cage.changeFromBodyToFaceSelect();
          });
       } else if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__["VertexMadsor"]) {
-         redoFn = __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreVertexMode"];
+         redoFn = __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["restoreVertexMode"];
          this.eachPreviewCage( function(cage) {
             snapshots.push( self._wrapSelection(cage.snapshotSelection()) );
             cage.changeFromBodyToVertexSelect();
          });
       } else {
-         redoFn = __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreEdgeMode"];
+         redoFn = __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["restoreEdgeMode"];
          this.eachPreviewCage( function(cage) {
             snapshots.push( self._wrapSelection(cage.snapshotSelection()) );
             cage.changeFromBodyToEdgeSelect();
          });
       }
-      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"](new __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["ToggleModeCommand"](redoFn, __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreBodyMode"], snapshots));
+      __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["undoQueue"](new __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["ToggleModeCommand"](redoFn, __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["restoreBodyMode"], snapshots));
    }
 
    restoreMode(toMadsor, snapshots) {
@@ -6201,7 +6301,7 @@ class BodyMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
    draw(gl) {} // override draw
 
    previewShader(gl) {
-      gl.useShader(__WEBPACK_IMPORTED_MODULE_5__wings3d_shaderprog__["colorSolidWireframe"]);
+      gl.useShader(__WEBPACK_IMPORTED_MODULE_6__wings3d_shaderprog__["colorSolidWireframe"]);
    }
 }
 
@@ -6244,13 +6344,13 @@ class DeleteBodyCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["Edi
 
    doIt() {
       for (let previewCage of this.previewCages) {
-         __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["removeFromWorld"](previewCage);
+         __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["removeFromWorld"](previewCage);
       }
    }
 
    undo() {
       for (let previewCage of this.previewCages) {
-         __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["addToWorld"](previewCage);
+         __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["addToWorld"](previewCage);
       }
    }
 }
@@ -6290,7 +6390,7 @@ class DuplicateBodyCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["
       this.originalCages = originalCages;
       this.duplicateCages = [];
       for (let cage of originalCages) {
-         let duplicate = PreviewCage.duplicate(cage);
+         let duplicate = __WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].duplicate(cage);
          this.duplicateCages.push( duplicate );
       }
    }
@@ -6303,7 +6403,7 @@ class DuplicateBodyCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["
 
    doIt() {
       for (let cage of this.duplicateCages) {
-         __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["addToWorld"](cage);
+         __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["addToWorld"](cage);
          cage.selectBody();
       }
       this._toggleOriginalSelected();
@@ -6312,7 +6412,7 @@ class DuplicateBodyCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["
    undo() {
       for (let cage of this.duplicateCages) {
          cage.selectBody();                  // deselection before out
-         __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["removeFromWorld"](cage);
+         __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["removeFromWorld"](cage);
       }
       this._toggleOriginalSelected();        // reselected the original
    }
@@ -6328,7 +6428,7 @@ class DuplicateMouseMoveAlongAxis extends __WEBPACK_IMPORTED_MODULE_0__wings3d_m
 
    _commit() {
       const movement = new MoveCommand(this.madsor, this.snapshots, this.movement);
-      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueueCombo"]([this.duplicateBodyCommand, movement]);
+      __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["undoQueueCombo"]([this.duplicateBodyCommand, movement]);
    }
 
    _cancel() {
@@ -6347,7 +6447,7 @@ class DuplicateMoveFreePositionHandler extends __WEBPACK_IMPORTED_MODULE_0__wing
 
    _commit() {
       const movement = new MoveCommand(this.madsor, this.snapshots, this.movement);
-      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueueCombo"]([this.duplicateBodyCommand, movement]);
+      __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["undoQueueCombo"]([this.duplicateBodyCommand, movement]);
    }
 
    _cancel() {
@@ -6373,7 +6473,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_edgemads__ = __webpack_require__(9);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_view__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_shaderprog__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_shaderprog__ = __webpack_require__(6);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_ui__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d__ = __webpack_require__(0);
 /**
@@ -9461,7 +9561,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_view__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_camera__ = __webpack_require__(12);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_shaderprog__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_shaderprog__ = __webpack_require__(6);
 /*
 //    Render all objects and helpers (such as axes) in the scene.
 //     Used for the Geometry and AutoUV windows.
@@ -10143,7 +10243,7 @@ class WavefrontObjImportExporter extends __WEBPACK_IMPORTED_MODULE_0__wings3d_im
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ImportExporter", function() { return ImportExporter; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_model__ = __webpack_require__(6);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_model__ = __webpack_require__(5);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_wingededge__ = __webpack_require__(13);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_ui__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_view__ = __webpack_require__(2);
@@ -10316,9 +10416,9 @@ __webpack_require__(15);
 __webpack_require__(18);
 __webpack_require__(14);
 __webpack_require__(8);
-__webpack_require__(6);
-__webpack_require__(16);
 __webpack_require__(5);
+__webpack_require__(16);
+__webpack_require__(6);
 __webpack_require__(29);
 __webpack_require__(1);
 __webpack_require__(3);
@@ -10417,7 +10517,7 @@ __WEBPACK_IMPORTED_MODULE_8__wings3d__["start"]('glcanvas');
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_view__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_wingededge__ = __webpack_require__(13);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_model__ = __webpack_require__(6);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_model__ = __webpack_require__(5);
 /*
    n cube create. Use Dialog to create the cube.
    todo: to support spherize, rotate, translate, putOnGround. currently only numberOfCuts and size is working.

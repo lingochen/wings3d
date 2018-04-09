@@ -49,6 +49,12 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
             View.attachHandlerMouseMove(new ScaleUniformHandler(self));
           });
       }
+      // rotate x, y, z
+      for (let axis = 0; axis < 3; ++axis) {
+         UI.bindMenuItem(mode + 'Rotate' + axisName[axis], function(ev) {
+            View.attachHandlerMouseMove(new MouseRotateAlongAxis(self, axis));
+          });
+      }
    }
 
    getContextMenu() {
@@ -128,6 +134,11 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
    // scale vertices along axis
    scaleSelection(snapshots, scale) {
       this.doAll(snapshots, PreviewCage.prototype.scaleSelection, scale);
+   }
+
+   // rotate vertices
+   rotateSelection(snapshots, quatRotate) {
+      this.doAll(snapshots, PreviewCage.prototype.rotateSelection, quatRotate);
    }
 
    setWorld(world) {
@@ -321,7 +332,7 @@ class ScaleUniformHandler extends MouseMoveHandler {
    constructor(madsor) {
       super();
       this.madsor = madsor;
-      this.snapshots = madsor.snapshotScalePosition();
+      this.snapshots = madsor.snapshotTransformGroup();
       this.scale = 1.0;                    // cumulative movement.
    }
 
@@ -345,6 +356,35 @@ class ScaleUniformHandler extends MouseMoveHandler {
    }
 }
 
+
+// movement handler.
+class MouseRotateAlongAxis extends MovePositionHandler {
+   constructor(madsor, axis) {   // 0 = x axis, 1 = y axis, 2 = z axis.
+      super(madsor);
+      this.snapshots = madsor.snapshotTransformGroup();
+      this.movement = 0.0;             // cumulative movement.
+      this.axisVec3 = vec3.create();
+      this.axisVec3[axis] = 1.0;
+   }
+
+   handleMouseMove(ev) {
+      const move = this._xPercentMovement(ev)*5;
+      const quatRotate = quat.create();
+      quat.setAxisAngle(quatRotate, this.axisVec3, move);
+      this.madsor.rotateSelection(this.snapshots, quatRotate);
+      this.movement += move;
+   }
+
+   _commit() {
+      const quatRotate = quat.create();
+      quat.setAxisAngle(quatRotate, this.axisVec3, this.movement);
+      View.undoQueue(new RotateCommand(this.madsor, this.snapshots, quatRotate));
+   }
+
+   _cancel() {
+      this.madsor.restoreSelectionPosition(this.snapshots);
+   }
+}
 
 
 class MoveCommand extends EditCommand {
@@ -382,6 +422,23 @@ class ScaleCommand extends EditCommand {
    }
 }
 
+
+class RotateCommand extends EditCommand {
+   constructor(madsor, snapshots, quatRotate) {
+      super();
+      this.madsor = madsor;
+      this.snapshots = snapshots;
+      this.quat = quatRotate;
+   }
+
+   doIt() {
+      this.madsor.rotateSelection(this.snapshots, this.quat);
+   }
+
+   undo() {
+      this.madsor.restoreSelectionPosition(this.snapshots);
+   }
+}
 
 class ToggleModeCommand extends EditCommand {
    constructor(doFn, undoFn, snapshots) {

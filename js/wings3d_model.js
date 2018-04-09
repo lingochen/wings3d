@@ -972,27 +972,41 @@ PreviewCage.prototype.moveSelection = function(movement, snapshot) {
    this.computeSnapshot(snapshot);
 };
 
+//
+// rotate selection, with a center
+//
+PreviewCage.prototype.rotateSelection = function(snapshot, quatRotate) {
+   const translate = vec3.create();
+   const scale = vec3.fromValues(1, 1, 1);
+   this.transformSelection(snapshot, (transform, origin) => {
+      mat4.fromRotationTranslationScaleOrigin(transform, quatRotate, translate, scale, origin);   
+    });
+};
 
 //
 // scale selection, by moving vertices
 //
 PreviewCage.prototype.scaleSelection = function(snapshot, scale) {
+   const scaleV = vec3.fromValues(scale, scale, scale);
+   this.transformSelection(snapshot, (transform, origin) => {
+      mat4.fromScaling(transform, scaleV);   
+    });
+};
+
+//
+// transform selection,
+//
+PreviewCage.prototype.transformSelection = function(snapshot, transformFn) {
    // construct the matrix
-   const scaleV = vec3.create();
-   vec3.set(scaleV, scale, scale, scale);
-   const mat = mat4.create();
-   mat4.fromScaling(mat, scaleV);
+   const transform = mat4.create();
 
    const vArry = snapshot.vertices[Symbol.iterator]();
    for (let group of snapshot.matrixGroup) {
+      //mat4.fromRotationTranslationScaleOrigin(transform, quatRotation, translate, scale, group.center); // origin should not be modified by scale, glmatrix seems to get the order wrong.
+      transformFn(transform, group.center);
       for (let index = 0; index < group.count; index++) {
          const vertex = vArry.next().value;
-         // change basis
-         vec3.sub(vertex.vertex, vertex.vertex, group.center);
-         // scale 
-         vec3.transformMat4(vertex.vertex, vertex.vertex, mat);
-         // change basis back
-         vec3.add(vertex.vertex, vertex.vertex, group.center);
+         vec3.transformMat4(vertex.vertex, vertex.vertex, transform);
       }
    }
 
@@ -1166,7 +1180,7 @@ PreviewCage.prototype.snapshotEdgePositionAndNormal = function() {
    return this.snapshotPosition(vertices, normalArray);
 };
 
-PreviewCage.prototype.snapshotFaceScalePosition = function() {
+PreviewCage.prototype.snapshotTransformFaceGroup = function() {
    const oldSize = this._getGeometrySize();
 
    const vertices = new Set;
@@ -1194,6 +1208,24 @@ PreviewCage.prototype.snapshotFaceScalePosition = function() {
    // now construct all the effected data and save position.
    const ret = this.snapshotPosition(vertices);
    ret.matrixGroup = matrixGroup;
+   return ret;
+};
+
+PreviewCage.prototype.snapshotTransformBodyGroup = function() {
+   let vertices = new Set;
+   const center = vec3.create();
+   if (this.hasSelection()) {
+      for (let vertex of this.geometry.vertices) {
+         if (vertex.isReal()) {
+            vertices.add(vertex);
+            vec3.add(center, center, vertex.vertex);
+         }
+      }
+      vec3.scale(center, center, 1.0/vertices.size);
+   }
+
+   const ret = this.snapshotPosition(vertices);
+   ret.matrixGroup = [{center: center, count: vertices.size}];
    return ret;
 };
 

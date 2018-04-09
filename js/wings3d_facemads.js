@@ -76,8 +76,8 @@ class FaceMadsor extends Madsor {
       return snapshots;
    }
 
-   snapshotScalePosition() {
-      return this.snapshotAll(PreviewCage.prototype.snapshotFaceScalePosition);
+   snapshotTransformGroup() {
+      return this.snapshotAll(PreviewCage.prototype.snapshotTransformFaceGroup);
    }
 
    // extrude Face
