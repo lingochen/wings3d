@@ -288,6 +288,11 @@ const action = {
    faceMoveZ: () => {notImplemented(this);},
    faceMoveFree: () => {notImplemented(this);},
    faceMoveNormal: () => {notImplemented(this);},
+   faceRotateMenu: () => {notImplemented(this);},
+   faceRotateX: () => {notImplemented(this);},
+   faceRotateY: () => {notImplemented(this);},
+   faceRotateZ: () => {notImplemented(this);},
+   bodyRotateFree: () => {notImplemented(this);},
    faceScaleUniform: () => {notImplemented(this);},
    // vertex
    vertexConnect: () => {notImplemented(this);},

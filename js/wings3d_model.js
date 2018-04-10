@@ -1188,9 +1188,9 @@ PreviewCage.prototype.snapshotTransformFaceGroup = function() {
    // array of edgeLoop. 
    let faceGroup = this.geometry.findFaceGroup(this.selectedSet);
    // compute center of loop, gather all the vertices, create the scaling matrix
-   const center = vec3.create();
    for (let group of faceGroup) {
       let count = 0;
+      const center = vec3.create();
       for (let face of group) {
          face.eachVertex(function(vertex) {
             if (!vertices.has(vertex)){
