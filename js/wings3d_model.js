@@ -1256,6 +1256,24 @@ PreviewCage.prototype.snapshotTransformBodyGroup = function() {
    return ret;
 };
 
+//
+// no separate group. needs to have 2 vertex to see rotation.
+//
+PreviewCage.prototype.snapshotTransformVertexGroup = function() {
+   let vertices = new Set;
+   const center = vec3.create();
+   if (this.hasSelection()) {
+      for (let vertex of this.selectedSet) {
+         vertices.add(vertex);
+         vec3.add(center, center, vertex.vertex);
+      }
+      vec3.scale(center, center, 1.0/vertices.size);
+   }
+
+   const ret = this.snapshotPosition(vertices);
+   ret.matrixGroup = [{center: center, count: vertices.size}];
+   return ret;
+};
 
 
 PreviewCage.prototype._resetSelectEdge = function() {

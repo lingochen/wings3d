@@ -145,7 +145,6 @@ class EdgeMadsor extends Madsor {
       return snapshots;
    }
 
-
    snapshotTransformGroup() {
       return this.snapshotAll(PreviewCage.prototype.snapshotTransformEdgeGroup);
    }

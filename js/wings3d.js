@@ -309,6 +309,11 @@ const action = {
    vertexMoveZ: () => {notImplemented(this);},
    vertexMoveFree: () => {notImplemented(this);},
    vertexMoveNormal: () => {notImplemented(this);},
+   vertexRotateMenu: () => {notImplemented(this);},
+   vertexRotateX: () => {notImplemented(this);},
+   vertexRotateY: () => {notImplemented(this);},
+   vertexRotateZ: () => {notImplemented(this);},
+   vertexRotateFree: () => {notImplemented(this);},
    // guide tour
    helpMenu: () => {notImplemented(this);},
    about: () => {notImplemented(this);},
