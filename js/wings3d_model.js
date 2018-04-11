@@ -2108,6 +2108,17 @@ PreviewCage.prototype.edgeRing = function(nth) {
    return ret;
 };
 
+// bridge, and unbridge
+PreviewCage.prototype.bridge = function() {
+
+};
+
+PreviewCage.prototype.undoBridge = function(bridge) {
+
+};
+
+
+//----------------------------------------------------------------------------------------------------------
 
 PreviewCage.prototype.EPSILON = 0.000001;
 // Möller–Trumbore ray-triangle intersection algorithm

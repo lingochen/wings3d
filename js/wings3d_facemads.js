@@ -48,6 +48,28 @@ class FaceMadsor extends Madsor {
             command.doIt();
             View.undoQueue(command);
          });
+      UI.bindMenuItem(action.faceBridge.name, (ev) => {
+         let bridgeFaces = this.madsor.getBridgeFaces();
+         if (bridgeFaces.length === 2) {
+            const dest = bridgeFaces[0];
+            const origin = bridgeFaces[1];
+            if (dest.face.numberOfVertex == origin.face.numberOfVertex) {
+               let merge;
+               if (dest.preview !== origin.preview) {
+                  // merge dest and origin.
+                  merge = new MergePreviewCommand(dest.preview, origin.preview);
+                  merge.doIt();
+               }
+               const bridge = new BridgeFaceCommand(this, dest.preview);
+               bridge.doIt();
+               if (merge) {
+                  View.undoQueueCombo([merge, bridge]);
+               } else {
+                  View.undoQueue(bridge);
+               }
+            }
+         }
+       });
       // setup highlite face, at most 28 triangles.
       var buf = new Float32Array(3*30);
       this.trianglefan = {data: buf, length: 0};
@@ -127,6 +149,17 @@ class FaceMadsor extends Madsor {
       }, collapseArray);
    }
 
+   // bridge
+   getBridgeFaces() {
+      const snapshot = [];
+      this.eachPreviewCage( (cage) => {
+         const selection = cage.snapshotSelection();
+         for (let selected of selection) {
+            snapshot.push( {preview: cage, face: selected} );
+         }
+      });
+      return snapshot;
+   }
 
    dragSelect(cage, selectArray, onOff) {
       if (this.currentEdge !== null) {
@@ -388,6 +421,26 @@ class CollapseFaceCommand extends EditCommand {
       this.madsor.undoCollapse(this.collapse);
       View.restoreFaceMode(this.collapse);
    }   
+}
+
+
+//
+// current limitation, no interobject bridge yet.
+//
+class BridgeFaceCommand extends EditCommand {
+   constructor(cage) {
+      super();
+      this.cage = cage;
+   }
+
+   doIt() {
+      // should be ready for bridging. 
+      this.bridge = this.cage.bridge();
+   }
+
+   undo() {
+      this.cage.undoBridge(this.bridge);
+   }
 }
 
 

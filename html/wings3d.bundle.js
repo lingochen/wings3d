@@ -384,6 +384,7 @@ const action = {
    faceRotateZ: () => {notImplemented(this);},
    faceRotateFree: () => {notImplemented(this);},
    faceScaleUniform: () => {notImplemented(this);},
+   faceBridge: () => {notImplemented(this);},
    // vertex
    vertexConnect: () => {notImplemented(this);},
    vertexDissolve: () => {notImplemented(this);},
@@ -3695,6 +3696,9 @@ PreviewCage.prototype.edgeRing = function(nth) {
    return ret;
 };
 
+// bridge, and unbridge
+
+
 
 PreviewCage.prototype.EPSILON = 0.000001;
 // Möller–Trumbore ray-triangle intersection algorithm
@@ -4745,6 +4749,28 @@ class FaceMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
             command.doIt();
             __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"](command);
          });
+      __WEBPACK_IMPORTED_MODULE_9__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_10__wings3d__["action"].faceBridge.name, (ev) => {
+         let bridgeFaces = this.madsor.getBridgeFaces();
+         if (bridgeFaces.length === 2) {
+            const dest = bridgeFaces[0];
+            const origin = bridgeFaces[1];
+            if (dest.face.numberOfVertex == origin.face.numberOfVertex) {
+               let merge;
+               if (dest.preview !== origin.preview) {
+                  // merge dest and origin.
+                  merge = new MergePreviewCommand(dest.preview, origin.preview);
+                  merge.doIt();
+               }
+               const bridge = new BridgeFaceCommand(this, dest.preview);
+               bridge.doIt();
+               if (merge) {
+                  __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueueCombo"]([merge, bridge]);
+               } else {
+                  __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"](bridge);
+               }
+            }
+         }
+       });
       // setup highlite face, at most 28 triangles.
       var buf = new Float32Array(3*30);
       this.trianglefan = {data: buf, length: 0};
@@ -4824,6 +4850,17 @@ class FaceMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
       }, collapseArray);
    }
 
+   // bridge
+   getBridgeFaces() {
+      const snapshot = [];
+      this.eachPreviewCage( (cage) => {
+         const selection = cage.snapshotSelection();
+         for (let selected of selection) {
+            snapshot.push( {preview: cage, face: selected} );
+         }
+      });
+      return snapshot;
+   }
 
    dragSelect(cage, selectArray, onOff) {
       if (this.currentEdge !== null) {
@@ -5085,6 +5122,26 @@ class CollapseFaceCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["E
       this.madsor.undoCollapse(this.collapse);
       __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreFaceMode"](this.collapse);
    }   
+}
+
+
+//
+// current limitation, no interobject bridge yet.
+//
+class BridgeFaceCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
+   constructor(cage) {
+      super();
+      this.cage = cage;
+   }
+
+   doIt() {
+      // should be ready for bridging. 
+      this.bridge = this.cage.bridge();
+   }
+
+   undo() {
+      this.cage.undoBridge(this.bridge);
+   }
 }
 
 
