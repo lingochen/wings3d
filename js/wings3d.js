@@ -273,6 +273,11 @@ const action = {
    edgeMoveZ: () => {notImplemented(this);},
    edgeMoveFree: () => {notImplemented(this);},
    edgeMoveNormal: () => {notImplemented(this);},
+   edgeRotateMenu: () => {notImplemented(this);},
+   edgeRotateX: () => {notImplemented(this);},
+   edgeRotateY: () => {notImplemented(this);},
+   edgeRotateZ: () => {notImplemented(this);},
+   edgeRotateFree: () => {notImplemented(this);},
    // face
    faceExtrudeMenu: () =>{notImplemented(this);},
    faceExtrudeX: () =>{notImplemented(this);},
@@ -292,7 +297,7 @@ const action = {
    faceRotateX: () => {notImplemented(this);},
    faceRotateY: () => {notImplemented(this);},
    faceRotateZ: () => {notImplemented(this);},
-   bodyRotateFree: () => {notImplemented(this);},
+   faceRotateFree: () => {notImplemented(this);},
    faceScaleUniform: () => {notImplemented(this);},
    // vertex
    vertexConnect: () => {notImplemented(this);},

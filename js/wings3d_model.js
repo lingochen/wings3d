@@ -1180,9 +1180,36 @@ PreviewCage.prototype.snapshotEdgePositionAndNormal = function() {
    return this.snapshotPosition(vertices, normalArray);
 };
 
-PreviewCage.prototype.snapshotTransformFaceGroup = function() {
-   const oldSize = this._getGeometrySize();
+PreviewCage.prototype.snapshotTransformEdgeGroup = function() {
+   const vertices = new Set;
+   const matrixGroup = [];
+   // array of edgeLoop. 
+   let edgeGroup = this.geometry.findEdgeGroup(this.selectedSet);
+   // compute center of loop, gather all the vertices, create the scaling matrix
+   for (let group of edgeGroup) {
+      let count = 0;
+      const center = vec3.create();
+      for (let wEdge of group) {
+         for (let vertex of wEdge.eachVertex()) {
+            if (!vertices.has(vertex)){
+               vertices.add(vertex);
+               count++;
+               vec3.add(center, center, vertex.vertex);
+            }
+          };
+      }
+      vec3.scale(center, center, 1.0/count); // get the center
+      // now construct the group
+      matrixGroup.push( {center: center, count: count});
+   }
 
+   // now construct all the effected data and save position.
+   const ret = this.snapshotPosition(vertices);
+   ret.matrixGroup = matrixGroup;
+   return ret;
+};
+
+PreviewCage.prototype.snapshotTransformFaceGroup = function() {
    const vertices = new Set;
    const matrixGroup = [];
    // array of edgeLoop. 

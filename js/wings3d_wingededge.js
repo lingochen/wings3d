@@ -78,6 +78,11 @@ WingedEdge.prototype.oneRing = function* () {
    }
 };
 
+WingedEdge.prototype.eachVertex = function* () {
+   yield this.left.origin;
+   yield this.right.origin;
+};
+
 // return left wing then right wing. \   right0-> /
 //                                   |            |
 //                          left0->  /            \ 
@@ -1141,6 +1146,30 @@ WingedTopology.prototype.extrudeContours = function(edgeLoops) {
    }
 
    return extrudeContours;
+};
+
+// Similar to findFaceGroup
+WingedTopology.prototype.findEdgeGroup = function(selectedWingedEdge) {
+   const processWingedEdge = new Set(selectedWingedEdge);
+   let wingedEdgeGroup = null;
+   function processNeighbors(wingedEdge) {
+      processWingedEdge.delete(wingedEdge);
+      wingedEdgeGroup.add(wingedEdge);
+      for (let neighborWinged of wingedEdge.oneRing()) {
+         if (processWingedEdge.has(neighborWinged)) {
+            processNeighbors(neighborWinged);
+         }
+      }
+   };
+
+   let list = [];
+   for (let wingedEdge of processWingedEdge) {
+      wingedEdgeGroup = new Set;
+      processNeighbors(wingedEdge);
+      list.push( wingedEdgeGroup );
+   }
+
+   return list;
 };
 
 //

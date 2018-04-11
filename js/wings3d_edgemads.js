@@ -8,6 +8,7 @@ import {FaceMadsor} from './wings3d_facemads';   // for switching
 import {BodyMadsor} from './wings3d_bodymads';
 import {VertexMadsor, VertexConnectCommand} from './wings3d_vertexmads';
 import { EditCommand } from './wings3d_undo';
+import {PreviewCage} from './wings3d_model';
 import * as UI from './wings3d_ui';
 import * as View from './wings3d_view';
 import * as ShaderProg from './wings3d_shaderprog';
@@ -142,6 +143,11 @@ class EdgeMadsor extends Madsor {
          snapshots.push( preview.snapshotEdgePositionAndNormal() );
       });
       return snapshots;
+   }
+
+
+   snapshotTransformGroup() {
+      return this.snapshotAll(PreviewCage.prototype.snapshotTransformEdgeGroup);
    }
 
    bevel() {
