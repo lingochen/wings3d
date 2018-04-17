@@ -2109,8 +2109,22 @@ PreviewCage.prototype.edgeRing = function(nth) {
 };
 
 // bridge, and unbridge
-PreviewCage.prototype.bridge = function() {
+PreviewCage.prototype.bridge = function(targetFace, sourceFace) {
+   if (this.selectedSet.size === 2) {  // make sure. it really target, source
+      const oldSize = this._getGeometrySize();
 
+      const targetSphere = this.boundingSpheres[targetFace.index];
+      const sourceSphere = this.boundingSpheres[sourceFace.index];
+      const deltaCenter = vec3.create();
+      vec3.sub(deltaCenter, targetSphere.center, sourceSphere.center);
+      const result = this.geometry.bridgeFace(targetFace, sourceFace, deltaCenter);
+
+      // update previewBox.
+      this._updatePreviewAll(oldSize, this.geometry.affected);  
+      return result;
+   }
+   // should not happened, throw?
+   return null;
 };
 
 PreviewCage.prototype.undoBridge = function(bridge) {

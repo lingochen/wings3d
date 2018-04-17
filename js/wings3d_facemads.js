@@ -49,7 +49,7 @@ class FaceMadsor extends Madsor {
             View.undoQueue(command);
          });
       UI.bindMenuItem(action.faceBridge.name, (ev) => {
-         let bridgeFaces = this.madsor.getBridgeFaces();
+         let bridgeFaces = this.getBridgeFaces();
          if (bridgeFaces.length === 2) {
             const dest = bridgeFaces[0];
             const origin = bridgeFaces[1];
@@ -60,7 +60,7 @@ class FaceMadsor extends Madsor {
                   merge = new MergePreviewCommand(dest.preview, origin.preview);
                   merge.doIt();
                }
-               const bridge = new BridgeFaceCommand(this, dest.preview);
+               const bridge = new BridgeFaceCommand(dest.preview, dest.face, origin.face);
                bridge.doIt();
                if (merge) {
                   View.undoQueueCombo([merge, bridge]);
@@ -428,14 +428,16 @@ class CollapseFaceCommand extends EditCommand {
 // current limitation, no interobject bridge yet.
 //
 class BridgeFaceCommand extends EditCommand {
-   constructor(cage) {
+   constructor(cage, target, source) {
       super();
       this.cage = cage;
+      this.target = target;
+      this.source = source;
    }
 
    doIt() {
       // should be ready for bridging. 
-      this.bridge = this.cage.bridge();
+      this.bridge = this.cage.bridge(this.target, this.source);
    }
 
    undo() {

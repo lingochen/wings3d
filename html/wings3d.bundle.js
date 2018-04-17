@@ -3697,8 +3697,30 @@ PreviewCage.prototype.edgeRing = function(nth) {
 };
 
 // bridge, and unbridge
+PreviewCage.prototype.bridge = function(targetFace, sourceFace) {
+   if (this.selectedSet.size === 2) {  // make sure. it really target, source
+      const oldSize = this._getGeometrySize();
+
+      const targetSphere = this.boundingSpheres[targetFace.index];
+      const sourceSphere = this.boundingSpheres[sourceFace.index];
+      const deltaCenter = vec3.create();
+      vec3.sub(deltaCenter, targetSphere.center, sourceSphere.center);
+      const result = this.geometry.bridgeFace(targetFace, sourceFace, deltaCenter);
+
+      // update previewBox.
+      this._updatePreviewAll(oldSize, this.geometry.affected);  
+      return result;
+   }
+   // should not happened, throw?
+   return null;
+};
+
+PreviewCage.prototype.undoBridge = function(bridge) {
+
+};
 
 
+//----------------------------------------------------------------------------------------------------------
 
 PreviewCage.prototype.EPSILON = 0.000001;
 // Möller–Trumbore ray-triangle intersection algorithm
@@ -4750,7 +4772,7 @@ class FaceMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
             __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"](command);
          });
       __WEBPACK_IMPORTED_MODULE_9__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_10__wings3d__["action"].faceBridge.name, (ev) => {
-         let bridgeFaces = this.madsor.getBridgeFaces();
+         let bridgeFaces = this.getBridgeFaces();
          if (bridgeFaces.length === 2) {
             const dest = bridgeFaces[0];
             const origin = bridgeFaces[1];
@@ -4761,7 +4783,7 @@ class FaceMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
                   merge = new MergePreviewCommand(dest.preview, origin.preview);
                   merge.doIt();
                }
-               const bridge = new BridgeFaceCommand(this, dest.preview);
+               const bridge = new BridgeFaceCommand(dest.preview, dest.face, origin.face);
                bridge.doIt();
                if (merge) {
                   __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueueCombo"]([merge, bridge]);
@@ -5129,14 +5151,16 @@ class CollapseFaceCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["E
 // current limitation, no interobject bridge yet.
 //
 class BridgeFaceCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
-   constructor(cage) {
+   constructor(cage, target, source) {
       super();
       this.cage = cage;
+      this.target = target;
+      this.source = source;
    }
 
    doIt() {
       // should be ready for bridging. 
-      this.bridge = this.cage.bridge();
+      this.bridge = this.cage.bridge(this.target, this.source);
    }
 
    undo() {
@@ -7738,6 +7762,15 @@ Polygon.prototype.eachEdge = function(callbackFn) {
    } while (current !== begin);
 };
 
+Polygon.prototype.hEdges = function* () {
+   const begin = this.halfEdge;
+   let current = begin;
+   do {
+      yield current;
+      current = current.next;
+   } while (current !== begin);
+}
+
 // adjacent face, along the edge
 Polygon.prototype.adjacent = function* () {
    const check = new Set;
@@ -7787,6 +7820,7 @@ Polygon.prototype.computeNormal = function() {
    vec3.cross(this.normal, V, U);
    vec3.normalize(this.normal, this.normal);
 };
+
 
 // recompute numberOfVertex and normal.
 Polygon.prototype.update = function() {
@@ -9186,6 +9220,64 @@ WingedTopology.prototype.dissolveVertex = function(vertex) {
       }};
    }
 };
+
+//
+// bridge the 2 faces. and 
+//
+WingedTopology.prototype.bridgeFace = function(targetFace, sourceFace, deltaCenter) {
+   const ret = {target: {face: targetFace, hEdge: targetFace.halfEdge}, source: {face: sourceFace, hEdge: sourceFace.halfEdge} };
+   // get the 2 faces vertices
+   const targetHEdges = [];
+   const sourceHEdges = [];
+   for (let hEdge of targetFace.hEdges()) {
+      targetHEdges.push( hEdge );
+      hEdge.face = null;   // remove face reference
+   }
+   // move source to target
+   for (let hEdge of sourceFace.hEdges()) {
+      const point = vec3.clone(hEdge.origin.vertex);
+      vec3.add(point, point, deltaCenter);
+      sourceHEdges.unshift( {hEdge: hEdge, delta: point} );  // reverse direction.
+      hEdge.face = null;   // remove face reference
+   }
+   // project origin's vertices  to target's plane? skip it for now
+   // find the smallest length combined.
+   let index = -1;
+   let len = Number.MAX_SAFE_INTEGER;
+   const temp = vec3.create();
+   for (let i = 0; i < sourceFace.numberOfVertex; ++i) {
+      // add up th length
+      let currentLen = 0;
+      for (let j = 0; j < targetHEdges.length; ++j) {
+         vec3.sub(temp, targetHEdges[j].origin.vertex, sourceHEdges[j].delta);
+         len += vec3.length(temp);
+      }
+      if (currentLen < len) {
+         len = currentLen;
+         index = i;
+      }
+      sourceHEdges.push( sourceHEdges.shift() );  // rotate 
+   }
+   // hopefully -1 works well enough with splice and unshift.
+   sourceHEdges.unshift.apply( sourceHEdges, sourceHEdges.splice(index-1, sourceHEdges.length ) ); // rotate to desired location.
+   // remove face, and bridge target[0] at the source index
+   this._freePolygon(targetFace);
+   this._freePolygon(sourceFace);
+   let hEdgePrev = null;
+   const hEdges = [];
+   for (let i = 0; i < targetHEdges.length; ++i) {  // create new Edge, new Face.
+      const hEdge = this.addEdge(sourceHEdges[i].hEdge.origin, targetHEdges[i].origin);
+      if (hEdgePrev) {  // added the face
+         this._createPolygon(hEdgePrev, 4);
+      }
+      hEdges.push( hEdge );
+      hEdgePrev = hEdge;
+   }
+   this._createPolygon(hEdgePrev, 4);
+
+   ret.hEdges = hEdges;
+   return ret;
+}
 
 
 

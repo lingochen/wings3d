@@ -364,6 +364,15 @@ Polygon.prototype.eachEdge = function(callbackFn) {
    } while (current !== begin);
 };
 
+Polygon.prototype.hEdges = function* () {
+   const begin = this.halfEdge;
+   let current = begin;
+   do {
+      yield current;
+      current = current.next;
+   } while (current !== begin);
+}
+
 // adjacent face, along the edge
 Polygon.prototype.adjacent = function* () {
    const check = new Set;
@@ -413,6 +422,7 @@ Polygon.prototype.computeNormal = function() {
    vec3.cross(this.normal, V, U);
    vec3.normalize(this.normal, this.normal);
 };
+
 
 // recompute numberOfVertex and normal.
 Polygon.prototype.update = function() {
@@ -1812,6 +1822,64 @@ WingedTopology.prototype.dissolveVertex = function(vertex) {
       }};
    }
 };
+
+//
+// bridge the 2 faces. and 
+//
+WingedTopology.prototype.bridgeFace = function(targetFace, sourceFace, deltaCenter) {
+   const ret = {target: {face: targetFace, hEdge: targetFace.halfEdge}, source: {face: sourceFace, hEdge: sourceFace.halfEdge} };
+   // get the 2 faces vertices
+   const targetHEdges = [];
+   const sourceHEdges = [];
+   for (let hEdge of targetFace.hEdges()) {
+      targetHEdges.push( hEdge );
+      hEdge.face = null;   // remove face reference
+   }
+   // move source to target
+   for (let hEdge of sourceFace.hEdges()) {
+      const point = vec3.clone(hEdge.origin.vertex);
+      vec3.add(point, point, deltaCenter);
+      sourceHEdges.unshift( {hEdge: hEdge, delta: point} );  // reverse direction.
+      hEdge.face = null;   // remove face reference
+   }
+   // project origin's vertices  to target's plane? skip it for now
+   // find the smallest length combined.
+   let index = -1;
+   let len = Number.MAX_SAFE_INTEGER;
+   const temp = vec3.create();
+   for (let i = 0; i < sourceFace.numberOfVertex; ++i) {
+      // add up th length
+      let currentLen = 0;
+      for (let j = 0; j < targetHEdges.length; ++j) {
+         vec3.sub(temp, targetHEdges[j].origin.vertex, sourceHEdges[j].delta);
+         len += vec3.length(temp);
+      }
+      if (currentLen < len) {
+         len = currentLen;
+         index = i;
+      }
+      sourceHEdges.push( sourceHEdges.shift() );  // rotate 
+   }
+   // hopefully -1 works well enough with splice and unshift.
+   sourceHEdges.unshift.apply( sourceHEdges, sourceHEdges.splice(index-1, sourceHEdges.length ) ); // rotate to desired location.
+   // remove face, and bridge target[0] at the source index
+   this._freePolygon(targetFace);
+   this._freePolygon(sourceFace);
+   let hEdgePrev = null;
+   const hEdges = [];
+   for (let i = 0; i < targetHEdges.length; ++i) {  // create new Edge, new Face.
+      const hEdge = this.addEdge(sourceHEdges[i].hEdge.origin, targetHEdges[i].origin);
+      if (hEdgePrev) {  // added the face
+         this._createPolygon(hEdgePrev, 4);
+      }
+      hEdges.push( hEdge );
+      hEdgePrev = hEdge;
+   }
+   this._createPolygon(hEdgePrev, 4);
+
+   ret.hEdges = hEdges;
+   return ret;
+}
 
 export {
    WingedEdge,
