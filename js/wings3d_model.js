@@ -2118,6 +2118,10 @@ PreviewCage.prototype.bridge = function(targetFace, sourceFace) {
       const deltaCenter = vec3.create();
       vec3.sub(deltaCenter, targetSphere.center, sourceSphere.center);
       const result = this.geometry.bridgeFace(targetFace, sourceFace, deltaCenter);
+      // clear selection
+      result.selectedFaces = this.selectedSet;
+      this._resetSelectFace();
+
 
       // update previewBox.
       this._updatePreviewAll(oldSize, this.geometry.affected);  
@@ -2126,9 +2130,15 @@ PreviewCage.prototype.bridge = function(targetFace, sourceFace) {
    // should not happened, throw?
    return null;
 };
-
 PreviewCage.prototype.undoBridge = function(bridge) {
+   if (bridge) {
+      const oldSize = this._getGeometrySize();
 
+      this.geometry.undoBridgeFace(bridge);
+
+      // update previewBox.
+      this._updatePreviewAll(oldSize, this.geometry.affected);  
+   }
 };
 
 

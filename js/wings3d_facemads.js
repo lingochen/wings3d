@@ -442,6 +442,7 @@ class BridgeFaceCommand extends EditCommand {
 
    undo() {
       this.cage.undoBridge(this.bridge);
+      this.cage.restoreFaceSelection(this.bridge);
    }
 }
 
