@@ -3706,6 +3706,10 @@ PreviewCage.prototype.bridge = function(targetFace, sourceFace) {
       const deltaCenter = vec3.create();
       vec3.sub(deltaCenter, targetSphere.center, sourceSphere.center);
       const result = this.geometry.bridgeFace(targetFace, sourceFace, deltaCenter);
+      // clear selection
+      result.selectedFaces = this.selectedSet;
+      this._resetSelectFace();
+
 
       // update previewBox.
       this._updatePreviewAll(oldSize, this.geometry.affected);  
@@ -3714,9 +3718,15 @@ PreviewCage.prototype.bridge = function(targetFace, sourceFace) {
    // should not happened, throw?
    return null;
 };
-
 PreviewCage.prototype.undoBridge = function(bridge) {
+   if (bridge) {
+      const oldSize = this._getGeometrySize();
 
+      this.geometry.undoBridgeFace(bridge);
+
+      // update previewBox.
+      this._updatePreviewAll(oldSize, this.geometry.affected);  
+   }
 };
 
 
@@ -5165,6 +5175,7 @@ class BridgeFaceCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["Edi
 
    undo() {
       this.cage.undoBridge(this.bridge);
+      this.cage.restoreFaceSelection(this.bridge);
    }
 }
 
@@ -8938,19 +8949,9 @@ WingedTopology.prototype.collapseEdge = function(halfEdge, collapsibleWings) {
    }
 };
 
-// won't work with potentially "dangling" vertices and edges. Any doubt, call dissolveEdge
-WingedTopology.prototype.removeEdge = function(outEdge) {
-   let inEdge = outEdge.pair;
-   if (inEdge.face === null) {   // switch side
-      inEdge = outEdge;
-      outEdge = outEdge.pair;
-      if (inEdge.face === null) {
-         console.log("error, both side of the edges are null faces");
-         return null;
-      }
-   }
 
-   //fix the halfedge relations
+// fixed the halfEdge relation only.
+WingedTopology.prototype._removeEdge = function(outEdge, inEdge) {
    const outPrev = outEdge.prev();
    const inPrev = inEdge.prev();
    const inNext = inEdge.next;
@@ -8965,6 +8966,21 @@ WingedTopology.prototype.removeEdge = function(outEdge) {
    if (inEdge.origin.outEdge === inEdge) {
       inEdge.origin.outEdge = inPrev.pair;
    }
+}
+// won't work with potentially "dangling" vertices and edges. Any doubt, call dissolveEdge
+WingedTopology.prototype.removeEdge = function(outEdge) {
+   let inEdge = outEdge.pair;
+   if (inEdge.face === null) {   // switch side
+      inEdge = outEdge;
+      outEdge = outEdge.pair;
+      if (inEdge.face === null) {
+         console.log("error, both side of the edges are null faces");
+         return null;
+      }
+   }
+
+   //fix the halfedge relations
+   this._removeEdge(outEdge, inEdge);
   
    //deal with the faces
    const face = outEdge.face;    // the other side is boundary, after removal becomes boundary too.
@@ -8984,7 +9000,7 @@ WingedTopology.prototype.removeEdge = function(outEdge) {
       this.affected.faces.add(face);
    }
 
-   if (delFace !== null) {    // guaranteed to be non-null, but
+   if (delFace !== null) {    // guaranteed to be non-null, but maybe later use case will change
       this._freePolygon(delFace);
    }
    this._freeEdge(outEdge);
@@ -9119,15 +9135,14 @@ WingedTopology.prototype.connectVertex = function(selectedVertex) {
 };
 
 
-/*WingedTopology.prototype.removePolygon = function(polygon) {
-   polygon.eachEdge( function(edge) {
-      edge.face = null;
-   });
+WingedTopology.prototype.removePolygon = function(polygon) {
+   for (let hEdge of polygon.hEdges()) {
+      hEdge.face = null;
+   }
    // put into freeList.
-   polygon.halfEdge = null;
-   this.freeFaces.push(polygon);
+   this._freePolygon(polygon);
 };
-function isCorner(outEdge) {
+/*function isCorner(outEdge) {
    const prev = outEdge.prev();
    const a = vec3.create();
    vec3.sub(a, outEdge.destination().vertex, outEdge.origin.vertex); 
@@ -9278,6 +9293,18 @@ WingedTopology.prototype.bridgeFace = function(targetFace, sourceFace, deltaCent
    ret.hEdges = hEdges;
    return ret;
 }
+
+WingedTopology.prototype.undoBridgeFace = function(bridge) {
+   for (let hEdge of bridge.hEdges) {
+      this.removePolygon(hEdge.face);  // free face first
+   }
+   for (let hEdge of bridge.hEdges) {
+      this._removeEdge(hEdge, hEdge.pair); // remove edge later.
+   }
+   // now, get the 2 face back
+   this._createPolygon(bridge.target.hEdge, bridge.hEdges.length, bridge.target.face);
+   this._createPolygon(bridge.source.hEdge, bridge.hEdges.length, bridge.source.face);
+};
 
 
 
