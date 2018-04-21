@@ -385,6 +385,7 @@ const action = {
    faceRotateFree: () => {notImplemented(this);},
    faceScaleUniform: () => {notImplemented(this);},
    faceBridge: () => {notImplemented(this);},
+   faceInset: () => {notImpelemnted(this);},
    // vertex
    vertexConnect: () => {notImplemented(this);},
    vertexDissolve: () => {notImplemented(this);},
@@ -2538,7 +2539,9 @@ PreviewCage.prototype.restoreMoveSelection = function(snapshot) {
    this.computeSnapshot(snapshot);
 };
 
-//
+PreviewCage.prototype.moveSelectionNew = function(snapshot, movement) {
+   this.moveSelection(movement, snapshot);
+}
 // 3-15 - add limit to movement.
 PreviewCage.prototype.moveSelection = function(movement, snapshot) {
    // first move geometry's position
@@ -3704,7 +3707,7 @@ PreviewCage.prototype.bridge = function(targetFace, sourceFace) {
       const targetSphere = this.boundingSpheres[targetFace.index];
       const sourceSphere = this.boundingSpheres[sourceFace.index];
       const deltaCenter = vec3.create();
-      vec3.sub(deltaCenter, targetSphere.center, sourceSphere.center);
+      //vec3.sub(deltaCenter, targetSphere.center, sourceSphere.center);   // what if we don't move the center, would it work better? so far, no
       const result = this.geometry.bridgeFace(targetFace, sourceFace, deltaCenter);
       // clear selection
       result.selectedFaces = this.selectedSet;
@@ -3727,6 +3730,72 @@ PreviewCage.prototype.undoBridge = function(bridge) {
       // update previewBox.
       this._updatePreviewAll(oldSize, this.geometry.affected);  
    }
+};
+
+// 
+// Inset face, reuse extrude face code.
+//
+PreviewCage.prototype.insetFace = function() {
+   const oldSize = this._getGeometrySize();
+
+   // array of edgeLoop.
+   const contours = {};
+   contours.edgeLoops = this.geometry.findInsetContours(this.selectedSet); 
+   
+   contours.edgeLoops = this.geometry.liftContours(contours.edgeLoops);
+   contours.extrudeEdges = this.geometry.extrudeContours(contours.edgeLoops);
+   // now get all the effected vertices, and moving direction.
+   let vertexCount = 0;
+   for (let polygon of this.selectedSet) {
+      vertexCount += polygon.numberOfVertex;
+   }
+   // compute direction, and moveLimit.
+   contours.vertices = [];
+   contours.faces = new Set;
+   contours.wingedEdges = new Set;
+   contours.position = new Float32Array(vertexCount*3);     // saved the original position
+   contours.direction = new Float32Array(vertexCount*3);    // also add direction.
+   contours.vertexLimit = Number.MAX_SAFE_INTEGER;  // really should call moveLimit.
+   let count = 0;
+   for (let polygon of this.selectedSet) {
+      let prev = null;
+      contours.faces.add(polygon);
+      for (let hEdge of polygon.hEdges()) {
+         contours.vertices.push(hEdge.origin);
+         contours.faces.add(hEdge.pair.face);
+         contours.wingedEdges.add( hEdge.wingedEdge );
+         contours.wingedEdges.add( hEdge.pair.next.wingedEdge );  // the extrude edge 
+         let position = contours.position.subarray(count, count+3);
+         let direction = contours.direction.subarray(count, count+3);
+         count += 3;
+         vec3.copy(position, hEdge.origin.vertex);
+         if (!prev) {
+            prev = hEdge.prev();
+         }
+         vec3.scale(direction, hEdge.destination().vertex, 1.0/2);            // compute the sliding middle point
+         vec3.scaleAndAdd(direction, direction, prev.origin.vertex, 1.0/2);
+         vec3.sub(direction, direction, hEdge.origin.vertex);
+         // get length and normalized.
+         const len = vec3.length(direction);
+         if (len < contours.vertexLimit) {
+            contours.vertexLimit = len;
+         }
+         vec3.normalize(direction, direction);
+         // 
+         prev = hEdge;
+      }
+   }
+
+   // add the new Faces. and new vertices to the preview
+   this._updatePreviewAll(oldSize, this.geometry.affected);
+   // reselect face, or it won't show up. a limitation.
+   const oldSelected = this._resetSelectFace();
+   for (let polygon of oldSelected) {
+      this.selectFace(polygon.halfEdge);
+   }
+
+
+   return contours;
 };
 
 
@@ -4803,6 +4872,13 @@ class FaceMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
             }
          }
        });
+      __WEBPACK_IMPORTED_MODULE_9__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_10__wings3d__["action"].faceInset.name, (ev) => {
+         if (this.hasSelection()) {
+            __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["attachHandlerMouseMove"](new InsetFaceHandler(this));
+         } else {
+            geometryStatus('No selected face');
+         }
+       });
       // setup highlite face, at most 28 triangles.
       var buf = new Float32Array(3*30);
       this.trianglefan = {data: buf, length: 0};
@@ -4892,6 +4968,11 @@ class FaceMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
          }
       });
       return snapshot;
+   }
+
+   // Inset
+   inset() {
+      return this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.insetFace);
    }
 
    dragSelect(cage, selectArray, onOff) {
@@ -5180,6 +5261,63 @@ class BridgeFaceCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["Edi
 }
 
 
+class InsetFaceHandler extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["MouseMoveHandler"] {
+   constructor(madsor) {
+      super(madsor);
+      this.insetFace = new InsetFaceCommand(madsor); 
+      this.insetFace.doIt();
+   }
+
+   handleMouseMove(ev) {
+      let move = this._calibrateMovement(ev.movementX);
+      this.insetFace.update(move);
+   }
+
+   _commit() {
+      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"](this.bevelEdge);
+   }
+
+   _cancel() {
+      this.insetFace.undo();
+   }
+}
+
+class InsetFaceCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
+   constructor(madsor) {
+      super();
+      this.madsor = madsor;
+      //this.selectedFaces = madsor.snapshotSelection();
+      this.movement = 0;
+   }
+
+   doIt() {
+      this.snapshots = this.madsor.inset();   // should we test for current snapshots and prev snapshots?
+      this.madsor.moveSelectionNew(this.snapshots, this.movement);
+      // get limit
+      this.vertexLimit = Number.MAX_SAFE_INTEGER;
+      for (let obj of this.snapshots) {
+         this.vertexLimit = Math.min(this.vertexLimit, obj.snapshot.vertexLimit);
+      } 
+   }
+
+   update(move) {
+      if ((this.movement+move) > this.vertexLimit) {
+         move = this.vertexLimit - this.movement;
+      } else if ((this.movement+move) < 0) {
+         move = 0 - this.movement;
+      }
+      this.madsor.moveSelectionNew(this.snapshots, move);
+      this.movement += move;
+   }
+
+   undo() {
+      //this.madsor.restoreMoveSelection(this.snapshots);  // do we realy needs this. since we are destroying it.
+      //this.madsor.collapseEdge(this.snapshots);
+      //this.snapshots = undefined;
+   }
+}
+
+
 
 
 /***/ }),
@@ -5319,6 +5457,15 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       }
    }
 
+   hasSelection() {
+      for (let cage of this.world) {
+         if (cage.hasSelection()) {
+            return true;
+         }
+      }
+      return false;
+   }
+
    // move edge along movement.
    moveSelection(movement, snapshots) {
       this.eachPreviewCage( function(cage, snapshot) {
@@ -5344,6 +5491,11 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
    // rotate vertices
    rotateSelection(snapshots, quatRotate) {
       this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_2__wings3d_model__["PreviewCage"].prototype.rotateSelection, quatRotate);
+   }
+
+   // move vertices
+   moveSelectionNew(snapshots, movement) {
+      this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_2__wings3d_model__["PreviewCage"].prototype.moveSelectionNew, movement);
    }
 
    setWorld(world) {
@@ -9305,6 +9457,24 @@ WingedTopology.prototype.undoBridgeFace = function(bridge) {
    this._createPolygon(bridge.target.hEdge, bridge.hEdges.length, bridge.target.face);
    this._createPolygon(bridge.source.hEdge, bridge.hEdges.length, bridge.source.face);
 };
+
+//
+// insetFace.
+//
+WingedTopology.prototype.findInsetContours = function(polygonSet) {
+   // find contour.
+   const edgeLoops = [];
+   for (let polygon of polygonSet) {
+      const edgeLoop = [];
+      for (let hEdge of polygon.hEdges()) {
+         const edge = {outer: hEdge, inner: null};
+         edgeLoop.push(edge);
+      }
+      edgeLoops.push( edgeLoop );
+   }
+
+   return edgeLoops;
+}
 
 
 
