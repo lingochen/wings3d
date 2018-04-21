@@ -4926,6 +4926,12 @@ class FaceMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
       }, extrudeEdgesContoursArray);
    }
 
+   collapseEdgeNew(snapshots) {
+      this.eachPreviewCage(function(cage, obj) {
+         cage.collapseExtrudeEdge(obj.snapshot.extrudeEdges);
+      }, snapshots);
+   }
+
    // face dissolve mode
    dissolve() {
       const dissolve = {count: 0, record: []};
@@ -5274,7 +5280,7 @@ class InsetFaceHandler extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["Mous
    }
 
    _commit() {
-      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"](this.bevelEdge);
+      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"](this.insetFace);
    }
 
    _cancel() {
@@ -5312,7 +5318,7 @@ class InsetFaceCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["Edit
 
    undo() {
       //this.madsor.restoreMoveSelection(this.snapshots);  // do we realy needs this. since we are destroying it.
-      //this.madsor.collapseEdge(this.snapshots);
+      this.madsor.collapseEdgeNew(this.snapshots);
       //this.snapshots = undefined;
    }
 }

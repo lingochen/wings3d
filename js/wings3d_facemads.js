@@ -124,6 +124,12 @@ class FaceMadsor extends Madsor {
       }, extrudeEdgesContoursArray);
    }
 
+   collapseEdgeNew(snapshots) {
+      this.eachPreviewCage(function(cage, obj) {
+         cage.collapseExtrudeEdge(obj.snapshot.extrudeEdges);
+      }, snapshots);
+   }
+
    // face dissolve mode
    dissolve() {
       const dissolve = {count: 0, record: []};
@@ -472,7 +478,7 @@ class InsetFaceHandler extends MouseMoveHandler {
    }
 
    _commit() {
-      View.undoQueue(this.bevelEdge);
+      View.undoQueue(this.insetFace);
    }
 
    _cancel() {
@@ -510,7 +516,7 @@ class InsetFaceCommand extends EditCommand {
 
    undo() {
       //this.madsor.restoreMoveSelection(this.snapshots);  // do we realy needs this. since we are destroying it.
-      //this.madsor.collapseEdge(this.snapshots);
+      this.madsor.collapseEdgeNew(this.snapshots);
       //this.snapshots = undefined;
    }
 }
