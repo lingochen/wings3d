@@ -950,7 +950,9 @@ PreviewCage.prototype.restoreMoveSelection = function(snapshot) {
    this.computeSnapshot(snapshot);
 };
 
-//
+PreviewCage.prototype.moveSelectionNew = function(snapshot, movement) {
+   this.moveSelection(movement, snapshot);
+}
 // 3-15 - add limit to movement.
 PreviewCage.prototype.moveSelection = function(movement, snapshot) {
    // first move geometry's position
@@ -2116,7 +2118,7 @@ PreviewCage.prototype.bridge = function(targetFace, sourceFace) {
       const targetSphere = this.boundingSpheres[targetFace.index];
       const sourceSphere = this.boundingSpheres[sourceFace.index];
       const deltaCenter = vec3.create();
-      vec3.sub(deltaCenter, targetSphere.center, sourceSphere.center);
+      //vec3.sub(deltaCenter, targetSphere.center, sourceSphere.center);   // what if we don't move the center, would it work better? so far, no
       const result = this.geometry.bridgeFace(targetFace, sourceFace, deltaCenter);
       // clear selection
       result.selectedFaces = this.selectedSet;
@@ -2139,6 +2141,72 @@ PreviewCage.prototype.undoBridge = function(bridge) {
       // update previewBox.
       this._updatePreviewAll(oldSize, this.geometry.affected);  
    }
+};
+
+// 
+// Inset face, reuse extrude face code.
+//
+PreviewCage.prototype.insetFace = function() {
+   const oldSize = this._getGeometrySize();
+
+   // array of edgeLoop.
+   const contours = {};
+   contours.edgeLoops = this.geometry.findInsetContours(this.selectedSet); 
+   
+   contours.edgeLoops = this.geometry.liftContours(contours.edgeLoops);
+   contours.extrudeEdges = this.geometry.extrudeContours(contours.edgeLoops);
+   // now get all the effected vertices, and moving direction.
+   let vertexCount = 0;
+   for (let polygon of this.selectedSet) {
+      vertexCount += polygon.numberOfVertex;
+   }
+   // compute direction, and moveLimit.
+   contours.vertices = [];
+   contours.faces = new Set;
+   contours.wingedEdges = new Set;
+   contours.position = new Float32Array(vertexCount*3);     // saved the original position
+   contours.direction = new Float32Array(vertexCount*3);    // also add direction.
+   contours.vertexLimit = Number.MAX_SAFE_INTEGER;  // really should call moveLimit.
+   let count = 0;
+   for (let polygon of this.selectedSet) {
+      let prev = null;
+      contours.faces.add(polygon);
+      for (let hEdge of polygon.hEdges()) {
+         contours.vertices.push(hEdge.origin);
+         contours.faces.add(hEdge.pair.face);
+         contours.wingedEdges.add( hEdge.wingedEdge );
+         contours.wingedEdges.add( hEdge.pair.next.wingedEdge );  // the extrude edge 
+         let position = contours.position.subarray(count, count+3);
+         let direction = contours.direction.subarray(count, count+3);
+         count += 3;
+         vec3.copy(position, hEdge.origin.vertex);
+         if (!prev) {
+            prev = hEdge.prev();
+         }
+         vec3.scale(direction, hEdge.destination().vertex, 1.0/2);            // compute the sliding middle point
+         vec3.scaleAndAdd(direction, direction, prev.origin.vertex, 1.0/2);
+         vec3.sub(direction, direction, hEdge.origin.vertex);
+         // get length and normalized.
+         const len = vec3.length(direction);
+         if (len < contours.vertexLimit) {
+            contours.vertexLimit = len;
+         }
+         vec3.normalize(direction, direction);
+         // 
+         prev = hEdge;
+      }
+   }
+
+   // add the new Faces. and new vertices to the preview
+   this._updatePreviewAll(oldSize, this.geometry.affected);
+   // reselect face, or it won't show up. a limitation.
+   const oldSelected = this._resetSelectFace();
+   for (let polygon of oldSelected) {
+      this.selectFace(polygon.halfEdge);
+   }
+
+
+   return contours;
 };
 
 

@@ -1897,6 +1897,24 @@ WingedTopology.prototype.undoBridgeFace = function(bridge) {
    this._createPolygon(bridge.source.hEdge, bridge.hEdges.length, bridge.source.face);
 };
 
+//
+// insetFace.
+//
+WingedTopology.prototype.findInsetContours = function(polygonSet) {
+   // find contour.
+   const edgeLoops = [];
+   for (let polygon of polygonSet) {
+      const edgeLoop = [];
+      for (let hEdge of polygon.hEdges()) {
+         const edge = {outer: hEdge, inner: null};
+         edgeLoop.push(edge);
+      }
+      edgeLoops.push( edgeLoop );
+   }
+
+   return edgeLoops;
+}
+
 export {
    WingedEdge,
    HalfEdge,

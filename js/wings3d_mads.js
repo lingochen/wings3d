@@ -114,6 +114,15 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       }
    }
 
+   hasSelection() {
+      for (let cage of this.world) {
+         if (cage.hasSelection()) {
+            return true;
+         }
+      }
+      return false;
+   }
+
    // move edge along movement.
    moveSelection(movement, snapshots) {
       this.eachPreviewCage( function(cage, snapshot) {
@@ -139,6 +148,11 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
    // rotate vertices
    rotateSelection(snapshots, quatRotate) {
       this.doAll(snapshots, PreviewCage.prototype.rotateSelection, quatRotate);
+   }
+
+   // move vertices
+   moveSelectionNew(snapshots, movement) {
+      this.doAll(snapshots, PreviewCage.prototype.moveSelectionNew, movement);
    }
 
    setWorld(world) {

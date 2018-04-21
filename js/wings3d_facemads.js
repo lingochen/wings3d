@@ -7,8 +7,8 @@ import {Madsor, DragSelect, MouseMoveAlongAxis, MoveAlongNormal, MoveFreePositio
 import {EdgeMadsor} from './wings3d_edgemads';   // for switching
 import {BodyMadsor} from './wings3d_bodymads';
 import {VertexMadsor} from './wings3d_vertexmads';
-import { EditCommand } from './wings3d_undo';
-import { PreviewCage } from './wings3d_model';
+import {MouseMoveHandler, EditCommand} from './wings3d_undo';
+import {PreviewCage} from './wings3d_model';
 import * as View from './wings3d_view';
 import {gl, ShaderData} from './wings3d_gl';
 import * as ShaderProg from './wings3d_shaderprog';
@@ -68,6 +68,13 @@ class FaceMadsor extends Madsor {
                   View.undoQueue(bridge);
                }
             }
+         }
+       });
+      UI.bindMenuItem(action.faceInset.name, (ev) => {
+         if (this.hasSelection()) {
+            View.attachHandlerMouseMove(new InsetFaceHandler(this));
+         } else {
+            geometryStatus('No selected face');
          }
        });
       // setup highlite face, at most 28 triangles.
@@ -159,6 +166,11 @@ class FaceMadsor extends Madsor {
          }
       });
       return snapshot;
+   }
+
+   // Inset
+   inset() {
+      return this.snapshotAll(PreviewCage.prototype.insetFace);
    }
 
    dragSelect(cage, selectArray, onOff) {
@@ -443,6 +455,63 @@ class BridgeFaceCommand extends EditCommand {
    undo() {
       this.cage.undoBridge(this.bridge);
       this.cage.restoreFaceSelection(this.bridge);
+   }
+}
+
+
+class InsetFaceHandler extends MouseMoveHandler {
+   constructor(madsor) {
+      super(madsor);
+      this.insetFace = new InsetFaceCommand(madsor); 
+      this.insetFace.doIt();
+   }
+
+   handleMouseMove(ev) {
+      let move = this._calibrateMovement(ev.movementX);
+      this.insetFace.update(move);
+   }
+
+   _commit() {
+      View.undoQueue(this.bevelEdge);
+   }
+
+   _cancel() {
+      this.insetFace.undo();
+   }
+}
+
+class InsetFaceCommand extends EditCommand {
+   constructor(madsor) {
+      super();
+      this.madsor = madsor;
+      //this.selectedFaces = madsor.snapshotSelection();
+      this.movement = 0;
+   }
+
+   doIt() {
+      this.snapshots = this.madsor.inset();   // should we test for current snapshots and prev snapshots?
+      this.madsor.moveSelectionNew(this.snapshots, this.movement);
+      // get limit
+      this.vertexLimit = Number.MAX_SAFE_INTEGER;
+      for (let obj of this.snapshots) {
+         this.vertexLimit = Math.min(this.vertexLimit, obj.snapshot.vertexLimit);
+      } 
+   }
+
+   update(move) {
+      if ((this.movement+move) > this.vertexLimit) {
+         move = this.vertexLimit - this.movement;
+      } else if ((this.movement+move) < 0) {
+         move = 0 - this.movement;
+      }
+      this.madsor.moveSelectionNew(this.snapshots, move);
+      this.movement += move;
+   }
+
+   undo() {
+      //this.madsor.restoreMoveSelection(this.snapshots);  // do we realy needs this. since we are destroying it.
+      //this.madsor.collapseEdge(this.snapshots);
+      //this.snapshots = undefined;
    }
 }
 
