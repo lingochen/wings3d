@@ -4,8 +4,8 @@
  *
 **/
 import {gl} from './wings3d_gl';
-import { EditCommand, MouseMoveHandler } from './wings3d_undo';
-import { PreviewCage } from './wings3d_model';
+import {EditCommand, MouseMoveHandler} from './wings3d_undo';
+import {PreviewCage} from './wings3d_model';
 import * as View from './wings3d_view';
 import * as UI from './wings3d_ui';
 import {action} from './wings3d';
@@ -53,6 +53,13 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       for (let axis = 0; axis < 3; ++axis) {
          UI.bindMenuItem(mode + 'Rotate' + axisName[axis], function(ev) {
             View.attachHandlerMouseMove(new MouseRotateAlongAxis(self, axis));
+          });
+      }
+      // Bevel
+      const bevel = {face: action.faceBevel, edge: action.edgeBevel}; //, vertex: action.vertexBevel};
+      if (bevel[mode]) {
+         UI.bindMenuItem(bevel[mode].name, (ev)=> {
+            View.attachHandlerMouseMove(new BevelHandler(this));
           });
       }
    }
@@ -469,6 +476,61 @@ class ToggleModeCommand extends EditCommand {
    undo() {
       // toggle back
       this.undoToggle(this.snapshots);
+   }
+}
+
+class BevelCommand extends EditCommand {
+   constructor(madsor) {
+      super();
+      this.madsor = madsor;
+      this.selection = madsor.snapshotSelection();
+      this.movement = 0;
+   }
+
+   doIt() {
+      this.snapshots = this.madsor.bevel();   // should test for current snapshots and prev snapshots?
+      this.madsor.moveSelection(this.movement, this.snapshots);
+      // get limit
+      this.vertexLimit = Number.MAX_SAFE_INTEGER;
+      for (let snapshot of this.snapshots) {
+         this.vertexLimit = Math.min(this.vertexLimit, snapshot.vertexLimit);
+      } 
+   }
+
+   update(move) {
+      if ((this.movement+move) > this.vertexLimit) {
+         move = this.vertexLimit - this.movement;
+      } else if ((this.movement+move) < 0) {
+         move = 0 - this.movement;
+      }
+      this.madsor.moveSelection(move, this.snapshots);
+      this.movement += move;
+   }
+
+   undo() {
+      this.madsor.undoBevel(this.snapshots, this.selection);
+      //this.snapshots = undefined;
+   }
+}
+
+class BevelHandler extends MovePositionHandler {
+   constructor(madsor) {
+      super(madsor);
+      this.bevel = new BevelCommand(this.madsor); 
+      this.bevel.doIt();
+   }
+
+   handleMouseMove(ev) {
+      let move = this._calibrateMovement(ev.movementX);
+      this.bevel.update(move);
+   }
+
+   _commit() {
+      View.undoQueue(this.bevel);
+   }
+
+   _cancel() {
+      this.bevel.undo();
    }
 }
 

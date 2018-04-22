@@ -109,6 +109,14 @@ class FaceMadsor extends Madsor {
       return this.snapshotAll(PreviewCage.prototype.snapshotTransformFaceGroup);
    }
 
+   bevel() {
+
+   }
+
+   undoBevel(snapshots, selection) {
+      
+   }
+
    // extrude Face
    extrude(reuseLoops) {
       var edgeLoops = [];

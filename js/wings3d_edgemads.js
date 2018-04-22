@@ -3,11 +3,11 @@
 //
 //    
 **/
-import {Madsor, DragSelect, ToggleModeCommand, MovePositionHandler} from './wings3d_mads';
+import {Madsor, DragSelect, ToggleModeCommand} from './wings3d_mads';
 import {FaceMadsor} from './wings3d_facemads';   // for switching
 import {BodyMadsor} from './wings3d_bodymads';
 import {VertexMadsor, VertexConnectCommand} from './wings3d_vertexmads';
-import { EditCommand } from './wings3d_undo';
+import {EditCommand} from './wings3d_undo';
 import {PreviewCage} from './wings3d_model';
 import * as UI from './wings3d_ui';
 import * as View from './wings3d_view';
@@ -61,10 +61,6 @@ class EdgeMadsor extends Madsor {
             } else {
                // should not happened.
             }
-         });
-      // Bevel
-      UI.bindMenuItem(action.edgeBevel.name, function(ev) {
-            View.attachHandlerMouseMove(new EdgeBevelHandler(self));
          });
       // EdgeLoop.
       for (let [numberOfSegments, hotkey] of [[action.edgeLoop1,"l"], [action.edgeLoop2,undefined], [action.edgeLoop3,undefined]]) {
@@ -154,7 +150,15 @@ class EdgeMadsor extends Madsor {
       this.eachPreviewCage( function(preview) {
          snapshots.push( preview.bevelEdge() );
       });
+      // change to facemode.
+      View.restoreFaceMode(snapshots);
       return snapshots;
+   }
+
+   undoBevel(snapshots, selection) {
+      this.restoreMoveSelection(snapshots);
+      this.collapseEdge(snapshots);
+      View.restoreEdgeMode(selection);
    }
 
    cutEdge(numberOfSegments) {
@@ -448,63 +452,6 @@ class CollapseEdgeCommand extends EditCommand {
    }
 }
 
-class BevelEdgeCommand extends EditCommand {
-   constructor(madsor) {
-      super();
-      this.madsor = madsor;
-      this.selectedEdges = madsor.snapshotSelection();
-      this.movement = 0;
-   }
-
-   doIt() {
-      this.snapshots = this.madsor.bevel();   // should test for current snapshots and prev snapshots?
-      View.restoreFaceMode(this.snapshots);
-      this.madsor.moveSelection(this.movement, this.snapshots);
-      // get limit
-      this.vertexLimit = Number.MAX_SAFE_INTEGER;
-      for (let snapshot of this.snapshots) {
-         this.vertexLimit = Math.min(this.vertexLimit, snapshot.vertexLimit);
-      } 
-   }
-
-   update(move) {
-      if ((this.movement+move) > this.vertexLimit) {
-         move = this.vertexLimit - this.movement;
-      } else if ((this.movement+move) < 0) {
-         move = 0 - this.movement;
-      }
-      this.madsor.moveSelection(move, this.snapshots);
-      this.movement += move;
-   }
-
-   undo() {
-      this.madsor.restoreMoveSelection(this.snapshots);
-      this.madsor.collapseEdge(this.snapshots);
-      View.restoreEdgeMode(this.selectedEdges);
-      //this.snapshots = undefined;
-   }
-}
-
-class EdgeBevelHandler extends MovePositionHandler {
-   constructor(madsor) {
-      super(madsor);
-      this.bevelEdge = new BevelEdgeCommand(this.madsor); 
-      this.bevelEdge.doIt();
-   }
-
-   handleMouseMove(ev) {
-      let move = this._calibrateMovement(ev.movementX);
-      this.bevelEdge.update(move);
-   }
-
-   _commit() {
-      View.undoQueue(this.bevelEdge);
-   }
-
-   _cancel() {
-      this.bevelEdge.undo();
-   }
-}
 
 class EdgeLoopCommand extends EditCommand {
    constructor(madsor, nth) {
