@@ -8667,10 +8667,17 @@ WingedTopology.prototype.bevelEdge = function(wingedEdges) {   // wingedEdges(se
          this.affected.faces.add(hEdge.face);
          // fix the vertexLimit.
          const pts = vertexLimit.get(hEdge.next.origin); // to limit the original vertex
-         if (!this.isSplitEdgeSelected(hEdge.next.origin, hEdge.origin, adjacentRed)) { 
-            while (adjacentRed.has(hEdge.next.wingedEdge)) { hEdge = hEdge.next.pair; }  // we move along non-selected edge
-            pts.push( hEdge.next.pair );
-            slideEdge.add(hEdge.next.pair);
+         if (!this.isSplitEdgeSelected(hEdge.next.origin, hEdge.origin, adjacentRed)) {
+            const red = [];
+            // we move along non-selected edge
+            do { hEdge = hEdge.next.pair; red.push(hEdge); } while (adjacentRed.has(hEdge.wingedEdge));
+            if (hEdge !== insertion.next) {
+               pts.push( hEdge );
+               slideEdge.add(hEdge );
+            } else { // reselect all.
+               red.pop();
+               for (let hEdge of red) {pts.push(hEdge);slideEdge.add(hEdge);}
+            }
          } else {  // adjust vertex, a lot of hacks.
             const hEdge2 = hEdge.next.pair;
             let prev = hEdge2.prev(); pts.push( prev ); slideEdge.add(prev);
