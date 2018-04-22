@@ -3380,7 +3380,9 @@ PreviewCage.prototype.cutEdge = function(numberOfSegments) {
 PreviewCage.prototype.collapseSplitOrBevelEdge = function(collapse) {
    const oldSize = this._getGeometrySize();
    for (let halfEdge of collapse.halfEdges) {
-      this.geometry.collapseEdge(halfEdge, collapse.collapsibleWings);
+      if (halfEdge.wingedEdge.isReal()) {
+         this.geometry.collapseEdge(halfEdge, collapse.collapsibleWings);
+      }
    }
    // recompute the smaller size
    this._updatePreviewAll(oldSize, this.geometry.affected);
@@ -4913,11 +4915,16 @@ class FaceMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
    }
 
    bevel() {
-
+      var snapshots = [];
+      this.eachPreviewCage( function(preview) {
+         snapshots.push( preview.bevelFace() );
+      });
+      return snapshots;
    }
 
    undoBevel(snapshots, selection) {
-      
+      this.restoreMoveSelection(snapshots);
+      this.collapseEdge(snapshots);
    }
 
    // extrude Face

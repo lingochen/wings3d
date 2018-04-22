@@ -110,11 +110,16 @@ class FaceMadsor extends Madsor {
    }
 
    bevel() {
-
+      var snapshots = [];
+      this.eachPreviewCage( function(preview) {
+         snapshots.push( preview.bevelFace() );
+      });
+      return snapshots;
    }
 
    undoBevel(snapshots, selection) {
-      
+      this.restoreMoveSelection(snapshots);
+      this.collapseEdge(snapshots);
    }
 
    // extrude Face
