@@ -1790,7 +1790,7 @@ PreviewCage.prototype.cutEdge = function(numberOfSegments) {
 PreviewCage.prototype.collapseSplitOrBevelEdge = function(collapse) {
    const oldSize = this._getGeometrySize();
    for (let halfEdge of collapse.halfEdges) {
-      if (halfEdge.wingedEdge.isReal()) {
+      if (halfEdge.wingedEdge.isReal()) { // checked for already collapse edge
          this.geometry.collapseEdge(halfEdge, collapse.collapsibleWings);
       }
    }
@@ -2041,7 +2041,7 @@ PreviewCage.prototype.bevelEdge = function() {
          result.wingedEdges.add( hEdge.wingedEdge );
          result.faces.add( hEdge.face );
       }
-   }
+   };
 
    // add the new Faces, new edges and new vertices to the preview
    this._updatePreviewAll(oldSize, this.geometry.affected);
@@ -2056,6 +2056,41 @@ PreviewCage.prototype.bevelEdge = function() {
    //   direction: float32array,
    //   vertexLimit: magnitude,
    //};
+};
+// 
+// bevel face, same as edge but with differnt hilite faces
+//
+PreviewCage.prototype.bevelFace = function() {
+   const oldSize = this._getGeometrySize();
+   const faces = this.selectedSet;
+
+   let wingedEdges = new Set;
+   for (let polygon of faces) {  // select all polygon's edges
+      for (let hEdge of polygon.hEdges()) {
+         wingedEdges.add( hEdge.wingedEdge );
+      }
+   }
+   // cut bevelEdge
+   const result = this.geometry.bevelEdge(wingedEdges);       // input edge will take the new vertex as origin.
+   // get all effected wingedEdge
+   result.wingedEdges = new Set;
+   result.faces = new Set;
+   for (let vertex of result.vertices) {
+      for (let hEdge of vertex.edgeRing()) {
+         result.wingedEdges.add( hEdge.wingedEdge );
+         result.faces.add( hEdge.face );
+      }
+   };
+
+   // add the new Faces, new edges and new vertices to the preview
+   this._updatePreviewAll(oldSize, this.geometry.affected);
+   // reselect faces again. because polygon's edges were changed.
+   const oldSelected = this._resetSelectFace();
+   for (let polygon of oldSelected) {
+      this.selectFace(polygon.halfEdge);
+   }
+
+   return result;
 };
 
 //

@@ -119,7 +119,13 @@ class FaceMadsor extends Madsor {
 
    undoBevel(snapshots, selection) {
       this.restoreMoveSelection(snapshots);
-      this.collapseEdge(snapshots);
+      // collapse extrudeEdge
+      this.eachPreviewCage(function(cage, collapse) {
+         cage.collapseSplitOrBevelEdge(collapse);
+      }, snapshots);
+      // rehilite selectedFace
+      this.resetSelection();
+      this.restoreSelection(selection);
    }
 
    // extrude Face
