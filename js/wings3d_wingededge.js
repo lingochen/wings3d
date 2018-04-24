@@ -1182,8 +1182,8 @@ WingedTopology.prototype.bevelVertex = function(vertices) {
       // fixed the inner edge then add face.
       if (count > 1) {  // add the last edge
          let lastBevel = this.simpleSplit(prevOut.pair);
-         ret.halfEdges.push(lastBevel.pair);
-         lastBevel.pair.next = prevBevel.pair;
+         ret.halfEdges.push(lastBevel);   // reverse direction. so collapse will do the right thing.
+         lastBevel.pair.next = prevBevel.pair; 
          const firstBevel = vertex.outEdge.pair.next;
          firstBevel.pair.next = lastBevel.pair;   // innerEdge loop connected.
          const polygon = this._createPolygon(firstBevel.pair, count+1);
