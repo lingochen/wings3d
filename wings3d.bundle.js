@@ -8870,7 +8870,7 @@ WingedTopology.prototype.bevelVertex = function(vertices) {
       // fixed the inner edge then add face.
       if (count > 1) {  // add the last edge
          let lastBevel = this.simpleSplit(prevOut.pair);
-         ret.halfEdges.push(lastBevel.pair);
+         ret.halfEdges.push(lastBevel);   // reverse direction.
          lastBevel.pair.next = prevBevel.pair;
          const firstBevel = vertex.outEdge.pair.next;
          firstBevel.pair.next = lastBevel.pair;   // innerEdge loop connected.
