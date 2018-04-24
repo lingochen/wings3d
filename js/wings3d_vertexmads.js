@@ -60,6 +60,27 @@ class VertexMadsor extends Madsor {
    snapshotTransformGroup() {
       return this.snapshotAll(PreviewCage.prototype.snapshotTransformVertexGroup);
    }
+
+   bevel() {
+      var snapshots = [];
+      this.eachPreviewCage( function(preview) {
+         snapshots.push( preview.bevelVertex() );
+      });
+      // change to facemode.
+      View.restoreFaceMode(snapshots);
+      return snapshots;
+   }
+
+   undoBevel(snapshots, selection) {
+      this.restoreMoveSelection(snapshots);
+      // collapse extrudeEdge
+      this.eachPreviewCage(function(cage, collapse) {
+         cage.collapseSplitOrBevelEdge(collapse);
+      }, snapshots);
+      // restore Vertex Selection
+      View.restoreVertexMode(selection); 
+   }
+
    connectVertex() {
       const vertexConnect = new VertexConnectCommand(this);
       if (vertexConnect.doIt()) {

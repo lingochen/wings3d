@@ -56,7 +56,7 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
           });
       }
       // Bevel
-      const bevel = {face: action.faceBevel, edge: action.edgeBevel}; //, vertex: action.vertexBevel};
+      const bevel = {face: action.faceBevel, edge: action.edgeBevel, vertex: action.vertexBevel};
       if (bevel[mode]) {
          UI.bindMenuItem(bevel[mode].name, (ev)=> {
             View.attachHandlerMouseMove(new BevelHandler(this));

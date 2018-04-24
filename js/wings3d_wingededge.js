@@ -954,7 +954,7 @@ WingedTopology.prototype.isSplitEdgeSelected = function(origin, dest, adjacentRe
             redCount++;
          }
       }
-      if (count !== 3) {
+      if (count !== 3) { // (count > 3) { // equal 3 or 4
          return false;
       } else if (redCount !== 2) {
          return false;
@@ -1145,6 +1145,77 @@ WingedTopology.prototype.bevelEdge = function(wingedEdges) {   // wingedEdges(se
    // we needs faces, we needs
    return ret;
 };
+
+//
+// bevel Vertex. create new edge between each vertex's outEdge, which is n. will create (n-1) vertex, and one face, for each 
+// selected vertex.
+WingedTopology.prototype.bevelVertex = function(vertices) {
+   const ret = {vertices: [], halfEdges: [], selectedFaces:[], };
+
+   const slideHEdges = new Set;
+   for (let vertex of vertices) {
+      let prevOut = vertex.outEdge;
+      let prevBevel;
+      let outEdge = prevOut.pair.next;
+      let count = 0;
+      ret.vertices.push(vertex);
+      slideHEdges.add(outEdge);
+      while (outEdge !== vertex.outEdge) { // splice between outTarget and inEdge. add a new Vertex
+         const origin = this.addVertex(outEdge.origin.vertex);
+         ret.vertices.push(origin);
+         outEdge.origin = origin;
+         origin.outEdge = outEdge;
+         slideHEdges.add(outEdge);
+         const outNext = outEdge.pair.next;     // save the next Out
+         let outBevel = this.simpleSplit(prevOut.pair);  // the newly create bevel edge
+         ret.halfEdges.push(outBevel.pair);
+         //origin.outEdge = outBevel.pair;
+         ++count;
+         if (prevBevel) {  // innerEdge connect together.
+            outBevel.pair.next = prevBevel.pair;
+         }
+         prevBevel = outBevel;
+         // check(outEdge.next === nextOut);
+         prevOut = outEdge;
+         outEdge = outNext;
+      }
+      // fixed the inner edge then add face.
+      if (count > 1) {  // add the last edge
+         let lastBevel = this.simpleSplit(prevOut.pair);
+         ret.halfEdges.push(lastBevel.pair);
+         lastBevel.pair.next = prevBevel.pair;
+         const firstBevel = vertex.outEdge.pair.next;
+         firstBevel.pair.next = lastBevel.pair;   // innerEdge loop connected.
+         const polygon = this._createPolygon(firstBevel.pair, count+1);
+         ret.selectedFaces.push(polygon);
+      } else { // weird case of 2 edge vertex
+
+      }
+   }
+
+   // compute moveLimit.
+   ret.vertexLimit = Number.MAX_SAFE_INTEGER;       // magnitude
+   ret.position = new Float32Array(ret.vertices.length*3);     // saved the original position
+   ret.direction = new Float32Array(ret.vertices.length*3);    // also add direction.
+   let i = 0;
+   for (let vertex of ret.vertices) {
+      const position = ret.position.subarray(i, i+3);
+      const direction = ret.direction.subarray(i, i+3);
+      vec3.copy(position, vertex.vertex);
+      vec3.sub(direction, vertex.outEdge.destination().vertex, position);
+      if (slideHEdges.has(vertex.outEdge.pair)) {  // half length because we are sharing the expansion.
+         ret.vertexLimit = Math.min(vec3.length(direction)*0.5, ret.vertexLimit);
+      } else {
+         ret.vertexLimit = Math.min(vec3.length(direction), ret.vertexLimit);  // the full length.
+      }
+      vec3.normalize(direction, direction);
+      i += 3;
+   }
+
+   // results
+   return ret;
+};
+
 
 
 WingedTopology.prototype.extrudeContours = function(edgeLoops) {

@@ -2092,6 +2092,39 @@ PreviewCage.prototype.bevelFace = function() {
 
    return result;
 };
+//
+// bevel vertex
+//
+PreviewCage.prototype.bevelVertex = function() {
+   const oldSize = this._getGeometrySize();
+   const vertices = this.selectedSet;
+
+   // cut bevelVertex
+   const result = this.geometry.bevelVertex(vertices);       // input vertices, out new vertex, edges, and faces.
+   // get all effected wingedEdge
+   result.wingedEdges = new Set;
+   result.faces = new Set;
+   for (let vertex of result.vertices) {
+      for (let hEdge of vertex.edgeRing()) {
+         result.wingedEdges.add( hEdge.wingedEdge );
+         result.faces.add( hEdge.face );
+      }
+   };
+
+   // add the new Faces, new edges and new vertices to the preview
+   this._updatePreviewAll(oldSize, this.geometry.affected);
+   // update vertices created vertices.
+   return result;
+   //let ret = {
+   //   faces: [],
+   //   vertices: [],
+   //   wingedEdge: new set,
+   //   halfEdges: [],
+   //   position: float32array,
+   //   direction: float32array,
+   //   vertexLimit: magnitude,
+   //};
+};
 
 //
 // iterated through selectedEdge, and expand it along the edges, edge loop only possible on 4 edges vertex
