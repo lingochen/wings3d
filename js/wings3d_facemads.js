@@ -3,11 +3,11 @@
 //
 //    
 **/
-import {Madsor, DragSelect, MouseMoveAlongAxis, MoveAlongNormal, MoveFreePositionHandler, ToggleModeCommand} from './wings3d_mads';
+import {Madsor, DragSelect, MovePositionHandler, MouseMoveAlongAxis, MoveAlongNormal, MoveFreePositionHandler, ToggleModeCommand} from './wings3d_mads';
 import {EdgeMadsor} from './wings3d_edgemads';   // for switching
 import {BodyMadsor} from './wings3d_bodymads';
 import {VertexMadsor} from './wings3d_vertexmads';
-import {MouseMoveHandler, EditCommand} from './wings3d_undo';
+import {MoveableCommand, EditCommand} from './wings3d_undo';
 import {PreviewCage} from './wings3d_model';
 import * as View from './wings3d_view';
 import {gl, ShaderData} from './wings3d_gl';
@@ -26,14 +26,14 @@ class FaceMadsor extends Madsor {
       // movement for (x, y, z)
       for (let axis=0; axis < 3; ++axis) {
          UI.bindMenuItem(axisName[axis].name, function(ev) {
-               View.attachHandlerMouseMove(new FaceExtrudeHandler(self, axis));
+               View.attachHandlerMouseMove(new ExtrudeAlongAxisHandler(self, axis));
             });
       }
       UI.bindMenuItem(action.faceExtrudeFree.name, function(ev) {
-            View.attachHandlerMouseMove(new FaceExtrudeFreeHandler(self));
+            View.attachHandlerMouseMove(new ExtrudeFreeHandler(self));
          });
       UI.bindMenuItem(action.faceExtrudeNormal.name, function(ev) {
-            View.attachHandlerMouseMove(new FaceExtrudeNormalHandler(self));
+            View.attachHandlerMouseMove(new ExtrudeNormalHandler(self));
          });
       UI.bindMenuItem(action.faceDissolve.name, function(ev) {
             const command = new DissolveFaceCommand(self);
@@ -338,82 +338,47 @@ class FaceSelectCommand extends EditCommand {
    }
 }
 
-class FaceExtrudeHandler extends MouseMoveAlongAxis {
-   constructor(madsor, axis) {
-      const contourEdges = madsor.extrude();
-      super(madsor, axis);
-      this.contourEdges = contourEdges;
-   }
 
-   _commit() {
-      View.undoQueue(new ExtrudeFaceCommand(this.madsor, this.movement, this.snapshots, this.contourEdges));
-   }
-
-   _cancel() {
-      this.madsor.restoreMoveSelection(this.snapshots);
-      this.madsor.collapseEdge(this.contourEdges);
-   }
-}
-
-class FaceExtrudeFreeHandler extends MoveFreePositionHandler {
+class ExtrudeHandler extends MoveableCommand {
    constructor(madsor) {
-      const contourEdges = madsor.extrude();
-      super(madsor);
-      this.contourEdges = contourEdges;
-   }
-
-   _commit() {
-      View.undoQueue(new ExtrudeFaceCommand(this.madsor, this.movement, this.snapshots, this.contourEdges));
-   }
-
-   _cancel() {
-      this.madsor.restoreMoveSelection(this.snapshots);
-      this.madsor.collapseEdge(this.contourEdges);
-   }
-}
-
-class FaceExtrudeNormalHandler extends MoveAlongNormal {
-   constructor(madsor) {
-      const contourEdges = madsor.extrude();
-      super(madsor);
-      this.contourEdges = contourEdges;
-   }
-
-   _commit() {
-      View.undoQueue(new ExtrudeFaceCommand(this.madsor, this.movement, this.snapshots, this.contourEdges, true));
-   }
-
-   _cancel() {
-      this.madsor.restoreMoveSelection(this.snapshots);
-      this.madsor.collapseEdge(this.contourEdges);
-   }
-}
-
-class ExtrudeFaceCommand extends EditCommand {
-   constructor(faceMadsor, movement, snapshots, extrudeEdgesContours, useNormal = false) {
       super();
-      this.madsor = faceMadsor;
-      this.movement = movement;
-      this.snapshots = snapshots;
-      this.useNormal = useNormal;
-      this.extrudeEdgesContoursArray = extrudeEdgesContours;
+      this.madsor = madsor;
+      this.contourEdges = madsor.extrude();
    }
 
    doIt() {
-      this.extrudeEdgesContoursArray = this.madsor.extrude( this.extrudeEdgesContoursArray );
-      if (this.useNormal) {
-         this.snapshots = this.madsor.snapshotPositionAndNormal();
-      } else {
-         this.snapshots = this.madsor.snapshotPosition();
-      }
-      this.madsor.moveSelection(this.movement, this.snapshots);
+      this.contourEdges = this.madsor.extrude();
+      super.doIt();     // = this.madsor.moveSelection(this.movement, this.snapshots);
    }
 
    undo() {
-      this.madsor.restoreMoveSelection(this.snapshots);
-      this.madsor.collapseEdge(this.extrudeEdgesContoursArray);
+      //this.madsor.restoreMoveSelection(this.snapshots);
+      this.madsor.collapseEdge(this.contourEdges);
    }
 }
+
+class ExtrudeAlongAxisHandler extends ExtrudeHandler {
+   constructor(madsor, axis) {
+      super(madsor);
+      this.moveHandler = new MouseMoveAlongAxis(madsor, axis); // this should comes later
+   }
+}
+
+
+class ExtrudeFreeHandler extends ExtrudeHandler {
+   constructor(madsor) {
+      super(madsor);
+      this.moveHandler = new MoveFreePositionHandler(madsor);
+   }
+}
+
+class ExtrudeNormalHandler extends ExtrudeHandler {
+   constructor(madsor) {
+      super(madsor);
+      this.moveHandler = new MoveAlongNormal(madsor);
+   }
+}
+
 
 class DissolveFaceCommand extends EditCommand {
    constructor(madsor) {
@@ -484,33 +449,12 @@ class BridgeFaceCommand extends EditCommand {
 }
 
 
-class InsetFaceHandler extends MouseMoveHandler {
+class InsetFaceHandler extends MovePositionHandler {
    constructor(madsor) {
       super(madsor);
-      this.insetFace = new InsetFaceCommand(madsor); 
-      this.insetFace.doIt();
-   }
-
-   handleMouseMove(ev) {
-      let move = this._calibrateMovement(ev.movementX);
-      this.insetFace.update(move);
-   }
-
-   _commit() {
-      View.undoQueue(this.insetFace);
-   }
-
-   _cancel() {
-      this.insetFace.undo();
-   }
-}
-
-class InsetFaceCommand extends EditCommand {
-   constructor(madsor) {
-      super();
-      this.madsor = madsor;
       //this.selectedFaces = madsor.snapshotSelection();
       this.movement = 0;
+      this.doIt();   // init.
    }
 
    doIt() {
@@ -523,14 +467,17 @@ class InsetFaceCommand extends EditCommand {
       } 
    }
 
-   update(move) {
+   //_updateMovement(ev) {  // change back when we all move to moveSelectionNew
+   handleMouseMove(ev) {
+      let move = this._calibrateMovement(ev.movementX);
       if ((this.movement+move) > this.vertexLimit) {
          move = this.vertexLimit - this.movement;
       } else if ((this.movement+move) < 0) {
          move = 0 - this.movement;
       }
-      this.madsor.moveSelectionNew(this.snapshots, move);
       this.movement += move;
+      this.madsor.moveSelectionNew(this.snapshots, move);
+      return move;
    }
 
    undo() {

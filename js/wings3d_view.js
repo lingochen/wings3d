@@ -305,12 +305,12 @@ const handler = {camera: null, mousemove: null};
 function canvasHandleMouseDown(ev) {
    if (ev.button == 0) {
       if (handler.camera !== null) {
-         handler.camera.commit();  
+         handler.camera.doIt();  
          handler.camera = null;
          Wings3D.log(Wings3D.action.cameraModeExit, Camera.view);
          help('L:Select   M:Start Camera   R:Show Menu   [Alt]+R:Tweak menu');      
       } else if (handler.mousemove !== null) {
-         handler.mousemove.commit();
+         undoQueue( handler.mousemove );  // put on queue, commit()?
          handler.mousemove = null;
       } else {
          //e.stopImmediatePropagation();
@@ -388,12 +388,12 @@ function canvasHandleContextMenu(ev) {
       ev.preventDefault();
       ev.stopImmediatePropagation();      // prevent document's contextmenu popup
       if (handler.camera !== null) {
-         handler.camera.cancel();
+         handler.camera.undo();
          handler.camera = null;
          Wings3D.log(Wings3D.action.cameraModeExit, Camera.view);   // log action
          help('L:Select   M:Start Camera   R:Show Menu   [Alt]+R:Tweak menu');
       } else {
-         handler.mousemove.cancel();
+         handler.mousemove.undo();
          handler.mousemove = null;
          Renderer.needToRedraw();
       }

@@ -3,8 +3,8 @@
  * 
  */
 
-class MouseMoveHandler {
-
+// merge MouseMoveHandler to EditCommand
+class EditCommand {
    _calibrateMovement(mouseMove) {
       // todo: instead of magic constant. should supply a scaling factor.
       var move = mouseMove/20.0;
@@ -19,9 +19,16 @@ class MouseMoveHandler {
       return (ev.movementX / width);
    }
 
+   //doIt() {}
+
+   //undo() {}
+}
+
+class MouseMoveHandler extends EditCommand {
+
    //handleMouseMove(ev) {}
 
-   cancel() {
+/*   cancel() {
       this._cancel();     // called descendant handler
       // enable mouse cursor
       document.body.style.cursor = 'auto';
@@ -31,16 +38,29 @@ class MouseMoveHandler {
       this._commit();
       // enable mouse cursor
       document.body.style.cursor = 'auto';
-   }
+   } */
 }
 
-class EditCommand {
+// delegate mouse movement to MouseMoveHandler
+class MoveableCommand extends EditCommand {
 
+   handleMouseMove(ev, cameraView) {
+      if (this.moveHandler) {
+         this.moveHandler.handleMouseMove(ev, cameraView);
+      }
+   }
 
-   //doIt() {}
+   doIt() {
+      if (this.moveHandler) {
+         this.moveHandler.doIt();
+      }
+   }
 
-   //undo() {}
-
+   undo() {
+      if (this.moveHandler) {
+         this.moveHandler.undo();
+      }
+   }
 }
 
 class EditCommandSimple extends EditCommand {
@@ -58,6 +78,7 @@ class EditCommandSimple extends EditCommand {
       this.undo(currentMadsor);
    }
 }
+
 
 class EditCommandCombo extends EditCommand {
    constructor(editCommands) {
@@ -82,8 +103,9 @@ class EditCommandCombo extends EditCommand {
 
 
 export {
-   MouseMoveHandler,
    EditCommand,
+   MouseMoveHandler,
+   MoveableCommand,
    EditCommandCombo,
    EditCommandSimple
 }

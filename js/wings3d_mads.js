@@ -62,6 +62,19 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
             View.attachHandlerMouseMove(new BevelHandler(this));
           });
       }
+/*      // extrude
+      const extrude = {face: [action.faceExtrudeX, action.faceExtrudeY, action.faceExtrudeZ],
+                       //vertex:  [action.vertexExtrudeX, action.vertexExtrudeY, action.vertexExtrudeZ],
+                      };
+      let extrudeMode = extrude[mode];
+      if (extrudeMode) {
+         // movement for (x, y, z)
+         for (let axis=0; axis < 3; ++axis) {
+            UI.bindMenuItem(extrudeMode[axis].name, (ev) => {
+                  View.attachHandlerMouseMove(new ExtrudeHandler(this, axis));
+             });
+         }
+      }*/
    }
 
    getContextMenu() {
@@ -279,187 +292,6 @@ class DragSelect {
    }
 }
 
-class MovePositionHandler extends MouseMoveHandler {
-   constructor(madsor) {
-      super();
-      this.madsor = madsor;
-      // this.snapshots
-      // this.movement
-   }
-
-   _commit() {
-      View.undoQueue(new MoveCommand(this.madsor, this.snapshots, this.movement));
-   }
-
-   _cancel() {
-      this.madsor.restoreMoveSelection(this.snapshots);
-   }
-}
-
-// movement handler.
-class MouseMoveAlongAxis extends MovePositionHandler {
-   constructor(madsor, axis) {   // 0 = x axis, 1 = y axis, 2 = z axis.
-      super(madsor);
-      this.snapshots = madsor.snapshotPosition();
-      this.movement = [0.0, 0.0, 0.0];             // cumulative movement.
-      this.axis = axis;
-   }
-
-   handleMouseMove(ev) {
-      var move = this._calibrateMovement(ev.movementX);
-      var movement = [0.0, 0.0, 0.0];
-      movement[this.axis] = move;
-      this.madsor.moveSelection(movement, this.snapshots);
-      this.movement[this.axis] += move;
-   }
-}
-
-
-class MoveAlongNormal extends MovePositionHandler {
-   constructor(madsor) {
-      super(madsor);
-      this.snapshots = madsor.snapshotPositionAndNormal();
-      this.movement = 0.0;                    // cumulative movement.
-   }
-
-   handleMouseMove(ev) {
-      var move = this._calibrateMovement(ev.movementX);
-      this.madsor.moveSelection(move, this.snapshots);
-      this.movement += move;
-   }
-}
-
-
-class MoveFreePositionHandler extends MovePositionHandler {
-   constructor(madsor) {
-      super(madsor);
-      this.snapshots = madsor.snapshotPosition();
-      this.movement = [0.0, 0.0, 0.0];             // cumulative movement.
-   }
-
-   handleMouseMove(ev, cameraView) {
-      var x = this._calibrateMovement(ev.movementX);
-      var y = this._calibrateMovement(-ev.movementY);
-      var cam = cameraView.inverseCameraVectors();
-      // move parallel to camera.
-      var movement = [cam.x[0]*x + cam.y[0]*y, cam.x[1]*x + cam.y[1]*y, cam.x[2]*x + cam.y[2]*y];
-      this.madsor.moveSelection(movement, this.snapshots);
-      vec3.add(this.movement, this.movement, movement);
-   }
-}
-
-
-class ScaleUniformHandler extends MouseMoveHandler {
-   constructor(madsor) {
-      super();
-      this.madsor = madsor;
-      this.snapshots = madsor.snapshotTransformGroup();
-      this.scale = 1.0;                    // cumulative movement.
-   }
-
-   handleMouseMove(ev) {
-      let scale = this._xPercentMovement(ev);   // return (100% to -100%)
-      if (scale < 0) {
-         scale = 1.0 + Math.abs(scale);
-      } else {
-         scale = 1.0 / (1.0 + scale);
-      }
-      this.madsor.scaleSelection(this.snapshots, scale);
-      this.scale *= scale;
-   }
-
-   _commit() {
-      View.undoQueue(new ScaleCommand(this.madsor, this.snapshots, this.scale));
-   }
-
-   _cancel() {
-      this.madsor.restoreSelectionPosition(this.snapshots);
-   }
-}
-
-
-// movement handler.
-class MouseRotateAlongAxis extends MovePositionHandler {
-   constructor(madsor, axis) {   // 0 = x axis, 1 = y axis, 2 = z axis.
-      super(madsor);
-      this.snapshots = madsor.snapshotTransformGroup();
-      this.movement = 0.0;             // cumulative movement.
-      this.axisVec3 = vec3.create();
-      this.axisVec3[axis] = 1.0;
-   }
-
-   handleMouseMove(ev) {
-      const move = this._xPercentMovement(ev)*5;
-      const quatRotate = quat.create();
-      quat.setAxisAngle(quatRotate, this.axisVec3, move);
-      this.madsor.rotateSelection(this.snapshots, quatRotate);
-      this.movement += move;
-   }
-
-   _commit() {
-      const quatRotate = quat.create();
-      quat.setAxisAngle(quatRotate, this.axisVec3, this.movement);
-      View.undoQueue(new RotateCommand(this.madsor, this.snapshots, quatRotate));
-   }
-
-   _cancel() {
-      this.madsor.restoreSelectionPosition(this.snapshots);
-   }
-}
-
-
-class MoveCommand extends EditCommand {
-   constructor(madsor, snapshots, movement) {
-      super();
-      this.madsor = madsor;
-      this.snapshots = snapshots;
-      this.movement = movement;
-   }
-
-   doIt() {
-      this.madsor.moveSelection(this.movement, this.snapshots);
-   }
-
-   undo() {
-      this.madsor.restoreMoveSelection(this.snapshots);
-   }
-}
-
-
-class ScaleCommand extends EditCommand {
-   constructor(madsor, snapshots, scale) {
-      super();
-      this.madsor = madsor;
-      this.snapshots = snapshots;
-      this.scale = scale;
-   }
-
-   doIt() {
-      this.madsor.scaleSelection(this.snapshots, this.movement);
-   }
-
-   undo() {
-      this.madsor.restoreSelectionPosition(this.snapshots);
-   }
-}
-
-
-class RotateCommand extends EditCommand {
-   constructor(madsor, snapshots, quatRotate) {
-      super();
-      this.madsor = madsor;
-      this.snapshots = snapshots;
-      this.quat = quatRotate;
-   }
-
-   doIt() {
-      this.madsor.rotateSelection(this.snapshots, this.quat);
-   }
-
-   undo() {
-      this.madsor.restoreSelectionPosition(this.snapshots);
-   }
-}
 
 class ToggleModeCommand extends EditCommand {
    constructor(doFn, undoFn, snapshots) {
@@ -479,32 +311,165 @@ class ToggleModeCommand extends EditCommand {
    }
 }
 
-class BevelCommand extends EditCommand {
-   constructor(madsor) {
+
+class MovePositionHandler extends MouseMoveHandler {
+   constructor(madsor, snapshots, movement) {
       super();
       this.madsor = madsor;
-      this.selection = madsor.snapshotSelection();
-      this.movement = 0;
+      this.snapshots = snapshots;
+      this.movement = movement;
    }
 
    doIt() {
-      this.snapshots = this.madsor.bevel();   // should test for current snapshots and prev snapshots?
       this.madsor.moveSelection(this.movement, this.snapshots);
+   }
+
+   undo() {
+      this.madsor.restoreMoveSelection(this.snapshots);
+   }
+
+   handleMouseMove(ev, cameraView) {
+      this.madsor.moveSelection(this._updateMovement(ev, cameraView), this.snapshots);
+   }
+}
+
+
+// movement handler.
+class MouseMoveAlongAxis extends MovePositionHandler {
+   constructor(madsor, axis) {   // 0 = x axis, 1 = y axis, 2 = z axis.
+      super(madsor, madsor.snapshotPosition(), [0.0, 0.0, 0.0]);
+      this.axis = axis;
+   }
+
+   _updateMovement(ev) {
+      let move = this._calibrateMovement(ev.movementX);
+      let movement = [0.0, 0.0, 0.0];
+      movement[this.axis] = move;
+      this.movement[this.axis] += move;
+      return movement;
+   }
+}
+
+
+class MoveAlongNormal extends MovePositionHandler {
+   constructor(madsor) {
+      super(madsor, madsor.snapshotPositionAndNormal(), 0.0);
+   }
+
+   _updateMovement(ev) {
+      let move = this._calibrateMovement(ev.movementX);
+      this.movement += move;
+      return move;
+   }
+}
+
+
+class MoveFreePositionHandler extends MovePositionHandler {
+   constructor(madsor) {
+      super(madsor, madsor.snapshotPosition(), [0.0, 0.0, 0.0]);
+   }
+
+   _updateMovement(ev, cameraView) {
+      let x = this._calibrateMovement(ev.movementX);
+      let y = this._calibrateMovement(-ev.movementY);
+      var cam = cameraView.inverseCameraVectors();
+      // move parallel to camera.
+      var movement = [cam.x[0]*x + cam.y[0]*y, cam.x[1]*x + cam.y[1]*y, cam.x[2]*x + cam.y[2]*y];
+      vec3.add(this.movement, this.movement, movement);
+      return movement;
+   }
+}
+
+
+class ScaleUniformHandler extends EditCommand {
+   constructor(madsor) {
+      super();
+      this.madsor = madsor;
+      this.snapshots = madsor.snapshotTransformGroup();
+      this.scale = 1.0;                    // cumulative movement.
+   }
+
+   handleMouseMove(ev) {
+      let scale = this._xPercentMovement(ev);   // return (100% to -100%)
+      if (scale < 0) {
+         scale = 1.0 + Math.abs(scale);
+      } else {
+         scale = 1.0 / (1.0 + scale);
+      }
+      this.madsor.scaleSelection(this.snapshots, scale);
+      this.scale *= scale;
+   }
+
+  
+   doIt() {
+      this.madsor.scaleSelection(this.snapshots, this.movement);
+   }
+
+   undo() {
+      this.madsor.restoreSelectionPosition(this.snapshots);
+   }
+}
+
+
+// movement handler.
+class MouseRotateAlongAxis extends EditCommand {
+   constructor(madsor, axis) {   // 0 = x axis, 1 = y axis, 2 = z axis.
+      super();
+      this.madsor = madsor;
+      this.snapshots = madsor.snapshotTransformGroup();
+      this.movement = 0.0;             // cumulative movement.
+      this.axisVec3 = vec3.create();
+      this.axisVec3[axis] = 1.0;
+   }
+
+   handleMouseMove(ev) {
+      const move = this._xPercentMovement(ev)*5;
+      const quatRotate = quat.create();
+      quat.setAxisAngle(quatRotate, this.axisVec3, move);
+      this.madsor.rotateSelection(this.snapshots, quatRotate);
+      this.movement += move;
+   }
+
+   doIt() {
+      const quatRotate = quat.create();
+      quat.setAxisAngle(quatRotate, this.axisVec3, this.movement);
+      this.madsor.rotateSelection(this.snapshots, quatRotate);
+   }
+
+   undo() {
+      this.madsor.restoreSelectionPosition(this.snapshots);
+   }
+}
+
+
+class BevelHandler extends MovePositionHandler {
+   constructor(madsor) {
+      const selection = madsor.snapshotSelection();   // have to get selection first
+      super(madsor, madsor.bevel(), 0.0);
+      this.selection = selection;
       // get limit
       this.vertexLimit = Number.MAX_SAFE_INTEGER;
       for (let snapshot of this.snapshots) {
          this.vertexLimit = Math.min(this.vertexLimit, snapshot.vertexLimit);
-      } 
+      }
    }
 
-   update(move) {
+   _updateMovement(ev) {
+      let move = this._calibrateMovement(ev.movementX);
       if ((this.movement+move) > this.vertexLimit) {
          move = this.vertexLimit - this.movement;
       } else if ((this.movement+move) < 0) {
          move = 0 - this.movement;
       }
-      this.madsor.moveSelection(move, this.snapshots);
       this.movement += move;
+      return move;
+   }
+
+   doIt() {
+      this.snapshots = this.madsor.bevel();   // should test for current snapshots and prev snapshots? should not change
+      // no needs to recompute limit, wont change, 
+      // move 
+      super.doIt();  // = this.madsor.moveSelection(this.movement, this.snapshots);
    }
 
    undo() {
@@ -513,26 +478,6 @@ class BevelCommand extends EditCommand {
    }
 }
 
-class BevelHandler extends MovePositionHandler {
-   constructor(madsor) {
-      super(madsor);
-      this.bevel = new BevelCommand(this.madsor); 
-      this.bevel.doIt();
-   }
-
-   handleMouseMove(ev) {
-      let move = this._calibrateMovement(ev.movementX);
-      this.bevel.update(move);
-   }
-
-   _commit() {
-      View.undoQueue(this.bevel);
-   }
-
-   _cancel() {
-      this.bevel.undo();
-   }
-}
 
 export {
    Madsor,
@@ -541,7 +486,7 @@ export {
    MouseMoveAlongAxis,
    MoveAlongNormal,
    MoveFreePositionHandler,
-   EditCommand,   // re export
-   MoveCommand,
+   EditCommand,   // re export?
+   MoveableCommand, // re export?
    ToggleModeCommand,
 }

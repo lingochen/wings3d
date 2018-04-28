@@ -28,12 +28,12 @@ class CameraMouseMoveHandler extends MouseMoveHandler {
       }
    }
 
-   _commit() {
+   doIt() {
       // no redo, undo for now
       //debugLog("exitCameraMode", {ok: this.camera});
    }
 
-   _cancel() {
+   undo() {
       // restore camera's value.
       copyCam(view, this.saveView);
       //debugLog("exitCameraMode", {cancel: this.camera});

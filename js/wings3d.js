@@ -318,6 +318,7 @@ const action = {
    vertexRotateZ: () => {notImplemented(this);},
    vertexRotateFree: () => {notImplemented(this);},
    vertexBevel: () => {notImplemented(this);},
+   vertexExtrude: () =>{notImplemented(this);},
    // guide tour
    helpMenu: () => {notImplemented(this);},
    about: () => {notImplemented(this);},

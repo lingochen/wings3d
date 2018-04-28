@@ -335,13 +335,13 @@ class DuplicateMouseMoveAlongAxis extends MouseMoveAlongAxis {
       this.duplicateBodyCommand = duplicateBodyCommand;
    }
 
-   _commit() {
-      const movement = new MoveCommand(this.madsor, this.snapshots, this.movement);
-      View.undoQueueCombo([this.duplicateBodyCommand, movement]);
+   doIt() {
+      this.duplicateBodyCommand.doIt();
+      super.doIt();     // movement.
    }
 
-   _cancel() {
-      // no needs to restore position. /this.madsor.restoreMoveSelection(this.snapshots);
+   undo() {
+      super.undo();
       this.duplicateBodyCommand.undo();
    }
 }
@@ -354,13 +354,13 @@ class DuplicateMoveFreePositionHandler extends MoveFreePositionHandler {
       this.duplicateBodyCommand = duplicateBodyCommand;
    }
 
-   _commit() {
-      const movement = new MoveCommand(this.madsor, this.snapshots, this.movement);
-      View.undoQueueCombo([this.duplicateBodyCommand, movement]);
+   doIt() {
+      this.duplicateBodyCommand.doIt();
+      super.doIt();     // movement.
    }
 
-   _cancel() {
-      // no needs to restore position. /this.madsor.restoreMoveSelection(this.snapshots);
+   undo() {
+      super.undo();
       this.duplicateBodyCommand.undo();
    }
 
