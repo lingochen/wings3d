@@ -4,7 +4,7 @@
  *
 **/
 import {gl} from './wings3d_gl';
-import {EditCommand, MouseMoveHandler} from './wings3d_undo';
+import {EditCommand, MouseMoveHandler, MoveableCommand} from './wings3d_undo';
 import {PreviewCage} from './wings3d_model';
 import * as View from './wings3d_view';
 import * as UI from './wings3d_ui';
@@ -62,7 +62,7 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
             View.attachHandlerMouseMove(new BevelHandler(this));
           });
       }
-/*      // extrude
+      // extrude
       const extrude = {face: [action.faceExtrudeX, action.faceExtrudeY, action.faceExtrudeZ],
                        //vertex:  [action.vertexExtrudeX, action.vertexExtrudeY, action.vertexExtrudeZ],
                       };
@@ -74,7 +74,19 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
                   View.attachHandlerMouseMove(new ExtrudeHandler(this, axis));
              });
          }
-      }*/
+      }
+      const extrudeFree = {face: action.faceExtrudeFree, /*edge: action.edgeExtrudeFree, vertex: action.vertexExtrudeFree */};
+      if (extrudeFree[mode]) {
+         UI.bindMenuItem(extrudeFree[mode].name, (ev) => {
+            View.attachHandlerMouseMove(new ExtrudeFreeHandler(this));
+          });
+      }
+      const extrudeNormal = {face: action.faceExtrudeNormal, /*edge: action.edgeExtrudeNormal, vertex: action.vertexExtrudeNormal */};
+      if (extrudeNormal[mode]) {
+         UI.bindMenuItem(extrudeNormal[mode].name, (ev) => {
+            View.attachHandlerMouseMove(new ExtrudeNormalHandler(this));
+          });
+      }
    }
 
    getContextMenu() {
@@ -478,6 +490,48 @@ class BevelHandler extends MovePositionHandler {
    }
 }
 
+// extrude
+class ExtrudeHandler extends MoveableCommand {
+   constructor(madsor) {
+      super();
+      this.madsor = madsor;
+      this.contourEdges = madsor.extrude();
+   }
+
+   doIt() {
+      this.contourEdges = this.madsor.extrude();
+      super.doIt();     // = this.madsor.moveSelection(this.movement, this.snapshots);
+   }
+
+   undo() {
+      //this.madsor.restoreMoveSelection(this.snapshots);
+      this.madsor.collapseEdge(this.contourEdges);
+   }
+}
+
+class ExtrudeAlongAxisHandler extends ExtrudeHandler {
+   constructor(madsor, axis) {
+      super(madsor);
+      this.moveHandler = new MouseMoveAlongAxis(madsor, axis); // this should comes later
+   }
+}
+
+
+class ExtrudeFreeHandler extends ExtrudeHandler {
+   constructor(madsor) {
+      super(madsor);
+      this.moveHandler = new MoveFreePositionHandler(madsor);
+   }
+}
+
+class ExtrudeNormalHandler extends ExtrudeHandler {
+   constructor(madsor) {
+      super(madsor);
+      this.moveHandler = new MoveAlongNormal(madsor);
+   }
+}
+// end of extrude
+
 
 export {
    Madsor,
@@ -486,7 +540,5 @@ export {
    MouseMoveAlongAxis,
    MoveAlongNormal,
    MoveFreePositionHandler,
-   EditCommand,   // re export?
-   MoveableCommand, // re export?
    ToggleModeCommand,
 }

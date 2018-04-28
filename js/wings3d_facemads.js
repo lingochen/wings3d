@@ -21,20 +21,6 @@ class FaceMadsor extends Madsor {
    constructor() {
       super('face');
       var self = this;
-      // extrude
-      const axisName = [action.faceExtrudeX, action.faceExtrudeY, action.faceExtrudeZ];
-      // movement for (x, y, z)
-      for (let axis=0; axis < 3; ++axis) {
-         UI.bindMenuItem(axisName[axis].name, function(ev) {
-               View.attachHandlerMouseMove(new ExtrudeAlongAxisHandler(self, axis));
-            });
-      }
-      UI.bindMenuItem(action.faceExtrudeFree.name, function(ev) {
-            View.attachHandlerMouseMove(new ExtrudeFreeHandler(self));
-         });
-      UI.bindMenuItem(action.faceExtrudeNormal.name, function(ev) {
-            View.attachHandlerMouseMove(new ExtrudeNormalHandler(self));
-         });
       UI.bindMenuItem(action.faceDissolve.name, function(ev) {
             const command = new DissolveFaceCommand(self);
             if (command.doIt()) {
@@ -335,47 +321,6 @@ class FaceSelectCommand extends EditCommand {
 
    undo() {
       this.doIt();   // selectEdge, flip/flop, so
-   }
-}
-
-
-class ExtrudeHandler extends MoveableCommand {
-   constructor(madsor) {
-      super();
-      this.madsor = madsor;
-      this.contourEdges = madsor.extrude();
-   }
-
-   doIt() {
-      this.contourEdges = this.madsor.extrude();
-      super.doIt();     // = this.madsor.moveSelection(this.movement, this.snapshots);
-   }
-
-   undo() {
-      //this.madsor.restoreMoveSelection(this.snapshots);
-      this.madsor.collapseEdge(this.contourEdges);
-   }
-}
-
-class ExtrudeAlongAxisHandler extends ExtrudeHandler {
-   constructor(madsor, axis) {
-      super(madsor);
-      this.moveHandler = new MouseMoveAlongAxis(madsor, axis); // this should comes later
-   }
-}
-
-
-class ExtrudeFreeHandler extends ExtrudeHandler {
-   constructor(madsor) {
-      super(madsor);
-      this.moveHandler = new MoveFreePositionHandler(madsor);
-   }
-}
-
-class ExtrudeNormalHandler extends ExtrudeHandler {
-   constructor(madsor) {
-      super(madsor);
-      this.moveHandler = new MoveAlongNormal(madsor);
    }
 }
 

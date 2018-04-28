@@ -4918,20 +4918,6 @@ class FaceMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
    constructor() {
       super('face');
       var self = this;
-      // extrude
-      const axisName = [__WEBPACK_IMPORTED_MODULE_10__wings3d__["action"].faceExtrudeX, __WEBPACK_IMPORTED_MODULE_10__wings3d__["action"].faceExtrudeY, __WEBPACK_IMPORTED_MODULE_10__wings3d__["action"].faceExtrudeZ];
-      // movement for (x, y, z)
-      for (let axis=0; axis < 3; ++axis) {
-         __WEBPACK_IMPORTED_MODULE_9__wings3d_ui__["bindMenuItem"](axisName[axis].name, function(ev) {
-               __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["attachHandlerMouseMove"](new ExtrudeAlongAxisHandler(self, axis));
-            });
-      }
-      __WEBPACK_IMPORTED_MODULE_9__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_10__wings3d__["action"].faceExtrudeFree.name, function(ev) {
-            __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["attachHandlerMouseMove"](new ExtrudeFreeHandler(self));
-         });
-      __WEBPACK_IMPORTED_MODULE_9__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_10__wings3d__["action"].faceExtrudeNormal.name, function(ev) {
-            __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["attachHandlerMouseMove"](new ExtrudeNormalHandler(self));
-         });
       __WEBPACK_IMPORTED_MODULE_9__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_10__wings3d__["action"].faceDissolve.name, function(ev) {
             const command = new DissolveFaceCommand(self);
             if (command.doIt()) {
@@ -5236,47 +5222,6 @@ class FaceSelectCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["Edi
 }
 
 
-class ExtrudeHandler extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["MoveableCommand"] {
-   constructor(madsor) {
-      super();
-      this.madsor = madsor;
-      this.contourEdges = madsor.extrude();
-   }
-
-   doIt() {
-      this.contourEdges = this.madsor.extrude();
-      super.doIt();     // = this.madsor.moveSelection(this.movement, this.snapshots);
-   }
-
-   undo() {
-      //this.madsor.restoreMoveSelection(this.snapshots);
-      this.madsor.collapseEdge(this.contourEdges);
-   }
-}
-
-class ExtrudeAlongAxisHandler extends ExtrudeHandler {
-   constructor(madsor, axis) {
-      super(madsor);
-      this.moveHandler = new __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["MouseMoveAlongAxis"](madsor, axis); // this should comes later
-   }
-}
-
-
-class ExtrudeFreeHandler extends ExtrudeHandler {
-   constructor(madsor) {
-      super(madsor);
-      this.moveHandler = new __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["MoveFreePositionHandler"](madsor);
-   }
-}
-
-class ExtrudeNormalHandler extends ExtrudeHandler {
-   constructor(madsor) {
-      super(madsor);
-      this.moveHandler = new __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["MoveAlongNormal"](madsor);
-   }
-}
-
-
 class DissolveFaceCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
    constructor(madsor) {
       super();
@@ -5399,7 +5344,6 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "MouseMoveAlongAxis", function() { return MouseMoveAlongAxis; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "MoveAlongNormal", function() { return MoveAlongNormal; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "MoveFreePositionHandler", function() { return MoveFreePositionHandler; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "MoveableCommand", function() { return MoveableCommand; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ToggleModeCommand", function() { return ToggleModeCommand; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__ = __webpack_require__(5);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__ = __webpack_require__(3);
@@ -5407,7 +5351,6 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_view__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_ui__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d__ = __webpack_require__(0);
-/* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "EditCommand", function() { return __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["EditCommand"]; });
 /*
  *
  * MADS (Modify, Add, Delete, Select) operation. 
@@ -5472,19 +5415,31 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
             __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["attachHandlerMouseMove"](new BevelHandler(this));
           });
       }
-/*      // extrude
-      const extrude = {face: [action.faceExtrudeX, action.faceExtrudeY, action.faceExtrudeZ],
+      // extrude
+      const extrude = {face: [__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceExtrudeX, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceExtrudeY, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceExtrudeZ],
                        //vertex:  [action.vertexExtrudeX, action.vertexExtrudeY, action.vertexExtrudeZ],
                       };
       let extrudeMode = extrude[mode];
       if (extrudeMode) {
          // movement for (x, y, z)
          for (let axis=0; axis < 3; ++axis) {
-            UI.bindMenuItem(extrudeMode[axis].name, (ev) => {
-                  View.attachHandlerMouseMove(new ExtrudeHandler(this, axis));
+            __WEBPACK_IMPORTED_MODULE_4__wings3d_ui__["bindMenuItem"](extrudeMode[axis].name, (ev) => {
+                  __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["attachHandlerMouseMove"](new ExtrudeHandler(this, axis));
              });
          }
-      }*/
+      }
+      const extrudeFree = {face: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceExtrudeFree, /*edge: action.edgeExtrudeFree, vertex: action.vertexExtrudeFree */};
+      if (extrudeFree[mode]) {
+         __WEBPACK_IMPORTED_MODULE_4__wings3d_ui__["bindMenuItem"](extrudeFree[mode].name, (ev) => {
+            __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["attachHandlerMouseMove"](new ExtrudeFreeHandler(this));
+          });
+      }
+      const extrudeNormal = {face: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceExtrudeNormal, /*edge: action.edgeExtrudeNormal, vertex: action.vertexExtrudeNormal */};
+      if (extrudeNormal[mode]) {
+         __WEBPACK_IMPORTED_MODULE_4__wings3d_ui__["bindMenuItem"](extrudeNormal[mode].name, (ev) => {
+            __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["attachHandlerMouseMove"](new ExtrudeNormalHandler(this));
+          });
+      }
    }
 
    getContextMenu() {
@@ -5887,6 +5842,48 @@ class BevelHandler extends MovePositionHandler {
       //this.snapshots = undefined;
    }
 }
+
+// extrude
+class ExtrudeHandler extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["MoveableCommand"] {
+   constructor(madsor) {
+      super();
+      this.madsor = madsor;
+      this.contourEdges = madsor.extrude();
+   }
+
+   doIt() {
+      this.contourEdges = this.madsor.extrude();
+      super.doIt();     // = this.madsor.moveSelection(this.movement, this.snapshots);
+   }
+
+   undo() {
+      //this.madsor.restoreMoveSelection(this.snapshots);
+      this.madsor.collapseEdge(this.contourEdges);
+   }
+}
+
+class ExtrudeAlongAxisHandler extends ExtrudeHandler {
+   constructor(madsor, axis) {
+      super(madsor);
+      this.moveHandler = new MouseMoveAlongAxis(madsor, axis); // this should comes later
+   }
+}
+
+
+class ExtrudeFreeHandler extends ExtrudeHandler {
+   constructor(madsor) {
+      super(madsor);
+      this.moveHandler = new MoveFreePositionHandler(madsor);
+   }
+}
+
+class ExtrudeNormalHandler extends ExtrudeHandler {
+   constructor(madsor) {
+      super(madsor);
+      this.moveHandler = new MoveAlongNormal(madsor);
+   }
+}
+// end of extrude
 
 
 
