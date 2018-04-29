@@ -123,7 +123,7 @@ class FaceMadsor extends Madsor {
       return edgeLoops;
    }
 
-   collapseEdge(extrudeEdgesContoursArray) {
+   undoExtrude(extrudeEdgesContoursArray) {
       this.eachPreviewCage(function(cage, extrudeEdgesContours) {
          cage.collapseExtrudeEdge(extrudeEdgesContours.extrudeEdges);
       }, extrudeEdgesContoursArray);

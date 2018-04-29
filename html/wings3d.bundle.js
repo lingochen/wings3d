@@ -3323,6 +3323,7 @@ PreviewCage.prototype.extractFace = function() {
 PreviewCage.prototype.extrudeVertex = function() {
    const oldSize = this._getGeometrySize();
 
+   const splitEdges = [];
    const extrudeLoops = [];
    const pt = vec3.create();
    for (let vertex of this.selectedSet) {
@@ -3332,6 +3333,7 @@ PreviewCage.prototype.extrudeVertex = function() {
       do {
          vec3.lerp(pt, hEdge.origin.vertex, hEdge.destination().vertex, 0.25);
          let newOut = this.geometry.splitEdge(hEdge, pt);   // pt is the split point.
+         splitEdges.push( newOut );
          hEdge = newOut.pair.next;                          // move to next
          // connect vertex
          if (prevHalf) {
@@ -3350,8 +3352,20 @@ PreviewCage.prototype.extrudeVertex = function() {
 
    this._updatePreviewAll(oldSize, this.geometry.affected);
 
-   return extrudeLoops;
+   return {insertEdges: extrudeLoops, splitEdges: splitEdges};
 };
+PreviewCage.prototype.undoExtrudeVertex = function(extrude) {
+   const oldSize = this._getGeometrySize();
+
+   for (let hEdge of extrude.insertEdges) {
+      this.geometry.removeEdge(hEdge.pair);
+   }
+   for (let hEdge of extrude.splitEdges) {
+      this.geometry.collapseEdge(hEdge.pair);
+   }
+ 
+   this._updatePreviewAll(oldSize, this.geometry.affected);
+}
 
 
 //
@@ -5059,7 +5073,7 @@ class FaceMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
       return edgeLoops;
    }
 
-   collapseEdge(extrudeEdgesContoursArray) {
+   undoExtrude(extrudeEdgesContoursArray) {
       this.eachPreviewCage(function(cage, extrudeEdgesContours) {
          cage.collapseExtrudeEdge(extrudeEdgesContours.extrudeEdges);
       }, extrudeEdgesContoursArray);
@@ -5896,8 +5910,8 @@ class ExtrudeHandler extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["Moveab
    }
 
    undo() {
-      //this.madsor.restoreMoveSelection(this.snapshots);
-      this.madsor.collapseEdge(this.contourEdges);
+      super.undo(); //this.madsor.restoreMoveSelection(this.snapshots);
+      this.madsor.undoExtrude(this.contourEdges);
    }
 }
 
@@ -6934,6 +6948,11 @@ class VertexMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"]
          edgeLoops.push( preview.extrudeVertex(contours) );
       });
       return edgeLoops;
+   }
+   undoExtrude(extrudeData) {
+      this.eachPreviewCage(function(cage, extrude) {
+         cage.undoExtrudeVertex(extrude);
+      }, extrudeData);
    }
 
    connectVertex() {
@@ -9287,6 +9306,7 @@ WingedTopology.prototype._removeEdge = function(outEdge, inEdge) {
    if (inEdge.origin.outEdge === inEdge) {
       inEdge.origin.outEdge = inPrev.pair;
    }
+   return {outPrev: outPrev, inPrev: inPrev, inNext: inNext};
 }
 // won't work with potentially "dangling" vertices and edges. Any doubt, call dissolveEdge
 WingedTopology.prototype.removeEdge = function(outEdge) {
@@ -9301,7 +9321,7 @@ WingedTopology.prototype.removeEdge = function(outEdge) {
    }
 
    //fix the halfedge relations
-   this._removeEdge(outEdge, inEdge);
+   const remove = this._removeEdge(outEdge, inEdge);
   
    //deal with the faces
    const face = outEdge.face;    // the other side is boundary, after removal becomes boundary too.
@@ -9309,7 +9329,7 @@ WingedTopology.prototype.removeEdge = function(outEdge) {
 
    if (face !== null) {
       if (face.halfEdge === outEdge) { //correct the halfedge handle of face if needed
-         face.halfEdge = outPrev;
+         face.halfEdge = remove.outPrev;
       }
    // make sure everye connect edge point to the same face.
       let size = 0;
@@ -9328,7 +9348,7 @@ WingedTopology.prototype.removeEdge = function(outEdge) {
    // return undo functions
    const self = this;
    return function() {
-      self.insertEdge(inPrev, inNext, inEdge, delFace);
+      self.insertEdge(remove.inPrev, remove.inNext, inEdge, delFace);
    };
    //return face;   // return the remaining face handle
 };

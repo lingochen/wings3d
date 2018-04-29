@@ -89,6 +89,11 @@ class VertexMadsor extends Madsor {
       });
       return edgeLoops;
    }
+   undoExtrude(extrudeData) {
+      this.eachPreviewCage(function(cage, extrude) {
+         cage.undoExtrudeVertex(extrude);
+      }, extrudeData);
+   }
 
    connectVertex() {
       const vertexConnect = new VertexConnectCommand(this);

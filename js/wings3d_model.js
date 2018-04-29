@@ -1706,6 +1706,7 @@ PreviewCage.prototype.extractFace = function() {
 PreviewCage.prototype.extrudeVertex = function() {
    const oldSize = this._getGeometrySize();
 
+   const splitEdges = [];
    const extrudeLoops = [];
    const pt = vec3.create();
    for (let vertex of this.selectedSet) {
@@ -1715,6 +1716,7 @@ PreviewCage.prototype.extrudeVertex = function() {
       do {
          vec3.lerp(pt, hEdge.origin.vertex, hEdge.destination().vertex, 0.25);
          let newOut = this.geometry.splitEdge(hEdge, pt);   // pt is the split point.
+         splitEdges.push( newOut );
          hEdge = newOut.pair.next;                          // move to next
          // connect vertex
          if (prevHalf) {
@@ -1733,8 +1735,20 @@ PreviewCage.prototype.extrudeVertex = function() {
 
    this._updatePreviewAll(oldSize, this.geometry.affected);
 
-   return extrudeLoops;
+   return {insertEdges: extrudeLoops, splitEdges: splitEdges};
 };
+PreviewCage.prototype.undoExtrudeVertex = function(extrude) {
+   const oldSize = this._getGeometrySize();
+
+   for (let hEdge of extrude.insertEdges) {
+      this.geometry.removeEdge(hEdge.pair);
+   }
+   for (let hEdge of extrude.splitEdges) {
+      this.geometry.collapseEdge(hEdge.pair);
+   }
+ 
+   this._updatePreviewAll(oldSize, this.geometry.affected);
+}
 
 
 //

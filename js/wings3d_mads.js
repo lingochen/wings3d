@@ -504,8 +504,8 @@ class ExtrudeHandler extends MoveableCommand {
    }
 
    undo() {
-      //this.madsor.restoreMoveSelection(this.snapshots);
-      this.madsor.collapseEdge(this.contourEdges);
+      super.undo(); //this.madsor.restoreMoveSelection(this.snapshots);
+      this.madsor.undoExtrude(this.contourEdges);
    }
 }
 

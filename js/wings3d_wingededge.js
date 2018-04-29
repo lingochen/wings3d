@@ -1639,6 +1639,7 @@ WingedTopology.prototype._removeEdge = function(outEdge, inEdge) {
    if (inEdge.origin.outEdge === inEdge) {
       inEdge.origin.outEdge = inPrev.pair;
    }
+   return {outPrev: outPrev, inPrev: inPrev, inNext: inNext};
 }
 // won't work with potentially "dangling" vertices and edges. Any doubt, call dissolveEdge
 WingedTopology.prototype.removeEdge = function(outEdge) {
@@ -1653,7 +1654,7 @@ WingedTopology.prototype.removeEdge = function(outEdge) {
    }
 
    //fix the halfedge relations
-   this._removeEdge(outEdge, inEdge);
+   const remove = this._removeEdge(outEdge, inEdge);
   
    //deal with the faces
    const face = outEdge.face;    // the other side is boundary, after removal becomes boundary too.
@@ -1661,7 +1662,7 @@ WingedTopology.prototype.removeEdge = function(outEdge) {
 
    if (face !== null) {
       if (face.halfEdge === outEdge) { //correct the halfedge handle of face if needed
-         face.halfEdge = outPrev;
+         face.halfEdge = remove.outPrev;
       }
    // make sure everye connect edge point to the same face.
       let size = 0;
@@ -1680,7 +1681,7 @@ WingedTopology.prototype.removeEdge = function(outEdge) {
    // return undo functions
    const self = this;
    return function() {
-      self.insertEdge(inPrev, inNext, inEdge, delFace);
+      self.insertEdge(remove.inPrev, remove.inNext, inEdge, delFace);
    };
    //return face;   // return the remaining face handle
 };
