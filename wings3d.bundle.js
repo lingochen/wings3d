@@ -404,6 +404,8 @@ const action = {
    vertexRotateFree: () => {notImplemented(this);},
    vertexBevel: () => {notImplemented(this);},
    vertexExtrudeMenu: () =>{notImplemented(this);}, // submenu
+   vertexExtrudeNormal: () =>{notImplemented(this);},
+   vertexExtrudeFree: () =>{notImplemented(this);},
    vertexExtrudeX: () =>{notImplemented(this);},
    vertexExtrudeY: () =>{notImplemented(this);},
    vertexExtrudeZ: () =>{notImplemented(this);},
@@ -5481,13 +5483,13 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
              });
          }
       }
-      const extrudeFree = {face: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceExtrudeFree, /*edge: action.edgeExtrudeFree, vertex: action.vertexExtrudeFree */};
+      const extrudeFree = {face: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceExtrudeFree, /*edge: action.edgeExtrudeFree,*/ vertex: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].vertexExtrudeFree };
       if (extrudeFree[mode]) {
          __WEBPACK_IMPORTED_MODULE_4__wings3d_ui__["bindMenuItem"](extrudeFree[mode].name, (ev) => {
             __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["attachHandlerMouseMove"](new ExtrudeFreeHandler(this));
           });
       }
-      const extrudeNormal = {face: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceExtrudeNormal, /*edge: action.edgeExtrudeNormal, vertex: action.vertexExtrudeNormal */};
+      const extrudeNormal = {face: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceExtrudeNormal, /*edge: action.edgeExtrudeNormal,*/ vertex: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].vertexExtrudeNormal};
       if (extrudeNormal[mode]) {
          __WEBPACK_IMPORTED_MODULE_4__wings3d_ui__["bindMenuItem"](extrudeNormal[mode].name, (ev) => {
             __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["attachHandlerMouseMove"](new ExtrudeNormalHandler(this));
