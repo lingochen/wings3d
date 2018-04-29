@@ -75,13 +75,13 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
              });
          }
       }
-      const extrudeFree = {face: action.faceExtrudeFree, /*edge: action.edgeExtrudeFree, vertex: action.vertexExtrudeFree */};
+      const extrudeFree = {face: action.faceExtrudeFree, /*edge: action.edgeExtrudeFree,*/ vertex: action.vertexExtrudeFree };
       if (extrudeFree[mode]) {
          UI.bindMenuItem(extrudeFree[mode].name, (ev) => {
             View.attachHandlerMouseMove(new ExtrudeFreeHandler(this));
           });
       }
-      const extrudeNormal = {face: action.faceExtrudeNormal, /*edge: action.edgeExtrudeNormal, vertex: action.vertexExtrudeNormal */};
+      const extrudeNormal = {face: action.faceExtrudeNormal, /*edge: action.edgeExtrudeNormal,*/ vertex: action.vertexExtrudeNormal};
       if (extrudeNormal[mode]) {
          UI.bindMenuItem(extrudeNormal[mode].name, (ev) => {
             View.attachHandlerMouseMove(new ExtrudeNormalHandler(this));
