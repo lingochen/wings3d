@@ -403,7 +403,10 @@ const action = {
    vertexRotateZ: () => {notImplemented(this);},
    vertexRotateFree: () => {notImplemented(this);},
    vertexBevel: () => {notImplemented(this);},
-   vertexExtrude: () =>{notImplemented(this);},
+   vertexExtrudeMenu: () =>{notImplemented(this);}, // submenu
+   vertexExtrudeX: () =>{notImplemented(this);},
+   vertexExtrudeY: () =>{notImplemented(this);},
+   vertexExtrudeZ: () =>{notImplemented(this);},
    // guide tour
    helpMenu: () => {notImplemented(this);},
    about: () => {notImplemented(this);},
@@ -3316,6 +3319,42 @@ PreviewCage.prototype.extractFace = function() {
 };
 
 //
+// extrudeVertex - add 1/5 vertex to every edge then connect all together.
+PreviewCage.prototype.extrudeVertex = function() {
+   const oldSize = this._getGeometrySize();
+
+   const extrudeLoops = [];
+   const pt = vec3.create();
+   for (let vertex of this.selectedSet) {
+      let firstHalf;
+      let prevHalf = null;
+      let hEdge = vertex.outEdge;
+      do {
+         vec3.lerp(pt, hEdge.origin.vertex, hEdge.destination().vertex, 0.25);
+         let newOut = this.geometry.splitEdge(hEdge, pt);   // pt is the split point.
+         hEdge = newOut.pair.next;                          // move to next
+         // connect vertex
+         if (prevHalf) {
+            let outConnect = this.geometry.insertEdge(prevHalf, newOut.next);
+            extrudeLoops.push( outConnect );
+            prevHalf = outConnect.next.pair;
+         } else {
+            firstHalf = newOut;   // remember to save the first one
+            prevHalf = newOut.next.pair;
+         }
+      } while (hEdge !== firstHalf);   // firstHalf is the new vertex.outEdge;
+      // connect last to first loop.
+      let outConnect = this.geometry.insertEdge(prevHalf, firstHalf.next);
+      extrudeLoops.push( outConnect );
+   }
+
+   this._updatePreviewAll(oldSize, this.geometry.affected);
+
+   return extrudeLoops;
+};
+
+
+//
 // extrudeFace - will create a list of 
 PreviewCage.prototype.extrudeFace = function(contours) {
    const oldSize = this._getGeometrySize();
@@ -3382,10 +3421,10 @@ PreviewCage.prototype.cutEdge = function(numberOfSegments) {
    let vertex = vec3.create();
    for (let wingedEdge of edges) {
       let edge = wingedEdge.left;
-      vec3.sub(diff, edge.origin.vertex, edge.destination().vertex);
+      vec3.sub(diff, edge.origin.vertex, edge.destination().vertex); // todo: we could use vec3.lerp?
       for (let i = 1; i < numberOfSegments; ++i) {
          const scaler = (numberOfSegments-i)/numberOfSegments;
-         vec3.scale(vertex, diff, scaler);
+         vec3.scale(vertex, diff, scaler);                  
          vec3.add(vertex, edge.destination().vertex, vertex);
          const newEdge = this.geometry.splitEdge(edge, vertex);       // input edge will take the new vertex as origin.
          vertices.push( edge.origin );
@@ -3645,7 +3684,7 @@ PreviewCage.prototype.bevelEdge = function() {
    const oldSize = this._getGeometrySize();
    const wingedEdges = this.selectedSet;
 
-   // cut bevelEdge
+   // bevelEdge
    const result = this.geometry.bevelEdge(wingedEdges);       // input edge will take the new vertex as origin.
    // get all effected wingedEdge
    result.wingedEdges = new Set;
@@ -3684,7 +3723,7 @@ PreviewCage.prototype.bevelFace = function() {
          wingedEdges.add( hEdge.wingedEdge );
       }
    }
-   // cut bevelEdge
+   // bevelEdge
    const result = this.geometry.bevelEdge(wingedEdges);       // input edge will take the new vertex as origin.
    // get all effected wingedEdge
    result.wingedEdges = new Set;
@@ -3713,7 +3752,7 @@ PreviewCage.prototype.bevelVertex = function() {
    const oldSize = this._getGeometrySize();
    const vertices = this.selectedSet;
 
-   // cut bevelVertex
+   // bevelVertex
    const result = this.geometry.bevelVertex(vertices);       // input vertices, out new vertex, edges, and faces.
    // get all effected wingedEdge
    result.wingedEdges = new Set;
@@ -5417,14 +5456,14 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       }
       // extrude
       const extrude = {face: [__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceExtrudeX, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceExtrudeY, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceExtrudeZ],
-                       //vertex:  [action.vertexExtrudeX, action.vertexExtrudeY, action.vertexExtrudeZ],
+                       vertex:  [__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].vertexExtrudeX, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].vertexExtrudeY, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].vertexExtrudeZ],
                       };
       let extrudeMode = extrude[mode];
       if (extrudeMode) {
          // movement for (x, y, z)
          for (let axis=0; axis < 3; ++axis) {
             __WEBPACK_IMPORTED_MODULE_4__wings3d_ui__["bindMenuItem"](extrudeMode[axis].name, (ev) => {
-                  __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["attachHandlerMouseMove"](new ExtrudeHandler(this, axis));
+                  __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["attachHandlerMouseMove"](new ExtrudeAlongAxisHandler(this, axis));
              });
          }
       }
@@ -5852,7 +5891,7 @@ class ExtrudeHandler extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["Moveab
    }
 
    doIt() {
-      this.contourEdges = this.madsor.extrude();
+      this.contourEdges = this.madsor.extrude(this.contourEdges);
       super.doIt();     // = this.madsor.moveSelection(this.movement, this.snapshots);
    }
 
@@ -6886,6 +6925,15 @@ class VertexMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"]
       }, snapshots);
       // restore Vertex Selection
       __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreVertexMode"](selection); 
+   }
+
+   // extrude Vertex
+   extrude() {
+      var edgeLoops = [];
+      this.eachPreviewCage( function(preview, contours) {
+         edgeLoops.push( preview.extrudeVertex(contours) );
+      });
+      return edgeLoops;
    }
 
    connectVertex() {
@@ -8175,6 +8223,7 @@ WingedTopology.prototype.addVertex = function(pt, delVertex) {
       var _vert = new Vertex(vertex);
       //_vert.index = this.vertices.length;
       this.vertices.push( _vert );
+      //this.affected.vertices.add( _vert );
       return _vert;
    }
 };
@@ -8203,6 +8252,7 @@ WingedTopology.prototype._createEdge = function(begVert, endVert, delOutEdge) {
       edge.index = this.edges.length;
       this.edges.push( edge );
       outEdge = edge.left;
+      //this.affected.edges.add( edge );
    }
 
    return outEdge;
@@ -8435,7 +8485,9 @@ WingedTopology.prototype.insertEdge = function(prevHalf, nextHalf, delOutEdge, d
    return outEdge;
 }
 
-
+//
+// insert a new outEdge at (origin), oldOut push out to newOrigin.
+//
 WingedTopology.prototype.splitEdge = function(outEdge, pt, delOut) {
    const inEdge = outEdge.pair;
    const outPrev = outEdge.prev();

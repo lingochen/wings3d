@@ -81,6 +81,15 @@ class VertexMadsor extends Madsor {
       View.restoreVertexMode(selection); 
    }
 
+   // extrude Vertex
+   extrude() {
+      var edgeLoops = [];
+      this.eachPreviewCage( function(preview, contours) {
+         edgeLoops.push( preview.extrudeVertex(contours) );
+      });
+      return edgeLoops;
+   }
+
    connectVertex() {
       const vertexConnect = new VertexConnectCommand(this);
       if (vertexConnect.doIt()) {

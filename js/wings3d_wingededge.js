@@ -575,6 +575,7 @@ WingedTopology.prototype.addVertex = function(pt, delVertex) {
       var _vert = new Vertex(vertex);
       //_vert.index = this.vertices.length;
       this.vertices.push( _vert );
+      //this.affected.vertices.add( _vert );
       return _vert;
    }
 };
@@ -603,6 +604,7 @@ WingedTopology.prototype._createEdge = function(begVert, endVert, delOutEdge) {
       edge.index = this.edges.length;
       this.edges.push( edge );
       outEdge = edge.left;
+      //this.affected.edges.add( edge );
    }
 
    return outEdge;
@@ -835,7 +837,9 @@ WingedTopology.prototype.insertEdge = function(prevHalf, nextHalf, delOutEdge, d
    return outEdge;
 }
 
-
+//
+// insert a new outEdge at (origin), oldOut push out to newOrigin.
+//
 WingedTopology.prototype.splitEdge = function(outEdge, pt, delOut) {
    const inEdge = outEdge.pair;
    const outPrev = outEdge.prev();

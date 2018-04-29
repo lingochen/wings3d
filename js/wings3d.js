@@ -318,7 +318,10 @@ const action = {
    vertexRotateZ: () => {notImplemented(this);},
    vertexRotateFree: () => {notImplemented(this);},
    vertexBevel: () => {notImplemented(this);},
-   vertexExtrude: () =>{notImplemented(this);},
+   vertexExtrudeMenu: () =>{notImplemented(this);}, // submenu
+   vertexExtrudeX: () =>{notImplemented(this);},
+   vertexExtrudeY: () =>{notImplemented(this);},
+   vertexExtrudeZ: () =>{notImplemented(this);},
    // guide tour
    helpMenu: () => {notImplemented(this);},
    about: () => {notImplemented(this);},

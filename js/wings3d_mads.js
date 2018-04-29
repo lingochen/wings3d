@@ -64,14 +64,14 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       }
       // extrude
       const extrude = {face: [action.faceExtrudeX, action.faceExtrudeY, action.faceExtrudeZ],
-                       //vertex:  [action.vertexExtrudeX, action.vertexExtrudeY, action.vertexExtrudeZ],
+                       vertex:  [action.vertexExtrudeX, action.vertexExtrudeY, action.vertexExtrudeZ],
                       };
       let extrudeMode = extrude[mode];
       if (extrudeMode) {
          // movement for (x, y, z)
          for (let axis=0; axis < 3; ++axis) {
             UI.bindMenuItem(extrudeMode[axis].name, (ev) => {
-                  View.attachHandlerMouseMove(new ExtrudeHandler(this, axis));
+                  View.attachHandlerMouseMove(new ExtrudeAlongAxisHandler(this, axis));
              });
          }
       }
@@ -499,7 +499,7 @@ class ExtrudeHandler extends MoveableCommand {
    }
 
    doIt() {
-      this.contourEdges = this.madsor.extrude();
+      this.contourEdges = this.madsor.extrude(this.contourEdges);
       super.doIt();     // = this.madsor.moveSelection(this.movement, this.snapshots);
    }
 

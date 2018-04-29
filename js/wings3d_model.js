@@ -1702,6 +1702,42 @@ PreviewCage.prototype.extractFace = function() {
 };
 
 //
+// extrudeVertex - add 1/5 vertex to every edge then connect all together.
+PreviewCage.prototype.extrudeVertex = function() {
+   const oldSize = this._getGeometrySize();
+
+   const extrudeLoops = [];
+   const pt = vec3.create();
+   for (let vertex of this.selectedSet) {
+      let firstHalf;
+      let prevHalf = null;
+      let hEdge = vertex.outEdge;
+      do {
+         vec3.lerp(pt, hEdge.origin.vertex, hEdge.destination().vertex, 0.25);
+         let newOut = this.geometry.splitEdge(hEdge, pt);   // pt is the split point.
+         hEdge = newOut.pair.next;                          // move to next
+         // connect vertex
+         if (prevHalf) {
+            let outConnect = this.geometry.insertEdge(prevHalf, newOut.next);
+            extrudeLoops.push( outConnect );
+            prevHalf = outConnect.next.pair;
+         } else {
+            firstHalf = newOut;   // remember to save the first one
+            prevHalf = newOut.next.pair;
+         }
+      } while (hEdge !== firstHalf);   // firstHalf is the new vertex.outEdge;
+      // connect last to first loop.
+      let outConnect = this.geometry.insertEdge(prevHalf, firstHalf.next);
+      extrudeLoops.push( outConnect );
+   }
+
+   this._updatePreviewAll(oldSize, this.geometry.affected);
+
+   return extrudeLoops;
+};
+
+
+//
 // extrudeFace - will create a list of 
 PreviewCage.prototype.extrudeFace = function(contours) {
    const oldSize = this._getGeometrySize();
@@ -1768,10 +1804,10 @@ PreviewCage.prototype.cutEdge = function(numberOfSegments) {
    let vertex = vec3.create();
    for (let wingedEdge of edges) {
       let edge = wingedEdge.left;
-      vec3.sub(diff, edge.origin.vertex, edge.destination().vertex);
+      vec3.sub(diff, edge.origin.vertex, edge.destination().vertex); // todo: we could use vec3.lerp?
       for (let i = 1; i < numberOfSegments; ++i) {
          const scaler = (numberOfSegments-i)/numberOfSegments;
-         vec3.scale(vertex, diff, scaler);
+         vec3.scale(vertex, diff, scaler);                  
          vec3.add(vertex, edge.destination().vertex, vertex);
          const newEdge = this.geometry.splitEdge(edge, vertex);       // input edge will take the new vertex as origin.
          vertices.push( edge.origin );
@@ -2031,7 +2067,7 @@ PreviewCage.prototype.bevelEdge = function() {
    const oldSize = this._getGeometrySize();
    const wingedEdges = this.selectedSet;
 
-   // cut bevelEdge
+   // bevelEdge
    const result = this.geometry.bevelEdge(wingedEdges);       // input edge will take the new vertex as origin.
    // get all effected wingedEdge
    result.wingedEdges = new Set;
@@ -2070,7 +2106,7 @@ PreviewCage.prototype.bevelFace = function() {
          wingedEdges.add( hEdge.wingedEdge );
       }
    }
-   // cut bevelEdge
+   // bevelEdge
    const result = this.geometry.bevelEdge(wingedEdges);       // input edge will take the new vertex as origin.
    // get all effected wingedEdge
    result.wingedEdges = new Set;
@@ -2099,7 +2135,7 @@ PreviewCage.prototype.bevelVertex = function() {
    const oldSize = this._getGeometrySize();
    const vertices = this.selectedSet;
 
-   // cut bevelVertex
+   // bevelVertex
    const result = this.geometry.bevelVertex(vertices);       // input vertices, out new vertex, edges, and faces.
    // get all effected wingedEdge
    result.wingedEdges = new Set;
