@@ -83,7 +83,7 @@ class VertexMadsor extends Madsor {
 
    // extrude Vertex
    extrude() {
-      var edgeLoops = [];
+      const edgeLoops = [];
       this.eachPreviewCage( function(preview, contours) {
          edgeLoops.push( preview.extrudeVertex(contours) );
       });

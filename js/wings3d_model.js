@@ -1701,8 +1701,81 @@ PreviewCage.prototype.extractFace = function() {
    return edgeLoops;
 };
 
+
 //
-// extrudeVertex - add 1/5 vertex to every edge then connect all together.
+// extrudeEdge - add 1/5 vertex to non-selected next/prev hEdges.
+// or to extrude corner if next/prev hEdges are selected. 
+PreviewCage.prototype.extrudeEdge = function() {
+   const oldSize = this._getGeometrySize();
+
+   const pt = vec3.create();
+   let extrudeEdge  = new Set;   // wEdge
+   let traversedEdges = new Set;
+   for (let wEdge of this.selectedSet) {
+      for (let hEdge of wEdge) {
+         if (traversedEdges.has(hEdge)) {  
+            continue;   // already processed.
+         }
+         let current = hEdge.next;
+         while (current !== hEdge) {
+            if (!this.selectedSet.has(current.wingedEdge)) {
+               while (!this.selectedSet.has(current.next.wingedEdge)) { current = current.next; }
+               break;   // found the last of the first contiguous non-selected hEdge.
+            } 
+            // this is selected, so keep going.
+            current = current.next;
+         }
+         if (current === hEdge) {   // all inner edges of polygon selected. 
+
+
+         } else { // now we have a starting non-selected hEdge. restart from here.
+            let fences = [];
+            hEdge = current;     // reset the starting edge.
+            do {
+               let start = current; // now find contiguous selected.
+               current = current.next;
+               while (this.selectedSet.has(current.wingedEdge)) {
+                  traversedEdges.add(current);
+                  current = current.next; // go until not selected.
+               }
+               // we have start, we have end. now split new Edge if not already split by other.
+               if (!extrudeEdge.has(current.wingedEdge)) {
+                  // split it out.
+                  vec3.lerp(pt, current.origin.vertex, current.destination().vertex, 0.2);
+                  current = this.geometry.splitEdge(current, pt); // current newly create edge
+                  extrudeEdge.add(current.wingedEdge);
+               }
+               if (!extrudeEdge.has(start.wingedEdge)) {
+                  // split it out, start stay in the front.
+                  vec3.lerp(pt, start.origin.vertex, start.destination().vertex, 0.8);
+                  let newOut = this.geometry.splitEdge(start, pt);
+                  extrudeEdge.add(start.wingedEdge);
+               }
+               fences.push( {start: start, end: current});
+               /*// now extrude the contiguous selected edge.
+               let next = current.next;   // current will get modified.
+               let result = this.geometry.extrudeEdge(start, current);*/
+               // // goto the last of this contiguous non-selected hEdge.
+               //current = next;       // original next
+               while (!this.selectedSet.has(current.next.wingedEdge)) { current = current.next; }
+            } while (current !== hEdge);  // check if we have reach starting point.
+            // now loop the extrudeEdge. we could not splitEdge and extrudeEdge because it will become very hard to find the beginning again.
+            for (let fence of fences) {
+               // now extrude the contiguous selected edge.
+               let result = this.geometry.extrudeEdge(fence.start, fence.end);
+            }
+         }
+      }
+   }
+   
+   this._updatePreviewAll(oldSize, this.geometry.affected);
+
+   return;
+};
+
+
+//
+// extrudeVertex - add 1/4 vertex to every edge then connect all together.
 PreviewCage.prototype.extrudeVertex = function() {
    const oldSize = this._getGeometrySize();
 

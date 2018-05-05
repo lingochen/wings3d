@@ -131,6 +131,9 @@ HalfEdge.prototype.destination = function() {
 }
 
 HalfEdge.prototype.prev = function() {
+   if (this.pair.next === this)  {  // check for dangling edge.
+      return this.pair; // we need this behavior.
+   }
    var that = this;
    var ret = this.origin.findInEdge(function(inEdge, vertex) {
       if (inEdge.next === that) {   // found the prev
@@ -657,6 +660,8 @@ WingedTopology.prototype.findFreeInEdge = function(inner_next, inner_prev) {
    return null;
 };
 
+
+
 WingedTopology.prototype.spliceAdjacent = function(inEdge, outEdge) {
    if (inEdge.next === outEdge) {   // adjacency is already correct.
       return true;
@@ -791,6 +796,8 @@ WingedTopology.prototype.findHalfEdge = function(v0, v1) {
             return false;
          });
 };
+
+
 
 // to split a face into 2 faces by insertEdge, delOutEdge and delPolygon optional.
 WingedTopology.prototype.insertEdge = function(prevHalf, nextHalf, delOutEdge, delPolygon) {
@@ -1996,7 +2003,86 @@ WingedTopology.prototype.findInsetContours = function(polygonSet) {
    }
 
    return edgeLoops;
-}
+};
+
+
+//
+// insert a dangling corner edge at hEdge.next position.
+WingedTopology.prototype.liftCornerEdge = function(hEdge) {
+   const pt = vec3.create();
+   // lift destination corner vertex
+   let next = hEdge.next;
+   vec3.lerp(pt, next.destination().vertex, hEdge.origin.vertex, 0.5);
+   vec3.lerp(pt, next.origin.vertex, pt, 0.20);
+   let destVert = this.addVertex(pt);
+   // fixup the new fence End
+   let danglingOut = this._createEdge(next.origin, destVert);
+   destVert.outEdge = danglingOut.pair;
+   hEdge.next = danglingOut;
+   danglingOut.pair.next = next;
+   danglingOut.face = danglingOut.pair.face = hEdge.face;   // assigned face, but don't update number of vertex.
+
+   return danglingOut;
+};
+//
+// fix up insertOut.destination() at inEdge.destination().
+//
+/*WingedTopology.prototype._insertEdge = function(begHalf, endHalf, delPolygon) {
+   const v0 = begHalf.destination();
+   const v1 = endHalf.destination();
+   const oldPolygon = begHalf.face;
+
+   // create edge and link together
+   const outEdge = this._createEdge(v0, v1);
+   const inEdge = outEdge.pair;
+   inEdge.next = begHalf.next;
+   outEdge.next = endHalf.next;
+   begHalf.next = outEdge;
+   begHalf.next = inEdge;
+  
+   //now set the face handles
+   const newPolygon = this._createPolygon(outEdge, 4, delPolygon);  // readjust size later.
+
+   // inEdge is oldPolygon
+   inEdge.face = oldPolygon;
+   if (oldPolygon.halfEdge.face === newPolygon) { //  pointed to one of the halfedges now assigned to newPolygon
+      oldPolygon.halfEdge = inEdge; // should add to restore list.
+   }
+   oldPolygon.update();
+   this.affected.faces.add( oldPolygon );
+
+   // adjustOutEdge for v0, v1. point to boundary so, ccw work better?
+   return outEdge;
+}*/
+//
+// extrudeEdge.
+//  
+WingedTopology.prototype.extrudeEdge = function(startFenceHEdge, finishFenceHEdge) {
+   const halfEdges = [];
+   const collapsibleWings = new Set;
+   // 
+   let sFenceOut = startFenceHEdge;
+   let current = startFenceHEdge.next;
+   let next = current.next;
+   const pt = vec3.create();
+   while (next !== finishFenceHEdge) {
+      // lift destination corner vertex
+      let fFenceIn = this.liftCornerEdge(current);   // at destination() of current
+      // extrude paralle edge.
+      let extrudeOut = this.insertEdge(fFenceIn, sFenceOut);
+      // move to nextEdge
+      sFenceOut = fFenceIn.pair;
+      current = next;
+      next = next.next;
+   }
+   // connect to the last one. 
+   let extrudeOut = this.insertEdge(next, sFenceOut);
+
+   // return created halfEdges
+   return ;
+};
+
+
 
 export {
    WingedEdge,

@@ -161,6 +161,14 @@ class EdgeMadsor extends Madsor {
       View.restoreEdgeMode(selection);
    }
 
+   extrude() {
+      const edgeLoops = [];
+      this.eachPreviewCage( function(preview) {
+         edgeLoops.push( preview.extrudeEdge() );
+      });
+      return edgeLoops;
+   }
+
    cutEdge(numberOfSegments) {
       const cutEdge = new CutEdgeCommand(this, numberOfSegments);
       View.undoQueue(cutEdge);

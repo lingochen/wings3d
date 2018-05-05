@@ -278,6 +278,12 @@ const action = {
    edgeRotateY: () => {notImplemented(this);},
    edgeRotateZ: () => {notImplemented(this);},
    edgeRotateFree: () => {notImplemented(this);},
+   edgeExtrudeMenu: () =>{notImplemented(this);}, // submenu
+   edgeExtrudeNormal: () =>{notImplemented(this);},
+   edgeExtrudeFree: () =>{notImplemented(this);},
+   edgeExtrudeX: () =>{notImplemented(this);},
+   edgeExtrudeY: () =>{notImplemented(this);},
+   edgeExtrudeZ: () =>{notImplemented(this);},
    // face
    faceExtrudeMenu: () =>{notImplemented(this);},
    faceExtrudeX: () =>{notImplemented(this);},
