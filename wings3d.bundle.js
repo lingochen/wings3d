@@ -363,6 +363,12 @@ const action = {
    edgeRotateY: () => {notImplemented(this);},
    edgeRotateZ: () => {notImplemented(this);},
    edgeRotateFree: () => {notImplemented(this);},
+   edgeExtrudeMenu: () =>{notImplemented(this);}, // submenu
+   edgeExtrudeNormal: () =>{notImplemented(this);},
+   edgeExtrudeFree: () =>{notImplemented(this);},
+   edgeExtrudeX: () =>{notImplemented(this);},
+   edgeExtrudeY: () =>{notImplemented(this);},
+   edgeExtrudeZ: () =>{notImplemented(this);},
    // face
    faceExtrudeMenu: () =>{notImplemented(this);},
    faceExtrudeX: () =>{notImplemented(this);},
@@ -3320,8 +3326,81 @@ PreviewCage.prototype.extractFace = function() {
    return edgeLoops;
 };
 
+
 //
-// extrudeVertex - add 1/5 vertex to every edge then connect all together.
+// extrudeEdge - add 1/5 vertex to non-selected next/prev hEdges.
+// or to extrude corner if next/prev hEdges are selected. 
+PreviewCage.prototype.extrudeEdge = function() {
+   const oldSize = this._getGeometrySize();
+
+   const pt = vec3.create();
+   let extrudeEdge  = new Set;   // wEdge
+   let traversedEdges = new Set;
+   for (let wEdge of this.selectedSet) {
+      for (let hEdge of wEdge) {
+         if (traversedEdges.has(hEdge)) {  
+            continue;   // already processed.
+         }
+         let current = hEdge.next;
+         while (current !== hEdge) {
+            if (!this.selectedSet.has(current.wingedEdge)) {
+               while (!this.selectedSet.has(current.next.wingedEdge)) { current = current.next; }
+               break;   // found the last of the first contiguous non-selected hEdge.
+            } 
+            // this is selected, so keep going.
+            current = current.next;
+         }
+         if (current === hEdge) {   // all inner edges of polygon selected. 
+
+
+         } else { // now we have a starting non-selected hEdge. restart from here.
+            let fences = [];
+            hEdge = current;     // reset the starting edge.
+            do {
+               let start = current; // now find contiguous selected.
+               current = current.next;
+               while (this.selectedSet.has(current.wingedEdge)) {
+                  traversedEdges.add(current);
+                  current = current.next; // go until not selected.
+               }
+               // we have start, we have end. now split new Edge if not already split by other.
+               if (!extrudeEdge.has(current.wingedEdge)) {
+                  // split it out.
+                  vec3.lerp(pt, current.origin.vertex, current.destination().vertex, 0.2);
+                  current = this.geometry.splitEdge(current, pt); // current newly create edge
+                  extrudeEdge.add(current.wingedEdge);
+               }
+               if (!extrudeEdge.has(start.wingedEdge)) {
+                  // split it out, start stay in the front.
+                  vec3.lerp(pt, start.origin.vertex, start.destination().vertex, 0.8);
+                  let newOut = this.geometry.splitEdge(start, pt);
+                  extrudeEdge.add(start.wingedEdge);
+               }
+               fences.push( {start: start, end: current});
+               /*// now extrude the contiguous selected edge.
+               let next = current.next;   // current will get modified.
+               let result = this.geometry.extrudeEdge(start, current);*/
+               // // goto the last of this contiguous non-selected hEdge.
+               //current = next;       // original next
+               while (!this.selectedSet.has(current.next.wingedEdge)) { current = current.next; }
+            } while (current !== hEdge);  // check if we have reach starting point.
+            // now loop the extrudeEdge. we could not splitEdge and extrudeEdge because it will become very hard to find the beginning again.
+            for (let fence of fences) {
+               // now extrude the contiguous selected edge.
+               let result = this.geometry.extrudeEdge(fence.start, fence.end);
+            }
+         }
+      }
+   }
+   
+   this._updatePreviewAll(oldSize, this.geometry.affected);
+
+   return;
+};
+
+
+//
+// extrudeVertex - add 1/4 vertex to every edge then connect all together.
 PreviewCage.prototype.extrudeVertex = function() {
    const oldSize = this._getGeometrySize();
 
@@ -5472,6 +5551,7 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       }
       // extrude
       const extrude = {face: [__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceExtrudeX, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceExtrudeY, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceExtrudeZ],
+                       edge: [__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].edgeExtrudeX, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].edgeExtrudeY, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].edgeExtrudeZ],
                        vertex:  [__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].vertexExtrudeX, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].vertexExtrudeY, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].vertexExtrudeZ],
                       };
       let extrudeMode = extrude[mode];
@@ -5483,13 +5563,13 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
              });
          }
       }
-      const extrudeFree = {face: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceExtrudeFree, /*edge: action.edgeExtrudeFree,*/ vertex: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].vertexExtrudeFree };
+      const extrudeFree = {face: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceExtrudeFree, edge: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].edgeExtrudeFree, vertex: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].vertexExtrudeFree };
       if (extrudeFree[mode]) {
          __WEBPACK_IMPORTED_MODULE_4__wings3d_ui__["bindMenuItem"](extrudeFree[mode].name, (ev) => {
             __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["attachHandlerMouseMove"](new ExtrudeFreeHandler(this));
           });
       }
-      const extrudeNormal = {face: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceExtrudeNormal, /*edge: action.edgeExtrudeNormal,*/ vertex: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].vertexExtrudeNormal};
+      const extrudeNormal = {face: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceExtrudeNormal, edge: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].edgeExtrudeNormal, vertex: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].vertexExtrudeNormal};
       if (extrudeNormal[mode]) {
          __WEBPACK_IMPORTED_MODULE_4__wings3d_ui__["bindMenuItem"](extrudeNormal[mode].name, (ev) => {
             __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["attachHandlerMouseMove"](new ExtrudeNormalHandler(this));
@@ -6121,6 +6201,14 @@ class EdgeMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
       this.restoreMoveSelection(snapshots);
       this.collapseEdge(snapshots);
       __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["restoreEdgeMode"](selection);
+   }
+
+   extrude() {
+      const edgeLoops = [];
+      this.eachPreviewCage( function(preview) {
+         edgeLoops.push( preview.extrudeEdge() );
+      });
+      return edgeLoops;
    }
 
    cutEdge(numberOfSegments) {
@@ -6945,7 +7033,7 @@ class VertexMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"]
 
    // extrude Vertex
    extrude() {
-      var edgeLoops = [];
+      const edgeLoops = [];
       this.eachPreviewCage( function(preview, contours) {
          edgeLoops.push( preview.extrudeVertex(contours) );
       });
@@ -7800,6 +7888,9 @@ HalfEdge.prototype.destination = function() {
 }
 
 HalfEdge.prototype.prev = function() {
+   if (this.pair.next === this)  {  // check for dangling edge.
+      return this.pair; // we need this behavior.
+   }
    var that = this;
    var ret = this.origin.findInEdge(function(inEdge, vertex) {
       if (inEdge.next === that) {   // found the prev
@@ -8326,6 +8417,8 @@ WingedTopology.prototype.findFreeInEdge = function(inner_next, inner_prev) {
    return null;
 };
 
+
+
 WingedTopology.prototype.spliceAdjacent = function(inEdge, outEdge) {
    if (inEdge.next === outEdge) {   // adjacency is already correct.
       return true;
@@ -8460,6 +8553,8 @@ WingedTopology.prototype.findHalfEdge = function(v0, v1) {
             return false;
          });
 };
+
+
 
 // to split a face into 2 faces by insertEdge, delOutEdge and delPolygon optional.
 WingedTopology.prototype.insertEdge = function(prevHalf, nextHalf, delOutEdge, delPolygon) {
@@ -9665,7 +9760,86 @@ WingedTopology.prototype.findInsetContours = function(polygonSet) {
    }
 
    return edgeLoops;
-}
+};
+
+
+//
+// insert a dangling corner edge at hEdge.next position.
+WingedTopology.prototype.liftCornerEdge = function(hEdge) {
+   const pt = vec3.create();
+   // lift destination corner vertex
+   let next = hEdge.next;
+   vec3.lerp(pt, next.destination().vertex, hEdge.origin.vertex, 0.5);
+   vec3.lerp(pt, next.origin.vertex, pt, 0.20);
+   let destVert = this.addVertex(pt);
+   // fixup the new fence End
+   let danglingOut = this._createEdge(next.origin, destVert);
+   destVert.outEdge = danglingOut.pair;
+   hEdge.next = danglingOut;
+   danglingOut.pair.next = next;
+   danglingOut.face = danglingOut.pair.face = hEdge.face;   // assigned face, but don't update number of vertex.
+
+   return danglingOut;
+};
+//
+// fix up insertOut.destination() at inEdge.destination().
+//
+/*WingedTopology.prototype._insertEdge = function(begHalf, endHalf, delPolygon) {
+   const v0 = begHalf.destination();
+   const v1 = endHalf.destination();
+   const oldPolygon = begHalf.face;
+
+   // create edge and link together
+   const outEdge = this._createEdge(v0, v1);
+   const inEdge = outEdge.pair;
+   inEdge.next = begHalf.next;
+   outEdge.next = endHalf.next;
+   begHalf.next = outEdge;
+   begHalf.next = inEdge;
+  
+   //now set the face handles
+   const newPolygon = this._createPolygon(outEdge, 4, delPolygon);  // readjust size later.
+
+   // inEdge is oldPolygon
+   inEdge.face = oldPolygon;
+   if (oldPolygon.halfEdge.face === newPolygon) { //  pointed to one of the halfedges now assigned to newPolygon
+      oldPolygon.halfEdge = inEdge; // should add to restore list.
+   }
+   oldPolygon.update();
+   this.affected.faces.add( oldPolygon );
+
+   // adjustOutEdge for v0, v1. point to boundary so, ccw work better?
+   return outEdge;
+}*/
+//
+// extrudeEdge.
+//  
+WingedTopology.prototype.extrudeEdge = function(startFenceHEdge, finishFenceHEdge) {
+   const halfEdges = [];
+   const collapsibleWings = new Set;
+   // 
+   let sFenceOut = startFenceHEdge;
+   let current = startFenceHEdge.next;
+   let next = current.next;
+   const pt = vec3.create();
+   while (next !== finishFenceHEdge) {
+      // lift destination corner vertex
+      let fFenceIn = this.liftCornerEdge(current);   // at destination() of current
+      // extrude paralle edge.
+      let extrudeOut = this.insertEdge(fFenceIn, sFenceOut);
+      // move to nextEdge
+      sFenceOut = fFenceIn.pair;
+      current = next;
+      next = next.next;
+   }
+   // connect to the last one. 
+   let extrudeOut = this.insertEdge(next, sFenceOut);
+
+   // return created halfEdges
+   return ;
+};
+
+
 
 
 
@@ -10276,7 +10450,7 @@ Object(__WEBPACK_IMPORTED_MODULE_3__wings3d__["onReady"])(function() {
 
    ShaderProg.selectedColorPoint = gl.createShaderProgram(ShaderProg.selectedColorPoint.vertex, ShaderProg.selectedColorPoint.fragment);*/
 
-   console.log("Render.init() success");
+ //  console.log("Render.init() success");
 });
 
 
