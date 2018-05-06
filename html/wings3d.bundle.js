@@ -3333,6 +3333,18 @@ PreviewCage.prototype.extractFace = function() {
 PreviewCage.prototype.extrudeEdge = function() {
    const oldSize = this._getGeometrySize();
 
+   // return value
+   let collapsibleWings = new Set;
+   let liftEdges = [];
+   function undoExtrudeAccounting(result) {
+      for (let hEdge of result.extrude) {
+         collapsibleWings.add(hEdge.wingedEdge);
+      }
+      for (let hEdge of result.lift) {
+         liftEdges.push(hEdge);
+      }
+   };
+   // temp for accounting purpose.
    const pt = vec3.create();
    let extrudeOut  = new Set;    // fFence
    let extrudeIn = new Set;       // sFence
@@ -3357,7 +3369,9 @@ PreviewCage.prototype.extrudeEdge = function() {
             }  
             // liftCorner, and extrudeTheLooop.
             let danglingOut = this.geometry.liftCornerEdge(current);
-            let result = this.geometry.extrudeEdge(danglingOut.pair, danglingOut);          
+            liftEdges.push(danglingOut.pair);
+            let result = this.geometry.extrudeEdge(danglingOut.pair, danglingOut);    
+            undoExtrudeAccounting(result);
          } else { // now we have a starting non-selected hEdge. restart from here.
             let fences = [];
             hEdge = current;     // reset the starting edge.
@@ -3374,46 +3388,53 @@ PreviewCage.prototype.extrudeEdge = function() {
                   vec3.lerp(pt, current.origin.vertex, current.destination().vertex, 0.2);
                   current = this.geometry.splitEdge(current, pt); // current newly create edge
                   extrudeOut.add(current);
+                  liftEdges.push(current.pair);
                } else {
                   extrudeIn.delete(current.pair);   // yes, already create, now connect together, can savely remove
                }
                if (!extrudeOut.has(start.pair)) {
                   // split it out, start stay in the front.
                   vec3.lerp(pt, start.origin.vertex, start.destination().vertex, 0.8);
-                  let newOut = this.geometry.splitEdge(start, pt);
-                  extrudeIn.add(start);
+                  let newOut = this.geometry.splitEdge(start.pair, pt).pair;
+                  extrudeIn.add(newOut);
+                  liftEdges.push(newOut);
+                  if (start === hEdge) {
+                     hEdge = newOut;               // adjust endEdge.
+                  }
+                  start = newOut;
                } else {
                   extrudeOut.delete(start.pair);   // yes, already create, now connect together, can savely remove
                }
                fences.push( {start: start, end: current});
-               /*// now extrude the contiguous selected edge.
-               let next = current.next;   // current will get modified.
-               let result = this.geometry.extrudeEdge(start, current);*/
-               // // goto the last of this contiguous non-selected hEdge.
-               //current = next;       // original next
+               // non-selected edge
                while (!this.selectedSet.has(current.next.wingedEdge)) { current = current.next; }
             } while (current !== hEdge);  // check if we have reach starting point.
-            // now loop the extrudeEdge. we could not splitEdge and extrudeEdge because it will become very hard to find the beginning again.
+
+            // now loop the extrudeEdge. we could not (splitEdge and extrudeEdge) because it will become very hard to find the beginning again.
             for (let fence of fences) {
                // now extrude the contiguous selected edge.
                let result = this.geometry.extrudeEdge(fence.start, fence.end);
+               undoExtrudeAccounting(result);
             }
          }
       }
    }
-   // connected the extrudeEdge together if any.
+   // connected the extrudeEdge corner together if any.
    for (let hOut of extrudeOut) {
       let hIn = hOut.pair;
       do {
          hIn = hIn.next.pair;   // move to next In
          if (extrudeIn.has(hIn)) {  // just connect, then exit
             let connect = this.geometry.insertEdge(hIn.pair, hOut.pair);
+            collapsibleWings.add(connect.wingedEdge);
             break;
          } else { // split edge and connect
             vec3.lerp(pt, hIn.destination().vertex, hIn.origin.vertex, 0.2);
             let newOut = this.geometry.splitEdge(hIn.pair, pt);
             hIn = newOut.pair;
+            liftEdges.push( hIn );
             let connect = this.geometry.insertEdge(newOut, hOut.pair);
+            collapsibleWings.add(connect.wingedEdge);
          }
          hOut = hIn.pair;  // move to current
       } while (true);   // walk until we hit the other pair
@@ -3421,7 +3442,16 @@ PreviewCage.prototype.extrudeEdge = function() {
    
    this._updatePreviewAll(oldSize, this.geometry.affected);
 
-   return;
+   return {collapsibleWings: collapsibleWings, liftEdges: liftEdges};
+};
+PreviewCage.prototype.undoExtrudeEdge = function(extrude) {
+   const oldSize = this._getGeometrySize();
+
+   for (let hEdge of extrude.liftEdges) {
+      this.geometry.collapseEdge(hEdge, extrude.collapsibleWings);
+   }
+ 
+   this._updatePreviewAll(oldSize, this.geometry.affected);
 };
 
 
@@ -6235,6 +6265,12 @@ class EdgeMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
          edgeLoops.push( preview.extrudeEdge() );
       });
       return edgeLoops;
+   }
+
+   undoExtrude(contourEdges) {
+      this.eachPreviewCage(function(cage, extrude) {
+         cage.undoExtrudeEdge(extrude);
+      }, contourEdges);
    }
 
    cutEdge(numberOfSegments) {
@@ -9844,8 +9880,8 @@ WingedTopology.prototype.liftCornerEdge = function(hEdge) {
 // extrudeEdge.
 //  
 WingedTopology.prototype.extrudeEdge = function(startFenceHEdge, finishFenceHEdge) {
-   const halfEdges = [];
-   const collapsibleWings = new Set;
+   const lift = [];
+   const extrude = [];
    // 
    let sFenceOut = startFenceHEdge;
    let current = startFenceHEdge.next;
@@ -9854,8 +9890,10 @@ WingedTopology.prototype.extrudeEdge = function(startFenceHEdge, finishFenceHEdg
    while (next !== finishFenceHEdge) {
       // lift destination corner vertex
       let fFenceIn = this.liftCornerEdge(current);   // at destination() of current
+      lift.push(fFenceIn.pair);
       // extrude paralle edge.
       let extrudeOut = this.insertEdge(fFenceIn, sFenceOut);
+      extrude.push( extrudeOut );
       // move to nextEdge
       sFenceOut = fFenceIn.pair;
       current = next;
@@ -9863,9 +9901,10 @@ WingedTopology.prototype.extrudeEdge = function(startFenceHEdge, finishFenceHEdg
    }
    // connect to the last one. 
    let extrudeOut = this.insertEdge(next, sFenceOut);
+   extrude.push( extrudeOut );
 
    // return created halfEdges
-   return ;
+   return {extrude: extrude, lift: lift};
 };
 
 

@@ -2061,8 +2061,8 @@ WingedTopology.prototype.liftCornerEdge = function(hEdge) {
 // extrudeEdge.
 //  
 WingedTopology.prototype.extrudeEdge = function(startFenceHEdge, finishFenceHEdge) {
-   const halfEdges = [];
-   const collapsibleWings = new Set;
+   const lift = [];
+   const extrude = [];
    // 
    let sFenceOut = startFenceHEdge;
    let current = startFenceHEdge.next;
@@ -2071,8 +2071,10 @@ WingedTopology.prototype.extrudeEdge = function(startFenceHEdge, finishFenceHEdg
    while (next !== finishFenceHEdge) {
       // lift destination corner vertex
       let fFenceIn = this.liftCornerEdge(current);   // at destination() of current
+      lift.push(fFenceIn.pair);
       // extrude paralle edge.
       let extrudeOut = this.insertEdge(fFenceIn, sFenceOut);
+      extrude.push( extrudeOut );
       // move to nextEdge
       sFenceOut = fFenceIn.pair;
       current = next;
@@ -2080,9 +2082,10 @@ WingedTopology.prototype.extrudeEdge = function(startFenceHEdge, finishFenceHEdg
    }
    // connect to the last one. 
    let extrudeOut = this.insertEdge(next, sFenceOut);
+   extrude.push( extrudeOut );
 
    // return created halfEdges
-   return ;
+   return {extrude: extrude, lift: lift};
 };
 
 
