@@ -3351,8 +3351,12 @@ PreviewCage.prototype.extrudeEdge = function() {
             current = current.next;
          }
          if (current === hEdge) {   // all inner edges of polygon selected. 
-
-
+            for (let current of hEdge.face.hEdges()) {
+               traversedEdges.add(current);
+            }  
+            // liftCorner, and extrudeTheLooop.
+            let danglingOut = this.geometry.liftCornerEdge(current);
+            let result = this.geometry.extrudeEdge(danglingOut.pair, danglingOut);          
          } else { // now we have a starting non-selected hEdge. restart from here.
             let fences = [];
             hEdge = current;     // reset the starting edge.
