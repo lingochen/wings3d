@@ -1709,7 +1709,8 @@ PreviewCage.prototype.extrudeEdge = function() {
    const oldSize = this._getGeometrySize();
 
    const pt = vec3.create();
-   let extrudeEdge  = new Set;   // wEdge
+   let extrudeOut  = new Set;    // fFence
+   let extrudeIn = new Set;       // sFence
    let traversedEdges = new Set;
    for (let wEdge of this.selectedSet) {
       for (let hEdge of wEdge) {
@@ -1743,17 +1744,21 @@ PreviewCage.prototype.extrudeEdge = function() {
                   current = current.next; // go until not selected.
                }
                // we have start, we have end. now split new Edge if not already split by other.
-               if (!extrudeEdge.has(current.wingedEdge)) {
+               if (!extrudeIn.has(current.pair)) {
                   // split it out.
                   vec3.lerp(pt, current.origin.vertex, current.destination().vertex, 0.2);
                   current = this.geometry.splitEdge(current, pt); // current newly create edge
-                  extrudeEdge.add(current.wingedEdge);
+                  extrudeOut.add(current);
+               } else {
+                  extrudeIn.delete(current.pair);   // yes, already create, now connect together, can savely remove
                }
-               if (!extrudeEdge.has(start.wingedEdge)) {
+               if (!extrudeOut.has(start.pair)) {
                   // split it out, start stay in the front.
                   vec3.lerp(pt, start.origin.vertex, start.destination().vertex, 0.8);
                   let newOut = this.geometry.splitEdge(start, pt);
-                  extrudeEdge.add(start.wingedEdge);
+                  extrudeIn.add(start);
+               } else {
+                  extrudeOut.delete(start.pair);   // yes, already create, now connect together, can savely remove
                }
                fences.push( {start: start, end: current});
                /*// now extrude the contiguous selected edge.
@@ -1770,6 +1775,23 @@ PreviewCage.prototype.extrudeEdge = function() {
             }
          }
       }
+   }
+   // connected the extrudeEdge together if any.
+   for (let hOut of extrudeOut) {
+      let hIn = hOut.pair;
+      do {
+         hIn = hIn.next.pair;   // move to next In
+         if (extrudeIn.has(hIn)) {  // just connect, then exit
+            let connect = this.geometry.insertEdge(hIn.pair, hOut.pair);
+            break;
+         } else { // split edge and connect
+            vec3.lerp(pt, hIn.destination().vertex, hIn.origin.vertex, 0.2);
+            let newOut = this.geometry.splitEdge(hIn.pair, pt);
+            hIn = newOut.pair;
+            let connect = this.geometry.insertEdge(newOut, hOut.pair);
+         }
+         hOut = hIn.pair;  // move to current
+      } while (true);   // walk until we hit the other pair
    }
    
    this._updatePreviewAll(oldSize, this.geometry.affected);
