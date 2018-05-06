@@ -6055,23 +6055,26 @@ class ExtrudeHandler extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["Moveab
 
 class ExtrudeAlongAxisHandler extends ExtrudeHandler {
    constructor(madsor, axis) {
+      const moveHandler = new MouseMoveAlongAxis(madsor, axis); // this should comes earlier
       super(madsor);
-      this.moveHandler = new MouseMoveAlongAxis(madsor, axis); // this should comes later
+      this.moveHandler = moveHandler;
    }
 }
 
 
 class ExtrudeFreeHandler extends ExtrudeHandler {
    constructor(madsor) {
+      const moveHandler = new MoveFreePositionHandler(madsor);
       super(madsor);
-      this.moveHandler = new MoveFreePositionHandler(madsor);
+      this.moveHandler = moveHandler;
    }
 }
 
 class ExtrudeNormalHandler extends ExtrudeHandler {
    constructor(madsor) {
+      const moveHandler = new MoveAlongNormal(madsor);
       super(madsor);
-      this.moveHandler = new MoveAlongNormal(madsor);
+      this.moveHandler = moveHandler;
    }
 }
 // end of extrude
