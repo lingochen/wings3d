@@ -369,6 +369,7 @@ const action = {
    edgeExtrudeX: () =>{notImplemented(this);},
    edgeExtrudeY: () =>{notImplemented(this);},
    edgeExtrudeZ: () =>{notImplemented(this);},
+   edgeCrease: () =>{notImplemented(this);},
    // face
    faceExtrudeMenu: () =>{notImplemented(this);},
    faceExtrudeX: () =>{notImplemented(this);},
@@ -815,6 +816,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "removeFromWorld", function() { return removeFromWorld; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getWorld", function() { return getWorld; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "attachHandlerMouseMove", function() { return attachHandlerMouseMove; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "doCommand", function() { return doCommand; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "redoEdit", function() { return redoEdit; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "undoEdit", function() { return undoEdit; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "undoQueue", function() { return undoQueue; });
@@ -1301,6 +1303,16 @@ function undoEdit() {
       __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
    }
 };
+
+function doCommand(command) {
+   if (command.doIt) {
+      undoQueue(command);
+      return true;
+   } else {
+      // todo: pop messages, said command not workable.
+      return false;
+   }
+}
 
 // -- end of undo/redo handling ----------------------------------------------------------------------------------
 
@@ -3327,16 +3339,20 @@ PreviewCage.prototype.extractFace = function() {
 };
 
 
+PreviewCage.prototype.creaseEdge = function() {
+   return this.extrudeEdge(true);
+}
 //
 // extrudeEdge - add 1/5 vertex to non-selected next/prev hEdges.
 // or to extrude corner if next/prev hEdges are selected. 
-PreviewCage.prototype.extrudeEdge = function() {
+// creaseFlag = crease endCap is different.
+PreviewCage.prototype.extrudeEdge = function(creaseFlag = false) {
    const oldSize = this._getGeometrySize();
 
    // return value
    let collapsibleWings = new Set;
    let liftEdges = [];
-   function undoExtrudeAccounting(result) {
+   function undoExtrudeAccounting(result) {  // for undo Purpose.
       for (let hEdge of result.extrude) {
          collapsibleWings.add(hEdge.wingedEdge);
       }
@@ -3422,6 +3438,28 @@ PreviewCage.prototype.extrudeEdge = function() {
    // connected the extrudeEdge corner together if any.
    for (let hOut of extrudeOut) {
       let hIn = hOut.pair;
+      // if (extrudeIn.has(hIn)) { continue; } // this is special case of -- edges. already connected. 
+      if (creaseFlag) {  // special case of creasing
+         let currentOut = hIn.next;
+         const endIn = currentOut.pair.next.pair;
+         if (extrudeIn.has(endIn))  { // yes the special pair
+            if ((currentOut.face.numberOfVertex > 3) && (currentOut.pair.face.numberOfVertex > 3)) {  // could not do diagonal with triangle.
+               // check if we have to splitEdge because we share the edge with other selected edge.
+               if (extrudeIn.has(currentOut.next.pair) && extrudeOut.has(currentOut.pair.prev().pair)) {
+                  vec3.lerp(pt, currentOut.origin.vertex, currentOut.destination().vertex, 0.5);
+                  let newOut = this.geometry.splitEdge(currentOut, pt);
+                  liftEdges.push(newOut.pair);
+                  currentOut = newOut;
+               }
+               // insert diagonal edge.
+               let diagonalOut = this.geometry.insertEdge(currentOut, hIn);
+               collapsibleWings.add(diagonalOut.wingedEdge);
+               // slide currentOut Edge to diagonal.
+               this.geometry.slideToNext(currentOut.pair);  // will collapse back, due to edge's expansion.
+               continue;   // done th end cap
+            }
+         }
+      }
       do {
          hIn = hIn.next.pair;   // move to next In
          if (extrudeIn.has(hIn)) {  // just connect, then exit
@@ -6163,6 +6201,11 @@ class EdgeMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
                // should not happened.
             }
          });
+      // Crease
+      __WEBPACK_IMPORTED_MODULE_6__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].edgeCrease.name, (ev) => {
+         __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["attachHandlerMouseMove"](new CreaseEdgeHandler(this));
+      });
+
       // EdgeLoop.
       for (let [numberOfSegments, hotkey] of [[__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].edgeLoop1,"l"], [__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].edgeLoop2,undefined], [__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].edgeLoop3,undefined]]) {
          const name = numberOfSegments.name;
@@ -6260,6 +6303,14 @@ class EdgeMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
       this.restoreMoveSelection(snapshots);
       this.collapseEdge(snapshots);
       __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["restoreEdgeMode"](selection);
+   }
+
+   crease() {
+      const edgeLoops = [];
+      this.eachPreviewCage( function(preview) {
+         edgeLoops.push( preview.creaseEdge() );
+      });
+      return edgeLoops;
    }
 
    extrude() {
@@ -6567,6 +6618,26 @@ class CollapseEdgeCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["E
    }
 }
 
+// Crease
+class CreaseEdgeHandler extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["MoveableCommand"] {
+   constructor(madsor) {
+      super();
+      this.moveHandler = new __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["MoveAlongNormal"](madsor);
+      this.madsor = madsor;
+      this.contourEdges = madsor.crease();
+   }
+
+   doIt() {
+      this.contourEdges = this.madsor.crease(this.contourEdges);
+      super.doIt();     // = this.madsor.moveSelection(this.movement, this.snapshots);
+   }
+
+   undo() {
+      super.undo(); //this.madsor.restoreMoveSelection(this.snapshots);
+      this.madsor.undoExtrude(this.contourEdges);
+   }
+}
+// end of Crease
 
 class EdgeLoopCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
    constructor(madsor, nth) {
@@ -9908,6 +9979,86 @@ WingedTopology.prototype.extrudeEdge = function(startFenceHEdge, finishFenceHEdg
 
    // return created halfEdges
    return {extrude: extrude, lift: lift};
+};
+
+
+WingedTopology.prototype.slideToPrev = function(outEdge, prevPrev) {
+   if (!prevPrev) {
+      prevPrev = outEdge.prev().prev();
+   } else {
+      // check(prevPrev.next.next === outEdge)
+   }
+   const prev = prevPrev.next;
+   const inEdge = outEdge.pair;
+
+   if (outEdge.face.numberOfVertex <= 3) {   // collapseLoop already.
+      const result = {inEdge: outEdge, delFace: outEdge.face, inNext: outEdge.next, inPrev: outEdge.prev()};
+      this.this.removeEdge(outEdge);
+      return result;
+   }
+
+   // fix up th pointer
+   prev.next = inEdge.next;
+   inEdge.next = prev;
+   prevPrev.next = outEdge;
+
+   // fix up the faces.
+   if (outEdge.origin.halfEdge === outEdge) {
+      outEdge.origin.halfEdge = prev.next;  // we will be no longer using origin;
+   }
+   outEdge.origin = prev.origin;
+
+   // reassign face
+   if (prev.face.halfEdge === prev) {
+      prev.face.halfEdge = inEdge;
+   }
+   prev.face = inEdge.face;
+   ++inEdge.face.numberOfVertex;
+   --outEdge.face.numberOfVertex;
+
+   // for slideToNext
+   return {inEdge: inEdge};
+};
+
+
+// slide dow
+WingedTopology.prototype.slideToNext = function(inEdge) {
+   if (inEdge.face.numberOfVertex <= 3) {   // collapseLoop if slide, just remove the edge, simpler
+      const result = {inEdge: inEdge, delFace: inEdge.face, inNext: inEdge.next, inPrev: inEdge.prev()};
+      this.removeEdge(inEdge);   // todo: removeEdge should return result, instead of closure.
+      return result;
+   }
+
+   // Fix up the pointer and face.
+   const outEdge = inEdge.pair;
+   const next = inEdge.next;
+   const prev = outEdge.prev();
+
+   prev.next = next;
+   inEdge.next = next.next;
+   next.next = outEdge;
+
+   if (outEdge.origin.halfEdge === outEdge) {
+      outEdge.origin.halfEdge = next;  // we will be no longer using origin;
+   }
+   outEdge.origin = inEdge.next.origin;
+
+   // reassign face.
+   if (next.face.halfEdge === next) {
+      next.face.halfEdge = inEdge;
+   }
+   next.face = outEdge.face; 
+   ++outEdge.face.numberOfVertex;      // accounting.
+   --inEdge.face.numberOfVertex;       // oops, needs ot collapse edge
+
+   return {prevPrev: prev, outEdge: outEdge};   // for slideToPrev
+};
+WingedTopology.prototype.undoSlideToNext = function(result) {
+   if (result.delFace) {   // yep, removeEdge, so now restore.
+      this.insertEdge(result.inPrev, result.inNext, result.inEdge, result.delFace);
+   } else {
+      this.slideToPrev(result.outEdge, result.prevPrev);
+   }
 };
 
 
