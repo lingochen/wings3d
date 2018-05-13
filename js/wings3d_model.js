@@ -1818,7 +1818,7 @@ PreviewCage.prototype.extrudeEdge = function(creaseFlag = false) {
                let diagonalOut = this.geometry.insertEdge(currentOut, hIn);
                collapsibleWings.add(diagonalOut.wingedEdge);
                // slide currentOut Edge to diagonal.
-               this.geometry.slideToNext(currentOut.pair);  // will collapse back, due to edge's expansion.
+               this.geometry.slideToNext(currentOut.pair);  // will collapse back, due to edge's contraction.
                continue;   // done th end cap
             }
          }
@@ -1849,7 +1849,9 @@ PreviewCage.prototype.undoExtrudeEdge = function(extrude) {
    const oldSize = this._getGeometrySize();
 
    for (let hEdge of extrude.liftEdges) {
-      this.geometry.collapseEdge(hEdge, extrude.collapsibleWings);
+      if (hEdge.wingedEdge.isReal()) {
+         this.geometry.collapseEdge(hEdge, extrude.collapsibleWings);
+      }
    }
  
    this._updatePreviewAll(oldSize, this.geometry.affected);

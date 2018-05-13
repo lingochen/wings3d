@@ -483,9 +483,9 @@ class CollapseEdgeCommand extends EditCommand {
 class CreaseEdgeHandler extends MoveableCommand {
    constructor(madsor) {
       super();
-      this.moveHandler = new MoveAlongNormal(madsor);
       this.madsor = madsor;
       this.contourEdges = madsor.crease();
+      this.moveHandler = new MoveAlongNormal(madsor);
    }
 
    doIt() {

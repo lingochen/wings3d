@@ -511,27 +511,24 @@ class ExtrudeHandler extends MoveableCommand {
 }
 
 class ExtrudeAlongAxisHandler extends ExtrudeHandler {
-   constructor(madsor, axis) {
-      const moveHandler = new MouseMoveAlongAxis(madsor, axis); // this should comes earlier
+   constructor(madsor, axis) { 
       super(madsor);
-      this.moveHandler = moveHandler;
+      this.moveHandler = new MouseMoveAlongAxis(madsor, axis); // this should comes earlier
    }
 }
 
 
 class ExtrudeFreeHandler extends ExtrudeHandler {
    constructor(madsor) {
-      const moveHandler = new MoveFreePositionHandler(madsor);
       super(madsor);
-      this.moveHandler = moveHandler;
+      this.moveHandler = new MoveFreePositionHandler(madsor);
    }
 }
 
 class ExtrudeNormalHandler extends ExtrudeHandler {
    constructor(madsor) {
-      const moveHandler = new MoveAlongNormal(madsor);
       super(madsor);
-      this.moveHandler = moveHandler;
+      this.moveHandler = new MoveAlongNormal(madsor);
    }
 }
 // end of extrude

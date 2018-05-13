@@ -3455,7 +3455,7 @@ PreviewCage.prototype.extrudeEdge = function(creaseFlag = false) {
                let diagonalOut = this.geometry.insertEdge(currentOut, hIn);
                collapsibleWings.add(diagonalOut.wingedEdge);
                // slide currentOut Edge to diagonal.
-               this.geometry.slideToNext(currentOut.pair);  // will collapse back, due to edge's expansion.
+               this.geometry.slideToNext(currentOut.pair);  // will collapse back, due to edge's contraction.
                continue;   // done th end cap
             }
          }
@@ -3486,7 +3486,9 @@ PreviewCage.prototype.undoExtrudeEdge = function(extrude) {
    const oldSize = this._getGeometrySize();
 
    for (let hEdge of extrude.liftEdges) {
-      this.geometry.collapseEdge(hEdge, extrude.collapsibleWings);
+      if (hEdge.wingedEdge.isReal()) {
+         this.geometry.collapseEdge(hEdge, extrude.collapsibleWings);
+      }
    }
  
    this._updatePreviewAll(oldSize, this.geometry.affected);
@@ -6092,27 +6094,24 @@ class ExtrudeHandler extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["Moveab
 }
 
 class ExtrudeAlongAxisHandler extends ExtrudeHandler {
-   constructor(madsor, axis) {
-      const moveHandler = new MouseMoveAlongAxis(madsor, axis); // this should comes earlier
+   constructor(madsor, axis) { 
       super(madsor);
-      this.moveHandler = moveHandler;
+      this.moveHandler = new MouseMoveAlongAxis(madsor, axis); // this should comes earlier
    }
 }
 
 
 class ExtrudeFreeHandler extends ExtrudeHandler {
    constructor(madsor) {
-      const moveHandler = new MoveFreePositionHandler(madsor);
       super(madsor);
-      this.moveHandler = moveHandler;
+      this.moveHandler = new MoveFreePositionHandler(madsor);
    }
 }
 
 class ExtrudeNormalHandler extends ExtrudeHandler {
    constructor(madsor) {
-      const moveHandler = new MoveAlongNormal(madsor);
       super(madsor);
-      this.moveHandler = moveHandler;
+      this.moveHandler = new MoveAlongNormal(madsor);
    }
 }
 // end of extrude
@@ -6622,9 +6621,9 @@ class CollapseEdgeCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["E
 class CreaseEdgeHandler extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["MoveableCommand"] {
    constructor(madsor) {
       super();
-      this.moveHandler = new __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["MoveAlongNormal"](madsor);
       this.madsor = madsor;
       this.contourEdges = madsor.crease();
+      this.moveHandler = new __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["MoveAlongNormal"](madsor);
    }
 
    doIt() {
