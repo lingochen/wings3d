@@ -284,6 +284,7 @@ const action = {
    edgeExtrudeX: () =>{notImplemented(this);},
    edgeExtrudeY: () =>{notImplemented(this);},
    edgeExtrudeZ: () =>{notImplemented(this);},
+   edgeCrease: () =>{notImplemented(this);},
    // face
    faceExtrudeMenu: () =>{notImplemented(this);},
    faceExtrudeX: () =>{notImplemented(this);},

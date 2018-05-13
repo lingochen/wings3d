@@ -1702,16 +1702,20 @@ PreviewCage.prototype.extractFace = function() {
 };
 
 
+PreviewCage.prototype.creaseEdge = function() {
+   return this.extrudeEdge(true);
+}
 //
 // extrudeEdge - add 1/5 vertex to non-selected next/prev hEdges.
 // or to extrude corner if next/prev hEdges are selected. 
-PreviewCage.prototype.extrudeEdge = function() {
+// creaseFlag = crease endCap is different.
+PreviewCage.prototype.extrudeEdge = function(creaseFlag = false) {
    const oldSize = this._getGeometrySize();
 
    // return value
    let collapsibleWings = new Set;
    let liftEdges = [];
-   function undoExtrudeAccounting(result) {
+   function undoExtrudeAccounting(result) {  // for undo Purpose.
       for (let hEdge of result.extrude) {
          collapsibleWings.add(hEdge.wingedEdge);
       }
@@ -1797,6 +1801,28 @@ PreviewCage.prototype.extrudeEdge = function() {
    // connected the extrudeEdge corner together if any.
    for (let hOut of extrudeOut) {
       let hIn = hOut.pair;
+      // if (extrudeIn.has(hIn)) { continue; } // this is special case of -- edges. already connected. 
+      if (creaseFlag) {  // special case of creasing
+         let currentOut = hIn.next;
+         const endIn = currentOut.pair.next.pair;
+         if (extrudeIn.has(endIn))  { // yes the special pair
+            if ((currentOut.face.numberOfVertex > 3) && (currentOut.pair.face.numberOfVertex > 3)) {  // could not do diagonal with triangle.
+               // check if we have to splitEdge because we share the edge with other selected edge.
+               if (extrudeIn.has(currentOut.next.pair) && extrudeOut.has(currentOut.pair.prev().pair)) {
+                  vec3.lerp(pt, currentOut.origin.vertex, currentOut.destination().vertex, 0.5);
+                  let newOut = this.geometry.splitEdge(currentOut, pt);
+                  liftEdges.push(newOut.pair);
+                  currentOut = newOut;
+               }
+               // insert diagonal edge.
+               let diagonalOut = this.geometry.insertEdge(currentOut, hIn);
+               collapsibleWings.add(diagonalOut.wingedEdge);
+               // slide currentOut Edge to diagonal.
+               this.geometry.slideToNext(currentOut.pair);  // will collapse back, due to edge's expansion.
+               continue;   // done th end cap
+            }
+         }
+      }
       do {
          hIn = hIn.next.pair;   // move to next In
          if (extrudeIn.has(hIn)) {  // just connect, then exit

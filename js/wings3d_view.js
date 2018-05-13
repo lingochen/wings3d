@@ -464,6 +464,16 @@ function undoEdit() {
    }
 };
 
+function doCommand(command) {
+   if (command.doIt) {
+      undoQueue(command);
+      return true;
+   } else {
+      // todo: pop messages, said command not workable.
+      return false;
+   }
+}
+
 // -- end of undo/redo handling ----------------------------------------------------------------------------------
 
 
@@ -672,6 +682,7 @@ export {
    //rayPick,
    attachHandlerMouseMove,
    // undo/redo
+   doCommand,
    redoEdit,
    undoEdit,
    undoQueue,

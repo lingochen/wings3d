@@ -2089,6 +2089,86 @@ WingedTopology.prototype.extrudeEdge = function(startFenceHEdge, finishFenceHEdg
 };
 
 
+WingedTopology.prototype.slideToPrev = function(outEdge, prevPrev) {
+   if (!prevPrev) {
+      prevPrev = outEdge.prev().prev();
+   } else {
+      // check(prevPrev.next.next === outEdge)
+   }
+   const prev = prevPrev.next;
+   const inEdge = outEdge.pair;
+
+   if (outEdge.face.numberOfVertex <= 3) {   // collapseLoop already.
+      const result = {inEdge: outEdge, delFace: outEdge.face, inNext: outEdge.next, inPrev: outEdge.prev()};
+      this.this.removeEdge(outEdge);
+      return result;
+   }
+
+   // fix up th pointer
+   prev.next = inEdge.next;
+   inEdge.next = prev;
+   prevPrev.next = outEdge;
+
+   // fix up the faces.
+   if (outEdge.origin.halfEdge === outEdge) {
+      outEdge.origin.halfEdge = prev.next;  // we will be no longer using origin;
+   }
+   outEdge.origin = prev.origin;
+
+   // reassign face
+   if (prev.face.halfEdge === prev) {
+      prev.face.halfEdge = inEdge;
+   }
+   prev.face = inEdge.face;
+   ++inEdge.face.numberOfVertex;
+   --outEdge.face.numberOfVertex;
+
+   // for slideToNext
+   return {inEdge: inEdge};
+};
+
+
+// slide dow
+WingedTopology.prototype.slideToNext = function(inEdge) {
+   if (inEdge.face.numberOfVertex <= 3) {   // collapseLoop if slide, just remove the edge, simpler
+      const result = {inEdge: inEdge, delFace: inEdge.face, inNext: inEdge.next, inPrev: inEdge.prev()};
+      this.removeEdge(inEdge);   // todo: removeEdge should return result, instead of closure.
+      return result;
+   }
+
+   // Fix up the pointer and face.
+   const outEdge = inEdge.pair;
+   const next = inEdge.next;
+   const prev = outEdge.prev();
+
+   prev.next = next;
+   inEdge.next = next.next;
+   next.next = outEdge;
+
+   if (outEdge.origin.halfEdge === outEdge) {
+      outEdge.origin.halfEdge = next;  // we will be no longer using origin;
+   }
+   outEdge.origin = inEdge.next.origin;
+
+   // reassign face.
+   if (next.face.halfEdge === next) {
+      next.face.halfEdge = inEdge;
+   }
+   next.face = outEdge.face; 
+   ++outEdge.face.numberOfVertex;      // accounting.
+   --inEdge.face.numberOfVertex;       // oops, needs ot collapse edge
+
+   return {prevPrev: prev, outEdge: outEdge};   // for slideToPrev
+};
+WingedTopology.prototype.undoSlideToNext = function(result) {
+   if (result.delFace) {   // yep, removeEdge, so now restore.
+      this.insertEdge(result.inPrev, result.inNext, result.inEdge, result.delFace);
+   } else {
+      this.slideToPrev(result.outEdge, result.prevPrev);
+   }
+};
+
+
 
 export {
    WingedEdge,

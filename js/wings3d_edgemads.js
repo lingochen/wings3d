@@ -3,11 +3,11 @@
 //
 //    
 **/
-import {Madsor, DragSelect, ToggleModeCommand} from './wings3d_mads';
+import {Madsor, DragSelect, ToggleModeCommand, MoveAlongNormal} from './wings3d_mads';
 import {FaceMadsor} from './wings3d_facemads';   // for switching
 import {BodyMadsor} from './wings3d_bodymads';
 import {VertexMadsor, VertexConnectCommand} from './wings3d_vertexmads';
-import {EditCommand} from './wings3d_undo';
+import {EditCommand, MoveableCommand} from './wings3d_undo';
 import {PreviewCage} from './wings3d_model';
 import * as UI from './wings3d_ui';
 import * as View from './wings3d_view';
@@ -62,6 +62,11 @@ class EdgeMadsor extends Madsor {
                // should not happened.
             }
          });
+      // Crease
+      UI.bindMenuItem(action.edgeCrease.name, (ev) => {
+         View.attachHandlerMouseMove(new CreaseEdgeHandler(this));
+      });
+
       // EdgeLoop.
       for (let [numberOfSegments, hotkey] of [[action.edgeLoop1,"l"], [action.edgeLoop2,undefined], [action.edgeLoop3,undefined]]) {
          const name = numberOfSegments.name;
@@ -159,6 +164,14 @@ class EdgeMadsor extends Madsor {
       this.restoreMoveSelection(snapshots);
       this.collapseEdge(snapshots);
       View.restoreEdgeMode(selection);
+   }
+
+   crease() {
+      const edgeLoops = [];
+      this.eachPreviewCage( function(preview) {
+         edgeLoops.push( preview.creaseEdge() );
+      });
+      return edgeLoops;
    }
 
    extrude() {
@@ -466,6 +479,26 @@ class CollapseEdgeCommand extends EditCommand {
    }
 }
 
+// Crease
+class CreaseEdgeHandler extends MoveableCommand {
+   constructor(madsor) {
+      super();
+      this.moveHandler = new MoveAlongNormal(madsor);
+      this.madsor = madsor;
+      this.contourEdges = madsor.crease();
+   }
+
+   doIt() {
+      this.contourEdges = this.madsor.crease(this.contourEdges);
+      super.doIt();     // = this.madsor.moveSelection(this.movement, this.snapshots);
+   }
+
+   undo() {
+      super.undo(); //this.madsor.restoreMoveSelection(this.snapshots);
+      this.madsor.undoExtrude(this.contourEdges);
+   }
+}
+// end of Crease
 
 class EdgeLoopCommand extends EditCommand {
    constructor(madsor, nth) {
