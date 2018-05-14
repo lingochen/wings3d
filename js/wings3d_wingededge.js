@@ -2110,8 +2110,8 @@ WingedTopology.prototype.slideToPrev = function(outEdge, prevPrev) {
    prevPrev.next = outEdge;
 
    // fix up the faces.
-   if (outEdge.origin.halfEdge === outEdge) {
-      outEdge.origin.halfEdge = prev.next;  // we will be no longer using origin;
+   if (outEdge.origin.outEdge === outEdge) {
+      outEdge.origin.outEdge = prev.next;  // we will be no longer using origin;
    }
    outEdge.origin = prev.origin;
 
@@ -2145,18 +2145,22 @@ WingedTopology.prototype.slideToNext = function(inEdge) {
    inEdge.next = next.next;
    next.next = outEdge;
 
-   if (outEdge.origin.halfEdge === outEdge) {
-      outEdge.origin.halfEdge = next;  // we will be no longer using origin;
+   if (outEdge.origin.outEdge === outEdge) {
+      outEdge.origin.outEdge = next;  // we will be no longer using origin;
    }
    outEdge.origin = inEdge.next.origin;
+   this.affected.edges.add(outEdge.wingedEdge);
 
    // reassign face.
    if (next.face.halfEdge === next) {
       next.face.halfEdge = inEdge;
    }
+   inEdge.face = next.face;
    next.face = outEdge.face; 
    ++outEdge.face.numberOfVertex;      // accounting.
    --inEdge.face.numberOfVertex;       // oops, needs ot collapse edge
+   this.affected.faces.add( outEdge.face );
+   this.affected.faces.add( inEdge.face );
 
    return {prevPrev: prev, outEdge: outEdge};   // for slideToPrev
 };

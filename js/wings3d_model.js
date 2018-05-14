@@ -1849,9 +1849,7 @@ PreviewCage.prototype.undoExtrudeEdge = function(extrude) {
    const oldSize = this._getGeometrySize();
 
    for (let hEdge of extrude.liftEdges) {
-      if (hEdge.wingedEdge.isReal()) {
-         this.geometry.collapseEdge(hEdge, extrude.collapsibleWings);
-      }
+      this.geometry.collapseEdge(hEdge, extrude.collapsibleWings);
    }
  
    this._updatePreviewAll(oldSize, this.geometry.affected);
