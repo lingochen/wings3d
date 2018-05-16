@@ -3,7 +3,7 @@
 //
 //    
 **/
-import {Madsor, DragSelect, MovePositionHandler, MouseMoveAlongAxis, MoveAlongNormal, MoveFreePositionHandler, ToggleModeCommand} from './wings3d_mads';
+import {Madsor, DragSelect, MovePositionHandler, MoveAlongNormal, ToggleModeCommand} from './wings3d_mads';
 import {EdgeMadsor} from './wings3d_edgemads';   // for switching
 import {BodyMadsor} from './wings3d_bodymads';
 import {VertexMadsor} from './wings3d_vertexmads';
@@ -63,6 +63,9 @@ class FaceMadsor extends Madsor {
             geometryStatus('No selected face');
          }
        });
+      UI.bindMenuItem(action.faceBump.name, (ev) => {
+         View.attachHandlerMouseMove(new BumpFaceHandler(this));
+       });
       // setup highlite face, at most 28 triangles.
       var buf = new Float32Array(3*30);
       this.trianglefan = {data: buf, length: 0};
@@ -96,7 +99,7 @@ class FaceMadsor extends Madsor {
    }
 
    bevel() {
-      var snapshots = [];
+      const snapshots = [];
       this.eachPreviewCage( function(preview) {
          snapshots.push( preview.bevelFace() );
       });
@@ -114,9 +117,24 @@ class FaceMadsor extends Madsor {
       this.restoreSelection(selection);
    }
 
+   bump(reuseLoops) {
+      const edgeLoops = [];
+      this.eachPreviewCage( function(preview, contours) {
+         edgeLoops.push( preview.bumpFace(contours) );
+      }, reuseLoops);
+      return edgeLoops;
+   }
+
+   undoBump(snapshots) {
+      // collapse extrudeEdge
+      this.eachPreviewCage(function(cage, collapse) {
+         cage.undoExtrudeEdge(collapse);
+      }, snapshots);  
+   }
+
    // extrude Face
    extrude(reuseLoops) {
-      var edgeLoops = [];
+      const edgeLoops = [];
       this.eachPreviewCage( function(preview, contours) {
          edgeLoops.push( preview.extrudeFace(contours) );
       }, reuseLoops);
@@ -431,6 +449,27 @@ class InsetFaceHandler extends MovePositionHandler {
       //this.snapshots = undefined;
    }
 }
+
+// Crease
+class BumpFaceHandler extends MoveableCommand {
+   constructor(madsor) {
+      super();
+      this.madsor = madsor;
+      this.bump = madsor.bump();
+      this.moveHandler = new MoveAlongNormal(madsor);
+   }
+
+   doIt() {
+      this.bump = this.madsor.bump(this.contourEdges);
+      super.doIt();     // = this.madsor.moveSelection(this.movement, this.snapshots);
+   }
+
+   undo() {
+      super.undo(); //this.madsor.restoreMoveSelection(this.snapshots);
+      this.madsor.undoBump(this.bump);
+   }
+}
+// end of Crease
 
 
 export {

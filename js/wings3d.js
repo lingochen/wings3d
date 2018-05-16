@@ -309,6 +309,7 @@ const action = {
    faceBridge: () => {notImplemented(this);},
    faceInset: () => {notImplemented(this);},
    faceBevel: () => {notImplemented(this);},
+   faceBump: () => {notImplemented(this);},
    // vertex
    vertexConnect: () => {notImplemented(this);},
    vertexDissolve: () => {notImplemented(this);},

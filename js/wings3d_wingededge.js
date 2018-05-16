@@ -2008,14 +2008,14 @@ WingedTopology.prototype.findInsetContours = function(polygonSet) {
 
 //
 // insert a dangling corner edge at hEdge.next position.
-WingedTopology.prototype.liftCornerEdge = function(hEdge) {
+WingedTopology.prototype.liftCornerEdge = function(hEdge, percent = 0.2) {
    const pt = vec3.create();
    const vector = vec3.create();
    // lift destination corner vertex
    let next = hEdge.next;
-   vec3.lerp(pt, next.origin.vertex, next.destination().vertex, 0.2);
+   vec3.lerp(pt, next.origin.vertex, next.destination().vertex, percent);
    vec3.sub(vector, hEdge.origin.vertex, hEdge.destination().vertex);
-   vec3.scale(vector, vector, 0.2);
+   vec3.scale(vector, vector, percent);
    vec3.add(pt, pt, vector);
    let destVert = this.addVertex(pt);
    // fixup the new fence End

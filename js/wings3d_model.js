@@ -1851,6 +1851,14 @@ PreviewCage.prototype.undoExtrudeEdge = function(extrude) {
    for (let hEdge of extrude.liftEdges) {
       this.geometry.collapseEdge(hEdge, extrude.collapsibleWings);
    }
+
+   if (extrude.dissolveEdges) {
+      for (let hEdge of extrude.dissolveEdges) {
+         if (hEdge.wingedEdge.isReal()) {
+            this.geometry.removeEdge(hEdge);
+         }
+      }
+   }
  
    this._updatePreviewAll(oldSize, this.geometry.affected);
 };
@@ -1959,6 +1967,120 @@ PreviewCage.prototype.collapseExtrudeEdge = function(edges) {
    // done, update shader data, should we update each vertex individually?
    const centroids = this.preview.centroid.buf.data.subarray(0, this.preview.centroid.buf.len)
    this.preview.shaderData.uploadAttribute('position', this.geometry.buf.len*4, centroids);
+};
+
+//
+// selectable polygon - find exterior edges loop of selected polygon
+//
+PreviewCage.prototype.findFaceContourExt = function() {
+   const contourEdges = new Set;
+   const edgeLoops = [];
+   // find all contourEdges to extrude
+   for (let polygon of this.selectedSet) {
+      for (let outEdge of polygon.hEdges()) {
+         let extEdge = outEdge.pair;
+         if (!contourEdges.has(extEdge) && !this.selectedSet.has(extEdge.face)) {   // yes, this exterior edge has not been processed yet
+            const edgeLoop = [];
+            let current = extEdge;
+            do {
+               edgeLoop.push( current );
+               contourEdges.add(current);       // checkIn the contour edge.
+               while (!this.selectedSet.has(current.next.pair.face)) {  // walk to the next exterior edge
+                  current = current.next.pair;
+               }
+               current = current.next;          // the next exterior Edge
+            } while (current !== extEdge);      // check if we come full circle
+            edgeLoops.push( edgeLoop );
+         }
+      }
+   }
+
+   return edgeLoops;
+};
+
+
+PreviewCage.prototype.bumpFace = function() {
+   const oldSize = this._getGeometrySize();
+
+   // find contourEdge
+   const contours = this.findFaceContourExt();
+
+   const pt = vec3.create();
+   let traversedEdges = new Map;
+   let collapsibleWings = new Set;
+   let dissolveEdges = new Set;
+   let liftEdges = new Set;
+   // split and connect the exterior edges.
+   for (let loop of contours) {
+      let isPrevCorner = false; // is previous lift a dangling corner lift?
+      let firstLift;
+      let prevLift = null;
+      let prevH = loop[loop.length-1]; // get the last exterior edge
+      for (let hEdge of loop) {
+         let current = prevH.next;
+         if (current === hEdge) {   // do liftCorner Cap.
+            if (isPrevCorner) { // connect to prevCorner
+               let connectOut = this.geometry.insertEdge(prevH, prevLift);
+               collapsibleWings.add(connectOut.wingedEdge);
+               dissolveEdges.add(connectOut.pair);
+               prevLift = connectOut.pair;
+            } else {
+               let danglingLift = this.geometry.liftCornerEdge(prevH, 0.5);
+               liftEdges.add(danglingLift.pair);
+               if (prevLift) {   // connect to prevLift
+                  let connect = this.geometry.insertEdge(danglingLift, prevLift);
+                  collapsibleWings.add(connect.wingedEdge);
+                  dissolveEdges.add(connect.pair);
+               } else {
+                  firstLift = danglingLift;
+               }
+               prevLift = danglingLift.pair;
+            }
+            isPrevCorner = true;
+         } else {
+            do {  // at lease one splitEdge
+               let splitOut = current;
+               if (!traversedEdges.has(current.wingedEdge)) {
+                  vec3.lerp(pt, current.origin.vertex, current.destination().vertex, 0.5);
+                  splitOut = this.geometry.splitEdge(current, pt);   // pt is the split point.
+                  liftEdges.add(splitOut.pair);
+                  traversedEdges.set(current.wingedEdge, loop);
+                  if (prevLift) {   // connect to prevLift
+                     let connectOut = this.geometry.insertEdge(splitOut, prevLift);
+                     collapsibleWings.add(connectOut.wingedEdge);
+                  } else {
+                     firstLift = splitOut;
+                  }
+               } else { // check if neighbor face already bump it
+                  if (prevLift) {
+                     let iLoop = traversedEdges.get(current.wingedEdge);   // make sure we are on the same loop contour.
+                     if ((loop !== iLoop) && current.next.next !== prevLift) {  // no, not connected yet.
+                        let connectOut = this.geometry.insertEdge(splitOut, prevLift);
+                        dissolveEdges.add(connectOut.pair);
+                     }
+                  } else {
+                     firstLift = current;
+                  }
+               }
+
+               prevLift = splitOut.pair;
+               current = splitOut.pair.next;
+            } while (current !== hEdge);
+            isPrevCorner = false;
+         }
+         prevH = hEdge;
+      }
+      if (!isPrevCorner) {
+         // connect last to first.
+         let connectOut = this.geometry.insertEdge(firstLift, prevLift);
+         collapsibleWings.add(connectOut.wingedEdge);
+      }
+   }
+   //
+ 
+   this._updatePreviewAll(oldSize, this.geometry.affected);
+
+   return {liftEdges: liftEdges, collapsibleWings: collapsibleWings, dissolveEdges: dissolveEdges};
 };
 
 
