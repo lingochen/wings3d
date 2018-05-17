@@ -1855,7 +1855,7 @@ PreviewCage.prototype.undoExtrudeEdge = function(extrude) {
    if (extrude.dissolveEdges) {
       for (let hEdge of extrude.dissolveEdges) {
          if (hEdge.wingedEdge.isReal()) {
-            this.geometry.removeEdge(hEdge);
+            this.geometry.dissolveEdge(hEdge, extrude.collapsibleWings);
          }
       }
    }
@@ -2026,6 +2026,7 @@ PreviewCage.prototype.bumpFace = function() {
                prevLift = connectOut.pair;
             } else {
                let danglingLift = this.geometry.liftCornerEdge(prevH, 0.5);
+               //collapsibleWings.add(danglingLift.wingedEdge);
                liftEdges.add(danglingLift.pair);
                if (prevLift) {   // connect to prevLift
                   let connect = this.geometry.insertEdge(danglingLift, prevLift);

@@ -3493,7 +3493,7 @@ PreviewCage.prototype.undoExtrudeEdge = function(extrude) {
    if (extrude.dissolveEdges) {
       for (let hEdge of extrude.dissolveEdges) {
          if (hEdge.wingedEdge.isReal()) {
-            this.geometry.removeEdge(hEdge);
+            this.geometry.dissolveEdge(hEdge, extrude.collapsibleWings);
          }
       }
    }
@@ -3664,6 +3664,7 @@ PreviewCage.prototype.bumpFace = function() {
                prevLift = connectOut.pair;
             } else {
                let danglingLift = this.geometry.liftCornerEdge(prevH, 0.5);
+               //collapsibleWings.add(danglingLift.wingedEdge);
                liftEdges.add(danglingLift.pair);
                if (prevLift) {   // connect to prevLift
                   let connect = this.geometry.insertEdge(danglingLift, prevLift);
@@ -9746,15 +9747,15 @@ WingedTopology.prototype.removeEdge = function(outEdge) {
 };
 
 
-WingedTopology.prototype.dissolveEdge = function(outEdge) {
+WingedTopology.prototype.dissolveEdge = function(outEdge, collapsibleWings) {
    // check next only connect to outEdge? 
    const self = this;
    const inEdge = outEdge.pair;
    if (outEdge.next.pair.next === inEdge) {
       const outNext = outEdge.next;
-      return this.collapseEdge(inEdge);   // collapse inward
+      return this.collapseEdge(inEdge, collapsibleWings);   // collapse inward
    } else if (inEdge.next.pair.next === outEdge) {
-      return this.collapseEdge(outEdge);  // collapse outward
+      return this.collapseEdge(outEdge, collapsibleWings);  // collapse outward
    } else {
       return this.removeEdge(outEdge);    // normal dissolve
    }

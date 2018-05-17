@@ -1694,15 +1694,15 @@ WingedTopology.prototype.removeEdge = function(outEdge) {
 };
 
 
-WingedTopology.prototype.dissolveEdge = function(outEdge) {
+WingedTopology.prototype.dissolveEdge = function(outEdge, collapsibleWings) {
    // check next only connect to outEdge? 
    const self = this;
    const inEdge = outEdge.pair;
    if (outEdge.next.pair.next === inEdge) {
       const outNext = outEdge.next;
-      return this.collapseEdge(inEdge);   // collapse inward
+      return this.collapseEdge(inEdge, collapsibleWings);   // collapse inward
    } else if (inEdge.next.pair.next === outEdge) {
-      return this.collapseEdge(outEdge);  // collapse outward
+      return this.collapseEdge(outEdge, collapsibleWings);  // collapse outward
    } else {
       return this.removeEdge(outEdge);    // normal dissolve
    }
