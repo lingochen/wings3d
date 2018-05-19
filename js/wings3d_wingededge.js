@@ -2210,21 +2210,19 @@ WingedTopology.prototype.insertFan = function(polygon, fanLists) {
    let destVert = this.addVertex(centroid);
 
    const fan = [];
-   let liftEdge;
    let lastOut;
    for (let hEdge of polygon.hEdges()) {  // walk in order.
       if (fanLists.has(hEdge)) { // only in the list, we do fanEdge.
          if (lastOut !== undefined) {
             lastOut = this.insertEdge(hEdge, lastOut.pair);
-            fan.push(lastOut.pair);
+            fan.unshift(lastOut.pair);
          } else { // liftCorner Edge for first Fan.
             lastOut = this._liftDanglingEdge(hEdge, destVert);
-            fan.push( lastOut.pair );
+            fan.unshift( lastOut ); // lastOut, not lastOut.pair will guarantee dissolve correctly.
          }
       }
    }
 
-   //return {fan: fan, liftEdge: liftEdge};
    return fan;
 };
 

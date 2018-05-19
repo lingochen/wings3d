@@ -1848,16 +1848,16 @@ PreviewCage.prototype.extrudeEdge = function(creaseFlag = false) {
 PreviewCage.prototype.undoExtrudeEdge = function(extrude) {
    const oldSize = this._getGeometrySize();
 
-   for (let hEdge of extrude.liftEdges) {
-      this.geometry.collapseEdge(hEdge, extrude.collapsibleWings);
-   }
-
    if (extrude.dissolveEdges) {
       for (let hEdge of extrude.dissolveEdges) {
          if (hEdge.wingedEdge.isReal()) {
             this.geometry.dissolveEdge(hEdge, extrude.collapsibleWings);
          }
       }
+   }
+
+   for (let hEdge of extrude.liftEdges) {
+      this.geometry.collapseEdge(hEdge, extrude.collapsibleWings);
    }
  
    this._updatePreviewAll(oldSize, this.geometry.affected);
@@ -2094,7 +2094,7 @@ PreviewCage.prototype.bumpFace = function() {
    for (let [polygon, fans] of cornerFaces) {   // fan is error
       const fan = this.geometry.insertFan(polygon, fans);
       // add fan to dissolveEdges, and collapsibleWings
-      //dissolveEdges.add(liftEdge);
+      //liftEdges.add(liftEdge);
       //collapsibleWings.add(liftEdge.wingedEdge);
       for (let hEdge of fan) {
          collapsibleWings.add(hEdge.wingedEdge);

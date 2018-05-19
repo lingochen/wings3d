@@ -3486,16 +3486,16 @@ PreviewCage.prototype.extrudeEdge = function(creaseFlag = false) {
 PreviewCage.prototype.undoExtrudeEdge = function(extrude) {
    const oldSize = this._getGeometrySize();
 
-   for (let hEdge of extrude.liftEdges) {
-      this.geometry.collapseEdge(hEdge, extrude.collapsibleWings);
-   }
-
    if (extrude.dissolveEdges) {
       for (let hEdge of extrude.dissolveEdges) {
          if (hEdge.wingedEdge.isReal()) {
             this.geometry.dissolveEdge(hEdge, extrude.collapsibleWings);
          }
       }
+   }
+
+   for (let hEdge of extrude.liftEdges) {
+      this.geometry.collapseEdge(hEdge, extrude.collapsibleWings);
    }
  
    this._updatePreviewAll(oldSize, this.geometry.affected);
@@ -3732,7 +3732,7 @@ PreviewCage.prototype.bumpFace = function() {
    for (let [polygon, fans] of cornerFaces) {   // fan is error
       const fan = this.geometry.insertFan(polygon, fans);
       // add fan to dissolveEdges, and collapsibleWings
-      //dissolveEdges.add(liftEdge);
+      //liftEdges.add(liftEdge);
       //collapsibleWings.add(liftEdge.wingedEdge);
       for (let hEdge of fan) {
          collapsibleWings.add(hEdge.wingedEdge);
@@ -10287,21 +10287,19 @@ WingedTopology.prototype.insertFan = function(polygon, fanLists) {
    let destVert = this.addVertex(centroid);
 
    const fan = [];
-   let liftEdge;
    let lastOut;
    for (let hEdge of polygon.hEdges()) {  // walk in order.
       if (fanLists.has(hEdge)) { // only in the list, we do fanEdge.
          if (lastOut !== undefined) {
             lastOut = this.insertEdge(hEdge, lastOut.pair);
-            fan.push(lastOut.pair);
+            fan.unshift(lastOut.pair);
          } else { // liftCorner Edge for first Fan.
             lastOut = this._liftDanglingEdge(hEdge, destVert);
-            fan.push( lastOut.pair );
+            fan.unshift( lastOut ); // lastOut, not lastOut.pair will guarantee dissolve correctly.
          }
       }
    }
 
-   //return {fan: fan, liftEdge: liftEdge};
    return fan;
 };
 
