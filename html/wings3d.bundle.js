@@ -3610,8 +3610,9 @@ PreviewCage.prototype.collapseExtrudeEdge = function(edges) {
 //
 // selectable polygon - find exterior edges loop of selected polygon
 //
-PreviewCage.prototype.findFaceContourExt = function() {
+PreviewCage.prototype.findExtFaceContours = function() {
    const contourEdges = new Set;
+   const cornerFaces = new Set;
    const edgeLoops = [];
    // find all contourEdges to extrude
    for (let polygon of this.selectedSet) {
@@ -3623,8 +3624,13 @@ PreviewCage.prototype.findFaceContourExt = function() {
             do {
                edgeLoop.push( current );
                contourEdges.add(current);       // checkIn the contour edge.
+               let corner = true;
                while (!this.selectedSet.has(current.next.pair.face)) {  // walk to the next exterior edge
                   current = current.next.pair;
+                  corner = false;
+               }
+               if (corner) {
+                  cornerFaces.add(current.face);
                }
                current = current.next;          // the next exterior Edge
             } while (current !== extEdge);      // check if we come full circle
@@ -3633,7 +3639,7 @@ PreviewCage.prototype.findFaceContourExt = function() {
       }
    }
 
-   return edgeLoops;
+   return {contourLoops: edgeLoops, cornerFaces: cornerFaces};
 };
 
 
@@ -3641,81 +3647,99 @@ PreviewCage.prototype.bumpFace = function() {
    const oldSize = this._getGeometrySize();
 
    // find contourEdge
-   const contours = this.findFaceContourExt();
+   const result = this.findExtFaceContours();
+   const contours = result.contourLoops;
 
    const pt = vec3.create();
-   let traversedEdges = new Map;
+   const cornerFaces = new Map;
    let collapsibleWings = new Set;
    let dissolveEdges = new Set;
    let liftEdges = new Set;
+   let self = this;
+   function bumpEdge(next, prev) {
+      let connectOut = self.geometry.insertEdge(next, prev);
+      collapsibleWings.add(connectOut.wingedEdge);
+      dissolveEdges.add(connectOut.pair); // make sure it gone.
+   };
    // split and connect the exterior edges.
    for (let loop of contours) {
-      let isPrevCorner = false; // is previous lift a dangling corner lift?
-      let firstLift;
+      let firstLift = null;
       let prevLift = null;
       let prevH = loop[loop.length-1]; // get the last exterior edge
       for (let hEdge of loop) {
          let current = prevH.next;
-         if (current === hEdge) {   // do liftCorner Cap.
-            if (isPrevCorner) { // connect to prevCorner
-               let connectOut = this.geometry.insertEdge(prevH, prevLift);
-               collapsibleWings.add(connectOut.wingedEdge);
-               dissolveEdges.add(connectOut.pair);
-               prevLift = connectOut.pair;
-            } else {
-               let danglingLift = this.geometry.liftCornerEdge(prevH, 0.5);
-               //collapsibleWings.add(danglingLift.wingedEdge);
-               liftEdges.add(danglingLift.pair);
-               if (prevLift) {   // connect to prevLift
-                  let connect = this.geometry.insertEdge(danglingLift, prevLift);
-                  collapsibleWings.add(connect.wingedEdge);
-                  dissolveEdges.add(connect.pair);
-               } else {
-                  firstLift = danglingLift;
-               }
-               prevLift = danglingLift.pair;
-            }
-            isPrevCorner = true;
-         } else {
+         if (current !== hEdge) {   // skip corner
             do {  // at lease one splitEdge
                let splitOut = current;
-               if (!traversedEdges.has(current.wingedEdge)) {
+               if (collapsibleWings.has(current.next.wingedEdge) || liftEdges.has(current.next)) {  // yep, already split,
+                  // check if neighbor face already bump it
+                  if (prevLift) {
+                     if (current.next.next !== prevLift) {  // no, not bump yet.
+                        bumpEdge(splitOut, prevLift);
+                     }
+                  } else if (firstLift === null) { // first time through
+                     firstLift = current;
+                  } else { // exit cornerFace
+                     const fans = cornerFaces.get(current.face);
+                     fans.add(current);
+                  }
+               } else { // split edge, and connect to prevLift
                   vec3.lerp(pt, current.origin.vertex, current.destination().vertex, 0.5);
                   splitOut = this.geometry.splitEdge(current, pt);   // pt is the split point.
                   liftEdges.add(splitOut.pair);
-                  traversedEdges.set(current.wingedEdge, loop);
                   if (prevLift) {   // connect to prevLift
-                     let connectOut = this.geometry.insertEdge(splitOut, prevLift);
-                     collapsibleWings.add(connectOut.wingedEdge);
-                  } else {
+                     bumpEdge(splitOut, prevLift);
+                  } else if (firstLift === null) { // first time through
                      firstLift = splitOut;
-                  }
-               } else { // check if neighbor face already bump it
-                  if (prevLift) {
-                     let iLoop = traversedEdges.get(current.wingedEdge);   // make sure we are on the same loop contour.
-                     if ((loop !== iLoop) && current.next.next !== prevLift) {  // no, not connected yet.
-                        let connectOut = this.geometry.insertEdge(splitOut, prevLift);
-                        dissolveEdges.add(connectOut.pair);
-                     }
-                  } else {
-                     firstLift = current;
+                  } else { // exit cornerFace
+                     const fans = cornerFaces.get(splitOut.face);
+                     fans.add(splitOut);
                   }
                }
 
                prevLift = splitOut.pair;
                current = splitOut.pair.next;
             } while (current !== hEdge);
-            isPrevCorner = false;
+         } else { // inner corner, reset prevLift
+            if (!cornerFaces.has(current.face)) {
+               cornerFaces.set(current.face, new Set);
+            }
+            const fans = cornerFaces.get(current.face);
+            if (prevLift) {
+               fans.add( prevLift.prev() );
+               prevLift = null;
+            }
+            fans.add( prevH );   // all inEdge.
+            if (firstLift === null) {  // firstLift is a corner, so no worry. undefined it
+               firstLift = undefined;
+            }
          }
          prevH = hEdge;
       }
-      if (!isPrevCorner) {
-         // connect last to first.
-         let connectOut = this.geometry.insertEdge(firstLift, prevLift);
-         collapsibleWings.add(connectOut.wingedEdge);
+      if (prevLift) {
+         if (cornerFaces.has(prevLift.face)) {
+            const fans = cornerFaces.get(prevLift.face);
+            fans.add( prevLift.prev() );
+         }
+
+         if (firstLift && (firstLift.next.next !== prevLift)) {   // no bumped by other loop
+            // connect last to first.
+            bumpEdge(firstLift, prevLift);
+         }
       }
    }
-   //
+   // now do polygon fans on the cornerFace.
+   for (let [polygon, fans] of cornerFaces) {   // fan is error
+      const fan = this.geometry.insertFan(polygon, fans);
+      // add fan to dissolveEdges, and collapsibleWings
+      //dissolveEdges.add(liftEdge);
+      //collapsibleWings.add(liftEdge.wingedEdge);
+      for (let hEdge of fan) {
+         collapsibleWings.add(hEdge.wingedEdge);
+         dissolveEdges.add(hEdge);
+      }
+   }
+
  
    this._updatePreviewAll(oldSize, this.geometry.affected);
 
@@ -8415,8 +8439,9 @@ Polygon.prototype.eachEdge = function(callbackFn) {
    var begin = this.halfEdge;
    var current = begin;
    do {
+      let next = current.next;
       callbackFn(current);
-      current = current.next;
+      current = next;
    } while (current !== begin);
 };
 
@@ -8424,8 +8449,9 @@ Polygon.prototype.hEdges = function* () {
    const begin = this.halfEdge;
    let current = begin;
    do {
+      let next = current.next;
       yield current;
-      current = current.next;
+      current = next;
    } while (current !== begin);
 }
 
@@ -8498,6 +8524,23 @@ Polygon.prototype.update = function() {
    if (this.numberOfVertex > 2) {
       this.computeNormal();
    }
+};
+
+//
+// getCentroid - not really centroid, but center of points.
+// todo - find a good centroid algorithm. like tessellate to triangles. and use triangle's centroid to find real centroid.
+//
+Polygon.prototype.getCentroid = function(centroid) {
+   const begin = this.halfEdge;
+   let current = begin;
+   let numberOfVertex = 0;
+   do {
+      vec3.add(centroid, centroid, current.origin.vertex);
+      ++numberOfVertex;
+      current = current.next;
+   } while (current !== begin);
+   // compute centroid.
+   vec3.scale(centroid, centroid, 1.0/numberOfVertex);
 };
 
 
@@ -10059,6 +10102,16 @@ WingedTopology.prototype.findInsetContours = function(polygonSet) {
 };
 
 
+
+WingedTopology.prototype._liftDanglingEdge = function(hEdge, destVert) {
+   const next = hEdge.next;
+   const danglingOut = this._createEdge(next.origin, destVert);
+   destVert.outEdge = danglingOut.pair;
+   hEdge.next = danglingOut;
+   danglingOut.pair.next = next;
+   danglingOut.face = danglingOut.pair.face = hEdge.face;   // assigned face, but don't update number of vertex.
+   return danglingOut;
+};
 //
 // insert a dangling corner edge at hEdge.next position.
 WingedTopology.prototype.liftCornerEdge = function(hEdge, percent = 0.2) {
@@ -10072,11 +10125,7 @@ WingedTopology.prototype.liftCornerEdge = function(hEdge, percent = 0.2) {
    vec3.add(pt, pt, vector);
    let destVert = this.addVertex(pt);
    // fixup the new fence End
-   let danglingOut = this._createEdge(next.origin, destVert);
-   destVert.outEdge = danglingOut.pair;
-   hEdge.next = danglingOut;
-   danglingOut.pair.next = next;
-   danglingOut.face = danglingOut.pair.face = hEdge.face;   // assigned face, but don't update number of vertex.
+   let danglingOut = this._liftDanglingEdge(hEdge, destVert);
 
    return danglingOut;
 };
@@ -10223,6 +10272,37 @@ WingedTopology.prototype.undoSlideToNext = function(result) {
    } else {
       this.slideToPrev(result.outEdge, result.prevPrev);
    }
+};
+
+
+//
+// insertFan - inside polygon, adds polygon fan with fanLists(Set)
+//
+WingedTopology.prototype.insertFan = function(polygon, fanLists) {
+   //const 
+   
+   // get polygon centroid.
+   const centroid = vec3.create();
+   polygon.getCentroid(centroid);
+   let destVert = this.addVertex(centroid);
+
+   const fan = [];
+   let liftEdge;
+   let lastOut;
+   for (let hEdge of polygon.hEdges()) {  // walk in order.
+      if (fanLists.has(hEdge)) { // only in the list, we do fanEdge.
+         if (lastOut !== undefined) {
+            lastOut = this.insertEdge(hEdge, lastOut.pair);
+            fan.push(lastOut.pair);
+         } else { // liftCorner Edge for first Fan.
+            lastOut = this._liftDanglingEdge(hEdge, destVert);
+            fan.push( lastOut.pair );
+         }
+      }
+   }
+
+   //return {fan: fan, liftEdge: liftEdge};
+   return fan;
 };
 
 

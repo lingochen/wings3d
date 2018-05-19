@@ -362,8 +362,9 @@ Polygon.prototype.eachEdge = function(callbackFn) {
    var begin = this.halfEdge;
    var current = begin;
    do {
+      let next = current.next;
       callbackFn(current);
-      current = current.next;
+      current = next;
    } while (current !== begin);
 };
 
@@ -371,8 +372,9 @@ Polygon.prototype.hEdges = function* () {
    const begin = this.halfEdge;
    let current = begin;
    do {
+      let next = current.next;
       yield current;
-      current = current.next;
+      current = next;
    } while (current !== begin);
 }
 
@@ -445,6 +447,23 @@ Polygon.prototype.update = function() {
    if (this.numberOfVertex > 2) {
       this.computeNormal();
    }
+};
+
+//
+// getCentroid - not really centroid, but center of points.
+// todo - find a good centroid algorithm. like tessellate to triangles. and use triangle's centroid to find real centroid.
+//
+Polygon.prototype.getCentroid = function(centroid) {
+   const begin = this.halfEdge;
+   let current = begin;
+   let numberOfVertex = 0;
+   do {
+      vec3.add(centroid, centroid, current.origin.vertex);
+      ++numberOfVertex;
+      current = current.next;
+   } while (current !== begin);
+   // compute centroid.
+   vec3.scale(centroid, centroid, 1.0/numberOfVertex);
 };
 
 
@@ -2006,6 +2025,16 @@ WingedTopology.prototype.findInsetContours = function(polygonSet) {
 };
 
 
+
+WingedTopology.prototype._liftDanglingEdge = function(hEdge, destVert) {
+   const next = hEdge.next;
+   const danglingOut = this._createEdge(next.origin, destVert);
+   destVert.outEdge = danglingOut.pair;
+   hEdge.next = danglingOut;
+   danglingOut.pair.next = next;
+   danglingOut.face = danglingOut.pair.face = hEdge.face;   // assigned face, but don't update number of vertex.
+   return danglingOut;
+};
 //
 // insert a dangling corner edge at hEdge.next position.
 WingedTopology.prototype.liftCornerEdge = function(hEdge, percent = 0.2) {
@@ -2019,11 +2048,7 @@ WingedTopology.prototype.liftCornerEdge = function(hEdge, percent = 0.2) {
    vec3.add(pt, pt, vector);
    let destVert = this.addVertex(pt);
    // fixup the new fence End
-   let danglingOut = this._createEdge(next.origin, destVert);
-   destVert.outEdge = danglingOut.pair;
-   hEdge.next = danglingOut;
-   danglingOut.pair.next = next;
-   danglingOut.face = danglingOut.pair.face = hEdge.face;   // assigned face, but don't update number of vertex.
+   let danglingOut = this._liftDanglingEdge(hEdge, destVert);
 
    return danglingOut;
 };
@@ -2170,6 +2195,37 @@ WingedTopology.prototype.undoSlideToNext = function(result) {
    } else {
       this.slideToPrev(result.outEdge, result.prevPrev);
    }
+};
+
+
+//
+// insertFan - inside polygon, adds polygon fan with fanLists(Set)
+//
+WingedTopology.prototype.insertFan = function(polygon, fanLists) {
+   //const 
+   
+   // get polygon centroid.
+   const centroid = vec3.create();
+   polygon.getCentroid(centroid);
+   let destVert = this.addVertex(centroid);
+
+   const fan = [];
+   let liftEdge;
+   let lastOut;
+   for (let hEdge of polygon.hEdges()) {  // walk in order.
+      if (fanLists.has(hEdge)) { // only in the list, we do fanEdge.
+         if (lastOut !== undefined) {
+            lastOut = this.insertEdge(hEdge, lastOut.pair);
+            fan.push(lastOut.pair);
+         } else { // liftCorner Edge for first Fan.
+            lastOut = this._liftDanglingEdge(hEdge, destVert);
+            fan.push( lastOut.pair );
+         }
+      }
+   }
+
+   //return {fan: fan, liftEdge: liftEdge};
+   return fan;
 };
 
 
