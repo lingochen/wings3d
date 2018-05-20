@@ -3365,6 +3365,9 @@ PreviewCage.prototype.extrudeEdge = function(creaseFlag = false) {
    const pt = vec3.create();
    let extrudeOut  = new Set;    // fFence
    let extrudeIn = new Set;       // sFence
+   let fences = [];
+   let adjustEnd = [];
+   let adjustStart = [];
    let traversedEdges = new Set;
    for (let wEdge of this.selectedSet) {
       for (let hEdge of wEdge) {
@@ -3389,8 +3392,8 @@ PreviewCage.prototype.extrudeEdge = function(creaseFlag = false) {
             liftEdges.push(danglingOut.pair);
             let result = this.geometry.extrudeEdge(danglingOut.pair, danglingOut);    
             undoExtrudeAccounting(result);
-         } else { // now we have a starting non-selected hEdge. restart from here.
-            let fences = [];
+         } else { // now we have a starting non-selected hEdge. restart from here. this is the heart of the algorithm.
+            //let fences = [];
             hEdge = current;     // reset the starting edge.
             do {
                let start = current; // now find contiguous selected.
@@ -3399,43 +3402,77 @@ PreviewCage.prototype.extrudeEdge = function(creaseFlag = false) {
                   traversedEdges.add(current);
                   current = current.next; // go until not selected.
                }
-               // we have start, we have end. now split new Edge if not already split by other.
+               let endAdjust = false;
+               let startAdjust = false;
+               let end = current;
+               // we have start, we have end. now split new Edge if not already split by neighbor edges.
                if (!extrudeIn.has(current.pair)) {
-                  // split it out.
-                  vec3.lerp(pt, current.origin.vertex, current.destination().vertex, 0.2);
-                  current = this.geometry.splitEdge(current, pt); // current newly create edge
-                  extrudeOut.add(current);
-                  liftEdges.push(current.pair);
+                  if (end === end.pair.next.pair.next) { // special case of -- edge. lift Edge.
+                     endAdjust = true;
+                  } else { // split it out.
+                     vec3.lerp(pt, current.origin.vertex, current.destination().vertex, 0.2);
+                     current = this.geometry.splitEdge(current, pt); // current newly create edge
+                     end = current;
+                     extrudeOut.add(current);
+                     liftEdges.push(current.pair);
+                  }
                } else {
                   extrudeIn.delete(current.pair);   // yes, already create, now connect together, can savely remove
                }
-               if (!extrudeOut.has(start.pair)) {
-                  // split it out, start stay in the front.
-                  vec3.lerp(pt, start.origin.vertex, start.destination().vertex, 0.8);
-                  let newOut = this.geometry.splitEdge(start.pair, pt).pair;
-                  extrudeIn.add(newOut);
-                  liftEdges.push(newOut);
-                  if (start === hEdge) {
-                     hEdge = newOut;               // adjust endEdge.
+               if (!extrudeOut.has(start.pair)) {  // we have end, check if already split by neighbor edges.
+                  if (start === start.next.pair.next.pair) { // special case of -- edge. lift Edge
+                     startAdjust = true;
+                  } else { // split it out, start stay in the front.
+                     vec3.lerp(pt, start.origin.vertex, start.destination().vertex, 0.8);
+                     let newOut = this.geometry.splitEdge(start.pair, pt).pair;
+                     extrudeIn.add(newOut);
+                     liftEdges.push(newOut);
+                     if (start === hEdge) {
+                        hEdge = newOut;               // adjust endEdge.
+                     }
+                     start = newOut;
                   }
-                  start = newOut;
                } else {
                   extrudeOut.delete(start.pair);   // yes, already create, now connect together, can savely remove
                }
-               fences.push( {start: start, end: current});
+               let fence = {start: start, end: end};
+               fences.push(fence);
+               if (endAdjust) { adjustEnd.push(fence);}
+               if (startAdjust) { adjustStart.push(fence);}
                // non-selected edge
-               while (!this.selectedSet.has(current.next.wingedEdge)) { current = current.next; }
+               while (!this.selectedSet.has(current.next.wingedEdge)) { 
+                  current = current.next;
+               }
             } while (current !== hEdge);  // check if we have reach starting point.
-
-            // now loop the extrudeEdge. we could not (splitEdge and extrudeEdge) because it will become very hard to find the beginning again.
-            for (let fence of fences) {
-               // now extrude the contiguous selected edge.
-               let result = this.geometry.extrudeEdge(fence.start, fence.end);
-               undoExtrudeAccounting(result);
-            }
          }
       }
    }
+   // before loop the extrudeEdge, check if we needs to adjust {start, end}
+   for (let fence of adjustEnd) {
+      let end = fence.end;
+      end.face.getCentroid(pt);
+      vec3.lerp(pt, end.origin.vertex, pt, 0.2);
+      const destVert = this.geometry.addVertex(pt);
+      end = this.geometry._liftDanglingEdge(end.prev(), destVert);
+      liftEdges.push(end);
+      fence.end = end;
+   }
+   for (let fence of adjustStart) {
+      let start = fence.start;
+      start.face.getCentroid(pt);
+      vec3.lerp(pt, start.destination().vertex, pt, 0.2);
+      const destVert = this.geometry.addVertex(pt);
+      start = this.geometry._liftDanglingEdge(start, destVert);
+      liftEdges.push(start);
+      fence.start = start.pair;
+   }
+   // now loop the extrudeEdge. we could not (splitEdge and extrudeEdge) because it will become very hard to find the beginning again.
+   for (let fence of fences) {
+      // now extrude the contiguous selected edge.
+      let result = this.geometry.extrudeEdge(fence.start, fence.end);
+      undoExtrudeAccounting(result);
+   }
+
    // connected the extrudeEdge corner together if any.
    for (let hOut of extrudeOut) {
       let hIn = hOut.pair;
