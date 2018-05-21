@@ -3454,7 +3454,7 @@ PreviewCage.prototype.extrudeEdge = function(creaseFlag = false) {
       vec3.lerp(pt, end.origin.vertex, pt, 0.2);
       const destVert = this.geometry.addVertex(pt);
       end = this.geometry._liftDanglingEdge(end.prev(), destVert);
-      liftEdges.push(end);
+      liftEdges.push(end.pair);
       fence.end = end;
    }
    for (let fence of adjustStart) {
@@ -3463,7 +3463,7 @@ PreviewCage.prototype.extrudeEdge = function(creaseFlag = false) {
       vec3.lerp(pt, start.destination().vertex, pt, 0.2);
       const destVert = this.geometry.addVertex(pt);
       start = this.geometry._liftDanglingEdge(start, destVert);
-      liftEdges.push(start);
+      liftEdges.push(start.pair);
       fence.start = start.pair;
    }
    // now loop the extrudeEdge. we could not (splitEdge and extrudeEdge) because it will become very hard to find the beginning again.
@@ -9748,7 +9748,7 @@ WingedTopology.prototype.collapseEdge = function(halfEdge, collapsibleWings) {
    if (next.next.next === next) {
       undoCollapseLeft = this._collapseLoop(next.next, collapsibleWings);
    }
-   if (pairNext.next.next === pairNext) {
+   if (pairNext.wingedEdge.isReal() && (pairNext.next.next === pairNext)) {   // add wingedEdge.isReal() to guard (--) edges. (or should we check (next ===pairNext))
       undoCollapseRight = this._collapseLoop(pairNext, collapsibleWings);
    }
    return function() {
