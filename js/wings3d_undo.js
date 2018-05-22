@@ -7,10 +7,16 @@
 class EditCommand {
    _calibrateMovement(mouseMove) {
       // todo: instead of magic constant. should supply a scaling factor.
-      var move = mouseMove/20.0;
-      if (move >= 2) {
-         move = 2;
+      let move;
+      if (mouseMove == 0) {
+         move = 0;
+      } else if (mouseMove < 0) {
+         move = Math.log(-mouseMove) / Math.log(15);
+         move = -move;
+      } else {
+         move = Math.log(mouseMove) / Math.log(15);
       }
+
       return move;
    }
 

@@ -1634,7 +1634,7 @@ WingedTopology.prototype.collapseEdge = function(halfEdge, collapsibleWings) {
    if (next.next.next === next) {
       undoCollapseLeft = this._collapseLoop(next.next, collapsibleWings);
    }
-   if (pairNext.wingedEdge.isReal() && (pairNext.next.next === pairNext)) {   // add wingedEdge.isReal() to guard (--) edges. (or should we check (next ===pairNext))
+   if (pairNext.wingedEdge.isReal() && (pairNext.next.next === pairNext)) {   // add wingedEdge.isReal() to guard (--) edges.
       undoCollapseRight = this._collapseLoop(pairNext, collapsibleWings);
    }
    return function() {
