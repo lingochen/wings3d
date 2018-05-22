@@ -1525,10 +1525,16 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 class EditCommand {
    _calibrateMovement(mouseMove) {
       // todo: instead of magic constant. should supply a scaling factor.
-      var move = mouseMove/20.0;
-      if (move >= 2) {
-         move = 2;
+      let move;
+      if (mouseMove == 0) {
+         move = 0;
+      } else if (mouseMove < 0) {
+         move = Math.log(-mouseMove) / Math.log(15);
+         move = -move;
+      } else {
+         move = Math.log(mouseMove) / Math.log(15);
       }
+
       return move;
    }
 
@@ -9748,7 +9754,7 @@ WingedTopology.prototype.collapseEdge = function(halfEdge, collapsibleWings) {
    if (next.next.next === next) {
       undoCollapseLeft = this._collapseLoop(next.next, collapsibleWings);
    }
-   if (pairNext.wingedEdge.isReal() && (pairNext.next.next === pairNext)) {   // add wingedEdge.isReal() to guard (--) edges. (or should we check (next ===pairNext))
+   if (pairNext.wingedEdge.isReal() && (pairNext.next.next === pairNext)) {   // add wingedEdge.isReal() to guard (--) edges.
       undoCollapseRight = this._collapseLoop(pairNext, collapsibleWings);
    }
    return function() {
