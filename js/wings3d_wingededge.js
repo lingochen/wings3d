@@ -188,6 +188,21 @@ Object.defineProperty(Vertex.prototype, 'valence', {
    },
 });
 
+//
+// compute normal(later) and adjust outEdge to lowest index edge.
+//
+Vertex.prototype.reorient = function() {
+   let outEdge = this.outEdge;
+   let current = this.outEdge;
+   do {
+      if (current.index < outEdge.index) {
+         outEdge = current;
+      }
+      current = current.pair.next;
+   } while (current !== this.outEdge);
+   this.outEdge = outEdge;    // get the lowest index outEdge;
+};
+
 Vertex.prototype.isReal = function() {
    return (this.outEdge !== null);
 };
@@ -429,20 +444,26 @@ Polygon.prototype.computeNormal = function() {
 };
 
 
-// recompute numberOfVertex and normal.
+// recompute numberOfVertex and normal. and reorient.
 Polygon.prototype.update = function() {
    const begin = this.halfEdge;
+   let halfEdge = begin;
    let current = begin;
    this.numberOfVertex = 0;
    do {
       current.face = this;
+      //current.origin.reorient();
       ++this.numberOfVertex;
+      if (current.index < halfEdge.index) {
+         halfEdge = current;
+      }
       if (this.numberOfVertex > 1001) {   // break;   
          console.log("something is wrong with polygon link list");
          return;
       }
       current = current.next;
    } while (current !== begin);
+   this.halfEdge = halfEdge;              // the lowest index.
    // compute normal.
    if (this.numberOfVertex > 2) {
       this.computeNormal();

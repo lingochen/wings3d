@@ -1529,10 +1529,10 @@ class EditCommand {
       if (mouseMove == 0) {
          move = 0;
       } else if (mouseMove < 0) {
-         move = Math.log(-mouseMove) / Math.log(15);
+         move = Math.log(-mouseMove) / 5.0;  // log to counteract mouse acceleration.
          move = -move;
       } else {
-         move = Math.log(mouseMove) / Math.log(15);
+         move = Math.log(mouseMove) / 5.0;
       }
 
       return move;
@@ -8308,6 +8308,21 @@ Object.defineProperty(Vertex.prototype, 'valence', {
    },
 });
 
+//
+// compute normal(later) and adjust outEdge to lowest index edge.
+//
+Vertex.prototype.reorient = function() {
+   let outEdge = this.outEdge;
+   let current = this.outEdge;
+   do {
+      if (current.index < outEdge.index) {
+         outEdge = current;
+      }
+      current = current.pair.next;
+   } while (current !== this.outEdge);
+   this.outEdge = outEdge;    // get the lowest index outEdge;
+};
+
 Vertex.prototype.isReal = function() {
    return (this.outEdge !== null);
 };
@@ -8549,20 +8564,26 @@ Polygon.prototype.computeNormal = function() {
 };
 
 
-// recompute numberOfVertex and normal.
+// recompute numberOfVertex and normal. and reorient.
 Polygon.prototype.update = function() {
    const begin = this.halfEdge;
+   let halfEdge = begin;
    let current = begin;
    this.numberOfVertex = 0;
    do {
       current.face = this;
+      //current.origin.reorient();
       ++this.numberOfVertex;
+      if (current.index < halfEdge.index) {
+         halfEdge = current;
+      }
       if (this.numberOfVertex > 1001) {   // break;   
          console.log("something is wrong with polygon link list");
          return;
       }
       current = current.next;
    } while (current !== begin);
+   this.halfEdge = halfEdge;              // the lowest index.
    // compute normal.
    if (this.numberOfVertex > 2) {
       this.computeNormal();
@@ -11726,10 +11747,11 @@ __webpack_require__(21);
 __webpack_require__(10);
 __webpack_require__(19);
 __webpack_require__(12);
+__webpack_require__(28);
 __webpack_require__(9);
 __webpack_require__(7);
 __webpack_require__(5);
-__webpack_require__(28);
+__webpack_require__(29);
 __webpack_require__(15);
 __webpack_require__(18);
 __webpack_require__(14);
@@ -11737,7 +11759,7 @@ __webpack_require__(8);
 __webpack_require__(4);
 __webpack_require__(16);
 __webpack_require__(6);
-__webpack_require__(29);
+__webpack_require__(30);
 __webpack_require__(1);
 __webpack_require__(3);
 __webpack_require__(11);
@@ -12178,6 +12200,74 @@ document.addEventListener('DOMContentLoaded', function() {
 
 /***/ }),
 /* 28 */
+/***/ (function(module, exports) {
+
+//
+//
+//
+
+const DraftBench = function(allocatedSize = 256) {  // should only be created by WingedEdge
+   var buf = new ArrayBuffer(allocatedSize*3 * Float32Array.BYTES_PER_ELEMENT);
+   this.buf = { buffer: buf, data: new Float32Array(buf), len: 0, };
+   this.vertices = [];
+   this.edges = [];        // wingededge
+   this.faces = [];
+   this.freeVertices = [];
+   this.freeEdges = [];
+   this.freeFaces = [];
+   // affected is when reuse, deleted, or change vital stats.
+   this.affected = {vertices: new Set, edges: new Set, faces: new Set};
+
+   this.preview = {centroid: {}};
+   this.preview.shaderData = gl.createShaderData();
+   this.preview.shaderData.setUniform3fv("faceColor", [0.5, 0.5, 0.5]);
+   this.preview.shaderData.setUniform3fv("selectedColor", [1.0, 0.0, 0.0]);
+   var layoutVec = ShaderData.attribLayout();
+   var layoutFloat = ShaderData.attribLayout(1);
+   this.preview.shaderData.createAttribute('position', layoutVec, gl.STATIC_DRAW);
+   this.preview.shaderData.createAttribute('barycentric', layoutVec, gl.STATIC_DRAW);
+   this.preview.shaderData.createAttribute('selected', layoutFloat, gl.DYNAMIC_DRAW);
+   this._resizeBoundingSphere(0);
+   this._resizePreview(0, 0);
+
+   // previewEdge
+   this.previewEdge = {};
+   this.previewEdge.shaderData = gl.createShaderData();
+   this.previewEdge.shaderData.setUniform4fv("selectedColor", [1.0, 0.0, 0.0, 1.0]);
+   this.previewEdge.shaderData.setUniform4fv('hiliteColor', [0.0, 1.0, 0.0, 1.0]);
+   this.previewEdge.shaderData.createAttribute('position', layoutVec, gl.STATIC_DRAW);
+   this.previewEdge.shaderData.createAttribute('color', layoutFloat, gl.DYNAMIC_DRAW);
+   this._resizePreviewEdge(0);
+
+   // previewVertex
+   this.previewVertex = {};
+   this.previewVertex.shaderData = gl.createShaderData();
+   this.previewVertex.shaderData.setUniform4fv("selectedColor", [1.0, 0.0, 0.0, 1.0]);
+   this.previewVertex.shaderData.setUniform4fv('hiliteColor', [0.0, 1.0, 0.0, 1.0]);
+   this.previewVertex.shaderData.createAttribute('position', layoutVec, gl.STATIC_DRAW);
+   this.previewVertex.shaderData.createAttribute('color', layoutFloat, gl.DYNAMIC_DRAW);
+   this._resizePreviewVertex(0);
+   // body state.
+   this.previewBody = {hilite: false};
+};
+
+DraftBench.CONST = (function() {
+   const constant = {};
+
+   constant.SELECTON  = new Float32Array(1);
+   constant.SELECTON[0] = 1.0;
+   constant.SELECTOFF = new Float32Array(1);
+   constant.SELECTOFF[0] = 0.0;
+   constant.BARYCENTRIC = new Float32Array(3);
+   constant.BARYCENTRIC[0] = 1.0;
+   constant.BARYCENTRIC[1] = 0.0;
+   constant.BARYCENTRIC[2] = 1.0;
+   return constant;
+}());
+
+
+/***/ }),
+/* 29 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -12310,7 +12400,7 @@ __WEBPACK_IMPORTED_MODULE_2__wings3d__["onReady"](createGuideTour);
 
 
 /***/ }),
-/* 29 */
+/* 30 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";

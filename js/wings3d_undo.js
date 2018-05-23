@@ -11,10 +11,10 @@ class EditCommand {
       if (mouseMove == 0) {
          move = 0;
       } else if (mouseMove < 0) {
-         move = Math.log(-mouseMove) / Math.log(15);
+         move = Math.log(-mouseMove) / 5.0;  // log to counteract mouse acceleration.
          move = -move;
       } else {
-         move = Math.log(mouseMove) / Math.log(15);
+         move = Math.log(mouseMove) / 5.0;
       }
 
       return move;
