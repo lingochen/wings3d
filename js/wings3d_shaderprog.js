@@ -168,9 +168,9 @@ let solidColor = {
       '}'].join("\n"),
    fragment:[
       'precision mediump float;',
-      'uniform vec4 uColor;',
+      'uniform vec4 faceColor;',
       'void main(void) {',
-      '  gl_FragColor = uColor;',
+      '  gl_FragColor = faceColor;',
       '}'].join("\n")
 };
 let simplePoint = { 
@@ -305,8 +305,8 @@ let colorSolidWireframe = {  // we don't have geometry shader, so we have to man
    fragment:[
       '#extension GL_OES_standard_derivatives : enable',
       'precision mediump float;',
-      'uniform vec3 faceColor;',
-      'uniform vec3 selectedColor;',  // hilite color
+      'uniform vec4 faceColor;',
+      'uniform vec4 selectedColor;',  // hilite color
       'varying vec3 vBC;',
       'varying float vSelected;',
 
@@ -317,13 +317,13 @@ let colorSolidWireframe = {  // we don't have geometry shader, so we have to man
       '}',
 
       'void main(){',
-         'vec3 interiorColor = faceColor;',
+         'vec4 interiorColor = faceColor;',
          'if (vSelected == 1.0) {',
          '  interiorColor = selectedColor;',
          '}',
          // coloring by edge
-         'gl_FragColor.rgb = mix(vec3(0.0), interiorColor, edgeFactor());',
-         'gl_FragColor.a = 1.0;',
+         'gl_FragColor.rgb = mix(vec3(0.0), vec3(interiorColor), edgeFactor());',
+         'gl_FragColor.a = interiorColor[3];',
       '}'].join("\n"),
 };
 

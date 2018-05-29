@@ -13,6 +13,7 @@ import * as View from './wings3d_view';
 import * as ShaderProg from './wings3d_shaderprog';
 import * as UI from './wings3d_ui';
 import {action} from './wings3d';
+import {DraftBench} from './wings3d_draftbench';
 
 
 
@@ -236,14 +237,14 @@ class VertexMadsor extends Madsor {
       }
    }
 
-   draw(gl) {
+   draw(gl, draftBench) {
       // draw hilite
       //if (this.currentEdge) {
          this.useShader(gl);
          gl.bindTransform();
-         this.eachPreviewCage( function(preview) {
-            preview.drawVertex(gl);
-         });
+         //this.eachPreviewCage( function(preview) {
+            draftBench.drawVertex(gl);
+         //});
          gl.disableShader();
       //}
    }

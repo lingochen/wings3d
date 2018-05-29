@@ -16,6 +16,7 @@ import {EdgeMadsor} from './wings3d_edgemads';
 import {VertexMadsor} from './wings3d_vertexmads';
 import {BodyMadsor} from './wings3d_bodymads';
 import {PreviewCage} from './wings3d_model';
+import {DraftBench} from './wings3d_draftbench';
 
 
 // 
@@ -201,24 +202,9 @@ function currentMode() {
 // world objects management
 //
 const world = []; // private var
-function putIntoWorld(mesh) {
-   // write point to alert windows.
-   /*var triangleSize = mesh.faces.reduce( function(acc, element) {
-      return acc + element.numberOfVertex - 2;
-      }, 0);
-   var str = "Mesh:" + mesh.faces.length + "," + triangleSize + "{\n";
-   mesh.faces.forEach(function(poly, index, arry){
-      str += "face: [\n";
-      poly.eachVertex(function(_vert){
-         var vert = _vert.vertex;
-         str += "[" + vert[0] + "," + vert[1] + "," + vert[2] + "],\n";
-      });
-      str += "},\n";
-   });
-   geometryStatus(str);*/
-   //
-   var model = new PreviewCage(mesh);
-   //
+let draftBench; // = new DraftBench; wait for GL
+function putIntoWorld() {
+   let model = new PreviewCage(draftBench);
    return addToWorld(model);
 };
 
@@ -238,6 +224,10 @@ function removeFromWorld(previewCage) {
 function getWorld() {
    return world;
 }
+function updateWorld() {
+   draftBench.updatePreview();
+   Renderer.needToRedraw();
+};
 //-- End of World objects management -------------------------
 
 //
@@ -537,18 +527,17 @@ function drawWorld(gl) {
       gl.polygonOffset(1.0, 1.0);          // Set the polygon offset
       gl.enable(gl.POLYGON_OFFSET_FILL);
       mode.current.previewShader(gl);
-      world.forEach(function(model, _index, _array){
+      //world.forEach(function(model, _index, _array){
          gl.bindTransform();
-         model.draw(gl);
-      });
+         draftBench.draw(gl);
+      //});
       gl.disableShader();
       gl.disable(gl.POLYGON_OFFSET_FILL);
-
 
       gl.enable(gl.BLEND);
       gl.blendFunc(gl.SRC_COLOR, gl.DST_COLOR);
       // draw Current Select Mode (vertex, edge, or face)
-      mode.current.draw(gl);
+      mode.current.draw(gl, draftBench);
       gl.disable(gl.BLEND);
    }
 }
@@ -626,6 +615,7 @@ function init() {
 
 
    //Renderer.init(gl, drawWorld);  // init by itself
+   draftBench = new DraftBench;
 
    // capture click mouse event.
    gl.canvas.addEventListener("mouseenter", canvasHandleMouseEnter, false);
@@ -663,6 +653,7 @@ export {
    // data
    prop,
    theme,
+   draftBench,
    // function
    toggleVertexMode,
    toggleFaceMode,
@@ -678,6 +669,7 @@ export {
    addToWorld,
    removeFromWorld,
    getWorld,
+   updateWorld,
    // mouse handler
    //rayPick,
    attachHandlerMouseMove,

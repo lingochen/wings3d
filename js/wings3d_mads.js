@@ -199,7 +199,7 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
    setCurrent(edge, intersect, center) {
       if (this.currentEdge !== edge) {
          if (this.currentEdge !== null) {
-            this.hideOldHilite();
+            this.hideOldHilite(edge);
          }
          if (edge !== null) {
             this.showNewHilite(edge, intersect, center);
@@ -271,13 +271,13 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       }, selection);     
    }
 
-   draw(gl) {
+   draw(gl, draftBench) {
       if (this.currentEdge) {
          this.useShader(gl);
          gl.bindTransform();
-         gl.bindShaderData(this.shaderData, false);
-         this.drawObject(gl);
-         gl.disableShader();
+         //gl.bindShaderData(this.shaderData, false);
+         this.drawObject(gl, draftBench);
+         //gl.disableShader();
       }
    }
 }

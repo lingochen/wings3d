@@ -105,11 +105,17 @@ class BodyMadsor extends Madsor {
    }
 
    hideOldHilite() {
-      this.preview.hiliteBody(false);
+      if (this.hiliteView !== this.preview) {
+         this.preview.hiliteBody(false);
+         this.hiliteView = this.preview;
+      }
    }
 
    showNewHilite(_edge, _intersect, _center) {
-      this.preview.hiliteBody(true);
+      if (this.hiliteView !== this.preview) {
+         this.preview.hiliteBody(true);
+         this.hiliteView = this.preview;
+      }
    }
 
    similarSelection() {
@@ -166,6 +172,9 @@ class BodyMadsor extends Madsor {
    }
 
    toggleFunc(toMadsor) {
+      this.hiliteView = null;
+      this.hideOldHilite();
+      this.hiliteView = null;
       const self = this;
       var redoFn;
       var snapshots = [];
@@ -207,10 +216,17 @@ class BodyMadsor extends Madsor {
       }
    }
 
-   draw(gl) {} // override draw
+   drawObject(gl, draftBench) {
+      // draw hilite
+      draftBench.drawHilite(gl);
+   } 
 
    previewShader(gl) {
       gl.useShader(ShaderProg.colorSolidWireframe);
+   }
+
+   useShader(gl) {
+      gl.useShader(ShaderProg.solidColor);
    }
 }
 

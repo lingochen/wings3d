@@ -487,99 +487,23 @@ Polygon.prototype.getCentroid = function(centroid) {
    vec3.scale(centroid, centroid, 1.0/numberOfVertex);
 };
 
-
-var WingedTopology = function(allocatedSize = 256) {     // default to 256 vertex
-   var buf = new ArrayBuffer(allocatedSize*3 * Float32Array.BYTES_PER_ELEMENT);
-   this.buf = { buffer: buf, data: new Float32Array(buf), len: 0, };
-   this.vertices = [];
-   this.edges = [];        // wingededge
-   this.faces = [];
+//
+// 
+//
+let MeshAllocator = function(allocatedSize = 1024) {
+   var buf = new ArrayBuffer(allocatedSize*3 * Float32Array.BYTES_PER_ELEMENT);  // vertices in typedArray
+   this.buf = { buffer: buf, data: new Float32Array(buf), len: 0, }; // vertex's pt buffer. to be used for Vertex.
+   this.vertices = [];     // class Vertex
+   this.edges = [];        // class WingedEdge
+   this.faces = [];        // class Polygon
    this.freeVertices = [];
    this.freeEdges = [];
    this.freeFaces = [];
    // affected is when reuse, deleted, or change vital stats.
    this.affected = {vertices: new Set, edges: new Set, faces: new Set};
 };
-
-WingedTopology.prototype.sanityCheck = function() {
-   let sanity = true;
-   // first check vertex for error.
-   for (let [index, vertex] of this.vertices.entries()) {
-      if (vertex.isReal()) {
-         if (vertex.outEdge.origin !== vertex) {
-            console.log("vertex " + index + " outEdge is wrong");
-            sanity = false;
-         } else {
-            // manual find prev. 
-            var start = vertex.outEdge;
-            var edge = start;
-            let prev = null;
-            let iterationCount = 0;    // make sure, no infinite loop
-            if (edge) {
-               do { // ccw ordering
-                  if (edge.pair.next === start) {
-                     prev = edge.pair;
-                     break;
-                  }
-                  edge = edge.pair.next;   // my pair's tail is in too. 
-                  iterationCount++;
-               } while (edge && (edge !== start) && (iterationCount < 101));
-            }
-            if (prev === null) {
-               console.log("vertex " + index + " is broken");
-               sanity = false;
-            }
-         }
-      }
-   }
-   // now check polygon
-   return sanity;
-};
-
-WingedTopology.prototype.clearAffected = function() {
-   this.affected.vertices.clear();
-   this.affected.edges.clear();
-   this.affected.faces.clear();
-};
-
-WingedTopology.prototype.addAffectedEdgeAndFace = function(vertex) {
-   this.affected.vertices.add(vertex);
-   const self = this;
-   vertex.eachOutEdge( function(halfEdge) {
-      self.affected.edges.add(halfEdge.wingedEdge);
-      if (halfEdge.face !== null) {
-         self.affected.faces.add(halfEdge.face);
-     }
-   });
-};
-
-// todo: ?binary search for delPolygon, then use splice. a win? for large freelist yes, but, I don't think it a common situation.
-WingedTopology.prototype._createPolygon = function(halfEdge, numberOfVertex, delPolygon) {
-   let polygon;
-   if (this.freeFaces.length > 0) {
-      if (typeof delPolygon !== "undefined") {
-         const index = delPolygon.index;   // remove delOutEdge from freeEdges list
-         this.freeFaces = this.freeFaces.filter(function(element) {
-            return element !== index;
-         });
-         polygon = delPolygon;
-      } else {
-         polygon = this.faces[ this.freeFaces.pop() ];
-      }
-      polygon.halfEdge = halfEdge;
-      polygon.numberOfVertex = numberOfVertex;
-      polygon.update();
-      this.affected.faces.add( polygon );
-   } else {
-      polygon = new Polygon(halfEdge, numberOfVertex);
-      polygon.index = this.faces.length;
-      this.faces.push( polygon );
-   }
-   return polygon;
-};
-
-// return vertex index
-WingedTopology.prototype.addVertex = function(pt, delVertex) {
+// allocation,
+MeshAllocator.prototype.allocVertex = function(pt, delVertex) {
    if (this.freeVertices.length > 0) {
       let vertex;
       if (typeof delVertex === 'undefined') {
@@ -623,7 +547,7 @@ WingedTopology.prototype.addVertex = function(pt, delVertex) {
    }
 };
 
-WingedTopology.prototype._createEdge = function(begVert, endVert, delOutEdge) {
+MeshAllocator.prototype.allocEdge = function(begVert, endVert, deOut) {
    let edge;
    let outEdge;
    if (this.freeEdges.length > 0) { // prefered recycle edge.
@@ -651,6 +575,206 @@ WingedTopology.prototype._createEdge = function(begVert, endVert, delOutEdge) {
    }
 
    return outEdge;
+};
+
+// todo: ?binary search for delPolygon, then use splice. a win? for large freelist yes, but, I don't think it a common situation.
+MeshAllocator.prototype.allocPolygon = function(halfEdge, numberOfVertex, delPolygon) {
+   let polygon;
+   if (this.freeFaces.length > 0) {
+      if (typeof delPolygon !== "undefined") {
+         const index = delPolygon.index;   // remove delOutEdge from freeEdges list
+         this.freeFaces = this.freeFaces.filter(function(element) {
+            return element !== index;
+         });
+         polygon = delPolygon;
+      } else {
+         polygon = this.faces[ this.freeFaces.pop() ];
+      }
+      polygon.halfEdge = halfEdge;
+      polygon.numberOfVertex = numberOfVertex;
+      polygon.update();
+      this.affected.faces.add( polygon );
+   } else {
+      polygon = new Polygon(halfEdge, numberOfVertex);
+      polygon.index = this.faces.length;
+      this.faces.push( polygon );
+   }
+   return polygon;
+};
+
+// recycled
+// insert the index number in reverse order. smallest last.
+MeshAllocator.prototype._insertFreeList = function(val, array) {
+   var l = 0, r = array.length - 1;
+   while (l <= r) {
+      //let m = (l + r) >>> 1; /// equivalent to Math.floor((l + h) / 2) but faster
+      let m = l + ((r-l) >>> 1); // avoid overflow. 
+      let comparison = val - array[m];
+      if (comparison > 0) {
+         r = m - 1;
+      } else if (comparison < 0) {
+         l = m + 1;
+      } else {
+         break; // should no happened.
+      }
+   }
+   array.splice(l, 0, val);
+};
+MeshAllocator.prototype.freeVertex = function(vertex) {
+   vertex.outEdge = null;
+   //vertex.vertex.fill(0.0);
+   // assert !freeVertices.has(vertex);
+   //this.freeVertices.push( vertex );
+   this._insertFreeList(vertex.index, this.freeVertices);
+   this.affected.vertices.add( vertex );
+};
+
+MeshAllocator.prototype.freeHEdge = function(edge) {
+   const pair = edge.pair;
+   edge.face = null;
+   pair.face = null;
+   edge.origin = null;
+   pair.origin = null;
+   // link together for a complete loop
+   edge.next = pair;
+   pair.next = edge;
+   // assert !this.freeEdges.has( edge.wingedEdge );
+   //this.freeEdges.push( edge.wingedEdge );
+   this._insertFreeList(edge.wingedEdge.index, this.freeEdges);
+   this.affected.edges.add( edge.wingedEdge );
+};
+
+MeshAllocator.prototype.freePolygon = function(polygon) {
+   polygon.halfEdge = null;
+   polygon.numberOfVertex = 0;
+   // assert !freeFaces.has( polygon );
+   //this.freeFaces.push( polygon );
+   this._insertFreeList(polygon.index, this.freeFaces);
+   this.affected.faces.add( polygon );
+};
+
+
+// update for affected (vertex, edge, and polygon)
+MeshAllocator.prototype.clearAffected = function() {
+   this.affected.vertices.clear();
+   this.affected.edges.clear();
+   this.affected.faces.clear();
+};
+
+MeshAllocator.prototype.addAffectedEdgeAndFace = function(vertex) {
+   this.affected.vertices.add(vertex);
+   const self = this;
+   vertex.eachOutEdge( function(halfEdge) {
+      self.affected.edges.add(halfEdge.wingedEdge);
+      if (halfEdge.face !== null) {
+         self.affected.faces.add(halfEdge.face);
+     }
+   });
+};
+
+
+// 
+// changed - so Vertex, WingedEdge, and Polygon is allocated from meshAllocator. So different 
+// Models on the same DraftBench can use the same Allocation. Merging becomes easier.
+//
+var WingedTopology = function(allocator) {
+   this.alloc = allocator;
+   this.vertices = new Set;
+   this.faces = new Set;
+   this.edges = new Set;
+};
+
+// act as destructor
+WingedTopology.prototype.free = function() {
+   for (let polygon of this.faces) {
+      this.alloc.freePolygon(polygon);
+   }
+   this.faces = new Set;
+   for (let wedge of this.edges) {
+      this.alloc.freeHEdge(wedge.left);
+   }
+   this.edges = new Set;
+   for (let vertex of this.vertices) {
+      this.alloc.freeVertex(vertex);
+   }
+   this.vertices = new Set;
+};
+
+WingedTopology.prototype.sanityCheck = function() {
+   let sanity = true;
+   // first check vertex for error.
+   for (let [index, vertex] of this.vertices.entries()) {
+      if (vertex.isReal()) {
+         if (vertex.outEdge.origin !== vertex) {
+            console.log("vertex " + index + " outEdge is wrong");
+            sanity = false;
+         } else {
+            // manual find prev. 
+            var start = vertex.outEdge;
+            var edge = start;
+            let prev = null;
+            let iterationCount = 0;    // make sure, no infinite loop
+            if (edge) {
+               do { // ccw ordering
+                  if (edge.pair.next === start) {
+                     prev = edge.pair;
+                     break;
+                  }
+                  edge = edge.pair.next;   // my pair's tail is in too. 
+                  iterationCount++;
+               } while (edge && (edge !== start) && (iterationCount < 101));
+            }
+            if (prev === null) {
+               console.log("vertex " + index + " is broken");
+               sanity = false;
+            }
+         }
+      }
+   }
+   // now check polygon
+   return sanity;
+};
+
+WingedTopology.prototype.clearAffected = function() {
+   this.alloc.clearAffected();
+};
+
+WingedTopology.prototype.addAffectedEdgeAndFace = function(vertex) {
+   this.alloc.addAffectedEdgeAndFace(vertex);
+};
+
+WingedTopology.prototype._createPolygon = function(halfEdge, numberOfVertex, delPolygon) {
+   const polygon = this.alloc.allocPolygon(halfEdge, numberOfVertex, delPolygon);
+   this.faces.add(polygon);
+   return polygon;
+};
+
+// return vertex index
+WingedTopology.prototype.addVertex = function(pt, delVertex) {
+   const vertex = this.alloc.allocVertex(pt, delVertex);
+   this.vertices.add(vertex);
+   return vertex;
+};
+
+WingedTopology.prototype._createEdge = function(begVert, endVert, delOutEdge) {
+   const outEdge = this.alloc.allocEdge(begVert, endVert, delOutEdge);
+   this.edges.add(outEdge.wingedEdge);
+   return outEdge;
+};
+// recycled
+WingedTopology.prototype._freeVertex = function(vertex) {
+   this.alloc.freeVertex(vertex);
+   this.vertices.delete(vertex);
+};
+
+WingedTopology.prototype._freeEdge = function(edge) {
+   this.alloc.freeHEdge(edge);
+   this.edges.delete(edge.wingedEdge);
+};
+
+WingedTopology.prototype._freePolygon = function(polygon) {
+   this.alloc.freePolygon(polygon);
+   this.faces.delete(polygon);
 };
 
 // return winged edge ptr because internal use only.
@@ -766,8 +890,8 @@ WingedTopology.prototype.addPolygon = function(pts) {
          nextIndex = 0;
       }
 
-      var v0 = this.vertices[pts[i]];
-      var v1 = this.vertices[pts[nextIndex]];
+      var v0 = this.alloc.vertices[pts[i]];
+      var v1 = this.alloc.vertices[pts[nextIndex]];
       var edge = this.findHalfEdge(v0, v1);
       if (edge === null) { // not found, create one
          edge = this.addEdge(v0, v1);
@@ -1464,59 +1588,6 @@ WingedTopology.prototype._liftEdge = function(outLeft, inRight, fromVertex, delE
    this.affected.faces.add(outEdge.face);
    this.affected.faces.add(inEdge.face);
 }
-
-
-// insert the index number in reverse order. smallest last.
-WingedTopology.prototype._insertFreeList = function(val, array) {
-   var l = 0, r = array.length - 1;
-   while (l <= r) {
-      //let m = (l + r) >>> 1; /// equivalent to Math.floor((l + h) / 2) but faster
-      let m = l + ((r-l) >>> 1); // avoid overflow. 
-      let comparison = val - array[m];
-      if (comparison > 0) {
-         r = m - 1;
-      } else if (comparison < 0) {
-         l = m + 1;
-      } else {
-         break; // should no happened.
-      }
-   }
-   array.splice(l, 0, val);
-};
-
-// recycled
-WingedTopology.prototype._freeVertex = function(vertex) {
-   vertex.outEdge = null;
-   //vertex.vertex.fill(0.0);
-   // assert !freeVertices.has(vertex);
-   //this.freeVertices.push( vertex );
-   this._insertFreeList(vertex.index, this.freeVertices);
-   this.affected.vertices.add( vertex );
-};
-
-WingedTopology.prototype._freeEdge = function(edge) {
-   const pair = edge.pair;
-   edge.face = null;
-   pair.face = null;
-   edge.origin = null;
-   pair.origin = null;
-   // link together for a complete loop
-   edge.next = pair;
-   pair.next = edge;
-   // assert !this.freeEdges.has( edge.wingedEdge );
-   //this.freeEdges.push( edge.wingedEdge );
-   this._insertFreeList(edge.wingedEdge.index, this.freeEdges);
-   this.affected.edges.add( edge.wingedEdge );
-};
-
-WingedTopology.prototype._freePolygon = function(polygon) {
-   polygon.halfEdge = null;
-   polygon.numberOfVertex = 0;
-   // assert !freeFaces.has( polygon );
-   //this.freeFaces.push( polygon );
-   this._insertFreeList(polygon.index, this.freeFaces);
-   this.affected.faces.add( polygon );
-};
 
 
 WingedTopology.prototype._collapseEdge = function(halfEdge) {
@@ -2254,5 +2325,6 @@ export {
    HalfEdge,
    Vertex,
    Polygon,
+   MeshAllocator,
    WingedTopology,
 }

@@ -14,7 +14,7 @@ import {gl, ShaderData} from './wings3d_gl';
 import * as ShaderProg from './wings3d_shaderprog';
 import * as UI from './wings3d_ui';
 import {action} from './wings3d';
-
+import {DraftBench} from './wings3d_draftbench';
 
 
 class FaceMadsor extends Madsor {
@@ -66,11 +66,6 @@ class FaceMadsor extends Madsor {
       UI.bindMenuItem(action.faceBump.name, (ev) => {
          View.attachHandlerMouseMove(new BumpFaceHandler(this));
        });
-      // setup highlite face, at most 28 triangles.
-      var buf = new Float32Array(3*30);
-      this.trianglefan = {data: buf, length: 0};
-      var layout = ShaderData.attribLayout();
-      this.shaderData.setupAttribute('position', layout, this.trianglefan.data, gl.DYNAMIC_DRAW);  // needs to import gl.DYNAMIC_DRAW. 
    }
 
    modeName() {
@@ -219,27 +214,15 @@ class FaceMadsor extends Madsor {
       }    
    }
 
-   showNewHilite(edge, intersect, center) {
+   hideOldHilite(edge) {
+      if ((edge === null) || (this.currentEdge.face !== edge.face)) {
+         View.draftBench.hiliteFace(null, false);
+      }
+   }
+
+   showNewHilite(edge, intersect, center, draftBench) {
       if ((this.currentEdge === null) || (this.currentEdge.face !== edge.face)) {   // make sure it new face
-         if (edge.face.numberOfVertex < 17) {
-            var position = this.trianglefan.data;
-            var i = 0;
-            position[i++] = center[0];
-            position[i++] = center[1];
-            position[i++] = center[2];
-            edge.face.eachVertex( function(vertex) {
-               position[i++] = vertex.vertex[0];
-               position[i++] = vertex.vertex[1];
-               position[i++] = vertex.vertex[2];
-            });
-            // copied the first vertex to complete fan
-            position[i++] = position[3];
-            position[i++] = position[4];
-            position[i++] = position[5];
-            this.trianglefan.length = i / 3;
-            // update vbo buffer
-            this.shaderData.uploadAttribute('position', 0, this.trianglefan.data);
-         }
+         View.draftBench.hiliteFace(edge.face, true);
       }
    }
 
@@ -297,9 +280,9 @@ class FaceMadsor extends Madsor {
       }
    }
 
-   drawObject(gl) {
+   drawObject(gl, draftBench) {
       // draw hilite
-      gl.drawArrays(gl.TRIANGLE_FAN, 0, this.trianglefan.length);
+      draftBench.drawHilite(gl);
    }
 
    previewShader(gl) {

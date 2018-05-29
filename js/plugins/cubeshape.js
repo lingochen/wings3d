@@ -53,7 +53,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
    createCube = function(size, numberOfCut, translate, rotate, onGround) {
       // create, one 
-      var mesh = new WingedTopology;
+      let preview = View.putIntoWorld();    //new WingedTopology; create WingedTopology(PreviewCage) and putIntoWorld.
+      let mesh = preview.geometry;
       var map = {};
       function addVertexUnique(pt) {
          var x = pt[0], y = pt[1], z = pt[2];
@@ -168,7 +169,8 @@ document.addEventListener('DOMContentLoaded', function() {
                  dest[2]-stepX[up][2]-stepZ[rt][2]+offset[2]];
       });
 
-      _pvt.previewCage = View.putIntoWorld(mesh);
+      _pvt.previewCage = preview;   //View.putIntoWorld(); already.
+      View.updateWorld();
    }; 
 
    // insert a hidden form into document
