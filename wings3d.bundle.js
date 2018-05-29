@@ -60,7 +60,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 20);
+/******/ 	return __webpack_require__(__webpack_require__.s = 21);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -82,7 +82,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "bindAction", function() { return bindAction; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "runAction", function() { return runAction; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "setInteraction", function() { return setInteraction; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__ = __webpack_require__(3);
 /*
 //  wings3d.js
 //     The start module of Wings 3D. Port,
@@ -437,6 +437,709 @@ function addActionConstant(id) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "prop", function() { return prop; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "theme", function() { return theme; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "draftBench", function() { return draftBench; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "toggleVertexMode", function() { return toggleVertexMode; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "toggleFaceMode", function() { return toggleFaceMode; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "toggleEdgeMode", function() { return toggleEdgeMode; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "toggleBodyMode", function() { return toggleBodyMode; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "restoreVertexMode", function() { return restoreVertexMode; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "restoreFaceMode", function() { return restoreFaceMode; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "restoreEdgeMode", function() { return restoreEdgeMode; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "restoreBodyMode", function() { return restoreBodyMode; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "currentMode", function() { return currentMode; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "putIntoWorld", function() { return putIntoWorld; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "addToWorld", function() { return addToWorld; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "removeFromWorld", function() { return removeFromWorld; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getWorld", function() { return getWorld; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "updateWorld", function() { return updateWorld; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "attachHandlerMouseMove", function() { return attachHandlerMouseMove; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "doCommand", function() { return doCommand; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "redoEdit", function() { return redoEdit; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "undoEdit", function() { return undoEdit; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "undoQueue", function() { return undoQueue; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "undoQueueCombo", function() { return undoQueueCombo; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "loadMatrices", function() { return loadMatrices; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "projection", function() { return projection; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "modelView", function() { return modelView; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "drawWorld", function() { return drawWorld; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "render", function() { return render; });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__ = __webpack_require__(2);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_render__ = __webpack_require__(18);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_camera__ = __webpack_require__(14);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_gl__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__plugins_wavefront_obj__ = __webpack_require__(19);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_undo__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_facemads__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d_edgemads__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__wings3d_vertexmads__ = __webpack_require__(13);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__wings3d_bodymads__ = __webpack_require__(12);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__wings3d_model__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12__wings3d_draftbench__ = __webpack_require__(7);
+/*
+//     This module implements most of the commands in the View menu. 
+//
+// Original Erlang Version: Bjorn Gustavsson
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// 
+// pref and theme
+//
+// init Prop
+const prop = {
+      showEdges: true,
+      showBackfaces: true,
+      showNormals: false,
+      showBB: true,
+      showBBCenter: true,
+      showColors: true,
+      showMaterials: true,
+      showTextures: true,
+      showNormalMaps: true,
+      showWireBackfaces: false,
+      showGroundplane: true,
+      showCamImagePlane: false,
+      showAxes: true,
+      constrainAxes: true,
+      clipPlane: false,
+      orthogonalView: false,
+      numberOfLights: 1,
+      activeShader: 1,
+      filterTexture: true,
+      frameDisregardsMirror: false,
+      useSceneLights: false,
+      forceOrthoAlongAxis: false,
+      workmode: true,
+      //wireFramedObjects: gb_sets:empty(),
+      //currentView: DEFAULT_VIEW,   // goes to camera
+      allowRotation: true,
+      allowInfoText: true,
+      miniAxis: true
+   };
+const nativeTheme = {
+       activeVectorColor: [0.0, 1.0, 0.0],
+       clipPlaneColor: [0.8, 0.3, 0.0],
+       consoleColor: [1.0, 1.0, 1.0],
+       consoleTextColor: [0.0, 0.0, 0.0],
+       defaultAxis: [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]],
+       edgeColor: [0.0, 0.0, 0.0],
+       gridColor: [0.3, 0.3, 0.3],
+       hardEdgeColor: [1.0, 0.5, 0.0],
+       infoBackgroundColor: [0.38, 0.38, 0.38, 0.5],
+       infoColor: [1.0, 1.0, 1.0],
+       infoLineBg: [0.33131360000000004, 0.4, 0.0],
+       infoLineText: [1.0, 1.0, 1.0],
+       maskedVertexColor: [0.5, 1.0, 0.0, 0.8],
+       materialDefault: [0.7898538076923077, 0.8133333333333334, 0.6940444444444445],
+       normalVectorColor: [0.0, 1.0, 0.0],
+       sculptMagnetColor: [0.0, 0.0, 1.0, 0.1],
+       selectedColor: [0.65, 0.0, 0.0],
+       selectedHlite: [0.7, 0.7, 0.0],
+       tweakMagnetColor: [0.0, 0.0, 1.0, 0.06],
+       tweakVectorColor: [1.0, 0.5, 0.0],
+       unselectedHlite: [0.0, 0.65, 0.0],
+       vertexColor: [0.0, 0.0, 0.0],
+       color: [[0.7, 0.0, 0.1], [0.37210077142857145, 0.82, 0.0], [0.0, 0.3, 0.8]],
+       negColor: [[0.8, 0.8, 0.8], [0.8, 0.8, 0.8], [0.8, 0.8, 0.8]]
+   };
+let theme = nativeTheme;
+
+//--  end of pref and theme --------------------------------------------------------------------------
+
+// 
+// editing mode management
+//
+const mode = {             // private variable, needed to initialize after gl, 
+   face: null,//new FaceMadsor, 
+   edge: null,//new EdgeMadsor,
+   vertex: null,//new VertexMadsor,
+   body: null,//new BodyMadsor,
+   current: null,
+};
+function initMode() {
+   mode.face = new __WEBPACK_IMPORTED_MODULE_7__wings3d_facemads__["FaceMadsor"];
+   mode.edge = new __WEBPACK_IMPORTED_MODULE_8__wings3d_edgemads__["EdgeMadsor"];
+   mode.vertex = new __WEBPACK_IMPORTED_MODULE_9__wings3d_vertexmads__["VertexMadsor"];
+   mode.body = new __WEBPACK_IMPORTED_MODULE_10__wings3d_bodymads__["BodyMadsor"];
+   mode.current = mode.face;
+   mode.face.setWorld(world);
+   mode.edge.setWorld(world);
+   mode.vertex.setWorld(world);
+   mode.body.setWorld(world);
+};
+
+
+function toggleMode(mode) {
+   let button = document.getElementById('toggle'+mode+'Mode');  // :checked property only existed on <input>
+   if (button && !button.checked) {
+      button.click();         // https://stackoverflow.com/questions/8206565/check-uncheck-checkbox-with-javascript
+   }
+}
+function toggleVertexMode() {
+   // change current mode to 
+   if (mode.current !== mode.vertex) {
+      mode.current.toggleFunc(mode.vertex);
+      mode.current = mode.vertex;
+      toggleMode('Vertex');
+      __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
+   }
+};
+
+function toggleFaceMode() {
+   if (mode.current !== mode.face) {
+      mode.current.toggleFunc(mode.face);
+      mode.current = mode.face;
+      toggleMode('Face');
+      __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
+   }
+};
+
+function toggleEdgeMode() {
+   if (mode.current !== mode.edge) {
+      mode.current.toggleFunc(mode.edge);
+      mode.current = mode.edge;
+      toggleMode('Edge');
+      __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
+   }
+};
+
+function toggleBodyMode() {
+   if (mode.current !== mode.body) {
+      mode.current.toggleFunc(mode.body);
+      mode.current = mode.body;
+      toggleMode('Body');
+      __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
+   }
+};
+
+function restoreVertexMode(snapshots) {
+   if (mode.current !== mode.vertex) {
+      mode.current.restoreMode(mode.vertex, snapshots);
+      mode.current = mode.vertex;
+      toggleMode('Vertex');
+      __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
+   } else {
+      // bad state. should always be in other mode. 
+   }
+};
+
+function restoreFaceMode(snapshots) {
+   if (mode.current !== mode.face) {
+      mode.current.restoreMode(mode.face, snapshots);
+      mode.current = mode.face;
+      toggleMode('Face');
+      __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
+   } else {
+      // bad state. should always be in other mode. 
+   }
+};
+
+function restoreEdgeMode(snapshots) {
+   if (mode.current !== mode.edge) {
+      mode.current.restoreMode(mode.edge, snapshots);
+      mode.current = mode.edge;
+      toggleMode('Edge');
+      __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
+   } else {
+      // bad state. should always be in other mode. 
+   }
+};
+
+function restoreBodyMode(snapshots) {
+   if (mode.current !== mode.body) {
+      mode.current.restoreMode(mode.body, snapshots);
+      mode.current = mode.body;
+      toggleMode('Body');
+      __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
+   } else {
+      // bad state. should always be in other mode. 
+   }
+};
+
+function currentMode() {
+   return mode.current;
+}
+//- End of editing Mode ----------
+
+//
+// world objects management
+//
+const world = []; // private var
+let draftBench; // = new DraftBench; wait for GL
+function putIntoWorld() {
+   let model = new __WEBPACK_IMPORTED_MODULE_11__wings3d_model__["PreviewCage"](draftBench);
+   return addToWorld(model);
+};
+
+function addToWorld(model) {
+   world.push( model );
+   __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
+   return model;
+}
+
+function removeFromWorld(previewCage) {
+   var index = world.indexOf(previewCage);
+   if (index >= 0) {
+      world.splice(index, 1);
+      __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
+   }
+};
+function getWorld() {
+   return world;
+}
+function updateWorld() {
+   draftBench.updatePreview();
+   __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
+};
+//-- End of World objects management -------------------------
+
+//
+// mouse handling
+//
+let lastPick = null;
+
+function rayPick(ray) {
+   let pick = null;
+   for (let model of world) {
+      const newPick = model.rayPick(ray);
+      if (newPick !== null) {
+         if ((pick === null) || (pick.t > newPick.t)) {
+            pick = newPick;
+         }
+      }
+   }
+   if (pick !== null) {
+      mode.current.setPreview(pick.model);
+      //if (lastPick !== null && lastPick.model !== pick.model) {
+      //   lastPick.model.setCurrentSelect(null);
+      //}
+      // now set current edge again.
+      lastPick = pick;
+      let intersect = vec3.create();
+      vec3.scaleAndAdd(intersect, ray.origin, ray.direction, pick.t);
+      mode.current.setCurrent(pick.edge, intersect, pick.center);
+      __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
+   } else {
+      if (lastPick !== null) {
+         // no current selection.
+         mode.current.setCurrent(null);
+         __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
+      }
+   }
+   // now the currentPick will be the next lastPick.
+   lastPick = pick;
+};
+
+let dragMode = null;
+function selectStart() {
+   if (lastPick !== null) {
+      dragMode = mode.current.selectStart(lastPick.model);
+      __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
+   }
+};
+
+function selectDrag() {
+   if ((dragMode !== null)) {// &&
+       if ((lastPick !== null)) {
+         dragMode.dragSelect(lastPick.model);
+         __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
+      }
+   }
+}
+
+function selectFinish() {
+   if (dragMode !== null) {
+      undoQueue(dragMode.finish());
+      dragMode = null;
+   }
+}
+
+const handler = {camera: null, mousemove: null};
+function canvasHandleMouseDown(ev) {
+   if (ev.button == 0) {
+      if (handler.camera !== null) {
+         handler.camera.doIt();  
+         handler.camera = null;
+         __WEBPACK_IMPORTED_MODULE_5__wings3d__["log"](__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].cameraModeExit, __WEBPACK_IMPORTED_MODULE_2__wings3d_camera__["view"]);
+         help('L:Select   M:Start Camera   R:Show Menu   [Alt]+R:Tweak menu');      
+      } else if (handler.mousemove !== null) {
+         undoQueue( handler.mousemove );  // put on queue, commit()?
+         handler.mousemove = null;
+      } else {
+         //e.stopImmediatePropagation();
+         // ask view to select current hilite if any.
+         selectStart();
+      }
+   }
+};
+
+function canvasHandleMouseEnter(ev) {
+   if (handler.camera !== null) {
+      help('L:Accept   M:Drag to Pan  R:Cancel/Restore to View   Move mouse to tumble');
+   } else {
+      help('L:Select   M:Start Camera   R:Show Menu   [Alt]+R:Tweak menu');
+   }
+};
+
+function canvasHandleMouseLeave(ev) {
+   selectFinish();       // we can't caputre mouseup when mouse leave, so force to finish the selection.
+};
+
+// event handling, switching state if needs to be
+function canvasHandleMouseUp(ev) {
+   if (ev.button == 0) {
+      selectFinish();
+   } else if (ev.button == 1) { // check for middle button down
+      if (handler.camera === null) {
+         ev.stopImmediatePropagation();
+         // let camera handle the mouse event until it quit.
+         handler.camera = __WEBPACK_IMPORTED_MODULE_2__wings3d_camera__["getMouseMoveHandler"]();
+         // tell tutor step, we are in camera mode
+         __WEBPACK_IMPORTED_MODULE_5__wings3d__["log"](__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].cameraModeEnter, __WEBPACK_IMPORTED_MODULE_2__wings3d_camera__["view"]);
+         help('L:Accept   M:Drag to Pan  R:Cancel/Restore to View   Move mouse to tumble');
+         // disable mouse cursor
+         //document.body.style.cursor = 'none';
+      } 
+   }
+};
+
+function canvasHandleMouseMove(e) {
+   if (handler.camera !== null) {
+      handler.camera.handleMouseMove(e);
+   } else if (handler.mousemove !== null) {
+      handler.mousemove.handleMouseMove(e, __WEBPACK_IMPORTED_MODULE_2__wings3d_camera__["view"]);
+      __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
+   } else {
+      // handle pick selection
+      var viewport = __WEBPACK_IMPORTED_MODULE_3__wings3d_gl__["gl"].getViewport();
+      var winx = e.pageX - e.currentTarget.offsetLeft;
+      var winy = (viewport[3]+1) - (e.pageY - e.currentTarget.offsetTop);   // y is upside-down
+      // yes, sometimes mouse coordinate is outside of the viewport. firefox is larger than width, height.
+      if (winx < 0) { winx = 0; }
+      if (winx > viewport[2]) { winx = viewport[2];}
+      if (winy < 0) { winy = 0; }
+      if (winy > viewport[3]) { winy = viewport[3];}
+
+      var mat = loadMatrices(false);
+      var ptNear = __WEBPACK_IMPORTED_MODULE_3__wings3d_gl__["gl"].unProject(winx, winy, 0.0, mat.modelView, mat.projection);
+      var ptFar = __WEBPACK_IMPORTED_MODULE_3__wings3d_gl__["gl"].unProject(winx, winy, 1.0, mat.modelView, mat.projection);
+
+      vec3.sub(ptFar, ptFar, ptNear);
+      vec3.normalize(ptFar, ptFar);
+      var ray = {origin: ptNear, direction: ptFar};
+      //geometryStatus("mouse position: " + ptNear[0] + ", " + ptNear[1] + "," + ptNear[2] + ", <br />"+ ptFar[0] + ", " + ptFar[1] + ", " + ptFar[2]);
+      rayPick(ray);
+      // selectDrag if left button mousedown
+      selectDrag();
+   }
+};
+
+// contextMenu, mouse right click.
+function canvasHandleContextMenu(ev) {
+   if (handler.camera !== null || handler.mousemove !== null) {
+      // prevent propagation.
+      ev.preventDefault();
+      ev.stopImmediatePropagation();      // prevent document's contextmenu popup
+      if (handler.camera !== null) {
+         handler.camera.undo();
+         handler.camera = null;
+         __WEBPACK_IMPORTED_MODULE_5__wings3d__["log"](__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].cameraModeExit, __WEBPACK_IMPORTED_MODULE_2__wings3d_camera__["view"]);   // log action
+         help('L:Select   M:Start Camera   R:Show Menu   [Alt]+R:Tweak menu');
+      } else {
+         handler.mousemove.undo();
+         handler.mousemove = null;
+         __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
+      }
+      return true;
+   }
+   // let wings3d_contextmenu handle the event.
+   return false;
+};
+
+// handling in reverse order. the newest one will handle the event. (should be at most 2 handler)
+function attachHandlerMouseMove(mousemoveHandler) {
+   // should we make sure handler.mousemove is null?
+   handler.mousemove = mousemoveHandler;
+};
+
+function canvasHandleWheel(e) {
+   // adjusting to scroll pixels, inspiration from facebook's estimate.
+   var px = e.deltaX, py = e.deltaY, pz = e.deltaZ;
+   if ((px || py || pz) && e.deltaMode) {
+      var scale = 360;        // page scaler
+      if (e.deltaMode == 1) {
+         scale = 18;          // line scaler, should be line height
+      }
+      px *= scale;
+      py *= scale;
+      pz *= scale;
+   }
+   
+   // asks camera to zoomIn/Out.
+   __WEBPACK_IMPORTED_MODULE_2__wings3d_camera__["zoomStep"](py);
+};
+
+//-- end of mouse handling-----------------------------------------------
+
+// 
+// undo/redo handling
+//
+const undo = {queue: [], current: -1};
+// undo queueCombo, convenient functions
+function undoQueueCombo(editCommands) {
+   // wrap the array in a combo
+   const combo = new __WEBPACK_IMPORTED_MODULE_6__wings3d_undo__["EditCommandCombo"](editCommands);
+   undoQueue( combo );
+};
+// undo queue
+function undoQueue(editCommand) {
+   if ( (undo.queue.length-1) > undo.current ) {
+      // remove branch not taken
+      undo.queue.length = undo.current+1;
+   }
+   // now push the new command back
+   undo.queue.push(editCommand);
+   undo.current++;
+   __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
+};
+
+function redoEdit() {
+   if ( (undo.queue.length-1) > undo.current) {
+      undo.queue[++undo.current].doIt(mode.current);
+      __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
+   }
+};
+
+function undoEdit() {
+   if (undo.current >= 0) {
+      undo.queue[undo.current--].undo(mode.current);
+      __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
+   }
+};
+
+function doCommand(command) {
+   if (command.doIt) {
+      undoQueue(command);
+      return true;
+   } else {
+      // todo: pop messages, said command not workable.
+      return false;
+   }
+}
+
+// -- end of undo/redo handling ----------------------------------------------------------------------------------
+
+
+//
+// world rendering and utility functions
+//
+function loadMatrices(includeLights) {
+   let proj = projection(mat4.create()); // passed identity matrix.
+   let tmm = modelView(includeLights);
+   return { projection: proj, modelView: tmm.modelView, useSceneLights: tmm.useSceneLights };
+};
+
+//projection() ->
+//     OP0 = gl:getDoublev(?GL_PROJECTION_MATRIX),
+//     projection(e3d_transform:init(list_to_tuple(OP0))).
+function projection(In) {
+   const size = __WEBPACK_IMPORTED_MODULE_3__wings3d_gl__["gl"].getViewport();
+   const aspect = (size[2]-size[0]) / (size[3]-size[1]);
+   const view = __WEBPACK_IMPORTED_MODULE_2__wings3d_camera__["view"];
+   const ortho = view.orthogonalView;
+   if (!ortho && view.alongAxis) {
+      ortho = prop.force_ortho_along_axis;
+   }
+   var tp = mat4.create();
+   if (ortho) {
+      const sz = view.distance * Math.tan(view.fov * Math.PI  / 180 / 2);
+      mat4.ortho(tp, -sz * aspect, sz * aspect, -sz, sz, view.zNear, view.zFar);      
+   } else {
+      mat4.perspective(tp, view.fov, aspect, view.zNear, view.zFar);
+   }
+
+   mat4.mul(__WEBPACK_IMPORTED_MODULE_3__wings3d_gl__["gl"].projection, In, tp);
+   return __WEBPACK_IMPORTED_MODULE_3__wings3d_gl__["gl"].projection;
+};
+
+function modelView(includeLights = false) {
+   const view = __WEBPACK_IMPORTED_MODULE_2__wings3d_camera__["view"];
+
+   let useSceneLights = false;
+   if (includeLights) {
+      useSceneLights = prop.useSceneLights; // && Wings3D.light.anyEnabledLights();
+      if (!useSceneLights) {
+         //Wings3D.light.cameraLights();
+      }
+   }
+
+   // fromTranslation, identity * vec3. modelView rest.
+   mat4.fromTranslation(__WEBPACK_IMPORTED_MODULE_3__wings3d_gl__["gl"].modelView, vec3.fromValues(view.panX, view.panY, -view.distance));
+   mat4.rotateX(__WEBPACK_IMPORTED_MODULE_3__wings3d_gl__["gl"].modelView, __WEBPACK_IMPORTED_MODULE_3__wings3d_gl__["gl"].modelView, view.elevation * Math.PI / 180);
+   mat4.rotateY(__WEBPACK_IMPORTED_MODULE_3__wings3d_gl__["gl"].modelView, __WEBPACK_IMPORTED_MODULE_3__wings3d_gl__["gl"].modelView, view.azimuth * Math.PI / 180);
+   mat4.translate(__WEBPACK_IMPORTED_MODULE_3__wings3d_gl__["gl"].modelView, __WEBPACK_IMPORTED_MODULE_3__wings3d_gl__["gl"].modelView, view.origin);
+
+   if (useSceneLights) {
+      //Wings3D.light.globalLights();
+   }
+   return {useScentLights: useSceneLights, modelView: __WEBPACK_IMPORTED_MODULE_3__wings3d_gl__["gl"].modelView};
+};
+
+function drawWorld(gl) {
+   if (world.length > 0) {
+      gl.polygonOffset(1.0, 1.0);          // Set the polygon offset
+      gl.enable(gl.POLYGON_OFFSET_FILL);
+      mode.current.previewShader(gl);
+      //world.forEach(function(model, _index, _array){
+         gl.bindTransform();
+         draftBench.draw(gl);
+      //});
+      gl.disableShader();
+      gl.disable(gl.POLYGON_OFFSET_FILL);
+
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.SRC_COLOR, gl.DST_COLOR);
+      // draw Current Select Mode (vertex, edge, or face)
+      mode.current.draw(gl, draftBench);
+      gl.disable(gl.BLEND);
+   }
+}
+
+function render(gl) {
+   __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["render"](gl, drawWorld);
+};
+
+//-- end of world rendering and utility functions ---------------------------------------------------------------
+
+//
+// initialization
+//
+function init() {
+   initMode();
+   // init menu
+   const selectionMenu = [ {id: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].deselect, fn: 'resetSelection', hotKey: ' '},
+                         {id: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].more, fn: 'moreSelection', hotKey: '+'},
+                         {id: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].less, fn: 'lessSelection', hotKey: '-'},
+                         {id: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].similar, fn: 'similarSelection', hotkey: 'i'},
+                         {id: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].all, fn: 'allSelection', hotKey: 'a', meta: 'ctrl'}, 
+                         {id: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].invert, fn: 'invertSelection', hotKey: 'i', meta: 'ctrl+shift'},
+                         {id: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].adjacent, fn: 'adjacentSelection'}
+                        ];
+   for (let select of selectionMenu) {
+      __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["bindMenuItem"](select.id.name, function(ev) {
+         const command = new __WEBPACK_IMPORTED_MODULE_6__wings3d_undo__["EditCommandSimple"](select.fn);
+         if(command.doIt(mode.current)) {
+            undoQueue( command );
+            __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
+         }
+      }, select.hotKey, select.meta);
+   }
+
+   const toolBar = [ {id: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].undoEdit, fn: undoEdit, hotKey: ' '},
+                     {id: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].redoEdit, fn: redoEdit, hotKey: ' '},
+                     {id: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].toggleVertexMode, fn: toggleVertexMode, hotKey: ' '},
+                     {id: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].toggleEdgeMode, fn: toggleEdgeMode, hotKey: ' '},
+                     {id: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].toggleFaceMode, fn: toggleFaceMode, hotKey: ' '},
+                     {id: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].toggleBodyMode, fn: toggleBodyMode, hotKey: ' '},
+                   ];
+   // bindMenu toolbar
+   for (let button of toolBar) {
+      __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["bindMenuItem"](button.id.name, function(ev) {
+         //ev.preventDefault();
+         help( "wings3d - " + ev.currentTarget.id);
+         button.fn();
+       });
+   }
+   // bind .dropdown, .dropside click event.
+   let buttons = document.querySelectorAll("li.dropdown > a");
+   for (let button of buttons) {
+      if (button.id) {
+         let ul = button.nextElementSibling;  // popupMenu
+         if (ul && ul.classList.contains("popupmenu")) {
+            __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["bindMenuItem"](button.id, function(ev) {
+               __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["queuePopupMenu"](ul);  // show popupMenu
+             });
+         }
+      }
+   }
+   // bind li.dropside > a.
+   buttons = document.querySelectorAll("li.dropside > a");
+   for (let button of buttons) {
+      if (button.id) {
+         let ul = button.nextElementSibling;  // popupMenu
+         if (ul && ul.classList.contains("popupmenu")) {
+            __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["bindMenuItem"](button.id, function(ev) {
+               __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["toggleSubmenu"](ul);  // slide in popup menu, replace the original one
+               ev.stopPropagation();
+             });
+         }
+      }
+   }
+
+
+   //Renderer.init(gl, drawWorld);  // init by itself
+   draftBench = new __WEBPACK_IMPORTED_MODULE_12__wings3d_draftbench__["DraftBench"];
+
+   // capture click mouse event.
+   __WEBPACK_IMPORTED_MODULE_3__wings3d_gl__["gl"].canvas.addEventListener("mouseenter", canvasHandleMouseEnter, false);
+   __WEBPACK_IMPORTED_MODULE_3__wings3d_gl__["gl"].canvas.addEventListener("mousedown", canvasHandleMouseDown, false); 
+   __WEBPACK_IMPORTED_MODULE_3__wings3d_gl__["gl"].canvas.addEventListener("mouseup", canvasHandleMouseUp, false);
+   __WEBPACK_IMPORTED_MODULE_3__wings3d_gl__["gl"].canvas.addEventListener("mouseleave", canvasHandleMouseLeave, false);
+   __WEBPACK_IMPORTED_MODULE_3__wings3d_gl__["gl"].canvas.addEventListener("mousemove", canvasHandleMouseMove, false);
+   __WEBPACK_IMPORTED_MODULE_3__wings3d_gl__["gl"].canvas.addEventListener("wheel", canvasHandleWheel, false);
+   // bind context-menu
+   let createObjectContextMenu = {menu: document.querySelector('#create-context-menu')};
+   __WEBPACK_IMPORTED_MODULE_3__wings3d_gl__["gl"].canvas.addEventListener("contextmenu", function(e) {
+      if(!canvasHandleContextMenu(e)) {
+         e.preventDefault();
+         let contextMenu = currentMode().getContextMenu();
+         if (!contextMenu || !contextMenu.menu) {
+            contextMenu = createObjectContextMenu;
+         }
+         __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["positionDom"](contextMenu.menu, __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["getPosition"](e));
+         __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["showContextMenu"](contextMenu.menu);
+      }
+   }, false);
+   //console.log("Workspace init successful");
+   let wavefront = new __WEBPACK_IMPORTED_MODULE_4__plugins_wavefront_obj__["a" /* WavefrontObjImportExporter */]();
+
+   // handle redrawingLoop
+   function updateFrame(timestamp) {
+      render(__WEBPACK_IMPORTED_MODULE_3__wings3d_gl__["gl"]);
+      requestAnimationFrame(updateFrame);
+   };
+   requestAnimationFrame(updateFrame);
+};
+
+
+ 
+
+// register for initialization
+__WEBPACK_IMPORTED_MODULE_5__wings3d__["onReady"](init);
+
+/***/ }),
+/* 2 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "styleSheet", function() { return styleSheet; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getArrow", function() { return getArrow; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "placement", function() { return placement; });
@@ -450,7 +1153,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "showContextMenu", function() { return showContextMenu; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "queuePopupMenu", function() { return queuePopupMenu; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "toggleSubmenu", function() { return toggleSubmenu; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_hotkey__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_hotkey__ = __webpack_require__(17);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d__ = __webpack_require__(0);
 /*
    wings3d, ui and ui utility functions. including tutor.
@@ -796,717 +1499,547 @@ function queuePopupMenu(popupMenu) {
 
 
 /***/ }),
-/* 2 */
+/* 3 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "prop", function() { return prop; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "theme", function() { return theme; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "toggleVertexMode", function() { return toggleVertexMode; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "toggleFaceMode", function() { return toggleFaceMode; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "toggleEdgeMode", function() { return toggleEdgeMode; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "toggleBodyMode", function() { return toggleBodyMode; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "restoreVertexMode", function() { return restoreVertexMode; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "restoreFaceMode", function() { return restoreFaceMode; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "restoreEdgeMode", function() { return restoreEdgeMode; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "restoreBodyMode", function() { return restoreBodyMode; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "currentMode", function() { return currentMode; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "putIntoWorld", function() { return putIntoWorld; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "addToWorld", function() { return addToWorld; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "removeFromWorld", function() { return removeFromWorld; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getWorld", function() { return getWorld; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "attachHandlerMouseMove", function() { return attachHandlerMouseMove; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "doCommand", function() { return doCommand; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "redoEdit", function() { return redoEdit; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "undoEdit", function() { return undoEdit; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "undoQueue", function() { return undoQueue; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "undoQueueCombo", function() { return undoQueueCombo; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "loadMatrices", function() { return loadMatrices; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "projection", function() { return projection; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "modelView", function() { return modelView; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "drawWorld", function() { return drawWorld; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "render", function() { return render; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_render__ = __webpack_require__(16);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_camera__ = __webpack_require__(12);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_gl__ = __webpack_require__(5);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__plugins_wavefront_obj__ = __webpack_require__(17);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_undo__ = __webpack_require__(3);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_facemads__ = __webpack_require__(7);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d_edgemads__ = __webpack_require__(9);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__wings3d_vertexmads__ = __webpack_require__(11);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__wings3d_bodymads__ = __webpack_require__(10);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__wings3d_model__ = __webpack_require__(4);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "createWebGLContext", function() { return createWebGLContext; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ShaderData", function() { return ShaderData; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ShaderProgram", function() { return ShaderProgram; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "gl", function() { return gl; });
 /*
-//     This module implements most of the commands in the View menu. 
 //
-// Original Erlang Version: Bjorn Gustavsson
+//     Append a few utilities and convenience functions. now to es6 module.
+//
 */
 
 
+let gl = null;
+function createWebGLContext(canvasID, attrib) {
+   var _pvt = {currentShader: null};
 
-
-
-
-
-
-
-
-
-
-
-
-
-// 
-// pref and theme
-//
-// init Prop
-const prop = {
-      showEdges: true,
-      showBackfaces: true,
-      showNormals: false,
-      showBB: true,
-      showBBCenter: true,
-      showColors: true,
-      showMaterials: true,
-      showTextures: true,
-      showNormalMaps: true,
-      showWireBackfaces: false,
-      showGroundplane: true,
-      showCamImagePlane: false,
-      showAxes: true,
-      constrainAxes: true,
-      clipPlane: false,
-      orthogonalView: false,
-      numberOfLights: 1,
-      activeShader: 1,
-      filterTexture: true,
-      frameDisregardsMirror: false,
-      useSceneLights: false,
-      forceOrthoAlongAxis: false,
-      workmode: true,
-      //wireFramedObjects: gb_sets:empty(),
-      //currentView: DEFAULT_VIEW,   // goes to camera
-      allowRotation: true,
-      allowInfoText: true,
-      miniAxis: true
-   };
-const nativeTheme = {
-       activeVectorColor: [0.0, 1.0, 0.0],
-       clipPlaneColor: [0.8, 0.3, 0.0],
-       consoleColor: [1.0, 1.0, 1.0],
-       consoleTextColor: [0.0, 0.0, 0.0],
-       defaultAxis: [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]],
-       edgeColor: [0.0, 0.0, 0.0],
-       gridColor: [0.3, 0.3, 0.3],
-       hardEdgeColor: [1.0, 0.5, 0.0],
-       infoBackgroundColor: [0.38, 0.38, 0.38, 0.5],
-       infoColor: [1.0, 1.0, 1.0],
-       infoLineBg: [0.33131360000000004, 0.4, 0.0],
-       infoLineText: [1.0, 1.0, 1.0],
-       maskedVertexColor: [0.5, 1.0, 0.0, 0.8],
-       materialDefault: [0.7898538076923077, 0.8133333333333334, 0.6940444444444445],
-       normalVectorColor: [0.0, 1.0, 0.0],
-       sculptMagnetColor: [0.0, 0.0, 1.0, 0.1],
-       selectedColor: [0.65, 0.0, 0.0],
-       selectedHlite: [0.7, 0.7, 0.0],
-       tweakMagnetColor: [0.0, 0.0, 1.0, 0.06],
-       tweakVectorColor: [1.0, 0.5, 0.0],
-       unselectedHlite: [0.0, 0.65, 0.0],
-       vertexColor: [0.0, 0.0, 0.0],
-       color: [[0.7, 0.0, 0.1], [0.37210077142857145, 0.82, 0.0], [0.0, 0.3, 0.8]],
-       negColor: [[0.8, 0.8, 0.8], [0.8, 0.8, 0.8], [0.8, 0.8, 0.8]]
-   };
-let theme = nativeTheme;
-
-//--  end of pref and theme --------------------------------------------------------------------------
-
-// 
-// editing mode management
-//
-const mode = {             // private variable, needed to initialize after gl, 
-   face: null,//new FaceMadsor, 
-   edge: null,//new EdgeMadsor,
-   vertex: null,//new VertexMadsor,
-   body: null,//new BodyMadsor,
-   current: null,
-};
-function initMode() {
-   mode.face = new __WEBPACK_IMPORTED_MODULE_7__wings3d_facemads__["FaceMadsor"];
-   mode.edge = new __WEBPACK_IMPORTED_MODULE_8__wings3d_edgemads__["EdgeMadsor"];
-   mode.vertex = new __WEBPACK_IMPORTED_MODULE_9__wings3d_vertexmads__["VertexMadsor"];
-   mode.body = new __WEBPACK_IMPORTED_MODULE_10__wings3d_bodymads__["BodyMadsor"];
-   mode.current = mode.face;
-   mode.face.setWorld(world);
-   mode.edge.setWorld(world);
-   mode.vertex.setWorld(world);
-   mode.body.setWorld(world);
-};
-
-
-function toggleMode(mode) {
-   let button = document.getElementById('toggle'+mode+'Mode');  // :checked property only existed on <input>
-   if (button && !button.checked) {
-      button.click();         // https://stackoverflow.com/questions/8206565/check-uncheck-checkbox-with-javascript
+   // initialization
+   var canvas = document.getElementById(canvasID);
+   if (!canvas) {
+      return null;
    }
-}
-function toggleVertexMode() {
-   // change current mode to 
-   if (mode.current !== mode.vertex) {
-      mode.current.toggleFunc(mode.vertex);
-      mode.current = mode.vertex;
-      toggleMode('Vertex');
-      __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
-   }
-};
-
-function toggleFaceMode() {
-   if (mode.current !== mode.face) {
-      mode.current.toggleFunc(mode.face);
-      mode.current = mode.face;
-      toggleMode('Face');
-      __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
-   }
-};
-
-function toggleEdgeMode() {
-   if (mode.current !== mode.edge) {
-      mode.current.toggleFunc(mode.edge);
-      mode.current = mode.edge;
-      toggleMode('Edge');
-      __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
-   }
-};
-
-function toggleBodyMode() {
-   if (mode.current !== mode.body) {
-      mode.current.toggleFunc(mode.body);
-      mode.current = mode.body;
-      toggleMode('Body');
-      __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
-   }
-};
-
-function restoreVertexMode(snapshots) {
-   if (mode.current !== mode.vertex) {
-      mode.current.restoreMode(mode.vertex, snapshots);
-      mode.current = mode.vertex;
-      toggleMode('Vertex');
-      __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
-   } else {
-      // bad state. should always be in other mode. 
-   }
-};
-
-function restoreFaceMode(snapshots) {
-   if (mode.current !== mode.face) {
-      mode.current.restoreMode(mode.face, snapshots);
-      mode.current = mode.face;
-      toggleMode('Face');
-      __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
-   } else {
-      // bad state. should always be in other mode. 
-   }
-};
-
-function restoreEdgeMode(snapshots) {
-   if (mode.current !== mode.edge) {
-      mode.current.restoreMode(mode.edge, snapshots);
-      mode.current = mode.edge;
-      toggleMode('Edge');
-      __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
-   } else {
-      // bad state. should always be in other mode. 
-   }
-};
-
-function restoreBodyMode(snapshots) {
-   if (mode.current !== mode.body) {
-      mode.current.restoreMode(mode.body, snapshots);
-      mode.current = mode.body;
-      toggleMode('Body');
-      __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
-   } else {
-      // bad state. should always be in other mode. 
-   }
-};
-
-function currentMode() {
-   return mode.current;
-}
-//- End of editing Mode ----------
-
-//
-// world objects management
-//
-const world = []; // private var
-function putIntoWorld(mesh) {
-   // write point to alert windows.
-   /*var triangleSize = mesh.faces.reduce( function(acc, element) {
-      return acc + element.numberOfVertex - 2;
-      }, 0);
-   var str = "Mesh:" + mesh.faces.length + "," + triangleSize + "{\n";
-   mesh.faces.forEach(function(poly, index, arry){
-      str += "face: [\n";
-      poly.eachVertex(function(_vert){
-         var vert = _vert.vertex;
-         str += "[" + vert[0] + "," + vert[1] + "," + vert[2] + "],\n";
-      });
-      str += "},\n";
-   });
-   geometryStatus(str);*/
-   //
-   var model = new __WEBPACK_IMPORTED_MODULE_11__wings3d_model__["PreviewCage"](mesh);
-   //
-   return addToWorld(model);
-};
-
-function addToWorld(model) {
-   world.push( model );
-   __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
-   return model;
-}
-
-function removeFromWorld(previewCage) {
-   var index = world.indexOf(previewCage);
-   if (index >= 0) {
-      world.splice(index, 1);
-      __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
-   }
-};
-function getWorld() {
-   return world;
-}
-//-- End of World objects management -------------------------
-
-//
-// mouse handling
-//
-let lastPick = null;
-
-function rayPick(ray) {
-   let pick = null;
-   for (let model of world) {
-      const newPick = model.rayPick(ray);
-      if (newPick !== null) {
-         if ((pick === null) || (pick.t > newPick.t)) {
-            pick = newPick;
+      
+   attrib = typeof attrib !== 'undefined' ? attrib : { depth: true, stencil: true, antialias: true };
+//   gl = canvas.getContext("webgl2", attrib);
+//   if (!gl) {
+      gl = canvas.getContext("webgl", attrib) || canvas.getContext("experimental-webgl", attrib);
+      if (gl) {
+         // init_extensions(), init_restrictions()
+         let ext = gl.getExtension("OES_standard_derivatives"); // webgl2 is standard.
+         if (ext === null) {
+            console.log("No OES_standard_derivatives");
+            return null;   
          }
-      }
-   }
-   if (pick !== null) {
-      mode.current.setPreview(pick.model);
-      //if (lastPick !== null && lastPick.model !== pick.model) {
-      //   lastPick.model.setCurrentSelect(null);
-      //}
-      // now set current edge again.
-      lastPick = pick;
-      let intersect = vec3.create();
-      vec3.scaleAndAdd(intersect, ray.origin, ray.direction, pick.t);
-      mode.current.setCurrent(pick.edge, intersect, pick.center);
-      __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
-   } else {
-      if (lastPick !== null) {
-         // no current selection.
-         mode.current.setCurrent(null);
-         __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
-      }
-   }
-   // now the currentPick will be the next lastPick.
-   lastPick = pick;
-};
-
-let dragMode = null;
-function selectStart() {
-   if (lastPick !== null) {
-      dragMode = mode.current.selectStart(lastPick.model);
-      __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
-   }
-};
-
-function selectDrag() {
-   if ((dragMode !== null)) {// &&
-       if ((lastPick !== null)) {
-         dragMode.dragSelect(lastPick.model);
-         __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
-      }
-   }
-}
-
-function selectFinish() {
-   if (dragMode !== null) {
-      undoQueue(dragMode.finish());
-      dragMode = null;
-   }
-}
-
-const handler = {camera: null, mousemove: null};
-function canvasHandleMouseDown(ev) {
-   if (ev.button == 0) {
-      if (handler.camera !== null) {
-         handler.camera.doIt();  
-         handler.camera = null;
-         __WEBPACK_IMPORTED_MODULE_5__wings3d__["log"](__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].cameraModeExit, __WEBPACK_IMPORTED_MODULE_2__wings3d_camera__["view"]);
-         help('L:Select   M:Start Camera   R:Show Menu   [Alt]+R:Tweak menu');      
-      } else if (handler.mousemove !== null) {
-         undoQueue( handler.mousemove );  // put on queue, commit()?
-         handler.mousemove = null;
+         ext = gl.getExtension("OES_element_index_uint");
+         if (ext === null) {
+            console.log("No OES_element_index_uint");
+            return null;
+         }
+         console.log("WebGL 1 init with extension");
       } else {
-         //e.stopImmediatePropagation();
-         // ask view to select current hilite if any.
-         selectStart();
+         alert("Unable to initialize WebGL");
+         return null;
       }
-   }
-};
+//   } else {
+//      console.log("WebGL 2 init successful");
+//   }
 
-function canvasHandleMouseEnter(ev) {
-   if (handler.camera !== null) {
-      help('L:Accept   M:Drag to Pan  R:Cancel/Restore to View   Move mouse to tumble');
-   } else {
-      help('L:Select   M:Start Camera   R:Show Menu   [Alt]+R:Tweak menu');
-   }
-};
 
-function canvasHandleMouseLeave(ev) {
-   selectFinish();       // we can't caputre mouseup when mouse leave, so force to finish the selection.
-};
-
-// event handling, switching state if needs to be
-function canvasHandleMouseUp(ev) {
-   if (ev.button == 0) {
-      selectFinish();
-   } else if (ev.button == 1) { // check for middle button down
-      if (handler.camera === null) {
-         ev.stopImmediatePropagation();
-         // let camera handle the mouse event until it quit.
-         handler.camera = __WEBPACK_IMPORTED_MODULE_2__wings3d_camera__["getMouseMoveHandler"]();
-         // tell tutor step, we are in camera mode
-         __WEBPACK_IMPORTED_MODULE_5__wings3d__["log"](__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].cameraModeEnter, __WEBPACK_IMPORTED_MODULE_2__wings3d_camera__["view"]);
-         help('L:Accept   M:Drag to Pan  R:Cancel/Restore to View   Move mouse to tumble');
-         // disable mouse cursor
-         //document.body.style.cursor = 'none';
-      } 
-   }
-};
-
-function canvasHandleMouseMove(e) {
-   if (handler.camera !== null) {
-      handler.camera.handleMouseMove(e);
-   } else if (handler.mousemove !== null) {
-      handler.mousemove.handleMouseMove(e, __WEBPACK_IMPORTED_MODULE_2__wings3d_camera__["view"]);
-      __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
-   } else {
-      // handle pick selection
-      var viewport = __WEBPACK_IMPORTED_MODULE_3__wings3d_gl__["gl"].getViewport();
-      var winx = e.pageX - e.currentTarget.offsetLeft;
-      var winy = (viewport[3]+1) - (e.pageY - e.currentTarget.offsetTop);   // y is upside-down
-      // yes, sometimes mouse coordinate is outside of the viewport. firefox is larger than width, height.
-      if (winx < 0) { winx = 0; }
-      if (winx > viewport[2]) { winx = viewport[2];}
-      if (winy < 0) { winy = 0; }
-      if (winy > viewport[3]) { winy = viewport[3];}
-
-      var mat = loadMatrices(false);
-      var ptNear = __WEBPACK_IMPORTED_MODULE_3__wings3d_gl__["gl"].unProject(winx, winy, 0.0, mat.modelView, mat.projection);
-      var ptFar = __WEBPACK_IMPORTED_MODULE_3__wings3d_gl__["gl"].unProject(winx, winy, 1.0, mat.modelView, mat.projection);
-
-      vec3.sub(ptFar, ptFar, ptNear);
-      vec3.normalize(ptFar, ptFar);
-      var ray = {origin: ptNear, direction: ptFar};
-      //geometryStatus("mouse position: " + ptNear[0] + ", " + ptNear[1] + "," + ptNear[2] + ", <br />"+ ptFar[0] + ", " + ptFar[1] + ", " + ptFar[2]);
-      rayPick(ray);
-      // selectDrag if left button mousedown
-      selectDrag();
-   }
-};
-
-// contextMenu, mouse right click.
-function canvasHandleContextMenu(ev) {
-   if (handler.camera !== null || handler.mousemove !== null) {
-      // prevent propagation.
-      ev.preventDefault();
-      ev.stopImmediatePropagation();      // prevent document's contextmenu popup
-      if (handler.camera !== null) {
-         handler.camera.undo();
-         handler.camera = null;
-         __WEBPACK_IMPORTED_MODULE_5__wings3d__["log"](__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].cameraModeExit, __WEBPACK_IMPORTED_MODULE_2__wings3d_camera__["view"]);   // log action
-         help('L:Select   M:Start Camera   R:Show Menu   [Alt]+R:Tweak menu');
-      } else {
-         handler.mousemove.undo();
-         handler.mousemove = null;
-         __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
+   // make sure webgl framebuffer size matched real canvas size.
+   gl.resizeToDisplaySize = function() {
+      var canvas = gl.canvas;
+      var displayWidth = canvas.clientWidth;
+      var displayHeight = canvas.clientHeight;
+      if (canvas.width != displayWidth ||
+          canvas.height != displayHeight) {
+         canvas.width = displayWidth;
+         canvas.height = displayHeight;     
+         gl.viewport(0, 0, displayWidth, displayHeight);
+         return true;
       }
-      return true;
-   }
-   // let wings3d_contextmenu handle the event.
-   return false;
-};
-
-// handling in reverse order. the newest one will handle the event. (should be at most 2 handler)
-function attachHandlerMouseMove(mousemoveHandler) {
-   // should we make sure handler.mousemove is null?
-   handler.mousemove = mousemoveHandler;
-};
-
-function canvasHandleWheel(e) {
-   // adjusting to scroll pixels, inspiration from facebook's estimate.
-   var px = e.deltaX, py = e.deltaY, pz = e.deltaZ;
-   if ((px || py || pz) && e.deltaMode) {
-      var scale = 360;        // page scaler
-      if (e.deltaMode == 1) {
-         scale = 18;          // line scaler, should be line height
-      }
-      px *= scale;
-      py *= scale;
-      pz *= scale;
-   }
-   
-   // asks camera to zoomIn/Out.
-   __WEBPACK_IMPORTED_MODULE_2__wings3d_camera__["zoomStep"](py);
-};
-
-//-- end of mouse handling-----------------------------------------------
-
-// 
-// undo/redo handling
-//
-const undo = {queue: [], current: -1};
-// undo queueCombo, convenient functions
-function undoQueueCombo(editCommands) {
-   // wrap the array in a combo
-   const combo = new __WEBPACK_IMPORTED_MODULE_6__wings3d_undo__["EditCommandCombo"](editCommands);
-   undoQueue( combo );
-};
-// undo queue
-function undoQueue(editCommand) {
-   if ( (undo.queue.length-1) > undo.current ) {
-      // remove branch not taken
-      undo.queue.length = undo.current+1;
-   }
-   // now push the new command back
-   undo.queue.push(editCommand);
-   undo.current++;
-   __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
-};
-
-function redoEdit() {
-   if ( (undo.queue.length-1) > undo.current) {
-      undo.queue[++undo.current].doIt(mode.current);
-      __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
-   }
-};
-
-function undoEdit() {
-   if (undo.current >= 0) {
-      undo.queue[undo.current--].undo(mode.current);
-      __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
-   }
-};
-
-function doCommand(command) {
-   if (command.doIt) {
-      undoQueue(command);
-      return true;
-   } else {
-      // todo: pop messages, said command not workable.
       return false;
-   }
-}
-
-// -- end of undo/redo handling ----------------------------------------------------------------------------------
-
-
-//
-// world rendering and utility functions
-//
-function loadMatrices(includeLights) {
-   let proj = projection(mat4.create()); // passed identity matrix.
-   let tmm = modelView(includeLights);
-   return { projection: proj, modelView: tmm.modelView, useSceneLights: tmm.useSceneLights };
-};
-
-//projection() ->
-//     OP0 = gl:getDoublev(?GL_PROJECTION_MATRIX),
-//     projection(e3d_transform:init(list_to_tuple(OP0))).
-function projection(In) {
-   const size = __WEBPACK_IMPORTED_MODULE_3__wings3d_gl__["gl"].getViewport();
-   const aspect = (size[2]-size[0]) / (size[3]-size[1]);
-   const view = __WEBPACK_IMPORTED_MODULE_2__wings3d_camera__["view"];
-   const ortho = view.orthogonalView;
-   if (!ortho && view.alongAxis) {
-      ortho = prop.force_ortho_along_axis;
-   }
-   var tp = mat4.create();
-   if (ortho) {
-      const sz = view.distance * Math.tan(view.fov * Math.PI  / 180 / 2);
-      mat4.ortho(tp, -sz * aspect, sz * aspect, -sz, sz, view.zNear, view.zFar);      
-   } else {
-      mat4.perspective(tp, view.fov, aspect, view.zNear, view.zFar);
-   }
-
-   mat4.mul(__WEBPACK_IMPORTED_MODULE_3__wings3d_gl__["gl"].projection, In, tp);
-   return __WEBPACK_IMPORTED_MODULE_3__wings3d_gl__["gl"].projection;
-};
-
-function modelView(includeLights = false) {
-   const view = __WEBPACK_IMPORTED_MODULE_2__wings3d_camera__["view"];
-
-   let useSceneLights = false;
-   if (includeLights) {
-      useSceneLights = prop.useSceneLights; // && Wings3D.light.anyEnabledLights();
-      if (!useSceneLights) {
-         //Wings3D.light.cameraLights();
-      }
-   }
-
-   // fromTranslation, identity * vec3. modelView rest.
-   mat4.fromTranslation(__WEBPACK_IMPORTED_MODULE_3__wings3d_gl__["gl"].modelView, vec3.fromValues(view.panX, view.panY, -view.distance));
-   mat4.rotateX(__WEBPACK_IMPORTED_MODULE_3__wings3d_gl__["gl"].modelView, __WEBPACK_IMPORTED_MODULE_3__wings3d_gl__["gl"].modelView, view.elevation * Math.PI / 180);
-   mat4.rotateY(__WEBPACK_IMPORTED_MODULE_3__wings3d_gl__["gl"].modelView, __WEBPACK_IMPORTED_MODULE_3__wings3d_gl__["gl"].modelView, view.azimuth * Math.PI / 180);
-   mat4.translate(__WEBPACK_IMPORTED_MODULE_3__wings3d_gl__["gl"].modelView, __WEBPACK_IMPORTED_MODULE_3__wings3d_gl__["gl"].modelView, view.origin);
-
-   if (useSceneLights) {
-      //Wings3D.light.globalLights();
-   }
-   return {useScentLights: useSceneLights, modelView: __WEBPACK_IMPORTED_MODULE_3__wings3d_gl__["gl"].modelView};
-};
-
-function drawWorld(gl) {
-   if (world.length > 0) {
-      gl.polygonOffset(1.0, 1.0);          // Set the polygon offset
-      gl.enable(gl.POLYGON_OFFSET_FILL);
-      mode.current.previewShader(gl);
-      world.forEach(function(model, _index, _array){
-         gl.bindTransform();
-         model.draw(gl);
-      });
-      gl.disableShader();
-      gl.disable(gl.POLYGON_OFFSET_FILL);
-
-
-      gl.enable(gl.BLEND);
-      gl.blendFunc(gl.SRC_COLOR, gl.DST_COLOR);
-      // draw Current Select Mode (vertex, edge, or face)
-      mode.current.draw(gl);
-      gl.disable(gl.BLEND);
-   }
-}
-
-function render(gl) {
-   __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["render"](gl, drawWorld);
-};
-
-//-- end of world rendering and utility functions ---------------------------------------------------------------
-
-//
-// initialization
-//
-function init() {
-   initMode();
-   // init menu
-   const selectionMenu = [ {id: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].deselect, fn: 'resetSelection', hotKey: ' '},
-                         {id: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].more, fn: 'moreSelection', hotKey: '+'},
-                         {id: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].less, fn: 'lessSelection', hotKey: '-'},
-                         {id: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].similar, fn: 'similarSelection', hotkey: 'i'},
-                         {id: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].all, fn: 'allSelection', hotKey: 'a', meta: 'ctrl'}, 
-                         {id: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].invert, fn: 'invertSelection', hotKey: 'i', meta: 'ctrl+shift'},
-                         {id: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].adjacent, fn: 'adjacentSelection'}
-                        ];
-   for (let select of selectionMenu) {
-      __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["bindMenuItem"](select.id.name, function(ev) {
-         const command = new __WEBPACK_IMPORTED_MODULE_6__wings3d_undo__["EditCommandSimple"](select.fn);
-         if(command.doIt(mode.current)) {
-            undoQueue( command );
-            __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
-         }
-      }, select.hotKey, select.meta);
-   }
-
-   const toolBar = [ {id: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].undoEdit, fn: undoEdit, hotKey: ' '},
-                     {id: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].redoEdit, fn: redoEdit, hotKey: ' '},
-                     {id: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].toggleVertexMode, fn: toggleVertexMode, hotKey: ' '},
-                     {id: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].toggleEdgeMode, fn: toggleEdgeMode, hotKey: ' '},
-                     {id: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].toggleFaceMode, fn: toggleFaceMode, hotKey: ' '},
-                     {id: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].toggleBodyMode, fn: toggleBodyMode, hotKey: ' '},
-                   ];
-   // bindMenu toolbar
-   for (let button of toolBar) {
-      __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["bindMenuItem"](button.id.name, function(ev) {
-         //ev.preventDefault();
-         help( "wings3d - " + ev.currentTarget.id);
-         button.fn();
-       });
-   }
-   // bind .dropdown, .dropside click event.
-   let buttons = document.querySelectorAll("li.dropdown > a");
-   for (let button of buttons) {
-      if (button.id) {
-         let ul = button.nextElementSibling;  // popupMenu
-         if (ul && ul.classList.contains("popupmenu")) {
-            __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["bindMenuItem"](button.id, function(ev) {
-               __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["queuePopupMenu"](ul);  // show popupMenu
-             });
-         }
-      }
-   }
-   // bind li.dropside > a.
-   buttons = document.querySelectorAll("li.dropside > a");
-   for (let button of buttons) {
-      if (button.id) {
-         let ul = button.nextElementSibling;  // popupMenu
-         if (ul && ul.classList.contains("popupmenu")) {
-            __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["bindMenuItem"](button.id, function(ev) {
-               __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["toggleSubmenu"](ul);  // slide in popup menu, replace the original one
-               ev.stopPropagation();
-             });
-         }
-      }
-   }
-
-
-   //Renderer.init(gl, drawWorld);  // init by itself
-
-   // capture click mouse event.
-   __WEBPACK_IMPORTED_MODULE_3__wings3d_gl__["gl"].canvas.addEventListener("mouseenter", canvasHandleMouseEnter, false);
-   __WEBPACK_IMPORTED_MODULE_3__wings3d_gl__["gl"].canvas.addEventListener("mousedown", canvasHandleMouseDown, false); 
-   __WEBPACK_IMPORTED_MODULE_3__wings3d_gl__["gl"].canvas.addEventListener("mouseup", canvasHandleMouseUp, false);
-   __WEBPACK_IMPORTED_MODULE_3__wings3d_gl__["gl"].canvas.addEventListener("mouseleave", canvasHandleMouseLeave, false);
-   __WEBPACK_IMPORTED_MODULE_3__wings3d_gl__["gl"].canvas.addEventListener("mousemove", canvasHandleMouseMove, false);
-   __WEBPACK_IMPORTED_MODULE_3__wings3d_gl__["gl"].canvas.addEventListener("wheel", canvasHandleWheel, false);
-   // bind context-menu
-   let createObjectContextMenu = {menu: document.querySelector('#create-context-menu')};
-   __WEBPACK_IMPORTED_MODULE_3__wings3d_gl__["gl"].canvas.addEventListener("contextmenu", function(e) {
-      if(!canvasHandleContextMenu(e)) {
-         e.preventDefault();
-         let contextMenu = currentMode().getContextMenu();
-         if (!contextMenu || !contextMenu.menu) {
-            contextMenu = createObjectContextMenu;
-         }
-         __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["positionDom"](contextMenu.menu, __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["getPosition"](e));
-         __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["showContextMenu"](contextMenu.menu);
-      }
-   }, false);
-   //console.log("Workspace init successful");
-   let wavefront = new __WEBPACK_IMPORTED_MODULE_4__plugins_wavefront_obj__["a" /* WavefrontObjImportExporter */]();
-
-   // handle redrawingLoop
-   function updateFrame(timestamp) {
-      render(__WEBPACK_IMPORTED_MODULE_3__wings3d_gl__["gl"]);
-      requestAnimationFrame(updateFrame);
    };
-   requestAnimationFrame(updateFrame);
+   gl.resizeToDisplaySize();
+
+   // setup variables
+   gl.projection = mat4.create();
+   gl.modelView = mat4.create();
+
+   // binder
+   _pvt.transform = {
+      projection: function(gl, loc) {
+         gl.uniformMatrix4fv(loc, false, gl.projection);
+      },
+      worldView: function(gl, loc) {
+         gl.uniformMatrix4fv(loc, false, gl.modelView);
+      },
+   };
+
+   // utility functions
+   // move from wings3d.wm.
+   // return int32array[0,0, width, height] ...etc.
+   gl.getViewport = function() {
+      return gl.getParameter(gl.VIEWPORT);
+   };
+   // project() transform objectSpace vert to screenSpace,
+   //   return vec4. vec4[3] == 0 meant failure, problems with input projection.
+   gl.project = function(objx, objy, objz, modelview, projection) {
+      //Transformation vectors
+      var input = vec4.fromValues(objx, objy, objz, 1.0);
+          out = vec4.create();
+      //Modelview transform
+      vec4.transformMat4(out, input, modelView);
+      //Projection transform, 
+      vec4.transformMat4(input, out, projection);
+      if(input[3] == 0.0) {//The w value
+         return input;
+      }
+      //Perspective division
+      input[0] /= input[3];
+      input[1] /= input[3];
+      input[2] /= input[3];
+      var viewport = gl.getViewport();
+      //screenCoordinate, Map x, y to range 0-1
+      out[0]=(input[0]*0.5+0.5)*viewport[2]+viewport[0];
+      out[1]=(input[1]*0.5+0.5)*viewport[3]+viewport[1];
+      //This is only correct when glDepthRange(0.0, 1.0)
+      out[2]=input[2]*0.5 + 0.5;	//Between 0 and 1
+      out[3]=1.0;             // out[w] determined success or failure.
+      return out;
+  };
+
+   gl.unProject = function(winx, winy, winz, modelview, projection, viewport) {
+      //Transformation matrices
+      var final = mat4.create(),
+          input = vec4.create(),
+          out = vec4.create();
+      //Calculation for inverting a matrix, compute projection x modelview
+      //and store in A[16]
+      mat4.multiply(final, projection, modelview);
+      //Now compute the inverse of matrix A
+      if(mat4.invert(final, final)==null) {
+         out[3]=0.0;
+         return out;
+      }
+      var viewport = gl.getViewport();
+      //Transformation of normalized coordinates between -1 and 1
+      input[0]=(winx-viewport[0])/viewport[2]*2.0 - 1.0;
+      input[1]=(winy-viewport[1])/viewport[3]*2.0 - 1.0;
+      input[2]=2.0*winz-1.0;
+      input[3]=1.0;
+      //Objects coordinates
+      vec4.transformMat4(out, input, final);
+      if(out[3]==0.0) {
+         return out;
+      }
+      out[0]/=out[3];
+      out[1]/=out[3];
+      out[2]/=out[3];
+      out[3] =1.0;
+      return out;
+   };
+   gl.transformVertex = function(vertex4) {
+       var out = vec4.create();
+       return vec4.transformMat4(out, vec4.transformMat4(out, vertex4, gl.modelView), gl.projection);
+   };
+
+   // shader, programs.
+   gl.compileGLSL = function(vshader, fshader) {
+      // compile vertex and fragment shader
+      var vertexShader = gl.loadShader(gl.VERTEX_SHADER, vshader);
+      if (!vertexShader) {
+         console.log("failed to compile vertex shader");
+         return null;
+      }
+      var fragmentShader = gl.loadShader(gl.FRAGMENT_SHADER, fshader);
+      if (!fragmentShader) {
+         console.log("failed to compile fragment shader");
+         return null;
+      }
+
+      // get program, attach, link
+      var progHandle = gl.createProgram();
+      gl.attachShader(progHandle, vertexShader);
+      gl.attachShader(progHandle, fragmentShader);
+      gl.linkProgram(progHandle);
+
+      // check for error
+      var linked = gl.getProgramParameter(progHandle, gl.LINK_STATUS);
+      if (!linked) {
+         var error = gl.getProgramInfoLog(progHandle);
+         console.log('failed to link program: ' + error);
+         gl.deleteProgram(progHandle);
+         gl.deleteShader(fragmentShader);
+         gl.deleteShader(vertexShader);
+         return null;
+      }
+      return progHandle;
+   };
+
+   gl.loadShader = function(shaderType, shaderSource) {
+      // createShader always work unless shaderType is wrong?
+      var shaderHandle = gl.createShader(shaderType);
+
+      // loading shaderSource then compile shader.
+      gl.shaderSource(shaderHandle, shaderSource);
+      gl.compileShader(shaderHandle);
+
+      // check for successful compilation.
+      var compiled = gl.getShaderParameter(shaderHandle, gl.COMPILE_STATUS);
+      if (!compiled) {
+         var error = gl.getShaderInfoLog(shaderHandle);
+         console.log('failed to compile shader: ' + error);
+         gl.deleteShader(shaderHandle);
+         return null;
+      }
+      return shaderHandle;
+   };
+
+   gl.createShaderProgram = function(vShader, fShader) {
+      var progHandle = gl.compileGLSL(vShader, fShader);
+      if (progHandle) {
+         var info;
+         var attribute = {};
+         var numCount = gl.getProgramParameter(progHandle, gl.ACTIVE_ATTRIBUTES);
+         for (var i = 0; i < numCount; ++i) {
+            info = gl.getActiveAttrib(progHandle, i);
+            if (!info){
+               console.log("Something wrong, getActiveAttrib failed");
+               return null;
+            }
+            attribute[info.name] = {loc: gl.getAttribLocation(progHandle, info.name), type: info.type};
+         }
+         var uniform = {};
+         var transform = {world: null, worldView: null, worldViewProjection: null, view: null, projection: null};
+         numCount = gl.getProgramParameter(progHandle, gl.ACTIVE_UNIFORMS);
+         for (i = 0; i < numCount; ++i) {
+            info  = gl.getActiveUniform(progHandle, i);
+            if (!info) {
+               console.log("Something wrong, getActiveUniform failed");
+               return null;
+            }
+            // check if it belongs to transform?
+            if (transform.hasOwnProperty(info.name)) {
+               transform[info.name] = gl.getUniformLocation(progHandle, info.name);
+            } else {
+               // check for array suffix?
+               uniform[info.name] = {loc: gl.getUniformLocation(progHandle, info.name),
+                                     size: info.size, type: info.type};
+            }
+         }
+         return new ShaderProgram(progHandle, transform, attribute, uniform);
+      }
+      
+   };
+
+   // return buffer Handle.
+   gl.createBufferHandle = function(typedArray, type = gl.ARRAY_BUFFER, draw = gl.STATIC_DRAW) {
+      if (ArrayBuffer.isView(typedArray)) {
+         var handle = gl.createBuffer();
+         gl.bindBuffer(type, handle);
+         gl.bufferData(type, typedArray, draw);
+         gl.bindBuffer(type, null);
+         return handle;
+      } else {
+         console.log("not typedArray");
+         return null;
+      }
+   };
+
+   gl.setBufferAndAttrib = function(handle, position, size=3) {
+      gl.bindBuffer(gl.ARRAY_BUFFER, handle);
+      gl.vertexAttribPointer(position, size, gl.FLOAT, false, 0, 0);
+      gl.enableVertexAttribArray(position);
+   };
+   
+   gl.bindAttributeToProgram = function(progLoc, attrib) {
+      gl.bindBuffer(gl.ARRAY_BUFFER, attrib.handle);
+      gl.vertexAttribPointer(progLoc, attrib.size, attrib.type, attrib.normalized, attrib.stride, attrib.offset);
+      gl.enableVertexAttribArray(progLoc);
+   }
+
+   gl.bindShaderData = function(data, useIndex=true) {
+      // using current setShader, set shader, set indexbuffer
+      _pvt.currentShader.bindAttribute(gl, data.attribute);
+      _pvt.currentShader.bindUniform(gl, data.uniform);
+      if (useIndex && typeof(data.index)!=="undefined" && data.index !== null) {
+         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, data.index.handle);
+      }
+   };
+
+   gl.bindTransform = function() {
+      // current shader, set current transform
+      _pvt.currentShader.bindTransform(gl, _pvt.transform);
+   };
+   gl.pushTransform = function(matrix) {
+
+   };
+   gl.popTransform = function() {
+      // restore transform
+   };
+   gl.useShader = function(shader) {
+      _pvt.currentShader = shader;
+      gl.useProgram(shader.progHandle);
+   };
+   gl.disableShader = function() {
+      // disable vertex attribute array
+      if (_pvt.currentShader) {
+         _pvt.currentShader.disableVertexAttributeArray(gl);
+      }
+   };
+
+   gl.drawVertex =  function(drawObject) {
+      gl.bindTransform();
+      gl.bindShaderData(drawObject.shaderData, false);
+      drawObject.drawVertex(gl);
+   };
+
+   gl.drawSelect = function(drawObject) {
+      gl.bindTransform();
+      drawObject.bindSelectorShaderData(gl);
+      drawObject.drawSelect(gl);
+   };
+
+   gl.createShaderData = function() {
+      return new ShaderData();
+   };
+
+   return gl;
 };
 
 
- 
+//
+// define ShaderProgram, ShaderData.
+//
 
-// register for initialization
-__WEBPACK_IMPORTED_MODULE_5__wings3d__["onReady"](init);
+/**input to ShaderProgram.
+ */
+const ShaderData = function() {
+   this.attribute = {};
+   this.uniform = {};
+};
+
+ShaderData.attribLayout = function(attribSize=3, attribType=gl.FLOAT, normalized=false, stride=0, offset=0) {
+   return {size: attribSize, type: attribType, normalized: normalized, stride: stride, offset: offset};
+}
+
+
+ShaderData.prototype.setupAttribute = function(name, layout, buffer, usage) {
+   this.createAttribute(name, layout, usage);
+   this.resizeAttribute(name, buffer.byteLength);
+   this.uploadAttribute(name, 0, buffer);
+}
+
+ShaderData.prototype.createAttribute = function(name, layout, usage) {
+   if (!this.attribute[name]) {
+      var handle = gl.createBuffer();
+      this.attribute[name] = {handle: handle,
+                              byteLength: 0,
+                              usage: usage,
+                              size: layout.size,
+                              type: layout.type,
+                              normalized: layout.normalized,
+                              stride: layout.stride,
+                              offset: layout.offset
+                             };
+   } else {
+      console.log("Shader Data: " + name + " already initialized");
+   }
+};
+
+ShaderData.prototype.resizeAttribute = function(name, byteLength) {//, usage) {
+   var attrib = this.attribute[name];
+   if (attrib && attrib.byteLength != byteLength) {
+      gl.bindBuffer(gl.ARRAY_BUFFER, attrib.handle);
+      gl.bufferData(gl.ARRAY_BUFFER, byteLength, attrib.usage);
+      attrib.byteLength = byteLength;
+   }
+};
+
+ShaderData.prototype.deleteAttribute = function(name) {
+   var attribute = this.attribute[name];
+   if (attribute) {
+      gl.deleteBuffer(attribute.handle);
+      this.attribute[name] = null;
+   }
+};
+
+ShaderData.prototype.freeAllAttributes = function() {
+   var removeList = [];
+   for (var key in this.attribute) {
+      removeList.push(key);
+   }
+   for (var i = 0; i < removeList.length; ++i) {
+      this.deleteAttribute(removeList[i]);
+   }
+};
+
+
+ShaderData.prototype.uploadAttribute = function(name, byteOffset, typedArray)  {
+   var attrb = this.attribute[name];
+   if (attrb) {
+      gl.bindBuffer(gl.ARRAY_BUFFER, attrb.handle);
+      gl.bufferSubData(gl.ARRAY_BUFFER, byteOffset, typedArray);
+   } else {
+      console.log("Shader Data: " + name + " not initialized");
+   }
+};
+
+//ShaderData.prototype.setAttribute = function(name, value) {
+//};
+// index is used for drawElement, not used for input to shaderProgram
+ShaderData.prototype.setIndex = function(index) {
+   if ((typeof(this.index)!=="undefined") && (this.index !== null)) {
+      gl.deleteBuffer(this.index.handle);
+   }
+   if (index !== null) {
+      var handle = gl.createBufferHandle(index, gl.ELEMENT_ARRAY_BUFFER);
+      this.index = {handle: handle};
+   }
+};
+
+ShaderData.prototype.setUniform3fv = function(name, arry3) {   // 3fv === vec3
+   this.uniform[name] = {value: new Float32Array(arry3), binder: ShaderData.uniform3fvFn};
+};
+
+ShaderData.uniform3fvFn = function(gl, loc, value) {
+   gl.uniform3fv(loc, value);
+}; 
+
+ShaderData.prototype.setUniform4fv = function(name, arry4) {
+   this.uniform[name] = {value: new Float32Array(arry4), binder: ShaderData.uniform4fvFn};
+};
+
+ShaderData.uniform4fvFn = function(gl, loc, value) {
+   gl.uniform4fv(loc, value);
+};
+
+// a few predefine var. 
+//        attributes: ["position", "normal", "uv"],
+//        uniforms: ["world", "worldView", "worldViewProjection", "view", "projection"] ? how about inverse?
+var ShaderProgram = function(progHandle, transform, attribute, uniform) {
+   this.progHandle = progHandle;
+   this.transform = transform;
+   this.attribute = attribute;
+   this.uniform = uniform;
+};
+
+ShaderProgram.prototype.disableVertexAttributeArray = function(gl) {
+   for (var key in this.attribute) {
+      if (this.attribute.hasOwnProperty(key)) {
+         gl.disableVertexAttribArray(this.attribute[key].loc);
+      }
+   }
+};
+
+ShaderProgram.prototype.bindAttribute = function(gl, attribute) {
+   try {
+   for (var key in this.attribute) {
+      if (attribute.hasOwnProperty(key)) {   // don't need to check this.attribute' inherited property, cannot possibley exist
+         var attrb = attribute[key];
+         gl.bindAttributeToProgram(this.attribute[key].loc, attrb);
+      } else {
+         // don't have property. console.log?
+         console.log("shaderData don't have shader attribute: " + key);
+      }
+   }
+   }
+   catch (e) {
+      console.log(e);
+   }
+};
+
+ShaderProgram.prototype.bindUniform = function(gl, uniform) {
+   try {
+   for (var key in this.uniform) {
+      if (uniform.hasOwnProperty(key)) {
+         var uni = uniform[key];
+         uni.binder(gl, this.uniform[key].loc, uni.value);
+      } else {
+         // don't have property. console.log?
+      }
+   }
+   }
+   catch (e) {
+      console.log(e);
+   }
+};
+
+ShaderProgram.prototype.bindTransform = function(gl, transform) {
+   try {
+     for (var key in this.transform) {
+      if (transform.hasOwnProperty(key)) {
+         var binder = transform[key];
+         binder(gl, this.transform[key]);
+      }
+   } 
+   }
+   catch (e) {
+      console.log(e);
+   }
+};
+
+ShaderProgram.prototype.getTypeByName = function(type) {
+/*	  var FLOAT = 0x1406;
+	  var FLOAT_VEC2 = 0x8B50;
+	  var FLOAT_VEC3 = 0x8B51;
+	  var FLOAT_VEC4 = 0x8B52;
+	  var INT = 0x1404;
+	  var INT_VEC2 = 0x8B53;
+	  var INT_VEC3 = 0x8B54;
+	  var INT_VEC4 = 0x8B55;
+	  var BOOL = 0x8B56;
+	  var BOOL_VEC2 = 0x8B57;
+	  var BOOL_VEC3 = 0x8B58;
+	  var BOOL_VEC4 = 0x8B59;
+	  var FLOAT_MAT2 = 0x8B5A;
+	  var FLOAT_MAT3 = 0x8B5B;
+	  var FLOAT_MAT4 = 0x8B5C;
+	  var SAMPLER_2D = 0x8B5E;
+	  var SAMPLER_CUBE = 0x8B60;
+	  var SAMPLER_3D = 0x8B5F;
+	  var SAMPLER_2D_SHADOW = 0x8B62;
+	  var FLOAT_MAT2x3 = 0x8B65;
+	  var FLOAT_MAT2x4 = 0x8B66;
+	  var FLOAT_MAT3x2 = 0x8B67;
+	  var FLOAT_MAT3x4 = 0x8B68;
+	  var FLOAT_MAT4x2 = 0x8B69;
+	  var FLOAT_MAT4x3 = 0x8B6A;
+	  var SAMPLER_2D_ARRAY = 0x8DC1;
+	  var SAMPLER_2D_ARRAY_SHADOW = 0x8DC4;
+	  var SAMPLER_CUBE_SHADOW = 0x8DC5;
+	  var UNSIGNED_INT = 0x1405;
+	  var UNSIGNED_INT_VEC2 = 0x8DC6;
+	  var UNSIGNED_INT_VEC3 = 0x8DC7;
+	  var UNSIGNED_INT_VEC4 = 0x8DC8;
+	  var INT_SAMPLER_2D = 0x8DCA;
+	  var INT_SAMPLER_3D = 0x8DCB;
+	  var INT_SAMPLER_CUBE = 0x8DCC;
+	  var INT_SAMPLER_2D_ARRAY = 0x8DCF;
+	  var UNSIGNED_INT_SAMPLER_2D = 0x8DD2;
+	  var UNSIGNED_INT_SAMPLER_3D = 0x8DD3;
+	  var UNSIGNED_INT_SAMPLER_CUBE = 0x8DD4;
+	  var UNSIGNED_INT_SAMPLER_2D_ARRAY = 0x8DD7;
+
+	  var TEXTURE_2D = 0x0DE1;
+	  var TEXTURE_CUBE_MAP = 0x8513;
+	  var TEXTURE_3D = 0x806F;
+	  var TEXTURE_2D_ARRAY = 0x8C1A;*/
+
+};
+
+
+
+
 
 /***/ }),
-/* 3 */
+/* 4 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -1629,19 +2162,20 @@ class EditCommandCombo extends EditCommand {
 
 
 /***/ }),
-/* 4 */
+/* 5 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "PreviewCage", function() { return PreviewCage; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "CreatePreviewCageCommand", function() { return CreatePreviewCageCommand; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__ = __webpack_require__(5);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_boundingvolume__ = __webpack_require__(19);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_wingededge__ = __webpack_require__(13);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_view__ = __webpack_require__(2);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_boundingvolume__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_wingededge__ = __webpack_require__(8);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_view__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_undo__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_undo__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_draftbench__ = __webpack_require__(7);
 /*
 *  hold onto a WingedEdgeTopology. adds index, texture, etc....
 *  bounding box, picking.
@@ -1660,40 +2194,11 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 
 
-const PreviewCage = function(mesh) {
-   this.geometry = mesh;
-   this.preview = {centroid: {}};
-   this.preview.shaderData = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].createShaderData();
-   this.preview.shaderData.setUniform3fv("faceColor", [0.5, 0.5, 0.5]);
-   this.preview.shaderData.setUniform3fv("selectedColor", [1.0, 0.0, 0.0]);
-   var layoutVec = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["ShaderData"].attribLayout();
-   var layoutFloat = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["ShaderData"].attribLayout(1);
-   this.preview.shaderData.createAttribute('position', layoutVec, __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].STATIC_DRAW);
-   this.preview.shaderData.createAttribute('barycentric', layoutVec, __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].STATIC_DRAW);
-   this.preview.shaderData.createAttribute('selected', layoutFloat, __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].DYNAMIC_DRAW);
-   this._resizeBoundingSphere(0);
-   this._resizePreview(0, 0);
 
+const PreviewCage = function(bench) {
+   this.geometry = new __WEBPACK_IMPORTED_MODULE_2__wings3d_wingededge__["WingedTopology"](bench.allocMesh);
+   this.bench = bench;
 
-   // previewEdge
-   this.previewEdge = {};
-   this.previewEdge.shaderData = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].createShaderData();
-   this.previewEdge.shaderData.setUniform4fv("selectedColor", [1.0, 0.0, 0.0, 1.0]);
-   this.previewEdge.shaderData.setUniform4fv('hiliteColor', [0.0, 1.0, 0.0, 1.0]);
-   this.previewEdge.shaderData.createAttribute('position', layoutVec, __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].STATIC_DRAW);
-   this.previewEdge.shaderData.createAttribute('color', layoutFloat, __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].DYNAMIC_DRAW);
-   this._resizePreviewEdge(0);
-
-   // previewVertex
-   this.previewVertex = {};
-   this.previewVertex.shaderData = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].createShaderData();
-   this.previewVertex.shaderData.setUniform4fv("selectedColor", [1.0, 0.0, 0.0, 1.0]);
-   this.previewVertex.shaderData.setUniform4fv('hiliteColor', [0.0, 1.0, 0.0, 1.0]);
-   this.previewVertex.shaderData.createAttribute('position', layoutVec, __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].STATIC_DRAW);
-   this.previewVertex.shaderData.createAttribute('color', layoutFloat, __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].DYNAMIC_DRAW);
-   this._resizePreviewVertex(0);
-   // body state.
-   this.previewBody = {hilite: false};
    // selecte(Vertex,Edge,Face)here
    this.selectedSet = new Set;
    this.groupSelection = false;
@@ -1701,22 +2206,14 @@ const PreviewCage = function(mesh) {
    this.name = "";
 };
 
-PreviewCage.CONST = (function() {
-   var constant = {};
 
-   constant.SELECTON  = new Float32Array(1);
-   constant.SELECTON[0] = 1.0;
-   constant.SELECTOFF = new Float32Array(1);
-   constant.SELECTOFF[0] = 0.0;
-   constant.BARYCENTRIC = new Float32Array(3);
-   constant.BARYCENTRIC[0] = 1.0;
-   constant.BARYCENTRIC[1] = 0.0;
-   constant.BARYCENTRIC[2] = 1.0;
-   return constant;
-}());
+// act as destructor
+PreviewCage.prototype.freeBuffer = function() {
+   this.geometry.free();
+};
 
 
-PreviewCage.duplicate = function(originalCage) {
+PreviewCage.prototype.duplicate = function(originalCage) {
    // copy geometry.
    const geometry = new __WEBPACK_IMPORTED_MODULE_2__wings3d_wingededge__["WingedTopology"]( originalCage.geometry.vertices.length*2 );
    for (let vertex of originalCage.geometry.vertices) {
@@ -1739,329 +2236,18 @@ PreviewCage.duplicate = function(originalCage) {
 
 
 PreviewCage.prototype._getGeometrySize = function() {
-   return { face: this.geometry.faces.length,
-            edge: this.geometry.edges.length,
-            vertex: this.geometry.vertices.length
+   return { face: this.geometry.faces.size,
+            edge: this.geometry.edges.size,
+            vertex: this.geometry.vertices.size
           };
 };
 
 
-PreviewCage.prototype._resizeBoundingSphere = function(oldSize) {
-   let size = this.geometry.faces.length - oldSize;
-   if (size > 0) {   // we only care about growth for now
-      if (oldSize > 0) {
-         if (this.preview.centroid.buf.data.length < (this.preview.centroid.buf.len+(size*3))) {
-            // needs to resize, and copy
-            const buf = new ArrayBuffer(this.geometry.faces.length * 3 * Float32Array.BYTES_PER_ELEMENT * 2);
-            const centroid = {buf: {buffer: buf, data: new Float32Array(buf), len: 0} };
-            // 
-            centroid.buf.data.set(this.preview.centroid.buf.data);  // copy old data
-            for (let sphere of this.boundingSpheres) {
-               sphere.center = new Float32Array(centroid.buf.buffer, Float32Array.BYTES_PER_ELEMENT*centroid.buf.len, 3); 
-               centroid.buf.len += 3;             
-            }
-            this.preview.centroid.buf = centroid.buf;
-         }
-      } else {
-         const buf = new ArrayBuffer(this.geometry.faces.length * 3 * Float32Array.BYTES_PER_ELEMENT * 2); // twice the current size
-         this.preview.centroid.buf = {buffer: buf, data: new Float32Array(buf), len: 0};
-         // assign a boundingsphere for each polygon.
-         this.boundingSpheres = new Array(this.geometry.faces.length);
-         this.boundingSpheres.length = 0;
-      }
-      // create New, should not have deleted sphere to mess up things
-      const centroid = this.preview.centroid;   // 
-      for (let i = oldSize; i < this.geometry.faces.length; ++i) {
-         const center = new Float32Array(centroid.buf.buffer, Float32Array.BYTES_PER_ELEMENT*centroid.buf.len, 3);
-         centroid.buf.len += 3;
-         const polygon = this.geometry.faces[i];
-         //polygon.index = i; // recalibrate index for free.
-         this.boundingSpheres.push( __WEBPACK_IMPORTED_MODULE_1__wings3d_boundingvolume__["BoundingSphere"].create(polygon, center) );
-      }
-      // vertices is geometry data + centroid data.
-   }
-};
-
-PreviewCage.prototype._resizePreview = function(oldSize, oldCentroidSize) {
-   const size = this.geometry.vertices.length - oldSize;
-   const centroidSize = this.geometry.faces.length - oldCentroidSize;
-   if ((size > 0) || (centroidSize > 0)) {
-      const model = this;
-      let length = model.geometry.buf.data.length;
-      let centroidLength = model.preview.centroid.buf.data.length;
-      if (oldSize > 0) {
-         if (length > model.preview.barycentric.length) {
-            // create new length
-            model.preview.barycentric = new Float32Array(length);
-            let selected = new Float32Array(length/3);
-            selected.set(model.preview.selected);
-            model.preview.selected = selected;
-         }
-         if (centroidLength > model.preview.centroid.barycentric.length) {
-            model.preview.centroid.barycentric = new Float32Array(centroidLength);
-            let selected = new Float32Array(centroidLength/3);
-            selected.set(model.preview.centroid.selected);
-            model.preview.centroid.selected = selected;
-         }
-      } else { // brand new
-         // created array
-         model.preview.barycentric = new Float32Array(length);
-         model.preview.selected = new Float32Array(length/3);
-      
-         model.preview.centroid.barycentric = new Float32Array(centroidLength);
-         model.preview.centroid.selected = new Float32Array(centroidLength/3);
-      }
-      model.preview.barycentric.set(PreviewCage.CONST.BARYCENTRIC);
-      model.preview.selected.fill(0.0, oldSize);
-      model.preview.centroid.barycentric.fill(1.0);
-      model.preview.centroid.selected.fill(0.0, oldCentroidSize);
-      // upload the data to webgl
-      length = this.geometry.buf.len;
-      centroidLength = this.preview.centroid.buf.len;
-      model.preview.shaderData.resizeAttribute('position', (length+centroidLength)*4);
-      model.preview.shaderData.uploadAttribute('position', 0, this.geometry.buf.data.subarray(0, length));
-      model.preview.shaderData.uploadAttribute('position', length*4, this.preview.centroid.buf.data.subarray(0, centroidLength));
-      model.preview.shaderData.resizeAttribute('barycentric', (length+centroidLength)*4);
-      model.preview.shaderData.uploadAttribute('barycentric', 0, this.preview.barycentric.subarray(0, length));
-      model.preview.shaderData.uploadAttribute('barycentric', length*4, this.preview.centroid.barycentric.subarray(0, centroidLength));
-      length /= 3;
-      centroidLength /= 3;
-      model.preview.shaderData.resizeAttribute('selected', (length+centroidLength) * 4);
-      model.preview.shaderData.uploadAttribute('selected', 0, this.preview.selected.subarray(0, length));
-      model.preview.shaderData.uploadAttribute('selected', length*4, this.preview.centroid.selected.subarray(0, centroidLength));
-   }
-      
-   // compute index.
-   this._computePreviewIndex();
-};
-
-PreviewCage.prototype._computePreviewIndex = function() {
-   this.numberOfTriangles = this.geometry.faces.reduce( function(acc, element) {
-      return acc + element.numberOfVertex; // -2; for half the vertex
-   }, 0);
-   const index = new Uint32Array(this.numberOfTriangles*3 );
-   let length = 0;
-   // recompute all index. (no optimization unless prove to be bottleneck)
-   let barycentric = this.geometry.vertices.length;
-   for (let sphere of this.boundingSpheres) {
-      if (sphere.isReal()) {     // skip over deleted sphere.
-         const polygon = sphere.polygon;
-         //sphere.indexStart = model.preview.index.length;
-         let indicesLength = 0;
-         polygon.eachEdge( function(edge) {
-            const vertex = edge.origin;
-            if (indicesLength > 0) {
-               index[length+indicesLength++] = vertex.index;
-               index[length+indicesLength++] = barycentric; 
-            }
-            index[length+indicesLength++] = vertex.index;         
-         });
-         // last triangle using the first vertices.
-         index[length+indicesLength++] = index[length];
-         index[length+indicesLength++] = barycentric;
-         length += indicesLength;
-         //sphere.indexEnd = model.preview.index.length;
-      }
-      barycentric++;
-   }
-   // save it to the buffer 
-   this.preview.shaderData.setIndex(index);
-   this.preview.indexLength = length;
+PreviewCage.prototype._updatePreviewAll = function() {
+   this.bench.updatePreview();
 };
 
 
-PreviewCage.prototype._updatePreviewAll = function(oldSize, affected) {
-   this._resizeBoundingSphere(oldSize.face);
-   this._resizePreview(oldSize.vertex, oldSize.face);
-   this._resizePreviewEdge(oldSize.edge);
-   this._resizePreviewVertex(oldSize.vertex);
-   this._updateAffected(affected);
-};
-
-PreviewCage.prototype._updateAffected = function(affected) {
-   if (affected.vertices.size > 0) {
-      for (let vertex of affected.vertices) {
-         this._updateVertex(vertex, affected);
-      }
-   }
-   if (affected.edges.size > 0) {
-      for (let edge of affected.edges) {
-         this._updatePreviewEdge(edge.left, true);
-      }
-   }
-   if (affected.faces.size > 0) {
-      for (let face of affected.faces) {
-         this._updatePreviewFace(face);
-      }
-      // update index
-
-   }
-
-   this.geometry.clearAffected();
-};
-
-
-PreviewCage.prototype._updateVertex = function(vertex, affected) {
-   if (vertex.isReal()) {
-      // first the simple case, update the vertexPreview,
-      const index = vertex.index;
-      this.previewVertex.shaderData.uploadAttribute('position', vertex.vertex.byteOffset, vertex.vertex);
-
-      // then update the effectedEdge and effectedFaces.
-//      vertex.eachOutEdge( function(halfEdge) {
-//         if (!affected.edges.has(halfEdge.wingedEdge)) {    // check edge
-//            affected.edges.add(halfEdge.wingedEdge);        // should not happened, for debugging purpose.
-//         }
-      //   const face = halfEdge.face;
-      //   if ((face!==null) && !affected.faces.has(face)) {  // check face
-      //      affected.faces.add(face);               // should not happened, for debugging purpose.
-      //   }
-//      });
-
-      // update preview too.
-      this.preview.shaderData.uploadAttribute('position', vertex.vertex.byteOffset, vertex.vertex);
-   }
-};
-
-PreviewCage.prototype._updatePreviewFace = function(polygon) {
-   // recompute boundingSphere centroid, and if numberOfVertex changed, needs to recompute index.
-   if ((polygon.index < this.boundingSpheres.length) && polygon.isReal()) { // will be get recompute on resize
-      const sphere = this.boundingSpheres[ polygon.index ];
-      sphere.setSphere( __WEBPACK_IMPORTED_MODULE_1__wings3d_boundingvolume__["BoundingSphere"].computeSphere(sphere.polygon, sphere.center) ); 
-      // update center.
-      const index = this.geometry.vertices.length+polygon.index;
-      this.preview.shaderData.uploadAttribute('position', index*3*4, sphere.center);
-   }
-};
-
-
-PreviewCage.prototype._updatePreviewEdge = function(edge, updateShader) {
-   const wingedEdge = edge.wingedEdge;
-   if (wingedEdge.isReal()) {
-      const index = wingedEdge.index * 6; // 2*3
-      this.previewEdge.line.set(edge.origin.vertex, index);
-      this.previewEdge.line.set(edge.pair.origin.vertex, index+3);
-
-      if (updateShader) {
-         this.previewEdge.shaderData.uploadAttribute('position', index*4, this.previewEdge.line.subarray(index, index+6));
-      }
-   } else {    // deleted edge. deselcted, dehilite.
-      const index = wingedEdge.index*2;
-      const color = this.previewEdge.color.subarray(index, index+2);
-      color.fill(0.0);
-      //this.previewEdge.color.fill(0.0, wingedEdge.index, wingedEdge.index+2);
-
-      //if (updateShader) {
-         this.previewEdge.shaderData.uploadAttribute('color', index*4, color);
-      //}
-   }
-};
-
-PreviewCage.prototype._resizePreviewEdge = function(oldSize) {
-   const size = this.geometry.edges.length - oldSize;
-   if (size > 0) {
-      if (oldSize > 0) {
-         let line = new Float32Array(this.geometry.edges.length*2*3);
-         line.set(this.previewEdge.line);
-         this.previewEdge.line = line;
-         let color = new Float32Array(this.geometry.edges.length*2);
-         color.set(this.previewEdge.color);
-         this.previewEdge.color = color;
-      } else { // brand new
-         this.previewEdge.line = new Float32Array(this.geometry.edges.length*2*3);
-         this.previewEdge.color = new Float32Array(this.geometry.edges.length*2);
-      }
-      for (let i = oldSize, j=(oldSize*2*3); i < this.geometry.edges.length; i++) {
-         let wingedEdge = this.geometry.edges[i];
-         for (let halfEdge of wingedEdge) {
-            if (wingedEdge.isReal()) {
-               this.previewEdge.line.set(halfEdge.origin.vertex, j);
-            } else {
-               this.previewEdge.line.fill(0.0, j, j+3);
-            }
-            j += 3;
-         }
-      }
-      //
-      this.previewEdge.color.fill(0.0, oldSize*2);
-      // update webgl
-      this.previewEdge.shaderData.resizeAttribute('position', this.previewEdge.line.length*4);
-      this.previewEdge.shaderData.uploadAttribute('position', 0, this.previewEdge.line);
-      this.previewEdge.shaderData.resizeAttribute('color', this.previewEdge.color.length*4);
-      this.previewEdge.shaderData.uploadAttribute('color', 0, this.previewEdge.color);
-   }
-};
-
-
-PreviewCage.prototype._resizePreviewVertex = function(oldSize) {
-   const length = this.geometry.vertices.length;
-   const size = length - oldSize;
-   if (size > 0) {
-      const preview = this.previewVertex;
-      const color = new Float32Array(length);
-      if (oldSize > 0) {
-         color.set(preview.color);
-      }
-      color.fill(0.0, oldSize);
-      preview.color = color;
-      // 
-      preview.shaderData.resizeAttribute('position', length*4*3);
-      preview.shaderData.uploadAttribute('position', 0, this.geometry.buf.data.subarray(0, length*3));
-      preview.shaderData.resizeAttribute('color', length*4);
-      preview.shaderData.uploadAttribute('color', 0, preview.color);
-   }
-   // rebuild index.
-   const index = new Uint32Array(length);
-   let j = 0;
-   for (let i = 0; i < length; ++i) {
-      if (this.geometry.vertices[i].isReal()) {
-         index[j++] = i;
-      }
-   }
-   // 
-   this.previewVertex.shaderData.setIndex(index);
-   this.previewVertex.indexLength = j;
-};
-
-
-// free webgl buffer.
-PreviewCage.prototype.freeBuffer = function() {
-   this.preview.shaderData.freeAllAttributes();
-   this.preview.shaderData =  null;
-   this.previewEdge.shaderData.freeAllAttributes();
-   this.preview.shaderData = null;
-   this.previewVertex.shaderData.freeAllAttributes();
-   this.previewVertex.shaderData = null;
-}
-
-
-PreviewCage.prototype.draw = function(gl) {
-   // draw using index
-   try {
-      gl.bindShaderData(this.preview.shaderData);
-      gl.drawElements(gl.TRIANGLES, this.preview.indexLength, gl.UNSIGNED_INT, 0);
-   } catch (e) {
-      console.log(e);
-   }
-};
-
-// draw vertex, select color, 
-PreviewCage.prototype.drawVertex = function(gl) {
-   // drawing using vertex array
-   try {
-      gl.bindShaderData(this.previewVertex.shaderData);
-      //gl.drawArrays(gl.POINTS, 0, this.geometry.vertices.length);
-      gl.drawElements(gl.POINTS, this.previewVertex.indexLength, gl.UNSIGNED_INT, 0);
-   } catch (e) {
-      console.log(e);
-   }
-};
-
-// draw edge, select color
-PreviewCage.prototype.drawEdge = function(gl) {
-   gl.bindShaderData(this.previewEdge.shaderData);
-   gl.drawArrays(gl.LINES, 0, this.previewEdge.line.length/3);
-}
 
 
 // todo: octree optimization.
@@ -2070,8 +2256,9 @@ PreviewCage.prototype.rayPick = function(ray) {
    // return the closest face (triangle) that intersect ray.
    var intersect = {polygon: [], pt: []};
    var hitSphere = [];
-   for (let sphere of this.boundingSpheres) {
-      if (sphere.isReal() && sphere.isIntersect(ray)){
+   for (let polygon of this.geometry.faces) {
+      const sphere = this.bench.boundingSpheres[polygon.index];
+      if (sphere.isIntersect(ray)){
          hitSphere.push( sphere );
       }
    }
@@ -2105,18 +2292,7 @@ PreviewCage.prototype.rayPick = function(ray) {
 
 // body selection.
 PreviewCage.prototype.changeFromBodyToFaceSelect = function() {
-   if (this.hasSelection()) {
-      this._resetBody();  
-      // select all face
-      this.selectedSet = new Set(this.geometry.faces);
-      this.preview.selected.fill(1.0);
-      this.preview.centroid.selected.fill(1.0);
-      // update drawing element
-      const length = this.geometry.buf.len/3;
-      const centroidLength = this.preview.centroid.buf.len/3;
-      this.preview.shaderData.uploadAttribute('selected', 0, this.preview.selected.subarray(0, length));
-      this.preview.shaderData.uploadAttribute('selected', length*4, this.preview.centroid.selected.subarray(0, centroidLength));
-   }
+   // do nothing, already selected or deselected.
 };
 
 PreviewCage.prototype.changeFromBodyToEdgeSelect = function() {
@@ -2130,7 +2306,7 @@ PreviewCage.prototype.changeFromBodyToEdgeSelect = function() {
       }
       // update previewLine
       this.groupSelection = false;
-      this.previewEdge.shaderData.uploadAttribute('color', 0, this.previewEdge.color);
+      this.bench.uploadEdgePreview();
    }
 };
 
@@ -2145,7 +2321,7 @@ PreviewCage.prototype.changeFromBodyToVertexSelect = function() {
       }
       // update previewVertex
       this.groupSelection = false;
-      this.previewVertex.shaderData.uploadAttribute('color', 0, this.previewVertex.color);
+      this.bench.uploadVertexPreview();
    }
 };
 
@@ -2206,8 +2382,7 @@ PreviewCage.prototype.restoreFromBodyToVertexSelect = function(snapshot) {
 PreviewCage.prototype._resetBody = function() {
    const oldSet = this.selectedSet;
    this.selectedSet = new Set();
-   this.previewBody.hilite = false;
-   this.preview.shaderData.setUniform3fv("faceColor", [0.5, 0.5, 0.5]);
+   this.bench.resetBody(oldSet);
    return oldSet;
 };
 
@@ -2237,43 +2412,22 @@ PreviewCage.prototype.selectBody = function() {
    let faceColor;
    // we change interior color to show the selection
    if (this.hasSelection()) {
-      this.selectedSet.delete( this.geometry );
-      // change to unselect, check if we are hilite,
-      if (this.previewBody.hilite) {
-         faceColor = [0.0, 1.0, 0.0];   // hilite and unselected         
-      } else {
-         faceColor = [0.5, 0.5, 0.5];   // unselected
-      }
+      this.bench.selectGroup(this.selectedSet, false);
+      this.selectedSet = new Set;
+         //faceColor = [0.0, 1.0, 0.0];   // hilite and unselected         
+         //faceColor = [0.5, 0.5, 0.5];   // unselected
    } else {
-      this.selectedSet.add( this.geometry );
-      if (this.previewBody.hilite) {
-         faceColor = [1.0, 1.0, 0.0];   // selected and hilite
-      } else {
-         faceColor = [1.0, 0.0, 0.0];   // selected.
-      }
-      geometryStatus("Object " + this.name + " has " + this.geometry.faces.length + " polygons");
+      this.selectedSet = new Set(this.geometry.faces);
+      this.bench.selectGroup(this.selectedSet, true);
+         //faceColor = [1.0, 1.0, 0.0];   // selected and hilite
+         //faceColor = [1.0, 0.0, 0.0];   // selected.
+      geometryStatus("Object " + this.name + " has " + this.geometry.faces.size + " polygons");
    }
-   this.preview.shaderData.setUniform3fv("faceColor", faceColor);
    return this.hasSelection();
 };
 
 PreviewCage.prototype.hiliteBody = function(hilite) {
-   let faceColor;
-   this.previewBody.hilite = hilite;
-   if (hilite) {
-      if (this.hasSelection()) {
-         faceColor = [1.0, 1.0, 0.0];
-      } else {
-         faceColor = [0.0, 1.0, 0.0];
-      }
-   } else {
-      if (this.hasSelection()) {
-         faceColor = [1.0, 0.0, 0.0];
-      } else {
-         faceColor = [0.5, 0.5, 0.5];
-      }
-   }
-   this.preview.shaderData.setUniform3fv("faceColor", faceColor);
+   this.bench.hiliteBody(this.geometry.faces, hilite); 
 }
 
 PreviewCage.prototype.hasSelection = function() {
@@ -2287,12 +2441,7 @@ PreviewCage.prototype.snapshotSelection = function() {
 
 PreviewCage.prototype.setVertexColor = function(vertex, color) {
    // selected color
-   const j = vertex.index;  
-   this.previewVertex.color[j] += color;
-   if (!this.groupSelection) {
-      const point = this.previewVertex.color.subarray(j, j+1);
-      this.previewVertex.shaderData.uploadAttribute('color', j*Float32Array.BYTES_PER_ELEMENT, point);
-   }
+   this.bench.setVertexColor(vertex, color, this.groupSelection);
 };
 
 PreviewCage.prototype.hiliteVertex = function(vertex, show) {
@@ -2348,8 +2497,7 @@ PreviewCage.prototype._resetSelectVertex = function() {
    var oldSelected = this.selectedSet;
    this.selectedSet = new Set;
    // zeroout the edge seleciton.
-   this.previewVertex.color.fill(0.0);
-   this.previewVertex.shaderData.uploadAttribute('color', 0, this.previewVertex.color);
+   this.bench.resetSelectVertex();
    return oldSelected;
 };
 
@@ -2495,13 +2643,7 @@ PreviewCage.prototype.restoreFromVertexToBodySelect = function(snapshot) {
 
 PreviewCage.prototype.setEdgeColor = function(wingedEdge, color) {
    // selected color
-   const j = wingedEdge.index * 2;  
-   this.previewEdge.color[j] += color;
-   this.previewEdge.color[j+1] += color;
-   if (!this.groupSelection) {
-      const line = this.previewEdge.color.subarray(j, j+2);
-      this.previewEdge.shaderData.uploadAttribute('color', j*Float32Array.BYTES_PER_ELEMENT, line);
-   }
+   this.bench.setEdgeColor(wingedEdge, color, this.groupSelection);
 };
 
 PreviewCage.prototype.hiliteEdge = function(selectEdge, show) {
@@ -2560,23 +2702,14 @@ PreviewCage.prototype.selectEdge = function(selectEdge) {
 PreviewCage.prototype.computeSnapshot = function(snapshot) {
    // update all affected polygon(use sphere). copy and recompute vertex.
    for (let polygon of snapshot.faces) {
-      const sphere = this.boundingSpheres[polygon.index];
+      const sphere = this.bench.boundingSpheres[polygon.index];
       // recompute sphere center. and normal
       polygon.computeNormal();
       sphere.setSphere( __WEBPACK_IMPORTED_MODULE_1__wings3d_boundingvolume__["BoundingSphere"].computeSphere(polygon, sphere.center) );
    }
-   // done, update shader data, should we update each vertex individually?
-   const centroids = this.preview.centroid.buf.data.subarray(0, this.preview.centroid.buf.len)
-   this.preview.shaderData.uploadAttribute('position', this.geometry.buf.len*4, centroids);
-   // update the edges.vertex
-   for (let wingedEdge of snapshot.wingedEdges) {
-      let index = wingedEdge.index * 2 * 3;
-      for (let halfEdge of wingedEdge) {
-         this.previewEdge.line.set(halfEdge.origin.vertex, index);
-         index += 3;
-      }
-   }
-   this.previewEdge.shaderData.uploadAttribute('position', 0, this.previewEdge.line);
+   this.bench.updateCentroid();
+   // update edges vertices.
+   this.bench.updateWEdges(snapshot.wingedEdges);
 };
 
 
@@ -2587,10 +2720,7 @@ PreviewCage.prototype.restoreMoveSelection = function(snapshot) {
       vec3.copy(vertex.vertex, snapshot.position.subarray(i, i+3));
       i += 3;
    }
-   // todo: we really should update as little as possible.
-   const vertices = this.geometry.buf.data.subarray(0, this.geometry.buf.len);
-   this.preview.shaderData.uploadAttribute('position', 0, vertices);
-   this.previewVertex.shaderData.uploadAttribute('position', 0, vertices);
+   this.bench.updatePosition();
    this.computeSnapshot(snapshot);
 };
 
@@ -2611,10 +2741,7 @@ PreviewCage.prototype.moveSelection = function(movement, snapshot) {
          vec3.add(vertex.vertex, vertex.vertex, movement);
       }
    }
-   // todo: we really should update as little as possible.
-   const vertices = this.geometry.buf.data.subarray(0, this.geometry.buf.len);
-   this.preview.shaderData.uploadAttribute('position', 0, vertices);
-   this.previewVertex.shaderData.uploadAttribute('position', 0, vertices);
+   this.bench.updatePosition();
    this.computeSnapshot(snapshot);
 };
 
@@ -2656,11 +2783,7 @@ PreviewCage.prototype.transformSelection = function(snapshot, transformFn) {
       }
    }
 
-   //
-   // todo: we really should update as little as possible.
-   const vertices = this.geometry.buf.data.subarray(0, this.geometry.buf.len);
-   this.preview.shaderData.uploadAttribute('position', 0, vertices);
-   this.previewVertex.shaderData.uploadAttribute('position', 0, vertices);
+   this.bench.updatePosition();
    this.computeSnapshot(snapshot);
 };
 
@@ -2925,9 +3048,7 @@ PreviewCage.prototype.snapshotTransformVertexGroup = function() {
 PreviewCage.prototype._resetSelectEdge = function() {
    const oldSelected = this.selectedSet;
    this.selectedSet = new Set;
-   // zeroout the edge seleciton.
-   this.previewEdge.color.fill(0.0);
-   this.previewEdge.shaderData.uploadAttribute('color', 0, this.previewEdge.color);
+   this.bench.resetSelectEdge();
    return oldSelected;
 };
 
@@ -3082,40 +3203,12 @@ PreviewCage.prototype.restoreFromEdgeToBodySelect = function(snapshot) {
 };
 
 PreviewCage.prototype.setFaceSelectionOff = function(polygon) {
-   var self = this;
-   var selected = this.preview.selected;    // filled triangle's selection status.
-   polygon.eachVertex( function(vertex) {
-      // restore drawing color
-      var vertexSelected = false;
-      vertex.eachOutEdge( function(edge) {
-         if (edge.isNotBoundary() && (edge.face !== polygon) && self.selectedSet.has(edge.face)) {
-            vertexSelected = true;
-         }
-      }); 
-      if (vertexSelected === false) {  // no more sharing, can safely reset
-         selected[vertex.index] = 0.0;
-         self.preview.shaderData.uploadAttribute('selected', vertex.index*4, PreviewCage.CONST.SELECTOFF);
-      }
-   });
-   selected = this.preview.centroid.selected;
-   selected[polygon.index]= 0.0;
+   this.bench.setFaceSelectionOff(polygon, this.selectedSet);
    this.selectedSet.delete(polygon);
-   var byteOffset = (this.geometry.vertices.length+polygon.index)*4;
-   this.preview.shaderData.uploadAttribute("selected", byteOffset, PreviewCage.CONST.SELECTOFF);
 };
 PreviewCage.prototype.setFaceSelectionOn = function(polygon) {
-   var self = this;
-   var selected = this.preview.selected;      // filled triangle's selection status.
-   // set the drawing color
-   polygon.eachVertex( function(vertex) {
-      selected[vertex.index] = 1.0;
-      self.preview.shaderData.uploadAttribute('selected', vertex.index*4, PreviewCage.CONST.SELECTON);
-   });
-   selected = this.preview.centroid.selected;
-   selected[polygon.index]= 1.0;
+   this.bench.setFaceSelectionOn(polygon);
    this.selectedSet.add(polygon);
-   var byteOffset = (this.geometry.vertices.length+polygon.index)*4;
-   this.preview.shaderData.uploadAttribute("selected", byteOffset, PreviewCage.CONST.SELECTON);
 };
 
 PreviewCage.prototype.dragSelectFace = function(selectEdge, onOff) {
@@ -3159,12 +3252,7 @@ PreviewCage.prototype.selectFace = function(selectEdge) {
 PreviewCage.prototype._resetSelectFace = function() {
    var oldSelected = this.selectedSet;
    this.selectedSet = new Set;
-   this.preview.selected.fill(0.0);          // reset all polygon to non-selected 
-   this.preview.centroid.selected.fill(0.0);
-   var length = this.geometry.buf.len/3;
-   this.preview.shaderData.uploadAttribute("selected", 0, this.preview.selected.subarray(0, length));
-   var centroidLength = this.preview.centroid.buf.len/3;
-   this.preview.shaderData.uploadAttribute('selected', length*4, this.preview.centroid.selected.subarray(0, centroidLength));
+   this.bench.resetSelectFace();
    return oldSelected;
 }
 
@@ -3320,21 +3408,10 @@ PreviewCage.prototype.restoreFromFaceToBodySelect = function(snapshot) {
 };
 
 
-PreviewCage.prototype._resizeVertices = function(oldSize) {
-   // update webgl buffer
-   if (oldSize < this.geometry.vertices.length) {
-      // expand webgl buffer
-      this.preview.setAttribute();
-
-   } // ignore shrinking request for now.
-};
-
-
-
 PreviewCage.prototype.extractFace = function() {
-   var vertexSize = this.geometry.vertices.length;
-   var edgeSize = this.geometry.edges.length;
-   var faceSize = this.geometry.faces.length;
+   var vertexSize = this.geometry.vertices.size;
+   var edgeSize = this.geometry.edges.size;
+   var faceSize = this.geometry.faces.size;
    // array of edgeLoop. 
    var edgeLoops = this.geometry.extractPolygon(this.selectedSet);
    // adjust preview to the new vertices, edges and faces.
@@ -3640,14 +3717,13 @@ PreviewCage.prototype.collapseExtrudeEdge = function(edges) {
    // update all affected polygon(use sphere). recompute centroid.
    for (let polygon of affectedPolygon) {
       if (polygon.isReal()) {
-         const sphere = this.boundingSpheres[polygon.index];
+         const sphere = this.bench.boundingSpheres[polygon.index];
          // recompute sphere center.
          sphere.setSphere( __WEBPACK_IMPORTED_MODULE_1__wings3d_boundingvolume__["BoundingSphere"].computeSphere(polygon, sphere.center) );
       }
    }
    // done, update shader data, should we update each vertex individually?
-   const centroids = this.preview.centroid.buf.data.subarray(0, this.preview.centroid.buf.len)
-   this.preview.shaderData.uploadAttribute('position', this.geometry.buf.len*4, centroids);
+   this.bench.updateCentroid();
 };
 
 //
@@ -4218,8 +4294,8 @@ PreviewCage.prototype.bridge = function(targetFace, sourceFace) {
    if (this.selectedSet.size === 2) {  // make sure. it really target, source
       const oldSize = this._getGeometrySize();
 
-      const targetSphere = this.boundingSpheres[targetFace.index];
-      const sourceSphere = this.boundingSpheres[sourceFace.index];
+      const targetSphere = this.bench.boundingSpheres[targetFace.index];
+      const sourceSphere = this.bench.boundingSpheres[sourceFace.index];
       const deltaCenter = vec3.create();
       //vec3.sub(deltaCenter, targetSphere.center, sourceSphere.center);   // what if we don't move the center, would it work better? so far, no
       const result = this.geometry.bridgeFace(targetFace, sourceFace, deltaCenter);
@@ -4385,546 +4461,6 @@ class CreatePreviewCageCommand extends __WEBPACK_IMPORTED_MODULE_5__wings3d_undo
 
 
 /***/ }),
-/* 5 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "createWebGLContext", function() { return createWebGLContext; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ShaderData", function() { return ShaderData; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ShaderProgram", function() { return ShaderProgram; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "gl", function() { return gl; });
-/*
-//
-//     Append a few utilities and convenience functions. now to es6 module.
-//
-*/
-
-
-let gl = null;
-function createWebGLContext(canvasID, attrib) {
-   var _pvt = {currentShader: null};
-
-   // initialization
-   var canvas = document.getElementById(canvasID);
-   if (!canvas) {
-      return null;
-   }
-      
-   attrib = typeof attrib !== 'undefined' ? attrib : { depth: true, stencil: true, antialias: true };
-//   gl = canvas.getContext("webgl2", attrib);
-//   if (!gl) {
-      gl = canvas.getContext("webgl", attrib) || canvas.getContext("experimental-webgl", attrib);
-      if (gl) {
-         // init_extensions(), init_restrictions()
-         let ext = gl.getExtension("OES_standard_derivatives"); // webgl2 is standard.
-         if (ext === null) {
-            console.log("No OES_standard_derivatives");
-            return null;   
-         }
-         ext = gl.getExtension("OES_element_index_uint");
-         if (ext === null) {
-            console.log("No OES_element_index_uint");
-            return null;
-         }
-         console.log("WebGL 1 init with extension");
-      } else {
-         alert("Unable to initialize WebGL");
-         return null;
-      }
-//   } else {
-//      console.log("WebGL 2 init successful");
-//   }
-
-
-   // make sure webgl framebuffer size matched real canvas size.
-   gl.resizeToDisplaySize = function() {
-      var canvas = gl.canvas;
-      var displayWidth = canvas.clientWidth;
-      var displayHeight = canvas.clientHeight;
-      if (canvas.width != displayWidth ||
-          canvas.height != displayHeight) {
-         canvas.width = displayWidth;
-         canvas.height = displayHeight;     
-         gl.viewport(0, 0, displayWidth, displayHeight);
-         return true;
-      }
-      return false;
-   };
-   gl.resizeToDisplaySize();
-
-   // setup variables
-   gl.projection = mat4.create();
-   gl.modelView = mat4.create();
-
-   // binder
-   _pvt.transform = {
-      projection: function(gl, loc) {
-         gl.uniformMatrix4fv(loc, false, gl.projection);
-      },
-      worldView: function(gl, loc) {
-         gl.uniformMatrix4fv(loc, false, gl.modelView);
-      },
-   };
-
-   // utility functions
-   // move from wings3d.wm.
-   // return int32array[0,0, width, height] ...etc.
-   gl.getViewport = function() {
-      return gl.getParameter(gl.VIEWPORT);
-   };
-   // project() transform objectSpace vert to screenSpace,
-   //   return vec4. vec4[3] == 0 meant failure, problems with input projection.
-   gl.project = function(objx, objy, objz, modelview, projection) {
-      //Transformation vectors
-      var input = vec4.fromValues(objx, objy, objz, 1.0);
-          out = vec4.create();
-      //Modelview transform
-      vec4.transformMat4(out, input, modelView);
-      //Projection transform, 
-      vec4.transformMat4(input, out, projection);
-      if(input[3] == 0.0) {//The w value
-         return input;
-      }
-      //Perspective division
-      input[0] /= input[3];
-      input[1] /= input[3];
-      input[2] /= input[3];
-      var viewport = gl.getViewport();
-      //screenCoordinate, Map x, y to range 0-1
-      out[0]=(input[0]*0.5+0.5)*viewport[2]+viewport[0];
-      out[1]=(input[1]*0.5+0.5)*viewport[3]+viewport[1];
-      //This is only correct when glDepthRange(0.0, 1.0)
-      out[2]=input[2]*0.5 + 0.5;	//Between 0 and 1
-      out[3]=1.0;             // out[w] determined success or failure.
-      return out;
-  };
-
-   gl.unProject = function(winx, winy, winz, modelview, projection, viewport) {
-      //Transformation matrices
-      var final = mat4.create(),
-          input = vec4.create(),
-          out = vec4.create();
-      //Calculation for inverting a matrix, compute projection x modelview
-      //and store in A[16]
-      mat4.multiply(final, projection, modelview);
-      //Now compute the inverse of matrix A
-      if(mat4.invert(final, final)==null) {
-         out[3]=0.0;
-         return out;
-      }
-      var viewport = gl.getViewport();
-      //Transformation of normalized coordinates between -1 and 1
-      input[0]=(winx-viewport[0])/viewport[2]*2.0 - 1.0;
-      input[1]=(winy-viewport[1])/viewport[3]*2.0 - 1.0;
-      input[2]=2.0*winz-1.0;
-      input[3]=1.0;
-      //Objects coordinates
-      vec4.transformMat4(out, input, final);
-      if(out[3]==0.0) {
-         return out;
-      }
-      out[0]/=out[3];
-      out[1]/=out[3];
-      out[2]/=out[3];
-      out[3] =1.0;
-      return out;
-   };
-   gl.transformVertex = function(vertex4) {
-       var out = vec4.create();
-       return vec4.transformMat4(out, vec4.transformMat4(out, vertex4, gl.modelView), gl.projection);
-   };
-
-   // shader, programs.
-   gl.compileGLSL = function(vshader, fshader) {
-      // compile vertex and fragment shader
-      var vertexShader = gl.loadShader(gl.VERTEX_SHADER, vshader);
-      if (!vertexShader) {
-         console.log("failed to compile vertex shader");
-         return null;
-      }
-      var fragmentShader = gl.loadShader(gl.FRAGMENT_SHADER, fshader);
-      if (!fragmentShader) {
-         console.log("failed to compile fragment shader");
-         return null;
-      }
-
-      // get program, attach, link
-      var progHandle = gl.createProgram();
-      gl.attachShader(progHandle, vertexShader);
-      gl.attachShader(progHandle, fragmentShader);
-      gl.linkProgram(progHandle);
-
-      // check for error
-      var linked = gl.getProgramParameter(progHandle, gl.LINK_STATUS);
-      if (!linked) {
-         var error = gl.getProgramInfoLog(progHandle);
-         console.log('failed to link program: ' + error);
-         gl.deleteProgram(progHandle);
-         gl.deleteShader(fragmentShader);
-         gl.deleteShader(vertexShader);
-         return null;
-      }
-      return progHandle;
-   };
-
-   gl.loadShader = function(shaderType, shaderSource) {
-      // createShader always work unless shaderType is wrong?
-      var shaderHandle = gl.createShader(shaderType);
-
-      // loading shaderSource then compile shader.
-      gl.shaderSource(shaderHandle, shaderSource);
-      gl.compileShader(shaderHandle);
-
-      // check for successful compilation.
-      var compiled = gl.getShaderParameter(shaderHandle, gl.COMPILE_STATUS);
-      if (!compiled) {
-         var error = gl.getShaderInfoLog(shaderHandle);
-         console.log('failed to compile shader: ' + error);
-         gl.deleteShader(shaderHandle);
-         return null;
-      }
-      return shaderHandle;
-   };
-
-   gl.createShaderProgram = function(vShader, fShader) {
-      var progHandle = gl.compileGLSL(vShader, fShader);
-      if (progHandle) {
-         var info;
-         var attribute = {};
-         var numCount = gl.getProgramParameter(progHandle, gl.ACTIVE_ATTRIBUTES);
-         for (var i = 0; i < numCount; ++i) {
-            info = gl.getActiveAttrib(progHandle, i);
-            if (!info){
-               console.log("Something wrong, getActiveAttrib failed");
-               return null;
-            }
-            attribute[info.name] = {loc: gl.getAttribLocation(progHandle, info.name), type: info.type};
-         }
-         var uniform = {};
-         var transform = {world: null, worldView: null, worldViewProjection: null, view: null, projection: null};
-         numCount = gl.getProgramParameter(progHandle, gl.ACTIVE_UNIFORMS);
-         for (i = 0; i < numCount; ++i) {
-            info  = gl.getActiveUniform(progHandle, i);
-            if (!info) {
-               console.log("Something wrong, getActiveUniform failed");
-               return null;
-            }
-            // check if it belongs to transform?
-            if (transform.hasOwnProperty(info.name)) {
-               transform[info.name] = gl.getUniformLocation(progHandle, info.name);
-            } else {
-               // check for array suffix?
-               uniform[info.name] = {loc: gl.getUniformLocation(progHandle, info.name),
-                                     size: info.size, type: info.type};
-            }
-         }
-         return new ShaderProgram(progHandle, transform, attribute, uniform);
-      }
-      
-   };
-
-   // return buffer Handle.
-   gl.createBufferHandle = function(typedArray, type = gl.ARRAY_BUFFER, draw = gl.STATIC_DRAW) {
-      if (ArrayBuffer.isView(typedArray)) {
-         var handle = gl.createBuffer();
-         gl.bindBuffer(type, handle);
-         gl.bufferData(type, typedArray, draw);
-         gl.bindBuffer(type, null);
-         return handle;
-      } else {
-         console.log("not typedArray");
-         return null;
-      }
-   };
-
-   gl.setBufferAndAttrib = function(handle, position, size=3) {
-      gl.bindBuffer(gl.ARRAY_BUFFER, handle);
-      gl.vertexAttribPointer(position, size, gl.FLOAT, false, 0, 0);
-      gl.enableVertexAttribArray(position);
-   };
-   
-   gl.bindAttributeToProgram = function(progLoc, attrib) {
-      gl.bindBuffer(gl.ARRAY_BUFFER, attrib.handle);
-      gl.vertexAttribPointer(progLoc, attrib.size, attrib.type, attrib.normalized, attrib.stride, attrib.offset);
-      gl.enableVertexAttribArray(progLoc);
-   }
-
-   gl.bindShaderData = function(data, useIndex=true) {
-      // using current setShader, set shader, set indexbuffer
-      _pvt.currentShader.bindAttribute(gl, data.attribute);
-      _pvt.currentShader.bindUniform(gl, data.uniform);
-      if (useIndex && typeof(data.index)!=="undefined" && data.index !== null) {
-         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, data.index.handle);
-      }
-   };
-
-   gl.bindTransform = function() {
-      // current shader, set current transform
-      _pvt.currentShader.bindTransform(gl, _pvt.transform);
-   };
-   gl.pushTransform = function(matrix) {
-
-   };
-   gl.popTransform = function() {
-      // restore transform
-   };
-   gl.useShader = function(shader) {
-      _pvt.currentShader = shader;
-      gl.useProgram(shader.progHandle);
-   };
-   gl.disableShader = function() {
-      // disable vertex attribute array
-      if (_pvt.currentShader) {
-         _pvt.currentShader.disableVertexAttributeArray(gl);
-      }
-   };
-
-   gl.drawVertex =  function(drawObject) {
-      gl.bindTransform();
-      gl.bindShaderData(drawObject.shaderData, false);
-      drawObject.drawVertex(gl);
-   };
-
-   gl.drawSelect = function(drawObject) {
-      gl.bindTransform();
-      drawObject.bindSelectorShaderData(gl);
-      drawObject.drawSelect(gl);
-   };
-
-   gl.createShaderData = function() {
-      return new ShaderData();
-   };
-
-   return gl;
-};
-
-
-//
-// define ShaderProgram, ShaderData.
-//
-
-/**input to ShaderProgram.
- */
-const ShaderData = function() {
-   this.attribute = {};
-   this.uniform = {};
-};
-
-ShaderData.attribLayout = function(attribSize=3, attribType=gl.FLOAT, normalized=false, stride=0, offset=0) {
-   return {size: attribSize, type: attribType, normalized: normalized, stride: stride, offset: offset};
-}
-
-
-ShaderData.prototype.setupAttribute = function(name, layout, buffer, usage) {
-   this.createAttribute(name, layout, usage);
-   this.resizeAttribute(name, buffer.byteLength);
-   this.uploadAttribute(name, 0, buffer);
-}
-
-ShaderData.prototype.createAttribute = function(name, layout, usage) {
-   if (!this.attribute[name]) {
-      var handle = gl.createBuffer();
-      this.attribute[name] = {handle: handle,
-                              byteLength: 0,
-                              usage: usage,
-                              size: layout.size,
-                              type: layout.type,
-                              normalized: layout.normalized,
-                              stride: layout.stride,
-                              offset: layout.offset
-                             };
-   } else {
-      console.log("Shader Data: " + name + " already initialized");
-   }
-};
-
-ShaderData.prototype.resizeAttribute = function(name, byteLength) {//, usage) {
-   var attrib = this.attribute[name];
-   if (attrib && attrib.byteLength != byteLength) {
-      gl.bindBuffer(gl.ARRAY_BUFFER, attrib.handle);
-      gl.bufferData(gl.ARRAY_BUFFER, byteLength, attrib.usage);
-      attrib.byteLength = byteLength;
-   }
-};
-
-ShaderData.prototype.deleteAttribute = function(name) {
-   var attribute = this.attribute[name];
-   if (attribute) {
-      gl.deleteBuffer(attribute.handle);
-      this.attribute[name] = null;
-   }
-};
-
-ShaderData.prototype.freeAllAttributes = function() {
-   var removeList = [];
-   for (var key in this.attribute) {
-      removeList.push(key);
-   }
-   for (var i = 0; i < removeList.length; ++i) {
-      this.deleteAttribute(removeList[i]);
-   }
-};
-
-
-ShaderData.prototype.uploadAttribute = function(name, byteOffset, typedArray)  {
-   var attrb = this.attribute[name];
-   if (attrb) {
-      gl.bindBuffer(gl.ARRAY_BUFFER, attrb.handle);
-      gl.bufferSubData(gl.ARRAY_BUFFER, byteOffset, typedArray);
-   } else {
-      console.log("Shader Data: " + name + " not initialized");
-   }
-};
-
-//ShaderData.prototype.setAttribute = function(name, value) {
-//};
-// index is used for drawElement, not used for input to shaderProgram
-ShaderData.prototype.setIndex = function(index) {
-   if ((typeof(this.index)!=="undefined") && (this.index !== null)) {
-      gl.deleteBuffer(this.index.handle);
-   }
-   if (index !== null) {
-      var handle = gl.createBufferHandle(index, gl.ELEMENT_ARRAY_BUFFER);
-      this.index = {handle: handle};
-   }
-};
-
-ShaderData.prototype.setUniform3fv = function(name, arry3) {   // 3fv === vec3
-   this.uniform[name] = {value: new Float32Array(arry3), binder: ShaderData.uniform3fvFn};
-};
-
-ShaderData.uniform3fvFn = function(gl, loc, value) {
-   gl.uniform3fv(loc, value);
-}; 
-
-ShaderData.prototype.setUniform4fv = function(name, arry4) {
-   this.uniform[name] = {value: new Float32Array(arry4), binder: ShaderData.uniform4fvFn};
-};
-
-ShaderData.uniform4fvFn = function(gl, loc, value) {
-   gl.uniform4fv(loc, value);
-};
-
-// a few predefine var. 
-//        attributes: ["position", "normal", "uv"],
-//        uniforms: ["world", "worldView", "worldViewProjection", "view", "projection"] ? how about inverse?
-var ShaderProgram = function(progHandle, transform, attribute, uniform) {
-   this.progHandle = progHandle;
-   this.transform = transform;
-   this.attribute = attribute;
-   this.uniform = uniform;
-};
-
-ShaderProgram.prototype.disableVertexAttributeArray = function(gl) {
-   for (var key in this.attribute) {
-      if (this.attribute.hasOwnProperty(key)) {
-         gl.disableVertexAttribArray(this.attribute[key].loc);
-      }
-   }
-};
-
-ShaderProgram.prototype.bindAttribute = function(gl, attribute) {
-   try {
-   for (var key in this.attribute) {
-      if (attribute.hasOwnProperty(key)) {   // don't need to check this.attribute' inherited property, cannot possibley exist
-         var attrb = attribute[key];
-         gl.bindAttributeToProgram(this.attribute[key].loc, attrb);
-      } else {
-         // don't have property. console.log?
-         console.log("shaderData don't have shader attribute: " + key);
-      }
-   }
-   }
-   catch (e) {
-      console.log(e);
-   }
-};
-
-ShaderProgram.prototype.bindUniform = function(gl, uniform) {
-   try {
-   for (var key in this.uniform) {
-      if (uniform.hasOwnProperty(key)) {
-         var uni = uniform[key];
-         uni.binder(gl, this.uniform[key].loc, uni.value);
-      } else {
-         // don't have property. console.log?
-      }
-   }
-   }
-   catch (e) {
-      console.log(e);
-   }
-};
-
-ShaderProgram.prototype.bindTransform = function(gl, transform) {
-   try {
-     for (var key in this.transform) {
-      if (transform.hasOwnProperty(key)) {
-         var binder = transform[key];
-         binder(gl, this.transform[key]);
-      }
-   } 
-   }
-   catch (e) {
-      console.log(e);
-   }
-};
-
-ShaderProgram.prototype.getTypeByName = function(type) {
-/*	  var FLOAT = 0x1406;
-	  var FLOAT_VEC2 = 0x8B50;
-	  var FLOAT_VEC3 = 0x8B51;
-	  var FLOAT_VEC4 = 0x8B52;
-	  var INT = 0x1404;
-	  var INT_VEC2 = 0x8B53;
-	  var INT_VEC3 = 0x8B54;
-	  var INT_VEC4 = 0x8B55;
-	  var BOOL = 0x8B56;
-	  var BOOL_VEC2 = 0x8B57;
-	  var BOOL_VEC3 = 0x8B58;
-	  var BOOL_VEC4 = 0x8B59;
-	  var FLOAT_MAT2 = 0x8B5A;
-	  var FLOAT_MAT3 = 0x8B5B;
-	  var FLOAT_MAT4 = 0x8B5C;
-	  var SAMPLER_2D = 0x8B5E;
-	  var SAMPLER_CUBE = 0x8B60;
-	  var SAMPLER_3D = 0x8B5F;
-	  var SAMPLER_2D_SHADOW = 0x8B62;
-	  var FLOAT_MAT2x3 = 0x8B65;
-	  var FLOAT_MAT2x4 = 0x8B66;
-	  var FLOAT_MAT3x2 = 0x8B67;
-	  var FLOAT_MAT3x4 = 0x8B68;
-	  var FLOAT_MAT4x2 = 0x8B69;
-	  var FLOAT_MAT4x3 = 0x8B6A;
-	  var SAMPLER_2D_ARRAY = 0x8DC1;
-	  var SAMPLER_2D_ARRAY_SHADOW = 0x8DC4;
-	  var SAMPLER_CUBE_SHADOW = 0x8DC5;
-	  var UNSIGNED_INT = 0x1405;
-	  var UNSIGNED_INT_VEC2 = 0x8DC6;
-	  var UNSIGNED_INT_VEC3 = 0x8DC7;
-	  var UNSIGNED_INT_VEC4 = 0x8DC8;
-	  var INT_SAMPLER_2D = 0x8DCA;
-	  var INT_SAMPLER_3D = 0x8DCB;
-	  var INT_SAMPLER_CUBE = 0x8DCC;
-	  var INT_SAMPLER_2D_ARRAY = 0x8DCF;
-	  var UNSIGNED_INT_SAMPLER_2D = 0x8DD2;
-	  var UNSIGNED_INT_SAMPLER_3D = 0x8DD3;
-	  var UNSIGNED_INT_SAMPLER_CUBE = 0x8DD4;
-	  var UNSIGNED_INT_SAMPLER_2D_ARRAY = 0x8DD7;
-
-	  var TEXTURE_2D = 0x0DE1;
-	  var TEXTURE_CUBE_MAP = 0x8513;
-	  var TEXTURE_3D = 0x806F;
-	  var TEXTURE_2D_ARRAY = 0x8C1A;*/
-
-};
-
-
-
-
-
-/***/ }),
 /* 6 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -4942,7 +4478,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "solidWireframe", function() { return solidWireframe; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "colorWireframe", function() { return colorWireframe; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "colorSolidWireframe", function() { return colorSolidWireframe; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d__ = __webpack_require__(0);
 // program as text .
 
@@ -5114,9 +4650,9 @@ let solidColor = {
       '}'].join("\n"),
    fragment:[
       'precision mediump float;',
-      'uniform vec4 uColor;',
+      'uniform vec4 faceColor;',
       'void main(void) {',
-      '  gl_FragColor = uColor;',
+      '  gl_FragColor = faceColor;',
       '}'].join("\n")
 };
 let simplePoint = { 
@@ -5251,8 +4787,8 @@ let colorSolidWireframe = {  // we don't have geometry shader, so we have to man
    fragment:[
       '#extension GL_OES_standard_derivatives : enable',
       'precision mediump float;',
-      'uniform vec3 faceColor;',
-      'uniform vec3 selectedColor;',  // hilite color
+      'uniform vec4 faceColor;',
+      'uniform vec4 selectedColor;',  // hilite color
       'varying vec3 vBC;',
       'varying float vSelected;',
 
@@ -5263,13 +4799,13 @@ let colorSolidWireframe = {  // we don't have geometry shader, so we have to man
       '}',
 
       'void main(){',
-         'vec3 interiorColor = faceColor;',
+         'vec4 interiorColor = faceColor;',
          'if (vSelected == 1.0) {',
          '  interiorColor = selectedColor;',
          '}',
          // coloring by edge
-         'gl_FragColor.rgb = mix(vec3(0.0), interiorColor, edgeFactor());',
-         'gl_FragColor.a = 1.0;',
+         'gl_FragColor.rgb = mix(vec3(0.0), vec3(interiorColor), edgeFactor());',
+         'gl_FragColor.a = interiorColor[3];',
       '}'].join("\n"),
 };
 
@@ -5302,490 +4838,632 @@ __WEBPACK_IMPORTED_MODULE_1__wings3d__["onReady"](function() {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "FaceMadsor", function() { return FaceMadsor; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__ = __webpack_require__(8);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_edgemads__ = __webpack_require__(9);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_bodymads__ = __webpack_require__(10);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__ = __webpack_require__(11);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__ = __webpack_require__(3);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_model__ = __webpack_require__(4);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_view__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_gl__ = __webpack_require__(5);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d_shaderprog__ = __webpack_require__(6);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__wings3d_ui__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__wings3d__ = __webpack_require__(0);
-/**
-//    This module contains most face command and face utility functions.
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "DraftBench", function() { return DraftBench; });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_boundingvolume__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_wingededge__ = __webpack_require__(8);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_view__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d__ = __webpack_require__(0);
 //
-//    
-**/
+// strategy:
+//    use GPU as much as possible. multiple passes for drawing. we have more than enough GPU power.
+//
+//    update as little as possible on cpu side. 
+//
+// todo:
+//    first pass: draw line (select, unselected) first (using triangles). 
+//
+//    second pass: draw polygon (selected, unseleced) using slightly optimized index.
+//
+//    third pass?: draw vertex.
+//
+//    last pass: draw hilite (line, polygon, or vertex).
+//
 
-   // for switching
+ 
 
 
 
 
 
 
+const DraftBench = function(defaultSize = 2048) {  // should only be created by View
+   this.allocMesh = new __WEBPACK_IMPORTED_MODULE_2__wings3d_wingededge__["MeshAllocator"](defaultSize);
+   this.lastPreviewSize = { vertices: 0, edges: 0, faces: 0};
+   this.boundingSpheres = [];
+   this.hilite = {index: null, indexLength: 0, numberOfTriangles: 0};  // the hilite index triangle list.
+
+   this.preview = {centroid: {},};
+   this.preview.shaderData = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].createShaderData();
+   this.preview.shaderData.setUniform4fv("faceColor", [0.5, 0.5, 0.5, 1.0]);
+   this.preview.shaderData.setUniform4fv("selectedColor", [1.0, 0.0, 0.0, 1.0]);
+   var layoutVec = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["ShaderData"].attribLayout();
+   var layoutFloat = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["ShaderData"].attribLayout(1);
+   this.preview.shaderData.createAttribute('position', layoutVec, __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].STATIC_DRAW);
+   this.preview.shaderData.createAttribute('barycentric', layoutVec, __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].STATIC_DRAW);
+   this.preview.shaderData.createAttribute('selected', layoutFloat, __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].DYNAMIC_DRAW);
+   this._resizeBoundingSphere(0);
+   this._resizePreview(0, 0);
+
+   // previewEdge
+   this.previewEdge = {};
+   this.previewEdge.shaderData = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].createShaderData();
+   this.previewEdge.shaderData.setUniform4fv("selectedColor", [1.0, 0.0, 0.0, 1.0]);
+   this.previewEdge.shaderData.setUniform4fv('hiliteColor', [0.0, 1.0, 0.0, 1.0]);
+   this.previewEdge.shaderData.createAttribute('position', layoutVec, __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].STATIC_DRAW);
+   this.previewEdge.shaderData.createAttribute('color', layoutFloat, __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].DYNAMIC_DRAW);
+   this._resizePreviewEdge(0);
+
+   // previewVertex
+   this.previewVertex = {};
+   this.previewVertex.shaderData = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].createShaderData();
+   this.previewVertex.shaderData.setUniform4fv("selectedColor", [1.0, 0.0, 0.0, 1.0]);
+   this.previewVertex.shaderData.setUniform4fv('hiliteColor', [0.0, 1.0, 0.0, 1.0]);
+   this.previewVertex.shaderData.createAttribute('position', layoutVec, __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].STATIC_DRAW);
+   this.previewVertex.shaderData.createAttribute('color', layoutFloat, __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].DYNAMIC_DRAW);
+   this._resizePreviewVertex(0);
+   // body state.
+   this.previewBody = {hilite: false};
+};
+
+DraftBench.CONST = (function() {
+   const constant = {};
+
+   constant.SELECTON  = new Float32Array(1);
+   constant.SELECTON[0] = 1.0;
+   constant.SELECTOFF = new Float32Array(1);
+   constant.SELECTOFF[0] = 0.0;
+   constant.BARYCENTRIC = new Float32Array(3);
+   constant.BARYCENTRIC[0] = 1.0;
+   constant.BARYCENTRIC[1] = 0.0;
+   constant.BARYCENTRIC[2] = 1.0;
+   return constant;
+}());
+
+// free webgl buffer.
+DraftBench.prototype.freeBuffer = function() {
+   this.preview.shaderData.freeAllAttributes();
+   this.preview.shaderData =  null;
+   this.previewEdge.shaderData.freeAllAttributes();
+   this.previewEdge.shaderData = null;
+   this.previewVertex.shaderData.freeAllAttributes();
+   this.previewVertex.shaderData = null;
+};
+
+DraftBench.prototype.updatePreview = function() {
+   this._resizeBoundingSphere();
+   this._resizePreview();
+   this._resizePreviewEdge();
+   this._resizePreviewVertex();
+   this._updatePreviewSize();
+   this._updateAffected(this.allocMesh.affected);
+};
 
 
+DraftBench.prototype._resizeBoundingSphere = function() {
+   let oldSize = this.lastPreviewSize.faces
+   let size = this.allocMesh.faces.length - oldSize;
+   if (size > 0) {   // we only care about growth for now
+      if (oldSize > 0) {
+         if (this.preview.centroid.buf.data.length < (this.preview.centroid.buf.len+(size*3))) {
+            // needs to resize, and copy
+            const buf = new ArrayBuffer(this.allocMesh.faces.length * 3 * Float32Array.BYTES_PER_ELEMENT * 2);
+            const centroid = {buf: {buffer: buf, data: new Float32Array(buf), len: 0} };
+            // 
+            centroid.buf.data.set(this.preview.centroid.buf.data);  // copy old data
+            for (let sphere of this.boundingSpheres) {
+               sphere.center = new Float32Array(centroid.buf.buffer, Float32Array.BYTES_PER_ELEMENT*centroid.buf.len, 3); 
+               centroid.buf.len += 3;             
+            }
+            this.preview.centroid.buf = centroid.buf;
+         }
+      } else {
+         const buf = new ArrayBuffer(this.allocMesh.faces.length * 3 * Float32Array.BYTES_PER_ELEMENT * 2); // twice the current size
+         this.preview.centroid.buf = {buffer: buf, data: new Float32Array(buf), len: 0};
+         // assign a boundingsphere for each polygon.
+         this.boundingSpheres = new Array(this.allocMesh.faces.length);
+         this.boundingSpheres.length = 0;
+      }
+      // create New, should not have deleted sphere to mess up things
+      const centroid = this.preview.centroid;   // 
+      for (let i = oldSize; i < this.allocMesh.faces.length; ++i) {
+         const center = new Float32Array(centroid.buf.buffer, Float32Array.BYTES_PER_ELEMENT*centroid.buf.len, 3);
+         centroid.buf.len += 3;
+         const polygon = this.allocMesh.faces[i];
+         //polygon.index = i; // recalibrate index for free.
+         this.boundingSpheres.push( __WEBPACK_IMPORTED_MODULE_1__wings3d_boundingvolume__["BoundingSphere"].create(polygon, center) );
+      }
+      // vertices is geometry data + centroid data.
+   }
+};
+
+DraftBench.prototype._resizePreview = function() {
+   let oldSize = this.lastPreviewSize.vertices;
+   let oldCentroidSize = this.lastPreviewSize.faces;
+
+   const size = this.allocMesh.vertices.length - oldSize;
+   const centroidSize = this.allocMesh.faces.length - oldCentroidSize;
+   if ((size > 0) || (centroidSize > 0)) {
+      const model = this;
+      let length = model.allocMesh.buf.data.length;
+      let centroidLength = model.preview.centroid.buf.data.length;
+      if (oldSize > 0) {
+         if (length > model.preview.barycentric.length) {
+            // create new length
+            model.preview.barycentric = new Float32Array(length);
+            let selected = new Float32Array(length/3);
+            selected.set(model.preview.selected);
+            model.preview.selected = selected;
+         }
+         if (centroidLength > model.preview.centroid.barycentric.length) {
+            model.preview.centroid.barycentric = new Float32Array(centroidLength);
+            let selected = new Float32Array(centroidLength/3);
+            selected.set(model.preview.centroid.selected);
+            model.preview.centroid.selected = selected;
+         }
+      } else { // brand new
+         // created array
+         model.preview.barycentric = new Float32Array(length);
+         model.preview.selected = new Float32Array(length/3);
+      
+         model.preview.centroid.barycentric = new Float32Array(centroidLength);
+         model.preview.centroid.selected = new Float32Array(centroidLength/3);
+      }
+      model.preview.barycentric.set(DraftBench.CONST.BARYCENTRIC);
+      model.preview.selected.fill(0.0, oldSize);
+      model.preview.centroid.barycentric.fill(1.0);
+      model.preview.centroid.selected.fill(0.0, oldCentroidSize);
+      // upload the data to webgl
+      length = this.allocMesh.buf.len;
+      centroidLength = this.preview.centroid.buf.len;
+      model.preview.shaderData.resizeAttribute('position', (length+centroidLength)*4);
+      model.preview.shaderData.uploadAttribute('position', 0, this.allocMesh.buf.data.subarray(0, length));
+      model.preview.shaderData.uploadAttribute('position', length*4, this.preview.centroid.buf.data.subarray(0, centroidLength));
+      model.preview.shaderData.resizeAttribute('barycentric', (length+centroidLength)*4);
+      model.preview.shaderData.uploadAttribute('barycentric', 0, this.preview.barycentric.subarray(0, length));
+      model.preview.shaderData.uploadAttribute('barycentric', length*4, this.preview.centroid.barycentric.subarray(0, centroidLength));
+      length /= 3;
+      centroidLength /= 3;
+      model.preview.shaderData.resizeAttribute('selected', (length+centroidLength) * 4);
+      model.preview.shaderData.uploadAttribute('selected', 0, this.preview.selected.subarray(0, length));
+      model.preview.shaderData.uploadAttribute('selected', length*4, this.preview.centroid.selected.subarray(0, centroidLength));
+   }
+      
+   // compute index.
+   this._computePreviewIndex();
+};
+
+DraftBench.prototype._computePreviewIndex = function() {
+   this.numberOfTriangles = this.allocMesh.faces.reduce( function(acc, element) {
+      return acc + element.numberOfVertex; // -2; for half the vertex
+   }, 0);
+   const index = new Uint32Array( this.numberOfTriangles*3 );
+   let length = 0;
+   // recompute all index. (no optimization unless prove to be bottleneck)
+   let barycentric = this.allocMesh.vertices.length;
+   for (let sphere of this.boundingSpheres) {
+      if (sphere.isReal()) {     // skip over deleted sphere.
+         const polygon = sphere.polygon;
+         //sphere.indexStart = model.preview.index.length;
+         let indicesLength = 0;
+         polygon.eachEdge( function(edge) {
+            const vertex = edge.origin;
+            if (indicesLength > 0) {
+               index[length+indicesLength++] = vertex.index;
+               index[length+indicesLength++] = barycentric; 
+            }
+            index[length+indicesLength++] = vertex.index;         
+         });
+         // last triangle using the first vertices.
+         index[length+indicesLength++] = index[length];
+         index[length+indicesLength++] = barycentric;
+         length += indicesLength;
+         //sphere.indexEnd = model.preview.index.length;
+      }
+      barycentric++;
+   }
+   // save it to the buffer 
+   this.preview.shaderData.setIndex(index);
+   this.preview.index = index;
+   this.preview.indexLength = length;
+};
+
+DraftBench.prototype._computeFaceHiliteIndex = function(polygon, offset) {
+   if (this.hilite.numberOfTriangles < polygon.numberOfVertex) {
+      this.hilite.numberOfTriangles = polygon.numberOfVertex;
+      this.hilite.index = new Uint32Array(this.hilite.numberOfTriangles*3);
+   }
+   if (offset === undefined) {
+      offset = 0;
+   }
+   let index = polygon.index;
+   let indicesLength = 0;
+   let barycentric = this.allocMesh.vertices.length + polygon.index;
+   for (let hEdge of polygon.hEdges()) {
+      const vertex = hEdge.origin;
+      if (indicesLength > 0) {
+         this.hilite.index[offset+indicesLength++] = vertex.index;
+         this.hilite.index[offset+indicesLength++] = barycentric;
+      }
+      this.hilite.index[offset+indicesLength++] = vertex.index;
+   }
+   // last triangle using the first vertices
+   this.hilite.index[offset+indicesLength++] = this.hilite.index[offset];
+   this.hilite.index[offset+indicesLength++] = barycentric;
+
+   this.hilite.indexLength = offset+indicesLength;
+};
+
+DraftBench.prototype._computeGroupHiliteIndex = function(faceGroup) {
+   let numberOfTriangles = 0;
+   for (let polygon of faceGroup) {
+      numberOfTriangles += polygon.numberOfVertex;
+   }
+   if (this.hilite.numberOfTriangles < numberOfTriangles) {
+      this.hilite.numberOfTriangles = numberOfTriangles;
+      this.hilite.index = new Uint32Array(this.hilite.numberOfTriangles*3);
+   }
+   this.hilite.indexLength = 0;
+   for (let polygon of faceGroup) {
+      this._computeFaceHiliteIndex(polygon, this.hilite.indexLength);
+   }
+};
 
 
+DraftBench.prototype._resizePreviewEdge = function() {
+   let oldSize = this.lastPreviewSize.edges;
 
-
-class FaceMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
-   constructor() {
-      super('face');
-      var self = this;
-      __WEBPACK_IMPORTED_MODULE_9__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_10__wings3d__["action"].faceDissolve.name, function(ev) {
-            const command = new DissolveFaceCommand(self);
-            if (command.doIt()) {
-               __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"](command);
+   const size = this.allocMesh.edges.length - oldSize;
+   if (size > 0) {
+      if (oldSize > 0) {
+         let line = new Float32Array(this.allocMesh.edges.length*2*3);
+         line.set(this.previewEdge.line);
+         this.previewEdge.line = line;
+         let color = new Float32Array(this.allocMesh.edges.length*2);
+         color.set(this.previewEdge.color);
+         this.previewEdge.color = color;
+      } else { // brand new
+         this.previewEdge.line = new Float32Array(this.allocMesh.edges.length*2*3);
+         this.previewEdge.color = new Float32Array(this.allocMesh.edges.length*2);
+      }
+      for (let i = oldSize, j=(oldSize*2*3); i < this.allocMesh.edges.length; i++) {
+         let wingedEdge = this.allocMesh.edges[i];
+         for (let halfEdge of wingedEdge) {
+            if (wingedEdge.isReal()) {
+               this.previewEdge.line.set(halfEdge.origin.vertex, j);
             } else {
-               geometryStatus('Selected Face not dissolveable');
+               this.previewEdge.line.fill(0.0, j, j+3);
             }
-         });
-      __WEBPACK_IMPORTED_MODULE_9__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_10__wings3d__["action"].faceCollapse.name, function(ev) {
-            const command = new CollapseFaceCommand(self);
-            command.doIt();
-            __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"](command);
-         });
-      __WEBPACK_IMPORTED_MODULE_9__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_10__wings3d__["action"].faceBridge.name, (ev) => {
-         let bridgeFaces = this.getBridgeFaces();
-         if (bridgeFaces.length === 2) {
-            const dest = bridgeFaces[0];
-            const origin = bridgeFaces[1];
-            if (dest.face.numberOfVertex == origin.face.numberOfVertex) {
-               let merge;
-               if (dest.preview !== origin.preview) {
-                  // merge dest and origin.
-                  merge = new MergePreviewCommand(dest.preview, origin.preview);
-                  merge.doIt();
-               }
-               const bridge = new BridgeFaceCommand(dest.preview, dest.face, origin.face);
-               bridge.doIt();
-               if (merge) {
-                  __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueueCombo"]([merge, bridge]);
-               } else {
-                  __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"](bridge);
-               }
-            }
-         }
-       });
-      __WEBPACK_IMPORTED_MODULE_9__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_10__wings3d__["action"].faceInset.name, (ev) => {
-         if (this.hasSelection()) {
-            __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["attachHandlerMouseMove"](new InsetFaceHandler(this));
-         } else {
-            geometryStatus('No selected face');
-         }
-       });
-      __WEBPACK_IMPORTED_MODULE_9__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_10__wings3d__["action"].faceBump.name, (ev) => {
-         __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["attachHandlerMouseMove"](new BumpFaceHandler(this));
-       });
-      // setup highlite face, at most 28 triangles.
-      var buf = new Float32Array(3*30);
-      this.trianglefan = {data: buf, length: 0};
-      var layout = __WEBPACK_IMPORTED_MODULE_7__wings3d_gl__["ShaderData"].attribLayout();
-      this.shaderData.setupAttribute('position', layout, this.trianglefan.data, __WEBPACK_IMPORTED_MODULE_7__wings3d_gl__["gl"].DYNAMIC_DRAW);  // needs to import gl.DYNAMIC_DRAW. 
-   }
-
-   modeName() {
-      return 'Face';
-   }
-
-   // get selected Face's vertex snapshot. for doing, and redo queue. 
-   snapshotPosition() {
-      var snapshots = [];
-      this.eachPreviewCage( function(preview) {
-         snapshots.push( preview.snapshotFacePosition() );
-      });
-      return snapshots;
-   }
-
-   snapshotPositionAndNormal() {
-      var snapshots = [];
-      this.eachPreviewCage( function(preview) {
-         snapshots.push( preview.snapshotFacePositionAndNormal() );
-      });
-      return snapshots;
-   }
-
-   snapshotTransformGroup() {
-      return this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.snapshotTransformFaceGroup);
-   }
-
-   bevel() {
-      const snapshots = [];
-      this.eachPreviewCage( function(preview) {
-         snapshots.push( preview.bevelFace() );
-      });
-      return snapshots;
-   }
-
-   undoBevel(snapshots, selection) {
-      this.restoreMoveSelection(snapshots);
-      // collapse extrudeEdge
-      this.eachPreviewCage(function(cage, collapse) {
-         cage.collapseSplitOrBevelEdge(collapse);
-      }, snapshots);
-      // rehilite selectedFace
-      this.resetSelection();
-      this.restoreSelection(selection);
-   }
-
-   bump(reuseLoops) {
-      const edgeLoops = [];
-      this.eachPreviewCage( function(preview, contours) {
-         edgeLoops.push( preview.bumpFace(contours) );
-      }, reuseLoops);
-      return edgeLoops;
-   }
-
-   undoBump(snapshots) {
-      // collapse extrudeEdge
-      this.eachPreviewCage(function(cage, collapse) {
-         cage.undoExtrudeEdge(collapse);
-      }, snapshots);  
-   }
-
-   // extrude Face
-   extrude(reuseLoops) {
-      const edgeLoops = [];
-      this.eachPreviewCage( function(preview, contours) {
-         edgeLoops.push( preview.extrudeFace(contours) );
-      }, reuseLoops);
-      return edgeLoops;
-   }
-
-   undoExtrude(extrudeEdgesContoursArray) {
-      this.eachPreviewCage(function(cage, extrudeEdgesContours) {
-         cage.collapseExtrudeEdge(extrudeEdgesContours.extrudeEdges);
-      }, extrudeEdgesContoursArray);
-   }
-
-   collapseEdgeNew(snapshots) {
-      this.eachPreviewCage(function(cage, obj) {
-         cage.collapseExtrudeEdge(obj.snapshot.extrudeEdges);
-      }, snapshots);
-   }
-
-   // face dissolve mode
-   dissolve() {
-      const dissolve = {count: 0, record: []};
-      this.eachPreviewCage(function(cage) {
-         const record = cage.dissolveSelectedFace();
-         dissolve.count += record.edges.length;
-         dissolve.record.push( record );
-      });
-      return dissolve;
-   }
-   undoDissolve(dissolveArray) {
-      this.eachPreviewCage( function(cage, dissolveEdge) {
-         cage.undoDissolveFace(dissolveEdge);
-      }, dissolveArray);
-   }
-
-   // face collapse 
-   collapse() {
-      const collapse = {count: 0, collapse: []};
-      this.eachPreviewCage(function(cage) {
-         const record = cage.collapseSelectedFace();
-         collapse.count += record.collapse.edges.length;
-         collapse.collapse.push( record );
-      });
-      return collapse;
-   }
-   undoCollapse(collapseArray) {
-      this.eachPreviewCage( function(cage, collapse) {
-         cage.undoCollapseFace(collapse);
-      }, collapseArray);
-   }
-
-   // bridge
-   getBridgeFaces() {
-      const snapshot = [];
-      this.eachPreviewCage( (cage) => {
-         const selection = cage.snapshotSelection();
-         for (let selected of selection) {
-            snapshot.push( {preview: cage, face: selected} );
-         }
-      });
-      return snapshot;
-   }
-
-   // Inset
-   inset() {
-      return this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.insetFace);
-   }
-
-   dragSelect(cage, selectArray, onOff) {
-      if (this.currentEdge !== null) {
-        if (cage.dragSelectFace(this.currentEdge, onOff)) {
-            selectArray.push(this.currentEdge);
-        }
-      }
-   }
-
-   // select, hilite
-   selectStart(preview) {
-      // check not null, shouldn't happened
-      if (this.currentEdge !== null) {
-         var onOff = preview.selectFace(this.currentEdge);
-         return new DragFaceSelect(this, preview, this.currentEdge, onOff);
-      }    
-   }
-
-   showNewHilite(edge, intersect, center) {
-      if ((this.currentEdge === null) || (this.currentEdge.face !== edge.face)) {   // make sure it new face
-         if (edge.face.numberOfVertex < 17) {
-            var position = this.trianglefan.data;
-            var i = 0;
-            position[i++] = center[0];
-            position[i++] = center[1];
-            position[i++] = center[2];
-            edge.face.eachVertex( function(vertex) {
-               position[i++] = vertex.vertex[0];
-               position[i++] = vertex.vertex[1];
-               position[i++] = vertex.vertex[2];
-            });
-            // copied the first vertex to complete fan
-            position[i++] = position[3];
-            position[i++] = position[4];
-            position[i++] = position[5];
-            this.trianglefan.length = i / 3;
-            // update vbo buffer
-            this.shaderData.uploadAttribute('position', 0, this.trianglefan.data);
+            j += 3;
          }
       }
+      //
+      this.previewEdge.color.fill(0.0, oldSize*2);
+      // update GPU
+      this.previewEdge.shaderData.resizeAttribute('position', this.previewEdge.line.length*4);
+      this.previewEdge.shaderData.uploadAttribute('position', 0, this.previewEdge.line);
+      this.previewEdge.shaderData.resizeAttribute('color', this.previewEdge.color.length*4);
+      this.previewEdge.shaderData.uploadAttribute('color', 0, this.previewEdge.color);
+   }
+};
+
+
+DraftBench.prototype._resizePreviewVertex = function() {
+   const oldSize = this.lastPreviewSize.vertices;
+   const length = this.allocMesh.vertices.length;
+   const size = length - oldSize;
+   if (size > 0) {
+      const preview = this.previewVertex;
+      const color = new Float32Array(length);
+      if (oldSize > 0) {
+         color.set(preview.color);
+      }
+      color.fill(0.0, oldSize);
+      preview.color = color;
+      // 
+      preview.shaderData.resizeAttribute('position', length*4*3);
+      preview.shaderData.uploadAttribute('position', 0, this.allocMesh.buf.data.subarray(0, length*3));
+      preview.shaderData.resizeAttribute('color', length*4);
+      preview.shaderData.uploadAttribute('color', 0, preview.color);
+   }
+   // rebuild index.
+   const index = new Uint32Array(length);
+   let j = 0;
+   for (let i = 0; i < length; ++i) {
+      if (this.allocMesh.vertices[i].isReal()) {
+         index[j++] = i;
+      }
+   }
+   // 
+   this.previewVertex.shaderData.setIndex(index);
+   this.previewVertex.indexLength = j;
+};
+
+
+DraftBench.prototype._updatePreviewSize = function() {
+   this.lastPreviewSize.vertices = this.allocMesh.vertices.length;
+   this.lastPreviewSize.edges = this.allocMesh.edges.length;
+   this.lastPreviewSize.faces = this.allocMesh.faces.length;
+};
+
+
+DraftBench.prototype._updateAffected = function(affected) {
+   if (affected.vertices.size > 0) {
+      for (let vertex of affected.vertices) {
+         this._updateVertex(vertex, affected);
+      }
+   }
+   if (affected.edges.size > 0) {
+      for (let edge of affected.edges) {
+         this._updatePreviewEdge(edge.left, true);
+      }
+   }
+   if (affected.faces.size > 0) {
+      for (let face of affected.faces) {
+         this._updatePreviewFace(face);
+      }
+      // update index
+
    }
 
-   _resetSelection(cage) {
-      return this._wrapSelection(cage._resetSelectFace());
-   }
+   this.allocMesh.clearAffected();
+};
 
-   _restoreSelection(cage, snapshot) {
-      cage.restoreFaceSelection(snapshot);
-   }
+DraftBench.prototype._updateVertex = function(vertex, affected) {
+   if (vertex.isReal()) {
+      // first the simple case, update the vertexPreview,
+      const index = vertex.index;
+      this.previewVertex.shaderData.uploadAttribute('position', vertex.vertex.byteOffset, vertex.vertex);
 
-   _wrapSelection(selection) {
-      return {selectedFaces: selection };
+      // then update the effectedEdge and effectedFaces.
+//      vertex.eachOutEdge( function(halfEdge) {
+//         if (!affected.edges.has(halfEdge.wingedEdge)) {    // check edge
+//            affected.edges.add(halfEdge.wingedEdge);        // should not happened, for debugging purpose.
+//         }
+      //   const face = halfEdge.face;
+      //   if ((face!==null) && !affected.faces.has(face)) {  // check face
+      //      affected.faces.add(face);               // should not happened, for debugging purpose.
+      //   }
+//      });
+
+      // update preview too.
+      this.preview.shaderData.uploadAttribute('position', vertex.vertex.byteOffset, vertex.vertex);
    }
-   
-   toggleFunc(toMadsor) {
-      const self = this;
-      var redoFn;
-      var snapshots = [];
-      if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_1__wings3d_edgemads__["EdgeMadsor"]) {
-         redoFn = __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreEdgeMode"];
-         this.eachPreviewCage( function(cage) {
-            snapshots.push( self._wrapSelection(cage.snapshotSelection()) );
-            cage.changeFromFaceToEdgeSelect();
-         });
-      } else if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__["VertexMadsor"]) {
-         redoFn = __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreVertexMode"];
-         this.eachPreviewCage( function(cage) {
-            snapshots.push(  self._wrapSelection(cage.snapshotSelection()) );
-            cage.changeFromFaceToVertexSelect();
-         });
+};
+
+DraftBench.prototype._updatePreviewFace = function(polygon) {
+   // recompute boundingSphere centroid, and if numberOfVertex changed, needs to recompute index.
+   if ((polygon.index < this.boundingSpheres.length) && polygon.isReal()) { // will be get recompute on resize
+      const sphere = this.boundingSpheres[ polygon.index ];
+      sphere.setSphere( __WEBPACK_IMPORTED_MODULE_1__wings3d_boundingvolume__["BoundingSphere"].computeSphere(sphere.polygon, sphere.center) ); 
+      // update center.
+      const index = this.allocMesh.vertices.length+polygon.index;
+      this.preview.shaderData.uploadAttribute('position', index*3*4, sphere.center);
+   }
+};
+
+
+DraftBench.prototype._updatePreviewEdge = function(edge, updateShader) {
+   const wingedEdge = edge.wingedEdge;
+   if (wingedEdge.isReal()) {
+      const index = wingedEdge.index * 6; // 2*3
+      this.previewEdge.line.set(edge.origin.vertex, index);
+      this.previewEdge.line.set(edge.pair.origin.vertex, index+3);
+
+      if (updateShader) {
+         this.previewEdge.shaderData.uploadAttribute('position', index*4, this.previewEdge.line.subarray(index, index+6));
+      }
+   } else {    // deleted edge. deselcted, dehilite.
+      const index = wingedEdge.index*2;
+      const color = this.previewEdge.color.subarray(index, index+2);
+      color.fill(0.0);
+      //this.previewEdge.color.fill(0.0, wingedEdge.index, wingedEdge.index+2);
+
+      //if (updateShader) {
+         this.previewEdge.shaderData.uploadAttribute('color', index*4, color);
+      //}
+   }
+};
+
+
+DraftBench.prototype.hiliteFace = function(polygon, isHilite) {
+   if (isHilite) {   // show
+      this._computeFaceHiliteIndex(polygon);
+   } else { // hide
+      this.hilite.indexLength = 0;
+   }
+};
+
+DraftBench.prototype.hiliteBody = function(faceGroup, isHilite) {
+   if (isHilite) { // show
+      this._computeGroupHiliteIndex(faceGroup);
+   } else { // hide 
+      this.hilite.indexLength = 0;
+   }
+};
+
+
+// drawing routines -- draw selected polygon first, then draw unselected one, this is offseted
+DraftBench.prototype.draw = function(gl) {
+   // draw using index
+   try {
+      gl.bindShaderData(this.preview.shaderData);
+      gl.drawElements(gl.TRIANGLES, this.preview.indexLength, gl.UNSIGNED_INT, 0);
+   } catch (e) {
+      console.log(e);
+   }
+};
+
+// draw hilite polygon. not offset
+DraftBench.prototype.drawHilite = function(gl) {
+   if (this.hilite.indexLength == 0) {
+      return;
+   }
+   // set hilite color and hilite index
+   this.preview.shaderData.setIndex(this.hilite.index);
+   this.preview.shaderData.setUniform4fv("faceColor", [0.0, 1.0, 0.0, 0.35]);
+   gl.bindShaderData(this.preview.shaderData);
+   gl.drawElements(gl.TRIANGLES, this.hilite.indexLength, gl.UNSIGNED_INT, 0);
+   // restore color and index
+   this.preview.shaderData.setIndex(this.preview.index);
+   this.preview.shaderData.setUniform4fv("faceColor", [0.5, 0.5, 0.5, 1.0]);
+};
+
+// draw vertex, select color, 
+DraftBench.prototype.drawVertex = function(gl) {
+   // drawing using vertex array
+   try {
+      gl.bindShaderData(this.previewVertex.shaderData);
+      //gl.drawArrays(gl.POINTS, 0, this.allocMesh.vertices.length);
+      gl.drawElements(gl.POINTS, this.previewVertex.indexLength, gl.UNSIGNED_INT, 0);
+   } catch (e) {
+      console.log(e);
+   }
+};
+
+// draw edge, select color
+DraftBench.prototype.drawEdge = function(gl) {
+   gl.bindShaderData(this.previewEdge.shaderData);
+   gl.drawArrays(gl.LINES, 0, this.previewEdge.line.length/3);
+}
+
+
+DraftBench.prototype.selectGroup = function(selection, isOn) {
+   const noSelection = new Set;
+   for (let polygon of selection) {
+      if (isOn) {
+         this.setFaceSelectionOn(polygon);
       } else {
-         redoFn = __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreBodyMode"];
-         this.eachPreviewCage( function(cage) {
-            snapshots.push(  self._wrapSelection(cage.snapshotSelection()) );
-            cage.changeFromFaceToBodySelect();
-         });
-      }
-      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"](new __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["ToggleModeCommand"](redoFn, __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreFaceMode"], snapshots));
-   }
-
-   restoreMode(toMadsor, snapshots) {
-      if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_1__wings3d_edgemads__["EdgeMadsor"]) {
-         this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromFaceToEdgeSelect(snapshot);
-         }, snapshots);
-      } else if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__["VertexMadsor"]) {
-         this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromFaceToVertexSelect(snapshot);
-         }, snapshots);
-      } else {
-         this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromFaceToBodySelect(snapshot);
-         }, snapshots);
+         this.setFaceSelectionOff(polygon, noSelection);
       }
    }
+};
 
-   drawObject(gl) {
-      // draw hilite
-      gl.drawArrays(gl.TRIANGLE_FAN, 0, this.trianglefan.length);
-   }
 
-   previewShader(gl) {
-      gl.useShader(__WEBPACK_IMPORTED_MODULE_8__wings3d_shaderprog__["colorSolidWireframe"]);
-   }
+DraftBench.prototype.resetBody = function(bodyGroup) {
+   this.selectGroup(bodyGroup, false);    // turn group off.
+};
 
-   useShader(gl) {
-      gl.useShader(__WEBPACK_IMPORTED_MODULE_8__wings3d_shaderprog__["solidColor"]);
+
+DraftBench.prototype.uploadFacePreview = function() {
+
+};
+
+DraftBench.prototype.uploadEdgePreview = function() {
+   this.previewEdge.shaderData.uploadAttribute('color', 0, this.previewEdge.color);
+};
+
+DraftBench.prototype.uploadVertexPreview = function() {
+   //if (this.locked) {
+      this.previewVertex.shaderData.uploadAttribute('color', 0, this.previewVertex.color);
+      //this.locked = false;
+   //}
+};
+
+
+DraftBench.prototype.setVertexColor = function(vertex, color, groupSelection) {
+   // selected color
+   const j = vertex.index;  
+   this.previewVertex.color[j] += color;
+   if (!groupSelection) {
+      const point = this.previewVertex.color.subarray(j, j+1);
+      this.previewVertex.shaderData.uploadAttribute('color', j*Float32Array.BYTES_PER_ELEMENT, point);
    }
+};
+
+DraftBench.prototype.resetSelectVertex = function() {
+   // zeroout the edge seleciton.
+   this.previewVertex.color.fill(0.0);
+   this.previewVertex.shaderData.uploadAttribute('color', 0, this.previewVertex.color);
+};
+
+DraftBench.prototype.setEdgeColor = function(wingedEdge, color, groupSelection) {
+   // selected color
+   const j = wingedEdge.index * 2;  
+   this.previewEdge.color[j] += color;
+   this.previewEdge.color[j+1] += color;
+   if (!groupSelection) {
+      const line = this.previewEdge.color.subarray(j, j+2);
+      this.previewEdge.shaderData.uploadAttribute('color', j*Float32Array.BYTES_PER_ELEMENT, line);
+   }
+};
+
+DraftBench.prototype.resetSelectEdge = function() {
+   // zeroout the edge seleciton.
+   this.previewEdge.color.fill(0.0);
+   this.previewEdge.shaderData.uploadAttribute('color', 0, this.previewEdge.color);
+};
+
+DraftBench.prototype.updateWEdges = function(wingedEdgs) {
+   // update the edges.vertex
+   for (let wingedEdge of wingedEdges) {
+      let index = wingedEdge.index * 2 * 3;
+      for (let halfEdge of wingedEdge) {
+         this.previewEdge.line.set(halfEdge.origin.vertex, index);
+         index += 3;
+      }
+   }
+   this.previewEdge.shaderData.uploadAttribute('position', 0, this.previewEdge.line);
 }
 
-
-class DragFaceSelect extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["DragSelect"] {
-   constructor(madsor, cage, halfEdge, onOff) {
-      super(madsor, cage, halfEdge, onOff);
-   }
-
-   finish() {
-      return new FaceSelectCommand(this.select);
-   }
-}
+DraftBench.prototype.updateCentroid = function(snapshot) {
+   // done, update shader data, should we update each vertex individually?
+   const centroids = this.preview.centroid.buf.data.subarray(0, this.preview.centroid.buf.len)
+   this.preview.shaderData.uploadAttribute('position', this.allocMesh.buf.len*4, centroids);
+};
 
 
-class FaceSelectCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
-   constructor(select) {
-      super();
-      this.select = select;
-   }
+DraftBench.prototype.updatePosition = function() {
+   // todo: we really should update as little as possible.
+   const vertices = this.allocMesh.buf.data.subarray(0, this.allocMesh.buf.len);
+   this.preview.shaderData.uploadAttribute('position', 0, vertices);
+   this.previewVertex.shaderData.uploadAttribute('position', 0, vertices);
+};
 
-   doIt() {
-      for (var [cage, halfEdges] of this.select) {
-         for (var i = 0; i < halfEdges.length; ++i) {
-            cage.selectFace(halfEdges[i]);
+DraftBench.prototype.setFaceSelectionOff = function(polygon, selectedSet) {
+   var self = this;
+   var selected = this.preview.selected;    // filled triangle's selection status.
+   polygon.eachVertex( function(vertex) {
+      // restore drawing color
+      var vertexSelected = false;
+      vertex.eachOutEdge( function(edge) {
+         if (edge.isNotBoundary() && (edge.face !== polygon) && selectedSet.has(edge.face)) {
+            vertexSelected = true;
          }
+      }); 
+      if (vertexSelected === false) {  // no more sharing, can safely reset
+         selected[vertex.index] = 0.0;
+         self.preview.shaderData.uploadAttribute('selected', vertex.index*4, DraftBench.CONST.SELECTOFF);
       }
-   }
+   });
+   selected = this.preview.centroid.selected;
+   selected[polygon.index]= 0.0;
+   var byteOffset = (this.allocMesh.vertices.length+polygon.index)*4;
+   this.preview.shaderData.uploadAttribute("selected", byteOffset, DraftBench.CONST.SELECTOFF);
+};
+DraftBench.prototype.setFaceSelectionOn = function(polygon) {
+   var self = this;
+   var selected = this.preview.selected;      // filled triangle's selection status.
+   // set the drawing color
+   polygon.eachVertex( function(vertex) {
+      selected[vertex.index] = 1.0;
+      self.preview.shaderData.uploadAttribute('selected', vertex.index*4, DraftBench.CONST.SELECTON);
+   });
+   selected = this.preview.centroid.selected;
+   selected[polygon.index]= 1.0;
+   var byteOffset = (this.allocMesh.vertices.length+polygon.index)*4;
+   this.preview.shaderData.uploadAttribute("selected", byteOffset, DraftBench.CONST.SELECTON);
+};
 
-   undo() {
-      this.doIt();   // selectEdge, flip/flop, so
-   }
-}
+DraftBench.prototype.resetSelectFace = function() {
+   this.preview.selected.fill(0.0);          // reset all polygon to non-selected 
+   this.preview.centroid.selected.fill(0.0);
+   var length = this.allocMesh.buf.len/3;
+   this.preview.shaderData.uploadAttribute("selected", 0, this.preview.selected.subarray(0, length));
+   var centroidLength = this.preview.centroid.buf.len/3;
+   this.preview.shaderData.uploadAttribute('selected', length*4, this.preview.centroid.selected.subarray(0, centroidLength));
+};
 
-
-class DissolveFaceCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
-   constructor(madsor) {
-      super();
-      this.madsor = madsor;
-   }
-
-   doIt() {
-      const dissolve = this.madsor.dissolve();
-      if (dissolve.count > 0) {
-         this.dissolve = dissolve.record;
-         return true;
-      } else {
-         return false;
-      }
-   }
-
-   undo() {
-      this.madsor.undoDissolve(this.dissolve);
-   }
-}
-
-class CollapseFaceCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
-   constructor(madsor) {
-      super();
-      this.madsor = madsor;
-   }
-
-   doIt() {
-      let collapseCount;
-      ({count: collapseCount, collapse: this.collapse} = this.madsor.collapse());
-      if (collapseCount > 0) {
-         __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreVertexMode"](this.collapse);
-         return true;
-      } else {
-         return false;
-      }
-   }
-
-   undo() {
-      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["currentMode"]().resetSelection();
-      this.madsor.undoCollapse(this.collapse);
-      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreFaceMode"](this.collapse);
-   }   
-}
-
-
-//
-// current limitation, no interobject bridge yet.
-//
-class BridgeFaceCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
-   constructor(cage, target, source) {
-      super();
-      this.cage = cage;
-      this.target = target;
-      this.source = source;
-   }
-
-   doIt() {
-      // should be ready for bridging. 
-      this.bridge = this.cage.bridge(this.target, this.source);
-   }
-
-   undo() {
-      this.cage.undoBridge(this.bridge);
-      this.cage.restoreFaceSelection(this.bridge);
-   }
-}
-
-
-class InsetFaceHandler extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["MovePositionHandler"] {
-   constructor(madsor) {
-      super(madsor);
-      //this.selectedFaces = madsor.snapshotSelection();
-      this.movement = 0;
-      this.doIt();   // init.
-   }
-
-   doIt() {
-      this.snapshots = this.madsor.inset();   // should we test for current snapshots and prev snapshots?
-      this.madsor.moveSelectionNew(this.snapshots, this.movement);
-      // get limit
-      this.vertexLimit = Number.MAX_SAFE_INTEGER;
-      for (let obj of this.snapshots) {
-         this.vertexLimit = Math.min(this.vertexLimit, obj.snapshot.vertexLimit);
-      } 
-   }
-
-   //_updateMovement(ev) {  // change back when we all move to moveSelectionNew
-   handleMouseMove(ev) {
-      let move = this._calibrateMovement(ev.movementX);
-      if ((this.movement+move) > this.vertexLimit) {
-         move = this.vertexLimit - this.movement;
-      } else if ((this.movement+move) < 0) {
-         move = 0 - this.movement;
-      }
-      this.movement += move;
-      this.madsor.moveSelectionNew(this.snapshots, move);
-      return move;
-   }
-
-   undo() {
-      //this.madsor.restoreMoveSelection(this.snapshots);  // do we realy needs this. since we are destroying it.
-      this.madsor.collapseEdgeNew(this.snapshots);
-      //this.snapshots = undefined;
-   }
-}
-
-// Crease
-class BumpFaceHandler extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["MoveableCommand"] {
-   constructor(madsor) {
-      super();
-      this.madsor = madsor;
-      this.bump = madsor.bump();
-      this.moveHandler = new __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["MoveAlongNormal"](madsor);
-   }
-
-   doIt() {
-      this.bump = this.madsor.bump(this.contourEdges);
-      super.doIt();     // = this.madsor.moveSelection(this.movement, this.snapshots);
-   }
-
-   undo() {
-      super.undo(); //this.madsor.restoreMoveSelection(this.snapshots);
-      this.madsor.undoBump(this.bump);
-   }
-}
-// end of Crease
 
 
 
@@ -5796,2327 +5474,11 @@ class BumpFaceHandler extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["Movea
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "Madsor", function() { return Madsor; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "DragSelect", function() { return DragSelect; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "MovePositionHandler", function() { return MovePositionHandler; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "MouseMoveAlongAxis", function() { return MouseMoveAlongAxis; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "MoveAlongNormal", function() { return MoveAlongNormal; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "MoveFreePositionHandler", function() { return MoveFreePositionHandler; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ToggleModeCommand", function() { return ToggleModeCommand; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__ = __webpack_require__(5);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__ = __webpack_require__(3);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_model__ = __webpack_require__(4);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_view__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_ui__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d__ = __webpack_require__(0);
-/*
- *
- * MADS (Modify, Add, Delete, Select) operation. 
- *
-**/
-
-
-
-
-
-
-
-
-class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
-   constructor(mode) {
-      const self = this;
-      this.currentEdge = null;
-      this.shaderData = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].createShaderData();
-      this.shaderData.setUniform4fv("uColor", [0.0, 1.0, 0.0, 0.3]); // hilite green, selected hilite yellow.
-      // contextMenu
-      this.contextMenu = {menu: document.querySelector("#"+mode+"-context-menu")};
-      if (this.contextMenu.menu) {
-         this.contextMenu.menuItems = this.contextMenu.menu.querySelectorAll(".context-menu__item");
-      }
-      const axisName = ['X', 'Y', 'Z'];
-      // type handler 
-      // movement for (x, y, z)
-      for (let axis=0; axis < 3; ++axis) {
-         __WEBPACK_IMPORTED_MODULE_4__wings3d_ui__["bindMenuItem"](mode + 'Move' + axisName[axis], function(ev) {
-               __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["attachHandlerMouseMove"](new MouseMoveAlongAxis(self, axis));
-            });
-      }
-      // free Movement.
-      const moveFree = {body: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].bodyMoveFree, face: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceMoveFree, edge: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].edgeMoveFree, vertex: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].vertexMoveFree};
-      __WEBPACK_IMPORTED_MODULE_4__wings3d_ui__["bindMenuItem"](moveFree[mode].name, function(ev) {
-            __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["attachHandlerMouseMove"](new MoveFreePositionHandler(self));
-         });
-      // normal Movement.
-      const moveNormal = {face: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceMoveNormal, edge: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].edgeMoveNormal, vertex: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].vertexMoveNormal};
-      if (moveNormal[mode]) {
-         __WEBPACK_IMPORTED_MODULE_4__wings3d_ui__["bindMenuItem"](moveNormal[mode].name, function(ev) {
-            __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["attachHandlerMouseMove"](new MoveAlongNormal(self));
-          });
-      }
-      // scale uniform
-      const scaleUniform = {face: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceScaleUniform};
-      if (scaleUniform[mode]) {
-         __WEBPACK_IMPORTED_MODULE_4__wings3d_ui__["bindMenuItem"](scaleUniform[mode].name, function(ev) {
-            __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["attachHandlerMouseMove"](new ScaleUniformHandler(self));
-          });
-      }
-      // rotate x, y, z
-      for (let axis = 0; axis < 3; ++axis) {
-         __WEBPACK_IMPORTED_MODULE_4__wings3d_ui__["bindMenuItem"](mode + 'Rotate' + axisName[axis], function(ev) {
-            __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["attachHandlerMouseMove"](new MouseRotateAlongAxis(self, axis));
-          });
-      }
-      // Bevel
-      const bevel = {face: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceBevel, edge: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].edgeBevel, vertex: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].vertexBevel};
-      if (bevel[mode]) {
-         __WEBPACK_IMPORTED_MODULE_4__wings3d_ui__["bindMenuItem"](bevel[mode].name, (ev)=> {
-            __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["attachHandlerMouseMove"](new BevelHandler(this));
-          });
-      }
-      // extrude
-      const extrude = {face: [__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceExtrudeX, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceExtrudeY, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceExtrudeZ],
-                       edge: [__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].edgeExtrudeX, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].edgeExtrudeY, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].edgeExtrudeZ],
-                       vertex:  [__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].vertexExtrudeX, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].vertexExtrudeY, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].vertexExtrudeZ],
-                      };
-      let extrudeMode = extrude[mode];
-      if (extrudeMode) {
-         // movement for (x, y, z)
-         for (let axis=0; axis < 3; ++axis) {
-            __WEBPACK_IMPORTED_MODULE_4__wings3d_ui__["bindMenuItem"](extrudeMode[axis].name, (ev) => {
-                  __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["attachHandlerMouseMove"](new ExtrudeAlongAxisHandler(this, axis));
-             });
-         }
-      }
-      const extrudeFree = {face: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceExtrudeFree, edge: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].edgeExtrudeFree, vertex: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].vertexExtrudeFree };
-      if (extrudeFree[mode]) {
-         __WEBPACK_IMPORTED_MODULE_4__wings3d_ui__["bindMenuItem"](extrudeFree[mode].name, (ev) => {
-            __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["attachHandlerMouseMove"](new ExtrudeFreeHandler(this));
-          });
-      }
-      const extrudeNormal = {face: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceExtrudeNormal, edge: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].edgeExtrudeNormal, vertex: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].vertexExtrudeNormal};
-      if (extrudeNormal[mode]) {
-         __WEBPACK_IMPORTED_MODULE_4__wings3d_ui__["bindMenuItem"](extrudeNormal[mode].name, (ev) => {
-            __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["attachHandlerMouseMove"](new ExtrudeNormalHandler(this));
-          });
-      }
-   }
-
-   getContextMenu() {
-      var hasSelection = false;
-      this.eachPreviewCage( function(cage) {
-         hasSelection = hasSelection || cage.hasSelection();
-      });
-      if (hasSelection) {
-         return this.contextMenu;
-      } else {
-         return null;
-      }
-   }
-
-   snapshotSelection() {
-      const snapshots = [];
-      const self = this;
-      this.eachPreviewCage( function(cage) {
-         snapshots.push( self._wrapSelection(cage.snapshotSelection()) );
-      });
-      return snapshots;
-   }
-
-   snapshotAll(func, ...args) {
-      const snapshots = [];
-      for (let preview of this.world) {
-         snapshots.push( {preview: preview, snapshot: func.call(preview, ...args)} );
-      }
-      return snapshots;
-   }
-
-   doAll(snapshots, func, ...args) {
-      for (let obj of snapshots) {
-         func.call(obj.preview, obj.snapshot, ...args);
-      }
-   }
-
-   // can be use arguments object?
-   eachPreviewCage(func, items) {
-      if (items) {
-         for (var i = 0; i < this.world.length; ++i) {
-            func(this.world[i], items[i]);
-         }
-      } else {
-         for (var i = 0; i < this.world.length; ++i) {
-            func(this.world[i]);
-         }
-      }
-   }
-
-   * selectableCage() {
-      for (let i = 0; i < this.world.length; ++i) {
-         let cage = this.world[i];
-         if (!cage.isLock() && cage.isVisible()) {
-            yield cage;
-         }
-      }
-   }
-
-   hasSelection() {
-      for (let cage of this.world) {
-         if (cage.hasSelection()) {
-            return true;
-         }
-      }
-      return false;
-   }
-
-   // move edge along movement.
-   moveSelection(movement, snapshots) {
-      this.eachPreviewCage( function(cage, snapshot) {
-         cage.moveSelection(movement, snapshot);
-      }, snapshots);
-   }
-
-   restoreMoveSelection(snapshots) {
-      this.eachPreviewCage( function(cage, snapshot) {
-         cage.restoreMoveSelection(snapshot);
-      }, snapshots);
-   }
-
-   restoreSelectionPosition(snapshots) {
-      this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_2__wings3d_model__["PreviewCage"].prototype.restoreMoveSelection);
-   }
-
-   // scale vertices along axis
-   scaleSelection(snapshots, scale) {
-      this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_2__wings3d_model__["PreviewCage"].prototype.scaleSelection, scale);
-   }
-
-   // rotate vertices
-   rotateSelection(snapshots, quatRotate) {
-      this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_2__wings3d_model__["PreviewCage"].prototype.rotateSelection, quatRotate);
-   }
-
-   // move vertices
-   moveSelectionNew(snapshots, movement) {
-      this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_2__wings3d_model__["PreviewCage"].prototype.moveSelectionNew, movement);
-   }
-
-   setWorld(world) {
-      this.world = world;
-   }
-
-   setPreview(preview) {
-      this.preview = preview;
-   }
-
-   setCurrent(edge, intersect, center) {
-      if (this.currentEdge !== edge) {
-         if (this.currentEdge !== null) {
-            this.hideOldHilite();
-         }
-         if (edge !== null) {
-            this.showNewHilite(edge, intersect, center);
-         }
-         this.currentEdge = edge;
-      }
-   }
-
-   hideOldHilite() {}
-
-   _doSelection(doName, initialCount=0) {
-      const snapshots = [];
-      const self = this;
-      doName = '_select' + this.modeName() + doName;
-      let count = initialCount;        // set initialCount, so we can force undo
-      this.eachPreviewCage( function(cage) {
-         const selection = cage[doName]();
-         snapshots.push( self._wrapSelection(selection) );
-         count += selection.size;
-      });
-      if (count != 0) {
-         return function() {
-            self.resetSelection();
-            self.restoreSelection(snapshots);
-         }
-      } // else
-      return null;  
-   }
-
-   similarSelection() {
-      return this._doSelection('Similar');
-   }
-
-   adjacentSelection() {
-      return this._doSelection('Adjacent');
-   }
-
-   invertSelection() {
-      return this._doSelection('Invert', 1);
-   }
-
-   allSelection() {
-      return this._doSelection('All', 1);
-   }
-
-   lessSelection() {
-      return this._doSelection('Less');
-   }
-
-   moreSelection() {
-      return this._doSelection('More');
-   }
-
-   resetSelection() {
-      const snapshots = [];
-      const self = this;
-      this.eachPreviewCage( function(cage) {
-         snapshots.push( self._resetSelection(cage) );
-      });
-      return function() {
-         self.restoreSelection(snapshots);
-      }
-   }
-
-   restoreSelection(selection) {
-      const self = this;
-      this.eachPreviewCage( function(cage, snapshot) {
-         self._restoreSelection(cage, snapshot);
-      }, selection);     
-   }
-
-   draw(gl) {
-      if (this.currentEdge) {
-         this.useShader(gl);
-         gl.bindTransform();
-         gl.bindShaderData(this.shaderData, false);
-         this.drawObject(gl);
-         gl.disableShader();
-      }
-   }
-}
-
-
-class DragSelect {
-   constructor(madsor, cage, current, onOff) {
-      this.madsor = madsor;
-      this.select = new Map; 
-      this.select.set(cage, [current]);
-      this.onOff = onOff;        // true = on, false = off.
-   }
-
- //  finish() {
- //     return new EdgeSelectCommand(this.select);
- //  }
-
-   dragSelect(cage) {
-      var array = this.select.get(cage);
-      if (array === undefined) {
-         array = [];
-         this.select.set(cage, array);
-      }
-      this.madsor.dragSelect(cage, array, this.onOff);
-   }
-}
-
-
-class ToggleModeCommand extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["EditCommand"] {
-   constructor(doFn, undoFn, snapshots) {
-      super();
-      this.snapshots = snapshots;
-      this.redoToggle = doFn;
-      this.undoToggle = undoFn;
-   }
-
-   doIt() {
-      this.redoToggle();
-   }
-
-   undo() {
-      // toggle back
-      this.undoToggle(this.snapshots);
-   }
-}
-
-
-class MovePositionHandler extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["MouseMoveHandler"] {
-   constructor(madsor, snapshots, movement) {
-      super();
-      this.madsor = madsor;
-      this.snapshots = snapshots;
-      this.movement = movement;
-   }
-
-   doIt() {
-      this.madsor.moveSelection(this.movement, this.snapshots);
-   }
-
-   undo() {
-      this.madsor.restoreMoveSelection(this.snapshots);
-   }
-
-   handleMouseMove(ev, cameraView) {
-      this.madsor.moveSelection(this._updateMovement(ev, cameraView), this.snapshots);
-   }
-}
-
-
-// movement handler.
-class MouseMoveAlongAxis extends MovePositionHandler {
-   constructor(madsor, axis) {   // 0 = x axis, 1 = y axis, 2 = z axis.
-      super(madsor, madsor.snapshotPosition(), [0.0, 0.0, 0.0]);
-      this.axis = axis;
-   }
-
-   _updateMovement(ev) {
-      let move = this._calibrateMovement(ev.movementX);
-      let movement = [0.0, 0.0, 0.0];
-      movement[this.axis] = move;
-      this.movement[this.axis] += move;
-      return movement;
-   }
-}
-
-
-class MoveAlongNormal extends MovePositionHandler {
-   constructor(madsor) {
-      super(madsor, madsor.snapshotPositionAndNormal(), 0.0);
-   }
-
-   _updateMovement(ev) {
-      let move = this._calibrateMovement(ev.movementX);
-      this.movement += move;
-      return move;
-   }
-}
-
-
-class MoveFreePositionHandler extends MovePositionHandler {
-   constructor(madsor) {
-      super(madsor, madsor.snapshotPosition(), [0.0, 0.0, 0.0]);
-   }
-
-   _updateMovement(ev, cameraView) {
-      let x = this._calibrateMovement(ev.movementX);
-      let y = this._calibrateMovement(-ev.movementY);
-      var cam = cameraView.inverseCameraVectors();
-      // move parallel to camera.
-      var movement = [cam.x[0]*x + cam.y[0]*y, cam.x[1]*x + cam.y[1]*y, cam.x[2]*x + cam.y[2]*y];
-      vec3.add(this.movement, this.movement, movement);
-      return movement;
-   }
-}
-
-
-class ScaleUniformHandler extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["EditCommand"] {
-   constructor(madsor) {
-      super();
-      this.madsor = madsor;
-      this.snapshots = madsor.snapshotTransformGroup();
-      this.scale = 1.0;                    // cumulative movement.
-   }
-
-   handleMouseMove(ev) {
-      let scale = this._xPercentMovement(ev);   // return (100% to -100%)
-      if (scale < 0) {
-         scale = 1.0 + Math.abs(scale);
-      } else {
-         scale = 1.0 / (1.0 + scale);
-      }
-      this.madsor.scaleSelection(this.snapshots, scale);
-      this.scale *= scale;
-   }
-
-  
-   doIt() {
-      this.madsor.scaleSelection(this.snapshots, this.movement);
-   }
-
-   undo() {
-      this.madsor.restoreSelectionPosition(this.snapshots);
-   }
-}
-
-
-// movement handler.
-class MouseRotateAlongAxis extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["EditCommand"] {
-   constructor(madsor, axis) {   // 0 = x axis, 1 = y axis, 2 = z axis.
-      super();
-      this.madsor = madsor;
-      this.snapshots = madsor.snapshotTransformGroup();
-      this.movement = 0.0;             // cumulative movement.
-      this.axisVec3 = vec3.create();
-      this.axisVec3[axis] = 1.0;
-   }
-
-   handleMouseMove(ev) {
-      const move = this._xPercentMovement(ev)*5;
-      const quatRotate = quat.create();
-      quat.setAxisAngle(quatRotate, this.axisVec3, move);
-      this.madsor.rotateSelection(this.snapshots, quatRotate);
-      this.movement += move;
-   }
-
-   doIt() {
-      const quatRotate = quat.create();
-      quat.setAxisAngle(quatRotate, this.axisVec3, this.movement);
-      this.madsor.rotateSelection(this.snapshots, quatRotate);
-   }
-
-   undo() {
-      this.madsor.restoreSelectionPosition(this.snapshots);
-   }
-}
-
-
-class BevelHandler extends MovePositionHandler {
-   constructor(madsor) {
-      const selection = madsor.snapshotSelection();   // have to get selection first
-      super(madsor, madsor.bevel(), 0.0);
-      this.selection = selection;
-      // get limit
-      this.vertexLimit = Number.MAX_SAFE_INTEGER;
-      for (let snapshot of this.snapshots) {
-         this.vertexLimit = Math.min(this.vertexLimit, snapshot.vertexLimit);
-      }
-   }
-
-   _updateMovement(ev) {
-      let move = this._calibrateMovement(ev.movementX);
-      if ((this.movement+move) > this.vertexLimit) {
-         move = this.vertexLimit - this.movement;
-      } else if ((this.movement+move) < 0) {
-         move = 0 - this.movement;
-      }
-      this.movement += move;
-      return move;
-   }
-
-   doIt() {
-      this.snapshots = this.madsor.bevel();   // should test for current snapshots and prev snapshots? should not change
-      // no needs to recompute limit, wont change, 
-      // move 
-      super.doIt();  // = this.madsor.moveSelection(this.movement, this.snapshots);
-   }
-
-   undo() {
-      this.madsor.undoBevel(this.snapshots, this.selection);
-      //this.snapshots = undefined;
-   }
-}
-
-// extrude
-class ExtrudeHandler extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["MoveableCommand"] {
-   constructor(madsor) {
-      super();
-      this.madsor = madsor;
-      this.contourEdges = madsor.extrude();
-   }
-
-   doIt() {
-      this.contourEdges = this.madsor.extrude(this.contourEdges);
-      super.doIt();     // = this.madsor.moveSelection(this.movement, this.snapshots);
-   }
-
-   undo() {
-      super.undo(); //this.madsor.restoreMoveSelection(this.snapshots);
-      this.madsor.undoExtrude(this.contourEdges);
-   }
-}
-
-class ExtrudeAlongAxisHandler extends ExtrudeHandler {
-   constructor(madsor, axis) { 
-      super(madsor);
-      this.moveHandler = new MouseMoveAlongAxis(madsor, axis); // this should comes earlier
-   }
-}
-
-
-class ExtrudeFreeHandler extends ExtrudeHandler {
-   constructor(madsor) {
-      super(madsor);
-      this.moveHandler = new MoveFreePositionHandler(madsor);
-   }
-}
-
-class ExtrudeNormalHandler extends ExtrudeHandler {
-   constructor(madsor) {
-      super(madsor);
-      this.moveHandler = new MoveAlongNormal(madsor);
-   }
-}
-// end of extrude
-
-
-
-
-/***/ }),
-/* 9 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "EdgeMadsor", function() { return EdgeMadsor; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__ = __webpack_require__(8);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__ = __webpack_require__(7);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_bodymads__ = __webpack_require__(10);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__ = __webpack_require__(11);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__ = __webpack_require__(3);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_model__ = __webpack_require__(4);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_ui__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_view__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d_shaderprog__ = __webpack_require__(6);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__wings3d__ = __webpack_require__(0);
-/**
-//    This module contains most edge command and edge utility functions.
-//
-//    
-**/
-
-   // for switching
-
-
-
-
-
-
-
-
-
-
-// 
-class EdgeMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
-   constructor() {
-      super('edge');
-      // cut commands
-      const self = this;
-      for (let numberOfSegments of [__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].cutLine2, __WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].cutLine3, __WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].cutLine4, __WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].cutLine5, __WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].cutLine10]) {
-         const name = numberOfSegments.name;
-         const count = name.substring('cutLine'.length);
-         __WEBPACK_IMPORTED_MODULE_6__wings3d_ui__["bindMenuItem"](name, function(ev) {
-               self.cutEdge(count);
-            });
-      }
-      // cutEdge Dialog, show form when click
-      __WEBPACK_IMPORTED_MODULE_6__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].cutAsk.name, function(ev) {
-            // position then show form;
-            __WEBPACK_IMPORTED_MODULE_6__wings3d_ui__["runDialog"]("#cutLineDialog", ev, function(data) {
-               if (data['Segments']) {
-                  const number = parseInt(data['Segments'], 10);
-                  if ((number != NaN) && (number > 0) && (number < 100)) { // sane input
-                     self.cutEdge(number);
-                  }
-               }
-            });
-        });
-      // cutAndConnect
-      __WEBPACK_IMPORTED_MODULE_6__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].cutAndConnect.name, function(ev) {
-            self.cutAndConnect();
-         });
-      // Dissolve
-      __WEBPACK_IMPORTED_MODULE_6__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].edgeDissolve.name, function(ev) {
-            const dissolve = self.dissolve();
-            if (dissolve.count > 0) {
-               __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["undoQueue"](new DissolveEdgeCommand(self, dissolve.record));
-            } else {
-               // should not happened.
-            }
-         });
-      // Collapse
-      __WEBPACK_IMPORTED_MODULE_6__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].edgeCollapse.name, function(ev) {
-            const command = new CollapseEdgeCommand(self);
-            if (command.doIt()) {
-               __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["undoQueue"](command);
-            } else {
-               // should not happened.
-            }
-         });
-      // Crease
-      __WEBPACK_IMPORTED_MODULE_6__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].edgeCrease.name, (ev) => {
-         __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["attachHandlerMouseMove"](new CreaseEdgeHandler(this));
-      });
-
-      // EdgeLoop.
-      for (let [numberOfSegments, hotkey] of [[__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].edgeLoop1,"l"], [__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].edgeLoop2,undefined], [__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].edgeLoop3,undefined]]) {
-         const name = numberOfSegments.name;
-         const count = name.substring('edgeLoop'.length);        
-         __WEBPACK_IMPORTED_MODULE_6__wings3d_ui__["bindMenuItem"](name, function(ev) {
-            const command = new EdgeLoopCommand(self, count);
-            if (command.doIt()) {
-               __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["undoQueue"](command);
-            } else { // should not happened, make some noise
-
-            }
-         }, hotkey);
-      }
-      // EdgeLoop Nth., show form when click
-      __WEBPACK_IMPORTED_MODULE_6__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].edgeLoopN.name, function(ev) {
-         __WEBPACK_IMPORTED_MODULE_6__wings3d_ui__["runDialog"]('#cutLineDialog', ev, function(data) {
-            if (data['Segments']) {
-               const number = parseInt(data['Segments'], 10);
-               if ((number != NaN) && (number > 0) && (number < 100)) { // sane input
-                  const command = new EdgeLoopCommand(self, number);
-                  if (command.doIt()) {
-                     __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["undoQueue"](command);
-                  } else { // should not happened, make some noise
-                  }
-               }
-            }
-          });
-       });
-      // EdgeRing
-      for (let [numberOfSegments, hotkey] of [[__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].edgeRing1,"g"], [__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].edgeRing2,undefined], [__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].edgeRing3,undefined]]) {
-         const name = numberOfSegments.name;
-         const count = name.substring('edgeRing'.length);
-         __WEBPACK_IMPORTED_MODULE_6__wings3d_ui__["bindMenuItem"](name, function(ev) {
-            const command = new EdgeRingCommand(self, count);
-            if (command.doIt()) {
-               __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["undoQueue"](command);
-            } else { // should not happened, make some noise
-      
-            }
-         }, hotkey);
-      }
-      // EdgeRing Nth
-      __WEBPACK_IMPORTED_MODULE_6__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].edgeRingN.name, function(ev) {
-         __WEBPACK_IMPORTED_MODULE_6__wings3d_ui__["runDialog"]('#cutLineDialog', ev, function(data) {
-            if (data['Segments']) {
-               const number = parseInt(data['Segments'], 10);
-               if ((number != NaN) && (number > 0) && (number < 100)) { // sane input
-                  const command = new EdgeRingCommand(self, number);
-                  if (command.doIt()) {
-                     __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["undoQueue"](command);
-                  } else { // should not happened, make some noise
-                  }
-               }
-            }
-          });
-       });
-   }
-
-   modeName() {
-      return 'Edge';
-   }
-
-   // get selected Edge's vertex snapshot. for doing, and redo queue. 
-   snapshotPosition() {
-      var snapshots = [];
-      this.eachPreviewCage( function(preview) {
-         snapshots.push( preview.snapshotEdgePosition() );
-      });
-      return snapshots;
-   }
-
-   snapshotPositionAndNormal() {
-      var snapshots = [];
-      this.eachPreviewCage( function(preview) {
-         snapshots.push( preview.snapshotEdgePositionAndNormal() );
-      });
-      return snapshots;
-   }
-
-   snapshotTransformGroup() {
-      return this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.snapshotTransformEdgeGroup);
-   }
-
-   bevel() {
-      var snapshots = [];
-      this.eachPreviewCage( function(preview) {
-         snapshots.push( preview.bevelEdge() );
-      });
-      // change to facemode.
-      __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["restoreFaceMode"](snapshots);
-      return snapshots;
-   }
-
-   undoBevel(snapshots, selection) {
-      this.restoreMoveSelection(snapshots);
-      this.collapseEdge(snapshots);
-      __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["restoreEdgeMode"](selection);
-   }
-
-   crease() {
-      const edgeLoops = [];
-      this.eachPreviewCage( function(preview) {
-         edgeLoops.push( preview.creaseEdge() );
-      });
-      return edgeLoops;
-   }
-
-   extrude() {
-      const edgeLoops = [];
-      this.eachPreviewCage( function(preview) {
-         edgeLoops.push( preview.extrudeEdge() );
-      });
-      return edgeLoops;
-   }
-
-   undoExtrude(contourEdges) {
-      this.eachPreviewCage(function(cage, extrude) {
-         cage.undoExtrudeEdge(extrude);
-      }, contourEdges);
-   }
-
-   cutEdge(numberOfSegments) {
-      const cutEdge = new CutEdgeCommand(this, numberOfSegments);
-      __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["undoQueue"](cutEdge);
-      cutEdge.doIt();
-   }
-
-   cutAndConnect() {
-      const cutEdge = new CutEdgeCommand(this, 2);
-      cutEdge.doIt();
-      const vertexMadsor = __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["currentMode"]();   // assurely it vertexMode
-      const vertexConnect = new __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__["VertexConnectCommand"](vertexMadsor);
-      if (vertexConnect.doIt()) {
-         __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["undoQueueCombo"]([cutEdge, vertexConnect]);
-      } else { // no connection possible
-         cutEdge.undo();
-         // post on geomoetryStatus
-         
-      }
-   }
-
-   cut(numberOfSegments) {
-      var snapshots = [];
-      this.eachPreviewCage( function(preview) {
-         snapshots.push( preview.cutEdge(numberOfSegments) );
-      });
-      return snapshots;
-   }
-
-   edgeLoop(nth) {
-      const loop = {count: 0, selection: []};
-      this.eachPreviewCage( function(preview) {
-         const record = preview.edgeLoop(nth);
-         loop.count += record.length;
-         loop.selection.push( record );
-      });
-      return loop;
-   }
-
-   edgeRing(nth) {
-      const loop = {count: 0, selection: []};
-      this.eachPreviewCage( function(preview) {
-         const record = preview.edgeRing(nth);
-         loop.count += record.length;
-         loop.selection.push( record );
-      });
-      return loop;
-   }
-   collapseEdge(collapseArray) {  // undo of splitEdge.
-      this.eachPreviewCage(function(cage, collapse) {
-         cage.collapseSplitOrBevelEdge(collapse);
-      }, collapseArray);
-   }
-
-   // dissolve edge
-   dissolve() {
-      const dissolve = {count: 0, record: []};
-      this.eachPreviewCage(function(cage) {
-         const record = cage.dissolveSelectedEdge();
-         dissolve.count += record.length;
-         dissolve.record.push( record );
-      });
-      return dissolve;
-   }
-   reinsertDissolve(dissolveEdgesArray) {
-      this.eachPreviewCage(function(cage, dissolveEdges) {
-         cage.reinsertDissolveEdge(dissolveEdges);
-      }, dissolveEdgesArray);
-   }
-
-   // collapse edge
-   collapse() {
-      const collapse = {count: 0, array: []};
-      const selectedVertex = [];
-      this.eachPreviewCage(function(cage) {
-         const record = cage.collapseSelectedEdge();
-         collapse.count += record.collapse.edges.length;
-         collapse.array.push( record );
-      });
-      return collapse;
-   }
-
-   restoreEdge(collapseEdgesArray) {
-      this.eachPreviewCage(function(cage, collapse) {
-         cage.restoreCollapseEdge(collapse);
-      }, collapseEdgesArray);
-   }
-
-
-   dragSelect(cage, selectArray, onOff) {
-      if (this.currentEdge !== null) {
-        if (cage.dragSelectEdge(this.currentEdge, onOff)) {
-            selectArray.push(this.currentEdge);
-        }
-      }
-   }
-
-   // select, hilite
-   selectStart(cage) {
-      if (this.currentEdge !== null) {
-         var onOff = cage.selectEdge(this.currentEdge);
-         return new DragEdgeSelect(this, cage, this.currentEdge, onOff);
-      }
-      return null;
-   }
-
-   hideOldHilite() {
-      //if (this.currentEdge) {
-         this.preview.hiliteEdge(this.currentEdge, false);
-      //}
-   }
-
-   showNewHilite(edge, intersect, _center) {
-      // setting of setCurrentEdge
-      //if (this.currentEdge) {
-         this.preview.hiliteEdge(edge, true);
-      //}
-   }
-
-   _wrapSelection(selection) {
-      return {wingedEdges: selection};
-   }
-
-   _resetSelection(cage) {
-      return {wingedEdges: cage._resetSelectEdge()};
-   }
-
-   _restoreSelection(cage, snapshot) {
-      cage.restoreEdgeSelection(snapshot);
-   }
-
-   toggleFunc(toMadsor) {
-      const self = this;
-      var redoFn;
-      var snapshots = [];
-      if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__["FaceMadsor"]) {
-         redoFn = __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["restoreFaceMode"];
-         this.eachPreviewCage( function(cage) {
-            snapshots.push( self._wrapSelection(cage.snapshotSelection()) );
-            cage.changeFromEdgeToFaceSelect();
-         });
-      } else if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__["VertexMadsor"]) {
-         redoFn = __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["restoreVertexMode"];
-         this.eachPreviewCage( function(cage) {
-            snapshots.push( self._wrapSelection(cage.snapshotSelection()) );
-            cage.changeFromEdgeToVertexSelect();
-         });         
-      } else {
-         redoFn = __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["restoreBodyMode"];
-         this.eachPreviewCage( function(cage) {
-            snapshots.push( self._wrapSelection(cage.snapshotSelection()) );
-            cage.changeFromEdgeToBodySelect();
-         });
-      }
-      __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["undoQueue"](new __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["ToggleModeCommand"](redoFn, __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["restoreEdgeMode"], snapshots));
-   }
-
-   restoreMode(toMadsor, snapshots) {
-      if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__["FaceMadsor"]) {
-         this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromEdgeToFaceSelect(snapshot);
-         }, snapshots);
-      } else if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__["VertexMadsor"]) {
-         this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromEdgeToVertexSelect(snapshot);
-         }, snapshots);
-      } else {
-           this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromEdgeToBodySelect(snapshot);
-         }, snapshots);       
-      }
-   }
-
-   draw(gl) {
-      //if (this.currentEdge) {
-         this.useShader(gl);
-         gl.bindTransform();
-         this.eachPreviewCage( function(preview) {
-            preview.drawEdge(gl);
-         });
-         gl.disableShader();
-      //}
-   }
-
-   previewShader(gl) {
-      gl.useShader(__WEBPACK_IMPORTED_MODULE_8__wings3d_shaderprog__["solidWireframe"]);
-   }
-
-   useShader(gl) {
-      //gl.useShader(ShaderProg.solidColor);
-      gl.useShader(__WEBPACK_IMPORTED_MODULE_8__wings3d_shaderprog__["selectedColorLine"]);
-   }
-}
-
-class DragEdgeSelect extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["DragSelect"] {
-   constructor(madsor, cage, halfEdge, onOff) {
-      super(madsor, cage, halfEdge, onOff);
-   }
-
-   finish() {
-      return new EdgeSelectCommand(this.select);
-   }
-}
-
-
-class EdgeSelectCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
-   constructor(select) {
-      super();
-      this.select = select;
-   }
-
-   doIt() {
-      for (var [cage, halfEdges] of this.select) {
-         for (var i = 0; i < halfEdges.length; ++i) {
-            cage.selectEdge(halfEdges[i]);
-         }
-      }
-   }
-
-   undo() {
-      this.doIt();   // selectEdge, flip/flop, so
-   }
-}
-
-
-//class CutEdgeMoveCommand extends MouseMoveHandler {
-//}
-
-
-class CutEdgeCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
-   constructor(madsor, numberOfSegments) {
-      super();
-      this.madsor = madsor;
-      this.numberOfSegments = numberOfSegments;
-      this.selectedEdges = madsor.snapshotSelection();
-   }
-
-   doIt() {
-      const snapshots = this.madsor.cut(this.numberOfSegments);
-      __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["restoreVertexMode"](snapshots);    // abusing the api?
-      this.snapshots = snapshots;
-   }
-
-   undo() {
-      // restoreToEdgeMode
-      this.madsor.collapseEdge(this.snapshots);
-      __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["restoreEdgeMode"](this.selectedEdges);
-   }
-}
-
-
-class DissolveEdgeCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
-   constructor(madsor, dissolveEdges) {
-      super();
-      this.madsor = madsor;
-      this.dissolveEdges = dissolveEdges;
-   }
-
-   doIt() {
-      this.madsor.dissolve(); // return data should be the same as previous one
-   }
-
-   undo() {
-      this.madsor.reinsertDissolve(this.dissolveEdges);
-   }
-}
-
-
-class CollapseEdgeCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
-   constructor(madsor) {
-      super();
-      this.madsor = madsor;
-   }
-
-   doIt() {
-      const collapse = this.madsor.collapse();
-      if (collapse.count > 0) {
-         this.collapse = collapse.array;
-         __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["restoreVertexMode"](this.collapse);
-         return true;
-      } else {
-         return false;
-      }
-   }
-
-   undo() {
-      __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["currentMode"]().resetSelection();
-      __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["restoreEdgeMode"]();
-      this.madsor.restoreEdge(this.collapse);
-   }
-}
-
-// Crease
-class CreaseEdgeHandler extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["MoveableCommand"] {
-   constructor(madsor) {
-      super();
-      this.madsor = madsor;
-      this.contourEdges = madsor.crease();
-      this.moveHandler = new __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["MoveAlongNormal"](madsor);
-   }
-
-   doIt() {
-      this.contourEdges = this.madsor.crease(this.contourEdges);
-      super.doIt();     // = this.madsor.moveSelection(this.movement, this.snapshots);
-   }
-
-   undo() {
-      super.undo(); //this.madsor.restoreMoveSelection(this.snapshots);
-      this.madsor.undoExtrude(this.contourEdges);
-   }
-}
-// end of Crease
-
-class EdgeLoopCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
-   constructor(madsor, nth) {
-      super();
-      this.madsor = madsor;
-      this.nth = nth;
-      this.selectedEdges = madsor.snapshotSelection();
-   }
-
-   doIt() {
-      this.loopSelection = this.madsor.edgeLoop(this.nth);
-      return (this.loopSelection.count > 0);
-   }
-
-   undo() {
-      this.madsor.resetSelection();
-      this.madsor.restoreSelection(this.selectedEdges);
-   }
-}
-
-class EdgeRingCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
-   constructor(madsor, nth) {
-      super();
-      this.madsor = madsor;
-      this.nth = nth;
-      this.selectedEdges = madsor.snapshotSelection();
-   }
-
-   doIt() {
-      this.loopSelection = this.madsor.edgeRing(this.nth);
-      return (this.loopSelection.count > 0);
-   }
-
-   undo() {
-      this.madsor.resetSelection();
-      this.madsor.restoreSelection(this.selectedEdges);
-   } 
-}
-
-
-
-/***/ }),
-/* 10 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "BodyMadsor", function() { return BodyMadsor; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__ = __webpack_require__(8);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__ = __webpack_require__(7);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_edgemads__ = __webpack_require__(9);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__ = __webpack_require__(11);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__ = __webpack_require__(3);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_model__ = __webpack_require__(4);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_shaderprog__ = __webpack_require__(6);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_view__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__wings3d__ = __webpack_require__(0);
-//
-// bodymadsor. 
-//
-
-
-   // for switching
-
-
-
-
-
-
-
-
-
-
-class BodyMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
-   constructor() {
-      super('body');
-      const self = this;
-      __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].bodyDelete.name, function(ev) {
-            const command = new DeleteBodyCommand(self.getSelected());
-            __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["undoQueue"]( command );
-            command.doIt(); // delete current selected.
-         });
-
-      __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].bodyRename.name, function(ev) {
-         __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["runDialog"]('#renameDialog', ev, function(data) {
-               const command = new RenameBodyCommand(self.getSelected(), data);
-               __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["undoQueue"]( command );
-               command.doIt();   // rename
-            }, function() {
-               const content = document.querySelector('#renameDialog div');
-               let labels = document.querySelectorAll('#renameDialog label');
-               for (let label of labels) {
-                  content.removeChild(label);
-               }
-               // add input name 
-               let array = self.getSelected();
-               for (let cage of array) {
-                  const label = document.createElement('label');
-                  label.textContent = cage.name;
-                  const input = document.createElement('input');
-                  input.type = "text";
-                  input.name = cage.name;
-                  input.placeholder = cage.name;
-                  label.appendChild(input);
-                  content.appendChild(label);
-               }
-            });
-       });
-      const duplicateMove = [__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].bodyDuplicateMoveX, __WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].bodyDuplicateMoveY, __WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].bodyDuplicateMoveZ];
-      // movement for (x, y, z)
-      for (let axis=0; axis < 3; ++axis) {
-         __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](duplicateMove[axis].name, function(ev) { //action.bodyDulipcateMoveX(Y,Z)
-               __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["attachHandlerMouseMove"](new DuplicateMouseMoveAlongAxis(self, axis, self.getSelected()));
-            });
-      }
-      __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].bodyDuplicateMoveFree.name, function(ev) {
-            __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["attachHandlerMouseMove"](new DuplicateMoveFreePositionHandler(self, self.getSelected()));
-         });
-   }
-
-   modeName() {
-      return 'Body';
-   }
-
-   getSelected() {
-      const selection = [];
-      this.eachPreviewCage( function(cage) {
-         if (cage.hasSelection()) {
-            selection.push(cage);
-         }
-      });
-      return selection;
-   }
-
-   snapshotPosition() {
-      var snapshots = [];
-      this.eachPreviewCage( function(preview) {
-         snapshots.push( preview.snapshotBodyPosition() );
-      });
-      return snapshots;
-   }
-
-   snapshotTransformGroup() {
-      return this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.snapshotTransformBodyGroup);
-   }
-
-   dragSelect(cage, selectArray, onOff) {
-      if (this.currentEdge !== null) {
-       // if (cage.dragSelectFace(this.currentEdge, onOff)) {
-       //     selectArray.push(this.currentEdge);
-       // }
-      }
-   }
-
-   // select, hilite
-   selectStart(preview) {
-      // check not null, shouldn't happened
-      if (this.currentEdge !== null) {
-         var onOff = preview.selectBody();
-         return new DragBodySelect(this, preview, this.currentEdge, onOff);
-      }    
-   }
-
-   hideOldHilite() {
-      this.preview.hiliteBody(false);
-   }
-
-   showNewHilite(_edge, _intersect, _center) {
-      this.preview.hiliteBody(true);
-   }
-
-   similarSelection() {
-      // first compute selected body's metric
-      const snapshot = new Set;
-      this.eachPreviewCage( function(cage) {
-         if (cage.hasSelection()) {
-            const size = cage._getGeometrySize();
-            const metric = size.vertex*3 + size.edge*2 + size.face;
-            snapshot.add(metric);
-         } 
-      });
-      const restore = [];
-      // now check if some of the unselected bodys match selected body.
-      this.eachPreviewCage( function(cage) {
-         if (!cage.hasSelection()) {
-            const size = cage._getGeometrySize();
-            const metric = size.vertex*3 + size.edge*2 + size.face;
-            if (snapshot.has(metric)) {
-               cage.selectBody();
-               restore.push(cage);
-            }
-         }
-      });
-      if (restore.length > 0) {
-         return function() {  // restore to previous state
-            for (let cage in restore) {
-               cage.selectBody();
-            }
-         };
-      } else {
-         return null;
-      }
-   }
-
-   adjacentSelection() {
-      return null;   // does nothing.
-   }
-
-   moreSelection() {
-      return null;      // does nothing.
-   }
-
-   _resetSelection(cage) {
-      return this._wrapSelection(cage._resetBody());
-   }
-
-   _restoreSelection(cage, snapshot) {
-      cage.restoreBodySelection(snapshot);
-   }
-
-   _wrapSelection(selection) {
-      return {body: selection};
-   }
-
-   toggleFunc(toMadsor) {
-      const self = this;
-      var redoFn;
-      var snapshots = [];
-      if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__["FaceMadsor"]) {
-         redoFn = __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["restoreFaceMode"];
-         this.eachPreviewCage( function(cage) {
-            snapshots.push( self._wrapSelection(cage.snapshotSelection()) );
-            cage.changeFromBodyToFaceSelect();
-         });
-      } else if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__["VertexMadsor"]) {
-         redoFn = __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["restoreVertexMode"];
-         this.eachPreviewCage( function(cage) {
-            snapshots.push( self._wrapSelection(cage.snapshotSelection()) );
-            cage.changeFromBodyToVertexSelect();
-         });
-      } else {
-         redoFn = __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["restoreEdgeMode"];
-         this.eachPreviewCage( function(cage) {
-            snapshots.push( self._wrapSelection(cage.snapshotSelection()) );
-            cage.changeFromBodyToEdgeSelect();
-         });
-      }
-      __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["undoQueue"](new __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["ToggleModeCommand"](redoFn, __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["restoreBodyMode"], snapshots));
-   }
-
-   restoreMode(toMadsor, snapshots) {
-      if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__["FaceMadsor"]) {
-         this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromBodyToFaceSelect(snapshot);
-         }, snapshots);
-      } else if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__["VertexMadsor"]) {
-         this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromBodyToVertexSelect(snapshot);
-         }, snapshots);
-      } else {
-         this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromBodyToEdgeSelect(snapshot);
-         }, snapshots);
-      }
-   }
-
-   draw(gl) {} // override draw
-
-   previewShader(gl) {
-      gl.useShader(__WEBPACK_IMPORTED_MODULE_6__wings3d_shaderprog__["colorSolidWireframe"]);
-   }
-}
-
-
-class DragBodySelect extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["DragSelect"] {
-   constructor(madsor, cage, halfEdge, onOff) {
-      super(madsor, cage, halfEdge, onOff);
-   }
-
-   finish() {
-      return new BodySelectCommand(this.select);
-   }
-}
-
-class BodySelectCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
-   constructor(select) {
-      super();
-      this.select = select;
-   }
-
-   doIt() {
-      for (var [cage, halfEdges] of this.select) {
-         if (halfEdges.length > 0) {
-            cage.selectBody();
-         }
-      }
-   }
-
-   undo() {
-      this.doIt();   // selectEdge, flip/flop, so
-   }
-
-}
-
-class DeleteBodyCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
-   constructor(previewCages) {
-      super();
-      this.previewCages = previewCages;
-   }
-
-   doIt() {
-      for (let previewCage of this.previewCages) {
-         __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["removeFromWorld"](previewCage);
-      }
-   }
-
-   undo() {
-      for (let previewCage of this.previewCages) {
-         __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["addToWorld"](previewCage);
-      }
-   }
-}
-
-class RenameBodyCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
-   constructor(previewCages, data) {
-      super();
-      this.previewCages = previewCages;
-      this.newName = data;
-      this.oldName = new Map;
-   }
-
-   doIt() {
-      for (let cage of this.previewCages) {
-         if (this.newName.hasOwnProperty(cage.name)) {
-            if (!this.oldName.has(cage.name)) {
-               this.oldName.set(cage.name, cage);
-            }
-            cage.name = this.newName[cage.name];
-            geometryStatus("Object new name is " + cage.name);
-         }
-      }
-   }
-
-   undo() {
-      for (let [name, cage] of this.oldName) {
-         cage.name = name;
-         geometryStatus("Object restore name to " + cage.name);
-      }  
-   }
-}
-
-
-class DuplicateBodyCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
-   constructor(originalCages) {
-      super();
-      this.originalCages = originalCages;
-      this.duplicateCages = [];
-      for (let cage of originalCages) {
-         let duplicate = __WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].duplicate(cage);
-         this.duplicateCages.push( duplicate );
-      }
-   }
-
-   _toggleOriginalSelected() {
-      for (let cage of this.originalCages) {
-         cage.selectBody();
-      }
-   }
-
-   doIt() {
-      for (let cage of this.duplicateCages) {
-         __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["addToWorld"](cage);
-         cage.selectBody();
-      }
-      this._toggleOriginalSelected();
-   }
-
-   undo() {
-      for (let cage of this.duplicateCages) {
-         cage.selectBody();                  // deselection before out
-         __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["removeFromWorld"](cage);
-      }
-      this._toggleOriginalSelected();        // reselected the original
-   }
-}
-
-class DuplicateMouseMoveAlongAxis extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["MouseMoveAlongAxis"] {
-   constructor(madsor, axis, originalCages) {
-      const duplicateBodyCommand = new DuplicateBodyCommand(originalCages);
-      duplicateBodyCommand.doIt();
-      super(madsor, axis);
-      this.duplicateBodyCommand = duplicateBodyCommand;
-   }
-
-   doIt() {
-      this.duplicateBodyCommand.doIt();
-      super.doIt();     // movement.
-   }
-
-   undo() {
-      super.undo();
-      this.duplicateBodyCommand.undo();
-   }
-}
-
-class DuplicateMoveFreePositionHandler extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["MoveFreePositionHandler"] {
-   constructor(madsor, originalCages) {
-      const duplicateBodyCommand = new DuplicateBodyCommand(originalCages);
-      duplicateBodyCommand.doIt();
-      super(madsor);
-      this.duplicateBodyCommand = duplicateBodyCommand;
-   }
-
-   doIt() {
-      this.duplicateBodyCommand.doIt();
-      super.doIt();     // movement.
-   }
-
-   undo() {
-      super.undo();
-      this.duplicateBodyCommand.undo();
-   }
-
-}
-
-
-
-/***/ }),
-/* 11 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "VertexMadsor", function() { return VertexMadsor; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "VertexConnectCommand", function() { return VertexConnectCommand; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__ = __webpack_require__(8);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__ = __webpack_require__(7);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_bodymads__ = __webpack_require__(10);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_edgemads__ = __webpack_require__(9);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__ = __webpack_require__(3);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_model__ = __webpack_require__(4);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_view__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_shaderprog__ = __webpack_require__(6);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__wings3d__ = __webpack_require__(0);
-/**
-//    This module handle most vertex edit command.
-//
-//    
-**/
-
-   // for switching
-
-
-
-
-
-
-
-
-
-
-
-class VertexMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
-   constructor() {
-      super('vertex');
-      this.currentVertex = null;
-      const self = this;
-      __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].vertexConnect.name, function(ev) {
-            self.connectVertex();
-         });
-      __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].vertexDissolve.name, function(ev) {
-            const dissolve = new VertexDissolveCommand(self);
-            dissolve.doIt();
-            __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"](dissolve);
-         });
-      __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].vertexCollapse.name, function(ev) {
-            const dissolve = new VertexCollapseCommand(self);
-            dissolve.doIt();
-            __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"](dissolve);
-         });
-   }
-
-   modeName() {
-      return 'Vertex';
-   }
-
-   // get selected vertex snapshot. for doing, and redo queue. 
-   snapshotPosition() {
-      var snapshots = [];
-      this.eachPreviewCage( function(preview) {
-         snapshots.push( preview.snapshotVertexPosition() );
-      });
-      return snapshots;
-   }
-
-   snapshotPositionAndNormal() {
-      var snapshots = [];
-      this.eachPreviewCage( function(preview) {
-         snapshots.push( preview.snapshotVertexPositionAndNormal() );
-      });
-      return snapshots;
-   }
-
-   snapshotTransformGroup() {
-      return this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.snapshotTransformVertexGroup);
-   }
-
-   bevel() {
-      var snapshots = [];
-      this.eachPreviewCage( function(preview) {
-         snapshots.push( preview.bevelVertex() );
-      });
-      // change to facemode.
-      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreFaceMode"](snapshots);
-      return snapshots;
-   }
-
-   undoBevel(snapshots, selection) {
-      this.restoreMoveSelection(snapshots);
-      // collapse extrudeEdge
-      this.eachPreviewCage(function(cage, collapse) {
-         cage.collapseSplitOrBevelEdge(collapse);
-      }, snapshots);
-      // restore Vertex Selection
-      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreVertexMode"](selection); 
-   }
-
-   // extrude Vertex
-   extrude() {
-      const edgeLoops = [];
-      this.eachPreviewCage( function(preview, contours) {
-         edgeLoops.push( preview.extrudeVertex(contours) );
-      });
-      return edgeLoops;
-   }
-   undoExtrude(extrudeData) {
-      this.eachPreviewCage(function(cage, extrude) {
-         cage.undoExtrudeVertex(extrude);
-      }, extrudeData);
-   }
-
-   connectVertex() {
-      const vertexConnect = new VertexConnectCommand(this);
-      if (vertexConnect.doIt()) {
-         __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"](vertexConnect);   // saved for undo
-      } else {
-         // show no connection possible message.
-      }
-   }
-
-   connect() {
-      let snapshots = [];
-      let total = 0;
-      this.eachPreviewCage( function(cage) {
-         const snapshot = cage.connectVertex();
-         total += snapshot.halfEdges.length;
-         snapshots.push( snapshot );
-      });
-      if (total > 0) {
-         return snapshots;
-      }
-      // return undefined, or null?
-      return undefined;
-   };
-
-   dissolveConnect(edgesArray) {
-      this.eachPreviewCage( function(cage, edges) {
-         cage.dissolveConnect(edges.halfEdges);
-      }, edgesArray);
-   }
-
-   dissolve() {
-      const dissolve = {count: 0, undo: []};
-      this.eachPreviewCage(function(cage) {
-         const undo = cage.dissolveSelectedVertex();
-         dissolve.count += undo.array.length;
-         dissolve.undo.push( undo );
-      });
-      return dissolve;
-   }
-
-   undoDissolve(dissolveArray) {
-      this.eachPreviewCage( function(cage, dissolveVertex) {
-         cage.undoDissolveVertex(dissolveVertex.array);
-      }, dissolveArray);
-   }
-
-   dragSelect(cage, selectArray, onOff) {
-      if (this.currentVertex !== null) {
-        if (cage.dragSelectVertex(this.currentVertex, onOff)) {
-            selectArray.push(this.currentVertex);
-        }
-      }
-   }
-
-   selectStart(cage) {
-      //
-      if (this.currentVertex !== null) {
-         var onOff = this.preview.selectVertex(this.currentVertex);
-         return new DragVertexSelect(this, cage, this.currentVertex, onOff);
-      }
-      return null;
-   }
-
-   setCurrent(edge, intersect, center) {
-      // find out origin, dest. which is closer.
-      var currentVertex = null;
-      if (edge !== null) {
-         currentVertex = edge.destination();
-         var distance0 = vec3.distance(edge.origin.vertex, intersect);
-         var distance1 = vec3.distance(currentVertex.vertex, intersect);
-         if (distance0 < distance1) {
-            currentVertex = edge.origin;
-         }
-      }
-      if (currentVertex !== this.currentVertex) {
-         if (this.currentVertex !== null) {
-            this.preview.hiliteVertex(this.currentVertex, false);
-         }
-         if (currentVertex !== null) {
-            this.preview.hiliteVertex(currentVertex, true);
-         }
-         this.currentVertex = currentVertex;
-      }
-      this.currentEdge = edge;
-   }
-
-   _resetSelection(cage) {
-      return this._wrapSelection(cage._resetSelectVertex());
-   }
-
-   _restoreSelection(cage, snapshot) {
-      cage.restoreVertexSelection(snapshot);
-   }
-
-   _wrapSelection(selection) {
-      return {vertices: selection};
-   }
-
-   toggleFunc(toMadsor) {
-      const self = this;
-      var redoFn;
-      var snapshots = [];
-      if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__["FaceMadsor"]) {
-         redoFn = __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreFaceMode"];
-         this.eachPreviewCage( function(cage) {
-            snapshots.push( self._wrapSelection(cage.snapshotSelection()) );
-            cage.changeFromVertexToFaceSelect();
-         } );
-      } else if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_3__wings3d_edgemads__["EdgeMadsor"]) {
-         redoFn = __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreEdgeMode"];
-         this.eachPreviewCage( function(cage) {
-            snapshots.push( self._wrapSelection(cage.snapshotSelection())  );
-            cage.changeFromVertexToEdgeSelect();
-         });
-      } else {
-         redoFn = __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreEdgeMode"];
-         this.eachPreviewCage( function(cage) {
-            snapshots.push( self._wrapSelection(cage.snapshotSelection())  );
-            cage.changeFromVertexToBodySelect();
-         });      
-      }
-      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"]( new __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["ToggleModeCommand"](redoFn, __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreVertexMode"], snapshots) );
-   }
-
-
-   restoreMode(toMadsor, snapshots) {
-      if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__["FaceMadsor"]) {
-         this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromVertexToFaceSelect(snapshot);
-         }, snapshots);
-      } else if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_3__wings3d_edgemads__["EdgeMadsor"]) {
-         this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromVertexToEdgeSelect(snapshot);
-         }, snapshots);
-      } else {
-         this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromVertexToBodySelect(snapshot);
-         }, snapshots);
-      }
-   }
-
-   draw(gl) {
-      // draw hilite
-      //if (this.currentEdge) {
-         this.useShader(gl);
-         gl.bindTransform();
-         this.eachPreviewCage( function(preview) {
-            preview.drawVertex(gl);
-         });
-         gl.disableShader();
-      //}
-   }
-
-   previewShader(gl) {
-      gl.useShader(__WEBPACK_IMPORTED_MODULE_7__wings3d_shaderprog__["solidWireframe"]);
-   }
-
-   useShader(gl) {
-      gl.useShader(__WEBPACK_IMPORTED_MODULE_7__wings3d_shaderprog__["selectedColorPoint"]);
-   }
-} 
-
-class DragVertexSelect extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["DragSelect"] {
-   constructor(madsor, cage, vertex, onOff) {
-      super(madsor, cage, vertex, onOff);
-   }
-
-   finish() {
-      return new VertexSelectCommand(this.select);
-   }
-}
-
-class VertexSelectCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
-   constructor(select) {
-      super();
-      this.select = select;
-   }
-
-   doIt() {
-      for (var [cage, vertices] of this.select) {
-         for (var i = 0; i < vertices.length; ++i) {
-            cage.selectVertex(vertices[i]);
-         }
-      }
-   }
-
-   undo() {
-      this.doIt();   // selectVertex, flip/flop, so
-   }  
-}
-
-
-class VertexConnectCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
-   constructor(madsor) {
-      super();
-      this.madsor = madsor;
-   }
-
-   doIt() {
-      // reconnect
-      this.cageArray = this.madsor.connect();
-      if (this.cageArray) { // goes to edgeMode.
-         __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreEdgeMode"](this.cageArray);    // abusing the api?
-         return true;
-      }
-      return false;
-   }
-
-   undo() {
-      // restore to vertexMode.
-      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreVertexMode"]();
-      // dissolve the connect edges.
-      this.madsor.dissolveConnect(this.cageArray);
-   }  
-}
-
-class VertexDissolveCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
-   constructor(madsor) {
-      super();
-      this.madsor = madsor;
-   }
-
-   doIt() {
-      // dissolve, guaranteed dissolveCount > 0
-      ({count: this.dissolveCount, undo: this.dissolve} = this.madsor.dissolve());
-   }
-
-   undo() {
-      this.madsor.undoDissolve(this.dissolve);
-   }
-}
-
-class VertexCollapseCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
-   constructor(madsor) {
-      super();
-      this.madsor = madsor;
-   }
-
-   doIt() {
-      // collapse, is just like dissolve, but switch to facemode
-      ({count: this.dissovleCount, undo: this.dissolve} = this.madsor.dissolve());
-      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreFaceMode"](this.dissolve);
-   }
-
-   undo() {
-      this.madsor.resetSelection();
-      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreVertexMode"]();
-      this.madsor.undoDissolve(this.dissolve);
-   }
-}
-
-
-
-
-/***/ }),
-/* 12 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "pref", function() { return pref; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "view", function() { return view; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getMouseMoveHandler", function() { return getMouseMoveHandler; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "aimZoom", function() { return aimZoom; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "rotate", function() { return rotate; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "wheelRotate", function() { return wheelRotate; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "wheelZoom", function() { return wheelZoom; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "zoomStepAlt", function() { return zoomStepAlt; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "zoomStep", function() { return zoomStep; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "zoom", function() { return zoom; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "pan", function() { return pan; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "keyPan", function() { return keyPan; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "keyPanLeftArrow", function() { return keyPanLeftArrow; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "keyPanRightArrow", function() { return keyPanRightArrow; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "keyPanUpArrow", function() { return keyPanUpArrow; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "keyPanDownArrow", function() { return keyPanDownArrow; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "wheelPan", function() { return wheelPan; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_undo_js__ = __webpack_require__(3);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_js__ = __webpack_require__(0);
-/*
-**
-**
-**     This module handles camera moves (rotation, zooming, and panning).
-**
-**  Original Erlang Version:  Bjorn Gustavsson
-*/
-
-
-
-
-
-class CameraMouseMoveHandler extends __WEBPACK_IMPORTED_MODULE_0__wings3d_undo_js__["MouseMoveHandler"] {
-   constructor() {
-      super();
-      this.saveView = { origin: [0, 0, 0], };
-      copyCam(this.saveView, view);
-   }
-
-   handleMouseMove(ev) {
-      // if middle button down, pan 
-      if (ev.buttons == 4) {
-         pan(ev.movementX, 0);
-      } else {
-         // rotated
-         rotate(ev.movementX, ev.movementY);
-         //help(e.button + "," + e.buttons);
-      }
-   }
-
-   doIt() {
-      // no redo, undo for now
-      //debugLog("exitCameraMode", {ok: this.camera});
-   }
-
-   undo() {
-      // restore camera's value.
-      copyCam(view, this.saveView);
-      //debugLog("exitCameraMode", {cancel: this.camera});
-   }
-}
-
-// module variable.
-   let pref = {
-         cameraMode: "WingsCam",
-         numButtons: 3,
-         camRotationSpeed: 0.5,
-         panSpeed: 25,
-         panSpeedArrowKeys: 50,
-         wheelAdds: false,
-         whScrollInfo: true,
-         whPanSpeed: 50,
-         whRotationSpeed: 0.15,
-         highLightZoomAim: false,
-         // additional pref
-         wheelZoom: true,
-         wheelZoomFactorAlt: 0.0005,
-         wheelZoomFactor: 0.005
-      };
-   let view = (function(){
-         let camera = {
-            origin: [0.0, 0.0, 0.0],
-            azimuth: -45.0, elevation: 25.0,
-            distance: __WEBPACK_IMPORTED_MODULE_1__wings3d_js__["CAMERA_DIST"],
-            panX: 0.0, panY: 0.0,
-            fov: 45.0,
-            zNear: 0.1, zFar: 1000.0
-         };
-         return {
-            alongAxis: false,
-            isModified: false,
-            inverseCameraVectors: function() {
-               var cam = mat4.create();
-               // fromTranslation, identity * vec3. modelView rest.
-               mat4.fromTranslation(cam, vec3.fromValues(-camera.panX, -camera.panY, camera.distance));
-               mat4.rotateX(cam, cam, -camera.elevation * Math.PI / 180);
-               mat4.rotateY(cam, cam, -camera.azimuth * Math.PI / 180);
-               mat4.translate(cam, cam, -camera.origin);
-               // x===right, y===up, z===forward.
-               var ret = {x: [cam[0], cam[1], cam[2]], 
-                          y: [cam[4], cam[5], cam[6]], 
-                          z: [cam[8], cam[9], cam[10]]
-                         };
-               vec3.normalize(ret.x, ret.x);
-               vec3.normalize(ret.y, ret.y);
-               vec3.normalize(ret.z, ret.z);
-               return ret;
-            }, 
-            get origin() { return camera.origin; },
-            set origin(org) { 
-               if ( camera.origin[0] != org[0] || camera.origin[1] != org[1] || camera.origin[2] != org[2]) {
-                  camera.origin[0] = org[0];
-                  camera.origin[1] = org[1];
-                  camera.origin[2] = org[2];
-                  this.isModified = true;
-               }
-            },
-            get azimuth() { return camera.azimuth; },
-            set azimuth(azi) {
-               if (azi != camera.azimuth) {
-                  camera.azimuth = azi;
-                  this.isModified = true;
-               }
-            },
-            get elevation() { return camera.elevation; },
-            set elevation(elv) {
-               if (camera.elevation != elv) {
-                  camera.elevation = elv;
-                  this.isModified = true;
-               }
-            },
-            get distance() { return camera.distance; },
-            set distance(dist) {
-               if (camera.distance != dist) {
-                  __WEBPACK_IMPORTED_MODULE_1__wings3d_js__["log"](__WEBPACK_IMPORTED_MODULE_1__wings3d_js__["action"].cameraZoom, dist - camera.distance);
-                  camera.distance = dist;
-                  this.isModified = true;
-               }
-            },
-            get panX() { return camera.panX; },
-            set panX(px) {
-               if (camera.panX != px) {
-                  camera.panX = px;
-                  this.isModified = true;
-               }
-            },
-            get panY() { return camera.panY; },
-            set panY(py) {
-               if (camera.panY != py) {
-                  camera.panY = py;
-                  this.isModified = true;
-               }
-            },
-            get fov() { return camera.fov; },
-            set fov(fv) {
-               if (camera.fov != fv) {
-                  camera.fov = fv;
-                  this.isModified = true;
-               }
-            },
-            get zNear() { return camera.zNear; },
-            set zNear(near) {
-               if (camera.zNear != near) {
-                  camear.zNear = near;
-                  this.isModified = true;
-               }
-            },
-            get zFar() { return camera.zFar; },
-            set zFar(far) {
-               if (camera.zFar != far) {
-                  camera.zFar = far;
-                  this.isModified = true;
-               }
-            },
-          };
-      }());
-
-// utility function
-   function copyCam(save, source) {
-      save.origin[0] = source.origin[0];
-      save.origin[1] = source.origin[1];
-      save.origin[2] = source.origin[2];
-      save.azimuth = source.azimuth;
-      save.elevation = source.elevation;
-      save.distance = source.distance;
-      save.panX = source.panX;
-      save.panY = source.panY;
-      save.fov = source.fov;
-      save.zNear = source.zNear;
-      save.zFar = source.zFar;
-   };
-
-   function init() {
-/*    case {wings_pref:get_value(num_buttons),wings_pref:get_value(camera_mode)} of
-	   {3,_} -> ok
-	   {_,nendo} -> ok;
-	   {_,blender} -> ok;
-      {_,_} -> wings_pref:set_value(camera_mode, nendo) */
-   };
-
-   function getMouseMoveHandler() {
-      const ret = new CameraMouseMoveHandler();
-      return ret;
-   };
-
-/*
-%%%
-%%% Common utilities.
-%%%h
-
-generic_event(redraw, _Camera, #state{st=St, func=none}) ->
-    wings:redraw(St),
-    keep;
-generic_event(redraw, _Camera, #state{func=Redraw}) when is_function(Redraw) ->
-    Redraw(),
-    keep;
-
-generic_event(#mousebutton{button=4,mod=Mod,state=?SDL_RELEASED}, _Camera, _Redraw)
-  when Mod band ?SHIFT_BITS =/= 0 andalso Mod band ?ALT_BITS =/= 0 ->
-    whrotate(0.5,0.0);
-generic_event(#mousebutton{button=5,mod=Mod,state=?SDL_RELEASED}, _Camera, _Redraw)
-  when Mod band ?SHIFT_BITS =/= 0 andalso Mod band ?ALT_BITS =/= 0 ->
-    whrotate(-0.5,0.0);
-generic_event(#mousebutton{button=4,mod=Mod,state=?SDL_RELEASED}, _Camera, _Redraw)
-  when Mod band ?SHIFT_BITS =/= 0 ->
-    whrotate(0.0,0.5);
-generic_event(#mousebutton{button=5,mod=Mod,state=?SDL_RELEASED}, _Camera, _Redraw)
-  when Mod band ?SHIFT_BITS =/= 0 ->
-    whrotate(0.0,-0.5);
-
-generic_event(#mousebutton{button=4,mod=Mod,state=?SDL_RELEASED}, _Camera, _Redraw)
-  when Mod band ?CTRL_BITS =/= 0 andalso Mod band ?ALT_BITS =/= 0 ->
-    whpan(0.05,0.0);
-generic_event(#mousebutton{button=5,mod=Mod,state=?SDL_RELEASED}, _Camera, _Redraw)
-  when Mod band ?CTRL_BITS =/= 0 andalso Mod band ?ALT_BITS =/= 0 ->
-    whpan(-0.05,0.0);
-generic_event(#mousebutton{button=4,mod=Mod,state=?SDL_RELEASED}, _Camera, _Redraw)
-  when Mod band ?CTRL_BITS =/= 0 ->
-    whpan(0.0,0.05);
-generic_event(#mousebutton{button=5,mod=Mod,state=?SDL_RELEASED}, _Camera, _Redraw)
-  when Mod band ?CTRL_BITS =/= 0 ->
-    whpan(0.0,-0.05);
-
-generic_event(#mousebutton{button=4,mod=Mod,state=?SDL_RELEASED}, _Camera, _Redraw)
-  when Mod band ?ALT_BITS =/= 0 ->
-    zoom_step_alt(-1);
-generic_event(#mousebutton{button=4,state=?SDL_RELEASED}, #st{}=St, none) ->
-%% Matching 'none' stops zoom aim from being activated during a drag sequence.
-%% Zoom aim warps the mouse to the screen's centre, and this can cause a crash
-%% in since drag events also depend on cursor position.
-    aim_zoom(-1, St);
-generic_event(#mousebutton{button=4,state=?SDL_RELEASED}, _Camera, _Redraw) ->
-    zoom_step(-1);
-generic_event(#mousebutton{button=5,mod=Mod,state=?SDL_RELEASED}, _Camera, _Redraw)
-  when Mod band ?ALT_BITS =/= 0 ->
-    zoom_step_alt(1);
-generic_event(#mousebutton{button=5,state=?SDL_RELEASED}, _, none) ->
-%% Matching 'none' stops zoom aim from being activated during a drag sequence
-    zoom_step(1);
-generic_event(#mousebutton{button=5,state=?SDL_RELEASED}, _Camera, _Redraw) ->
-    zoom_step(1);
-
-generic_event(_, _, _) -> keep.
-
-*/
-   function aimZoom(dir, St0) {
-      /*
-        if (pref.highLightZoomAim) {
-        #view{origin=OriginB}=Before = wings_view:current(),
-        {{_,Cmd},_} = wings:highlight_aim_setup(St0),
-        wings_view:command(Cmd,St0),
-        #view{origin=OriginA} = wings_view:current(),
-        O = e3d_vec:zero(),
-        if OriginA =:= O, Cmd =:= aim ->
-              wings_view:set_current(Before),
-              zoom_step(Dir);
-            OriginA =:= OriginB ->
-              zoom_step(Dir);
-            true ->
-              Client = wings_wm:this(),
-              {X0,Y0} = wings_wm:win_size(Client),
-              {X,Y} = {X0 div 2, Y0 div 2},
-              wings_io:warp(X,Y),
-              zoom_step(Dir)
-      } else {
-         zoomStep(dir);
-      } */
-   };
-
-   function rotate(dx, dy) {
-      //if (allowRotation()) {
-	      view.azimuth += dx * pref.camRotationSpeed;
-         view.elevation += dy * pref.camRotationSpeed;
-      //}
-   };
-
-   function wheelRotate(dx, dy) {
-      if (pref.wheelZoom && pref.wheelAdds) {
-         var s = 2 * pref.wheelRotationSpeed;
-         view.azimuth = view.azimuth + (dx * s);
-         view.elevation = view.elevation + (dy * s);
-         view.alongAxis = false;
-      }
-      // return keep;
-   };
-
-
-   function wheelZoom(factor, dir) {
-      var delta = Math.max(Math.abs(view.distance), 0.2) * (dir * factor);
-      view.distance += delta;
-      //return keep;
-   };
-
-   function zoomStepAlt(dir) {
-      if (pref.wheelZoom) {
-		   wheelZoom(pref.wheelZoomFactorAlt, dir);
-      } 
-      //return keep;
-   };
-
-
-   function zoomStep(dir) {
-      if (pref.wheelZoom) {
-         wheelZoom(pref.wheelZoomFactor, dir);
-      }
-      //return keep;
-   };
-
-   function zoom(delta) {
-      view.distance = view.distance + (Math.max(Math.abs(view.distance), 0.2) * delta / 80);
-   };
-
-   function pan(dx, dy) {
-      const s = view.distance * (1/20)/(101-pref.panSpeed);
-      view.panX += (dx*s);
-      view.panY += (dy*s);
-   };
-
-   function keyPan(dx, dy) {
-      const s = view.distance * (pref.panSpeedArrowKeys/100);
-      view.panX += (dx * s);
-      view.panY += (dy * s);
-   };
-   function keyPanLeftArrow() {
-      keyPan(0.05, 0.0);
-   };
-   function keyPanRightArrow() {
-      keyPan(-0.05, 0.0);
-   }
-   function keyPanUpArrow() {
-      keyPan(0, 0.05);
-   };
-   function keyPanDownArrow() {
-      keyPan(0, -0.05);
-   }
-
-   function wheelPan(dx0, dy0) {
-      if (pref.wheelZoom && pref.wheelAdds) {
-         const s = view.distance * (pref.wheelPanSpeed/100);
-         view.panX += (dx * s);
-         view.panY -= (dy * s);
-      }
-      // keep
-   };
-
-   // handle mouse and keyboard event.
-
-/*
-stop_camera(#camera{ox=Ox,oy=Oy}) ->
-    wings_wm:release_focus(),
-    case wings_io:ungrab(Ox, Oy) of
-	still_grabbed ->
-	    wings_wm:later(view_changed);
-	no_grab ->
-	    wings_wm:dirty()
-    end,
-    update_sel(fun show_sel_fun/2),
-    pop.
-
-camera_mouse_range(X1, Y1, #camera{x=OX,y=OY, xt=Xt0, yt=Yt0}=Camera) ->
-%%    io:format("Camera Mouse Range ~p ~p~n", [{X0,Y0}, {OX,OY,Xt0,Yt0}]),
-    XD0 = (X1 - OX),
-    YD0 = (Y1 - OY),
-    {XD,YD} = wings_pref:lowpass(XD0 + Xt0, YD0 + Yt0),
-
-    if
-	XD0 =:= 0, YD0 =:= 0 ->
-	    {0.0,0.0,Camera#camera{xt=0,yt=0}};
-	true ->
-	    wings_io:warp(OX, OY),
-	    {XD/?CAMDIV, YD/?CAMDIV, Camera#camera{xt=XD0, yt=YD0}}
-    end.
-
-view_hotkey(Ev, Camera, #state{st=St}) ->
-    case wings_hotkey:event(Ev,St) of
-	next -> keep;
-	{view,smooth_proxy} -> keep;
-	{view,quick_preview} -> keep;
-	{view,Cmd} -> 
-	    wings_view:command(Cmd, St),
-	    keep;	
-	_Other -> %% Hotkey pressed, Quit camera mode
-	    wings_wm:later(Ev),
-	    stop_camera(Camera)
-    end.
-
-message(Message) ->
-    wings_wm:message(Message),
-    wings_wm:message_right([]).
-    
-grab() ->
-    wings_io:grab(),
-    wings_wm:grab_focus(),
-    update_sel(fun hide_sel_fun/2).
-
-hide_sel_fun(#dlo{sel=Sel}=D, _) ->
-    D#dlo{sel={call,none,Sel}}.
-
-show_sel_fun(#dlo{sel={call,none,Sel}}=D, _) ->
-    D#dlo{sel=Sel};
-show_sel_fun(D, _) -> D.
-
-allow_rotation() ->
-    wings_wm:get_prop(allow_rotation).
-
-update_sel(Fun) ->
-    case wings_pref:get_value(hide_sel_in_camera_moves) of
-	false -> ok;
-	true -> wings_dl:map(Fun, [])
-    end.
-
-format([{Mod,But,Msg}|T]) ->
-    wings_msg:join(wings_msg:mod_format(Mod, But, Msg), format(T));
-format([]) -> []. 
-*/
-
-
-
-__WEBPACK_IMPORTED_MODULE_1__wings3d_js__["onReady"](init);
-
-/***/ }),
-/* 13 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "WingedEdge", function() { return WingedEdge; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "HalfEdge", function() { return HalfEdge; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "Vertex", function() { return Vertex; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "Polygon", function() { return Polygon; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "MeshAllocator", function() { return MeshAllocator; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "WingedTopology", function() { return WingedTopology; });
 /* require glmatrix
 * http://kaba.hilvi.org/homepage/blog/halfedge/halfedge.htm. very nicely written half-edge explanation and pseudo code.
@@ -8607,99 +5969,23 @@ Polygon.prototype.getCentroid = function(centroid) {
    vec3.scale(centroid, centroid, 1.0/numberOfVertex);
 };
 
-
-var WingedTopology = function(allocatedSize = 256) {     // default to 256 vertex
-   var buf = new ArrayBuffer(allocatedSize*3 * Float32Array.BYTES_PER_ELEMENT);
-   this.buf = { buffer: buf, data: new Float32Array(buf), len: 0, };
-   this.vertices = [];
-   this.edges = [];        // wingededge
-   this.faces = [];
+//
+// 
+//
+let MeshAllocator = function(allocatedSize = 1024) {
+   var buf = new ArrayBuffer(allocatedSize*3 * Float32Array.BYTES_PER_ELEMENT);  // vertices in typedArray
+   this.buf = { buffer: buf, data: new Float32Array(buf), len: 0, }; // vertex's pt buffer. to be used for Vertex.
+   this.vertices = [];     // class Vertex
+   this.edges = [];        // class WingedEdge
+   this.faces = [];        // class Polygon
    this.freeVertices = [];
    this.freeEdges = [];
    this.freeFaces = [];
    // affected is when reuse, deleted, or change vital stats.
    this.affected = {vertices: new Set, edges: new Set, faces: new Set};
 };
-
-WingedTopology.prototype.sanityCheck = function() {
-   let sanity = true;
-   // first check vertex for error.
-   for (let [index, vertex] of this.vertices.entries()) {
-      if (vertex.isReal()) {
-         if (vertex.outEdge.origin !== vertex) {
-            console.log("vertex " + index + " outEdge is wrong");
-            sanity = false;
-         } else {
-            // manual find prev. 
-            var start = vertex.outEdge;
-            var edge = start;
-            let prev = null;
-            let iterationCount = 0;    // make sure, no infinite loop
-            if (edge) {
-               do { // ccw ordering
-                  if (edge.pair.next === start) {
-                     prev = edge.pair;
-                     break;
-                  }
-                  edge = edge.pair.next;   // my pair's tail is in too. 
-                  iterationCount++;
-               } while (edge && (edge !== start) && (iterationCount < 101));
-            }
-            if (prev === null) {
-               console.log("vertex " + index + " is broken");
-               sanity = false;
-            }
-         }
-      }
-   }
-   // now check polygon
-   return sanity;
-};
-
-WingedTopology.prototype.clearAffected = function() {
-   this.affected.vertices.clear();
-   this.affected.edges.clear();
-   this.affected.faces.clear();
-};
-
-WingedTopology.prototype.addAffectedEdgeAndFace = function(vertex) {
-   this.affected.vertices.add(vertex);
-   const self = this;
-   vertex.eachOutEdge( function(halfEdge) {
-      self.affected.edges.add(halfEdge.wingedEdge);
-      if (halfEdge.face !== null) {
-         self.affected.faces.add(halfEdge.face);
-     }
-   });
-};
-
-// todo: ?binary search for delPolygon, then use splice. a win? for large freelist yes, but, I don't think it a common situation.
-WingedTopology.prototype._createPolygon = function(halfEdge, numberOfVertex, delPolygon) {
-   let polygon;
-   if (this.freeFaces.length > 0) {
-      if (typeof delPolygon !== "undefined") {
-         const index = delPolygon.index;   // remove delOutEdge from freeEdges list
-         this.freeFaces = this.freeFaces.filter(function(element) {
-            return element !== index;
-         });
-         polygon = delPolygon;
-      } else {
-         polygon = this.faces[ this.freeFaces.pop() ];
-      }
-      polygon.halfEdge = halfEdge;
-      polygon.numberOfVertex = numberOfVertex;
-      polygon.update();
-      this.affected.faces.add( polygon );
-   } else {
-      polygon = new Polygon(halfEdge, numberOfVertex);
-      polygon.index = this.faces.length;
-      this.faces.push( polygon );
-   }
-   return polygon;
-};
-
-// return vertex index
-WingedTopology.prototype.addVertex = function(pt, delVertex) {
+// allocation,
+MeshAllocator.prototype.allocVertex = function(pt, delVertex) {
    if (this.freeVertices.length > 0) {
       let vertex;
       if (typeof delVertex === 'undefined') {
@@ -8743,7 +6029,7 @@ WingedTopology.prototype.addVertex = function(pt, delVertex) {
    }
 };
 
-WingedTopology.prototype._createEdge = function(begVert, endVert, delOutEdge) {
+MeshAllocator.prototype.allocEdge = function(begVert, endVert, deOut) {
    let edge;
    let outEdge;
    if (this.freeEdges.length > 0) { // prefered recycle edge.
@@ -8771,6 +6057,206 @@ WingedTopology.prototype._createEdge = function(begVert, endVert, delOutEdge) {
    }
 
    return outEdge;
+};
+
+// todo: ?binary search for delPolygon, then use splice. a win? for large freelist yes, but, I don't think it a common situation.
+MeshAllocator.prototype.allocPolygon = function(halfEdge, numberOfVertex, delPolygon) {
+   let polygon;
+   if (this.freeFaces.length > 0) {
+      if (typeof delPolygon !== "undefined") {
+         const index = delPolygon.index;   // remove delOutEdge from freeEdges list
+         this.freeFaces = this.freeFaces.filter(function(element) {
+            return element !== index;
+         });
+         polygon = delPolygon;
+      } else {
+         polygon = this.faces[ this.freeFaces.pop() ];
+      }
+      polygon.halfEdge = halfEdge;
+      polygon.numberOfVertex = numberOfVertex;
+      polygon.update();
+      this.affected.faces.add( polygon );
+   } else {
+      polygon = new Polygon(halfEdge, numberOfVertex);
+      polygon.index = this.faces.length;
+      this.faces.push( polygon );
+   }
+   return polygon;
+};
+
+// recycled
+// insert the index number in reverse order. smallest last.
+MeshAllocator.prototype._insertFreeList = function(val, array) {
+   var l = 0, r = array.length - 1;
+   while (l <= r) {
+      //let m = (l + r) >>> 1; /// equivalent to Math.floor((l + h) / 2) but faster
+      let m = l + ((r-l) >>> 1); // avoid overflow. 
+      let comparison = val - array[m];
+      if (comparison > 0) {
+         r = m - 1;
+      } else if (comparison < 0) {
+         l = m + 1;
+      } else {
+         break; // should no happened.
+      }
+   }
+   array.splice(l, 0, val);
+};
+MeshAllocator.prototype.freeVertex = function(vertex) {
+   vertex.outEdge = null;
+   //vertex.vertex.fill(0.0);
+   // assert !freeVertices.has(vertex);
+   //this.freeVertices.push( vertex );
+   this._insertFreeList(vertex.index, this.freeVertices);
+   this.affected.vertices.add( vertex );
+};
+
+MeshAllocator.prototype.freeHEdge = function(edge) {
+   const pair = edge.pair;
+   edge.face = null;
+   pair.face = null;
+   edge.origin = null;
+   pair.origin = null;
+   // link together for a complete loop
+   edge.next = pair;
+   pair.next = edge;
+   // assert !this.freeEdges.has( edge.wingedEdge );
+   //this.freeEdges.push( edge.wingedEdge );
+   this._insertFreeList(edge.wingedEdge.index, this.freeEdges);
+   this.affected.edges.add( edge.wingedEdge );
+};
+
+MeshAllocator.prototype.freePolygon = function(polygon) {
+   polygon.halfEdge = null;
+   polygon.numberOfVertex = 0;
+   // assert !freeFaces.has( polygon );
+   //this.freeFaces.push( polygon );
+   this._insertFreeList(polygon.index, this.freeFaces);
+   this.affected.faces.add( polygon );
+};
+
+
+// update for affected (vertex, edge, and polygon)
+MeshAllocator.prototype.clearAffected = function() {
+   this.affected.vertices.clear();
+   this.affected.edges.clear();
+   this.affected.faces.clear();
+};
+
+MeshAllocator.prototype.addAffectedEdgeAndFace = function(vertex) {
+   this.affected.vertices.add(vertex);
+   const self = this;
+   vertex.eachOutEdge( function(halfEdge) {
+      self.affected.edges.add(halfEdge.wingedEdge);
+      if (halfEdge.face !== null) {
+         self.affected.faces.add(halfEdge.face);
+     }
+   });
+};
+
+
+// 
+// changed - so Vertex, WingedEdge, and Polygon is allocated from meshAllocator. So different 
+// Models on the same DraftBench can use the same Allocation. Merging becomes easier.
+//
+var WingedTopology = function(allocator) {
+   this.alloc = allocator;
+   this.vertices = new Set;
+   this.faces = new Set;
+   this.edges = new Set;
+};
+
+// act as destructor
+WingedTopology.prototype.free = function() {
+   for (let polygon of this.faces) {
+      this.alloc.freePolygon(polygon);
+   }
+   this.faces = new Set;
+   for (let wedge of this.edges) {
+      this.alloc.freeHEdge(wedge.left);
+   }
+   this.edges = new Set;
+   for (let vertex of this.vertices) {
+      this.alloc.freeVertex(vertex);
+   }
+   this.vertices = new Set;
+};
+
+WingedTopology.prototype.sanityCheck = function() {
+   let sanity = true;
+   // first check vertex for error.
+   for (let [index, vertex] of this.vertices.entries()) {
+      if (vertex.isReal()) {
+         if (vertex.outEdge.origin !== vertex) {
+            console.log("vertex " + index + " outEdge is wrong");
+            sanity = false;
+         } else {
+            // manual find prev. 
+            var start = vertex.outEdge;
+            var edge = start;
+            let prev = null;
+            let iterationCount = 0;    // make sure, no infinite loop
+            if (edge) {
+               do { // ccw ordering
+                  if (edge.pair.next === start) {
+                     prev = edge.pair;
+                     break;
+                  }
+                  edge = edge.pair.next;   // my pair's tail is in too. 
+                  iterationCount++;
+               } while (edge && (edge !== start) && (iterationCount < 101));
+            }
+            if (prev === null) {
+               console.log("vertex " + index + " is broken");
+               sanity = false;
+            }
+         }
+      }
+   }
+   // now check polygon
+   return sanity;
+};
+
+WingedTopology.prototype.clearAffected = function() {
+   this.alloc.clearAffected();
+};
+
+WingedTopology.prototype.addAffectedEdgeAndFace = function(vertex) {
+   this.alloc.addAffectedEdgeAndFace(vertex);
+};
+
+WingedTopology.prototype._createPolygon = function(halfEdge, numberOfVertex, delPolygon) {
+   const polygon = this.alloc.allocPolygon(halfEdge, numberOfVertex, delPolygon);
+   this.faces.add(polygon);
+   return polygon;
+};
+
+// return vertex index
+WingedTopology.prototype.addVertex = function(pt, delVertex) {
+   const vertex = this.alloc.allocVertex(pt, delVertex);
+   this.vertices.add(vertex);
+   return vertex;
+};
+
+WingedTopology.prototype._createEdge = function(begVert, endVert, delOutEdge) {
+   const outEdge = this.alloc.allocEdge(begVert, endVert, delOutEdge);
+   this.edges.add(outEdge.wingedEdge);
+   return outEdge;
+};
+// recycled
+WingedTopology.prototype._freeVertex = function(vertex) {
+   this.alloc.freeVertex(vertex);
+   this.vertices.delete(vertex);
+};
+
+WingedTopology.prototype._freeEdge = function(edge) {
+   this.alloc.freeHEdge(edge);
+   this.edges.delete(edge.wingedEdge);
+};
+
+WingedTopology.prototype._freePolygon = function(polygon) {
+   this.alloc.freePolygon(polygon);
+   this.faces.delete(polygon);
 };
 
 // return winged edge ptr because internal use only.
@@ -8886,8 +6372,8 @@ WingedTopology.prototype.addPolygon = function(pts) {
          nextIndex = 0;
       }
 
-      var v0 = this.vertices[pts[i]];
-      var v1 = this.vertices[pts[nextIndex]];
+      var v0 = this.alloc.vertices[pts[i]];
+      var v1 = this.alloc.vertices[pts[nextIndex]];
       var edge = this.findHalfEdge(v0, v1);
       if (edge === null) { // not found, create one
          edge = this.addEdge(v0, v1);
@@ -9584,59 +7070,6 @@ WingedTopology.prototype._liftEdge = function(outLeft, inRight, fromVertex, delE
    this.affected.faces.add(outEdge.face);
    this.affected.faces.add(inEdge.face);
 }
-
-
-// insert the index number in reverse order. smallest last.
-WingedTopology.prototype._insertFreeList = function(val, array) {
-   var l = 0, r = array.length - 1;
-   while (l <= r) {
-      //let m = (l + r) >>> 1; /// equivalent to Math.floor((l + h) / 2) but faster
-      let m = l + ((r-l) >>> 1); // avoid overflow. 
-      let comparison = val - array[m];
-      if (comparison > 0) {
-         r = m - 1;
-      } else if (comparison < 0) {
-         l = m + 1;
-      } else {
-         break; // should no happened.
-      }
-   }
-   array.splice(l, 0, val);
-};
-
-// recycled
-WingedTopology.prototype._freeVertex = function(vertex) {
-   vertex.outEdge = null;
-   //vertex.vertex.fill(0.0);
-   // assert !freeVertices.has(vertex);
-   //this.freeVertices.push( vertex );
-   this._insertFreeList(vertex.index, this.freeVertices);
-   this.affected.vertices.add( vertex );
-};
-
-WingedTopology.prototype._freeEdge = function(edge) {
-   const pair = edge.pair;
-   edge.face = null;
-   pair.face = null;
-   edge.origin = null;
-   pair.origin = null;
-   // link together for a complete loop
-   edge.next = pair;
-   pair.next = edge;
-   // assert !this.freeEdges.has( edge.wingedEdge );
-   //this.freeEdges.push( edge.wingedEdge );
-   this._insertFreeList(edge.wingedEdge.index, this.freeEdges);
-   this.affected.edges.add( edge.wingedEdge );
-};
-
-WingedTopology.prototype._freePolygon = function(polygon) {
-   polygon.halfEdge = null;
-   polygon.numberOfVertex = 0;
-   // assert !freeFaces.has( polygon );
-   //this.freeFaces.push( polygon );
-   this._insertFreeList(polygon.index, this.freeFaces);
-   this.affected.faces.add( polygon );
-};
 
 
 WingedTopology.prototype._collapseEdge = function(halfEdge) {
@@ -10372,7 +7805,2893 @@ WingedTopology.prototype.insertFan = function(polygon, fanLists) {
 
 
 /***/ }),
+/* 9 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "FaceMadsor", function() { return FaceMadsor; });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_edgemads__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_bodymads__ = __webpack_require__(12);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__ = __webpack_require__(13);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_model__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_view__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_gl__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d_shaderprog__ = __webpack_require__(6);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__wings3d_ui__ = __webpack_require__(2);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__wings3d__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__wings3d_draftbench__ = __webpack_require__(7);
+/**
+//    This module contains most face command and face utility functions.
+//
+//    
+**/
+
+   // for switching
+
+
+
+
+
+
+
+
+
+
+
+
+class FaceMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
+   constructor() {
+      super('face');
+      var self = this;
+      __WEBPACK_IMPORTED_MODULE_9__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_10__wings3d__["action"].faceDissolve.name, function(ev) {
+            const command = new DissolveFaceCommand(self);
+            if (command.doIt()) {
+               __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"](command);
+            } else {
+               geometryStatus('Selected Face not dissolveable');
+            }
+         });
+      __WEBPACK_IMPORTED_MODULE_9__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_10__wings3d__["action"].faceCollapse.name, function(ev) {
+            const command = new CollapseFaceCommand(self);
+            command.doIt();
+            __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"](command);
+         });
+      __WEBPACK_IMPORTED_MODULE_9__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_10__wings3d__["action"].faceBridge.name, (ev) => {
+         let bridgeFaces = this.getBridgeFaces();
+         if (bridgeFaces.length === 2) {
+            const dest = bridgeFaces[0];
+            const origin = bridgeFaces[1];
+            if (dest.face.numberOfVertex == origin.face.numberOfVertex) {
+               let merge;
+               if (dest.preview !== origin.preview) {
+                  // merge dest and origin.
+                  merge = new MergePreviewCommand(dest.preview, origin.preview);
+                  merge.doIt();
+               }
+               const bridge = new BridgeFaceCommand(dest.preview, dest.face, origin.face);
+               bridge.doIt();
+               if (merge) {
+                  __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueueCombo"]([merge, bridge]);
+               } else {
+                  __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"](bridge);
+               }
+            }
+         }
+       });
+      __WEBPACK_IMPORTED_MODULE_9__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_10__wings3d__["action"].faceInset.name, (ev) => {
+         if (this.hasSelection()) {
+            __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["attachHandlerMouseMove"](new InsetFaceHandler(this));
+         } else {
+            geometryStatus('No selected face');
+         }
+       });
+      __WEBPACK_IMPORTED_MODULE_9__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_10__wings3d__["action"].faceBump.name, (ev) => {
+         __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["attachHandlerMouseMove"](new BumpFaceHandler(this));
+       });
+   }
+
+   modeName() {
+      return 'Face';
+   }
+
+   // get selected Face's vertex snapshot. for doing, and redo queue. 
+   snapshotPosition() {
+      var snapshots = [];
+      this.eachPreviewCage( function(preview) {
+         snapshots.push( preview.snapshotFacePosition() );
+      });
+      return snapshots;
+   }
+
+   snapshotPositionAndNormal() {
+      var snapshots = [];
+      this.eachPreviewCage( function(preview) {
+         snapshots.push( preview.snapshotFacePositionAndNormal() );
+      });
+      return snapshots;
+   }
+
+   snapshotTransformGroup() {
+      return this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.snapshotTransformFaceGroup);
+   }
+
+   bevel() {
+      const snapshots = [];
+      this.eachPreviewCage( function(preview) {
+         snapshots.push( preview.bevelFace() );
+      });
+      return snapshots;
+   }
+
+   undoBevel(snapshots, selection) {
+      this.restoreMoveSelection(snapshots);
+      // collapse extrudeEdge
+      this.eachPreviewCage(function(cage, collapse) {
+         cage.collapseSplitOrBevelEdge(collapse);
+      }, snapshots);
+      // rehilite selectedFace
+      this.resetSelection();
+      this.restoreSelection(selection);
+   }
+
+   bump(reuseLoops) {
+      const edgeLoops = [];
+      this.eachPreviewCage( function(preview, contours) {
+         edgeLoops.push( preview.bumpFace(contours) );
+      }, reuseLoops);
+      return edgeLoops;
+   }
+
+   undoBump(snapshots) {
+      // collapse extrudeEdge
+      this.eachPreviewCage(function(cage, collapse) {
+         cage.undoExtrudeEdge(collapse);
+      }, snapshots);  
+   }
+
+   // extrude Face
+   extrude(reuseLoops) {
+      const edgeLoops = [];
+      this.eachPreviewCage( function(preview, contours) {
+         edgeLoops.push( preview.extrudeFace(contours) );
+      }, reuseLoops);
+      return edgeLoops;
+   }
+
+   undoExtrude(extrudeEdgesContoursArray) {
+      this.eachPreviewCage(function(cage, extrudeEdgesContours) {
+         cage.collapseExtrudeEdge(extrudeEdgesContours.extrudeEdges);
+      }, extrudeEdgesContoursArray);
+   }
+
+   collapseEdgeNew(snapshots) {
+      this.eachPreviewCage(function(cage, obj) {
+         cage.collapseExtrudeEdge(obj.snapshot.extrudeEdges);
+      }, snapshots);
+   }
+
+   // face dissolve mode
+   dissolve() {
+      const dissolve = {count: 0, record: []};
+      this.eachPreviewCage(function(cage) {
+         const record = cage.dissolveSelectedFace();
+         dissolve.count += record.edges.length;
+         dissolve.record.push( record );
+      });
+      return dissolve;
+   }
+   undoDissolve(dissolveArray) {
+      this.eachPreviewCage( function(cage, dissolveEdge) {
+         cage.undoDissolveFace(dissolveEdge);
+      }, dissolveArray);
+   }
+
+   // face collapse 
+   collapse() {
+      const collapse = {count: 0, collapse: []};
+      this.eachPreviewCage(function(cage) {
+         const record = cage.collapseSelectedFace();
+         collapse.count += record.collapse.edges.length;
+         collapse.collapse.push( record );
+      });
+      return collapse;
+   }
+   undoCollapse(collapseArray) {
+      this.eachPreviewCage( function(cage, collapse) {
+         cage.undoCollapseFace(collapse);
+      }, collapseArray);
+   }
+
+   // bridge
+   getBridgeFaces() {
+      const snapshot = [];
+      this.eachPreviewCage( (cage) => {
+         const selection = cage.snapshotSelection();
+         for (let selected of selection) {
+            snapshot.push( {preview: cage, face: selected} );
+         }
+      });
+      return snapshot;
+   }
+
+   // Inset
+   inset() {
+      return this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.insetFace);
+   }
+
+   dragSelect(cage, selectArray, onOff) {
+      if (this.currentEdge !== null) {
+        if (cage.dragSelectFace(this.currentEdge, onOff)) {
+            selectArray.push(this.currentEdge);
+        }
+      }
+   }
+
+   // select, hilite
+   selectStart(preview) {
+      // check not null, shouldn't happened
+      if (this.currentEdge !== null) {
+         var onOff = preview.selectFace(this.currentEdge);
+         return new DragFaceSelect(this, preview, this.currentEdge, onOff);
+      }    
+   }
+
+   hideOldHilite(edge) {
+      if ((edge === null) || (this.currentEdge.face !== edge.face)) {
+         __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["draftBench"].hiliteFace(null, false);
+      }
+   }
+
+   showNewHilite(edge, intersect, center, draftBench) {
+      if ((this.currentEdge === null) || (this.currentEdge.face !== edge.face)) {   // make sure it new face
+         __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["draftBench"].hiliteFace(edge.face, true);
+      }
+   }
+
+   _resetSelection(cage) {
+      return this._wrapSelection(cage._resetSelectFace());
+   }
+
+   _restoreSelection(cage, snapshot) {
+      cage.restoreFaceSelection(snapshot);
+   }
+
+   _wrapSelection(selection) {
+      return {selectedFaces: selection };
+   }
+   
+   toggleFunc(toMadsor) {
+      const self = this;
+      var redoFn;
+      var snapshots = [];
+      if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_1__wings3d_edgemads__["EdgeMadsor"]) {
+         redoFn = __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreEdgeMode"];
+         this.eachPreviewCage( function(cage) {
+            snapshots.push( self._wrapSelection(cage.snapshotSelection()) );
+            cage.changeFromFaceToEdgeSelect();
+         });
+      } else if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__["VertexMadsor"]) {
+         redoFn = __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreVertexMode"];
+         this.eachPreviewCage( function(cage) {
+            snapshots.push(  self._wrapSelection(cage.snapshotSelection()) );
+            cage.changeFromFaceToVertexSelect();
+         });
+      } else {
+         redoFn = __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreBodyMode"];
+         this.eachPreviewCage( function(cage) {
+            snapshots.push(  self._wrapSelection(cage.snapshotSelection()) );
+            cage.changeFromFaceToBodySelect();
+         });
+      }
+      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"](new __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["ToggleModeCommand"](redoFn, __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreFaceMode"], snapshots));
+   }
+
+   restoreMode(toMadsor, snapshots) {
+      if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_1__wings3d_edgemads__["EdgeMadsor"]) {
+         this.eachPreviewCage( function(cage, snapshot) {
+            cage.restoreFromFaceToEdgeSelect(snapshot);
+         }, snapshots);
+      } else if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__["VertexMadsor"]) {
+         this.eachPreviewCage( function(cage, snapshot) {
+            cage.restoreFromFaceToVertexSelect(snapshot);
+         }, snapshots);
+      } else {
+         this.eachPreviewCage( function(cage, snapshot) {
+            cage.restoreFromFaceToBodySelect(snapshot);
+         }, snapshots);
+      }
+   }
+
+   drawObject(gl, draftBench) {
+      // draw hilite
+      draftBench.drawHilite(gl);
+   }
+
+   previewShader(gl) {
+      gl.useShader(__WEBPACK_IMPORTED_MODULE_8__wings3d_shaderprog__["colorSolidWireframe"]);
+   }
+
+   useShader(gl) {
+      gl.useShader(__WEBPACK_IMPORTED_MODULE_8__wings3d_shaderprog__["solidColor"]);
+   }
+}
+
+
+class DragFaceSelect extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["DragSelect"] {
+   constructor(madsor, cage, halfEdge, onOff) {
+      super(madsor, cage, halfEdge, onOff);
+   }
+
+   finish() {
+      return new FaceSelectCommand(this.select);
+   }
+}
+
+
+class FaceSelectCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
+   constructor(select) {
+      super();
+      this.select = select;
+   }
+
+   doIt() {
+      for (var [cage, halfEdges] of this.select) {
+         for (var i = 0; i < halfEdges.length; ++i) {
+            cage.selectFace(halfEdges[i]);
+         }
+      }
+   }
+
+   undo() {
+      this.doIt();   // selectEdge, flip/flop, so
+   }
+}
+
+
+class DissolveFaceCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
+   constructor(madsor) {
+      super();
+      this.madsor = madsor;
+   }
+
+   doIt() {
+      const dissolve = this.madsor.dissolve();
+      if (dissolve.count > 0) {
+         this.dissolve = dissolve.record;
+         return true;
+      } else {
+         return false;
+      }
+   }
+
+   undo() {
+      this.madsor.undoDissolve(this.dissolve);
+   }
+}
+
+class CollapseFaceCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
+   constructor(madsor) {
+      super();
+      this.madsor = madsor;
+   }
+
+   doIt() {
+      let collapseCount;
+      ({count: collapseCount, collapse: this.collapse} = this.madsor.collapse());
+      if (collapseCount > 0) {
+         __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreVertexMode"](this.collapse);
+         return true;
+      } else {
+         return false;
+      }
+   }
+
+   undo() {
+      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["currentMode"]().resetSelection();
+      this.madsor.undoCollapse(this.collapse);
+      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreFaceMode"](this.collapse);
+   }   
+}
+
+
+//
+// current limitation, no interobject bridge yet.
+//
+class BridgeFaceCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
+   constructor(cage, target, source) {
+      super();
+      this.cage = cage;
+      this.target = target;
+      this.source = source;
+   }
+
+   doIt() {
+      // should be ready for bridging. 
+      this.bridge = this.cage.bridge(this.target, this.source);
+   }
+
+   undo() {
+      this.cage.undoBridge(this.bridge);
+      this.cage.restoreFaceSelection(this.bridge);
+   }
+}
+
+
+class InsetFaceHandler extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["MovePositionHandler"] {
+   constructor(madsor) {
+      super(madsor);
+      //this.selectedFaces = madsor.snapshotSelection();
+      this.movement = 0;
+      this.doIt();   // init.
+   }
+
+   doIt() {
+      this.snapshots = this.madsor.inset();   // should we test for current snapshots and prev snapshots?
+      this.madsor.moveSelectionNew(this.snapshots, this.movement);
+      // get limit
+      this.vertexLimit = Number.MAX_SAFE_INTEGER;
+      for (let obj of this.snapshots) {
+         this.vertexLimit = Math.min(this.vertexLimit, obj.snapshot.vertexLimit);
+      } 
+   }
+
+   //_updateMovement(ev) {  // change back when we all move to moveSelectionNew
+   handleMouseMove(ev) {
+      let move = this._calibrateMovement(ev.movementX);
+      if ((this.movement+move) > this.vertexLimit) {
+         move = this.vertexLimit - this.movement;
+      } else if ((this.movement+move) < 0) {
+         move = 0 - this.movement;
+      }
+      this.movement += move;
+      this.madsor.moveSelectionNew(this.snapshots, move);
+      return move;
+   }
+
+   undo() {
+      //this.madsor.restoreMoveSelection(this.snapshots);  // do we realy needs this. since we are destroying it.
+      this.madsor.collapseEdgeNew(this.snapshots);
+      //this.snapshots = undefined;
+   }
+}
+
+// Crease
+class BumpFaceHandler extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["MoveableCommand"] {
+   constructor(madsor) {
+      super();
+      this.madsor = madsor;
+      this.bump = madsor.bump();
+      this.moveHandler = new __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["MoveAlongNormal"](madsor);
+   }
+
+   doIt() {
+      this.bump = this.madsor.bump(this.contourEdges);
+      super.doIt();     // = this.madsor.moveSelection(this.movement, this.snapshots);
+   }
+
+   undo() {
+      super.undo(); //this.madsor.restoreMoveSelection(this.snapshots);
+      this.madsor.undoBump(this.bump);
+   }
+}
+// end of Crease
+
+
+
+
+/***/ }),
+/* 10 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "Madsor", function() { return Madsor; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "DragSelect", function() { return DragSelect; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "MovePositionHandler", function() { return MovePositionHandler; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "MouseMoveAlongAxis", function() { return MouseMoveAlongAxis; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "MoveAlongNormal", function() { return MoveAlongNormal; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "MoveFreePositionHandler", function() { return MoveFreePositionHandler; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ToggleModeCommand", function() { return ToggleModeCommand; });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_model__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_view__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_ui__ = __webpack_require__(2);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d__ = __webpack_require__(0);
+/*
+ *
+ * MADS (Modify, Add, Delete, Select) operation. 
+ *
+**/
+
+
+
+
+
+
+
+
+class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
+   constructor(mode) {
+      const self = this;
+      this.currentEdge = null;
+      this.shaderData = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].createShaderData();
+      this.shaderData.setUniform4fv("uColor", [0.0, 1.0, 0.0, 0.3]); // hilite green, selected hilite yellow.
+      // contextMenu
+      this.contextMenu = {menu: document.querySelector("#"+mode+"-context-menu")};
+      if (this.contextMenu.menu) {
+         this.contextMenu.menuItems = this.contextMenu.menu.querySelectorAll(".context-menu__item");
+      }
+      const axisName = ['X', 'Y', 'Z'];
+      // type handler 
+      // movement for (x, y, z)
+      for (let axis=0; axis < 3; ++axis) {
+         __WEBPACK_IMPORTED_MODULE_4__wings3d_ui__["bindMenuItem"](mode + 'Move' + axisName[axis], function(ev) {
+               __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["attachHandlerMouseMove"](new MouseMoveAlongAxis(self, axis));
+            });
+      }
+      // free Movement.
+      const moveFree = {body: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].bodyMoveFree, face: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceMoveFree, edge: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].edgeMoveFree, vertex: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].vertexMoveFree};
+      __WEBPACK_IMPORTED_MODULE_4__wings3d_ui__["bindMenuItem"](moveFree[mode].name, function(ev) {
+            __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["attachHandlerMouseMove"](new MoveFreePositionHandler(self));
+         });
+      // normal Movement.
+      const moveNormal = {face: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceMoveNormal, edge: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].edgeMoveNormal, vertex: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].vertexMoveNormal};
+      if (moveNormal[mode]) {
+         __WEBPACK_IMPORTED_MODULE_4__wings3d_ui__["bindMenuItem"](moveNormal[mode].name, function(ev) {
+            __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["attachHandlerMouseMove"](new MoveAlongNormal(self));
+          });
+      }
+      // scale uniform
+      const scaleUniform = {face: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceScaleUniform};
+      if (scaleUniform[mode]) {
+         __WEBPACK_IMPORTED_MODULE_4__wings3d_ui__["bindMenuItem"](scaleUniform[mode].name, function(ev) {
+            __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["attachHandlerMouseMove"](new ScaleUniformHandler(self));
+          });
+      }
+      // rotate x, y, z
+      for (let axis = 0; axis < 3; ++axis) {
+         __WEBPACK_IMPORTED_MODULE_4__wings3d_ui__["bindMenuItem"](mode + 'Rotate' + axisName[axis], function(ev) {
+            __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["attachHandlerMouseMove"](new MouseRotateAlongAxis(self, axis));
+          });
+      }
+      // Bevel
+      const bevel = {face: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceBevel, edge: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].edgeBevel, vertex: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].vertexBevel};
+      if (bevel[mode]) {
+         __WEBPACK_IMPORTED_MODULE_4__wings3d_ui__["bindMenuItem"](bevel[mode].name, (ev)=> {
+            __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["attachHandlerMouseMove"](new BevelHandler(this));
+          });
+      }
+      // extrude
+      const extrude = {face: [__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceExtrudeX, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceExtrudeY, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceExtrudeZ],
+                       edge: [__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].edgeExtrudeX, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].edgeExtrudeY, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].edgeExtrudeZ],
+                       vertex:  [__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].vertexExtrudeX, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].vertexExtrudeY, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].vertexExtrudeZ],
+                      };
+      let extrudeMode = extrude[mode];
+      if (extrudeMode) {
+         // movement for (x, y, z)
+         for (let axis=0; axis < 3; ++axis) {
+            __WEBPACK_IMPORTED_MODULE_4__wings3d_ui__["bindMenuItem"](extrudeMode[axis].name, (ev) => {
+                  __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["attachHandlerMouseMove"](new ExtrudeAlongAxisHandler(this, axis));
+             });
+         }
+      }
+      const extrudeFree = {face: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceExtrudeFree, edge: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].edgeExtrudeFree, vertex: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].vertexExtrudeFree };
+      if (extrudeFree[mode]) {
+         __WEBPACK_IMPORTED_MODULE_4__wings3d_ui__["bindMenuItem"](extrudeFree[mode].name, (ev) => {
+            __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["attachHandlerMouseMove"](new ExtrudeFreeHandler(this));
+          });
+      }
+      const extrudeNormal = {face: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceExtrudeNormal, edge: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].edgeExtrudeNormal, vertex: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].vertexExtrudeNormal};
+      if (extrudeNormal[mode]) {
+         __WEBPACK_IMPORTED_MODULE_4__wings3d_ui__["bindMenuItem"](extrudeNormal[mode].name, (ev) => {
+            __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["attachHandlerMouseMove"](new ExtrudeNormalHandler(this));
+          });
+      }
+   }
+
+   getContextMenu() {
+      var hasSelection = false;
+      this.eachPreviewCage( function(cage) {
+         hasSelection = hasSelection || cage.hasSelection();
+      });
+      if (hasSelection) {
+         return this.contextMenu;
+      } else {
+         return null;
+      }
+   }
+
+   snapshotSelection() {
+      const snapshots = [];
+      const self = this;
+      this.eachPreviewCage( function(cage) {
+         snapshots.push( self._wrapSelection(cage.snapshotSelection()) );
+      });
+      return snapshots;
+   }
+
+   snapshotAll(func, ...args) {
+      const snapshots = [];
+      for (let preview of this.world) {
+         snapshots.push( {preview: preview, snapshot: func.call(preview, ...args)} );
+      }
+      return snapshots;
+   }
+
+   doAll(snapshots, func, ...args) {
+      for (let obj of snapshots) {
+         func.call(obj.preview, obj.snapshot, ...args);
+      }
+   }
+
+   // can be use arguments object?
+   eachPreviewCage(func, items) {
+      if (items) {
+         for (var i = 0; i < this.world.length; ++i) {
+            func(this.world[i], items[i]);
+         }
+      } else {
+         for (var i = 0; i < this.world.length; ++i) {
+            func(this.world[i]);
+         }
+      }
+   }
+
+   * selectableCage() {
+      for (let i = 0; i < this.world.length; ++i) {
+         let cage = this.world[i];
+         if (!cage.isLock() && cage.isVisible()) {
+            yield cage;
+         }
+      }
+   }
+
+   hasSelection() {
+      for (let cage of this.world) {
+         if (cage.hasSelection()) {
+            return true;
+         }
+      }
+      return false;
+   }
+
+   // move edge along movement.
+   moveSelection(movement, snapshots) {
+      this.eachPreviewCage( function(cage, snapshot) {
+         cage.moveSelection(movement, snapshot);
+      }, snapshots);
+   }
+
+   restoreMoveSelection(snapshots) {
+      this.eachPreviewCage( function(cage, snapshot) {
+         cage.restoreMoveSelection(snapshot);
+      }, snapshots);
+   }
+
+   restoreSelectionPosition(snapshots) {
+      this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_2__wings3d_model__["PreviewCage"].prototype.restoreMoveSelection);
+   }
+
+   // scale vertices along axis
+   scaleSelection(snapshots, scale) {
+      this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_2__wings3d_model__["PreviewCage"].prototype.scaleSelection, scale);
+   }
+
+   // rotate vertices
+   rotateSelection(snapshots, quatRotate) {
+      this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_2__wings3d_model__["PreviewCage"].prototype.rotateSelection, quatRotate);
+   }
+
+   // move vertices
+   moveSelectionNew(snapshots, movement) {
+      this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_2__wings3d_model__["PreviewCage"].prototype.moveSelectionNew, movement);
+   }
+
+   setWorld(world) {
+      this.world = world;
+   }
+
+   setPreview(preview) {
+      this.preview = preview;
+   }
+
+   setCurrent(edge, intersect, center) {
+      if (this.currentEdge !== edge) {
+         if (this.currentEdge !== null) {
+            this.hideOldHilite(edge);
+         }
+         if (edge !== null) {
+            this.showNewHilite(edge, intersect, center);
+         }
+         this.currentEdge = edge;
+      }
+   }
+
+   hideOldHilite() {}
+
+   _doSelection(doName, initialCount=0) {
+      const snapshots = [];
+      const self = this;
+      doName = '_select' + this.modeName() + doName;
+      let count = initialCount;        // set initialCount, so we can force undo
+      this.eachPreviewCage( function(cage) {
+         const selection = cage[doName]();
+         snapshots.push( self._wrapSelection(selection) );
+         count += selection.size;
+      });
+      if (count != 0) {
+         return function() {
+            self.resetSelection();
+            self.restoreSelection(snapshots);
+         }
+      } // else
+      return null;  
+   }
+
+   similarSelection() {
+      return this._doSelection('Similar');
+   }
+
+   adjacentSelection() {
+      return this._doSelection('Adjacent');
+   }
+
+   invertSelection() {
+      return this._doSelection('Invert', 1);
+   }
+
+   allSelection() {
+      return this._doSelection('All', 1);
+   }
+
+   lessSelection() {
+      return this._doSelection('Less');
+   }
+
+   moreSelection() {
+      return this._doSelection('More');
+   }
+
+   resetSelection() {
+      const snapshots = [];
+      const self = this;
+      this.eachPreviewCage( function(cage) {
+         snapshots.push( self._resetSelection(cage) );
+      });
+      return function() {
+         self.restoreSelection(snapshots);
+      }
+   }
+
+   restoreSelection(selection) {
+      const self = this;
+      this.eachPreviewCage( function(cage, snapshot) {
+         self._restoreSelection(cage, snapshot);
+      }, selection);     
+   }
+
+   draw(gl, draftBench) {
+      if (this.currentEdge) {
+         this.useShader(gl);
+         gl.bindTransform();
+         //gl.bindShaderData(this.shaderData, false);
+         this.drawObject(gl, draftBench);
+         //gl.disableShader();
+      }
+   }
+}
+
+
+class DragSelect {
+   constructor(madsor, cage, current, onOff) {
+      this.madsor = madsor;
+      this.select = new Map; 
+      this.select.set(cage, [current]);
+      this.onOff = onOff;        // true = on, false = off.
+   }
+
+ //  finish() {
+ //     return new EdgeSelectCommand(this.select);
+ //  }
+
+   dragSelect(cage) {
+      var array = this.select.get(cage);
+      if (array === undefined) {
+         array = [];
+         this.select.set(cage, array);
+      }
+      this.madsor.dragSelect(cage, array, this.onOff);
+   }
+}
+
+
+class ToggleModeCommand extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["EditCommand"] {
+   constructor(doFn, undoFn, snapshots) {
+      super();
+      this.snapshots = snapshots;
+      this.redoToggle = doFn;
+      this.undoToggle = undoFn;
+   }
+
+   doIt() {
+      this.redoToggle();
+   }
+
+   undo() {
+      // toggle back
+      this.undoToggle(this.snapshots);
+   }
+}
+
+
+class MovePositionHandler extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["MouseMoveHandler"] {
+   constructor(madsor, snapshots, movement) {
+      super();
+      this.madsor = madsor;
+      this.snapshots = snapshots;
+      this.movement = movement;
+   }
+
+   doIt() {
+      this.madsor.moveSelection(this.movement, this.snapshots);
+   }
+
+   undo() {
+      this.madsor.restoreMoveSelection(this.snapshots);
+   }
+
+   handleMouseMove(ev, cameraView) {
+      this.madsor.moveSelection(this._updateMovement(ev, cameraView), this.snapshots);
+   }
+}
+
+
+// movement handler.
+class MouseMoveAlongAxis extends MovePositionHandler {
+   constructor(madsor, axis) {   // 0 = x axis, 1 = y axis, 2 = z axis.
+      super(madsor, madsor.snapshotPosition(), [0.0, 0.0, 0.0]);
+      this.axis = axis;
+   }
+
+   _updateMovement(ev) {
+      let move = this._calibrateMovement(ev.movementX);
+      let movement = [0.0, 0.0, 0.0];
+      movement[this.axis] = move;
+      this.movement[this.axis] += move;
+      return movement;
+   }
+}
+
+
+class MoveAlongNormal extends MovePositionHandler {
+   constructor(madsor) {
+      super(madsor, madsor.snapshotPositionAndNormal(), 0.0);
+   }
+
+   _updateMovement(ev) {
+      let move = this._calibrateMovement(ev.movementX);
+      this.movement += move;
+      return move;
+   }
+}
+
+
+class MoveFreePositionHandler extends MovePositionHandler {
+   constructor(madsor) {
+      super(madsor, madsor.snapshotPosition(), [0.0, 0.0, 0.0]);
+   }
+
+   _updateMovement(ev, cameraView) {
+      let x = this._calibrateMovement(ev.movementX);
+      let y = this._calibrateMovement(-ev.movementY);
+      var cam = cameraView.inverseCameraVectors();
+      // move parallel to camera.
+      var movement = [cam.x[0]*x + cam.y[0]*y, cam.x[1]*x + cam.y[1]*y, cam.x[2]*x + cam.y[2]*y];
+      vec3.add(this.movement, this.movement, movement);
+      return movement;
+   }
+}
+
+
+class ScaleUniformHandler extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["EditCommand"] {
+   constructor(madsor) {
+      super();
+      this.madsor = madsor;
+      this.snapshots = madsor.snapshotTransformGroup();
+      this.scale = 1.0;                    // cumulative movement.
+   }
+
+   handleMouseMove(ev) {
+      let scale = this._xPercentMovement(ev);   // return (100% to -100%)
+      if (scale < 0) {
+         scale = 1.0 + Math.abs(scale);
+      } else {
+         scale = 1.0 / (1.0 + scale);
+      }
+      this.madsor.scaleSelection(this.snapshots, scale);
+      this.scale *= scale;
+   }
+
+  
+   doIt() {
+      this.madsor.scaleSelection(this.snapshots, this.movement);
+   }
+
+   undo() {
+      this.madsor.restoreSelectionPosition(this.snapshots);
+   }
+}
+
+
+// movement handler.
+class MouseRotateAlongAxis extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["EditCommand"] {
+   constructor(madsor, axis) {   // 0 = x axis, 1 = y axis, 2 = z axis.
+      super();
+      this.madsor = madsor;
+      this.snapshots = madsor.snapshotTransformGroup();
+      this.movement = 0.0;             // cumulative movement.
+      this.axisVec3 = vec3.create();
+      this.axisVec3[axis] = 1.0;
+   }
+
+   handleMouseMove(ev) {
+      const move = this._xPercentMovement(ev)*5;
+      const quatRotate = quat.create();
+      quat.setAxisAngle(quatRotate, this.axisVec3, move);
+      this.madsor.rotateSelection(this.snapshots, quatRotate);
+      this.movement += move;
+   }
+
+   doIt() {
+      const quatRotate = quat.create();
+      quat.setAxisAngle(quatRotate, this.axisVec3, this.movement);
+      this.madsor.rotateSelection(this.snapshots, quatRotate);
+   }
+
+   undo() {
+      this.madsor.restoreSelectionPosition(this.snapshots);
+   }
+}
+
+
+class BevelHandler extends MovePositionHandler {
+   constructor(madsor) {
+      const selection = madsor.snapshotSelection();   // have to get selection first
+      super(madsor, madsor.bevel(), 0.0);
+      this.selection = selection;
+      // get limit
+      this.vertexLimit = Number.MAX_SAFE_INTEGER;
+      for (let snapshot of this.snapshots) {
+         this.vertexLimit = Math.min(this.vertexLimit, snapshot.vertexLimit);
+      }
+   }
+
+   _updateMovement(ev) {
+      let move = this._calibrateMovement(ev.movementX);
+      if ((this.movement+move) > this.vertexLimit) {
+         move = this.vertexLimit - this.movement;
+      } else if ((this.movement+move) < 0) {
+         move = 0 - this.movement;
+      }
+      this.movement += move;
+      return move;
+   }
+
+   doIt() {
+      this.snapshots = this.madsor.bevel();   // should test for current snapshots and prev snapshots? should not change
+      // no needs to recompute limit, wont change, 
+      // move 
+      super.doIt();  // = this.madsor.moveSelection(this.movement, this.snapshots);
+   }
+
+   undo() {
+      this.madsor.undoBevel(this.snapshots, this.selection);
+      //this.snapshots = undefined;
+   }
+}
+
+// extrude
+class ExtrudeHandler extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["MoveableCommand"] {
+   constructor(madsor) {
+      super();
+      this.madsor = madsor;
+      this.contourEdges = madsor.extrude();
+   }
+
+   doIt() {
+      this.contourEdges = this.madsor.extrude(this.contourEdges);
+      super.doIt();     // = this.madsor.moveSelection(this.movement, this.snapshots);
+   }
+
+   undo() {
+      super.undo(); //this.madsor.restoreMoveSelection(this.snapshots);
+      this.madsor.undoExtrude(this.contourEdges);
+   }
+}
+
+class ExtrudeAlongAxisHandler extends ExtrudeHandler {
+   constructor(madsor, axis) { 
+      super(madsor);
+      this.moveHandler = new MouseMoveAlongAxis(madsor, axis); // this should comes earlier
+   }
+}
+
+
+class ExtrudeFreeHandler extends ExtrudeHandler {
+   constructor(madsor) {
+      super(madsor);
+      this.moveHandler = new MoveFreePositionHandler(madsor);
+   }
+}
+
+class ExtrudeNormalHandler extends ExtrudeHandler {
+   constructor(madsor) {
+      super(madsor);
+      this.moveHandler = new MoveAlongNormal(madsor);
+   }
+}
+// end of extrude
+
+
+
+
+/***/ }),
+/* 11 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "EdgeMadsor", function() { return EdgeMadsor; });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_bodymads__ = __webpack_require__(12);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__ = __webpack_require__(13);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_model__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_ui__ = __webpack_require__(2);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_view__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d_shaderprog__ = __webpack_require__(6);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__wings3d__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__wings3d_draftbench__ = __webpack_require__(7);
+/**
+//    This module contains most edge command and edge utility functions.
+//
+//    
+**/
+
+   // for switching
+
+
+
+
+
+
+
+
+
+
+// 
+class EdgeMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
+   constructor() {
+      super('edge');
+      // cut commands
+      const self = this;
+      for (let numberOfSegments of [__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].cutLine2, __WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].cutLine3, __WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].cutLine4, __WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].cutLine5, __WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].cutLine10]) {
+         const name = numberOfSegments.name;
+         const count = name.substring('cutLine'.length);
+         __WEBPACK_IMPORTED_MODULE_6__wings3d_ui__["bindMenuItem"](name, function(ev) {
+               self.cutEdge(count);
+            });
+      }
+      // cutEdge Dialog, show form when click
+      __WEBPACK_IMPORTED_MODULE_6__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].cutAsk.name, function(ev) {
+            // position then show form;
+            __WEBPACK_IMPORTED_MODULE_6__wings3d_ui__["runDialog"]("#cutLineDialog", ev, function(data) {
+               if (data['Segments']) {
+                  const number = parseInt(data['Segments'], 10);
+                  if ((number != NaN) && (number > 0) && (number < 100)) { // sane input
+                     self.cutEdge(number);
+                  }
+               }
+            });
+        });
+      // cutAndConnect
+      __WEBPACK_IMPORTED_MODULE_6__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].cutAndConnect.name, function(ev) {
+            self.cutAndConnect();
+         });
+      // Dissolve
+      __WEBPACK_IMPORTED_MODULE_6__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].edgeDissolve.name, function(ev) {
+            const dissolve = self.dissolve();
+            if (dissolve.count > 0) {
+               __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["undoQueue"](new DissolveEdgeCommand(self, dissolve.record));
+            } else {
+               // should not happened.
+            }
+         });
+      // Collapse
+      __WEBPACK_IMPORTED_MODULE_6__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].edgeCollapse.name, function(ev) {
+            const command = new CollapseEdgeCommand(self);
+            if (command.doIt()) {
+               __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["undoQueue"](command);
+            } else {
+               // should not happened.
+            }
+         });
+      // Crease
+      __WEBPACK_IMPORTED_MODULE_6__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].edgeCrease.name, (ev) => {
+         __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["attachHandlerMouseMove"](new CreaseEdgeHandler(this));
+      });
+
+      // EdgeLoop.
+      for (let [numberOfSegments, hotkey] of [[__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].edgeLoop1,"l"], [__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].edgeLoop2,undefined], [__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].edgeLoop3,undefined]]) {
+         const name = numberOfSegments.name;
+         const count = name.substring('edgeLoop'.length);        
+         __WEBPACK_IMPORTED_MODULE_6__wings3d_ui__["bindMenuItem"](name, function(ev) {
+            const command = new EdgeLoopCommand(self, count);
+            if (command.doIt()) {
+               __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["undoQueue"](command);
+            } else { // should not happened, make some noise
+
+            }
+         }, hotkey);
+      }
+      // EdgeLoop Nth., show form when click
+      __WEBPACK_IMPORTED_MODULE_6__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].edgeLoopN.name, function(ev) {
+         __WEBPACK_IMPORTED_MODULE_6__wings3d_ui__["runDialog"]('#cutLineDialog', ev, function(data) {
+            if (data['Segments']) {
+               const number = parseInt(data['Segments'], 10);
+               if ((number != NaN) && (number > 0) && (number < 100)) { // sane input
+                  const command = new EdgeLoopCommand(self, number);
+                  if (command.doIt()) {
+                     __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["undoQueue"](command);
+                  } else { // should not happened, make some noise
+                  }
+               }
+            }
+          });
+       });
+      // EdgeRing
+      for (let [numberOfSegments, hotkey] of [[__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].edgeRing1,"g"], [__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].edgeRing2,undefined], [__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].edgeRing3,undefined]]) {
+         const name = numberOfSegments.name;
+         const count = name.substring('edgeRing'.length);
+         __WEBPACK_IMPORTED_MODULE_6__wings3d_ui__["bindMenuItem"](name, function(ev) {
+            const command = new EdgeRingCommand(self, count);
+            if (command.doIt()) {
+               __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["undoQueue"](command);
+            } else { // should not happened, make some noise
+      
+            }
+         }, hotkey);
+      }
+      // EdgeRing Nth
+      __WEBPACK_IMPORTED_MODULE_6__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].edgeRingN.name, function(ev) {
+         __WEBPACK_IMPORTED_MODULE_6__wings3d_ui__["runDialog"]('#cutLineDialog', ev, function(data) {
+            if (data['Segments']) {
+               const number = parseInt(data['Segments'], 10);
+               if ((number != NaN) && (number > 0) && (number < 100)) { // sane input
+                  const command = new EdgeRingCommand(self, number);
+                  if (command.doIt()) {
+                     __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["undoQueue"](command);
+                  } else { // should not happened, make some noise
+                  }
+               }
+            }
+          });
+       });
+   }
+
+   modeName() {
+      return 'Edge';
+   }
+
+   // get selected Edge's vertex snapshot. for doing, and redo queue. 
+   snapshotPosition() {
+      var snapshots = [];
+      this.eachPreviewCage( function(preview) {
+         snapshots.push( preview.snapshotEdgePosition() );
+      });
+      return snapshots;
+   }
+
+   snapshotPositionAndNormal() {
+      var snapshots = [];
+      this.eachPreviewCage( function(preview) {
+         snapshots.push( preview.snapshotEdgePositionAndNormal() );
+      });
+      return snapshots;
+   }
+
+   snapshotTransformGroup() {
+      return this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.snapshotTransformEdgeGroup);
+   }
+
+   bevel() {
+      var snapshots = [];
+      this.eachPreviewCage( function(preview) {
+         snapshots.push( preview.bevelEdge() );
+      });
+      // change to facemode.
+      __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["restoreFaceMode"](snapshots);
+      return snapshots;
+   }
+
+   undoBevel(snapshots, selection) {
+      this.restoreMoveSelection(snapshots);
+      this.collapseEdge(snapshots);
+      __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["restoreEdgeMode"](selection);
+   }
+
+   crease() {
+      const edgeLoops = [];
+      this.eachPreviewCage( function(preview) {
+         edgeLoops.push( preview.creaseEdge() );
+      });
+      return edgeLoops;
+   }
+
+   extrude() {
+      const edgeLoops = [];
+      this.eachPreviewCage( function(preview) {
+         edgeLoops.push( preview.extrudeEdge() );
+      });
+      return edgeLoops;
+   }
+
+   undoExtrude(contourEdges) {
+      this.eachPreviewCage(function(cage, extrude) {
+         cage.undoExtrudeEdge(extrude);
+      }, contourEdges);
+   }
+
+   cutEdge(numberOfSegments) {
+      const cutEdge = new CutEdgeCommand(this, numberOfSegments);
+      __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["undoQueue"](cutEdge);
+      cutEdge.doIt();
+   }
+
+   cutAndConnect() {
+      const cutEdge = new CutEdgeCommand(this, 2);
+      cutEdge.doIt();
+      const vertexMadsor = __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["currentMode"]();   // assurely it vertexMode
+      const vertexConnect = new __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__["VertexConnectCommand"](vertexMadsor);
+      if (vertexConnect.doIt()) {
+         __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["undoQueueCombo"]([cutEdge, vertexConnect]);
+      } else { // no connection possible
+         cutEdge.undo();
+         // post on geomoetryStatus
+         
+      }
+   }
+
+   cut(numberOfSegments) {
+      var snapshots = [];
+      this.eachPreviewCage( function(preview) {
+         snapshots.push( preview.cutEdge(numberOfSegments) );
+      });
+      return snapshots;
+   }
+
+   edgeLoop(nth) {
+      const loop = {count: 0, selection: []};
+      this.eachPreviewCage( function(preview) {
+         const record = preview.edgeLoop(nth);
+         loop.count += record.length;
+         loop.selection.push( record );
+      });
+      return loop;
+   }
+
+   edgeRing(nth) {
+      const loop = {count: 0, selection: []};
+      this.eachPreviewCage( function(preview) {
+         const record = preview.edgeRing(nth);
+         loop.count += record.length;
+         loop.selection.push( record );
+      });
+      return loop;
+   }
+   collapseEdge(collapseArray) {  // undo of splitEdge.
+      this.eachPreviewCage(function(cage, collapse) {
+         cage.collapseSplitOrBevelEdge(collapse);
+      }, collapseArray);
+   }
+
+   // dissolve edge
+   dissolve() {
+      const dissolve = {count: 0, record: []};
+      this.eachPreviewCage(function(cage) {
+         const record = cage.dissolveSelectedEdge();
+         dissolve.count += record.length;
+         dissolve.record.push( record );
+      });
+      return dissolve;
+   }
+   reinsertDissolve(dissolveEdgesArray) {
+      this.eachPreviewCage(function(cage, dissolveEdges) {
+         cage.reinsertDissolveEdge(dissolveEdges);
+      }, dissolveEdgesArray);
+   }
+
+   // collapse edge
+   collapse() {
+      const collapse = {count: 0, array: []};
+      const selectedVertex = [];
+      this.eachPreviewCage(function(cage) {
+         const record = cage.collapseSelectedEdge();
+         collapse.count += record.collapse.edges.length;
+         collapse.array.push( record );
+      });
+      return collapse;
+   }
+
+   restoreEdge(collapseEdgesArray) {
+      this.eachPreviewCage(function(cage, collapse) {
+         cage.restoreCollapseEdge(collapse);
+      }, collapseEdgesArray);
+   }
+
+
+   dragSelect(cage, selectArray, onOff) {
+      if (this.currentEdge !== null) {
+        if (cage.dragSelectEdge(this.currentEdge, onOff)) {
+            selectArray.push(this.currentEdge);
+        }
+      }
+   }
+
+   // select, hilite
+   selectStart(cage) {
+      if (this.currentEdge !== null) {
+         var onOff = cage.selectEdge(this.currentEdge);
+         return new DragEdgeSelect(this, cage, this.currentEdge, onOff);
+      }
+      return null;
+   }
+
+   hideOldHilite() {
+      //if (this.currentEdge) {
+         this.preview.hiliteEdge(this.currentEdge, false);
+      //}
+   }
+
+   showNewHilite(edge, intersect, _center) {
+      // setting of setCurrentEdge
+      //if (this.currentEdge) {
+         this.preview.hiliteEdge(edge, true);
+      //}
+   }
+
+   _wrapSelection(selection) {
+      return {wingedEdges: selection};
+   }
+
+   _resetSelection(cage) {
+      return {wingedEdges: cage._resetSelectEdge()};
+   }
+
+   _restoreSelection(cage, snapshot) {
+      cage.restoreEdgeSelection(snapshot);
+   }
+
+   toggleFunc(toMadsor) {
+      const self = this;
+      var redoFn;
+      var snapshots = [];
+      if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__["FaceMadsor"]) {
+         redoFn = __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["restoreFaceMode"];
+         this.eachPreviewCage( function(cage) {
+            snapshots.push( self._wrapSelection(cage.snapshotSelection()) );
+            cage.changeFromEdgeToFaceSelect();
+         });
+      } else if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__["VertexMadsor"]) {
+         redoFn = __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["restoreVertexMode"];
+         this.eachPreviewCage( function(cage) {
+            snapshots.push( self._wrapSelection(cage.snapshotSelection()) );
+            cage.changeFromEdgeToVertexSelect();
+         });         
+      } else {
+         redoFn = __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["restoreBodyMode"];
+         this.eachPreviewCage( function(cage) {
+            snapshots.push( self._wrapSelection(cage.snapshotSelection()) );
+            cage.changeFromEdgeToBodySelect();
+         });
+      }
+      __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["undoQueue"](new __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["ToggleModeCommand"](redoFn, __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["restoreEdgeMode"], snapshots));
+   }
+
+   restoreMode(toMadsor, snapshots) {
+      if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__["FaceMadsor"]) {
+         this.eachPreviewCage( function(cage, snapshot) {
+            cage.restoreFromEdgeToFaceSelect(snapshot);
+         }, snapshots);
+      } else if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__["VertexMadsor"]) {
+         this.eachPreviewCage( function(cage, snapshot) {
+            cage.restoreFromEdgeToVertexSelect(snapshot);
+         }, snapshots);
+      } else {
+           this.eachPreviewCage( function(cage, snapshot) {
+            cage.restoreFromEdgeToBodySelect(snapshot);
+         }, snapshots);       
+      }
+   }
+
+   draw(gl, draftBench) {
+      //if (this.currentEdge) {
+         this.useShader(gl);
+         gl.bindTransform();
+         //this.eachPreviewCage( function(preview) {
+            draftBench.drawEdge(gl);
+         //});
+         gl.disableShader();
+      //}
+   }
+
+   previewShader(gl) {
+      gl.useShader(__WEBPACK_IMPORTED_MODULE_8__wings3d_shaderprog__["solidWireframe"]);
+   }
+
+   useShader(gl) {
+      //gl.useShader(ShaderProg.solidColor);
+      gl.useShader(__WEBPACK_IMPORTED_MODULE_8__wings3d_shaderprog__["selectedColorLine"]);
+   }
+}
+
+class DragEdgeSelect extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["DragSelect"] {
+   constructor(madsor, cage, halfEdge, onOff) {
+      super(madsor, cage, halfEdge, onOff);
+   }
+
+   finish() {
+      return new EdgeSelectCommand(this.select);
+   }
+}
+
+
+class EdgeSelectCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
+   constructor(select) {
+      super();
+      this.select = select;
+   }
+
+   doIt() {
+      for (var [cage, halfEdges] of this.select) {
+         for (var i = 0; i < halfEdges.length; ++i) {
+            cage.selectEdge(halfEdges[i]);
+         }
+      }
+   }
+
+   undo() {
+      this.doIt();   // selectEdge, flip/flop, so
+   }
+}
+
+
+//class CutEdgeMoveCommand extends MouseMoveHandler {
+//}
+
+
+class CutEdgeCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
+   constructor(madsor, numberOfSegments) {
+      super();
+      this.madsor = madsor;
+      this.numberOfSegments = numberOfSegments;
+      this.selectedEdges = madsor.snapshotSelection();
+   }
+
+   doIt() {
+      const snapshots = this.madsor.cut(this.numberOfSegments);
+      __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["restoreVertexMode"](snapshots);    // abusing the api?
+      this.snapshots = snapshots;
+   }
+
+   undo() {
+      // restoreToEdgeMode
+      this.madsor.collapseEdge(this.snapshots);
+      __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["restoreEdgeMode"](this.selectedEdges);
+   }
+}
+
+
+class DissolveEdgeCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
+   constructor(madsor, dissolveEdges) {
+      super();
+      this.madsor = madsor;
+      this.dissolveEdges = dissolveEdges;
+   }
+
+   doIt() {
+      this.madsor.dissolve(); // return data should be the same as previous one
+   }
+
+   undo() {
+      this.madsor.reinsertDissolve(this.dissolveEdges);
+   }
+}
+
+
+class CollapseEdgeCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
+   constructor(madsor) {
+      super();
+      this.madsor = madsor;
+   }
+
+   doIt() {
+      const collapse = this.madsor.collapse();
+      if (collapse.count > 0) {
+         this.collapse = collapse.array;
+         __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["restoreVertexMode"](this.collapse);
+         return true;
+      } else {
+         return false;
+      }
+   }
+
+   undo() {
+      __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["currentMode"]().resetSelection();
+      __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["restoreEdgeMode"]();
+      this.madsor.restoreEdge(this.collapse);
+   }
+}
+
+// Crease
+class CreaseEdgeHandler extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["MoveableCommand"] {
+   constructor(madsor) {
+      super();
+      this.madsor = madsor;
+      this.contourEdges = madsor.crease();
+      this.moveHandler = new __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["MoveAlongNormal"](madsor);
+   }
+
+   doIt() {
+      this.contourEdges = this.madsor.crease(this.contourEdges);
+      super.doIt();     // = this.madsor.moveSelection(this.movement, this.snapshots);
+   }
+
+   undo() {
+      super.undo(); //this.madsor.restoreMoveSelection(this.snapshots);
+      this.madsor.undoExtrude(this.contourEdges);
+   }
+}
+// end of Crease
+
+class EdgeLoopCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
+   constructor(madsor, nth) {
+      super();
+      this.madsor = madsor;
+      this.nth = nth;
+      this.selectedEdges = madsor.snapshotSelection();
+   }
+
+   doIt() {
+      this.loopSelection = this.madsor.edgeLoop(this.nth);
+      return (this.loopSelection.count > 0);
+   }
+
+   undo() {
+      this.madsor.resetSelection();
+      this.madsor.restoreSelection(this.selectedEdges);
+   }
+}
+
+class EdgeRingCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
+   constructor(madsor, nth) {
+      super();
+      this.madsor = madsor;
+      this.nth = nth;
+      this.selectedEdges = madsor.snapshotSelection();
+   }
+
+   doIt() {
+      this.loopSelection = this.madsor.edgeRing(this.nth);
+      return (this.loopSelection.count > 0);
+   }
+
+   undo() {
+      this.madsor.resetSelection();
+      this.madsor.restoreSelection(this.selectedEdges);
+   } 
+}
+
+
+
+/***/ }),
+/* 12 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "BodyMadsor", function() { return BodyMadsor; });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_edgemads__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__ = __webpack_require__(13);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_model__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_shaderprog__ = __webpack_require__(6);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_view__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__ = __webpack_require__(2);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__wings3d__ = __webpack_require__(0);
+//
+// bodymadsor. 
+//
+
+
+   // for switching
+
+
+
+
+
+
+
+
+
+
+class BodyMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
+   constructor() {
+      super('body');
+      const self = this;
+      __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].bodyDelete.name, function(ev) {
+            const command = new DeleteBodyCommand(self.getSelected());
+            __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["undoQueue"]( command );
+            command.doIt(); // delete current selected.
+         });
+
+      __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].bodyRename.name, function(ev) {
+         __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["runDialog"]('#renameDialog', ev, function(data) {
+               const command = new RenameBodyCommand(self.getSelected(), data);
+               __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["undoQueue"]( command );
+               command.doIt();   // rename
+            }, function() {
+               const content = document.querySelector('#renameDialog div');
+               let labels = document.querySelectorAll('#renameDialog label');
+               for (let label of labels) {
+                  content.removeChild(label);
+               }
+               // add input name 
+               let array = self.getSelected();
+               for (let cage of array) {
+                  const label = document.createElement('label');
+                  label.textContent = cage.name;
+                  const input = document.createElement('input');
+                  input.type = "text";
+                  input.name = cage.name;
+                  input.placeholder = cage.name;
+                  label.appendChild(input);
+                  content.appendChild(label);
+               }
+            });
+       });
+      const duplicateMove = [__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].bodyDuplicateMoveX, __WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].bodyDuplicateMoveY, __WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].bodyDuplicateMoveZ];
+      // movement for (x, y, z)
+      for (let axis=0; axis < 3; ++axis) {
+         __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](duplicateMove[axis].name, function(ev) { //action.bodyDulipcateMoveX(Y,Z)
+               __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["attachHandlerMouseMove"](new DuplicateMouseMoveAlongAxis(self, axis, self.getSelected()));
+            });
+      }
+      __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].bodyDuplicateMoveFree.name, function(ev) {
+            __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["attachHandlerMouseMove"](new DuplicateMoveFreePositionHandler(self, self.getSelected()));
+         });
+   }
+
+   modeName() {
+      return 'Body';
+   }
+
+   getSelected() {
+      const selection = [];
+      this.eachPreviewCage( function(cage) {
+         if (cage.hasSelection()) {
+            selection.push(cage);
+         }
+      });
+      return selection;
+   }
+
+   snapshotPosition() {
+      var snapshots = [];
+      this.eachPreviewCage( function(preview) {
+         snapshots.push( preview.snapshotBodyPosition() );
+      });
+      return snapshots;
+   }
+
+   snapshotTransformGroup() {
+      return this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.snapshotTransformBodyGroup);
+   }
+
+   dragSelect(cage, selectArray, onOff) {
+      if (this.currentEdge !== null) {
+       // if (cage.dragSelectFace(this.currentEdge, onOff)) {
+       //     selectArray.push(this.currentEdge);
+       // }
+      }
+   }
+
+   // select, hilite
+   selectStart(preview) {
+      // check not null, shouldn't happened
+      if (this.currentEdge !== null) {
+         var onOff = preview.selectBody();
+         return new DragBodySelect(this, preview, this.currentEdge, onOff);
+      }    
+   }
+
+   hideOldHilite() {
+      if (this.hiliteView !== this.preview) {
+         this.preview.hiliteBody(false);
+         this.hiliteView = this.preview;
+      }
+   }
+
+   showNewHilite(_edge, _intersect, _center) {
+      if (this.hiliteView !== this.preview) {
+         this.preview.hiliteBody(true);
+         this.hiliteView = this.preview;
+      }
+   }
+
+   similarSelection() {
+      // first compute selected body's metric
+      const snapshot = new Set;
+      this.eachPreviewCage( function(cage) {
+         if (cage.hasSelection()) {
+            const size = cage._getGeometrySize();
+            const metric = size.vertex*3 + size.edge*2 + size.face;
+            snapshot.add(metric);
+         } 
+      });
+      const restore = [];
+      // now check if some of the unselected bodys match selected body.
+      this.eachPreviewCage( function(cage) {
+         if (!cage.hasSelection()) {
+            const size = cage._getGeometrySize();
+            const metric = size.vertex*3 + size.edge*2 + size.face;
+            if (snapshot.has(metric)) {
+               cage.selectBody();
+               restore.push(cage);
+            }
+         }
+      });
+      if (restore.length > 0) {
+         return function() {  // restore to previous state
+            for (let cage in restore) {
+               cage.selectBody();
+            }
+         };
+      } else {
+         return null;
+      }
+   }
+
+   adjacentSelection() {
+      return null;   // does nothing.
+   }
+
+   moreSelection() {
+      return null;      // does nothing.
+   }
+
+   _resetSelection(cage) {
+      return this._wrapSelection(cage._resetBody());
+   }
+
+   _restoreSelection(cage, snapshot) {
+      cage.restoreBodySelection(snapshot);
+   }
+
+   _wrapSelection(selection) {
+      return {body: selection};
+   }
+
+   toggleFunc(toMadsor) {
+      this.hiliteView = null;
+      this.hideOldHilite();
+      this.hiliteView = null;
+      const self = this;
+      var redoFn;
+      var snapshots = [];
+      if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__["FaceMadsor"]) {
+         redoFn = __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["restoreFaceMode"];
+         this.eachPreviewCage( function(cage) {
+            snapshots.push( self._wrapSelection(cage.snapshotSelection()) );
+            cage.changeFromBodyToFaceSelect();
+         });
+      } else if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__["VertexMadsor"]) {
+         redoFn = __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["restoreVertexMode"];
+         this.eachPreviewCage( function(cage) {
+            snapshots.push( self._wrapSelection(cage.snapshotSelection()) );
+            cage.changeFromBodyToVertexSelect();
+         });
+      } else {
+         redoFn = __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["restoreEdgeMode"];
+         this.eachPreviewCage( function(cage) {
+            snapshots.push( self._wrapSelection(cage.snapshotSelection()) );
+            cage.changeFromBodyToEdgeSelect();
+         });
+      }
+      __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["undoQueue"](new __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["ToggleModeCommand"](redoFn, __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["restoreBodyMode"], snapshots));
+   }
+
+   restoreMode(toMadsor, snapshots) {
+      if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__["FaceMadsor"]) {
+         this.eachPreviewCage( function(cage, snapshot) {
+            cage.restoreFromBodyToFaceSelect(snapshot);
+         }, snapshots);
+      } else if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__["VertexMadsor"]) {
+         this.eachPreviewCage( function(cage, snapshot) {
+            cage.restoreFromBodyToVertexSelect(snapshot);
+         }, snapshots);
+      } else {
+         this.eachPreviewCage( function(cage, snapshot) {
+            cage.restoreFromBodyToEdgeSelect(snapshot);
+         }, snapshots);
+      }
+   }
+
+   drawObject(gl, draftBench) {
+      // draw hilite
+      draftBench.drawHilite(gl);
+   } 
+
+   previewShader(gl) {
+      gl.useShader(__WEBPACK_IMPORTED_MODULE_6__wings3d_shaderprog__["colorSolidWireframe"]);
+   }
+
+   useShader(gl) {
+      gl.useShader(__WEBPACK_IMPORTED_MODULE_6__wings3d_shaderprog__["solidColor"]);
+   }
+}
+
+
+class DragBodySelect extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["DragSelect"] {
+   constructor(madsor, cage, halfEdge, onOff) {
+      super(madsor, cage, halfEdge, onOff);
+   }
+
+   finish() {
+      return new BodySelectCommand(this.select);
+   }
+}
+
+class BodySelectCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
+   constructor(select) {
+      super();
+      this.select = select;
+   }
+
+   doIt() {
+      for (var [cage, halfEdges] of this.select) {
+         if (halfEdges.length > 0) {
+            cage.selectBody();
+         }
+      }
+   }
+
+   undo() {
+      this.doIt();   // selectEdge, flip/flop, so
+   }
+
+}
+
+class DeleteBodyCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
+   constructor(previewCages) {
+      super();
+      this.previewCages = previewCages;
+   }
+
+   doIt() {
+      for (let previewCage of this.previewCages) {
+         __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["removeFromWorld"](previewCage);
+      }
+   }
+
+   undo() {
+      for (let previewCage of this.previewCages) {
+         __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["addToWorld"](previewCage);
+      }
+   }
+}
+
+class RenameBodyCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
+   constructor(previewCages, data) {
+      super();
+      this.previewCages = previewCages;
+      this.newName = data;
+      this.oldName = new Map;
+   }
+
+   doIt() {
+      for (let cage of this.previewCages) {
+         if (this.newName.hasOwnProperty(cage.name)) {
+            if (!this.oldName.has(cage.name)) {
+               this.oldName.set(cage.name, cage);
+            }
+            cage.name = this.newName[cage.name];
+            geometryStatus("Object new name is " + cage.name);
+         }
+      }
+   }
+
+   undo() {
+      for (let [name, cage] of this.oldName) {
+         cage.name = name;
+         geometryStatus("Object restore name to " + cage.name);
+      }  
+   }
+}
+
+
+class DuplicateBodyCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
+   constructor(originalCages) {
+      super();
+      this.originalCages = originalCages;
+      this.duplicateCages = [];
+      for (let cage of originalCages) {
+         let duplicate = __WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].duplicate(cage);
+         this.duplicateCages.push( duplicate );
+      }
+   }
+
+   _toggleOriginalSelected() {
+      for (let cage of this.originalCages) {
+         cage.selectBody();
+      }
+   }
+
+   doIt() {
+      for (let cage of this.duplicateCages) {
+         __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["addToWorld"](cage);
+         cage.selectBody();
+      }
+      this._toggleOriginalSelected();
+   }
+
+   undo() {
+      for (let cage of this.duplicateCages) {
+         cage.selectBody();                  // deselection before out
+         __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["removeFromWorld"](cage);
+      }
+      this._toggleOriginalSelected();        // reselected the original
+   }
+}
+
+class DuplicateMouseMoveAlongAxis extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["MouseMoveAlongAxis"] {
+   constructor(madsor, axis, originalCages) {
+      const duplicateBodyCommand = new DuplicateBodyCommand(originalCages);
+      duplicateBodyCommand.doIt();
+      super(madsor, axis);
+      this.duplicateBodyCommand = duplicateBodyCommand;
+   }
+
+   doIt() {
+      this.duplicateBodyCommand.doIt();
+      super.doIt();     // movement.
+   }
+
+   undo() {
+      super.undo();
+      this.duplicateBodyCommand.undo();
+   }
+}
+
+class DuplicateMoveFreePositionHandler extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["MoveFreePositionHandler"] {
+   constructor(madsor, originalCages) {
+      const duplicateBodyCommand = new DuplicateBodyCommand(originalCages);
+      duplicateBodyCommand.doIt();
+      super(madsor);
+      this.duplicateBodyCommand = duplicateBodyCommand;
+   }
+
+   doIt() {
+      this.duplicateBodyCommand.doIt();
+      super.doIt();     // movement.
+   }
+
+   undo() {
+      super.undo();
+      this.duplicateBodyCommand.undo();
+   }
+
+}
+
+
+
+/***/ }),
+/* 13 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "VertexMadsor", function() { return VertexMadsor; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "VertexConnectCommand", function() { return VertexConnectCommand; });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_bodymads__ = __webpack_require__(12);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_edgemads__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_model__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_view__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_shaderprog__ = __webpack_require__(6);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__ = __webpack_require__(2);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__wings3d__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__wings3d_draftbench__ = __webpack_require__(7);
+/**
+//    This module handle most vertex edit command.
+//
+//    
+**/
+
+   // for switching
+
+
+
+
+
+
+
+
+
+
+
+
+class VertexMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
+   constructor() {
+      super('vertex');
+      this.currentVertex = null;
+      const self = this;
+      __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].vertexConnect.name, function(ev) {
+            self.connectVertex();
+         });
+      __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].vertexDissolve.name, function(ev) {
+            const dissolve = new VertexDissolveCommand(self);
+            dissolve.doIt();
+            __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"](dissolve);
+         });
+      __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].vertexCollapse.name, function(ev) {
+            const dissolve = new VertexCollapseCommand(self);
+            dissolve.doIt();
+            __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"](dissolve);
+         });
+   }
+
+   modeName() {
+      return 'Vertex';
+   }
+
+   // get selected vertex snapshot. for doing, and redo queue. 
+   snapshotPosition() {
+      var snapshots = [];
+      this.eachPreviewCage( function(preview) {
+         snapshots.push( preview.snapshotVertexPosition() );
+      });
+      return snapshots;
+   }
+
+   snapshotPositionAndNormal() {
+      var snapshots = [];
+      this.eachPreviewCage( function(preview) {
+         snapshots.push( preview.snapshotVertexPositionAndNormal() );
+      });
+      return snapshots;
+   }
+
+   snapshotTransformGroup() {
+      return this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.snapshotTransformVertexGroup);
+   }
+
+   bevel() {
+      var snapshots = [];
+      this.eachPreviewCage( function(preview) {
+         snapshots.push( preview.bevelVertex() );
+      });
+      // change to facemode.
+      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreFaceMode"](snapshots);
+      return snapshots;
+   }
+
+   undoBevel(snapshots, selection) {
+      this.restoreMoveSelection(snapshots);
+      // collapse extrudeEdge
+      this.eachPreviewCage(function(cage, collapse) {
+         cage.collapseSplitOrBevelEdge(collapse);
+      }, snapshots);
+      // restore Vertex Selection
+      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreVertexMode"](selection); 
+   }
+
+   // extrude Vertex
+   extrude() {
+      const edgeLoops = [];
+      this.eachPreviewCage( function(preview, contours) {
+         edgeLoops.push( preview.extrudeVertex(contours) );
+      });
+      return edgeLoops;
+   }
+   undoExtrude(extrudeData) {
+      this.eachPreviewCage(function(cage, extrude) {
+         cage.undoExtrudeVertex(extrude);
+      }, extrudeData);
+   }
+
+   connectVertex() {
+      const vertexConnect = new VertexConnectCommand(this);
+      if (vertexConnect.doIt()) {
+         __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"](vertexConnect);   // saved for undo
+      } else {
+         // show no connection possible message.
+      }
+   }
+
+   connect() {
+      let snapshots = [];
+      let total = 0;
+      this.eachPreviewCage( function(cage) {
+         const snapshot = cage.connectVertex();
+         total += snapshot.halfEdges.length;
+         snapshots.push( snapshot );
+      });
+      if (total > 0) {
+         return snapshots;
+      }
+      // return undefined, or null?
+      return undefined;
+   };
+
+   dissolveConnect(edgesArray) {
+      this.eachPreviewCage( function(cage, edges) {
+         cage.dissolveConnect(edges.halfEdges);
+      }, edgesArray);
+   }
+
+   dissolve() {
+      const dissolve = {count: 0, undo: []};
+      this.eachPreviewCage(function(cage) {
+         const undo = cage.dissolveSelectedVertex();
+         dissolve.count += undo.array.length;
+         dissolve.undo.push( undo );
+      });
+      return dissolve;
+   }
+
+   undoDissolve(dissolveArray) {
+      this.eachPreviewCage( function(cage, dissolveVertex) {
+         cage.undoDissolveVertex(dissolveVertex.array);
+      }, dissolveArray);
+   }
+
+   dragSelect(cage, selectArray, onOff) {
+      if (this.currentVertex !== null) {
+        if (cage.dragSelectVertex(this.currentVertex, onOff)) {
+            selectArray.push(this.currentVertex);
+        }
+      }
+   }
+
+   selectStart(cage) {
+      //
+      if (this.currentVertex !== null) {
+         var onOff = this.preview.selectVertex(this.currentVertex);
+         return new DragVertexSelect(this, cage, this.currentVertex, onOff);
+      }
+      return null;
+   }
+
+   setCurrent(edge, intersect, center) {
+      // find out origin, dest. which is closer.
+      var currentVertex = null;
+      if (edge !== null) {
+         currentVertex = edge.destination();
+         var distance0 = vec3.distance(edge.origin.vertex, intersect);
+         var distance1 = vec3.distance(currentVertex.vertex, intersect);
+         if (distance0 < distance1) {
+            currentVertex = edge.origin;
+         }
+      }
+      if (currentVertex !== this.currentVertex) {
+         if (this.currentVertex !== null) {
+            this.preview.hiliteVertex(this.currentVertex, false);
+         }
+         if (currentVertex !== null) {
+            this.preview.hiliteVertex(currentVertex, true);
+         }
+         this.currentVertex = currentVertex;
+      }
+      this.currentEdge = edge;
+   }
+
+   _resetSelection(cage) {
+      return this._wrapSelection(cage._resetSelectVertex());
+   }
+
+   _restoreSelection(cage, snapshot) {
+      cage.restoreVertexSelection(snapshot);
+   }
+
+   _wrapSelection(selection) {
+      return {vertices: selection};
+   }
+
+   toggleFunc(toMadsor) {
+      const self = this;
+      var redoFn;
+      var snapshots = [];
+      if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__["FaceMadsor"]) {
+         redoFn = __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreFaceMode"];
+         this.eachPreviewCage( function(cage) {
+            snapshots.push( self._wrapSelection(cage.snapshotSelection()) );
+            cage.changeFromVertexToFaceSelect();
+         } );
+      } else if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_3__wings3d_edgemads__["EdgeMadsor"]) {
+         redoFn = __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreEdgeMode"];
+         this.eachPreviewCage( function(cage) {
+            snapshots.push( self._wrapSelection(cage.snapshotSelection())  );
+            cage.changeFromVertexToEdgeSelect();
+         });
+      } else {
+         redoFn = __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreEdgeMode"];
+         this.eachPreviewCage( function(cage) {
+            snapshots.push( self._wrapSelection(cage.snapshotSelection())  );
+            cage.changeFromVertexToBodySelect();
+         });      
+      }
+      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"]( new __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["ToggleModeCommand"](redoFn, __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreVertexMode"], snapshots) );
+   }
+
+
+   restoreMode(toMadsor, snapshots) {
+      if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__["FaceMadsor"]) {
+         this.eachPreviewCage( function(cage, snapshot) {
+            cage.restoreFromVertexToFaceSelect(snapshot);
+         }, snapshots);
+      } else if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_3__wings3d_edgemads__["EdgeMadsor"]) {
+         this.eachPreviewCage( function(cage, snapshot) {
+            cage.restoreFromVertexToEdgeSelect(snapshot);
+         }, snapshots);
+      } else {
+         this.eachPreviewCage( function(cage, snapshot) {
+            cage.restoreFromVertexToBodySelect(snapshot);
+         }, snapshots);
+      }
+   }
+
+   draw(gl, draftBench) {
+      // draw hilite
+      //if (this.currentEdge) {
+         this.useShader(gl);
+         gl.bindTransform();
+         //this.eachPreviewCage( function(preview) {
+            draftBench.drawVertex(gl);
+         //});
+         gl.disableShader();
+      //}
+   }
+
+   previewShader(gl) {
+      gl.useShader(__WEBPACK_IMPORTED_MODULE_7__wings3d_shaderprog__["solidWireframe"]);
+   }
+
+   useShader(gl) {
+      gl.useShader(__WEBPACK_IMPORTED_MODULE_7__wings3d_shaderprog__["selectedColorPoint"]);
+   }
+} 
+
+class DragVertexSelect extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["DragSelect"] {
+   constructor(madsor, cage, vertex, onOff) {
+      super(madsor, cage, vertex, onOff);
+   }
+
+   finish() {
+      return new VertexSelectCommand(this.select);
+   }
+}
+
+class VertexSelectCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
+   constructor(select) {
+      super();
+      this.select = select;
+   }
+
+   doIt() {
+      for (var [cage, vertices] of this.select) {
+         for (var i = 0; i < vertices.length; ++i) {
+            cage.selectVertex(vertices[i]);
+         }
+      }
+   }
+
+   undo() {
+      this.doIt();   // selectVertex, flip/flop, so
+   }  
+}
+
+
+class VertexConnectCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
+   constructor(madsor) {
+      super();
+      this.madsor = madsor;
+   }
+
+   doIt() {
+      // reconnect
+      this.cageArray = this.madsor.connect();
+      if (this.cageArray) { // goes to edgeMode.
+         __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreEdgeMode"](this.cageArray);    // abusing the api?
+         return true;
+      }
+      return false;
+   }
+
+   undo() {
+      // restore to vertexMode.
+      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreVertexMode"]();
+      // dissolve the connect edges.
+      this.madsor.dissolveConnect(this.cageArray);
+   }  
+}
+
+class VertexDissolveCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
+   constructor(madsor) {
+      super();
+      this.madsor = madsor;
+   }
+
+   doIt() {
+      // dissolve, guaranteed dissolveCount > 0
+      ({count: this.dissolveCount, undo: this.dissolve} = this.madsor.dissolve());
+   }
+
+   undo() {
+      this.madsor.undoDissolve(this.dissolve);
+   }
+}
+
+class VertexCollapseCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
+   constructor(madsor) {
+      super();
+      this.madsor = madsor;
+   }
+
+   doIt() {
+      // collapse, is just like dissolve, but switch to facemode
+      ({count: this.dissovleCount, undo: this.dissolve} = this.madsor.dissolve());
+      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreFaceMode"](this.dissolve);
+   }
+
+   undo() {
+      this.madsor.resetSelection();
+      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreVertexMode"]();
+      this.madsor.undoDissolve(this.dissolve);
+   }
+}
+
+
+
+
+/***/ }),
 /* 14 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "pref", function() { return pref; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "view", function() { return view; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getMouseMoveHandler", function() { return getMouseMoveHandler; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "aimZoom", function() { return aimZoom; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "rotate", function() { return rotate; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "wheelRotate", function() { return wheelRotate; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "wheelZoom", function() { return wheelZoom; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "zoomStepAlt", function() { return zoomStepAlt; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "zoomStep", function() { return zoomStep; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "zoom", function() { return zoom; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "pan", function() { return pan; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "keyPan", function() { return keyPan; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "keyPanLeftArrow", function() { return keyPanLeftArrow; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "keyPanRightArrow", function() { return keyPanRightArrow; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "keyPanUpArrow", function() { return keyPanUpArrow; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "keyPanDownArrow", function() { return keyPanDownArrow; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "wheelPan", function() { return wheelPan; });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_undo_js__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_js__ = __webpack_require__(0);
+/*
+**
+**
+**     This module handles camera moves (rotation, zooming, and panning).
+**
+**  Original Erlang Version:  Bjorn Gustavsson
+*/
+
+
+
+
+
+class CameraMouseMoveHandler extends __WEBPACK_IMPORTED_MODULE_0__wings3d_undo_js__["MouseMoveHandler"] {
+   constructor() {
+      super();
+      this.saveView = { origin: [0, 0, 0], };
+      copyCam(this.saveView, view);
+   }
+
+   handleMouseMove(ev) {
+      // if middle button down, pan 
+      if (ev.buttons == 4) {
+         pan(ev.movementX, 0);
+      } else {
+         // rotated
+         rotate(ev.movementX, ev.movementY);
+         //help(e.button + "," + e.buttons);
+      }
+   }
+
+   doIt() {
+      // no redo, undo for now
+      //debugLog("exitCameraMode", {ok: this.camera});
+   }
+
+   undo() {
+      // restore camera's value.
+      copyCam(view, this.saveView);
+      //debugLog("exitCameraMode", {cancel: this.camera});
+   }
+}
+
+// module variable.
+   let pref = {
+         cameraMode: "WingsCam",
+         numButtons: 3,
+         camRotationSpeed: 0.5,
+         panSpeed: 25,
+         panSpeedArrowKeys: 50,
+         wheelAdds: false,
+         whScrollInfo: true,
+         whPanSpeed: 50,
+         whRotationSpeed: 0.15,
+         highLightZoomAim: false,
+         // additional pref
+         wheelZoom: true,
+         wheelZoomFactorAlt: 0.0005,
+         wheelZoomFactor: 0.005
+      };
+   let view = (function(){
+         let camera = {
+            origin: [0.0, 0.0, 0.0],
+            azimuth: -45.0, elevation: 25.0,
+            distance: __WEBPACK_IMPORTED_MODULE_1__wings3d_js__["CAMERA_DIST"],
+            panX: 0.0, panY: 0.0,
+            fov: 45.0,
+            zNear: 0.1, zFar: 1000.0
+         };
+         return {
+            alongAxis: false,
+            isModified: false,
+            inverseCameraVectors: function() {
+               var cam = mat4.create();
+               // fromTranslation, identity * vec3. modelView rest.
+               mat4.fromTranslation(cam, vec3.fromValues(-camera.panX, -camera.panY, camera.distance));
+               mat4.rotateX(cam, cam, -camera.elevation * Math.PI / 180);
+               mat4.rotateY(cam, cam, -camera.azimuth * Math.PI / 180);
+               mat4.translate(cam, cam, -camera.origin);
+               // x===right, y===up, z===forward.
+               var ret = {x: [cam[0], cam[1], cam[2]], 
+                          y: [cam[4], cam[5], cam[6]], 
+                          z: [cam[8], cam[9], cam[10]]
+                         };
+               vec3.normalize(ret.x, ret.x);
+               vec3.normalize(ret.y, ret.y);
+               vec3.normalize(ret.z, ret.z);
+               return ret;
+            }, 
+            get origin() { return camera.origin; },
+            set origin(org) { 
+               if ( camera.origin[0] != org[0] || camera.origin[1] != org[1] || camera.origin[2] != org[2]) {
+                  camera.origin[0] = org[0];
+                  camera.origin[1] = org[1];
+                  camera.origin[2] = org[2];
+                  this.isModified = true;
+               }
+            },
+            get azimuth() { return camera.azimuth; },
+            set azimuth(azi) {
+               if (azi != camera.azimuth) {
+                  camera.azimuth = azi;
+                  this.isModified = true;
+               }
+            },
+            get elevation() { return camera.elevation; },
+            set elevation(elv) {
+               if (camera.elevation != elv) {
+                  camera.elevation = elv;
+                  this.isModified = true;
+               }
+            },
+            get distance() { return camera.distance; },
+            set distance(dist) {
+               if (camera.distance != dist) {
+                  __WEBPACK_IMPORTED_MODULE_1__wings3d_js__["log"](__WEBPACK_IMPORTED_MODULE_1__wings3d_js__["action"].cameraZoom, dist - camera.distance);
+                  camera.distance = dist;
+                  this.isModified = true;
+               }
+            },
+            get panX() { return camera.panX; },
+            set panX(px) {
+               if (camera.panX != px) {
+                  camera.panX = px;
+                  this.isModified = true;
+               }
+            },
+            get panY() { return camera.panY; },
+            set panY(py) {
+               if (camera.panY != py) {
+                  camera.panY = py;
+                  this.isModified = true;
+               }
+            },
+            get fov() { return camera.fov; },
+            set fov(fv) {
+               if (camera.fov != fv) {
+                  camera.fov = fv;
+                  this.isModified = true;
+               }
+            },
+            get zNear() { return camera.zNear; },
+            set zNear(near) {
+               if (camera.zNear != near) {
+                  camear.zNear = near;
+                  this.isModified = true;
+               }
+            },
+            get zFar() { return camera.zFar; },
+            set zFar(far) {
+               if (camera.zFar != far) {
+                  camera.zFar = far;
+                  this.isModified = true;
+               }
+            },
+          };
+      }());
+
+// utility function
+   function copyCam(save, source) {
+      save.origin[0] = source.origin[0];
+      save.origin[1] = source.origin[1];
+      save.origin[2] = source.origin[2];
+      save.azimuth = source.azimuth;
+      save.elevation = source.elevation;
+      save.distance = source.distance;
+      save.panX = source.panX;
+      save.panY = source.panY;
+      save.fov = source.fov;
+      save.zNear = source.zNear;
+      save.zFar = source.zFar;
+   };
+
+   function init() {
+/*    case {wings_pref:get_value(num_buttons),wings_pref:get_value(camera_mode)} of
+	   {3,_} -> ok
+	   {_,nendo} -> ok;
+	   {_,blender} -> ok;
+      {_,_} -> wings_pref:set_value(camera_mode, nendo) */
+   };
+
+   function getMouseMoveHandler() {
+      const ret = new CameraMouseMoveHandler();
+      return ret;
+   };
+
+/*
+%%%
+%%% Common utilities.
+%%%h
+
+generic_event(redraw, _Camera, #state{st=St, func=none}) ->
+    wings:redraw(St),
+    keep;
+generic_event(redraw, _Camera, #state{func=Redraw}) when is_function(Redraw) ->
+    Redraw(),
+    keep;
+
+generic_event(#mousebutton{button=4,mod=Mod,state=?SDL_RELEASED}, _Camera, _Redraw)
+  when Mod band ?SHIFT_BITS =/= 0 andalso Mod band ?ALT_BITS =/= 0 ->
+    whrotate(0.5,0.0);
+generic_event(#mousebutton{button=5,mod=Mod,state=?SDL_RELEASED}, _Camera, _Redraw)
+  when Mod band ?SHIFT_BITS =/= 0 andalso Mod band ?ALT_BITS =/= 0 ->
+    whrotate(-0.5,0.0);
+generic_event(#mousebutton{button=4,mod=Mod,state=?SDL_RELEASED}, _Camera, _Redraw)
+  when Mod band ?SHIFT_BITS =/= 0 ->
+    whrotate(0.0,0.5);
+generic_event(#mousebutton{button=5,mod=Mod,state=?SDL_RELEASED}, _Camera, _Redraw)
+  when Mod band ?SHIFT_BITS =/= 0 ->
+    whrotate(0.0,-0.5);
+
+generic_event(#mousebutton{button=4,mod=Mod,state=?SDL_RELEASED}, _Camera, _Redraw)
+  when Mod band ?CTRL_BITS =/= 0 andalso Mod band ?ALT_BITS =/= 0 ->
+    whpan(0.05,0.0);
+generic_event(#mousebutton{button=5,mod=Mod,state=?SDL_RELEASED}, _Camera, _Redraw)
+  when Mod band ?CTRL_BITS =/= 0 andalso Mod band ?ALT_BITS =/= 0 ->
+    whpan(-0.05,0.0);
+generic_event(#mousebutton{button=4,mod=Mod,state=?SDL_RELEASED}, _Camera, _Redraw)
+  when Mod band ?CTRL_BITS =/= 0 ->
+    whpan(0.0,0.05);
+generic_event(#mousebutton{button=5,mod=Mod,state=?SDL_RELEASED}, _Camera, _Redraw)
+  when Mod band ?CTRL_BITS =/= 0 ->
+    whpan(0.0,-0.05);
+
+generic_event(#mousebutton{button=4,mod=Mod,state=?SDL_RELEASED}, _Camera, _Redraw)
+  when Mod band ?ALT_BITS =/= 0 ->
+    zoom_step_alt(-1);
+generic_event(#mousebutton{button=4,state=?SDL_RELEASED}, #st{}=St, none) ->
+%% Matching 'none' stops zoom aim from being activated during a drag sequence.
+%% Zoom aim warps the mouse to the screen's centre, and this can cause a crash
+%% in since drag events also depend on cursor position.
+    aim_zoom(-1, St);
+generic_event(#mousebutton{button=4,state=?SDL_RELEASED}, _Camera, _Redraw) ->
+    zoom_step(-1);
+generic_event(#mousebutton{button=5,mod=Mod,state=?SDL_RELEASED}, _Camera, _Redraw)
+  when Mod band ?ALT_BITS =/= 0 ->
+    zoom_step_alt(1);
+generic_event(#mousebutton{button=5,state=?SDL_RELEASED}, _, none) ->
+%% Matching 'none' stops zoom aim from being activated during a drag sequence
+    zoom_step(1);
+generic_event(#mousebutton{button=5,state=?SDL_RELEASED}, _Camera, _Redraw) ->
+    zoom_step(1);
+
+generic_event(_, _, _) -> keep.
+
+*/
+   function aimZoom(dir, St0) {
+      /*
+        if (pref.highLightZoomAim) {
+        #view{origin=OriginB}=Before = wings_view:current(),
+        {{_,Cmd},_} = wings:highlight_aim_setup(St0),
+        wings_view:command(Cmd,St0),
+        #view{origin=OriginA} = wings_view:current(),
+        O = e3d_vec:zero(),
+        if OriginA =:= O, Cmd =:= aim ->
+              wings_view:set_current(Before),
+              zoom_step(Dir);
+            OriginA =:= OriginB ->
+              zoom_step(Dir);
+            true ->
+              Client = wings_wm:this(),
+              {X0,Y0} = wings_wm:win_size(Client),
+              {X,Y} = {X0 div 2, Y0 div 2},
+              wings_io:warp(X,Y),
+              zoom_step(Dir)
+      } else {
+         zoomStep(dir);
+      } */
+   };
+
+   function rotate(dx, dy) {
+      //if (allowRotation()) {
+	      view.azimuth += dx * pref.camRotationSpeed;
+         view.elevation += dy * pref.camRotationSpeed;
+      //}
+   };
+
+   function wheelRotate(dx, dy) {
+      if (pref.wheelZoom && pref.wheelAdds) {
+         var s = 2 * pref.wheelRotationSpeed;
+         view.azimuth = view.azimuth + (dx * s);
+         view.elevation = view.elevation + (dy * s);
+         view.alongAxis = false;
+      }
+      // return keep;
+   };
+
+
+   function wheelZoom(factor, dir) {
+      var delta = Math.max(Math.abs(view.distance), 0.2) * (dir * factor);
+      view.distance += delta;
+      //return keep;
+   };
+
+   function zoomStepAlt(dir) {
+      if (pref.wheelZoom) {
+		   wheelZoom(pref.wheelZoomFactorAlt, dir);
+      } 
+      //return keep;
+   };
+
+
+   function zoomStep(dir) {
+      if (pref.wheelZoom) {
+         wheelZoom(pref.wheelZoomFactor, dir);
+      }
+      //return keep;
+   };
+
+   function zoom(delta) {
+      view.distance = view.distance + (Math.max(Math.abs(view.distance), 0.2) * delta / 80);
+   };
+
+   function pan(dx, dy) {
+      const s = view.distance * (1/20)/(101-pref.panSpeed);
+      view.panX += (dx*s);
+      view.panY += (dy*s);
+   };
+
+   function keyPan(dx, dy) {
+      const s = view.distance * (pref.panSpeedArrowKeys/100);
+      view.panX += (dx * s);
+      view.panY += (dy * s);
+   };
+   function keyPanLeftArrow() {
+      keyPan(0.05, 0.0);
+   };
+   function keyPanRightArrow() {
+      keyPan(-0.05, 0.0);
+   }
+   function keyPanUpArrow() {
+      keyPan(0, 0.05);
+   };
+   function keyPanDownArrow() {
+      keyPan(0, -0.05);
+   }
+
+   function wheelPan(dx0, dy0) {
+      if (pref.wheelZoom && pref.wheelAdds) {
+         const s = view.distance * (pref.wheelPanSpeed/100);
+         view.panX += (dx * s);
+         view.panY -= (dy * s);
+      }
+      // keep
+   };
+
+   // handle mouse and keyboard event.
+
+/*
+stop_camera(#camera{ox=Ox,oy=Oy}) ->
+    wings_wm:release_focus(),
+    case wings_io:ungrab(Ox, Oy) of
+	still_grabbed ->
+	    wings_wm:later(view_changed);
+	no_grab ->
+	    wings_wm:dirty()
+    end,
+    update_sel(fun show_sel_fun/2),
+    pop.
+
+camera_mouse_range(X1, Y1, #camera{x=OX,y=OY, xt=Xt0, yt=Yt0}=Camera) ->
+%%    io:format("Camera Mouse Range ~p ~p~n", [{X0,Y0}, {OX,OY,Xt0,Yt0}]),
+    XD0 = (X1 - OX),
+    YD0 = (Y1 - OY),
+    {XD,YD} = wings_pref:lowpass(XD0 + Xt0, YD0 + Yt0),
+
+    if
+	XD0 =:= 0, YD0 =:= 0 ->
+	    {0.0,0.0,Camera#camera{xt=0,yt=0}};
+	true ->
+	    wings_io:warp(OX, OY),
+	    {XD/?CAMDIV, YD/?CAMDIV, Camera#camera{xt=XD0, yt=YD0}}
+    end.
+
+view_hotkey(Ev, Camera, #state{st=St}) ->
+    case wings_hotkey:event(Ev,St) of
+	next -> keep;
+	{view,smooth_proxy} -> keep;
+	{view,quick_preview} -> keep;
+	{view,Cmd} -> 
+	    wings_view:command(Cmd, St),
+	    keep;	
+	_Other -> %% Hotkey pressed, Quit camera mode
+	    wings_wm:later(Ev),
+	    stop_camera(Camera)
+    end.
+
+message(Message) ->
+    wings_wm:message(Message),
+    wings_wm:message_right([]).
+    
+grab() ->
+    wings_io:grab(),
+    wings_wm:grab_focus(),
+    update_sel(fun hide_sel_fun/2).
+
+hide_sel_fun(#dlo{sel=Sel}=D, _) ->
+    D#dlo{sel={call,none,Sel}}.
+
+show_sel_fun(#dlo{sel={call,none,Sel}}=D, _) ->
+    D#dlo{sel=Sel};
+show_sel_fun(D, _) -> D.
+
+allow_rotation() ->
+    wings_wm:get_prop(allow_rotation).
+
+update_sel(Fun) ->
+    case wings_pref:get_value(hide_sel_in_camera_moves) of
+	false -> ok;
+	true -> wings_dl:map(Fun, [])
+    end.
+
+format([{Mod,But,Msg}|T]) ->
+    wings_msg:join(wings_msg:mod_format(Mod, But, Msg), format(T));
+format([]) -> []. 
+*/
+
+
+
+__WEBPACK_IMPORTED_MODULE_1__wings3d_js__["onReady"](init);
+
+/***/ }),
+/* 15 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "BoundingSphere", function() { return BoundingSphere; });
+/*
+   require glmatrix
+*/
+
+
+const BoundingSphere = function(center, radius, polygon) {
+   this.center = center;
+   this.radius = radius;
+   this.radius2 = radius*radius;
+   this.polygon = polygon;
+};
+
+BoundingSphere.prototype.isReal = function() {
+   return this.polygon.isReal();
+};
+
+BoundingSphere.prototype.isIntersect = function(ray) {
+	//  Fast Ray Sphere Intersection - eric haine, realtimerendering, similar to graphic gem's Jeff Hultquist
+	var l = vec3.create();
+   vec3.sub(l, this.center, ray.origin);
+	var l2 = vec3.dot(l, l);
+	var projection = vec3.dot(l, ray.direction);
+   if ((projection < 0.0) && (l2 > this.radius2)) { // sphere is totally behind the camera, not just sphere's origin
+      return false;
+   }
+   if ((l2 - (projection*projection)) > this.radius2) {   // discriminant < 0.0f, no sqrt, no intersection.
+      return false;
+   }
+
+   // don't care about true intersection of the 2, just there is a intersection.
+   return true;
+};
+
+BoundingSphere.prototype.setSphere = function(sphere) {
+   this.center = sphere.center;
+   this.radius = sphere.radius;
+   this.radius2 = sphere.radius*sphere.radius;
+};
+
+BoundingSphere.computeSphere = function(polygon, center) {  // vec3
+   // get all the polygon's vertex. compute barycentric.
+   center.fill(0.0);
+   var ret = {center: center, radius: 0.0};
+   polygon.eachVertex( function(vertex) {
+      vec3.add(ret.center, ret.center, vertex.vertex);
+   });
+   vec3.scale(ret.center, ret.center, 1.0/polygon.numberOfVertex);
+   // get the furthest distance. that the radius.
+   polygon.eachVertex( function(vertex) {
+      var distance = vec3.distance(ret.center, vertex.vertex);
+      if (distance > ret.radius) {
+         ret.radius = distance;
+      }
+   });
+   return ret;
+};
+
+// simple minded bounding sphere builder.
+BoundingSphere.create = function(polygon, center) {
+   var sphere = BoundingSphere.computeSphere(polygon, center);
+   return new BoundingSphere(sphere.center, sphere.radius, polygon);
+}
+
+
+
+/***/ }),
+/* 16 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -10392,7 +10711,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "cancel", function() { return cancel; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "complete", function() { return complete; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "startTour", function() { return startTour; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d__ = __webpack_require__(0);
 //
 // interact. tutoring.
@@ -10836,7 +11155,7 @@ __WEBPACK_IMPORTED_MODULE_1__wings3d__["onReady"](init);
 
 
 /***/ }),
-/* 15 */
+/* 17 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -10888,7 +11207,7 @@ function setHotkey(id, hotkey, meta='') {
 
 
 /***/ }),
-/* 16 */
+/* 18 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -10896,9 +11215,9 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "renderText", function() { return renderText; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "needToRedraw", function() { return needToRedraw; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "render", function() { return render; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__ = __webpack_require__(5);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_view__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_camera__ = __webpack_require__(12);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_view__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_camera__ = __webpack_require__(14);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_shaderprog__ = __webpack_require__(6);
 /*
@@ -11453,12 +11772,12 @@ function render(gl, drawWorldFn) {
 
 
 /***/ }),
-/* 17 */
+/* 19 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return WavefrontObjImportExporter; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_importexport__ = __webpack_require__(18);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_importexport__ = __webpack_require__(20);
 //
 // Wavefront Obj Loader and Writer.
 //
@@ -11576,16 +11895,16 @@ class WavefrontObjImportExporter extends __WEBPACK_IMPORTED_MODULE_0__wings3d_im
 
 
 /***/ }),
-/* 18 */
+/* 20 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ImportExporter", function() { return ImportExporter; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_model__ = __webpack_require__(4);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_wingededge__ = __webpack_require__(13);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_ui__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_view__ = __webpack_require__(2);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_model__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_wingededge__ = __webpack_require__(8);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_ui__ = __webpack_require__(2);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_view__ = __webpack_require__(1);
 //
 // file handling. 
 // 1) handling local file upload. and simple file download.
@@ -11668,129 +11987,57 @@ class ImportExporter {
 
 
 /***/ }),
-/* 19 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "BoundingSphere", function() { return BoundingSphere; });
-/*
-   require glmatrix
-*/
-
-
-const BoundingSphere = function(center, radius, polygon) {
-   this.center = center;
-   this.radius = radius;
-   this.radius2 = radius*radius;
-   this.polygon = polygon;
-};
-
-BoundingSphere.prototype.isReal = function() {
-   return this.polygon.isReal();
-};
-
-BoundingSphere.prototype.isIntersect = function(ray) {
-	//  Fast Ray Sphere Intersection - eric haine, realtimerendering, similar to graphic gem's Jeff Hultquist
-	var l = vec3.create();
-   vec3.sub(l, this.center, ray.origin);
-	var l2 = vec3.dot(l, l);
-	var projection = vec3.dot(l, ray.direction);
-   if ((projection < 0.0) && (l2 > this.radius2)) { // sphere is totally behind the camera, not just sphere's origin
-      return false;
-   }
-   if ((l2 - (projection*projection)) > this.radius2) {   // discriminant < 0.0f, no sqrt, no intersection.
-      return false;
-   }
-
-   // don't care about true intersection of the 2, just there is a intersection.
-   return true;
-};
-
-BoundingSphere.prototype.setSphere = function(sphere) {
-   this.center = sphere.center;
-   this.radius = sphere.radius;
-   this.radius2 = sphere.radius*sphere.radius;
-};
-
-BoundingSphere.computeSphere = function(polygon, center) {  // vec3
-   // get all the polygon's vertex. compute barycentric.
-   center.fill(0.0);
-   var ret = {center: center, radius: 0.0};
-   polygon.eachVertex( function(vertex) {
-      vec3.add(ret.center, ret.center, vertex.vertex);
-   });
-   vec3.scale(ret.center, ret.center, 1.0/polygon.numberOfVertex);
-   // get the furthest distance. that the radius.
-   polygon.eachVertex( function(vertex) {
-      var distance = vec3.distance(ret.center, vertex.vertex);
-      if (distance > ret.radius) {
-         ret.radius = distance;
-      }
-   });
-   return ret;
-};
-
-// simple minded bounding sphere builder.
-BoundingSphere.create = function(polygon, center) {
-   var sphere = BoundingSphere.computeSphere(polygon, center);
-   return new BoundingSphere(sphere.center, sphere.radius, polygon);
-}
-
-
-
-/***/ }),
-/* 20 */
+/* 21 */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(21);
-__webpack_require__(10);
-__webpack_require__(19);
+__webpack_require__(22);
 __webpack_require__(12);
-__webpack_require__(28);
-__webpack_require__(9);
-__webpack_require__(7);
-__webpack_require__(5);
-__webpack_require__(29);
 __webpack_require__(15);
-__webpack_require__(18);
 __webpack_require__(14);
-__webpack_require__(8);
-__webpack_require__(4);
+__webpack_require__(7);
+__webpack_require__(11);
+__webpack_require__(9);
+__webpack_require__(3);
+__webpack_require__(29);
+__webpack_require__(17);
+__webpack_require__(20);
 __webpack_require__(16);
+__webpack_require__(10);
+__webpack_require__(5);
+__webpack_require__(18);
 __webpack_require__(6);
 __webpack_require__(30);
-__webpack_require__(1);
-__webpack_require__(3);
-__webpack_require__(11);
 __webpack_require__(2);
+__webpack_require__(4);
 __webpack_require__(13);
+__webpack_require__(1);
+__webpack_require__(8);
 module.exports = __webpack_require__(0);
 
 
 /***/ }),
-/* 21 */
+/* 22 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__css_default_css__ = __webpack_require__(22);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__css_default_css__ = __webpack_require__(23);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__css_default_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__css_default_css__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__css_menu_css__ = __webpack_require__(23);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__css_menu_css__ = __webpack_require__(24);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__css_menu_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__css_menu_css__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__css_button_css__ = __webpack_require__(24);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__css_button_css__ = __webpack_require__(25);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__css_button_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__css_button_css__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__css_form_css__ = __webpack_require__(25);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__css_form_css__ = __webpack_require__(26);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__css_form_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3__css_form_css__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__css_bubble_css__ = __webpack_require__(26);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__css_bubble_css__ = __webpack_require__(27);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__css_bubble_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4__css_bubble_css__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_view__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_camera__ = __webpack_require__(12);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_interact__ = __webpack_require__(14);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_view__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_camera__ = __webpack_require__(14);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_interact__ = __webpack_require__(16);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__wings3d_ui__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__js_plugins_cubeshape_js__ = __webpack_require__(27);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__js_plugins_wavefront_obj_js__ = __webpack_require__(17);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__wings3d_ui__ = __webpack_require__(2);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__js_plugins_cubeshape_js__ = __webpack_require__(28);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__js_plugins_wavefront_obj_js__ = __webpack_require__(19);
 // app.js
 //  for bundling and initialization
 //
@@ -11815,12 +12062,6 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 
 __WEBPACK_IMPORTED_MODULE_8__wings3d__["start"]('glcanvas');
-
-/***/ }),
-/* 22 */
-/***/ (function(module, exports) {
-
-// removed by extract-text-webpack-plugin
 
 /***/ }),
 /* 23 */
@@ -11848,16 +12089,22 @@ __WEBPACK_IMPORTED_MODULE_8__wings3d__["start"]('glcanvas');
 
 /***/ }),
 /* 27 */
+/***/ (function(module, exports) {
+
+// removed by extract-text-webpack-plugin
+
+/***/ }),
+/* 28 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* unused harmony export createCube */
 /* unused harmony export createCubeDialog */
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_view__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_wingededge__ = __webpack_require__(13);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_model__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_view__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_wingededge__ = __webpack_require__(8);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_model__ = __webpack_require__(5);
 /*
    n cube create. Use Dialog to create the cube.
    todo: to support spherize, rotate, translate, putOnGround. currently only numberOfCuts and size is working.
@@ -11913,7 +12160,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
    createCube = function(size, numberOfCut, translate, rotate, onGround) {
       // create, one 
-      var mesh = new __WEBPACK_IMPORTED_MODULE_3__wings3d_wingededge__["WingedTopology"];
+      let preview = __WEBPACK_IMPORTED_MODULE_2__wings3d_view__["putIntoWorld"]();    //new WingedTopology; create WingedTopology(PreviewCage) and putIntoWorld.
+      let mesh = preview.geometry;
       var map = {};
       function addVertexUnique(pt) {
          var x = pt[0], y = pt[1], z = pt[2];
@@ -12028,7 +12276,8 @@ document.addEventListener('DOMContentLoaded', function() {
                  dest[2]-stepX[up][2]-stepZ[rt][2]+offset[2]];
       });
 
-      _pvt.previewCage = __WEBPACK_IMPORTED_MODULE_2__wings3d_view__["putIntoWorld"](mesh);
+      _pvt.previewCage = preview;   //View.putIntoWorld(); already.
+      __WEBPACK_IMPORTED_MODULE_2__wings3d_view__["updateWorld"]();
    }; 
 
    // insert a hidden form into document
@@ -12199,82 +12448,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 /***/ }),
-/* 28 */
-/***/ (function(module, exports) {
-
-//
-//
-//
-
-const DraftBench = function(allocatedSize = 256) {  // should only be created by WingedEdge
-   var buf = new ArrayBuffer(allocatedSize*3 * Float32Array.BYTES_PER_ELEMENT);
-   this.buf = { buffer: buf, data: new Float32Array(buf), len: 0, };
-   this.vertices = [];
-   this.edges = [];        // wingededge
-   this.faces = [];
-   this.freeVertices = [];
-   this.freeEdges = [];
-   this.freeFaces = [];
-   // affected is when reuse, deleted, or change vital stats.
-   this.affected = {vertices: new Set, edges: new Set, faces: new Set};
-
-   this.preview = {centroid: {}};
-   this.preview.shaderData = gl.createShaderData();
-   this.preview.shaderData.setUniform3fv("faceColor", [0.5, 0.5, 0.5]);
-   this.preview.shaderData.setUniform3fv("selectedColor", [1.0, 0.0, 0.0]);
-   var layoutVec = ShaderData.attribLayout();
-   var layoutFloat = ShaderData.attribLayout(1);
-   this.preview.shaderData.createAttribute('position', layoutVec, gl.STATIC_DRAW);
-   this.preview.shaderData.createAttribute('barycentric', layoutVec, gl.STATIC_DRAW);
-   this.preview.shaderData.createAttribute('selected', layoutFloat, gl.DYNAMIC_DRAW);
-   this._resizeBoundingSphere(0);
-   this._resizePreview(0, 0);
-
-   // previewEdge
-   this.previewEdge = {};
-   this.previewEdge.shaderData = gl.createShaderData();
-   this.previewEdge.shaderData.setUniform4fv("selectedColor", [1.0, 0.0, 0.0, 1.0]);
-   this.previewEdge.shaderData.setUniform4fv('hiliteColor', [0.0, 1.0, 0.0, 1.0]);
-   this.previewEdge.shaderData.createAttribute('position', layoutVec, gl.STATIC_DRAW);
-   this.previewEdge.shaderData.createAttribute('color', layoutFloat, gl.DYNAMIC_DRAW);
-   this._resizePreviewEdge(0);
-
-   // previewVertex
-   this.previewVertex = {};
-   this.previewVertex.shaderData = gl.createShaderData();
-   this.previewVertex.shaderData.setUniform4fv("selectedColor", [1.0, 0.0, 0.0, 1.0]);
-   this.previewVertex.shaderData.setUniform4fv('hiliteColor', [0.0, 1.0, 0.0, 1.0]);
-   this.previewVertex.shaderData.createAttribute('position', layoutVec, gl.STATIC_DRAW);
-   this.previewVertex.shaderData.createAttribute('color', layoutFloat, gl.DYNAMIC_DRAW);
-   this._resizePreviewVertex(0);
-   // body state.
-   this.previewBody = {hilite: false};
-};
-
-DraftBench.CONST = (function() {
-   const constant = {};
-
-   constant.SELECTON  = new Float32Array(1);
-   constant.SELECTON[0] = 1.0;
-   constant.SELECTOFF = new Float32Array(1);
-   constant.SELECTOFF[0] = 0.0;
-   constant.BARYCENTRIC = new Float32Array(3);
-   constant.BARYCENTRIC[0] = 1.0;
-   constant.BARYCENTRIC[1] = 0.0;
-   constant.BARYCENTRIC[2] = 1.0;
-   return constant;
-}());
-
-
-/***/ }),
 /* 29 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "tours", function() { return tours; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_interact__ = __webpack_require__(14);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_ui__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_interact__ = __webpack_require__(16);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_ui__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d__ = __webpack_require__(0);
 /*
 //
