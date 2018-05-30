@@ -340,6 +340,7 @@ const action = {
    bodyRotateY: () => {notImplemented(this);},
    bodyRotateZ: () => {notImplemented(this);},
    bodyRotateFree: () => {notImplemented(this);},
+   bodyInvert: () => {notImplemented(this);},
    // edge
    cutMenu: () => {notImplemented(this);},
    cutLine2: () => {notImplemented(this);},
@@ -4388,6 +4389,10 @@ PreviewCage.prototype.insetFace = function() {
    return contours;
 };
 
+PreviewCage.prototype.invertBody = function() {
+   this.geometry.invert();
+};
+
 
 //----------------------------------------------------------------------------------------------------------
 
@@ -7801,6 +7806,34 @@ WingedTopology.prototype.insertFan = function(polygon, fanLists) {
 };
 
 
+// 
+// invert() - invert the normal of all polygon. usefull when import meshes that use cw-order polygon.
+//
+WingedTopology.prototype.invert = function() {
+   const reverse = [];
+   for (let polygon of this.faces) {
+      for (let hEdge of polygon.hEdges()) {
+         reverse.push( {hEdge: hEdge.next.pair, next: hEdge.pair} );
+      }
+   }
+   // got the reversed list, now reverse the edge.
+   for (let {hEdge, next} of reverse) {
+      hEdge.next = next;
+   }
+   // now swap the polygon pointer.
+   for (let wEdge of this.edges) {
+      let swapPoly = wEdge.left.face;
+      if (swapPoly.halfEdge === wEdge.left) {
+         swapPoly.halfEdge = wEdge.right;
+      }
+      wEdge.left.face = wEdge.right.face;
+      if (wEdge.left.face.halfEdge === wEdge.right) {
+         wEdge.left.face.halfEdge = wEdge.left;
+      }
+      wEdge.right.face = swapPoly;  // done swapping.
+   }
+};
+
 
 
 
@@ -9477,6 +9510,11 @@ class BodyMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
       __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].bodyDuplicateMoveFree.name, function(ev) {
             __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["attachHandlerMouseMove"](new DuplicateMoveFreePositionHandler(self, self.getSelected()));
          });
+      __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].bodyInvert.name, (ev)=> {
+         const command = new InvertBodyCommand(this);
+         command.doIt();
+         __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["undoQueue"](command);
+        });
    }
 
    modeName() {
@@ -9503,6 +9541,17 @@ class BodyMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
 
    snapshotTransformGroup() {
       return this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.snapshotTransformBodyGroup);
+   }
+
+   invert() {
+      this.eachPreviewCage((cage)=> {
+         if (cage.hasSelection()) {
+            cage.invertBody();
+         }
+       });
+      // invert the draftBench's preview and update
+      __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["updateWorld"]();
+      this.hiliteView = null; // invalidate hilite
    }
 
    dragSelect(cage, selectArray, onOff) {
@@ -9797,8 +9846,23 @@ class DuplicateMoveFreePositionHandler extends __WEBPACK_IMPORTED_MODULE_0__wing
       super.undo();
       this.duplicateBodyCommand.undo();
    }
-
 }
+
+class InvertBodyCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
+   constructor(madsor) {
+      super();
+      this.madsor = madsor;
+   }
+
+   doIt() {
+      this.madsor.invert();
+   }
+
+   undo() {
+      this.madsor.invert();
+   }   
+}
+
 
 
 
@@ -11244,6 +11308,7 @@ let textProg;        // to be replaced
 Object(__WEBPACK_IMPORTED_MODULE_3__wings3d__["onReady"])(function() {
    redrawFlag = true;
    __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].enable(__WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].DEPTH_TEST);
+   __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].enable(__WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].CULL_FACE);   // enable cull face (2018-05-30) back face culling is default
    // initialized glsl program, update data
    // program source ShaderProg
    // drawGrid, using LineProgram
