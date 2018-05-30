@@ -59,6 +59,11 @@ class BodyMadsor extends Madsor {
       UI.bindMenuItem(action.bodyDuplicateMoveFree.name, function(ev) {
             View.attachHandlerMouseMove(new DuplicateMoveFreePositionHandler(self, self.getSelected()));
          });
+      UI.bindMenuItem(action.bodyInvert.name, (ev)=> {
+         const command = new InvertBodyCommand(this);
+         command.doIt();
+         View.undoQueue(command);
+        });
    }
 
    modeName() {
@@ -85,6 +90,17 @@ class BodyMadsor extends Madsor {
 
    snapshotTransformGroup() {
       return this.snapshotAll(PreviewCage.prototype.snapshotTransformBodyGroup);
+   }
+
+   invert() {
+      this.eachPreviewCage((cage)=> {
+         if (cage.hasSelection()) {
+            cage.invertBody();
+         }
+       });
+      // invert the draftBench's preview and update
+      View.updateWorld();
+      this.hiliteView = null; // invalidate hilite
    }
 
    dragSelect(cage, selectArray, onOff) {
@@ -379,8 +395,23 @@ class DuplicateMoveFreePositionHandler extends MoveFreePositionHandler {
       super.undo();
       this.duplicateBodyCommand.undo();
    }
-
 }
+
+class InvertBodyCommand extends EditCommand {
+   constructor(madsor) {
+      super();
+      this.madsor = madsor;
+   }
+
+   doIt() {
+      this.madsor.invert();
+   }
+
+   undo() {
+      this.madsor.invert();
+   }   
+}
+
 
 export {
    BodyMadsor,

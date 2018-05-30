@@ -255,6 +255,7 @@ const action = {
    bodyRotateY: () => {notImplemented(this);},
    bodyRotateZ: () => {notImplemented(this);},
    bodyRotateFree: () => {notImplemented(this);},
+   bodyInvert: () => {notImplemented(this);},
    // edge
    cutMenu: () => {notImplemented(this);},
    cutLine2: () => {notImplemented(this);},

@@ -2210,6 +2210,10 @@ PreviewCage.prototype.insetFace = function() {
    return contours;
 };
 
+PreviewCage.prototype.invertBody = function() {
+   this.geometry.invert();
+};
+
 
 //----------------------------------------------------------------------------------------------------------
 

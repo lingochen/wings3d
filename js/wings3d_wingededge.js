@@ -2319,6 +2319,34 @@ WingedTopology.prototype.insertFan = function(polygon, fanLists) {
 };
 
 
+// 
+// invert() - invert the normal of all polygon. usefull when import meshes that use cw-order polygon.
+//
+WingedTopology.prototype.invert = function() {
+   const reverse = [];
+   for (let polygon of this.faces) {
+      for (let hEdge of polygon.hEdges()) {
+         reverse.push( {hEdge: hEdge.next.pair, next: hEdge.pair} );
+      }
+   }
+   // got the reversed list, now reverse the edge.
+   for (let {hEdge, next} of reverse) {
+      hEdge.next = next;
+   }
+   // now swap the polygon pointer.
+   for (let wEdge of this.edges) {
+      let swapPoly = wEdge.left.face;
+      if (swapPoly.halfEdge === wEdge.left) {
+         swapPoly.halfEdge = wEdge.right;
+      }
+      wEdge.left.face = wEdge.right.face;
+      if (wEdge.left.face.halfEdge === wEdge.right) {
+         wEdge.left.face.halfEdge = wEdge.left;
+      }
+      wEdge.right.face = swapPoly;  // done swapping.
+   }
+};
+
 
 export {
    WingedEdge,

@@ -22,6 +22,7 @@ let textProg;        // to be replaced
 onReady(function() {
    redrawFlag = true;
    gl.enable(gl.DEPTH_TEST);
+   gl.enable(gl.CULL_FACE);   // enable cull face (2018-05-30) back face culling is default
    // initialized glsl program, update data
    // program source ShaderProg
    // drawGrid, using LineProgram
