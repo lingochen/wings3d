@@ -111,7 +111,7 @@ class BodyMadsor extends Madsor {
          const combine = View.makeCombineIntoWorld(cageSelection);
          combine.name = cageSelection[0].name;
          combine.selectBody();
-         return {combine: combine, oldSelection: selection};
+         return {combine: combine, oldSelection: cageSelection};
       }
       return null;
    }

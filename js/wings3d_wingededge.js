@@ -702,9 +702,15 @@ WingedTopology.prototype.free = function() {
 
 // merge - should we check alloc is the same?
 WingedTopology.prototype.merge = function(geometryIterator) {
-   this.vertices = new Set(function* () {yield* this.vertices; for (let geometry of geometryIterator) {yield* geometry.vertices;}});
-   this.edges = new Set(function* () {yield* this.edges; for (let geometry of geometryIterator) {yield* geometry.edges;}});
-   this.faces = new Set(function* () {yield* this.faces; for (let geometry of geometryIterator) {yield* geometry.faces;}});
+   const self = this;
+   this.vertices = new Set(function* () {
+      yield* self.vertices; 
+      for (let geometry of geometryIterator()) {
+         yield* geometry.vertices;
+      }
+    }());
+   this.edges = new Set(function* () {yield* self.edges; for (let geometry of geometryIterator()) {yield* geometry.edges;}}());
+   this.faces = new Set(function* () {yield* self.faces; for (let geometry of geometryIterator()) {yield* geometry.faces;}}());
 }
 
 WingedTopology.prototype.sanityCheck = function() {

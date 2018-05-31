@@ -62,7 +62,7 @@ PreviewCage.duplicate = function(originalCage) {
 
 PreviewCage.prototype.merge = function(mergeSelection) {
    // copy geometry.
-   this.geometry.merge(function*(){for (let cage of mergeSelection) {yield cage.geometry;}});
+   this.geometry.merge(function* (){for (let cage of mergeSelection) {yield cage.geometry;}});
 };
 
 

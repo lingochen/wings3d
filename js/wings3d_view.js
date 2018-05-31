@@ -210,6 +210,7 @@ function putIntoWorld() {
 
 function addToWorld(model) {
    world.push( model );
+   draftBench.updatePreview();
    Renderer.needToRedraw();
    return model;
 }
@@ -218,6 +219,7 @@ function removeFromWorld(previewCage) {
    var index = world.indexOf(previewCage);
    if (index >= 0) {
       world.splice(index, 1);
+      draftBench.updatePreview();
       Renderer.needToRedraw();
    }
 };
