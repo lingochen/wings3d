@@ -548,7 +548,7 @@ DraftBench.prototype.resetSelectEdge = function() {
    this.previewEdge.shaderData.uploadAttribute('color', 0, this.previewEdge.color);
 };
 
-DraftBench.prototype.updateWEdges = function(wingedEdgs) {
+DraftBench.prototype.updateWEdges = function(wingedEdges) {
    // update the edges.vertex
    for (let wingedEdge of wingedEdges) {
       let index = wingedEdge.index * 2 * 3;

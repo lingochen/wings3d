@@ -228,7 +228,16 @@ function updateWorld() {
    draftBench.updatePreview();
    Renderer.needToRedraw();
 };
-//-- End of World objects management -------------------------
+function makeCombineIntoWorld(cageSelection) {
+   let combine = new PreviewCage(draftBench);
+   for (let cage of cageSelection) {
+      removeFromWorld(cage);
+   }
+   combine.merge(cageSelection);
+   addToWorld(combine);
+   return combine;
+}
+//-- End of World objects management ----------------dra---------
 
 //
 // mouse handling
@@ -670,6 +679,7 @@ export {
    removeFromWorld,
    getWorld,
    updateWorld,
+   makeCombineIntoWorld,
    // mouse handler
    //rayPick,
    attachHandlerMouseMove,

@@ -35,25 +35,34 @@ PreviewCage.prototype.freeBuffer = function() {
 };
 
 
-PreviewCage.prototype.duplicate = function(originalCage) {
+PreviewCage.duplicate = function(originalCage) {
    // copy geometry.
-   const geometry = new WingedTopology( originalCage.geometry.vertices.length*2 );
+   const indexMap = new Map;
+   const previewCage = new PreviewCage(originalCage.bench);
+   const geometry = previewCage.geometry;
    for (let vertex of originalCage.geometry.vertices) {
-      geometry.addVertex(vertex.vertex);
+      const copy = geometry.addVertex(vertex.vertex);
+      indexMap.set(vertex.index, copy.index);
    }
    for (let polygon of originalCage.geometry.faces) {
       let index = [];
       polygon.eachVertex( function(vertex) {
-         index.push( vertex.index );
+         index.push( indexMap.get(vertex.index) );
       });
       geometry.addPolygon(index);
    }
-   geometry.clearAffected();
+   //geometry.clearAffected();
+   previewCage._updatePreviewAll();
    // new PreviewCage, and new name
-   const previewCage = new PreviewCage(geometry);
    previewCage.name = originalCage.name + "_copy1";
 
    return previewCage;
+};
+
+
+PreviewCage.prototype.merge = function(mergeSelection) {
+   // copy geometry.
+   this.geometry.merge(function*(){for (let cage of mergeSelection) {yield cage.geometry;}});
 };
 
 
@@ -68,8 +77,6 @@ PreviewCage.prototype._getGeometrySize = function() {
 PreviewCage.prototype._updatePreviewAll = function() {
    this.bench.updatePreview();
 };
-
-
 
 
 // todo: octree optimization.

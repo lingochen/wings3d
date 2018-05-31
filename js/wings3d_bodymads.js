@@ -64,6 +64,12 @@ class BodyMadsor extends Madsor {
          command.doIt();
          View.undoQueue(command);
         });
+      UI.bindMenuItem(action.bodyCombine.name, (ev)=> {
+         const command = new CombineBodyCommand(this);
+         if (command.doIt()) {   // do we really have 2 + objects?
+            View.undoQueue(command);
+         }
+       });
    }
 
    modeName() {
@@ -90,6 +96,32 @@ class BodyMadsor extends Madsor {
 
    snapshotTransformGroup() {
       return this.snapshotAll(PreviewCage.prototype.snapshotTransformBodyGroup);
+   }
+
+   combine() {
+      const cageSelection = [];
+      this.eachPreviewCage((cage)=> {
+         if (cage.hasSelection()) {
+            cageSelection.push( cage );
+         }
+       });
+      // got at least 2 selected cage2.
+      if (cageSelection.length >= 2) {
+         // now do merge operation.
+         const combine = View.makeCombineIntoWorld(cageSelection);
+         combine.name = cageSelection[0].name;
+         combine.selectBody();
+         return {combine: combine, oldSelection: selection};
+      }
+      return null;
+   }
+   undoCombine(combine) {
+      if (combine) {
+         View.removeFromWorld(combine.combine);
+         for (let cage of combine.oldSelection) {
+            View.addToWorld(cage);  // restore oldCage
+         }
+      }
    }
 
    invert() {
@@ -412,6 +444,26 @@ class InvertBodyCommand extends EditCommand {
    }   
 }
 
+class CombineBodyCommand extends EditCommand {
+   constructor(madsor) {
+      super();
+      this.madsor = madsor;
+   }
+
+   doIt() {
+      this.combine = this.madsor.combine();
+      if (this.combine) {
+         return true;
+      } else {
+         return false;
+      }
+   }
+
+   undo() {
+      this.madsor.undoCombine(this.combine);
+      this.combine = null; // release memory
+   } 
+};
 
 export {
    BodyMadsor,

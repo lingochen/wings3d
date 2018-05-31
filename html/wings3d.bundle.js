@@ -341,6 +341,7 @@ const action = {
    bodyRotateZ: () => {notImplemented(this);},
    bodyRotateFree: () => {notImplemented(this);},
    bodyInvert: () => {notImplemented(this);},
+   bodyCombine: () => {notImplemented(this);},
    // edge
    cutMenu: () => {notImplemented(this);},
    cutLine2: () => {notImplemented(this);},
@@ -455,6 +456,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "removeFromWorld", function() { return removeFromWorld; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getWorld", function() { return getWorld; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "updateWorld", function() { return updateWorld; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "makeCombineIntoWorld", function() { return makeCombineIntoWorld; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "attachHandlerMouseMove", function() { return attachHandlerMouseMove; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "doCommand", function() { return doCommand; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "redoEdit", function() { return redoEdit; });
@@ -709,7 +711,16 @@ function updateWorld() {
    draftBench.updatePreview();
    __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
 };
-//-- End of World objects management -------------------------
+function makeCombineIntoWorld(cageSelection) {
+   let combine = new __WEBPACK_IMPORTED_MODULE_11__wings3d_model__["PreviewCage"](draftBench);
+   for (let cage of cageSelection) {
+      removeFromWorld(cage);
+   }
+   combine.merge(cageSelection);
+   addToWorld(combine);
+   return combine;
+}
+//-- End of World objects management ----------------dra---------
 
 //
 // mouse handling
@@ -2214,25 +2225,34 @@ PreviewCage.prototype.freeBuffer = function() {
 };
 
 
-PreviewCage.prototype.duplicate = function(originalCage) {
+PreviewCage.duplicate = function(originalCage) {
    // copy geometry.
-   const geometry = new __WEBPACK_IMPORTED_MODULE_2__wings3d_wingededge__["WingedTopology"]( originalCage.geometry.vertices.length*2 );
+   const indexMap = new Map;
+   const previewCage = new PreviewCage(originalCage.bench);
+   const geometry = previewCage.geometry;
    for (let vertex of originalCage.geometry.vertices) {
-      geometry.addVertex(vertex.vertex);
+      const copy = geometry.addVertex(vertex.vertex);
+      indexMap.set(vertex.index, copy.index);
    }
    for (let polygon of originalCage.geometry.faces) {
       let index = [];
       polygon.eachVertex( function(vertex) {
-         index.push( vertex.index );
+         index.push( indexMap.get(vertex.index) );
       });
       geometry.addPolygon(index);
    }
-   geometry.clearAffected();
+   //geometry.clearAffected();
+   previewCage._updatePreviewAll();
    // new PreviewCage, and new name
-   const previewCage = new PreviewCage(geometry);
    previewCage.name = originalCage.name + "_copy1";
 
    return previewCage;
+};
+
+
+PreviewCage.prototype.merge = function(mergeSelection) {
+   // copy geometry.
+   this.geometry.merge(function*(){for (let cage of mergeSelection) {yield cage.geometry;}});
 };
 
 
@@ -2247,8 +2267,6 @@ PreviewCage.prototype._getGeometrySize = function() {
 PreviewCage.prototype._updatePreviewAll = function() {
    this.bench.updatePreview();
 };
-
-
 
 
 // todo: octree optimization.
@@ -5399,7 +5417,7 @@ DraftBench.prototype.resetSelectEdge = function() {
    this.previewEdge.shaderData.uploadAttribute('color', 0, this.previewEdge.color);
 };
 
-DraftBench.prototype.updateWEdges = function(wingedEdgs) {
+DraftBench.prototype.updateWEdges = function(wingedEdges) {
    // update the edges.vertex
    for (let wingedEdge of wingedEdges) {
       let index = wingedEdge.index * 2 * 3;
@@ -6186,6 +6204,13 @@ WingedTopology.prototype.free = function() {
    }
    this.vertices = new Set;
 };
+
+// merge - should we check alloc is the same?
+WingedTopology.prototype.merge = function(geometryIterator) {
+   this.vertices = new Set(function* () {yield* this.vertices; for (let geometry of geometryIterator) {yield* geometry.vertices;}});
+   this.edges = new Set(function* () {yield* this.edges; for (let geometry of geometryIterator) {yield* geometry.edges;}});
+   this.faces = new Set(function* () {yield* this.faces; for (let geometry of geometryIterator) {yield* geometry.faces;}});
+}
 
 WingedTopology.prototype.sanityCheck = function() {
    let sanity = true;
@@ -9515,6 +9540,12 @@ class BodyMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
          command.doIt();
          __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["undoQueue"](command);
         });
+      __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].bodyCombine.name, (ev)=> {
+         const command = new CombineBodyCommand(this);
+         if (command.doIt()) {   // do we really have 2 + objects?
+            __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["undoQueue"](command);
+         }
+       });
    }
 
    modeName() {
@@ -9541,6 +9572,32 @@ class BodyMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
 
    snapshotTransformGroup() {
       return this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.snapshotTransformBodyGroup);
+   }
+
+   combine() {
+      const cageSelection = [];
+      this.eachPreviewCage((cage)=> {
+         if (cage.hasSelection()) {
+            cageSelection.push( cage );
+         }
+       });
+      // got at least 2 selected cage2.
+      if (cageSelection.length >= 2) {
+         // now do merge operation.
+         const combine = __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["makeCombineIntoWorld"](cageSelection);
+         combine.name = cageSelection[0].name;
+         combine.selectBody();
+         return {combine: combine, oldSelection: selection};
+      }
+      return null;
+   }
+   undoCombine(combine) {
+      if (combine) {
+         __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["removeFromWorld"](combine.combine);
+         for (let cage of combine.oldSelection) {
+            __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["addToWorld"](cage);  // restore oldCage
+         }
+      }
    }
 
    invert() {
@@ -9863,6 +9920,26 @@ class InvertBodyCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["Edi
    }   
 }
 
+class CombineBodyCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
+   constructor(madsor) {
+      super();
+      this.madsor = madsor;
+   }
+
+   doIt() {
+      this.combine = this.madsor.combine();
+      if (this.combine) {
+         return true;
+      } else {
+         return false;
+      }
+   }
+
+   undo() {
+      this.madsor.undoCombine(this.combine);
+      this.combine = null; // release memory
+   } 
+};
 
 
 
