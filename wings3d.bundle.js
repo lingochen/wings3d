@@ -693,6 +693,7 @@ function putIntoWorld() {
 
 function addToWorld(model) {
    world.push( model );
+   draftBench.updatePreview();
    __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
    return model;
 }
@@ -701,6 +702,7 @@ function removeFromWorld(previewCage) {
    var index = world.indexOf(previewCage);
    if (index >= 0) {
       world.splice(index, 1);
+      draftBench.updatePreview();
       __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
    }
 };
@@ -2252,7 +2254,7 @@ PreviewCage.duplicate = function(originalCage) {
 
 PreviewCage.prototype.merge = function(mergeSelection) {
    // copy geometry.
-   this.geometry.merge(function*(){for (let cage of mergeSelection) {yield cage.geometry;}});
+   this.geometry.merge(function* (){for (let cage of mergeSelection) {yield cage.geometry;}});
 };
 
 
@@ -6207,9 +6209,15 @@ WingedTopology.prototype.free = function() {
 
 // merge - should we check alloc is the same?
 WingedTopology.prototype.merge = function(geometryIterator) {
-   this.vertices = new Set(function* () {yield* this.vertices; for (let geometry of geometryIterator) {yield* geometry.vertices;}});
-   this.edges = new Set(function* () {yield* this.edges; for (let geometry of geometryIterator) {yield* geometry.edges;}});
-   this.faces = new Set(function* () {yield* this.faces; for (let geometry of geometryIterator) {yield* geometry.faces;}});
+   const self = this;
+   this.vertices = new Set(function* () {
+      yield* self.vertices; 
+      for (let geometry of geometryIterator()) {
+         yield* geometry.vertices;
+      }
+    }());
+   this.edges = new Set(function* () {yield* self.edges; for (let geometry of geometryIterator()) {yield* geometry.edges;}}());
+   this.faces = new Set(function* () {yield* self.faces; for (let geometry of geometryIterator()) {yield* geometry.faces;}}());
 }
 
 WingedTopology.prototype.sanityCheck = function() {
@@ -9587,7 +9595,7 @@ class BodyMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
          const combine = __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["makeCombineIntoWorld"](cageSelection);
          combine.name = cageSelection[0].name;
          combine.selectBody();
-         return {combine: combine, oldSelection: selection};
+         return {combine: combine, oldSelection: cageSelection};
       }
       return null;
    }
