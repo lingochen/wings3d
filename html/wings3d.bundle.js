@@ -693,6 +693,7 @@ function putIntoWorld() {
 
 function addToWorld(model) {
    world.push( model );
+   model.show();
    draftBench.updatePreview();
    __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
    return model;
@@ -702,6 +703,7 @@ function removeFromWorld(previewCage) {
    var index = world.indexOf(previewCage);
    if (index >= 0) {
       world.splice(index, 1);
+      previewCage.hide();
       draftBench.updatePreview();
       __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
    }
@@ -2258,6 +2260,15 @@ PreviewCage.prototype.merge = function(mergeSelection) {
 };
 
 
+PreviewCage.prototype.hide = function() {
+   this.bench.hide(this.geometry.faces);
+};
+
+PreviewCage.prototype.show = function() {
+   this.bench.show(this.geometry.faces);
+};
+
+
 PreviewCage.prototype._getGeometrySize = function() {
    return { face: this.geometry.faces.size,
             edge: this.geometry.edges.size,
@@ -2559,7 +2570,7 @@ PreviewCage.prototype._selectVertexAll = function() {
    this.selectedSet = new Set(oldSelection);
 
    for (let vertex of this.geometry.vertices) {
-      if (vertex.isReal() && !oldSelection.has(vertex)) {
+      if (vertex.isLive() && !oldSelection.has(vertex)) {
          this.selectVertex(vertex);
       }
    }
@@ -2571,7 +2582,7 @@ PreviewCage.prototype._selectVertexInvert = function() {
    const snapshot = new Set(this.selectedSet);
 
    for (let vertex of this.geometry.vertices) {
-      if (vertex.isReal()) {
+      if (vertex.isLive()) {
          this.selectVertex(vertex);
       }
    }
@@ -2588,7 +2599,7 @@ PreviewCage.prototype._selectVertexSimilar = function() {
    const similarVertex = new SimilarVertex(snapshot);
 
    for (let vertex of this.geometry.vertices) {
-      if (vertex.isReal() && !snapshot.has(vertex) && similarVertex.find(vertex)) {
+      if (vertex.isLive() && !snapshot.has(vertex) && similarVertex.find(vertex)) {
          this.selectVertex(vertex);
       }
    }
@@ -3033,7 +3044,7 @@ PreviewCage.prototype.snapshotTransformBodyGroup = function() {
    const center = vec3.create();
    if (this.hasSelection()) {
       for (let vertex of this.geometry.vertices) {
-         if (vertex.isReal()) {
+         if (vertex.isLive()) {
             vertices.add(vertex);
             vec3.add(center, center, vertex.vertex);
          }
@@ -3112,7 +3123,7 @@ PreviewCage.prototype._selectEdgeAll = function() {
    this.selectedSet = new Set(oldSelection);
 
    for (let wingedEdge of this.geometry.edges) {
-      if (wingedEdge.isReal() && !oldSelection.has(wingedEdge)) {
+      if (wingedEdge.isLive() && !oldSelection.has(wingedEdge)) {
          this.selectEdge(wingedEdge.left);
       }
    }
@@ -3124,7 +3135,7 @@ PreviewCage.prototype._selectEdgeInvert = function() {
    const snapshot = new Set(this.selectedSet);
 
    for (let wingedEdge of this.geometry.edges) {
-      if (wingedEdge.isReal()) {
+      if (wingedEdge.isLive()) {
          this.selectEdge(wingedEdge.left);
       }
    }
@@ -3152,7 +3163,7 @@ PreviewCage.prototype._selectEdgeSimilar = function() {
    const similarEdge = new SimilarWingedEdge(snapshot);
 
    for (let wingedEdge of this.geometry.edges) {
-      if (wingedEdge.isReal && !snapshot.has(wingedEdge) && similarEdge.find(wingedEdge)) {
+      if (wingedEdge.isLive && !snapshot.has(wingedEdge) && similarEdge.find(wingedEdge)) {
          this.selectEdge(wingedEdge.left);
       }
    }
@@ -3314,7 +3325,7 @@ PreviewCage.prototype._selectFaceAll = function() {
    this.selectedSet = new Set(oldSelection);
 
    for (let polygon of this.geometry.faces) {
-      if (polygon.isReal && !oldSelection.has(polygon)) {
+      if (polygon.isLive && !oldSelection.has(polygon)) {
          this.selectFace(polygon.halfEdge);
       }
    }
@@ -3326,7 +3337,7 @@ PreviewCage.prototype._selectFaceInvert = function() {
    const snapshot = new Set(this.selectedSet);
 
    for (let polygon of this.geometry.faces) {
-      if (polygon.isReal()) {
+      if (polygon.isLive()) {
          this.selectFace(polygon.halfEdge);
       }
    }
@@ -3355,7 +3366,7 @@ PreviewCage.prototype._selectFaceSimilar = function() {
    const similarFace = new SimilarFace(snapshot);
 
    for (let polygon of this.geometry.faces) {
-      if (polygon.isReal && !snapshot.has(polygon) && similarFace.find(polygon)) {
+      if (polygon.isLive && !snapshot.has(polygon) && similarFace.find(polygon)) {
          this.selectFace(polygon.halfEdge);
       }
    }
@@ -3629,7 +3640,7 @@ PreviewCage.prototype.undoExtrudeEdge = function(extrude) {
 
    if (extrude.dissolveEdges) {
       for (let hEdge of extrude.dissolveEdges) {
-         if (hEdge.wingedEdge.isReal()) {
+         if (hEdge.wingedEdge.isLive()) {
             this.geometry.dissolveEdge(hEdge, extrude.collapsibleWings);
          }
       }
@@ -3737,7 +3748,7 @@ PreviewCage.prototype.collapseExtrudeEdge = function(edges) {
 
    // update all affected polygon(use sphere). recompute centroid.
    for (let polygon of affectedPolygon) {
-      if (polygon.isReal()) {
+      if (polygon.isLive()) {
          const sphere = this.bench.boundingSpheres[polygon.index];
          // recompute sphere center.
          sphere.setSphere( __WEBPACK_IMPORTED_MODULE_1__wings3d_boundingvolume__["BoundingSphere"].computeSphere(polygon, sphere.center) );
@@ -3920,7 +3931,7 @@ PreviewCage.prototype.cutEdge = function(numberOfSegments) {
 PreviewCage.prototype.collapseSplitOrBevelEdge = function(collapse) {
    const oldSize = this._getGeometrySize();
    for (let halfEdge of collapse.halfEdges) {
-      if (halfEdge.wingedEdge.isReal()) { // checked for already collapse edge
+      if (halfEdge.wingedEdge.isLive()) { // checked for already collapse edge
          this.geometry.collapseEdge(halfEdge, collapse.collapsibleWings);
       }
    }
@@ -3993,7 +4004,7 @@ PreviewCage.prototype.collapseSelectedEdge = function() {
    const selected = new Map();
    for (let edge of this.selectedSet) {
       let undo = function() {};
-      if (edge.isReal()){
+      if (edge.isLive()){
       let vertex = edge.left.origin;
       let pt;
       if (selected.has(vertex)) {
@@ -4091,7 +4102,7 @@ PreviewCage.prototype.dissolveSelectedFace = function() {
    const selectedFace = this.selectedSet;
    const selectedSet = new Set;
    for (let polygon of this.selectedSet) {
-      if (polygon.isReal()) {
+      if (polygon.isLive()) {
          selectedSet.add(polygon);
       }
    }
@@ -5067,7 +5078,7 @@ DraftBench.prototype._computePreviewIndex = function() {
    // recompute all index. (no optimization unless prove to be bottleneck)
    let barycentric = this.allocMesh.vertices.length;
    for (let sphere of this.boundingSpheres) {
-      if (sphere.isReal()) {     // skip over deleted sphere.
+      if (sphere.isLive()) {     // skip over deleted sphere.
          const polygon = sphere.polygon;
          //sphere.indexStart = model.preview.index.length;
          let indicesLength = 0;
@@ -5154,7 +5165,7 @@ DraftBench.prototype._resizePreviewEdge = function() {
       for (let i = oldSize, j=(oldSize*2*3); i < this.allocMesh.edges.length; i++) {
          let wingedEdge = this.allocMesh.edges[i];
          for (let halfEdge of wingedEdge) {
-            if (wingedEdge.isReal()) {
+            if (wingedEdge.isLive()) {
                this.previewEdge.line.set(halfEdge.origin.vertex, j);
             } else {
                this.previewEdge.line.fill(0.0, j, j+3);
@@ -5195,7 +5206,7 @@ DraftBench.prototype._resizePreviewVertex = function() {
    const index = new Uint32Array(length);
    let j = 0;
    for (let i = 0; i < length; ++i) {
-      if (this.allocMesh.vertices[i].isReal()) {
+      if (this.allocMesh.vertices[i].isLive()) {
          index[j++] = i;
       }
    }
@@ -5235,7 +5246,7 @@ DraftBench.prototype._updateAffected = function(affected) {
 };
 
 DraftBench.prototype._updateVertex = function(vertex, affected) {
-   if (vertex.isReal()) {
+   if (vertex.isLive()) {
       // first the simple case, update the vertexPreview,
       const index = vertex.index;
       this.previewVertex.shaderData.uploadAttribute('position', vertex.vertex.byteOffset, vertex.vertex);
@@ -5258,7 +5269,7 @@ DraftBench.prototype._updateVertex = function(vertex, affected) {
 
 DraftBench.prototype._updatePreviewFace = function(polygon) {
    // recompute boundingSphere centroid, and if numberOfVertex changed, needs to recompute index.
-   if ((polygon.index < this.boundingSpheres.length) && polygon.isReal()) { // will be get recompute on resize
+   if ((polygon.index < this.boundingSpheres.length) && polygon.isLive()) { // will be get recompute on resize
       const sphere = this.boundingSpheres[ polygon.index ];
       sphere.setSphere( __WEBPACK_IMPORTED_MODULE_1__wings3d_boundingvolume__["BoundingSphere"].computeSphere(sphere.polygon, sphere.center) ); 
       // update center.
@@ -5270,7 +5281,7 @@ DraftBench.prototype._updatePreviewFace = function(polygon) {
 
 DraftBench.prototype._updatePreviewEdge = function(edge, updateShader) {
    const wingedEdge = edge.wingedEdge;
-   if (wingedEdge.isReal()) {
+   if (wingedEdge.isLive()) {
       const index = wingedEdge.index * 6; // 2*3
       this.previewEdge.line.set(edge.origin.vertex, index);
       this.previewEdge.line.set(edge.pair.origin.vertex, index+3);
@@ -5490,6 +5501,19 @@ DraftBench.prototype.resetSelectFace = function() {
 };
 
 
+DraftBench.prototype.hide = function(faceGroup) {
+   for (let polygon of faceGroup) {
+      this.boundingSpheres[polygon.index].isVisible = false;
+   }
+};
+
+DraftBench.prototype.show = function(faceGroup) {
+   for (let polygon of faceGroup) {
+      this.boundingSpheres[polygon.index].isVisible = true;
+   }
+};
+
+
 
 
 
@@ -5555,7 +5579,7 @@ WingedEdge.prototype[Symbol.iterator] = function* () {
    yield this.right;
 };
 
-WingedEdge.prototype.isReal = function() {
+WingedEdge.prototype.isLive = function() {
    return (this.left.origin !== null) && (this.right.origin !== null);
 };
 
@@ -5710,7 +5734,7 @@ Vertex.prototype.reorient = function() {
    this.outEdge = outEdge;    // get the lowest index outEdge;
 };
 
-Vertex.prototype.isReal = function() {
+Vertex.prototype.isLive = function() {
    return (this.outEdge !== null);
 };
 
@@ -5866,7 +5890,7 @@ var Polygon = function(startEdge, size) {
 };
 
 // not on free list. not deleted.
-Polygon.prototype.isReal = function() {
+Polygon.prototype.isLive = function() {
    return (this.halfEdge !== null);
 };
 
@@ -6208,23 +6232,18 @@ WingedTopology.prototype.free = function() {
 };
 
 // merge - should we check alloc is the same?
-WingedTopology.prototype.merge = function(geometryIterator) {
+WingedTopology.prototype.merge = function(geometryGenerator) {
    const self = this;
-   this.vertices = new Set(function* () {
-      yield* self.vertices; 
-      for (let geometry of geometryIterator()) {
-         yield* geometry.vertices;
-      }
-    }());
-   this.edges = new Set(function* () {yield* self.edges; for (let geometry of geometryIterator()) {yield* geometry.edges;}}());
-   this.faces = new Set(function* () {yield* self.faces; for (let geometry of geometryIterator()) {yield* geometry.faces;}}());
+   this.vertices = new Set(function* () {yield* self.vertices; for (let geometry of geometryGenerator()) {yield* geometry.vertices;}}());
+   this.edges = new Set(function* () {yield* self.edges; for (let geometry of geometryGenerator()) {yield* geometry.edges;}}());
+   this.faces = new Set(function* () {yield* self.faces; for (let geometry of geometryGenerator()) {yield* geometry.faces;}}());
 }
 
 WingedTopology.prototype.sanityCheck = function() {
    let sanity = true;
    // first check vertex for error.
    for (let [index, vertex] of this.vertices.entries()) {
-      if (vertex.isReal()) {
+      if (vertex.isLive()) {
          if (vertex.outEdge.origin !== vertex) {
             console.log("vertex " + index + " outEdge is wrong");
             sanity = false;
@@ -7246,7 +7265,7 @@ WingedTopology.prototype.collapseEdge = function(halfEdge, collapsibleWings) {
    if (next.next.next === next) {
       undoCollapseLeft = this._collapseLoop(next.next, collapsibleWings);
    }
-   if (pairNext.wingedEdge.isReal() && (pairNext.next.next === pairNext)) {   // add wingedEdge.isReal() to guard (--) edges.
+   if (pairNext.wingedEdge.isLive() && (pairNext.next.next === pairNext)) {   // add wingedEdge.isLive() to guard (--) edges.
       undoCollapseRight = this._collapseLoop(pairNext, collapsibleWings);
    }
    return function() {
@@ -10784,10 +10803,11 @@ const BoundingSphere = function(center, radius, polygon) {
    this.radius = radius;
    this.radius2 = radius*radius;
    this.polygon = polygon;
+   this.isVisible = true;    // default to show because compute in preview.
 };
 
-BoundingSphere.prototype.isReal = function() {
-   return this.polygon.isReal();
+BoundingSphere.prototype.isLive = function() {
+   return (this.isVisible && this.polygon.isLive());
 };
 
 BoundingSphere.prototype.isIntersect = function(ray) {

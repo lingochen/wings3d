@@ -196,7 +196,7 @@ DraftBench.prototype._computePreviewIndex = function() {
    // recompute all index. (no optimization unless prove to be bottleneck)
    let barycentric = this.allocMesh.vertices.length;
    for (let sphere of this.boundingSpheres) {
-      if (sphere.isReal()) {     // skip over deleted sphere.
+      if (sphere.isLive()) {     // skip over deleted sphere.
          const polygon = sphere.polygon;
          //sphere.indexStart = model.preview.index.length;
          let indicesLength = 0;
@@ -283,7 +283,7 @@ DraftBench.prototype._resizePreviewEdge = function() {
       for (let i = oldSize, j=(oldSize*2*3); i < this.allocMesh.edges.length; i++) {
          let wingedEdge = this.allocMesh.edges[i];
          for (let halfEdge of wingedEdge) {
-            if (wingedEdge.isReal()) {
+            if (wingedEdge.isLive()) {
                this.previewEdge.line.set(halfEdge.origin.vertex, j);
             } else {
                this.previewEdge.line.fill(0.0, j, j+3);
@@ -324,7 +324,7 @@ DraftBench.prototype._resizePreviewVertex = function() {
    const index = new Uint32Array(length);
    let j = 0;
    for (let i = 0; i < length; ++i) {
-      if (this.allocMesh.vertices[i].isReal()) {
+      if (this.allocMesh.vertices[i].isLive()) {
          index[j++] = i;
       }
    }
@@ -364,7 +364,7 @@ DraftBench.prototype._updateAffected = function(affected) {
 };
 
 DraftBench.prototype._updateVertex = function(vertex, affected) {
-   if (vertex.isReal()) {
+   if (vertex.isLive()) {
       // first the simple case, update the vertexPreview,
       const index = vertex.index;
       this.previewVertex.shaderData.uploadAttribute('position', vertex.vertex.byteOffset, vertex.vertex);
@@ -387,7 +387,7 @@ DraftBench.prototype._updateVertex = function(vertex, affected) {
 
 DraftBench.prototype._updatePreviewFace = function(polygon) {
    // recompute boundingSphere centroid, and if numberOfVertex changed, needs to recompute index.
-   if ((polygon.index < this.boundingSpheres.length) && polygon.isReal()) { // will be get recompute on resize
+   if ((polygon.index < this.boundingSpheres.length) && polygon.isLive()) { // will be get recompute on resize
       const sphere = this.boundingSpheres[ polygon.index ];
       sphere.setSphere( BoundingSphere.computeSphere(sphere.polygon, sphere.center) ); 
       // update center.
@@ -399,7 +399,7 @@ DraftBench.prototype._updatePreviewFace = function(polygon) {
 
 DraftBench.prototype._updatePreviewEdge = function(edge, updateShader) {
    const wingedEdge = edge.wingedEdge;
-   if (wingedEdge.isReal()) {
+   if (wingedEdge.isLive()) {
       const index = wingedEdge.index * 6; // 2*3
       this.previewEdge.line.set(edge.origin.vertex, index);
       this.previewEdge.line.set(edge.pair.origin.vertex, index+3);
@@ -616,6 +616,19 @@ DraftBench.prototype.resetSelectFace = function() {
    this.preview.shaderData.uploadAttribute("selected", 0, this.preview.selected.subarray(0, length));
    var centroidLength = this.preview.centroid.buf.len/3;
    this.preview.shaderData.uploadAttribute('selected', length*4, this.preview.centroid.selected.subarray(0, centroidLength));
+};
+
+
+DraftBench.prototype.hide = function(faceGroup) {
+   for (let polygon of faceGroup) {
+      this.boundingSpheres[polygon.index].isVisible = false;
+   }
+};
+
+DraftBench.prototype.show = function(faceGroup) {
+   for (let polygon of faceGroup) {
+      this.boundingSpheres[polygon.index].isVisible = true;
+   }
 };
 
 

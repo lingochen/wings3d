@@ -48,7 +48,7 @@ WingedEdge.prototype[Symbol.iterator] = function* () {
    yield this.right;
 };
 
-WingedEdge.prototype.isReal = function() {
+WingedEdge.prototype.isLive = function() {
    return (this.left.origin !== null) && (this.right.origin !== null);
 };
 
@@ -203,7 +203,7 @@ Vertex.prototype.reorient = function() {
    this.outEdge = outEdge;    // get the lowest index outEdge;
 };
 
-Vertex.prototype.isReal = function() {
+Vertex.prototype.isLive = function() {
    return (this.outEdge !== null);
 };
 
@@ -359,7 +359,7 @@ var Polygon = function(startEdge, size) {
 };
 
 // not on free list. not deleted.
-Polygon.prototype.isReal = function() {
+Polygon.prototype.isLive = function() {
    return (this.halfEdge !== null);
 };
 
@@ -701,23 +701,18 @@ WingedTopology.prototype.free = function() {
 };
 
 // merge - should we check alloc is the same?
-WingedTopology.prototype.merge = function(geometryIterator) {
+WingedTopology.prototype.merge = function(geometryGenerator) {
    const self = this;
-   this.vertices = new Set(function* () {
-      yield* self.vertices; 
-      for (let geometry of geometryIterator()) {
-         yield* geometry.vertices;
-      }
-    }());
-   this.edges = new Set(function* () {yield* self.edges; for (let geometry of geometryIterator()) {yield* geometry.edges;}}());
-   this.faces = new Set(function* () {yield* self.faces; for (let geometry of geometryIterator()) {yield* geometry.faces;}}());
+   this.vertices = new Set(function* () {yield* self.vertices; for (let geometry of geometryGenerator()) {yield* geometry.vertices;}}());
+   this.edges = new Set(function* () {yield* self.edges; for (let geometry of geometryGenerator()) {yield* geometry.edges;}}());
+   this.faces = new Set(function* () {yield* self.faces; for (let geometry of geometryGenerator()) {yield* geometry.faces;}}());
 }
 
 WingedTopology.prototype.sanityCheck = function() {
    let sanity = true;
    // first check vertex for error.
    for (let [index, vertex] of this.vertices.entries()) {
-      if (vertex.isReal()) {
+      if (vertex.isLive()) {
          if (vertex.outEdge.origin !== vertex) {
             console.log("vertex " + index + " outEdge is wrong");
             sanity = false;
@@ -1739,7 +1734,7 @@ WingedTopology.prototype.collapseEdge = function(halfEdge, collapsibleWings) {
    if (next.next.next === next) {
       undoCollapseLeft = this._collapseLoop(next.next, collapsibleWings);
    }
-   if (pairNext.wingedEdge.isReal() && (pairNext.next.next === pairNext)) {   // add wingedEdge.isReal() to guard (--) edges.
+   if (pairNext.wingedEdge.isLive() && (pairNext.next.next === pairNext)) {   // add wingedEdge.isLive() to guard (--) edges.
       undoCollapseRight = this._collapseLoop(pairNext, collapsibleWings);
    }
    return function() {
