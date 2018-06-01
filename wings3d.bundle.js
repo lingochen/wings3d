@@ -5082,6 +5082,8 @@ DraftBench.prototype._resizePreview = function() {
       model.preview.shaderData.resizeAttribute('selected', (length+centroidLength) * 4);
       model.preview.shaderData.uploadAttribute('selected', 0, this.preview.selected.subarray(0, length));
       model.preview.shaderData.uploadAttribute('selected', length*4, this.preview.centroid.selected.subarray(0, centroidLength));
+      // invalidate hilite
+      model.hilite.indexLength = 0;
    }
       
    // compute index.
@@ -10090,11 +10092,7 @@ class SeparateBodyCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["E
 
    doIt() {
       this.separate = this.madsor.separate();
-      if (this.combine) {
-         return true;
-      } else {
-         return false;
-      }
+      return (this.separate.length > 0);
    }
 
    undo() {
