@@ -8665,6 +8665,7 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
    }
 
    setCurrent(edge, intersect, center) {
+      
       if (this.currentEdge !== edge) {
          if (this.currentEdge !== null) {
             this.hideOldHilite(edge);
@@ -9773,12 +9774,12 @@ class BodyMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
    hideOldHilite() {
       if (this.hiliteView !== this.preview) {
          this.preview.hiliteBody(false);
-         this.hiliteView = this.preview;
+         this.hiliteView = null;
       }
    }
 
    showNewHilite(_edge, _intersect, _center) {
-      if (this.hiliteView !== this.preview) {
+      if (this.preview !== null && this.hiliteView !== this.preview) {  // this.preview !== null should not happened, but just make sure
          this.preview.hiliteBody(true);
          this.hiliteView = this.preview;
       }

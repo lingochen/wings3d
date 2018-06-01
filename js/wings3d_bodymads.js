@@ -190,12 +190,12 @@ class BodyMadsor extends Madsor {
    hideOldHilite() {
       if (this.hiliteView !== this.preview) {
          this.preview.hiliteBody(false);
-         this.hiliteView = this.preview;
+         this.hiliteView = null;
       }
    }
 
    showNewHilite(_edge, _intersect, _center) {
-      if (this.hiliteView !== this.preview) {
+      if (this.preview !== null && this.hiliteView !== this.preview) {  // this.preview !== null should not happened, but just make sure
          this.preview.hiliteBody(true);
          this.hiliteView = this.preview;
       }

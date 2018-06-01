@@ -207,6 +207,7 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
    }
 
    setCurrent(edge, intersect, center) {
+      
       if (this.currentEdge !== edge) {
          if (this.currentEdge !== null) {
             this.hideOldHilite(edge);
