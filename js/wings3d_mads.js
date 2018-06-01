@@ -149,6 +149,14 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       }
    }
 
+   * selectedCage() {
+      for (let cage of this.world) {
+         if (cage.hasSelection()) {
+            yield cage;
+         }
+      }
+   }
+
    hasSelection() {
       for (let cage of this.world) {
          if (cage.hasSelection()) {
