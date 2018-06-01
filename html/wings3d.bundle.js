@@ -82,7 +82,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "bindAction", function() { return bindAction; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "runAction", function() { return runAction; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "setInteraction", function() { return setInteraction; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__ = __webpack_require__(4);
 /*
 //  wings3d.js
 //     The start module of Wings 3D. Port,
@@ -342,6 +342,7 @@ const action = {
    bodyRotateFree: () => {notImplemented(this);},
    bodyInvert: () => {notImplemented(this);},
    bodyCombine: () => {notImplemented(this);},
+   bodySeparate: () => {notImplemented(this);},
    // edge
    cutMenu: () => {notImplemented(this);},
    cutLine2: () => {notImplemented(this);},
@@ -471,15 +472,15 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_render__ = __webpack_require__(18);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_camera__ = __webpack_require__(14);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_gl__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_gl__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__plugins_wavefront_obj__ = __webpack_require__(19);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_undo__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_undo__ = __webpack_require__(5);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_facemads__ = __webpack_require__(9);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d_edgemads__ = __webpack_require__(11);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__wings3d_vertexmads__ = __webpack_require__(13);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__wings3d_bodymads__ = __webpack_require__(12);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__wings3d_model__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__wings3d_model__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_12__wings3d_draftbench__ = __webpack_require__(7);
 /*
 //     This module implements most of the commands in the View menu. 
@@ -1520,677 +1521,14 @@ function queuePopupMenu(popupMenu) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "createWebGLContext", function() { return createWebGLContext; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ShaderData", function() { return ShaderData; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ShaderProgram", function() { return ShaderProgram; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "gl", function() { return gl; });
-/*
-//
-//     Append a few utilities and convenience functions. now to es6 module.
-//
-*/
-
-
-let gl = null;
-function createWebGLContext(canvasID, attrib) {
-   var _pvt = {currentShader: null};
-
-   // initialization
-   var canvas = document.getElementById(canvasID);
-   if (!canvas) {
-      return null;
-   }
-      
-   attrib = typeof attrib !== 'undefined' ? attrib : { depth: true, stencil: true, antialias: true };
-//   gl = canvas.getContext("webgl2", attrib);
-//   if (!gl) {
-      gl = canvas.getContext("webgl", attrib) || canvas.getContext("experimental-webgl", attrib);
-      if (gl) {
-         // init_extensions(), init_restrictions()
-         let ext = gl.getExtension("OES_standard_derivatives"); // webgl2 is standard.
-         if (ext === null) {
-            console.log("No OES_standard_derivatives");
-            return null;   
-         }
-         ext = gl.getExtension("OES_element_index_uint");
-         if (ext === null) {
-            console.log("No OES_element_index_uint");
-            return null;
-         }
-         console.log("WebGL 1 init with extension");
-      } else {
-         alert("Unable to initialize WebGL");
-         return null;
-      }
-//   } else {
-//      console.log("WebGL 2 init successful");
-//   }
-
-
-   // make sure webgl framebuffer size matched real canvas size.
-   gl.resizeToDisplaySize = function() {
-      var canvas = gl.canvas;
-      var displayWidth = canvas.clientWidth;
-      var displayHeight = canvas.clientHeight;
-      if (canvas.width != displayWidth ||
-          canvas.height != displayHeight) {
-         canvas.width = displayWidth;
-         canvas.height = displayHeight;     
-         gl.viewport(0, 0, displayWidth, displayHeight);
-         return true;
-      }
-      return false;
-   };
-   gl.resizeToDisplaySize();
-
-   // setup variables
-   gl.projection = mat4.create();
-   gl.modelView = mat4.create();
-
-   // binder
-   _pvt.transform = {
-      projection: function(gl, loc) {
-         gl.uniformMatrix4fv(loc, false, gl.projection);
-      },
-      worldView: function(gl, loc) {
-         gl.uniformMatrix4fv(loc, false, gl.modelView);
-      },
-   };
-
-   // utility functions
-   // move from wings3d.wm.
-   // return int32array[0,0, width, height] ...etc.
-   gl.getViewport = function() {
-      return gl.getParameter(gl.VIEWPORT);
-   };
-   // project() transform objectSpace vert to screenSpace,
-   //   return vec4. vec4[3] == 0 meant failure, problems with input projection.
-   gl.project = function(objx, objy, objz, modelview, projection) {
-      //Transformation vectors
-      var input = vec4.fromValues(objx, objy, objz, 1.0);
-          out = vec4.create();
-      //Modelview transform
-      vec4.transformMat4(out, input, modelView);
-      //Projection transform, 
-      vec4.transformMat4(input, out, projection);
-      if(input[3] == 0.0) {//The w value
-         return input;
-      }
-      //Perspective division
-      input[0] /= input[3];
-      input[1] /= input[3];
-      input[2] /= input[3];
-      var viewport = gl.getViewport();
-      //screenCoordinate, Map x, y to range 0-1
-      out[0]=(input[0]*0.5+0.5)*viewport[2]+viewport[0];
-      out[1]=(input[1]*0.5+0.5)*viewport[3]+viewport[1];
-      //This is only correct when glDepthRange(0.0, 1.0)
-      out[2]=input[2]*0.5 + 0.5;	//Between 0 and 1
-      out[3]=1.0;             // out[w] determined success or failure.
-      return out;
-  };
-
-   gl.unProject = function(winx, winy, winz, modelview, projection, viewport) {
-      //Transformation matrices
-      var final = mat4.create(),
-          input = vec4.create(),
-          out = vec4.create();
-      //Calculation for inverting a matrix, compute projection x modelview
-      //and store in A[16]
-      mat4.multiply(final, projection, modelview);
-      //Now compute the inverse of matrix A
-      if(mat4.invert(final, final)==null) {
-         out[3]=0.0;
-         return out;
-      }
-      var viewport = gl.getViewport();
-      //Transformation of normalized coordinates between -1 and 1
-      input[0]=(winx-viewport[0])/viewport[2]*2.0 - 1.0;
-      input[1]=(winy-viewport[1])/viewport[3]*2.0 - 1.0;
-      input[2]=2.0*winz-1.0;
-      input[3]=1.0;
-      //Objects coordinates
-      vec4.transformMat4(out, input, final);
-      if(out[3]==0.0) {
-         return out;
-      }
-      out[0]/=out[3];
-      out[1]/=out[3];
-      out[2]/=out[3];
-      out[3] =1.0;
-      return out;
-   };
-   gl.transformVertex = function(vertex4) {
-       var out = vec4.create();
-       return vec4.transformMat4(out, vec4.transformMat4(out, vertex4, gl.modelView), gl.projection);
-   };
-
-   // shader, programs.
-   gl.compileGLSL = function(vshader, fshader) {
-      // compile vertex and fragment shader
-      var vertexShader = gl.loadShader(gl.VERTEX_SHADER, vshader);
-      if (!vertexShader) {
-         console.log("failed to compile vertex shader");
-         return null;
-      }
-      var fragmentShader = gl.loadShader(gl.FRAGMENT_SHADER, fshader);
-      if (!fragmentShader) {
-         console.log("failed to compile fragment shader");
-         return null;
-      }
-
-      // get program, attach, link
-      var progHandle = gl.createProgram();
-      gl.attachShader(progHandle, vertexShader);
-      gl.attachShader(progHandle, fragmentShader);
-      gl.linkProgram(progHandle);
-
-      // check for error
-      var linked = gl.getProgramParameter(progHandle, gl.LINK_STATUS);
-      if (!linked) {
-         var error = gl.getProgramInfoLog(progHandle);
-         console.log('failed to link program: ' + error);
-         gl.deleteProgram(progHandle);
-         gl.deleteShader(fragmentShader);
-         gl.deleteShader(vertexShader);
-         return null;
-      }
-      return progHandle;
-   };
-
-   gl.loadShader = function(shaderType, shaderSource) {
-      // createShader always work unless shaderType is wrong?
-      var shaderHandle = gl.createShader(shaderType);
-
-      // loading shaderSource then compile shader.
-      gl.shaderSource(shaderHandle, shaderSource);
-      gl.compileShader(shaderHandle);
-
-      // check for successful compilation.
-      var compiled = gl.getShaderParameter(shaderHandle, gl.COMPILE_STATUS);
-      if (!compiled) {
-         var error = gl.getShaderInfoLog(shaderHandle);
-         console.log('failed to compile shader: ' + error);
-         gl.deleteShader(shaderHandle);
-         return null;
-      }
-      return shaderHandle;
-   };
-
-   gl.createShaderProgram = function(vShader, fShader) {
-      var progHandle = gl.compileGLSL(vShader, fShader);
-      if (progHandle) {
-         var info;
-         var attribute = {};
-         var numCount = gl.getProgramParameter(progHandle, gl.ACTIVE_ATTRIBUTES);
-         for (var i = 0; i < numCount; ++i) {
-            info = gl.getActiveAttrib(progHandle, i);
-            if (!info){
-               console.log("Something wrong, getActiveAttrib failed");
-               return null;
-            }
-            attribute[info.name] = {loc: gl.getAttribLocation(progHandle, info.name), type: info.type};
-         }
-         var uniform = {};
-         var transform = {world: null, worldView: null, worldViewProjection: null, view: null, projection: null};
-         numCount = gl.getProgramParameter(progHandle, gl.ACTIVE_UNIFORMS);
-         for (i = 0; i < numCount; ++i) {
-            info  = gl.getActiveUniform(progHandle, i);
-            if (!info) {
-               console.log("Something wrong, getActiveUniform failed");
-               return null;
-            }
-            // check if it belongs to transform?
-            if (transform.hasOwnProperty(info.name)) {
-               transform[info.name] = gl.getUniformLocation(progHandle, info.name);
-            } else {
-               // check for array suffix?
-               uniform[info.name] = {loc: gl.getUniformLocation(progHandle, info.name),
-                                     size: info.size, type: info.type};
-            }
-         }
-         return new ShaderProgram(progHandle, transform, attribute, uniform);
-      }
-      
-   };
-
-   // return buffer Handle.
-   gl.createBufferHandle = function(typedArray, type = gl.ARRAY_BUFFER, draw = gl.STATIC_DRAW) {
-      if (ArrayBuffer.isView(typedArray)) {
-         var handle = gl.createBuffer();
-         gl.bindBuffer(type, handle);
-         gl.bufferData(type, typedArray, draw);
-         gl.bindBuffer(type, null);
-         return handle;
-      } else {
-         console.log("not typedArray");
-         return null;
-      }
-   };
-
-   gl.setBufferAndAttrib = function(handle, position, size=3) {
-      gl.bindBuffer(gl.ARRAY_BUFFER, handle);
-      gl.vertexAttribPointer(position, size, gl.FLOAT, false, 0, 0);
-      gl.enableVertexAttribArray(position);
-   };
-   
-   gl.bindAttributeToProgram = function(progLoc, attrib) {
-      gl.bindBuffer(gl.ARRAY_BUFFER, attrib.handle);
-      gl.vertexAttribPointer(progLoc, attrib.size, attrib.type, attrib.normalized, attrib.stride, attrib.offset);
-      gl.enableVertexAttribArray(progLoc);
-   }
-
-   gl.bindShaderData = function(data, useIndex=true) {
-      // using current setShader, set shader, set indexbuffer
-      _pvt.currentShader.bindAttribute(gl, data.attribute);
-      _pvt.currentShader.bindUniform(gl, data.uniform);
-      if (useIndex && typeof(data.index)!=="undefined" && data.index !== null) {
-         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, data.index.handle);
-      }
-   };
-
-   gl.bindTransform = function() {
-      // current shader, set current transform
-      _pvt.currentShader.bindTransform(gl, _pvt.transform);
-   };
-   gl.pushTransform = function(matrix) {
-
-   };
-   gl.popTransform = function() {
-      // restore transform
-   };
-   gl.useShader = function(shader) {
-      _pvt.currentShader = shader;
-      gl.useProgram(shader.progHandle);
-   };
-   gl.disableShader = function() {
-      // disable vertex attribute array
-      if (_pvt.currentShader) {
-         _pvt.currentShader.disableVertexAttributeArray(gl);
-      }
-   };
-
-   gl.drawVertex =  function(drawObject) {
-      gl.bindTransform();
-      gl.bindShaderData(drawObject.shaderData, false);
-      drawObject.drawVertex(gl);
-   };
-
-   gl.drawSelect = function(drawObject) {
-      gl.bindTransform();
-      drawObject.bindSelectorShaderData(gl);
-      drawObject.drawSelect(gl);
-   };
-
-   gl.createShaderData = function() {
-      return new ShaderData();
-   };
-
-   return gl;
-};
-
-
-//
-// define ShaderProgram, ShaderData.
-//
-
-/**input to ShaderProgram.
- */
-const ShaderData = function() {
-   this.attribute = {};
-   this.uniform = {};
-};
-
-ShaderData.attribLayout = function(attribSize=3, attribType=gl.FLOAT, normalized=false, stride=0, offset=0) {
-   return {size: attribSize, type: attribType, normalized: normalized, stride: stride, offset: offset};
-}
-
-
-ShaderData.prototype.setupAttribute = function(name, layout, buffer, usage) {
-   this.createAttribute(name, layout, usage);
-   this.resizeAttribute(name, buffer.byteLength);
-   this.uploadAttribute(name, 0, buffer);
-}
-
-ShaderData.prototype.createAttribute = function(name, layout, usage) {
-   if (!this.attribute[name]) {
-      var handle = gl.createBuffer();
-      this.attribute[name] = {handle: handle,
-                              byteLength: 0,
-                              usage: usage,
-                              size: layout.size,
-                              type: layout.type,
-                              normalized: layout.normalized,
-                              stride: layout.stride,
-                              offset: layout.offset
-                             };
-   } else {
-      console.log("Shader Data: " + name + " already initialized");
-   }
-};
-
-ShaderData.prototype.resizeAttribute = function(name, byteLength) {//, usage) {
-   var attrib = this.attribute[name];
-   if (attrib && attrib.byteLength != byteLength) {
-      gl.bindBuffer(gl.ARRAY_BUFFER, attrib.handle);
-      gl.bufferData(gl.ARRAY_BUFFER, byteLength, attrib.usage);
-      attrib.byteLength = byteLength;
-   }
-};
-
-ShaderData.prototype.deleteAttribute = function(name) {
-   var attribute = this.attribute[name];
-   if (attribute) {
-      gl.deleteBuffer(attribute.handle);
-      this.attribute[name] = null;
-   }
-};
-
-ShaderData.prototype.freeAllAttributes = function() {
-   var removeList = [];
-   for (var key in this.attribute) {
-      removeList.push(key);
-   }
-   for (var i = 0; i < removeList.length; ++i) {
-      this.deleteAttribute(removeList[i]);
-   }
-};
-
-
-ShaderData.prototype.uploadAttribute = function(name, byteOffset, typedArray)  {
-   var attrb = this.attribute[name];
-   if (attrb) {
-      gl.bindBuffer(gl.ARRAY_BUFFER, attrb.handle);
-      gl.bufferSubData(gl.ARRAY_BUFFER, byteOffset, typedArray);
-   } else {
-      console.log("Shader Data: " + name + " not initialized");
-   }
-};
-
-//ShaderData.prototype.setAttribute = function(name, value) {
-//};
-// index is used for drawElement, not used for input to shaderProgram
-ShaderData.prototype.setIndex = function(index) {
-   if ((typeof(this.index)!=="undefined") && (this.index !== null)) {
-      gl.deleteBuffer(this.index.handle);
-   }
-   if (index !== null) {
-      var handle = gl.createBufferHandle(index, gl.ELEMENT_ARRAY_BUFFER);
-      this.index = {handle: handle};
-   }
-};
-
-ShaderData.prototype.setUniform3fv = function(name, arry3) {   // 3fv === vec3
-   this.uniform[name] = {value: new Float32Array(arry3), binder: ShaderData.uniform3fvFn};
-};
-
-ShaderData.uniform3fvFn = function(gl, loc, value) {
-   gl.uniform3fv(loc, value);
-}; 
-
-ShaderData.prototype.setUniform4fv = function(name, arry4) {
-   this.uniform[name] = {value: new Float32Array(arry4), binder: ShaderData.uniform4fvFn};
-};
-
-ShaderData.uniform4fvFn = function(gl, loc, value) {
-   gl.uniform4fv(loc, value);
-};
-
-// a few predefine var. 
-//        attributes: ["position", "normal", "uv"],
-//        uniforms: ["world", "worldView", "worldViewProjection", "view", "projection"] ? how about inverse?
-var ShaderProgram = function(progHandle, transform, attribute, uniform) {
-   this.progHandle = progHandle;
-   this.transform = transform;
-   this.attribute = attribute;
-   this.uniform = uniform;
-};
-
-ShaderProgram.prototype.disableVertexAttributeArray = function(gl) {
-   for (var key in this.attribute) {
-      if (this.attribute.hasOwnProperty(key)) {
-         gl.disableVertexAttribArray(this.attribute[key].loc);
-      }
-   }
-};
-
-ShaderProgram.prototype.bindAttribute = function(gl, attribute) {
-   try {
-   for (var key in this.attribute) {
-      if (attribute.hasOwnProperty(key)) {   // don't need to check this.attribute' inherited property, cannot possibley exist
-         var attrb = attribute[key];
-         gl.bindAttributeToProgram(this.attribute[key].loc, attrb);
-      } else {
-         // don't have property. console.log?
-         console.log("shaderData don't have shader attribute: " + key);
-      }
-   }
-   }
-   catch (e) {
-      console.log(e);
-   }
-};
-
-ShaderProgram.prototype.bindUniform = function(gl, uniform) {
-   try {
-   for (var key in this.uniform) {
-      if (uniform.hasOwnProperty(key)) {
-         var uni = uniform[key];
-         uni.binder(gl, this.uniform[key].loc, uni.value);
-      } else {
-         // don't have property. console.log?
-      }
-   }
-   }
-   catch (e) {
-      console.log(e);
-   }
-};
-
-ShaderProgram.prototype.bindTransform = function(gl, transform) {
-   try {
-     for (var key in this.transform) {
-      if (transform.hasOwnProperty(key)) {
-         var binder = transform[key];
-         binder(gl, this.transform[key]);
-      }
-   } 
-   }
-   catch (e) {
-      console.log(e);
-   }
-};
-
-ShaderProgram.prototype.getTypeByName = function(type) {
-/*	  var FLOAT = 0x1406;
-	  var FLOAT_VEC2 = 0x8B50;
-	  var FLOAT_VEC3 = 0x8B51;
-	  var FLOAT_VEC4 = 0x8B52;
-	  var INT = 0x1404;
-	  var INT_VEC2 = 0x8B53;
-	  var INT_VEC3 = 0x8B54;
-	  var INT_VEC4 = 0x8B55;
-	  var BOOL = 0x8B56;
-	  var BOOL_VEC2 = 0x8B57;
-	  var BOOL_VEC3 = 0x8B58;
-	  var BOOL_VEC4 = 0x8B59;
-	  var FLOAT_MAT2 = 0x8B5A;
-	  var FLOAT_MAT3 = 0x8B5B;
-	  var FLOAT_MAT4 = 0x8B5C;
-	  var SAMPLER_2D = 0x8B5E;
-	  var SAMPLER_CUBE = 0x8B60;
-	  var SAMPLER_3D = 0x8B5F;
-	  var SAMPLER_2D_SHADOW = 0x8B62;
-	  var FLOAT_MAT2x3 = 0x8B65;
-	  var FLOAT_MAT2x4 = 0x8B66;
-	  var FLOAT_MAT3x2 = 0x8B67;
-	  var FLOAT_MAT3x4 = 0x8B68;
-	  var FLOAT_MAT4x2 = 0x8B69;
-	  var FLOAT_MAT4x3 = 0x8B6A;
-	  var SAMPLER_2D_ARRAY = 0x8DC1;
-	  var SAMPLER_2D_ARRAY_SHADOW = 0x8DC4;
-	  var SAMPLER_CUBE_SHADOW = 0x8DC5;
-	  var UNSIGNED_INT = 0x1405;
-	  var UNSIGNED_INT_VEC2 = 0x8DC6;
-	  var UNSIGNED_INT_VEC3 = 0x8DC7;
-	  var UNSIGNED_INT_VEC4 = 0x8DC8;
-	  var INT_SAMPLER_2D = 0x8DCA;
-	  var INT_SAMPLER_3D = 0x8DCB;
-	  var INT_SAMPLER_CUBE = 0x8DCC;
-	  var INT_SAMPLER_2D_ARRAY = 0x8DCF;
-	  var UNSIGNED_INT_SAMPLER_2D = 0x8DD2;
-	  var UNSIGNED_INT_SAMPLER_3D = 0x8DD3;
-	  var UNSIGNED_INT_SAMPLER_CUBE = 0x8DD4;
-	  var UNSIGNED_INT_SAMPLER_2D_ARRAY = 0x8DD7;
-
-	  var TEXTURE_2D = 0x0DE1;
-	  var TEXTURE_CUBE_MAP = 0x8513;
-	  var TEXTURE_3D = 0x806F;
-	  var TEXTURE_2D_ARRAY = 0x8C1A;*/
-
-};
-
-
-
-
-
-/***/ }),
-/* 4 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "EditCommand", function() { return EditCommand; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "MouseMoveHandler", function() { return MouseMoveHandler; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "MoveableCommand", function() { return MoveableCommand; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "EditCommandCombo", function() { return EditCommandCombo; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "EditCommandSimple", function() { return EditCommandSimple; });
-/**
- *  abstract EditCommand class for undo, redo handling. also MouseMoveHandler class.
- * 
- */
-
-// merge MouseMoveHandler to EditCommand
-class EditCommand {
-   _calibrateMovement(mouseMove) {
-      // todo: instead of magic constant. should supply a scaling factor.
-      let move;
-      if (mouseMove == 0) {
-         move = 0;
-      } else if (mouseMove < 0) {
-         move = Math.log(-mouseMove) / 5.0;  // log to counteract mouse acceleration.
-         move = -move;
-      } else {
-         move = Math.log(mouseMove) / 5.0;
-      }
-
-      return move;
-   }
-
-   _xPercentMovement(ev) {
-      let width = window.innertWidth || document.documentElement.clientWidth || document.body.clientWidth;
-      return (ev.movementX / width);
-   }
-
-   //doIt() {}
-
-   //undo() {}
-}
-
-class MouseMoveHandler extends EditCommand {
-
-   //handleMouseMove(ev) {}
-
-/*   cancel() {
-      this._cancel();     // called descendant handler
-      // enable mouse cursor
-      document.body.style.cursor = 'auto';
-   }
-
-   commit() {
-      this._commit();
-      // enable mouse cursor
-      document.body.style.cursor = 'auto';
-   } */
-}
-
-// delegate mouse movement to MouseMoveHandler
-class MoveableCommand extends EditCommand {
-
-   handleMouseMove(ev, cameraView) {
-      if (this.moveHandler) {
-         this.moveHandler.handleMouseMove(ev, cameraView);
-      }
-   }
-
-   doIt() {
-      if (this.moveHandler) {
-         this.moveHandler.doIt();
-      }
-   }
-
-   undo() {
-      if (this.moveHandler) {
-         this.moveHandler.undo();
-      }
-   }
-}
-
-class EditCommandSimple extends EditCommand {
-   constructor(command) {
-      super();
-      this.commandName = command;
-   }
-
-   doIt(currentMadsor) {
-      this.undo = currentMadsor[this.commandName]();
-      return (this.undo !== null);
-   }
-
-   undo(currentMadsor) {
-      this.undo(currentMadsor);
-   }
-}
-
-
-class EditCommandCombo extends EditCommand {
-   constructor(editCommands) {
-      super();
-      this.editCommands = editCommands;
-   }
-
-   doIt() {
-      // start from beginning
-      for (let cmd of this.editCommands) {
-         cmd.doIt();
-      }
-   }
-
-   undo() {
-      // walk from last to first
-      for (let i = this.editCommands.length-1; i >= 0; --i) {
-         this.editCommands[i].undo();
-      }
-   }
-}
-
-
-
-
-/***/ }),
-/* 5 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "PreviewCage", function() { return PreviewCage; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "CreatePreviewCageCommand", function() { return CreatePreviewCageCommand; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_boundingvolume__ = __webpack_require__(15);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_wingededge__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_view__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_undo__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_undo__ = __webpack_require__(5);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_draftbench__ = __webpack_require__(7);
 /*
 *  hold onto a WingedEdgeTopology. adds index, texture, etc....
@@ -2258,6 +1596,24 @@ PreviewCage.prototype.merge = function(mergeSelection) {
    // copy geometry.
    this.geometry.merge(function* (){for (let cage of mergeSelection) {yield cage.geometry;}});
 };
+
+PreviewCage.prototype.separate = function() {
+   const separatePreview = [];
+   const separateGeometry = this.geometry.separateOut();
+   let sep = 0;
+   for (let geometry of separateGeometry) {
+      const cage = new PreviewCage(this.bench);
+      cage.geometry = geometry;     // copy back
+      if (sep > 0) {
+         cage.name = this.name + "_sep" + sep.toString();
+      } else {
+         cage.name = this.name;
+      }
+      sep++;
+      separatePreview.push(cage);
+   }
+   return separatePreview;    // snapshot.
+}
 
 
 PreviewCage.prototype.hide = function() {
@@ -4497,6 +3853,669 @@ class CreatePreviewCageCommand extends __WEBPACK_IMPORTED_MODULE_5__wings3d_undo
 
 
 /***/ }),
+/* 4 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "createWebGLContext", function() { return createWebGLContext; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ShaderData", function() { return ShaderData; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ShaderProgram", function() { return ShaderProgram; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "gl", function() { return gl; });
+/*
+//
+//     Append a few utilities and convenience functions. now to es6 module.
+//
+*/
+
+
+let gl = null;
+function createWebGLContext(canvasID, attrib) {
+   var _pvt = {currentShader: null};
+
+   // initialization
+   var canvas = document.getElementById(canvasID);
+   if (!canvas) {
+      return null;
+   }
+      
+   attrib = typeof attrib !== 'undefined' ? attrib : { depth: true, stencil: true, antialias: true };
+//   gl = canvas.getContext("webgl2", attrib);
+//   if (!gl) {
+      gl = canvas.getContext("webgl", attrib) || canvas.getContext("experimental-webgl", attrib);
+      if (gl) {
+         // init_extensions(), init_restrictions()
+         let ext = gl.getExtension("OES_standard_derivatives"); // webgl2 is standard.
+         if (ext === null) {
+            console.log("No OES_standard_derivatives");
+            return null;   
+         }
+         ext = gl.getExtension("OES_element_index_uint");
+         if (ext === null) {
+            console.log("No OES_element_index_uint");
+            return null;
+         }
+         console.log("WebGL 1 init with extension");
+      } else {
+         alert("Unable to initialize WebGL");
+         return null;
+      }
+//   } else {
+//      console.log("WebGL 2 init successful");
+//   }
+
+
+   // make sure webgl framebuffer size matched real canvas size.
+   gl.resizeToDisplaySize = function() {
+      var canvas = gl.canvas;
+      var displayWidth = canvas.clientWidth;
+      var displayHeight = canvas.clientHeight;
+      if (canvas.width != displayWidth ||
+          canvas.height != displayHeight) {
+         canvas.width = displayWidth;
+         canvas.height = displayHeight;     
+         gl.viewport(0, 0, displayWidth, displayHeight);
+         return true;
+      }
+      return false;
+   };
+   gl.resizeToDisplaySize();
+
+   // setup variables
+   gl.projection = mat4.create();
+   gl.modelView = mat4.create();
+
+   // binder
+   _pvt.transform = {
+      projection: function(gl, loc) {
+         gl.uniformMatrix4fv(loc, false, gl.projection);
+      },
+      worldView: function(gl, loc) {
+         gl.uniformMatrix4fv(loc, false, gl.modelView);
+      },
+   };
+
+   // utility functions
+   // move from wings3d.wm.
+   // return int32array[0,0, width, height] ...etc.
+   gl.getViewport = function() {
+      return gl.getParameter(gl.VIEWPORT);
+   };
+   // project() transform objectSpace vert to screenSpace,
+   //   return vec4. vec4[3] == 0 meant failure, problems with input projection.
+   gl.project = function(objx, objy, objz, modelview, projection) {
+      //Transformation vectors
+      var input = vec4.fromValues(objx, objy, objz, 1.0);
+          out = vec4.create();
+      //Modelview transform
+      vec4.transformMat4(out, input, modelView);
+      //Projection transform, 
+      vec4.transformMat4(input, out, projection);
+      if(input[3] == 0.0) {//The w value
+         return input;
+      }
+      //Perspective division
+      input[0] /= input[3];
+      input[1] /= input[3];
+      input[2] /= input[3];
+      var viewport = gl.getViewport();
+      //screenCoordinate, Map x, y to range 0-1
+      out[0]=(input[0]*0.5+0.5)*viewport[2]+viewport[0];
+      out[1]=(input[1]*0.5+0.5)*viewport[3]+viewport[1];
+      //This is only correct when glDepthRange(0.0, 1.0)
+      out[2]=input[2]*0.5 + 0.5;	//Between 0 and 1
+      out[3]=1.0;             // out[w] determined success or failure.
+      return out;
+  };
+
+   gl.unProject = function(winx, winy, winz, modelview, projection, viewport) {
+      //Transformation matrices
+      var final = mat4.create(),
+          input = vec4.create(),
+          out = vec4.create();
+      //Calculation for inverting a matrix, compute projection x modelview
+      //and store in A[16]
+      mat4.multiply(final, projection, modelview);
+      //Now compute the inverse of matrix A
+      if(mat4.invert(final, final)==null) {
+         out[3]=0.0;
+         return out;
+      }
+      var viewport = gl.getViewport();
+      //Transformation of normalized coordinates between -1 and 1
+      input[0]=(winx-viewport[0])/viewport[2]*2.0 - 1.0;
+      input[1]=(winy-viewport[1])/viewport[3]*2.0 - 1.0;
+      input[2]=2.0*winz-1.0;
+      input[3]=1.0;
+      //Objects coordinates
+      vec4.transformMat4(out, input, final);
+      if(out[3]==0.0) {
+         return out;
+      }
+      out[0]/=out[3];
+      out[1]/=out[3];
+      out[2]/=out[3];
+      out[3] =1.0;
+      return out;
+   };
+   gl.transformVertex = function(vertex4) {
+       var out = vec4.create();
+       return vec4.transformMat4(out, vec4.transformMat4(out, vertex4, gl.modelView), gl.projection);
+   };
+
+   // shader, programs.
+   gl.compileGLSL = function(vshader, fshader) {
+      // compile vertex and fragment shader
+      var vertexShader = gl.loadShader(gl.VERTEX_SHADER, vshader);
+      if (!vertexShader) {
+         console.log("failed to compile vertex shader");
+         return null;
+      }
+      var fragmentShader = gl.loadShader(gl.FRAGMENT_SHADER, fshader);
+      if (!fragmentShader) {
+         console.log("failed to compile fragment shader");
+         return null;
+      }
+
+      // get program, attach, link
+      var progHandle = gl.createProgram();
+      gl.attachShader(progHandle, vertexShader);
+      gl.attachShader(progHandle, fragmentShader);
+      gl.linkProgram(progHandle);
+
+      // check for error
+      var linked = gl.getProgramParameter(progHandle, gl.LINK_STATUS);
+      if (!linked) {
+         var error = gl.getProgramInfoLog(progHandle);
+         console.log('failed to link program: ' + error);
+         gl.deleteProgram(progHandle);
+         gl.deleteShader(fragmentShader);
+         gl.deleteShader(vertexShader);
+         return null;
+      }
+      return progHandle;
+   };
+
+   gl.loadShader = function(shaderType, shaderSource) {
+      // createShader always work unless shaderType is wrong?
+      var shaderHandle = gl.createShader(shaderType);
+
+      // loading shaderSource then compile shader.
+      gl.shaderSource(shaderHandle, shaderSource);
+      gl.compileShader(shaderHandle);
+
+      // check for successful compilation.
+      var compiled = gl.getShaderParameter(shaderHandle, gl.COMPILE_STATUS);
+      if (!compiled) {
+         var error = gl.getShaderInfoLog(shaderHandle);
+         console.log('failed to compile shader: ' + error);
+         gl.deleteShader(shaderHandle);
+         return null;
+      }
+      return shaderHandle;
+   };
+
+   gl.createShaderProgram = function(vShader, fShader) {
+      var progHandle = gl.compileGLSL(vShader, fShader);
+      if (progHandle) {
+         var info;
+         var attribute = {};
+         var numCount = gl.getProgramParameter(progHandle, gl.ACTIVE_ATTRIBUTES);
+         for (var i = 0; i < numCount; ++i) {
+            info = gl.getActiveAttrib(progHandle, i);
+            if (!info){
+               console.log("Something wrong, getActiveAttrib failed");
+               return null;
+            }
+            attribute[info.name] = {loc: gl.getAttribLocation(progHandle, info.name), type: info.type};
+         }
+         var uniform = {};
+         var transform = {world: null, worldView: null, worldViewProjection: null, view: null, projection: null};
+         numCount = gl.getProgramParameter(progHandle, gl.ACTIVE_UNIFORMS);
+         for (i = 0; i < numCount; ++i) {
+            info  = gl.getActiveUniform(progHandle, i);
+            if (!info) {
+               console.log("Something wrong, getActiveUniform failed");
+               return null;
+            }
+            // check if it belongs to transform?
+            if (transform.hasOwnProperty(info.name)) {
+               transform[info.name] = gl.getUniformLocation(progHandle, info.name);
+            } else {
+               // check for array suffix?
+               uniform[info.name] = {loc: gl.getUniformLocation(progHandle, info.name),
+                                     size: info.size, type: info.type};
+            }
+         }
+         return new ShaderProgram(progHandle, transform, attribute, uniform);
+      }
+      
+   };
+
+   // return buffer Handle.
+   gl.createBufferHandle = function(typedArray, type = gl.ARRAY_BUFFER, draw = gl.STATIC_DRAW) {
+      if (ArrayBuffer.isView(typedArray)) {
+         var handle = gl.createBuffer();
+         gl.bindBuffer(type, handle);
+         gl.bufferData(type, typedArray, draw);
+         gl.bindBuffer(type, null);
+         return handle;
+      } else {
+         console.log("not typedArray");
+         return null;
+      }
+   };
+
+   gl.setBufferAndAttrib = function(handle, position, size=3) {
+      gl.bindBuffer(gl.ARRAY_BUFFER, handle);
+      gl.vertexAttribPointer(position, size, gl.FLOAT, false, 0, 0);
+      gl.enableVertexAttribArray(position);
+   };
+   
+   gl.bindAttributeToProgram = function(progLoc, attrib) {
+      gl.bindBuffer(gl.ARRAY_BUFFER, attrib.handle);
+      gl.vertexAttribPointer(progLoc, attrib.size, attrib.type, attrib.normalized, attrib.stride, attrib.offset);
+      gl.enableVertexAttribArray(progLoc);
+   }
+
+   gl.bindShaderData = function(data, useIndex=true) {
+      // using current setShader, set shader, set indexbuffer
+      _pvt.currentShader.bindAttribute(gl, data.attribute);
+      _pvt.currentShader.bindUniform(gl, data.uniform);
+      if (useIndex && typeof(data.index)!=="undefined" && data.index !== null) {
+         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, data.index.handle);
+      }
+   };
+
+   gl.bindTransform = function() {
+      // current shader, set current transform
+      _pvt.currentShader.bindTransform(gl, _pvt.transform);
+   };
+   gl.pushTransform = function(matrix) {
+
+   };
+   gl.popTransform = function() {
+      // restore transform
+   };
+   gl.useShader = function(shader) {
+      _pvt.currentShader = shader;
+      gl.useProgram(shader.progHandle);
+   };
+   gl.disableShader = function() {
+      // disable vertex attribute array
+      if (_pvt.currentShader) {
+         _pvt.currentShader.disableVertexAttributeArray(gl);
+      }
+   };
+
+   gl.drawVertex =  function(drawObject) {
+      gl.bindTransform();
+      gl.bindShaderData(drawObject.shaderData, false);
+      drawObject.drawVertex(gl);
+   };
+
+   gl.drawSelect = function(drawObject) {
+      gl.bindTransform();
+      drawObject.bindSelectorShaderData(gl);
+      drawObject.drawSelect(gl);
+   };
+
+   gl.createShaderData = function() {
+      return new ShaderData();
+   };
+
+   return gl;
+};
+
+
+//
+// define ShaderProgram, ShaderData.
+//
+
+/**input to ShaderProgram.
+ */
+const ShaderData = function() {
+   this.attribute = {};
+   this.uniform = {};
+};
+
+ShaderData.attribLayout = function(attribSize=3, attribType=gl.FLOAT, normalized=false, stride=0, offset=0) {
+   return {size: attribSize, type: attribType, normalized: normalized, stride: stride, offset: offset};
+}
+
+
+ShaderData.prototype.setupAttribute = function(name, layout, buffer, usage) {
+   this.createAttribute(name, layout, usage);
+   this.resizeAttribute(name, buffer.byteLength);
+   this.uploadAttribute(name, 0, buffer);
+}
+
+ShaderData.prototype.createAttribute = function(name, layout, usage) {
+   if (!this.attribute[name]) {
+      var handle = gl.createBuffer();
+      this.attribute[name] = {handle: handle,
+                              byteLength: 0,
+                              usage: usage,
+                              size: layout.size,
+                              type: layout.type,
+                              normalized: layout.normalized,
+                              stride: layout.stride,
+                              offset: layout.offset
+                             };
+   } else {
+      console.log("Shader Data: " + name + " already initialized");
+   }
+};
+
+ShaderData.prototype.resizeAttribute = function(name, byteLength) {//, usage) {
+   var attrib = this.attribute[name];
+   if (attrib && attrib.byteLength != byteLength) {
+      gl.bindBuffer(gl.ARRAY_BUFFER, attrib.handle);
+      gl.bufferData(gl.ARRAY_BUFFER, byteLength, attrib.usage);
+      attrib.byteLength = byteLength;
+   }
+};
+
+ShaderData.prototype.deleteAttribute = function(name) {
+   var attribute = this.attribute[name];
+   if (attribute) {
+      gl.deleteBuffer(attribute.handle);
+      this.attribute[name] = null;
+   }
+};
+
+ShaderData.prototype.freeAllAttributes = function() {
+   var removeList = [];
+   for (var key in this.attribute) {
+      removeList.push(key);
+   }
+   for (var i = 0; i < removeList.length; ++i) {
+      this.deleteAttribute(removeList[i]);
+   }
+};
+
+
+ShaderData.prototype.uploadAttribute = function(name, byteOffset, typedArray)  {
+   var attrb = this.attribute[name];
+   if (attrb) {
+      gl.bindBuffer(gl.ARRAY_BUFFER, attrb.handle);
+      gl.bufferSubData(gl.ARRAY_BUFFER, byteOffset, typedArray);
+   } else {
+      console.log("Shader Data: " + name + " not initialized");
+   }
+};
+
+//ShaderData.prototype.setAttribute = function(name, value) {
+//};
+// index is used for drawElement, not used for input to shaderProgram
+ShaderData.prototype.setIndex = function(index) {
+   if ((typeof(this.index)!=="undefined") && (this.index !== null)) {
+      gl.deleteBuffer(this.index.handle);
+   }
+   if (index !== null) {
+      var handle = gl.createBufferHandle(index, gl.ELEMENT_ARRAY_BUFFER);
+      this.index = {handle: handle};
+   }
+};
+
+ShaderData.prototype.setUniform3fv = function(name, arry3) {   // 3fv === vec3
+   this.uniform[name] = {value: new Float32Array(arry3), binder: ShaderData.uniform3fvFn};
+};
+
+ShaderData.uniform3fvFn = function(gl, loc, value) {
+   gl.uniform3fv(loc, value);
+}; 
+
+ShaderData.prototype.setUniform4fv = function(name, arry4) {
+   this.uniform[name] = {value: new Float32Array(arry4), binder: ShaderData.uniform4fvFn};
+};
+
+ShaderData.uniform4fvFn = function(gl, loc, value) {
+   gl.uniform4fv(loc, value);
+};
+
+// a few predefine var. 
+//        attributes: ["position", "normal", "uv"],
+//        uniforms: ["world", "worldView", "worldViewProjection", "view", "projection"] ? how about inverse?
+var ShaderProgram = function(progHandle, transform, attribute, uniform) {
+   this.progHandle = progHandle;
+   this.transform = transform;
+   this.attribute = attribute;
+   this.uniform = uniform;
+};
+
+ShaderProgram.prototype.disableVertexAttributeArray = function(gl) {
+   for (var key in this.attribute) {
+      if (this.attribute.hasOwnProperty(key)) {
+         gl.disableVertexAttribArray(this.attribute[key].loc);
+      }
+   }
+};
+
+ShaderProgram.prototype.bindAttribute = function(gl, attribute) {
+   try {
+   for (var key in this.attribute) {
+      if (attribute.hasOwnProperty(key)) {   // don't need to check this.attribute' inherited property, cannot possibley exist
+         var attrb = attribute[key];
+         gl.bindAttributeToProgram(this.attribute[key].loc, attrb);
+      } else {
+         // don't have property. console.log?
+         console.log("shaderData don't have shader attribute: " + key);
+      }
+   }
+   }
+   catch (e) {
+      console.log(e);
+   }
+};
+
+ShaderProgram.prototype.bindUniform = function(gl, uniform) {
+   try {
+   for (var key in this.uniform) {
+      if (uniform.hasOwnProperty(key)) {
+         var uni = uniform[key];
+         uni.binder(gl, this.uniform[key].loc, uni.value);
+      } else {
+         // don't have property. console.log?
+      }
+   }
+   }
+   catch (e) {
+      console.log(e);
+   }
+};
+
+ShaderProgram.prototype.bindTransform = function(gl, transform) {
+   try {
+     for (var key in this.transform) {
+      if (transform.hasOwnProperty(key)) {
+         var binder = transform[key];
+         binder(gl, this.transform[key]);
+      }
+   } 
+   }
+   catch (e) {
+      console.log(e);
+   }
+};
+
+ShaderProgram.prototype.getTypeByName = function(type) {
+/*	  var FLOAT = 0x1406;
+	  var FLOAT_VEC2 = 0x8B50;
+	  var FLOAT_VEC3 = 0x8B51;
+	  var FLOAT_VEC4 = 0x8B52;
+	  var INT = 0x1404;
+	  var INT_VEC2 = 0x8B53;
+	  var INT_VEC3 = 0x8B54;
+	  var INT_VEC4 = 0x8B55;
+	  var BOOL = 0x8B56;
+	  var BOOL_VEC2 = 0x8B57;
+	  var BOOL_VEC3 = 0x8B58;
+	  var BOOL_VEC4 = 0x8B59;
+	  var FLOAT_MAT2 = 0x8B5A;
+	  var FLOAT_MAT3 = 0x8B5B;
+	  var FLOAT_MAT4 = 0x8B5C;
+	  var SAMPLER_2D = 0x8B5E;
+	  var SAMPLER_CUBE = 0x8B60;
+	  var SAMPLER_3D = 0x8B5F;
+	  var SAMPLER_2D_SHADOW = 0x8B62;
+	  var FLOAT_MAT2x3 = 0x8B65;
+	  var FLOAT_MAT2x4 = 0x8B66;
+	  var FLOAT_MAT3x2 = 0x8B67;
+	  var FLOAT_MAT3x4 = 0x8B68;
+	  var FLOAT_MAT4x2 = 0x8B69;
+	  var FLOAT_MAT4x3 = 0x8B6A;
+	  var SAMPLER_2D_ARRAY = 0x8DC1;
+	  var SAMPLER_2D_ARRAY_SHADOW = 0x8DC4;
+	  var SAMPLER_CUBE_SHADOW = 0x8DC5;
+	  var UNSIGNED_INT = 0x1405;
+	  var UNSIGNED_INT_VEC2 = 0x8DC6;
+	  var UNSIGNED_INT_VEC3 = 0x8DC7;
+	  var UNSIGNED_INT_VEC4 = 0x8DC8;
+	  var INT_SAMPLER_2D = 0x8DCA;
+	  var INT_SAMPLER_3D = 0x8DCB;
+	  var INT_SAMPLER_CUBE = 0x8DCC;
+	  var INT_SAMPLER_2D_ARRAY = 0x8DCF;
+	  var UNSIGNED_INT_SAMPLER_2D = 0x8DD2;
+	  var UNSIGNED_INT_SAMPLER_3D = 0x8DD3;
+	  var UNSIGNED_INT_SAMPLER_CUBE = 0x8DD4;
+	  var UNSIGNED_INT_SAMPLER_2D_ARRAY = 0x8DD7;
+
+	  var TEXTURE_2D = 0x0DE1;
+	  var TEXTURE_CUBE_MAP = 0x8513;
+	  var TEXTURE_3D = 0x806F;
+	  var TEXTURE_2D_ARRAY = 0x8C1A;*/
+
+};
+
+
+
+
+
+/***/ }),
+/* 5 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "EditCommand", function() { return EditCommand; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "MouseMoveHandler", function() { return MouseMoveHandler; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "MoveableCommand", function() { return MoveableCommand; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "EditCommandCombo", function() { return EditCommandCombo; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "EditCommandSimple", function() { return EditCommandSimple; });
+/**
+ *  abstract EditCommand class for undo, redo handling. also MouseMoveHandler class.
+ * 
+ */
+
+// merge MouseMoveHandler to EditCommand
+class EditCommand {
+   _calibrateMovement(mouseMove) {
+      // todo: instead of magic constant. should supply a scaling factor.
+      let move;
+      if (mouseMove == 0) {
+         move = 0;
+      } else if (mouseMove < 0) {
+         move = Math.log(-mouseMove) / 5.0;  // log to counteract mouse acceleration.
+         move = -move;
+      } else {
+         move = Math.log(mouseMove) / 5.0;
+      }
+
+      return move;
+   }
+
+   _xPercentMovement(ev) {
+      let width = window.innertWidth || document.documentElement.clientWidth || document.body.clientWidth;
+      return (ev.movementX / width);
+   }
+
+   //doIt() {}
+
+   //undo() {}
+}
+
+class MouseMoveHandler extends EditCommand {
+
+   //handleMouseMove(ev) {}
+
+/*   cancel() {
+      this._cancel();     // called descendant handler
+      // enable mouse cursor
+      document.body.style.cursor = 'auto';
+   }
+
+   commit() {
+      this._commit();
+      // enable mouse cursor
+      document.body.style.cursor = 'auto';
+   } */
+}
+
+// delegate mouse movement to MouseMoveHandler
+class MoveableCommand extends EditCommand {
+
+   handleMouseMove(ev, cameraView) {
+      if (this.moveHandler) {
+         this.moveHandler.handleMouseMove(ev, cameraView);
+      }
+   }
+
+   doIt() {
+      if (this.moveHandler) {
+         this.moveHandler.doIt();
+      }
+   }
+
+   undo() {
+      if (this.moveHandler) {
+         this.moveHandler.undo();
+      }
+   }
+}
+
+class EditCommandSimple extends EditCommand {
+   constructor(command) {
+      super();
+      this.commandName = command;
+   }
+
+   doIt(currentMadsor) {
+      this.undo = currentMadsor[this.commandName]();
+      return (this.undo !== null);
+   }
+
+   undo(currentMadsor) {
+      this.undo(currentMadsor);
+   }
+}
+
+
+class EditCommandCombo extends EditCommand {
+   constructor(editCommands) {
+      super();
+      this.editCommands = editCommands;
+   }
+
+   doIt() {
+      // start from beginning
+      for (let cmd of this.editCommands) {
+         cmd.doIt();
+      }
+   }
+
+   undo() {
+      // walk from last to first
+      for (let i = this.editCommands.length-1; i >= 0; --i) {
+         this.editCommands[i].undo();
+      }
+   }
+}
+
+
+
+
+/***/ }),
 /* 6 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -4514,7 +4533,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "solidWireframe", function() { return solidWireframe; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "colorWireframe", function() { return colorWireframe; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "colorSolidWireframe", function() { return colorSolidWireframe; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d__ = __webpack_require__(0);
 // program as text .
 
@@ -4875,7 +4894,7 @@ __WEBPACK_IMPORTED_MODULE_1__wings3d__["onReady"](function() {
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "DraftBench", function() { return DraftBench; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_boundingvolume__ = __webpack_require__(15);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_wingededge__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_view__ = __webpack_require__(1);
@@ -5529,6 +5548,9 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "Polygon", function() { return Polygon; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "MeshAllocator", function() { return MeshAllocator; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "WingedTopology", function() { return WingedTopology; });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_model__ = __webpack_require__(3);
+
+
 /* require glmatrix
 * http://kaba.hilvi.org/homepage/blog/halfedge/halfedge.htm. very nicely written half-edge explanation and pseudo code.
 * https://fgiesen.wordpress.com/2012/02/21/half-edge-based-mesh-representations-theory/
@@ -5559,7 +5581,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 * our face is oriented counter clockwise.  
 *
 */
-
+"use strict";
 
 var WingedEdge = function(orgVert, toVert) {
    this.index = -1;
@@ -6237,7 +6259,53 @@ WingedTopology.prototype.merge = function(geometryGenerator) {
    this.vertices = new Set(function* () {yield* self.vertices; for (let geometry of geometryGenerator()) {yield* geometry.vertices;}}());
    this.edges = new Set(function* () {yield* self.edges; for (let geometry of geometryGenerator()) {yield* geometry.edges;}}());
    this.faces = new Set(function* () {yield* self.faces; for (let geometry of geometryGenerator()) {yield* geometry.faces;}}());
-}
+};
+
+// separate - separate out non-connected geometry.
+WingedTopology.prototype.separateOut = function() {
+   const traversed = new Set;
+   const separate = [];
+   let faces;
+
+   function oneRing(srcPolygon) {
+      for (let hEdge of srcPolygon.hEdges()) {  // don't use oneRing. extra set operation.
+         const polygon = hEdge.pair.face;
+         if ((polygon !== null) && !traversed.has(polygon)) {
+            traversed.add(polygon);
+            faces.add(polygon);
+            oneRing(polygon);
+         }
+      }
+   };
+
+   for (let polygon of this.faces) {
+      if (!traversed.has(polygon)) {
+         traversed.add(polygon);
+         let geometry = new WingedTopology(this.alloc);
+         faces = geometry.faces;              // ready for geometry.
+         faces.add(polygon);
+         oneRing(polygon);
+         // ok, got one separated
+         separate.push( geometry );
+      }
+   }
+
+   if (separate.length > 1) {
+      // we have the face list. now rebuild vertex and edge lists.
+      for (let mesh of separate) {
+         for (let polygon of mesh.faces) {
+            for (let hEdge of polygon.hEdges()) {
+               mesh.vertices.add( hEdge.origin );
+               mesh.edges.add( hEdge.wingedEdge );
+            }
+         }
+      }
+      return separate; 
+   } else {
+      return null;
+   }
+
+};
 
 WingedTopology.prototype.sanityCheck = function() {
    let sanity = true;
@@ -7900,10 +7968,10 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_edgemads__ = __webpack_require__(11);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_bodymads__ = __webpack_require__(12);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__ = __webpack_require__(13);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__ = __webpack_require__(4);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_model__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_model__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_view__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_gl__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_gl__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d_shaderprog__ = __webpack_require__(6);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__wings3d_ui__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__wings3d__ = __webpack_require__(0);
@@ -8380,9 +8448,9 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "MoveAlongNormal", function() { return MoveAlongNormal; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "MoveFreePositionHandler", function() { return MoveFreePositionHandler; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ToggleModeCommand", function() { return ToggleModeCommand; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__ = __webpack_require__(3);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__ = __webpack_require__(4);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_model__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_model__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_view__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_ui__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d__ = __webpack_require__(0);
@@ -8502,7 +8570,9 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
    snapshotAll(func, ...args) {
       const snapshots = [];
       for (let preview of this.world) {
-         snapshots.push( {preview: preview, snapshot: func.call(preview, ...args)} );
+         if (preview.hasSelection()) {
+            snapshots.push( {preview: preview, snapshot: func.call(preview, ...args)} );
+         }
       }
       return snapshots;
    }
@@ -8530,6 +8600,14 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       for (let i = 0; i < this.world.length; ++i) {
          let cage = this.world[i];
          if (!cage.isLock() && cage.isVisible()) {
+            yield cage;
+         }
+      }
+   }
+
+   * selectedCage() {
+      for (let cage of this.world) {
+         if (cage.hasSelection()) {
             yield cage;
          }
       }
@@ -8935,8 +9013,8 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__ = __webpack_require__(9);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_bodymads__ = __webpack_require__(12);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__ = __webpack_require__(13);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__ = __webpack_require__(4);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_model__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_model__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_ui__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_view__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d_shaderprog__ = __webpack_require__(6);
@@ -9495,8 +9573,8 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__ = __webpack_require__(9);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_edgemads__ = __webpack_require__(11);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__ = __webpack_require__(13);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__ = __webpack_require__(4);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_model__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_model__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_shaderprog__ = __webpack_require__(6);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_view__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__ = __webpack_require__(2);
@@ -9573,6 +9651,12 @@ class BodyMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
             __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["undoQueue"](command);
          }
        });
+      __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].bodySeparate.name, (ev)=> {
+         const command = new SeparateBodyCommand(this);
+         if (command.doIt()) {   // check if separable.
+            __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["undoQueue"](command);
+         }
+       });
    }
 
    modeName() {
@@ -9624,6 +9708,35 @@ class BodyMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
          for (let cage of combine.oldSelection) {
             __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["addToWorld"](cage);  // restore oldCage
          }
+      }
+   }
+
+   separate() {
+      const selection = [];
+      for (let cage of this.selectedCage()) {
+         let snapshot = cage.separate();
+         if (snapshot.length > 0) {
+            selection.push( {preview: cage, snapshot: snapshot} );
+         }
+      }
+      for (let separate of selection) {
+         // remove original
+         __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["removeFromWorld"](separate.preview);
+         // add the separates one.
+         for (let preview of separate.snapshot) {
+            __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["addToWorld"](preview);     // has to addToWorld after separate all selection, or we will mess up the iteration.
+         }
+      }
+      return selection;
+   }
+
+   undoSeparate(separateSelection) {
+      for (let separate of separateSelection) {
+         for (let preview of separate.snapshot) {
+            __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["removeFromWorld"](preview);
+         }
+         // addback the original one
+         __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["addToWorld"](separate.preview);
       }
    }
 
@@ -9969,6 +10082,28 @@ class CombineBodyCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["Ed
 };
 
 
+class SeparateBodyCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
+   constructor(madsor) {
+      super();
+      this.madsor = madsor;
+   }
+
+   doIt() {
+      this.separate = this.madsor.separate();
+      if (this.combine) {
+         return true;
+      } else {
+         return false;
+      }
+   }
+
+   undo() {
+      this.madsor.undoSeparate(this.separate);
+      this.separate = null; // release memory
+   } 
+};
+
+
 
 /***/ }),
 /* 13 */
@@ -9982,8 +10117,8 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__ = __webpack_require__(9);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_bodymads__ = __webpack_require__(12);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_edgemads__ = __webpack_require__(11);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__ = __webpack_require__(4);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_model__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_model__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_view__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_shaderprog__ = __webpack_require__(6);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__ = __webpack_require__(2);
@@ -10364,7 +10499,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "keyPanUpArrow", function() { return keyPanUpArrow; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "keyPanDownArrow", function() { return keyPanDownArrow; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "wheelPan", function() { return wheelPan; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_undo_js__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_undo_js__ = __webpack_require__(5);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_js__ = __webpack_require__(0);
 /*
 **
@@ -11384,7 +11519,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "renderText", function() { return renderText; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "needToRedraw", function() { return needToRedraw; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "render", function() { return render; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_view__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_camera__ = __webpack_require__(14);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d__ = __webpack_require__(0);
@@ -12071,7 +12206,7 @@ class WavefrontObjImportExporter extends __WEBPACK_IMPORTED_MODULE_0__wings3d_im
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ImportExporter", function() { return ImportExporter; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_model__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_model__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_wingededge__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_ui__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_view__ = __webpack_require__(1);
@@ -12167,18 +12302,18 @@ __webpack_require__(14);
 __webpack_require__(7);
 __webpack_require__(11);
 __webpack_require__(9);
-__webpack_require__(3);
+__webpack_require__(4);
 __webpack_require__(29);
 __webpack_require__(17);
 __webpack_require__(20);
 __webpack_require__(16);
 __webpack_require__(10);
-__webpack_require__(5);
+__webpack_require__(3);
 __webpack_require__(18);
 __webpack_require__(6);
 __webpack_require__(30);
 __webpack_require__(2);
-__webpack_require__(4);
+__webpack_require__(5);
 __webpack_require__(13);
 __webpack_require__(1);
 __webpack_require__(8);
@@ -12274,7 +12409,7 @@ __WEBPACK_IMPORTED_MODULE_8__wings3d__["start"]('glcanvas');
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_view__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_wingededge__ = __webpack_require__(8);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_model__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_model__ = __webpack_require__(3);
 /*
    n cube create. Use Dialog to create the cube.
    todo: to support spherize, rotate, translate, putOnGround. currently only numberOfCuts and size is working.

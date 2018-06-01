@@ -1,3 +1,5 @@
+import { PreviewCage } from "./wings3d_model";
+
 /* require glmatrix
 * http://kaba.hilvi.org/homepage/blog/halfedge/halfedge.htm. very nicely written half-edge explanation and pseudo code.
 * https://fgiesen.wordpress.com/2012/02/21/half-edge-based-mesh-representations-theory/
@@ -706,7 +708,53 @@ WingedTopology.prototype.merge = function(geometryGenerator) {
    this.vertices = new Set(function* () {yield* self.vertices; for (let geometry of geometryGenerator()) {yield* geometry.vertices;}}());
    this.edges = new Set(function* () {yield* self.edges; for (let geometry of geometryGenerator()) {yield* geometry.edges;}}());
    this.faces = new Set(function* () {yield* self.faces; for (let geometry of geometryGenerator()) {yield* geometry.faces;}}());
-}
+};
+
+// separate - separate out non-connected geometry.
+WingedTopology.prototype.separateOut = function() {
+   const traversed = new Set;
+   const separate = [];
+   let faces;
+
+   function oneRing(srcPolygon) {
+      for (let hEdge of srcPolygon.hEdges()) {  // don't use oneRing. extra set operation.
+         const polygon = hEdge.pair.face;
+         if ((polygon !== null) && !traversed.has(polygon)) {
+            traversed.add(polygon);
+            faces.add(polygon);
+            oneRing(polygon);
+         }
+      }
+   };
+
+   for (let polygon of this.faces) {
+      if (!traversed.has(polygon)) {
+         traversed.add(polygon);
+         let geometry = new WingedTopology(this.alloc);
+         faces = geometry.faces;              // ready for geometry.
+         faces.add(polygon);
+         oneRing(polygon);
+         // ok, got one separated
+         separate.push( geometry );
+      }
+   }
+
+   if (separate.length > 1) {
+      // we have the face list. now rebuild vertex and edge lists.
+      for (let mesh of separate) {
+         for (let polygon of mesh.faces) {
+            for (let hEdge of polygon.hEdges()) {
+               mesh.vertices.add( hEdge.origin );
+               mesh.edges.add( hEdge.wingedEdge );
+            }
+         }
+      }
+      return separate; 
+   } else {
+      return null;
+   }
+
+};
 
 WingedTopology.prototype.sanityCheck = function() {
    let sanity = true;

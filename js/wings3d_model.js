@@ -65,6 +65,24 @@ PreviewCage.prototype.merge = function(mergeSelection) {
    this.geometry.merge(function* (){for (let cage of mergeSelection) {yield cage.geometry;}});
 };
 
+PreviewCage.prototype.separate = function() {
+   const separatePreview = [];
+   const separateGeometry = this.geometry.separateOut();
+   let sep = 0;
+   for (let geometry of separateGeometry) {
+      const cage = new PreviewCage(this.bench);
+      cage.geometry = geometry;     // copy back
+      if (sep > 0) {
+         cage.name = this.name + "_sep" + sep.toString();
+      } else {
+         cage.name = this.name;
+      }
+      sep++;
+      separatePreview.push(cage);
+   }
+   return separatePreview;    // snapshot.
+}
+
 
 PreviewCage.prototype.hide = function() {
    this.bench.hide(this.geometry.faces);

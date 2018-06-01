@@ -131,12 +131,31 @@ class BodyMadsor extends Madsor {
    }
 
    separate() {
-      return this.snapshotAll(PreviewCage.prototype.separate);
+      const selection = [];
+      for (let cage of this.selectedCage()) {
+         let snapshot = cage.separate();
+         if (snapshot.length > 0) {
+            selection.push( {preview: cage, snapshot: snapshot} );
+         }
+      }
+      for (let separate of selection) {
+         // remove original
+         View.removeFromWorld(separate.preview);
+         // add the separates one.
+         for (let preview of separate.snapshot) {
+            View.addToWorld(preview);     // has to addToWorld after separate all selection, or we will mess up the iteration.
+         }
+      }
+      return selection;
    }
 
-   undoSeparate(separate) {
-      if (separate) {
-         
+   undoSeparate(separateSelection) {
+      for (let separate of separateSelection) {
+         for (let preview of separate.snapshot) {
+            View.removeFromWorld(preview);
+         }
+         // addback the original one
+         View.addToWorld(separate.preview);
       }
    }
 
