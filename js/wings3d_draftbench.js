@@ -181,6 +181,8 @@ DraftBench.prototype._resizePreview = function() {
       model.preview.shaderData.resizeAttribute('selected', (length+centroidLength) * 4);
       model.preview.shaderData.uploadAttribute('selected', 0, this.preview.selected.subarray(0, length));
       model.preview.shaderData.uploadAttribute('selected', length*4, this.preview.centroid.selected.subarray(0, centroidLength));
+      // invalidate hilite
+      model.hilite.indexLength = 0;
    }
       
    // compute index.

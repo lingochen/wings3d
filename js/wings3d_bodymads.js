@@ -509,11 +509,7 @@ class SeparateBodyCommand extends EditCommand {
 
    doIt() {
       this.separate = this.madsor.separate();
-      if (this.combine) {
-         return true;
-      } else {
-         return false;
-      }
+      return (this.separate.length > 0);
    }
 
    undo() {
