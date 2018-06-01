@@ -114,7 +114,9 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
    snapshotAll(func, ...args) {
       const snapshots = [];
       for (let preview of this.world) {
-         snapshots.push( {preview: preview, snapshot: func.call(preview, ...args)} );
+         if (preview.hasSelection()) {
+            snapshots.push( {preview: preview, snapshot: func.call(preview, ...args)} );
+         }
       }
       return snapshots;
    }

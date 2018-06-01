@@ -257,6 +257,7 @@ const action = {
    bodyRotateFree: () => {notImplemented(this);},
    bodyInvert: () => {notImplemented(this);},
    bodyCombine: () => {notImplemented(this);},
+   bodySeparate: () => {notImplemented(this);},
    // edge
    cutMenu: () => {notImplemented(this);},
    cutLine2: () => {notImplemented(this);},

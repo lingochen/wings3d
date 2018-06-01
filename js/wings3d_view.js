@@ -667,6 +667,7 @@ export {
    prop,
    theme,
    draftBench,
+   //world,   // we want iteration. can we share it?
    // function
    toggleVertexMode,
    toggleFaceMode,

@@ -70,6 +70,12 @@ class BodyMadsor extends Madsor {
             View.undoQueue(command);
          }
        });
+      UI.bindMenuItem(action.bodySeparate.name, (ev)=> {
+         const command = new SeparateBodyCommand(this);
+         if (command.doIt()) {   // check if separable.
+            View.undoQueue(command);
+         }
+       });
    }
 
    modeName() {
@@ -121,6 +127,16 @@ class BodyMadsor extends Madsor {
          for (let cage of combine.oldSelection) {
             View.addToWorld(cage);  // restore oldCage
          }
+      }
+   }
+
+   separate() {
+      return this.snapshotAll(PreviewCage.prototype.separate);
+   }
+
+   undoSeparate(separate) {
+      if (separate) {
+
       }
    }
 
@@ -462,6 +478,28 @@ class CombineBodyCommand extends EditCommand {
    undo() {
       this.madsor.undoCombine(this.combine);
       this.combine = null; // release memory
+   } 
+};
+
+
+class SeparateBodyCommand extends EditCommand {
+   constructor(madsor) {
+      super();
+      this.madsor = madsor;
+   }
+
+   doIt() {
+      this.separate = this.madsor.separate();
+      if (this.combine) {
+         return true;
+      } else {
+         return false;
+      }
+   }
+
+   undo() {
+      this.madsor.undoSeparate(this.separate);
+      this.separate = null; // release memory
    } 
 };
 
