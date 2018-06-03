@@ -16,7 +16,7 @@ import {EdgeMadsor} from './wings3d_edgemads';
 import {VertexMadsor} from './wings3d_vertexmads';
 import {BodyMadsor} from './wings3d_bodymads';
 import {PreviewCage} from './wings3d_model';
-import {DraftBench} from './wings3d_draftbench';
+import {DraftBench, CheckPoint} from './wings3d_draftbench';
 
 
 // 
@@ -443,6 +443,11 @@ function undoQueueCombo(editCommands) {
 };
 // undo queue
 function undoQueue(editCommand) {
+   //if (!editCommand.doIt()) {  // move all check here.
+   //   return;
+   //}
+   // editCommand = new CheckPoint(draftBench, editCommand);      // debug purpose. 
+
    if ( (undo.queue.length-1) > undo.current ) {
       // remove branch not taken
       undo.queue.length = undo.current+1;
