@@ -791,6 +791,18 @@ WingedTopology.prototype.sanityCheck = function() {
    return sanity;
 };
 
+WingedTopology.prototype.addAffectedEdge = function(wEdge) {
+   this.alloc.affected.edges.add(wEdge);
+};
+
+WingedTopology.prototype.addAffectedFace = function(polygon) {
+   this.alloc.affected.faces.add(polygon);
+};
+
+WingedTopology.prototype.addAffectedVertex = function(vertex) {
+   this.alloc.affected.vertices.add(vertex);
+};
+
 WingedTopology.prototype.clearAffected = function() {
    this.alloc.clearAffected();
 };
@@ -1058,7 +1070,7 @@ WingedTopology.prototype.insertEdge = function(prevHalf, nextHalf, delOutEdge, d
       ++size;
    });
    oldPolygon.numberOfVertex = size;
-   this.affected.faces.add( oldPolygon );
+   this.addAffectedFace( oldPolygon );
 
    // adjustOutEdge for v0, v1. point to boundary so, ccw work better?
    return outEdge;
@@ -1097,7 +1109,7 @@ WingedTopology.prototype.splitEdge = function(outEdge, pt, delOut) {
    if (vOut === outEdge) {
       vOrigin.outEdge = newOut;
    }
-   this.affected.edges.add( outEdge.wingedEdge );     // edge changed.
+   this.addAffectedWEdge( outEdge.wingedEdge );     // edge changed.
    // return the newOut
    return newOut;
 };
@@ -1121,7 +1133,7 @@ WingedTopology.prototype.doubleEdge = function(inEdge) {
    if (inEdge.face.halfEdge === inEdge) {
       newIn.face.halfEdge = newIn;
    }
-   this.affected.faces.add(newIn.face);
+   this.addAffectedFace(newIn.face);
    const newPolygon = this._createPolygon(newOut, 2);
 //   newOut.face = newPolygon;
 //   inEdge.face = newPolygon;
@@ -1303,7 +1315,7 @@ WingedTopology.prototype.bevelEdge = function(wingedEdges) {   // wingedEdges(se
          // fix the face ptr
          hEdge.face = insertion.face;
          hEdge.face.numberOfVertex++;
-         this.affected.faces.add(hEdge.face);
+         this.addAffectedFace(hEdge.face);
          // fix the vertexLimit.
          const pts = vertexLimit.get(hEdge.next.origin); // to limit the original vertex
          if (!this.isSplitEdgeSelected(hEdge.next.origin, hEdge.origin, adjacentRed)) {
@@ -1634,15 +1646,15 @@ WingedTopology.prototype._liftEdge = function(outLeft, inRight, fromVertex, delE
          currentOut.origin.outEdge = endOut; // or inEdge a safer choice? 
       }
       currentOut.origin = fromVertex;
-      this.affected.edges.add( currentOut.wingedEdge );
+      this.addAffectedWEdge( currentOut.wingedEdge );
       currentOut = currentOut.pair.next;
    } while (currentOut !== outEdge);
    outEdge.face = inRight.face;
    outEdge.face.numberOfVertex++;
    inEdge.face = outLeft.face;
    inEdge.face.numberOfVertex++;
-   this.affected.faces.add(outEdge.face);
-   this.affected.faces.add(inEdge.face);
+   this.addAffectedFace(outEdge.face);
+   this.addAffectedFace(inEdge.face);
 }
 
 
@@ -1661,7 +1673,7 @@ WingedTopology.prototype._collapseEdge = function(halfEdge) {
    let current = pairNext;
    while (current !== halfEdge) {
       current.origin = toVertex;
-      this.affected.edges.add(current.wingedEdge);
+      this.addAffectedWEdge(current.wingedEdge);
       current = current.pair.next;
    }
 
@@ -1675,13 +1687,13 @@ WingedTopology.prototype._collapseEdge = function(halfEdge) {
       face.halfEdge = next;
    }
    face.numberOfVertex--;
-   this.affected.faces.add(face);
+   this.addAffectedFace(face);
    face = pair.face;
    if (face.halfEdge === pair) {
       face.halfEdge = pairNext;
    }
    face.numberOfVertex--;
-   this.affected.faces.add(face);
+   this.addAffectedFace(face);
 
    // adjust vertex
    if (toVertex.outEdge === pair) {
@@ -1845,7 +1857,7 @@ WingedTopology.prototype.removeEdge = function(outEdge) {
          outEdge.face = face;
       });
       face.numberOfVertex = size;
-      this.affected.faces.add(face);
+      this.addAffectedFace(face);
    }
 
    if (delFace !== null) {    // guaranteed to be non-null, but maybe later use case will change
@@ -2225,7 +2237,7 @@ WingedTopology.prototype.liftCornerEdge = function(hEdge, percent = 0.2) {
       oldPolygon.halfEdge = inEdge; // should add to restore list.
    }
    oldPolygon.update();
-   this.affected.faces.add( oldPolygon );
+   this.addAffectedFace( oldPolygon );
 
    // adjustOutEdge for v0, v1. point to boundary so, ccw work better?
    return outEdge;
@@ -2322,7 +2334,7 @@ WingedTopology.prototype.slideToNext = function(inEdge) {
       outEdge.origin.outEdge = next;  // we will be no longer using origin;
    }
    outEdge.origin = inEdge.next.origin;
-   this.affected.edges.add(outEdge.wingedEdge);
+   this.addAffectedWEdge(outEdge.wingedEdge);
 
    // reassign face.
    if (next.face.halfEdge === next) {
@@ -2332,8 +2344,8 @@ WingedTopology.prototype.slideToNext = function(inEdge) {
    next.face = outEdge.face; 
    ++outEdge.face.numberOfVertex;      // accounting.
    --inEdge.face.numberOfVertex;       // oops, needs ot collapse edge
-   this.affected.faces.add( outEdge.face );
-   this.affected.faces.add( inEdge.face );
+   this.addAffectedFace( outEdge.face );
+   this.addAffectedFace( inEdge.face );
 
    return {prevPrev: prev, outEdge: outEdge};   // for slideToPrev
 };
@@ -2400,6 +2412,17 @@ WingedTopology.prototype.invert = function() {
          wEdge.left.face.halfEdge = wEdge.left;
       }
       wEdge.right.face = swapPoly;  // done swapping.
+   }
+};
+
+//
+// flip() - flip vertex around center with particular axis only
+//
+WingedTopology.prototype.flip = function(pivot, axis) {
+   const axisX2 = pivot[axis] * 2;
+   for (let vertex of this.vertices) {
+      vertex.vertex[axis] = axisX2 - vertex.vertex[axis];  // == center[axis] - (vertex.vertex[axis]-center[ais])
+      this.addAffectedVertex(vertex);
    }
 };
 

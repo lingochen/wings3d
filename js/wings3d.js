@@ -258,6 +258,10 @@ const action = {
    bodyInvert: () => {notImplemented(this);},
    bodyCombine: () => {notImplemented(this);},
    bodySeparate: () => {notImplemented(this);},
+   bodyFlipMenu: () => {notImplemented(this);},
+   bodyFlipX: () => {notImplemented(this);},
+   bodyFlipY: () => {notImplemented(this);},
+   bodyFlipZ: () => {notImplemented(this);},
    // edge
    cutMenu: () => {notImplemented(this);},
    cutLine2: () => {notImplemented(this);},

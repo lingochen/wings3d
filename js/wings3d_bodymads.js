@@ -76,6 +76,16 @@ class BodyMadsor extends Madsor {
             View.undoQueue(command);
          }
        });
+       const flip = [action.bodyFlipX, action.bodyFlipY, action.bodyFlipZ];
+       // flip for (x, y, z)
+       for (let axis=0; axis < 3; ++axis) {
+          UI.bindMenuItem(flip[axis].name, (ev) => { //action.bodyFlipX(Y,Z)
+                //View.undoQueue(new FlipBodyAxis(this, axis));
+                const command = new FlipBodyAxis(this, axis);
+                command.doIt();
+                View.undoQueue(command);
+             });
+       }
    }
 
    modeName() {
@@ -148,7 +158,6 @@ class BodyMadsor extends Madsor {
       }
       return selection;
    }
-
    undoSeparate(separateSelection) {
       for (let separate of separateSelection) {
          for (let preview of separate.snapshot) {
@@ -168,6 +177,15 @@ class BodyMadsor extends Madsor {
       // invert the draftBench's preview and update
       View.updateWorld();
       this.hiliteView = null; // invalidate hilite
+   }
+
+   flipAxis(snapShotPivot, axis) {
+      this.doAll(snapShotPivot, PreviewCage.prototype.flipBodyAxis, axis);
+      View.updateWorld();
+   }
+
+   centroid() {
+      return this.snapshotAll(PreviewCage.prototype.bodyCentroid);
    }
 
    dragSelect(cage, selectArray, onOff) {
@@ -456,6 +474,7 @@ class DuplicateMoveFreePositionHandler extends MoveFreePositionHandler {
    doIt() {
       this.duplicateBodyCommand.doIt();
       super.doIt();     // movement.
+      return true;
    }
 
    undo() {
@@ -472,6 +491,7 @@ class InvertBodyCommand extends EditCommand {
 
    doIt() {
       this.madsor.invert();
+      return true;
    }
 
    undo() {
@@ -517,6 +537,26 @@ class SeparateBodyCommand extends EditCommand {
       this.separate = null; // release memory
    } 
 };
+
+
+class FlipBodyAxis extends EditCommand {
+   constructor(madsor, axis) {
+      super();
+      this.madsor = madsor;
+      this.axis = axis;
+      this.pivot = madsor.centroid();
+   }
+
+   doIt() {
+      this.madsor.flipAxis(this.pivot, this.axis);
+      return true;
+   }
+
+   undo() {
+      this.madsor.flipAxis(this.pivot, this.axis);
+   }
+}
+
 
 export {
    BodyMadsor,

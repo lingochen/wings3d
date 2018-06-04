@@ -2248,6 +2248,26 @@ PreviewCage.prototype.invertBody = function() {
    this.geometry.invert();
 };
 
+PreviewCage.prototype.flipBodyAxis = function(pivot, axis) {
+   // first flip, then invert.
+   this.geometry.flip(pivot, axis);
+   this.geometry.invert();
+};
+
+// todo: current implementation is wrong. we should not average vertex, instead we should average using area of polygon
+PreviewCage.prototype.bodyCentroid = function() {
+   // 
+   const pt = vec3.create();
+   let count = 0;
+   for (let vertex of this.geometry.vertices) {
+      vec3.add(pt, pt, vertex.vertex);
+      ++count;
+   }
+   if (count > 0) {
+      vec3.scale(pt, pt, 1/count);
+   }
+   return pt;
+}
 
 //----------------------------------------------------------------------------------------------------------
 
