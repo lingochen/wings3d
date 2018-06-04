@@ -2422,7 +2422,7 @@ WingedTopology.prototype.flip = function(pivot, axis) {
    const axisX2 = pivot[axis] * 2;
    for (let vertex of this.vertices) {
       vertex.vertex[axis] = axisX2 - vertex.vertex[axis];  // == center[axis] - (vertex.vertex[axis]-center[ais])
-      this.addAffectedVertex(vertex);
+      this.addAffectedEdgeAndFace(vertex);
    }
 };
 
