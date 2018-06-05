@@ -6465,7 +6465,7 @@ WingedTopology.prototype.sanityCheck = function() {
    return sanity;
 };
 
-WingedTopology.prototype.addAffectedEdge = function(wEdge) {
+WingedTopology.prototype.addAffectedWEdge = function(wEdge) {
    this.alloc.affected.edges.add(wEdge);
 };
 
@@ -8096,8 +8096,8 @@ WingedTopology.prototype.flip = function(pivot, axis) {
    const axisX2 = pivot[axis] * 2;
    for (let vertex of this.vertices) {
       vertex.vertex[axis] = axisX2 - vertex.vertex[axis];  // == center[axis] - (vertex.vertex[axis]-center[ais])
-      this.addAffectedEdgeAndFace(vertex);
-   }
+         this.addAffectedEdgeAndFace(vertex);               // optimiztion: addAllAffected() functions.
+      }
 };
 
 
@@ -12495,6 +12495,7 @@ __webpack_require__(4);
 __webpack_require__(18);
 __webpack_require__(6);
 __webpack_require__(30);
+__webpack_require__(31);
 __webpack_require__(2);
 __webpack_require__(3);
 __webpack_require__(13);
@@ -13284,6 +13285,41 @@ class SimilarVertex extends SimilarGeometry {
       }
    }
 }
+
+
+
+/***/ }),
+/* 31 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "triangulate", function() { return triangulate; });
+//
+// triangulate polygon - use modified ear-cutting method.
+//
+//
+
+function triangulate() {
+
+
+};
+
+
+function findEar() {
+
+};
+
+
+function findDiagonal() {
+
+};
+
+
+function insideTriangle() {
+
+};
+
 
 
 
