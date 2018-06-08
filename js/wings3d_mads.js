@@ -202,6 +202,10 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       this.world = world;
    }
 
+   getPreview() {
+      return this.preview;
+   }
+
    setPreview(preview) {
       this.preview = preview;
    }

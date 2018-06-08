@@ -304,7 +304,7 @@ function selectFinish() {
    }
 }
 
-const handler = {camera: null, mousemove: null};
+const handler = {camera: null, mousemove: null, mouseSelect: null};
 function canvasHandleMouseDown(ev) {
    if (ev.button == 0) {
       if (handler.camera !== null) {
@@ -315,6 +315,12 @@ function canvasHandleMouseDown(ev) {
       } else if (handler.mousemove !== null) {
          undoQueue( handler.mousemove );  // put on queue, commit()?
          handler.mousemove = null;
+      } else if (handler.mouseSelect !== null) {
+         if (handler.mouseSelect.select()) {
+            handler.mouseSelect.doIt();
+            undoQueue( handler.mouseSelect );
+            handler.mouseSelect = null;
+         }
       } else {
          //e.stopImmediatePropagation();
          // ask view to select current hilite if any.
@@ -410,6 +416,9 @@ function canvasHandleContextMenu(ev) {
 function attachHandlerMouseMove(mousemoveHandler) {
    // should we make sure handler.mousemove is null?
    handler.mousemove = mousemoveHandler;
+};
+function attachHandlerMouseSelect(mouseSelectHandler) {
+   handler.mouseSelect = mouseSelectHandler;
 };
 
 function canvasHandleWheel(e) {
@@ -693,6 +702,7 @@ export {
    // mouse handler
    //rayPick,
    attachHandlerMouseMove,
+   attachHandlerMouseSelect,
    // undo/redo
    doCommand,
    redoEdit,

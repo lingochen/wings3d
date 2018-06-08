@@ -290,6 +290,10 @@ PreviewCage.prototype.hasSelection = function() {
    return (this.selectedSet.size > 0);
 };
 
+PreviewCage.prototype.selectionSize = function() {
+   return this.selectedSet.size;
+}
+
 
 PreviewCage.prototype.snapshotSelection = function() {
    return new Set(this.selectedSet);
@@ -2267,7 +2271,37 @@ PreviewCage.prototype.bodyCentroid = function() {
       vec3.scale(pt, pt, 1/count);
    }
    return pt;
-}
+};
+
+PreviewCage.prototype.weldableVertex = function(vertex) {
+   if (this.selectedSet.size == 1) {
+      let it = this.selectedSet.values();
+      let selectedVertex = it.next().value;     // get the selectedVertex
+      const end = selectedVertex.outEdge;
+      let current = end;
+      do {
+         if (current.destination() === vertex) {
+            return current;
+         }
+         current = current.pair.next;
+      } while (current !== end);
+   }
+   return false;
+};
+
+PreviewCage.prototype.weldVertex = function(halfEdge) {
+   this.selectVertex(halfEdge.origin);
+   this.selectVertex(halfEdge.destination());   // select the weld Vertex as new Selection.
+   let ret = this.geometry.collapseEdge(halfEdge);
+   this._updatePreviewAll();
+   return ret;
+};
+
+PreviewCage.prototype.undoWeldVertex = function(undo) {
+
+};
+
+
 
 //----------------------------------------------------------------------------------------------------------
 

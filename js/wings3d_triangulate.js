@@ -14,7 +14,7 @@ const InternalHEdge = function(vertex, next) {
    this.next = next;
 };
 
-internalHEdge.prototype.destination = function() {
+InternalHEdge.prototype.destination = function() {
    return this.next.origin;
 }
 
@@ -88,9 +88,11 @@ function triangulatePreview(polygon) {
    if (convex.length >= 3) {
       lastHEdge = convex[0];
       const end = convex.length -1;
+      lastHEdge.triPt = convex[2].origin;
       for (let i = 1; end > i; ++i) { // add triangle
          const current = convex[i];
          triangles.push(lastHEdge.origin, current.origin, current.destination());
+         current.triPt = lastHEdge.origin;
       }
    } else { // something wrong
       console.log("something wrong in triangulatePreview");

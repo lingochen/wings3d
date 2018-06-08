@@ -339,6 +339,7 @@ const action = {
    vertexExtrudeX: () =>{notImplemented(this);},
    vertexExtrudeY: () =>{notImplemented(this);},
    vertexExtrudeZ: () =>{notImplemented(this);},
+   vertexWeld: () =>{notImplemented(this);},
    // guide tour
    helpMenu: () => {notImplemented(this);},
    about: () => {notImplemented(this);},

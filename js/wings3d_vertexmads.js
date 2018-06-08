@@ -35,6 +35,24 @@ class VertexMadsor extends Madsor {
             dissolve.doIt();
             View.undoQueue(dissolve);
          });
+      UI.bindMenuItem(action.vertexWeld.name, (ev)=> {
+         let snapshot = [];
+         this.eachPreviewCage( (preview) => {
+            if (preview.selectionSize() == 1) {
+               snapshot.push( preview );
+            }
+          });
+         if (snapshot.length == 1) {
+            const weld = new VertexWeldCommand(this, snapshot[0]);
+            View.attachHandlerMouseSelect(weld);
+         } else {
+            geometryStatus("You can oly Weld one vertex");
+         }
+        });
+   }
+
+   getCurrentVertex() {
+      return this.currentVertex;
    }
 
    modeName() {
@@ -344,6 +362,33 @@ class VertexCollapseCommand extends EditCommand {
       this.madsor.resetSelection();
       View.restoreVertexMode();
       this.madsor.undoDissolve(this.dissolve);
+   }
+}
+
+
+class VertexWeldCommand extends EditCommand {
+   constructor(madsor, preview) {
+      super();
+      this.madsor = madsor;
+      this.preview = preview;
+   }
+
+   select() { // return true for accepting, false for continue doing things.
+      const vertex = this.madsor.getCurrentVertex();
+      if (vertex) {
+         this.collapseHEdge = this.preview.weldableVertex(vertex);
+         return (this.collapseHEdge != false);
+      }
+      return false;
+   }
+
+   doIt() {
+      this.undo = this.preview.weldVertex(this.collapseHEdge);
+      return true;
+   }
+
+   undo() {
+      this.preview.undoWeldVertex(this.undo);
    }
 }
 
