@@ -3506,7 +3506,7 @@ PreviewCage.prototype.collapseSelectedEdge = function() {
    const oldSize = this._getGeometrySize();
    const selected = new Map();
    for (let edge of this.selectedSet) {
-      let undo = function() {};
+      let undo = null;
       if (edge.isLive()){
       let vertex = edge.left.origin;
       let pt;
@@ -3529,7 +3529,7 @@ PreviewCage.prototype.collapseSelectedEdge = function() {
       }
          undo = this.geometry.collapseEdge(edge.left);
       }
-      let collapse = { halfEdge: edge.left, undo: undo};
+      let collapse = {halfEdge: edge.left, undo: undo};
       collapseEdges.push(collapse);
    }
    this.selectedSet.clear();
@@ -3561,7 +3561,9 @@ PreviewCage.prototype.restoreCollapseEdge = function(data) {
    const collapseEdges = collapse.edges;
    for (let i = (collapseEdges.length-1); i >= 0; --i) {
       let collapseEdge = collapseEdges[i];
-      collapseEdge.undo();
+      if (collapseEdge.undo) {
+         this.geometry.restoreCollapseEdge(collapseEdge.undo);
+      }
    }
    for (let collapseEdge of collapseEdges) { // selectedge should be in order
       this.selectEdge(collapseEdge.halfEdge);
@@ -3973,7 +3975,10 @@ PreviewCage.prototype.weldVertex = function(halfEdge) {
 };
 
 PreviewCage.prototype.undoWeldVertex = function(undo) {
-
+   this.geometry.restoreCollapseEdge(undo);
+   this.selectVertex(undo.hEdge.destination())  // unselect
+   this.selectVertex(undo.hEdge.origin);
+   this._updatePreviewAll();
 };
 
 
@@ -5525,7 +5530,7 @@ MeshAllocator.prototype.allocVertex = function(pt, delVertex) {
    }
 };
 
-MeshAllocator.prototype.allocEdge = function(begVert, endVert, deOut) {
+MeshAllocator.prototype.allocEdge = function(begVert, endVert, delOutEdge) {
    let edge;
    let outEdge;
    if (this.freeEdges.length > 0) { // prefered recycle edge.
@@ -6680,10 +6685,8 @@ WingedTopology.prototype._collapseEdge = function(halfEdge) {
    this._freeEdge(halfEdge);
    this._freeVertex(fromVertex);
 
-   const self = this;
-   return function() {  // undo collapseEdge
-      self._liftEdge(pairNext, prev, self.addVertex(fromVertex.vertex, fromVertex), halfEdge);
-   }
+   // undo collapseEdge
+   return {hEdge: halfEdge, pairNext: pairNext, prev: prev, vertex: fromVertex};
 };
 
 // undo of  _collapseLoop.
@@ -6708,11 +6711,6 @@ WingedTopology.prototype._restoreLoop = function(halfEdge, delEdge, delPolygon) 
    if (inEdge.face.halfEdge === halfEdge) {
       inEdge.face.halfEdge = inEdge;
    }
-
-   // const self = this;
-   // return function() {
-   //    self._collapseLoop(outEdge);      
-   //}
 };
 WingedTopology.prototype._collapseLoop = function(halfEdge, collapsibleWings) {
    if (collapsibleWings && !collapsibleWings.has(halfEdge.wingedEdge)) {   // if not collapsible, move to next.
@@ -6749,10 +6747,9 @@ WingedTopology.prototype._collapseLoop = function(halfEdge, collapsibleWings) {
    const delPolygon = halfEdge.face;
    this._freePolygon(halfEdge.face);
    this._freeEdge(halfEdge);
-   const self = this;
-   return function() {
-      self._restoreLoop(next, halfEdge, delPolygon);
-   };
+   
+   // restoreLoop
+   return {next: next, hEdge: halfEdge, polygon: delPolygon};
 };
 
 
@@ -6765,23 +6762,24 @@ WingedTopology.prototype.collapseEdge = function(halfEdge, collapsibleWings) {
    const undo = this._collapseEdge(halfEdge);
 
    // remove loops(2 side polygon)
-   let undoCollapseLeft;
-   let undoCollapseRight;
    if (next.next.next === next) {
-      undoCollapseLeft = this._collapseLoop(next.next, collapsibleWings);
+      undo.leftLoop = this._collapseLoop(next.next, collapsibleWings);
    }
    if (pairNext.wingedEdge.isLive() && (pairNext.next.next === pairNext)) {   // add wingedEdge.isLive() to guard (--) edges.
-      undoCollapseRight = this._collapseLoop(pairNext, collapsibleWings);
+      undo.rightLoop = this._collapseLoop(pairNext, collapsibleWings);
    }
-   return function() {
-      if (typeof undoCollapseRight !== 'undefined') {
-         undoCollapseRight();
-      }
-      if (typeof undoCollapseLeft !== 'undefined') {
-         undoCollapseLeft();
-      }
-      undo();
+   return undo;
+};
+
+WingedTopology.prototype.restoreCollapseEdge = function(undo) {
+   if (undo.rightLoop) {
+      this._restoreLoop(undo.rightLoop.next, undo.rightLoop.hEdge, undo.rightLoop.polygon);
    }
+   if (undo.leftLoop) {
+      this._restoreLoop(undo.leftLoop.next, undo.leftLoop.hEdge, undo.leftLoop.polygon);
+   }
+   // undo collapseEdge
+   this._liftEdge(undo.pairNext, undo.prev, this.addVertex(undo.vertex.vertex, undo.vertex), undo.hEdge);
 };
 
 
@@ -10404,7 +10402,7 @@ class VertexMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"]
             const weld = new VertexWeldCommand(this, snapshot[0]);
             __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["attachHandlerMouseSelect"](weld);
          } else {
-            geometryStatus("You can oly Weld one vertex");
+            geometryStatus("You can only Weld one vertex");
          }
         });
    }
@@ -10741,12 +10739,12 @@ class VertexWeldCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["Edi
    }
 
    doIt() {
-      this.undo = this.preview.weldVertex(this.collapseHEdge);
+      this.restore = this.preview.weldVertex(this.collapseHEdge);
       return true;
    }
 
    undo() {
-      this.preview.undoWeldVertex(this.undo);
+      this.preview.undoWeldVertex(this.restore);
    }
 }
 

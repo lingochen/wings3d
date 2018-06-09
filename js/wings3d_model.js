@@ -1831,7 +1831,7 @@ PreviewCage.prototype.collapseSelectedEdge = function() {
    const oldSize = this._getGeometrySize();
    const selected = new Map();
    for (let edge of this.selectedSet) {
-      let undo = function() {};
+      let undo = null;
       if (edge.isLive()){
       let vertex = edge.left.origin;
       let pt;
@@ -1854,7 +1854,7 @@ PreviewCage.prototype.collapseSelectedEdge = function() {
       }
          undo = this.geometry.collapseEdge(edge.left);
       }
-      let collapse = { halfEdge: edge.left, undo: undo};
+      let collapse = {halfEdge: edge.left, undo: undo};
       collapseEdges.push(collapse);
    }
    this.selectedSet.clear();
@@ -1886,7 +1886,9 @@ PreviewCage.prototype.restoreCollapseEdge = function(data) {
    const collapseEdges = collapse.edges;
    for (let i = (collapseEdges.length-1); i >= 0; --i) {
       let collapseEdge = collapseEdges[i];
-      collapseEdge.undo();
+      if (collapseEdge.undo) {
+         this.geometry.restoreCollapseEdge(collapseEdge.undo);
+      }
    }
    for (let collapseEdge of collapseEdges) { // selectedge should be in order
       this.selectEdge(collapseEdge.halfEdge);
@@ -2298,7 +2300,10 @@ PreviewCage.prototype.weldVertex = function(halfEdge) {
 };
 
 PreviewCage.prototype.undoWeldVertex = function(undo) {
-
+   this.geometry.restoreCollapseEdge(undo);
+   this.selectVertex(undo.hEdge.destination())  // unselect
+   this.selectVertex(undo.hEdge.origin);
+   this._updatePreviewAll();
 };
 
 

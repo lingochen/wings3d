@@ -46,7 +46,7 @@ class VertexMadsor extends Madsor {
             const weld = new VertexWeldCommand(this, snapshot[0]);
             View.attachHandlerMouseSelect(weld);
          } else {
-            geometryStatus("You can oly Weld one vertex");
+            geometryStatus("You can only Weld one vertex");
          }
         });
    }
@@ -383,12 +383,12 @@ class VertexWeldCommand extends EditCommand {
    }
 
    doIt() {
-      this.undo = this.preview.weldVertex(this.collapseHEdge);
+      this.restore = this.preview.weldVertex(this.collapseHEdge);
       return true;
    }
 
    undo() {
-      this.preview.undoWeldVertex(this.undo);
+      this.preview.undoWeldVertex(this.restore);
    }
 }
 

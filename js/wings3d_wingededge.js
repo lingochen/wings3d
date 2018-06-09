@@ -549,7 +549,7 @@ MeshAllocator.prototype.allocVertex = function(pt, delVertex) {
    }
 };
 
-MeshAllocator.prototype.allocEdge = function(begVert, endVert, deOut) {
+MeshAllocator.prototype.allocEdge = function(begVert, endVert, delOutEdge) {
    let edge;
    let outEdge;
    if (this.freeEdges.length > 0) { // prefered recycle edge.
@@ -1704,10 +1704,8 @@ WingedTopology.prototype._collapseEdge = function(halfEdge) {
    this._freeEdge(halfEdge);
    this._freeVertex(fromVertex);
 
-   const self = this;
-   return function() {  // undo collapseEdge
-      self._liftEdge(pairNext, prev, self.addVertex(fromVertex.vertex, fromVertex), halfEdge);
-   }
+   // undo collapseEdge
+   return {hEdge: halfEdge, pairNext: pairNext, prev: prev, vertex: fromVertex};
 };
 
 // undo of  _collapseLoop.
@@ -1732,11 +1730,6 @@ WingedTopology.prototype._restoreLoop = function(halfEdge, delEdge, delPolygon) 
    if (inEdge.face.halfEdge === halfEdge) {
       inEdge.face.halfEdge = inEdge;
    }
-
-   // const self = this;
-   // return function() {
-   //    self._collapseLoop(outEdge);      
-   //}
 };
 WingedTopology.prototype._collapseLoop = function(halfEdge, collapsibleWings) {
    if (collapsibleWings && !collapsibleWings.has(halfEdge.wingedEdge)) {   // if not collapsible, move to next.
@@ -1773,10 +1766,9 @@ WingedTopology.prototype._collapseLoop = function(halfEdge, collapsibleWings) {
    const delPolygon = halfEdge.face;
    this._freePolygon(halfEdge.face);
    this._freeEdge(halfEdge);
-   const self = this;
-   return function() {
-      self._restoreLoop(next, halfEdge, delPolygon);
-   };
+   
+   // restoreLoop
+   return {next: next, hEdge: halfEdge, polygon: delPolygon};
 };
 
 
@@ -1789,23 +1781,24 @@ WingedTopology.prototype.collapseEdge = function(halfEdge, collapsibleWings) {
    const undo = this._collapseEdge(halfEdge);
 
    // remove loops(2 side polygon)
-   let undoCollapseLeft;
-   let undoCollapseRight;
    if (next.next.next === next) {
-      undoCollapseLeft = this._collapseLoop(next.next, collapsibleWings);
+      undo.leftLoop = this._collapseLoop(next.next, collapsibleWings);
    }
    if (pairNext.wingedEdge.isLive() && (pairNext.next.next === pairNext)) {   // add wingedEdge.isLive() to guard (--) edges.
-      undoCollapseRight = this._collapseLoop(pairNext, collapsibleWings);
+      undo.rightLoop = this._collapseLoop(pairNext, collapsibleWings);
    }
-   return function() {
-      if (typeof undoCollapseRight !== 'undefined') {
-         undoCollapseRight();
-      }
-      if (typeof undoCollapseLeft !== 'undefined') {
-         undoCollapseLeft();
-      }
-      undo();
+   return undo;
+};
+
+WingedTopology.prototype.restoreCollapseEdge = function(undo) {
+   if (undo.rightLoop) {
+      this._restoreLoop(undo.rightLoop.next, undo.rightLoop.hEdge, undo.rightLoop.polygon);
    }
+   if (undo.leftLoop) {
+      this._restoreLoop(undo.leftLoop.next, undo.leftLoop.hEdge, undo.leftLoop.polygon);
+   }
+   // undo collapseEdge
+   this._liftEdge(undo.pairNext, undo.prev, this.addVertex(undo.vertex.vertex, undo.vertex), undo.hEdge);
 };
 
 
