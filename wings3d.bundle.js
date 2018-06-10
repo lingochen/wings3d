@@ -882,18 +882,21 @@ function canvasHandleMouseMove(e) {
 
 // contextMenu, mouse right click.
 function canvasHandleContextMenu(ev) {
-   if (handler.camera !== null || handler.mousemove !== null) {
+   if (handler.camera || handler.mousemove || handler.mouseSelect) {
       // prevent propagation.
       ev.preventDefault();
       ev.stopImmediatePropagation();      // prevent document's contextmenu popup
-      if (handler.camera !== null) {
+      if (handler.camera) {
          handler.camera.undo();
          handler.camera = null;
          __WEBPACK_IMPORTED_MODULE_5__wings3d__["log"](__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].cameraModeExit, __WEBPACK_IMPORTED_MODULE_2__wings3d_camera__["view"]);   // log action
          help('L:Select   M:Start Camera   R:Show Menu   [Alt]+R:Tweak menu');
-      } else {
+      } else if (handler.mousemove) {
          handler.mousemove.undo();
          handler.mousemove = null;
+         __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
+      } else {
+         handler.mouseSelect = null;   // no needs to undo because we havent doIt() yet.
          __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
       }
       return true;
