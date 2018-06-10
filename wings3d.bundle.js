@@ -1741,6 +1741,8 @@ PreviewCage.duplicate = function(originalCage) {
 PreviewCage.prototype.merge = function(mergeSelection) {
    // copy geometry.
    this.geometry.merge(function* (){for (let cage of mergeSelection) {yield cage.geometry;}});
+   // copy selection
+   this.selectedSet = new Set(function* (){for (let cage of mergeSelection) {yield* cage.selectedSet;}}());
 };
 
 PreviewCage.prototype.separate = function() {
@@ -8211,12 +8213,15 @@ class FaceMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
             const origin = bridgeFaces[1];
             if (dest.face.numberOfVertex == origin.face.numberOfVertex) {
                let merge;
+               let bridge;
                if (dest.preview !== origin.preview) {
                   // merge dest and origin.
                   merge = new MergePreviewCommand(dest.preview, origin.preview);
                   merge.doIt();
+                  bridge = new BridgeFaceCommand(merge.getCombine(), dest.face, origin.face);
+               } else {
+                  bridge = new BridgeFaceCommand(dest.preview, dest.face, origin.face);
                }
-               const bridge = new BridgeFaceCommand(dest.preview, dest.face, origin.face);
                bridge.doIt();
                if (merge) {
                   __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueueCombo"]([merge, bridge]);
@@ -8561,6 +8566,30 @@ class BridgeFaceCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["Edi
    undo() {
       this.cage.undoBridge(this.bridge);
       this.cage.restoreFaceSelection(this.bridge);
+   }
+}
+
+class MergePreviewCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
+   constructor(targetCage, sourceCage) {
+      super();
+      this.targetCage = targetCage;
+      this.sourceCage = sourceCage;
+   }
+
+   getCombine() {
+      return this.combine;
+   }
+
+   doIt() {
+      this.combine = __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["makeCombineIntoWorld"]([this.targetCage, this.sourceCage]);
+      this.combine.name = this.targetCage.name;
+      return true;
+   }
+
+   undo() {
+      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["removeFromWorld"](this.combine);
+      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["addToWorld"](this.targetCage);
+      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["addToWorld"](this.sourceCage);
    }
 }
 
@@ -9985,7 +10014,9 @@ class BodyMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
 
    hideOldHilite() {
       if (this.hiliteView !== this.preview) {
-         this.preview.hiliteBody(false);
+         if (this.preview) {
+            this.preview.hiliteBody(false);
+         }
          this.hiliteView = null;
       }
    }
