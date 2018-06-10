@@ -41,12 +41,15 @@ class FaceMadsor extends Madsor {
             const origin = bridgeFaces[1];
             if (dest.face.numberOfVertex == origin.face.numberOfVertex) {
                let merge;
+               let bridge;
                if (dest.preview !== origin.preview) {
                   // merge dest and origin.
                   merge = new MergePreviewCommand(dest.preview, origin.preview);
                   merge.doIt();
+                  bridge = new BridgeFaceCommand(merge.getCombine(), dest.face, origin.face);
+               } else {
+                  bridge = new BridgeFaceCommand(dest.preview, dest.face, origin.face);
                }
-               const bridge = new BridgeFaceCommand(dest.preview, dest.face, origin.face);
                bridge.doIt();
                if (merge) {
                   View.undoQueueCombo([merge, bridge]);
@@ -391,6 +394,30 @@ class BridgeFaceCommand extends EditCommand {
    undo() {
       this.cage.undoBridge(this.bridge);
       this.cage.restoreFaceSelection(this.bridge);
+   }
+}
+
+class MergePreviewCommand extends EditCommand {
+   constructor(targetCage, sourceCage) {
+      super();
+      this.targetCage = targetCage;
+      this.sourceCage = sourceCage;
+   }
+
+   getCombine() {
+      return this.combine;
+   }
+
+   doIt() {
+      this.combine = View.makeCombineIntoWorld([this.targetCage, this.sourceCage]);
+      this.combine.name = this.targetCage.name;
+      return true;
+   }
+
+   undo() {
+      View.removeFromWorld(this.combine);
+      View.addToWorld(this.targetCage);
+      View.addToWorld(this.sourceCage);
    }
 }
 

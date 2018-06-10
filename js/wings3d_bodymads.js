@@ -207,7 +207,9 @@ class BodyMadsor extends Madsor {
 
    hideOldHilite() {
       if (this.hiliteView !== this.preview) {
-         this.preview.hiliteBody(false);
+         if (this.preview) {
+            this.preview.hiliteBody(false);
+         }
          this.hiliteView = null;
       }
    }
