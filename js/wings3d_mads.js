@@ -380,13 +380,18 @@ class MouseMoveAlongAxis extends MovePositionHandler {
 
 
 class MoveAlongNormal extends MovePositionHandler {
-   constructor(madsor) {
+   constructor(madsor, noNegative = false) {
       super(madsor, madsor.snapshotPositionAndNormal(), 0.0);
+      this.noNegative = noNegative;
    }
 
    _updateMovement(ev) {
       let move = this._calibrateMovement(ev.movementX);
       this.movement += move;
+      if (this.noNegative && (this.movement < 0)) {
+         move -= this.movement;
+         this.movement = 0.0;
+      }
       return move;
    }
 }

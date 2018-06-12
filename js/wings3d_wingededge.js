@@ -358,6 +358,7 @@ var Polygon = function(startEdge, size) {
    this.numberOfVertex = size;       // how many vertex in the polygon
    this.update(); //this.computeNormal();
    this.index = -1;
+   this.isVisible = true;
 };
 
 // not on free list. not deleted.
@@ -488,6 +489,8 @@ Polygon.prototype.getCentroid = function(centroid) {
    // compute centroid.
    vec3.scale(centroid, centroid, 1.0/numberOfVertex);
 };
+
+
 
 //
 // 
@@ -1014,7 +1017,6 @@ WingedTopology.prototype.addPolygon = function(pts) {
 
    return newPolygon;
 };
-
 
 // utility for addPolygon.
 WingedTopology.prototype.findHalfEdge = function(v0, v1) {
@@ -2417,6 +2419,17 @@ WingedTopology.prototype.flip = function(pivot, axis) {
       vertex.vertex[axis] = axisX2 - vertex.vertex[axis];  // == center[axis] - (vertex.vertex[axis]-center[ais])
          this.addAffectedEdgeAndFace(vertex);               // optimiztion: addAllAffected() functions.
       }
+};
+
+
+WingedTopology.prototype.makeHole = function(polygon) {
+   // turn polygon into hole, 
+   let ret = {hEdge: polygon.halfEdge, face: polygon};
+   for (let hEdge of polygon.hEdges()) {
+      hEdge.face = null;
+   }
+   this._freePolygon(polygon);
+   return ret;
 };
 
 

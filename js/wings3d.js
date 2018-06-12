@@ -317,6 +317,7 @@ const action = {
    faceInset: () => {notImplemented(this);},
    faceBevel: () => {notImplemented(this);},
    faceBump: () => {notImplemented(this);},
+   faceIntrude: () => {notImplemented(this);},
    // vertex
    vertexConnect: () => {notImplemented(this);},
    vertexDissolve: () => {notImplemented(this);},

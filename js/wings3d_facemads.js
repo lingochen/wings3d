@@ -69,6 +69,9 @@ class FaceMadsor extends Madsor {
       UI.bindMenuItem(action.faceBump.name, (ev) => {
          View.attachHandlerMouseMove(new BumpFaceHandler(this));
        });
+      UI.bindMenuItem(action.faceIntrude.name, (ev) => {
+         View.attachHandlerMouseMove(new IntrudeFaceHandler(this));
+       });
    }
 
    modeName() {
@@ -181,6 +184,15 @@ class FaceMadsor extends Madsor {
       this.eachPreviewCage( function(cage, collapse) {
          cage.undoCollapseFace(collapse);
       }, collapseArray);
+   }
+
+   // intrude, 
+   intrude() {
+      const intrude = [];
+      this.eachPreviewCage( function(preview) {
+         intrude.push( preview.intrudeFace() );
+      });
+      return intrude;
    }
 
    // bridge
@@ -460,7 +472,7 @@ class InsetFaceHandler extends MovePositionHandler {
    }
 }
 
-// Crease
+// Bump
 class BumpFaceHandler extends MoveableCommand {
    constructor(madsor) {
       super();
@@ -479,8 +491,27 @@ class BumpFaceHandler extends MoveableCommand {
       this.madsor.undoBump(this.bump);
    }
 }
-// end of Crease
 
+// Intrude
+class IntrudeFaceHandler extends MoveableCommand {
+   constructor(madsor) {
+      super();
+      this.madsor = madsor;
+      this.bump = madsor.intrude();
+      this.moveHandler = new MoveAlongNormal(madsor, true);
+   }
+
+   doIt() {
+      this.intrude = this.madsor.intrude();
+      super.doIt();     // = this.madsor.moveSelection(this.movement, this.snapshots);
+      return true;
+   }
+
+   undo() {
+      super.undo(); //this.madsor.restoreMoveSelection(this.snapshots);
+      this.madsor.undoIntrude(this.intrude);
+   }
+}
 
 export {
    FaceMadsor,

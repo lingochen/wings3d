@@ -2309,6 +2309,84 @@ PreviewCage.prototype.undoWeldVertex = function(undo) {
 };
 
 
+PreviewCage.prototype.intrudeFace = function() {
+   if (this.selectedSet.size == 0) {
+      return null;   // no hole to intrude through.
+   }
+
+   // first merge adjacent faces
+   let dissolve = this.dissolveSelectedFace();
+
+   // duplicate connectivity info(invert), and vertex
+   const uniqueVertex = new Map;
+   const addVertex = (vertex) => {
+      let pt = uniqueVertex.get(vertex);
+      if (!pt) {
+         pt = this.geometry.addVertex(vertex.vertex);
+         uniqueVertex.set(vertex, pt);
+      }
+      return pt.index;
+   };
+   const newPolygons = [];
+   const connectLoops = [];
+   const originalFaces = Array.from(this.geometry.faces);
+   for (let polygon of originalFaces) {
+      const ptsLoop = [];
+      for (let hEdge of polygon.hEdges()) {
+         ptsLoop.push( addVertex(hEdge.origin) );
+      }
+      if (this.selectedSet.has(polygon)) {   // save hole's connect loop.
+         let i = 0;
+         let lastFront, lastBack;
+         for (let hEdge of polygon.hEdges()) {
+            const currentF = hEdge.origin.index;
+            const currentB = ptsLoop[i];
+            if (i > 0) {
+               connectLoops.push( [lastFront, currentF, currentB, lastBack] );
+            }
+            ++i;
+            lastFront = currentF;
+            lastBack = currentB;
+         }
+         // add the last loop
+         connectLoops.push( [lastFront, polygon.halfEdge.origin.index, ptsLoop[0], lastBack]);
+      } else { // add the invert polygon.
+         ptsLoop.reverse();
+         newPolygons.push( this.geometry.addPolygon(ptsLoop) );
+      }
+   }
+
+   // now holed the remaining selected Face
+   this._updatePreviewAll();  // temp Fix: needs to update Preview before holeSelectedFace
+   let holed = this.holeSelectedFace();
+   // select all newly created polygon
+   for (let polygon of newPolygons) {
+      this.selectFace(polygon.halfEdge);
+   }
+
+   // connect to the front polygons.
+   for (let loop of connectLoops) {
+      newPolygons.push( this.geometry.addPolygon(loop) );
+   }
+
+   this._updatePreviewAll();
+   // return restoration params.
+   return ;
+};
+
+
+PreviewCage.prototype.holeSelectedFace = function() {
+   // remove the selected Face, and free it.
+   const holes = new Set(this.selectedSet);
+   for (let polygon of holes) {
+      this.selectFace(polygon.halfEdge);
+      this.geometry.makeHole(polygon);
+   }
+
+   return holes;
+};
+
+
 
 //----------------------------------------------------------------------------------------------------------
 
