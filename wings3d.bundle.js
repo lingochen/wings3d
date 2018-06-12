@@ -402,6 +402,7 @@ const action = {
    faceInset: () => {notImplemented(this);},
    faceBevel: () => {notImplemented(this);},
    faceBump: () => {notImplemented(this);},
+   faceIntrude: () => {notImplemented(this);},
    // vertex
    vertexConnect: () => {notImplemented(this);},
    vertexDissolve: () => {notImplemented(this);},
@@ -3987,6 +3988,84 @@ PreviewCage.prototype.undoWeldVertex = function(undo) {
 };
 
 
+PreviewCage.prototype.intrudeFace = function() {
+   if (this.selectedSet.size == 0) {
+      return null;   // no hole to intrude through.
+   }
+
+   // first merge adjacent faces
+   let dissolve = this.dissolveSelectedFace();
+
+   // duplicate connectivity info(invert), and vertex
+   const uniqueVertex = new Map;
+   const addVertex = (vertex) => {
+      let pt = uniqueVertex.get(vertex);
+      if (!pt) {
+         pt = this.geometry.addVertex(vertex.vertex);
+         uniqueVertex.set(vertex, pt);
+      }
+      return pt.index;
+   };
+   const newPolygons = [];
+   const connectLoops = [];
+   const originalFaces = Array.from(this.geometry.faces);
+   for (let polygon of originalFaces) {
+      const ptsLoop = [];
+      for (let hEdge of polygon.hEdges()) {
+         ptsLoop.push( addVertex(hEdge.origin) );
+      }
+      if (this.selectedSet.has(polygon)) {   // save hole's connect loop.
+         let i = 0;
+         let lastFront, lastBack;
+         for (let hEdge of polygon.hEdges()) {
+            const currentF = hEdge.origin.index;
+            const currentB = ptsLoop[i];
+            if (i > 0) {
+               connectLoops.push( [lastFront, currentF, currentB, lastBack] );
+            }
+            ++i;
+            lastFront = currentF;
+            lastBack = currentB;
+         }
+         // add the last loop
+         connectLoops.push( [lastFront, polygon.halfEdge.origin.index, ptsLoop[0], lastBack]);
+      } else { // add the invert polygon.
+         ptsLoop.reverse();
+         newPolygons.push( this.geometry.addPolygon(ptsLoop) );
+      }
+   }
+
+   // now holed the remaining selected Face
+   this._updatePreviewAll();  // temp Fix: needs to update Preview before holeSelectedFace
+   let holed = this.holeSelectedFace();
+   // select all newly created polygon
+   for (let polygon of newPolygons) {
+      this.selectFace(polygon.halfEdge);
+   }
+
+   // connect to the front polygons.
+   for (let loop of connectLoops) {
+      newPolygons.push( this.geometry.addPolygon(loop) );
+   }
+
+   this._updatePreviewAll();
+   // return restoration params.
+   return ;
+};
+
+
+PreviewCage.prototype.holeSelectedFace = function() {
+   // remove the selected Face, and free it.
+   const holes = new Set(this.selectedSet);
+   for (let polygon of holes) {
+      this.selectFace(polygon.halfEdge);
+      this.geometry.makeHole(polygon);
+   }
+
+   return holes;
+};
+
+
 
 //----------------------------------------------------------------------------------------------------------
 
@@ -5344,6 +5423,7 @@ var Polygon = function(startEdge, size) {
    this.numberOfVertex = size;       // how many vertex in the polygon
    this.update(); //this.computeNormal();
    this.index = -1;
+   this.isVisible = true;
 };
 
 // not on free list. not deleted.
@@ -5474,6 +5554,8 @@ Polygon.prototype.getCentroid = function(centroid) {
    // compute centroid.
    vec3.scale(centroid, centroid, 1.0/numberOfVertex);
 };
+
+
 
 //
 // 
@@ -6000,7 +6082,6 @@ WingedTopology.prototype.addPolygon = function(pts) {
 
    return newPolygon;
 };
-
 
 // utility for addPolygon.
 WingedTopology.prototype.findHalfEdge = function(v0, v1) {
@@ -7406,6 +7487,17 @@ WingedTopology.prototype.flip = function(pivot, axis) {
 };
 
 
+WingedTopology.prototype.makeHole = function(polygon) {
+   // turn polygon into hole, 
+   let ret = {hEdge: polygon.halfEdge, face: polygon};
+   for (let hEdge of polygon.hEdges()) {
+      hEdge.face = null;
+   }
+   this._freePolygon(polygon);
+   return ret;
+};
+
+
 
 
 /***/ }),
@@ -8241,6 +8333,9 @@ class FaceMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
       __WEBPACK_IMPORTED_MODULE_9__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_10__wings3d__["action"].faceBump.name, (ev) => {
          __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["attachHandlerMouseMove"](new BumpFaceHandler(this));
        });
+      __WEBPACK_IMPORTED_MODULE_9__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_10__wings3d__["action"].faceIntrude.name, (ev) => {
+         __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["attachHandlerMouseMove"](new IntrudeFaceHandler(this));
+       });
    }
 
    modeName() {
@@ -8353,6 +8448,15 @@ class FaceMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
       this.eachPreviewCage( function(cage, collapse) {
          cage.undoCollapseFace(collapse);
       }, collapseArray);
+   }
+
+   // intrude, 
+   intrude() {
+      const intrude = [];
+      this.eachPreviewCage( function(preview) {
+         intrude.push( preview.intrudeFace() );
+      });
+      return intrude;
    }
 
    // bridge
@@ -8632,7 +8736,7 @@ class InsetFaceHandler extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Move
    }
 }
 
-// Crease
+// Bump
 class BumpFaceHandler extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["MoveableCommand"] {
    constructor(madsor) {
       super();
@@ -8651,8 +8755,27 @@ class BumpFaceHandler extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["Movea
       this.madsor.undoBump(this.bump);
    }
 }
-// end of Crease
 
+// Intrude
+class IntrudeFaceHandler extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["MoveableCommand"] {
+   constructor(madsor) {
+      super();
+      this.madsor = madsor;
+      this.bump = madsor.intrude();
+      this.moveHandler = new __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["MoveAlongNormal"](madsor, true);
+   }
+
+   doIt() {
+      this.intrude = this.madsor.intrude();
+      super.doIt();     // = this.madsor.moveSelection(this.movement, this.snapshots);
+      return true;
+   }
+
+   undo() {
+      super.undo(); //this.madsor.restoreMoveSelection(this.snapshots);
+      this.madsor.undoIntrude(this.intrude);
+   }
+}
 
 
 
@@ -9057,13 +9180,18 @@ class MouseMoveAlongAxis extends MovePositionHandler {
 
 
 class MoveAlongNormal extends MovePositionHandler {
-   constructor(madsor) {
+   constructor(madsor, noNegative = false) {
       super(madsor, madsor.snapshotPositionAndNormal(), 0.0);
+      this.noNegative = noNegative;
    }
 
    _updateMovement(ev) {
       let move = this._calibrateMovement(ev.movementX);
       this.movement += move;
+      if (this.noNegative && (this.movement < 0)) {
+         move -= this.movement;
+         this.movement = 0.0;
+      }
       return move;
    }
 }
