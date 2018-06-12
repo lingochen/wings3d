@@ -598,6 +598,7 @@ MeshAllocator.prototype.allocPolygon = function(halfEdge, numberOfVertex, delPol
       polygon.halfEdge = halfEdge;
       polygon.numberOfVertex = numberOfVertex;
       polygon.update();
+      polygon.isVisible = true;  // make sure it visible.
       this.affected.faces.add( polygon );
    } else {
       polygon = new Polygon(halfEdge, numberOfVertex);

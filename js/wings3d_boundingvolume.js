@@ -8,11 +8,10 @@ const BoundingSphere = function(center, radius, polygon) {
    this.radius = radius;
    this.radius2 = radius*radius;
    this.polygon = polygon;
-   this.isVisible = true;    // default to show because compute in preview.
 };
 
 BoundingSphere.prototype.isLive = function() {
-   return (this.isVisible && this.polygon.isLive());
+   return (this.polygon.isVisible && this.polygon.isLive());
 };
 
 BoundingSphere.prototype.isIntersect = function(ray) {

@@ -92,6 +92,8 @@ DraftBench.prototype.updatePreview = function() {
    this._resizePreviewVertex();
    this._updatePreviewSize();
    this._updateAffected(this.allocMesh.affected);
+   // compute index
+   //this._computePreviewIndex();
 };
 
 
@@ -624,13 +626,13 @@ DraftBench.prototype.resetSelectFace = function() {
 
 DraftBench.prototype.hide = function(faceGroup) {
    for (let polygon of faceGroup) {
-      this.boundingSpheres[polygon.index].isVisible = false;
+      polygon.isVisible = false;
    }
 };
 
 DraftBench.prototype.show = function(faceGroup) {
    for (let polygon of faceGroup) {
-      this.boundingSpheres[polygon.index].isVisible = true;
+      polygon.isVisible = true;
    }
 };
 
