@@ -5663,6 +5663,7 @@ MeshAllocator.prototype.allocPolygon = function(halfEdge, numberOfVertex, delPol
       polygon.halfEdge = halfEdge;
       polygon.numberOfVertex = numberOfVertex;
       polygon.update();
+      polygon.isVisible = true;  // make sure it visible.
       this.affected.faces.add( polygon );
    } else {
       polygon = new Polygon(halfEdge, numberOfVertex);
@@ -7608,6 +7609,8 @@ DraftBench.prototype.updatePreview = function() {
    this._resizePreviewVertex();
    this._updatePreviewSize();
    this._updateAffected(this.allocMesh.affected);
+   // compute index
+   //this._computePreviewIndex();
 };
 
 
@@ -8140,13 +8143,13 @@ DraftBench.prototype.resetSelectFace = function() {
 
 DraftBench.prototype.hide = function(faceGroup) {
    for (let polygon of faceGroup) {
-      this.boundingSpheres[polygon.index].isVisible = false;
+      polygon.isVisible = false;
    }
 };
 
 DraftBench.prototype.show = function(faceGroup) {
    for (let polygon of faceGroup) {
-      this.boundingSpheres[polygon.index].isVisible = true;
+      polygon.isVisible = true;
    }
 };
 
@@ -11375,11 +11378,10 @@ const BoundingSphere = function(center, radius, polygon) {
    this.radius = radius;
    this.radius2 = radius*radius;
    this.polygon = polygon;
-   this.isVisible = true;    // default to show because compute in preview.
 };
 
 BoundingSphere.prototype.isLive = function() {
-   return (this.isVisible && this.polygon.isLive());
+   return (this.polygon.isVisible && this.polygon.isLive());
 };
 
 BoundingSphere.prototype.isIntersect = function(ray) {
