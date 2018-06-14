@@ -2310,12 +2310,13 @@ PreviewCage.prototype.undoWeldVertex = function(undo) {
 
 
 PreviewCage.prototype.intrudeFace = function() {
+   const ret = {};
    if (this.selectedSet.size == 0) {
-      return null;   // no hole to intrude through.
+      return ret;   // no hole to intrude through.
    }
 
    // first merge adjacent faces
-   let dissolve = this.dissolveSelectedFace();
+   ret.dissolve = this.dissolveSelectedFace();
 
    // duplicate connectivity info(invert), and vertex
    const uniqueVertex = new Map;
@@ -2358,32 +2359,52 @@ PreviewCage.prototype.intrudeFace = function() {
 
    // now holed the remaining selected Face
    this._updatePreviewAll();  // temp Fix: needs to update Preview before holeSelectedFace
-   let holed = this.holeSelectedFace();
+   ret.holed = this.holeSelectedFace();
    // select all newly created polygon
    for (let polygon of newPolygons) {
       this.selectFace(polygon.halfEdge);
    }
+   ret.invert = newPolygons;
 
    // connect to the front polygons.
+   ret.connect = [];
    for (let loop of connectLoops) {
-      newPolygons.push( this.geometry.addPolygon(loop) );
+      ret.connect.push( this.geometry.addPolygon(loop) );
    }
 
    this._updatePreviewAll();
    // return restoration params.
-   return ;
+   return ret;
+};
+
+PreviewCage.prototype.undoIntrudeFace = function(intrude) {
+   for (let polygon of intrude.connect) { // first remove the connect face
+      this.geometry.makeHole(polygon);
+   }
+
+   // now deselect inverts, and remove all polygon' and it edges and vertex
+
+
 };
 
 
 PreviewCage.prototype.holeSelectedFace = function() {
    // remove the selected Face, and free it.
    const holes = new Set(this.selectedSet);
+   const ret = [];
    for (let polygon of holes) {
       this.selectFace(polygon.halfEdge);
-      this.geometry.makeHole(polygon);
+      ret.push( this.geometry.makeHole(polygon) );
    }
 
-   return holes;
+   return ret;
+};
+
+PreviewCage.prototype.undoHoleSelectedFace = function(holes) {
+   for (let hole of holes) {
+      const polygon = this.geometry.undoHole(hole);
+      this.selectFace(polygon.hEdge);
+   }
 };
 
 

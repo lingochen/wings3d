@@ -491,6 +491,14 @@ Polygon.prototype.getCentroid = function(centroid) {
 };
 
 
+let PolygonHole = (function() {
+   const ret = new Polygon();
+   ret.isVisible = false;
+
+}());
+
+
+
 
 //
 // 
@@ -850,12 +858,12 @@ WingedTopology.prototype._freePolygon = function(polygon) {
 };
 
 // return winged edge ptr because internal use only.
-WingedTopology.prototype.addEdge = function(begVert, endVert) {
+WingedTopology.prototype.addEdge = function(begVert, endVert, delOutEdge) {
    // what to do with loop edge?
    // what to do with parallel edge?
 
    // initialized data.
-   var edge = this._createEdge(begVert, endVert).wingedEdge;
+   var edge = this._createEdge(begVert, endVert, delOutEdge).wingedEdge;
 
    // Link outedge, splice if needed
    if (!begVert.linkEdge(edge.left, edge.right)) {
@@ -1821,7 +1829,7 @@ WingedTopology.prototype._removeEdge = function(outEdge, inEdge) {
    if (inEdge.origin.outEdge === inEdge) {
       inEdge.origin.outEdge = inPrev.pair;
    }
-   return {outPrev: outPrev, inPrev: inPrev, inNext: inNext};
+   return {outPrev: outPrev, inPrev: inPrev, inNext: inNext, inEdge: inEdge}; // fixed? outPrev: not needed
 }
 // won't work with potentially "dangling" vertices and edges. Any doubt, call dissolveEdge
 WingedTopology.prototype.removeEdge = function(outEdge) {
@@ -2425,13 +2433,26 @@ WingedTopology.prototype.flip = function(pivot, axis) {
 
 WingedTopology.prototype.makeHole = function(polygon) {
    // turn polygon into hole, 
-   let ret = {hEdge: polygon.halfEdge, face: polygon};
+   let ret = {hEdge: polygon.halfEdge, face: polygon, removeEdges: []};
    for (let hEdge of polygon.hEdges()) {
       hEdge.face = null;
+      const pairEdge = hEdge.pair;
+      if (pairEdge.face === null) { 
+         this.removeEdge(hEdge, pairEdge);
+         ret.removeEdges.unshift( {begVert: hEdge.origin, endVert, delOutEdge: hEdge} );
+      }
    }
    this._freePolygon(polygon);
    return ret;
 };
+
+WingedTopology.prototype.undoHole = function(hole) {
+   for (let remove of ret.removeEdges) {
+      this.addEdge( remove.begVert, remove.endVert, remove.delOutEdge );
+   }
+   return this._createPolygon(hole.hEdge, 4, hole.face);
+};
+
 
 
 export {
