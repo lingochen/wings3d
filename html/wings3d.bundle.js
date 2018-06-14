@@ -3989,12 +3989,13 @@ PreviewCage.prototype.undoWeldVertex = function(undo) {
 
 
 PreviewCage.prototype.intrudeFace = function() {
+   const ret = {};
    if (this.selectedSet.size == 0) {
-      return null;   // no hole to intrude through.
+      return ret;   // no hole to intrude through.
    }
 
    // first merge adjacent faces
-   let dissolve = this.dissolveSelectedFace();
+   ret.dissolve = this.dissolveSelectedFace();
 
    // duplicate connectivity info(invert), and vertex
    const uniqueVertex = new Map;
@@ -4037,32 +4038,70 @@ PreviewCage.prototype.intrudeFace = function() {
 
    // now holed the remaining selected Face
    this._updatePreviewAll();  // temp Fix: needs to update Preview before holeSelectedFace
-   let holed = this.holeSelectedFace();
+   ret.holed = this.holeSelectedFace();
    // select all newly created polygon
    for (let polygon of newPolygons) {
       this.selectFace(polygon.halfEdge);
    }
+   ret.invert = newPolygons;
 
    // connect to the front polygons.
+   ret.connect = [];
    for (let loop of connectLoops) {
-      newPolygons.push( this.geometry.addPolygon(loop) );
+      ret.connect.push( this.geometry.addPolygon(loop) );
    }
 
    this._updatePreviewAll();
    // return restoration params.
-   return ;
+   return ret;
+};
+
+PreviewCage.prototype.undoIntrudeFace = function(intrude) {
+   for (let polygon of intrude.connect) { // first remove the connect face
+      this.geometry.makeHole(polygon);
+   }
+
+   // now deselect inverts, and remove all polygon' and it edges and vertex
+   for (let polygon of intrude.invert) {
+      this.selectFace(polygon.halfEdge);
+   }
+   const wEdges = new Set();
+   for (let polygon of intrude.invert) {
+      for (let hEdge of polygon.hEdges()) {
+         this.geometry._freeVertex(hEdge.origin);
+         wEdges.add( hEdge.wingedEdge );
+      }
+      this.geometry._freePolygon(polygon);
+   }
+   for (let wEdge of wEdges) {
+      this.geometry._freeEdge(wEdge.left);
+   }
+
+   // now restore hole facce
+   this.undoHoleSelectedFace(intrude.holed);
+
+   // undo merge face
+   this.undoDissolveFace(intrude.dissolve);
 };
 
 
 PreviewCage.prototype.holeSelectedFace = function() {
    // remove the selected Face, and free it.
    const holes = new Set(this.selectedSet);
+   const ret = [];
    for (let polygon of holes) {
       this.selectFace(polygon.halfEdge);
-      this.geometry.makeHole(polygon);
+      ret.push( this.geometry.makeHole(polygon) );
    }
 
-   return holes;
+   return ret;
+};
+
+PreviewCage.prototype.undoHoleSelectedFace = function(holes) {
+   for (let hole of holes) {
+      const polygon = this.geometry.undoHole(hole);
+      this.selectFace(polygon.halfEdge);
+   }
 };
 
 
@@ -5556,6 +5595,14 @@ Polygon.prototype.getCentroid = function(centroid) {
 };
 
 
+/*let PolygonHole = function() {
+   const ret = new Polygon();
+   ret.isVisible = false;
+
+};*/
+
+
+
 
 //
 // 
@@ -5900,27 +5947,30 @@ WingedTopology.prototype._createEdge = function(begVert, endVert, delOutEdge) {
 };
 // recycled
 WingedTopology.prototype._freeVertex = function(vertex) {
-   this.alloc.freeVertex(vertex);
-   this.vertices.delete(vertex);
+   if (this.vertices.delete(vertex)) {
+      this.alloc.freeVertex(vertex);
+   }
 };
 
 WingedTopology.prototype._freeEdge = function(edge) {
-   this.alloc.freeHEdge(edge);
-   this.edges.delete(edge.wingedEdge);
+   if (this.edges.delete(edge.wingedEdge)){
+      this.alloc.freeHEdge(edge);
+   }
 };
 
 WingedTopology.prototype._freePolygon = function(polygon) {
-   this.alloc.freePolygon(polygon);
-   this.faces.delete(polygon);
+   if (this.faces.delete(polygon)) {
+      this.alloc.freePolygon(polygon);
+   }
 };
 
 // return winged edge ptr because internal use only.
-WingedTopology.prototype.addEdge = function(begVert, endVert) {
+WingedTopology.prototype.addEdge = function(begVert, endVert, delOutEdge) {
    // what to do with loop edge?
    // what to do with parallel edge?
 
    // initialized data.
-   var edge = this._createEdge(begVert, endVert).wingedEdge;
+   var edge = this._createEdge(begVert, endVert, delOutEdge).wingedEdge;
 
    // Link outedge, splice if needed
    if (!begVert.linkEdge(edge.left, edge.right)) {
@@ -6886,7 +6936,7 @@ WingedTopology.prototype._removeEdge = function(outEdge, inEdge) {
    if (inEdge.origin.outEdge === inEdge) {
       inEdge.origin.outEdge = inPrev.pair;
    }
-   return {outPrev: outPrev, inPrev: inPrev, inNext: inNext};
+   return {outPrev: outPrev, inPrev: inPrev, inNext: inNext, inEdge: inEdge}; // fixed? outPrev: not needed
 }
 // won't work with potentially "dangling" vertices and edges. Any doubt, call dissolveEdge
 WingedTopology.prototype.removeEdge = function(outEdge) {
@@ -7490,13 +7540,26 @@ WingedTopology.prototype.flip = function(pivot, axis) {
 
 WingedTopology.prototype.makeHole = function(polygon) {
    // turn polygon into hole, 
-   let ret = {hEdge: polygon.halfEdge, face: polygon};
+   let ret = {hEdge: polygon.halfEdge, face: polygon, removeEdges: []};
    for (let hEdge of polygon.hEdges()) {
       hEdge.face = null;
+      const pairEdge = hEdge.pair;
+      if (pairEdge.face === null) { 
+         this._removeEdge(hEdge, pairEdge);
+         ret.removeEdges.unshift( {begVert: hEdge.origin, endVert: hEdge.destination(), delOutEdge: hEdge} );
+      }
    }
    this._freePolygon(polygon);
    return ret;
 };
+
+WingedTopology.prototype.undoHole = function(hole) {
+   for (let remove of hole.removeEdges) {
+      this.addEdge( remove.begVert, remove.endVert, remove.delOutEdge );
+   }
+   return this._createPolygon(hole.hEdge, 4, hole.face);
+};
+
 
 
 
@@ -8455,11 +8518,10 @@ class FaceMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
 
    // intrude, 
    intrude() {
-      const intrude = [];
-      this.eachPreviewCage( function(preview) {
-         intrude.push( preview.intrudeFace() );
-      });
-      return intrude;
+      return this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.intrudeFace);
+   }
+   undoIntrude(snapshots) {
+      return this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.undoIntrudeFace);
    }
 
    // bridge
@@ -8764,7 +8826,7 @@ class IntrudeFaceHandler extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["Mo
    constructor(madsor) {
       super();
       this.madsor = madsor;
-      this.bump = madsor.intrude();
+      this.intrude = madsor.intrude();
       this.moveHandler = new __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["MoveAlongNormal"](madsor, true);
    }
 

@@ -491,11 +491,11 @@ Polygon.prototype.getCentroid = function(centroid) {
 };
 
 
-let PolygonHole = (function() {
+/*let PolygonHole = function() {
    const ret = new Polygon();
    ret.isVisible = false;
 
-}());
+};*/
 
 
 
@@ -843,18 +843,21 @@ WingedTopology.prototype._createEdge = function(begVert, endVert, delOutEdge) {
 };
 // recycled
 WingedTopology.prototype._freeVertex = function(vertex) {
-   this.alloc.freeVertex(vertex);
-   this.vertices.delete(vertex);
+   if (this.vertices.delete(vertex)) {
+      this.alloc.freeVertex(vertex);
+   }
 };
 
 WingedTopology.prototype._freeEdge = function(edge) {
-   this.alloc.freeHEdge(edge);
-   this.edges.delete(edge.wingedEdge);
+   if (this.edges.delete(edge.wingedEdge)){
+      this.alloc.freeHEdge(edge);
+   }
 };
 
 WingedTopology.prototype._freePolygon = function(polygon) {
-   this.alloc.freePolygon(polygon);
-   this.faces.delete(polygon);
+   if (this.faces.delete(polygon)) {
+      this.alloc.freePolygon(polygon);
+   }
 };
 
 // return winged edge ptr because internal use only.
@@ -2438,8 +2441,8 @@ WingedTopology.prototype.makeHole = function(polygon) {
       hEdge.face = null;
       const pairEdge = hEdge.pair;
       if (pairEdge.face === null) { 
-         this.removeEdge(hEdge, pairEdge);
-         ret.removeEdges.unshift( {begVert: hEdge.origin, endVert, delOutEdge: hEdge} );
+         this._removeEdge(hEdge, pairEdge);
+         ret.removeEdges.unshift( {begVert: hEdge.origin, endVert: hEdge.destination(), delOutEdge: hEdge} );
       }
    }
    this._freePolygon(polygon);
@@ -2447,7 +2450,7 @@ WingedTopology.prototype.makeHole = function(polygon) {
 };
 
 WingedTopology.prototype.undoHole = function(hole) {
-   for (let remove of ret.removeEdges) {
+   for (let remove of hole.removeEdges) {
       this.addEdge( remove.begVert, remove.endVert, remove.delOutEdge );
    }
    return this._createPolygon(hole.hEdge, 4, hole.face);

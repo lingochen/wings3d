@@ -188,11 +188,10 @@ class FaceMadsor extends Madsor {
 
    // intrude, 
    intrude() {
-      const intrude = [];
-      this.eachPreviewCage( function(preview) {
-         intrude.push( preview.intrudeFace() );
-      });
-      return intrude;
+      return this.snapshotAll(PreviewCage.prototype.intrudeFace);
+   }
+   undoIntrude(snapshots) {
+      return this.doAll(snapshots, PreviewCage.prototype.undoIntrudeFace);
    }
 
    // bridge
@@ -497,7 +496,7 @@ class IntrudeFaceHandler extends MoveableCommand {
    constructor(madsor) {
       super();
       this.madsor = madsor;
-      this.bump = madsor.intrude();
+      this.intrude = madsor.intrude();
       this.moveHandler = new MoveAlongNormal(madsor, true);
    }
 

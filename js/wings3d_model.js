@@ -2383,8 +2383,26 @@ PreviewCage.prototype.undoIntrudeFace = function(intrude) {
    }
 
    // now deselect inverts, and remove all polygon' and it edges and vertex
+   for (let polygon of intrude.invert) {
+      this.selectFace(polygon.halfEdge);
+   }
+   const wEdges = new Set();
+   for (let polygon of intrude.invert) {
+      for (let hEdge of polygon.hEdges()) {
+         this.geometry._freeVertex(hEdge.origin);
+         wEdges.add( hEdge.wingedEdge );
+      }
+      this.geometry._freePolygon(polygon);
+   }
+   for (let wEdge of wEdges) {
+      this.geometry._freeEdge(wEdge.left);
+   }
 
+   // now restore hole facce
+   this.undoHoleSelectedFace(intrude.holed);
 
+   // undo merge face
+   this.undoDissolveFace(intrude.dissolve);
 };
 
 
@@ -2403,7 +2421,7 @@ PreviewCage.prototype.holeSelectedFace = function() {
 PreviewCage.prototype.undoHoleSelectedFace = function(holes) {
    for (let hole of holes) {
       const polygon = this.geometry.undoHole(hole);
-      this.selectFace(polygon.hEdge);
+      this.selectFace(polygon.halfEdge);
    }
 };
 
