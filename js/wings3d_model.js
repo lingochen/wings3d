@@ -2483,7 +2483,7 @@ PreviewCage.prototype.loopCut = function() {
    // detach smaller groups from the largest, by finding the contour.
    for (let i = 0; i < partitionGroup.length; ++i) {
       const partition = partitionGroup[i];
-      let mergeFills = new Set;
+      let newFills = [];
       let separate = this;
       if (i !== (partitionGroup.length-1)) { 
          let contours = this.geometry.findContours(partition); // detach faceGroups from main
@@ -2491,20 +2491,23 @@ PreviewCage.prototype.loopCut = function() {
             if ((edgeLoop.length > 0) && !fillFaces.has(edgeLoop[0].outer.face)) { // not already separated.
                this.geometry.liftContour(edgeLoop);
                const fillFace = this.geometry._createPolygon(edgeLoop[0].outer, edgeLoop.size); // fill hole.
-               fillFaces.add(fillFace);
+               newFills.push(fillFace);
                separate = this.detachFace(partition, i);
-            } else {
-               for (let {outer, inner} of edgeLoop) {
-                  mergeFills.add(outer.face);
-               }
             }
          }
       }
       // merge/delete add fillFaces
-      separate.selectedSet = mergeFills;
+      for (let polygon of fillFaces) {
+         if (separate.geometry.faces.has(polygon)) {
+            separate.selectedSet.add(polygon);
+            fillFaces.delete(polygon);
+         }
+      }
       separate.dissolveSelectedFace(); // merge if possible.
-      mergeFills = separate.selectedSet;
       separate.selectedSet = new Set;
+      for (let polygon of newFills) {  // newFills should be always 0th, or 1th length. 
+         fillFaces.add(polygon);
+      }
       // todo: fillFace if neighbor to outside hole will be turn to holes too.
 
       // separation will be selected.
