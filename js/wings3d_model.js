@@ -2448,7 +2448,7 @@ PreviewCage.prototype.loopCut = function() {
       allFaces.delete(polygon);
       for (let hEdge of polygon.hEdges()) {
          if (!this.selectedSet.has(hEdge.wingedEdge) && allFaces.has(hEdge.pair.face)) {
-            partitionFace(polygon);
+            partitionFace(hEdge.pair.face);
          }
       }      
    };
@@ -2465,7 +2465,8 @@ PreviewCage.prototype.loopCut = function() {
       }
    }
 
-   if (partitionGroup.size < 2) {   // make sure, there is at least 2 partition.
+   if (partitionGroup.length < 2) {   // make sure, there is at least 2 partition.
+      geometryStatus("less than 2 partitions");
       return false;
    }
 
@@ -2480,9 +2481,9 @@ PreviewCage.prototype.loopCut = function() {
    const separateCages = [];
    const fillFaces = new Set;
    // detach smaller groups from the largest, by finding the contour.
-   for (let partition of partitionGroup) {
-      const partion = partitionGroup[i];
-      const mergeFills = new Set;
+   for (let i = 0; i < partitionGroup.length; ++i) {
+      const partition = partitionGroup[i];
+      let mergeFills = new Set;
       let separate = this;
       if (i !== (partitionGroup.length-1)) { 
          let contours = this.geometry.findContours(partition); // detach faceGroups from main
@@ -2507,12 +2508,12 @@ PreviewCage.prototype.loopCut = function() {
       // todo: fillFace if neighbor to outside hole will be turn to holes too.
 
       // separation will be selected.
-      if (separarte !== this) {
+      if (separate !== this) {
          separateCages.push( separate );
       }
    }
 
-   return ret.separateCages;
+   return {separateCages: separateCages};
 };
 
 

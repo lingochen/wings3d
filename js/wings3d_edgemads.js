@@ -160,7 +160,14 @@ class EdgeMadsor extends Madsor {
    }
 
    loopCut() {
-      return this.snapshotAll(PreviewCage.prototype.loopCut);
+      const snapshots = this.snapshotAll(PreviewCage.prototype.loopCut);
+      for (let snapshot of snapshots) {
+         for (let preview of snapshot.snapshot.separateCages) {
+            View.addToWorld(preview);
+            preview.selectBody();
+         }
+      }
+      return snapshots;
    }
 
    bevel() {
@@ -560,7 +567,7 @@ class LoopCutCommand extends EditCommand {
    doIt() {
       this.loopCut = this.madsor.loopCut();
       if (this.loopCut.length > 0) {   // change to body Mode.
-
+         View.restoreBodyMode();
          return true;
       } else {
          return false;
@@ -568,7 +575,10 @@ class LoopCutCommand extends EditCommand {
    }
 
    undo() {
-      this.madsor.undoLoopCut(this.loopCut);
+      if (this.loopCut.length > 0) {
+         View.restoreEdgeMode();
+         this.madsor.undoLoopCut(this.loopCut);
+      }
    }
 }
 

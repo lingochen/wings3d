@@ -772,7 +772,7 @@ WingedTopology.prototype.detachFace = function(faceSet) {
    const edges = new Set;
    for (let polygon of faceSet) {
       this.faces.delete(polygon);
-      for (let hEdge of polygon.hEdges) {
+      for (let hEdge of polygon.hEdges()) {
          vertices.add(hEdge.origin);
          this.vertices.delete(hEdge.origin);
          edges.add(hEdge.wingedEdge);
