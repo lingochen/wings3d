@@ -123,6 +123,15 @@ class EdgeMadsor extends Madsor {
             }
           });
        });
+       // loopCut
+       UI.bindMenuItem(action.edgeLoopCut.name, (ev) => {
+         const command = new LoopCutCommand(this);
+         if (command.doIt()) {
+            View.undoQueue(command);
+         } else { // geometry status. no LoopCut available.
+
+         }
+        });
    }
 
    modeName() {
@@ -148,6 +157,10 @@ class EdgeMadsor extends Madsor {
 
    snapshotTransformGroup() {
       return this.snapshotAll(PreviewCage.prototype.snapshotTransformEdgeGroup);
+   }
+
+   loopCut() {
+      return this.snapshotAll(PreviewCage.prototype.loopCut);
    }
 
    bevel() {
@@ -536,6 +549,27 @@ class EdgeRingCommand extends EditCommand {
       this.madsor.resetSelection();
       this.madsor.restoreSelection(this.selectedEdges);
    } 
+}
+
+class LoopCutCommand extends EditCommand {
+   constructor(madsor) {
+      super();
+      this.madsor = madsor;
+   }
+
+   doIt() {
+      this.loopCut = this.madsor.loopCut();
+      if (this.loopCut.length > 0) {   // change to body Mode.
+
+         return true;
+      } else {
+         return false;
+      }
+   }
+
+   undo() {
+      this.madsor.undoLoopCut(this.loopCut);
+   }
 }
 
 export {

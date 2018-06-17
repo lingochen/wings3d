@@ -292,6 +292,7 @@ const action = {
    edgeExtrudeY: () =>{notImplemented(this);},
    edgeExtrudeZ: () =>{notImplemented(this);},
    edgeCrease: () =>{notImplemented(this);},
+   edgeLoopCut: () =>{notImplemented(this);},
    // face
    faceExtrudeMenu: () =>{notImplemented(this);},
    faceExtrudeX: () =>{notImplemented(this);},

@@ -83,7 +83,20 @@ PreviewCage.prototype.separate = function() {
       separatePreview.push(cage);
    }
    return separatePreview;    // snapshot.
-}
+};
+
+
+PreviewCage.prototype.detachFace = function(detachFaces, number) {
+   const detach = this.geometry.detachFace(detachFaces);
+   const separate = new PreviewCage(this.bench);   // should only happened once for each partition.
+   separate.geometry.faces = detachFaces;
+   separate.geometry.edges = detach.edges;
+   separate.geometry.vertices = detach.vertices;
+   separate.name = this.name + "_cut" + number.toString();
+
+   return separate;
+};
+
 
 
 PreviewCage.prototype.hide = function() {
@@ -2417,12 +2430,89 @@ PreviewCage.prototype.holeSelectedFace = function() {
 
    return ret;
 };
-
 PreviewCage.prototype.undoHoleSelectedFace = function(holes) {
    for (let hole of holes) {
       const polygon = this.geometry.undoHole(hole);
       this.selectFace(polygon.halfEdge);
    }
+};
+
+
+// edgeMode - cut out selected contours.
+PreviewCage.prototype.loopCut = function() {
+   const allFaces = new Set(this.geometry.faces);
+   let partition;
+
+   const partitionFace = (polygon) => {
+      partition.add(polygon);
+      allFaces.delete(polygon);
+      for (let hEdge of polygon.hEdges()) {
+         if (!this.selectedSet.has(hEdge.wingedEdge) && allFaces.has(hEdge.pair.face)) {
+            partitionFace(polygon);
+         }
+      }      
+   };
+
+   let partitionGroup = [];
+   for (let wEdge of this.selectedSet) {
+      for (let hEdge of wEdge) {
+         if (allFaces.has(hEdge.face)) {
+            partition = new Set;
+            partitionFace(hEdge.face);
+            // go the partition, now save it
+            partitionGroup.push( partition );
+         }
+      }
+   }
+
+   if (partitionGroup.size < 2) {   // make sure, there is at least 2 partition.
+      return false;
+   }
+
+   // we have to separate from smallest to largest, so that separation can gel into single face correctly.
+   partitionGroup = partitionGroup.sort((a,b) => { return a.size - b.size;});
+   // reset selected set
+   const selected = new Set(this.selectedSet);
+   for (let wEdge of selected) {
+      this.selectEdge(wEdge.left);
+   }
+
+   const separateCages = [];
+   const fillFaces = new Set;
+   // detach smaller groups from the largest, by finding the contour.
+   for (let partition of partitionGroup) {
+      const partion = partitionGroup[i];
+      const mergeFills = new Set;
+      let separate = this;
+      if (i !== (partitionGroup.length-1)) { 
+         let contours = this.geometry.findContours(partition); // detach faceGroups from main
+         for (let edgeLoop of contours) {
+            if ((edgeLoop.length > 0) && !fillFaces.has(edgeLoop[0].outer.face)) { // not already separated.
+               this.geometry.liftContour(edgeLoop);
+               const fillFace = this.geometry._createPolygon(edgeLoop[0].outer, edgeLoop.size); // fill hole.
+               fillFaces.add(fillFace);
+               separate = this.detachFace(partition, i);
+            } else {
+               for (let {outer, inner} of edgeLoop) {
+                  mergeFills.add(outer.face);
+               }
+            }
+         }
+      }
+      // merge/delete add fillFaces
+      separate.selectedSet = mergeFills;
+      separate.dissolveSelectedFace(); // merge if possible.
+      mergeFills = separate.selectedSet;
+      separate.selectedSet = new Set;
+      // todo: fillFace if neighbor to outside hole will be turn to holes too.
+
+      // separation will be selected.
+      if (separarte !== this) {
+         separateCages.push( separate );
+      }
+   }
+
+   return ret.separateCages;
 };
 
 

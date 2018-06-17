@@ -377,6 +377,7 @@ const action = {
    edgeExtrudeY: () =>{notImplemented(this);},
    edgeExtrudeZ: () =>{notImplemented(this);},
    edgeCrease: () =>{notImplemented(this);},
+   edgeLoopCut: () =>{notImplemented(this);},
    // face
    faceExtrudeMenu: () =>{notImplemented(this);},
    faceExtrudeX: () =>{notImplemented(this);},
@@ -4096,12 +4097,94 @@ PreviewCage.prototype.holeSelectedFace = function() {
 
    return ret;
 };
-
 PreviewCage.prototype.undoHoleSelectedFace = function(holes) {
    for (let hole of holes) {
       const polygon = this.geometry.undoHole(hole);
       this.selectFace(polygon.halfEdge);
    }
+};
+
+
+// edgeMode - cut out selected contours.
+PreviewCage.prototype.loopCut = function() {
+   const allFaces = new Set(this.geometry.faces);
+   let partition;
+
+   const partitionFace = (polygon) => {
+      partition.add(polygon);
+      allFaces.delete(polygon);
+      for (let hEdge of polygon.hEdges()) {
+         if (!this.selectedSet.has(hEdge.wingedEdge) && allFaces.has(hEdge.pair.face)) {
+            partitionFace(polygon);
+         }
+      }      
+   };
+
+   let partitionGroup = [];
+   for (let wEdge of this.selectedSet) {
+      for (let hEdge of wEdge) {
+         if (allFaces.has(hEdge.face)) {
+            partition = new Set;
+            partitionFace(hEdge.face);
+            // go the partition, now save it
+            partitionGroup.push( partition );
+         }
+      }
+   }
+
+   if (partitionGroup.size < 2) {   // make sure, there is at least 2 partition.
+      return false;
+   }
+
+   // we have to separate from smallest to largest, so that separation can gel into single face correctly.
+   partitionGroup = partitionGroup.sort((a,b) => { return a.size - b.size;});
+   // reset selected set
+   const selected = new Set(this.selectedSet);
+   for (let wEdge of selected) {
+      this.selectEdge(wEdge.left);
+   }
+
+   const separateCages = [];
+   const fillFaces = new Set;
+   // detach smaller groups from the largest, by finding the contour.
+   for (let partition of partitionGroup) {
+      const mergeFills = new Set;
+      let separate = this;
+      if (i !== (partitionGroup.length-1)) { 
+         let contours = this.geometry.findContours(partition); // detach faceGroups from main
+         for (let edgeLoop of contours) {
+            if ((edgeLoop.length > 0) && !fillFaces.has(edgeLoop[0].outer.face)) { // not already separated.
+               this.geometry.liftContour(edgeLoop);
+               this.geometry.detachFaces(partition);
+               const fillFace = this.geometry._createPolygon(edgeLoop[0].outer, edgeLoop.size); // fill hole.
+               separate = new PreviewCage(this.bench);;   // should only happened once for each partition.
+               separate.attachFaces(partition);
+               fillFaces.add(fillFace);
+            } else {
+               for (let {outer, inner} of edgeLoop) {
+                  mergeFills.add(outer.face);
+               }
+            }
+         }
+      }
+      // merge/delete add fillFaces
+      separate.selectedSet = mergeFills;
+      separate.dissolveSelectedFace(); // merge if possible.
+      mergeFills = separate.selectedSet;
+      separate.selectedSet = new Set;
+      // todo: fillFace if neighbor to outside hole will be turn to holes too.
+
+      // separation is selected.
+      for (let polygon of partition) {
+         separate.selectFace(polygon.halfEdge);
+      }
+      if (separarte !== this) {
+         separateCages.push( separate );
+      }
+   }
+
+
+   return ret.separateCages;
 };
 
 
@@ -6622,6 +6705,19 @@ WingedTopology.prototype.findEdgeGroup = function(selectedWingedEdge) {
 };
 
 //
+// detachContours - separate out the contour. 
+//
+WingedTopology.prototype.detachContours = function(edgeLoop) {
+   // stash added loop in innerLoop
+   for (let hEdges of edgeLoop) {
+      hEdges.inner = this._copyhEdge(hEdges.outer);
+      
+   }
+
+
+};
+
+//
 // similar to findContours. but return a list of faces.
 //
 WingedTopology.prototype.findFaceGroup = function(selectedPolygon) {
@@ -6688,9 +6784,65 @@ WingedTopology.prototype.findContours = function(selectedPolygon) {
 };
 
 
+// lift edges from outerLoop to innerLoop. null the face between inner and outerface
+WingedTopology.prototype.liftContour = function(edgeLoop) {
+   if (edgeLoop.length == 0) {   // should not happened, but. Should we check ( < 4) too?
+      return edgeLoop;
+   }
+
+   // first create innerLoop
+   let firstVertex = this.addVertex(edgeLoop[0].outer.origin.vertex);
+   let fromVertex = firstVertex; 
+   for (let i = 0; i < edgeLoop.length; ++i) {
+      let outerEdge = edgeLoop[i].outer;
+      let toVertex;
+      if (i == (edgeLoop.length-1)) {  // the last one loopback
+         toVertex = firstVertex;
+      } else {
+         toVertex = this.addVertex(outerEdge.destination().vertex);
+      }
+      edgeLoop[i].inner = this.addEdge(fromVertex, toVertex);
+      fromVertex = toVertex;
+   }
+
+   // lift loop
+   let edge0 = edgeLoop[edgeLoop.length-1];
+   // lift the face edge from outer to inner.
+   for (let j = 0; j < edgeLoop.length; ++j) {
+      let edge1 = edgeLoop[j];
+      // lift edges from outer, and connect to inner
+      let outerNext = edge0.outer.next;
+      if (outerNext !== edge1.outer) {
+         // lift begin to end
+         let outer1Prev = edge1.outer.prev();
+         edge0.outer.next = edge1.outer;
+         edge0.inner.next = outerNext;
+         outer1Prev.next = edge1.inner;
+         // reset all vertex
+         let inner = outerNext;
+         do {
+            if (inner.origin.outEdge === inner) {
+               inner.origin.outEdge = edge1.outer;
+            }
+            inner.origin = edge1.inner.origin;
+            inner = inner.pair.next;
+         } while (inner !== edge1.inner);
+      }
+      edge0 = edge1;       // move edge post
+      // setup the faces.
+      edge1.inner.face = edge1.outer.face;
+      edge1.outer.face = null;
+      if (edge1.inner.face.halfEdge === edge1.outer) {
+         edge1.inner.face.halfEdge = edge1.inner;
+      }
+   }
+   return edgeLoop;
+};
+
+
 // lift edges from outerLoop to innerLoop.
 WingedTopology.prototype.liftContours = function(edgeLoops) {
-   // create innerloops
+/*   // create innerloops
    for (let contours of edgeLoops) {
       let firstVertex = this.addVertex(contours[0].outer.origin.vertex);
       let fromVertex = firstVertex; 
@@ -6740,6 +6892,9 @@ WingedTopology.prototype.liftContours = function(edgeLoops) {
             edge1.inner.face.halfEdge = edge1.inner;
          }
       }
+   } */
+   for (let edgeLoop of edgeLoops) {
+      this.liftContour(edgeLoop);
    }
 
    return edgeLoops;
@@ -8980,7 +9135,10 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       const snapshots = [];
       for (let preview of this.world) {
          if (preview.hasSelection()) {
-            snapshots.push( {preview: preview, snapshot: func.call(preview, ...args)} );
+            const snapshot = func.call(preview, ...args);
+            if (snapshot) {
+               snapshots.push( {preview: preview, snapshot: snapshot} );
+            }
          }
       }
       return snapshots;
@@ -9564,6 +9722,15 @@ class EdgeMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
             }
           });
        });
+       // loopCut
+       __WEBPACK_IMPORTED_MODULE_6__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].edgeLoopCut.name, (ev) => {
+         const command = new LoopCutCommand(this);
+         if (command.doIt()) {
+            __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["undoQueue"](command);
+         } else { // geometry status. no LoopCut available.
+
+         }
+        });
    }
 
    modeName() {
@@ -9589,6 +9756,10 @@ class EdgeMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
 
    snapshotTransformGroup() {
       return this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.snapshotTransformEdgeGroup);
+   }
+
+   loopCut() {
+      return this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.loopCut);
    }
 
    bevel() {
@@ -9977,6 +10148,27 @@ class EdgeRingCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditC
       this.madsor.resetSelection();
       this.madsor.restoreSelection(this.selectedEdges);
    } 
+}
+
+class LoopCutCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
+   constructor(madsor) {
+      super();
+      this.madsor = madsor;
+   }
+
+   doIt() {
+      this.loopCut = this.madsor.loopCut();
+      if (this.loopCut.length > 0) {   // change to body Mode.
+
+         return true;
+      } else {
+         return false;
+      }
+   }
+
+   undo() {
+      this.madsor.undoLoopCut(this.loopCut);
+   }
 }
 
 

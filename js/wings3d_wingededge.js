@@ -765,7 +765,22 @@ WingedTopology.prototype.separateOut = function() {
    } else {
       return null;
    }
+};
 
+WingedTopology.prototype.detachFace = function(faceSet) {
+   const vertices = new Set;
+   const edges = new Set;
+   for (let polygon of faceSet) {
+      this.faces.delete(polygon);
+      for (let hEdge of polygon.hEdges) {
+         vertices.add(hEdge.origin);
+         this.vertices.delete(hEdge.origin);
+         edges.add(hEdge.wingedEdge);
+         this.edges.delete(hEdge.wingedEdge);
+      }
+   }
+
+   return {vertices: vertices, edges: edges};
 };
 
 WingedTopology.prototype.sanityCheck = function() {
@@ -1518,6 +1533,19 @@ WingedTopology.prototype.findEdgeGroup = function(selectedWingedEdge) {
 };
 
 //
+// detachContours - separate out the contour. 
+//
+WingedTopology.prototype.detachContours = function(edgeLoop) {
+   // stash added loop in innerLoop
+   for (let hEdges of edgeLoop) {
+      hEdges.inner = this._copyhEdge(hEdges.outer);
+      
+   }
+
+
+};
+
+//
 // similar to findContours. but return a list of faces.
 //
 WingedTopology.prototype.findFaceGroup = function(selectedPolygon) {
@@ -1584,9 +1612,65 @@ WingedTopology.prototype.findContours = function(selectedPolygon) {
 };
 
 
+// lift edges from outerLoop to innerLoop. null the face between inner and outerface
+WingedTopology.prototype.liftContour = function(edgeLoop) {
+   if (edgeLoop.length == 0) {   // should not happened, but. Should we check ( < 4) too?
+      return edgeLoop;
+   }
+
+   // first create innerLoop
+   let firstVertex = this.addVertex(edgeLoop[0].outer.origin.vertex);
+   let fromVertex = firstVertex; 
+   for (let i = 0; i < edgeLoop.length; ++i) {
+      let outerEdge = edgeLoop[i].outer;
+      let toVertex;
+      if (i == (edgeLoop.length-1)) {  // the last one loopback
+         toVertex = firstVertex;
+      } else {
+         toVertex = this.addVertex(outerEdge.destination().vertex);
+      }
+      edgeLoop[i].inner = this.addEdge(fromVertex, toVertex);
+      fromVertex = toVertex;
+   }
+
+   // lift loop
+   let edge0 = edgeLoop[edgeLoop.length-1];
+   // lift the face edge from outer to inner.
+   for (let j = 0; j < edgeLoop.length; ++j) {
+      let edge1 = edgeLoop[j];
+      // lift edges from outer, and connect to inner
+      let outerNext = edge0.outer.next;
+      if (outerNext !== edge1.outer) {
+         // lift begin to end
+         let outer1Prev = edge1.outer.prev();
+         edge0.outer.next = edge1.outer;
+         edge0.inner.next = outerNext;
+         outer1Prev.next = edge1.inner;
+         // reset all vertex
+         let inner = outerNext;
+         do {
+            if (inner.origin.outEdge === inner) {
+               inner.origin.outEdge = edge1.outer;
+            }
+            inner.origin = edge1.inner.origin;
+            inner = inner.pair.next;
+         } while (inner !== edge1.inner);
+      }
+      edge0 = edge1;       // move edge post
+      // setup the faces.
+      edge1.inner.face = edge1.outer.face;
+      edge1.outer.face = null;
+      if (edge1.inner.face.halfEdge === edge1.outer) {
+         edge1.inner.face.halfEdge = edge1.inner;
+      }
+   }
+   return edgeLoop;
+};
+
+
 // lift edges from outerLoop to innerLoop.
 WingedTopology.prototype.liftContours = function(edgeLoops) {
-   // create innerloops
+/*   // create innerloops
    for (let contours of edgeLoops) {
       let firstVertex = this.addVertex(contours[0].outer.origin.vertex);
       let fromVertex = firstVertex; 
@@ -1636,6 +1720,9 @@ WingedTopology.prototype.liftContours = function(edgeLoops) {
             edge1.inner.face.halfEdge = edge1.inner;
          }
       }
+   } */
+   for (let edgeLoop of edgeLoops) {
+      this.liftContour(edgeLoop);
    }
 
    return edgeLoops;
