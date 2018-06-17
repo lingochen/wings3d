@@ -1763,7 +1763,20 @@ PreviewCage.prototype.separate = function() {
       separatePreview.push(cage);
    }
    return separatePreview;    // snapshot.
-}
+};
+
+
+PreviewCage.prototype.detachFace = function(detachFaces, number) {
+   const detach = this.geometry.detachFace(detachFaces);
+   const separate = new PreviewCage(this.bench);   // should only happened once for each partition.
+   separate.geometry.faces = detachFaces;
+   separate.geometry.edges = detach.edges;
+   separate.geometry.vertices = detach.vertices;
+   separate.name = this.name + "_cut" + number.toString();
+
+   return separate;
+};
+
 
 
 PreviewCage.prototype.hide = function() {
@@ -4115,7 +4128,7 @@ PreviewCage.prototype.loopCut = function() {
       allFaces.delete(polygon);
       for (let hEdge of polygon.hEdges()) {
          if (!this.selectedSet.has(hEdge.wingedEdge) && allFaces.has(hEdge.pair.face)) {
-            partitionFace(polygon);
+            partitionFace(hEdge.pair.face);
          }
       }      
    };
@@ -4132,7 +4145,8 @@ PreviewCage.prototype.loopCut = function() {
       }
    }
 
-   if (partitionGroup.size < 2) {   // make sure, there is at least 2 partition.
+   if (partitionGroup.length < 2) {   // make sure, there is at least 2 partition.
+      geometryStatus("less than 2 partitions");
       return false;
    }
 
@@ -4147,19 +4161,18 @@ PreviewCage.prototype.loopCut = function() {
    const separateCages = [];
    const fillFaces = new Set;
    // detach smaller groups from the largest, by finding the contour.
-   for (let partition of partitionGroup) {
-      const mergeFills = new Set;
+   for (let i = 0; i < partitionGroup.length; ++i) {
+      const partition = partitionGroup[i];
+      let mergeFills = new Set;
       let separate = this;
       if (i !== (partitionGroup.length-1)) { 
          let contours = this.geometry.findContours(partition); // detach faceGroups from main
          for (let edgeLoop of contours) {
             if ((edgeLoop.length > 0) && !fillFaces.has(edgeLoop[0].outer.face)) { // not already separated.
                this.geometry.liftContour(edgeLoop);
-               this.geometry.detachFaces(partition);
                const fillFace = this.geometry._createPolygon(edgeLoop[0].outer, edgeLoop.size); // fill hole.
-               separate = new PreviewCage(this.bench);;   // should only happened once for each partition.
-               separate.attachFaces(partition);
                fillFaces.add(fillFace);
+               separate = this.detachFace(partition, i);
             } else {
                for (let {outer, inner} of edgeLoop) {
                   mergeFills.add(outer.face);
@@ -4174,17 +4187,13 @@ PreviewCage.prototype.loopCut = function() {
       separate.selectedSet = new Set;
       // todo: fillFace if neighbor to outside hole will be turn to holes too.
 
-      // separation is selected.
-      for (let polygon of partition) {
-         separate.selectFace(polygon.halfEdge);
-      }
-      if (separarte !== this) {
+      // separation will be selected.
+      if (separate !== this) {
          separateCages.push( separate );
       }
    }
 
-
-   return ret.separateCages;
+   return {separateCages: separateCages};
 };
 
 
@@ -5952,7 +5961,22 @@ WingedTopology.prototype.separateOut = function() {
    } else {
       return null;
    }
+};
 
+WingedTopology.prototype.detachFace = function(faceSet) {
+   const vertices = new Set;
+   const edges = new Set;
+   for (let polygon of faceSet) {
+      this.faces.delete(polygon);
+      for (let hEdge of polygon.hEdges()) {
+         vertices.add(hEdge.origin);
+         this.vertices.delete(hEdge.origin);
+         edges.add(hEdge.wingedEdge);
+         this.edges.delete(hEdge.wingedEdge);
+      }
+   }
+
+   return {vertices: vertices, edges: edges};
 };
 
 WingedTopology.prototype.sanityCheck = function() {
@@ -9759,7 +9783,14 @@ class EdgeMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
    }
 
    loopCut() {
-      return this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.loopCut);
+      const snapshots = this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.loopCut);
+      for (let snapshot of snapshots) {
+         for (let preview of snapshot.snapshot.separateCages) {
+            __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["addToWorld"](preview);
+            preview.selectBody();
+         }
+      }
+      return snapshots;
    }
 
    bevel() {
@@ -10159,7 +10190,7 @@ class LoopCutCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCo
    doIt() {
       this.loopCut = this.madsor.loopCut();
       if (this.loopCut.length > 0) {   // change to body Mode.
-
+         __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["restoreBodyMode"]();
          return true;
       } else {
          return false;
@@ -10167,7 +10198,10 @@ class LoopCutCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCo
    }
 
    undo() {
-      this.madsor.undoLoopCut(this.loopCut);
+      if (this.loopCut.length > 0) {
+         __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["restoreEdgeMode"]();
+         this.madsor.undoLoopCut(this.loopCut);
+      }
    }
 }
 
