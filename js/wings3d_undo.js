@@ -25,6 +25,8 @@ class EditCommand {
       return (ev.movementX / width);
    }
 
+   free() {}
+
    //doIt() {}
 
    //undo() {}

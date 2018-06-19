@@ -460,9 +460,10 @@ function undoQueue(editCommand) {
    //}
    // editCommand = new CheckPoint(draftBench, editCommand);      // debug purpose. 
 
-   if ( (undo.queue.length-1) > undo.current ) {
+   while ( (undo.queue.length-1) > undo.current ) {
       // remove branch not taken
-      undo.queue.length = undo.current+1;
+      const cmd = undo.queue.pop();
+      cmd.free();
    }
    // now push the new command back
    undo.queue.push(editCommand);
@@ -485,7 +486,7 @@ function undoEdit() {
 };
 
 function doCommand(command) {
-   if (command.doIt) {
+   if (command.doIt()) {
       undoQueue(command);
       return true;
    } else {

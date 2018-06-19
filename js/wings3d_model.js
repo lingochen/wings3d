@@ -2602,6 +2602,10 @@ class CreatePreviewCageCommand extends EditCommand {
       this.previewCage = previewCage;
    }
 
+   free() {
+      this.previewCage.freeBuffer();
+   }
+
    doIt() {
       View.addToWorld(this.previewCage);
    }
