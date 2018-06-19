@@ -170,6 +170,16 @@ class EdgeMadsor extends Madsor {
       return snapshots;
    }
 
+   undoLoopCut(snapshots) {
+      for (let snapshot of snapshots) {
+         for (let preview of snapshot.snapshot.separateCages) {
+            //preview.selectBody();
+            View.removeFromWorld(preview);
+         }
+      }
+      this.doAll(snapshots, PreviewCage.prototype.undoLoopCut);
+   }
+
    bevel() {
       var snapshots = [];
       this.eachPreviewCage( function(preview) {

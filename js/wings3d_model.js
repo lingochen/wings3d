@@ -2478,7 +2478,7 @@ PreviewCage.prototype.loopCut = function() {
       this.selectEdge(wEdge.left);
    }
 
-   const separateCages = [];
+   const ret = {separateCages: [], fillFaces: [], contourLoops: [], selectedSet: selected};
    const fillFaces = new Set;
    // detach smaller groups from the largest, by finding the contour.
    for (let i = 0; i < partitionGroup.length; ++i) {
@@ -2493,6 +2493,7 @@ PreviewCage.prototype.loopCut = function() {
                const fillFace = this.geometry._createPolygon(edgeLoop[0].outer, edgeLoop.size); // fill hole.
                newFills.push(fillFace);
                separate = this.detachFace(partition, i);
+               ret.contourLoops.push( edgeLoop );
             }
          }
       }
@@ -2504,19 +2505,40 @@ PreviewCage.prototype.loopCut = function() {
          }
       }
       separate.dissolveSelectedFace(); // merge if possible.
+      ret.fillFaces = ret.fillFaces.concat( Array.from(separate.selectedSet) );
       separate.selectedSet = new Set;
       for (let polygon of newFills) {  // newFills should be always 0th, or 1th length. 
          fillFaces.add(polygon);
       }
-      // todo: fillFace if neighbor to outside hole will be turn to holes too.
 
       // separation will be selected.
       if (separate !== this) {
-         separateCages.push( separate );
+         ret.separateCages.push( separate );
       }
    }
 
-   return {separateCages: separateCages};
+   return ret;
+};
+
+
+PreviewCage.prototype.undoLoopCut = function(undo) {
+   // merge back to this
+   this.merge(undo.separateCages);
+
+   // remove fillFaces
+   for (let polygon of undo.fillFaces) {
+      this.geometry.removePolygon(polygon);
+   }
+
+   // weldContour back
+   for (let edgeLoop of undo.contourLoops) {
+      this.geometry.weldContour(edgeLoop);
+   }
+
+   // reSelect edges.
+   for (let wEdge of undo.selectedSet) {
+      this.selectEdge(wEdge.left);
+   }
 };
 
 

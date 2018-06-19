@@ -4158,7 +4158,7 @@ PreviewCage.prototype.loopCut = function() {
       this.selectEdge(wEdge.left);
    }
 
-   const separateCages = [];
+   const ret = {separateCages: [], fillFaces: [], contourLoops: [], selectedSet: selected};
    const fillFaces = new Set;
    // detach smaller groups from the largest, by finding the contour.
    for (let i = 0; i < partitionGroup.length; ++i) {
@@ -4173,6 +4173,7 @@ PreviewCage.prototype.loopCut = function() {
                const fillFace = this.geometry._createPolygon(edgeLoop[0].outer, edgeLoop.size); // fill hole.
                newFills.push(fillFace);
                separate = this.detachFace(partition, i);
+               ret.contourLoops.push( edgeLoop );
             }
          }
       }
@@ -4184,19 +4185,40 @@ PreviewCage.prototype.loopCut = function() {
          }
       }
       separate.dissolveSelectedFace(); // merge if possible.
+      ret.fillFaces = ret.fillFaces.concat( Array.from(separate.selectedSet) );
       separate.selectedSet = new Set;
       for (let polygon of newFills) {  // newFills should be always 0th, or 1th length. 
          fillFaces.add(polygon);
       }
-      // todo: fillFace if neighbor to outside hole will be turn to holes too.
 
       // separation will be selected.
       if (separate !== this) {
-         separateCages.push( separate );
+         ret.separateCages.push( separate );
       }
    }
 
-   return {separateCages: separateCages};
+   return ret;
+};
+
+
+PreviewCage.prototype.undoLoopCut = function(undo) {
+   // merge back to this
+   this.merge(undo.separateCages);
+
+   // remove fillFaces
+   for (let polygon of undo.fillFaces) {
+      this.geometry.removePolygon(polygon);
+   }
+
+   // weldContour back
+   for (let edgeLoop of undo.contourLoops) {
+      this.geometry.weldContour(edgeLoop);
+   }
+
+   // reSelect edges.
+   for (let wEdge of undo.selectedSet) {
+      this.selectEdge(wEdge.left);
+   }
 };
 
 
@@ -5331,6 +5353,19 @@ HalfEdge.prototype.destination = function() {
    return this.pair.origin;
 }
 
+// using polygon to find prev
+HalfEdge.prototype.prevAux = function() {
+   if (this.face !== null) {
+      let current = this;
+      while (current.next !== this) {
+         current = current.next;
+      }
+      return current;
+   }
+   return null;
+};
+
+// using vertex to find prev
 HalfEdge.prototype.prev = function() {
    if (this.pair.next === this)  {  // check for dangling edge.
       return this.pair; // we need this behavior.
@@ -6731,18 +6766,6 @@ WingedTopology.prototype.findEdgeGroup = function(selectedWingedEdge) {
    return list;
 };
 
-//
-// detachContours - separate out the contour. 
-//
-WingedTopology.prototype.detachContours = function(edgeLoop) {
-   // stash added loop in innerLoop
-   for (let hEdges of edgeLoop) {
-      hEdges.inner = this._copyhEdge(hEdges.outer);
-      
-   }
-
-
-};
 
 //
 // similar to findContours. but return a list of faces.
@@ -6811,6 +6834,40 @@ WingedTopology.prototype.findContours = function(selectedPolygon) {
 };
 
 
+// weld innerLoop to outerLoop. both side must null face. 
+WingedTopology.prototype.weldContour = function(edgeLoop) {
+   let edgePrev = edgeLoop[edgeLoop.length-1]
+   for (let i = 0; i < edgeLoop.length; ++i) {
+      const edge = edgeLoop[i];
+      if (edgePrev.inner.next !== edge.inner) { // check for contour tht don't have interpose edge
+         const end = edge.inner;
+         const current = edgePrev.inner.next;
+         edgePrev.outer.next = current;
+         let prev;
+         do {
+            current.origin = edge.outer.origin;
+            prev = current.pair;
+            current = prev.next;
+         } while (current !== end);
+         prev.next = edge1.outer;
+      }
+      edge.outer.face = edge.inner.face;
+      if (edge.inner.face.halfEdge === edge.inner) {
+         edge.outer.face.halfEdge = edge.outer;
+      }
+
+      edgePrev = edge;
+   }
+
+   // now we can safely release memory
+   for (let edge of edgeLoop) {
+      // remove vertex, and edge.
+      this._freeVertex(edge.inner.origin);
+      this._freeEdge(edge.inner);
+   }
+};
+
+
 // lift edges from outerLoop to innerLoop. null the face between inner and outerface
 WingedTopology.prototype.liftContour = function(edgeLoop) {
    if (edgeLoop.length == 0) {   // should not happened, but. Should we check ( < 4) too?
@@ -6869,57 +6926,6 @@ WingedTopology.prototype.liftContour = function(edgeLoop) {
 
 // lift edges from outerLoop to innerLoop.
 WingedTopology.prototype.liftContours = function(edgeLoops) {
-/*   // create innerloops
-   for (let contours of edgeLoops) {
-      let firstVertex = this.addVertex(contours[0].outer.origin.vertex);
-      let fromVertex = firstVertex; 
-      for (let i = 0; i < contours.length; ++i) {
-         let outerEdge = contours[i].outer;
-         let toVertex;
-         if (i == (contours.length-1)) {  // the last one loopback
-            toVertex = firstVertex;
-         } else {
-            toVertex = this.addVertex(outerEdge.destination().vertex);
-         }
-         contours[i].inner = this.addEdge(fromVertex, toVertex);
-         fromVertex = toVertex;
-      }
-   }
-
-   // got the internal loop, now lift and connect the faces to the innerLoop.
-   for (let i = 0; i < edgeLoops.length; ++i) {
-      const edgeLoop = edgeLoops[i];
-      let edge0 = edgeLoop[edgeLoop.length-1];
-      // lift the face edge from outer to inner.
-      for (let j = 0; j < edgeLoop.length; ++j) {
-         let edge1 = edgeLoop[j];
-         // lift edges from outer, and connect to inner
-         let outerNext = edge0.outer.next;
-         if (outerNext !== edge1.outer) {
-            // lift begin to end
-            let outer1Prev = edge1.outer.prev();
-            edge0.outer.next = edge1.outer;
-            edge0.inner.next = outerNext;
-            outer1Prev.next = edge1.inner;
-            // reset all vertex
-            let inner = outerNext;
-            do {
-               if (inner.origin.outEdge === inner) {
-                  inner.origin.outEdge = edge1.outer;
-               }
-               inner.origin = edge1.inner.origin;
-               inner = inner.pair.next;
-            } while (inner !== edge1.inner);
-         }
-         edge0 = edge1;       // move edge post
-         // setup the faces.
-         edge1.inner.face = edge1.outer.face;
-         edge1.outer.face = null;
-         if (edge1.inner.face.halfEdge === edge1.outer) {
-            edge1.inner.face.halfEdge = edge1.inner;
-         }
-      }
-   } */
    for (let edgeLoop of edgeLoops) {
       this.liftContour(edgeLoop);
    }
@@ -9794,6 +9800,16 @@ class EdgeMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
          }
       }
       return snapshots;
+   }
+
+   undoLoopCut(snapshots) {
+      for (let snapshot of snapshots) {
+         for (let preview of snapshot.snapshot.separateCages) {
+            //preview.selectBody();
+            __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["removeFromWorld"](preview);
+         }
+      }
+      this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.undoLoopCut);
    }
 
    bevel() {
