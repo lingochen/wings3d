@@ -65,6 +65,13 @@ PreviewCage.prototype.merge = function(mergeSelection) {
    this.geometry.merge(function* (){for (let cage of mergeSelection) {yield cage.geometry;}});
    // copy selection
    this.selectedSet = new Set(function* (){for (let cage of mergeSelection) {yield* cage.selectedSet;}}());
+   // clear out all
+   for (let cage of mergeSelection) {
+      cage.geometry.faces = new Set;
+      cage.geometry.vertices = new Set;
+      cage.geometry.edges = new Set;
+      cage.selectedSet = new Set;
+   }
 };
 
 PreviewCage.prototype.separate = function() {

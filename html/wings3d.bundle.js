@@ -1748,6 +1748,13 @@ PreviewCage.prototype.merge = function(mergeSelection) {
    this.geometry.merge(function* (){for (let cage of mergeSelection) {yield cage.geometry;}});
    // copy selection
    this.selectedSet = new Set(function* (){for (let cage of mergeSelection) {yield* cage.selectedSet;}}());
+   // clear out all
+   for (let cage of mergeSelection) {
+      cage.geometry.faces = new Set;
+      cage.geometry.vertices = new Set;
+      cage.geometry.edges = new Set;
+      cage.selectedSet = new Set;
+   }
 };
 
 PreviewCage.prototype.separate = function() {
@@ -9810,13 +9817,13 @@ class EdgeMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
    }
 
    undoLoopCut(snapshots) {
+      this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.undoLoopCut);
       for (let snapshot of snapshots) {
          for (let preview of snapshot.snapshot.separateCages) {
             //preview.selectBody();
             __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["removeFromWorld"](preview);
          }
       }
-      this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.undoLoopCut);
    }
 
    bevel() {

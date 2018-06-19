@@ -171,13 +171,13 @@ class EdgeMadsor extends Madsor {
    }
 
    undoLoopCut(snapshots) {
-      for (let snapshot of snapshots) {
+      this.doAll(snapshots, PreviewCage.prototype.undoLoopCut);
+      for (let snapshot of snapshots) {   // we have to remove later because of removeFromWorld will set invisible flag on polygon.
          for (let preview of snapshot.snapshot.separateCages) {
             //preview.selectBody();
             View.removeFromWorld(preview);
          }
       }
-      this.doAll(snapshots, PreviewCage.prototype.undoLoopCut);
    }
 
    bevel() {
