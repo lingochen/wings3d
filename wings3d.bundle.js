@@ -730,14 +730,17 @@ function makeCombineIntoWorld(cageSelection) {
 }
 //-- End of World objects management ----------------dra---------
 
-const isVertexSelectable = () => mode.current ? mode.current.isVertexSelectable() : true;
-const isEdgeSelectable = () => mode.current ? mode.current.isEdgeSelectable() : true;
-const isFaceSelectable = () => mode.current ? mode.current.isFaceSelectable() : true;
 //
-// hilite
+// mouse handling hilite
 //
 const hilite = {cage: null, edge: null, vertex: null, face: null};
 let currentCage;
+const handler = {camera: null, mousemove: null, mouseSelect: null};
+
+const isVertexSelectable = () => handler.mouseSelect ? handler.mouseSelect.isVertexSelectable() : (mode.current ? mode.current.isVertexSelectable() : true);
+const isEdgeSelectable = () => handler.mouseSelect ? handler.mouseSelect.isEdgeSelectable() : (mode.current ? mode.current.isEdgeSelectable() : true);
+const isFaceSelectable = () => handler.mouseSelect ? handler.mouseSelect.isFaceSelectable() : (mode.current ? mode.current.isFaceSelectable() : true);
+
 function setCurrent(edge, intersect, center) {
    // find out origin, dest. which is closer.
    let hiliteVertex = null, hiliteEdge = null, hiliteFace = null, hiliteCage = null;
@@ -882,7 +885,6 @@ function selectFinish() {
    }
 }
 
-const handler = {camera: null, mousemove: null, mouseSelect: null};
 function canvasHandleMouseDown(ev) {
    if (ev.button == 0) {
       if (handler.camera !== null) {
@@ -1636,6 +1638,7 @@ function queuePopupMenu(popupMenu) {
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "EditCommand", function() { return EditCommand; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "EditSelectHandler", function() { return EditSelectHandler; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "MouseMoveHandler", function() { return MouseMoveHandler; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "MoveableCommand", function() { return MoveableCommand; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "EditCommandCombo", function() { return EditCommandCombo; });
@@ -1672,6 +1675,19 @@ class EditCommand {
    //doIt() {}
 
    //undo() {}
+}
+
+class EditSelectHandler extends EditCommand {
+   constructor(isVertex, isEdge, isFace) {
+      super();
+      this.selectable = {isVertex: isVertex, isEdge: isEdge, isFace: isFace};
+   }
+
+   isVertexSelectable() { return this.selectable.isVertex; }
+   isEdgeSelectable() { return this.selectable.isEdge; }
+   isFaceSelectable() { return this.selectable.isFace; }
+
+   // select(hilite)
 }
 
 class MouseMoveHandler extends EditCommand {
@@ -9119,16 +9135,15 @@ class IntrudeFaceHandler extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["Mo
 
 
 //
-class PutOnCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
+class PutOnCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditSelectHandler"] {
    constructor(madsor, preview) {
-      super();
+      super(true, true, true);
       this.madsor = madsor;
       this.preview = preview;
    }
 
-   select() { // return true for accepting, false for continue doing things.
-      const vertex = this.madsor.getCurrent();
-      if (vertex) {
+   select(hilite) { // return true for accepting, false for continue doing things.
+      if (hilite.vertex) {
          this.collapseHEdge = this.preview.weldableVertex(vertex);
          return (this.collapseHEdge != false);
       }
@@ -11231,9 +11246,9 @@ class VertexCollapseCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__[
 }
 
 
-class VertexWeldCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
+class VertexWeldCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditSelectHandler"] {
    constructor(madsor, preview) {
-      super();
+      super(true, false, false);
       this.madsor = madsor;
       this.preview = preview;
    }
