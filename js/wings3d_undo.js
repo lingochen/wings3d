@@ -32,6 +32,19 @@ class EditCommand {
    //undo() {}
 }
 
+class EditSelectHandler extends EditCommand {
+   constructor(isVertex, isEdge, isFace) {
+      super();
+      this.selectable = {isVertex: isVertex, isEdge: isEdge, isFace: isFace};
+   }
+
+   isVertexSelectable() { return this.selectable.isVertex; }
+   isEdgeSelectable() { return this.selectable.isEdge; }
+   isFaceSelectable() { return this.selectable.isFace; }
+
+   // select(hilite)
+}
+
 class MouseMoveHandler extends EditCommand {
 
    //handleMouseMove(ev) {}
@@ -112,6 +125,7 @@ class EditCommandCombo extends EditCommand {
 
 export {
    EditCommand,
+   EditSelectHandler,
    MouseMoveHandler,
    MoveableCommand,
    EditCommandCombo,

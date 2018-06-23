@@ -7,7 +7,7 @@ import {Madsor, DragSelect, MovePositionHandler, MoveAlongNormal, ToggleModeComm
 import {EdgeMadsor} from './wings3d_edgemads';   // for switching
 import {BodyMadsor} from './wings3d_bodymads';
 import {VertexMadsor} from './wings3d_vertexmads';
-import {MoveableCommand, EditCommand} from './wings3d_undo';
+import {MoveableCommand, EditCommand, EditSelectHandler} from './wings3d_undo';
 import {PreviewCage} from './wings3d_model';
 import * as View from './wings3d_view';
 import {gl, ShaderData} from './wings3d_gl';
@@ -504,16 +504,15 @@ class IntrudeFaceHandler extends MoveableCommand {
 
 
 //
-class PutOnCommand extends EditCommand {
+class PutOnCommand extends EditSelectHandler {
    constructor(madsor, preview) {
-      super();
+      super(true, true, true);
       this.madsor = madsor;
       this.preview = preview;
    }
 
-   select() { // return true for accepting, false for continue doing things.
-      const vertex = this.madsor.getCurrent();
-      if (vertex) {
+   select(hilite) { // return true for accepting, false for continue doing things.
+      if (hilite.vertex) {
          this.collapseHEdge = this.preview.weldableVertex(vertex);
          return (this.collapseHEdge != false);
       }

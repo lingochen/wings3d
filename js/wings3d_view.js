@@ -237,14 +237,17 @@ function makeCombineIntoWorld(cageSelection) {
 }
 //-- End of World objects management ----------------dra---------
 
-const isVertexSelectable = () => mode.current ? mode.current.isVertexSelectable() : true;
-const isEdgeSelectable = () => mode.current ? mode.current.isEdgeSelectable() : true;
-const isFaceSelectable = () => mode.current ? mode.current.isFaceSelectable() : true;
 //
-// hilite
+// mouse handling hilite
 //
 const hilite = {cage: null, edge: null, vertex: null, face: null};
 let currentCage;
+const handler = {camera: null, mousemove: null, mouseSelect: null};
+
+const isVertexSelectable = () => handler.mouseSelect ? handler.mouseSelect.isVertexSelectable() : (mode.current ? mode.current.isVertexSelectable() : true);
+const isEdgeSelectable = () => handler.mouseSelect ? handler.mouseSelect.isEdgeSelectable() : (mode.current ? mode.current.isEdgeSelectable() : true);
+const isFaceSelectable = () => handler.mouseSelect ? handler.mouseSelect.isFaceSelectable() : (mode.current ? mode.current.isFaceSelectable() : true);
+
 function setCurrent(edge, intersect, center) {
    // find out origin, dest. which is closer.
    let hiliteVertex = null, hiliteEdge = null, hiliteFace = null, hiliteCage = null;
@@ -389,7 +392,6 @@ function selectFinish() {
    }
 }
 
-const handler = {camera: null, mousemove: null, mouseSelect: null};
 function canvasHandleMouseDown(ev) {
    if (ev.button == 0) {
       if (handler.camera !== null) {
