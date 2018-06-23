@@ -99,10 +99,6 @@ function initMode() {
    mode.vertex = new VertexMadsor;
    mode.body = new BodyMadsor;
    mode.current = mode.face;
-   mode.face.setWorld(world);
-   mode.edge.setWorld(world);
-   mode.vertex.setWorld(world);
-   mode.body.setWorld(world);
 };
 
 
@@ -193,9 +189,7 @@ function restoreBodyMode(snapshots) {
    }
 };
 
-function currentMode() {
-   return mode.current;
-}
+const currentMode = () => mode.current;
 //- End of editing Mode ----------
 
 //
@@ -243,6 +237,97 @@ function makeCombineIntoWorld(cageSelection) {
 }
 //-- End of World objects management ----------------dra---------
 
+const isVertexSelectable = () => mode.current ? mode.current.isVertexSelectable() : true;
+const isEdgeSelectable = () => mode.current ? mode.current.isEdgeSelectable() : true;
+const isFaceSelectable = () => mode.current ? mode.current.isFaceSelectable() : true;
+//
+// hilite
+//
+const hilite = {cage: null, edge: null, vertex: null, face: null};
+let currentCage;
+function setCurrent(edge, intersect, center) {
+   // find out origin, dest. which is closer.
+   let hiliteVertex = null, hiliteEdge = null, hiliteFace = null, hiliteCage = null;
+   if (edge !== null) {
+      const a = vec3.create(), b = vec3.create(), c = vec3.create();
+      const destination = edge.destination().vertex; // find out if we are within the distance threshold
+      const origin = edge.origin.vertex;
+      vec3.sub(a, intersect, origin);
+      vec3.sub(b, intersect, destination);
+      vec3.sub(c, destination, origin);
+      const dist0 = vec3.length(a);
+      const dist1 = vec3.length(b);
+      const dist2 = vec3.length(c);
+      const threshold = dist2 / 4.0;
+      const isVertex = isVertexSelectable();
+      const isEdge = isEdgeSelectable();
+      const isFace = isFaceSelectable();
+      if (isVertex) {
+         if (dist0 < dist1) {
+            if (!(isEdge || isFace) || (dist0 < threshold)) {  // only multiple selectable needs to check threshold
+               hiliteVertex = edge.origin;
+            }
+         } else {
+            if (!(isEdge || isFace) || (dist1 < threshold)) {
+               hiliteVertex = edge.destination();
+            }
+         }
+      }
+      if (isEdge && (hiliteVertex === null)) { // check out if edge is close enough
+         vec3.cross(a, a, b);
+         vec3.sub(b, destination, origin);
+         const distance = vec3.length(a) / dist2;
+         if (!(isVertex || isFace) || (distance < threshold)) {
+            hiliteEdge = edge;
+         }
+      }
+      if (isFace && (hiliteEdge === null)) {   // now hilite face
+         hiliteFace = edge.face;
+      }
+      if (!(isVertex || isEdge || isFace)) {    // all 3 mode not true then only bodyMode possible.
+         hiliteCage = currentCage;
+      }
+   }
+   // now do hilite.
+   if (hiliteVertex !== hilite.vertex) {  
+      if (hilite.vertex !== null) {
+         draftBench.hiliteVertex(hilite.vertex, false);
+      }
+      if (hiliteVertex !== null) {
+         draftBench.hiliteVertex(hiliteVertex, true);
+      }
+      hilite.vertex = hiliteVertex;
+   }
+   if (hiliteEdge !== hilite.edge) {
+      if (hilite.edge !== null) {
+         draftBench.hiliteEdge(hilite.edge, false);
+      }
+      if (hiliteEdge !== null) {
+         draftBench.hiliteEdge(hiliteEdge, true);
+      }
+      hilite.edge = hiliteEdge;
+   }
+   if (hiliteFace !== hilite.face) {
+      if (hilite.face !== null) {
+         draftBench.hiliteFace(hilite.face, false); // hiliteFace(null, false)?
+      }
+      if (hiliteFace !== null) {
+         draftBench.hiliteFace(hiliteFace, true);
+      }
+      hilite.face = hiliteFace;
+   }
+   if (hiliteCage !== hilite.cage) {
+      if (hilite.cage !== null) {
+         hilite.cage.hiliteBody(false);
+      }
+      if (hiliteCage) {
+         hiliteCage.hiliteBody(true);
+      }
+      hilite.cage = hiliteCage;
+   }
+}
+
+
 //
 // mouse handling
 //
@@ -259,7 +344,7 @@ function rayPick(ray) {
       }
    }
    if (pick !== null) {
-      mode.current.setPreview(pick.model);
+      currentCage = pick.model;
       //if (lastPick !== null && lastPick.model !== pick.model) {
       //   lastPick.model.setCurrentSelect(null);
       //}
@@ -267,12 +352,12 @@ function rayPick(ray) {
       lastPick = pick;
       let intersect = vec3.create();
       vec3.scaleAndAdd(intersect, ray.origin, ray.direction, pick.t);
-      mode.current.setCurrent(pick.edge, intersect, pick.center);
+      setCurrent(pick.edge, intersect, pick.center);
       Renderer.needToRedraw();
    } else {
       if (lastPick !== null) {
-         // no current selection.
-         mode.current.setCurrent(null);
+         // deselect last selection
+         setCurrent(null);
          Renderer.needToRedraw();
       }
    }
@@ -283,7 +368,7 @@ function rayPick(ray) {
 let dragMode = null;
 function selectStart() {
    if (lastPick !== null) {
-      dragMode = mode.current.selectStart(lastPick.model);
+      dragMode = mode.current.selectStart(lastPick.model, hilite);
       Renderer.needToRedraw();
    }
 };
@@ -291,7 +376,7 @@ function selectStart() {
 function selectDrag() {
    if ((dragMode !== null)) {// &&
        if ((lastPick !== null)) {
-         dragMode.dragSelect(lastPick.model);
+         dragMode.dragSelect(lastPick.model, hilite);
          Renderer.needToRedraw();
       }
    }
@@ -316,7 +401,7 @@ function canvasHandleMouseDown(ev) {
          undoQueue( handler.mousemove );  // put on queue, commit()?
          handler.mousemove = null;
       } else if (handler.mouseSelect !== null) {
-         if (handler.mouseSelect.select()) {
+         if (handler.mouseSelect.select(hilite)) {
             handler.mouseSelect.doIt();
             undoQueue( handler.mouseSelect );
             handler.mouseSelect = null;
@@ -568,7 +653,9 @@ function drawWorld(gl) {
       gl.enable(gl.BLEND);
       gl.blendFunc(gl.SRC_COLOR, gl.DST_COLOR);
       // draw Current Select Mode (vertex, edge, or face)
-      mode.current.draw(gl, draftBench);
+      //if (hilite.vertex || hilite.edge || hilite.face || hilite.cage) {
+         mode.current.draw(gl, draftBench);
+      //}
       gl.disable(gl.BLEND);
    }
 }

@@ -205,7 +205,7 @@ PreviewCage.prototype.changeFromBodyToVertexSelect = function() {
 
 PreviewCage.prototype.restoreFaceSelection = function(snapshot) {
    for (let polygon of snapshot.selectedFaces) {
-      this.selectFace(polygon.halfEdge);
+      this.selectFace(polygon);
    }
 };
 
@@ -324,17 +324,6 @@ PreviewCage.prototype.snapshotSelection = function() {
 PreviewCage.prototype.setVertexColor = function(vertex, color) {
    // selected color
    this.bench.setVertexColor(vertex, color, this.groupSelection);
-};
-
-PreviewCage.prototype.hiliteVertex = function(vertex, show) {
-   // select polygon set color,
-   var color;
-   if (show) {
-      color = 0.5;
-   } else {
-      color = -0.5;
-   }
-   this.setVertexColor(vertex, color);
 };
 
 PreviewCage.prototype.dragSelectVertex = function(vertex, onOff) {
@@ -465,7 +454,7 @@ PreviewCage.prototype.changeFromVertexToFaceSelect = function() {
       // select all face that is connected to the vertex.
       vertex.eachOutEdge(function(edge) {
          if (!self.selectedSet.has(edge.face)) {
-            self.selectFace(edge);
+            self.selectFace(edge.face);
          }
       });
    }
@@ -526,18 +515,6 @@ PreviewCage.prototype.restoreFromVertexToBodySelect = function(snapshot) {
 PreviewCage.prototype.setEdgeColor = function(wingedEdge, color) {
    // selected color
    this.bench.setEdgeColor(wingedEdge, color, this.groupSelection);
-};
-
-PreviewCage.prototype.hiliteEdge = function(selectEdge, show) {
-   // select polygon set color,
-   var color;
-   var wingedEdge = selectEdge.wingedEdge;
-   if (show) {
-      color = 0.5;
-   } else {
-      color = -0.5;
-   }
-   this.setEdgeColor(wingedEdge, color);
 };
 
 PreviewCage.prototype.dragSelectEdge = function(selectEdge, dragOn) {
@@ -1029,7 +1006,7 @@ PreviewCage.prototype.changeFromEdgeToFaceSelect = function() {
       // for each WingedEdge, select both it face.
       for (let halfEdge of wingedEdge) {
          if (!this.selectedSet.has(halfEdge.face)) {
-            this.selectFace(halfEdge);
+            this.selectFace(halfEdge.face);
          }
       }
    }
@@ -1114,9 +1091,8 @@ PreviewCage.prototype.dragSelectFace = function(selectEdge, onOff) {
 /**
  * 
  */
-PreviewCage.prototype.selectFace = function(selectEdge) {
+PreviewCage.prototype.selectFace = function(polygon) {
    var onOff;
-   var polygon = selectEdge.face;
    if (this.selectedSet.has(polygon)) {
       this.setFaceSelectionOff(polygon);
       Wings3D.log("faceSelectOff", polygon.index);
@@ -1146,7 +1122,7 @@ PreviewCage.prototype._selectFaceMore = function() {
       for (let face of polygon.oneRing()) {
          // check if face is not selected.
          if ( (face !== null) && !this.selectedSet.has(face) ) {
-            this.selectFace(face.halfEdge);
+            this.selectFace(face);
          }
       }
    }
@@ -1161,7 +1137,7 @@ PreviewCage.prototype._selectFaceLess = function() {
    for (let selected of oldSelection) {
       for (let polygon of selected.adjacent()) {
          if (!oldSelection.has(polygon)) {      // selected is a boundary polygon
-            this.selectFace(selected.halfEdge); // now removed.
+            this.selectFace(selected); // now removed.
             break;
          }
       }
@@ -1176,7 +1152,7 @@ PreviewCage.prototype._selectFaceAll = function() {
 
    for (let polygon of this.geometry.faces) {
       if (polygon.isLive && !oldSelection.has(polygon)) {
-         this.selectFace(polygon.halfEdge);
+         this.selectFace(polygon);
       }
    }
 
@@ -1188,7 +1164,7 @@ PreviewCage.prototype._selectFaceInvert = function() {
 
    for (let polygon of this.geometry.faces) {
       if (polygon.isLive()) {
-         this.selectFace(polygon.halfEdge);
+         this.selectFace(polygon);
       }
    }
 
@@ -1203,7 +1179,7 @@ PreviewCage.prototype._selectFaceAdjacent = function() {
       for (let face of polygon.adjacent()) {
          // check if face is not selected.
          if ( (face !== null) && !this.selectedSet.has(face) ) {
-            this.selectFace(face.halfEdge);
+            this.selectFace(face);
          }
       }
    }
@@ -1217,7 +1193,7 @@ PreviewCage.prototype._selectFaceSimilar = function() {
 
    for (let polygon of this.geometry.faces) {
       if (polygon.isLive && !snapshot.has(polygon) && similarFace.find(polygon)) {
-         this.selectFace(polygon.halfEdge);
+         this.selectFace(polygon);
       }
    }
 
@@ -1571,7 +1547,7 @@ PreviewCage.prototype.extrudeFace = function(contours) {
    // reselect face
    const oldSelected = this._resetSelectFace();
    for (let polygon of oldSelected) {
-      this.selectFace(polygon.halfEdge);
+      this.selectFace(polygon);
    }
 
    return contours; //edgeLoops;
@@ -1593,7 +1569,7 @@ PreviewCage.prototype.collapseExtrudeEdge = function(edges) {
    // reselect face
    const oldSelected = this._resetSelectFace();
    for (let polygon of oldSelected) {
-      this.selectFace(polygon.halfEdge);
+      this.selectFace(polygon);
    }
 
    // update all affected polygon(use sphere). recompute centroid.
@@ -1972,7 +1948,7 @@ PreviewCage.prototype.undoDissolveFace = function(dissolve) {
    this.selectedSet.clear();
    // reselected the polygon in order.
    for (let polygon of dissolve.selection) {
-      this.selectFace(polygon.halfEdge);
+      this.selectFace(polygon);
    }
    // update previewBox.
    this._updatePreviewAll(oldSize, this.geometry.affected);
@@ -2080,7 +2056,7 @@ PreviewCage.prototype.bevelFace = function() {
    // reselect faces again. because polygon's edges were changed.
    const oldSelected = this._resetSelectFace();
    for (let polygon of oldSelected) {
-      this.selectFace(polygon.halfEdge);
+      this.selectFace(polygon);
    }
 
    return result;
@@ -2265,7 +2241,7 @@ PreviewCage.prototype.insetFace = function() {
    // reselect face, or it won't show up. a limitation.
    const oldSelected = this._resetSelectFace();
    for (let polygon of oldSelected) {
-      this.selectFace(polygon.halfEdge);
+      this.selectFace(polygon);
    }
 
 
@@ -2382,7 +2358,7 @@ PreviewCage.prototype.intrudeFace = function() {
    ret.holed = this.holeSelectedFace();
    // select all newly created polygon
    for (let polygon of newPolygons) {
-      this.selectFace(polygon.halfEdge);
+      this.selectFace(polygon);
    }
    ret.invert = newPolygons;
 
@@ -2404,7 +2380,7 @@ PreviewCage.prototype.undoIntrudeFace = function(intrude) {
 
    // now deselect inverts, and remove all polygon' and it edges and vertex
    for (let polygon of intrude.invert) {
-      this.selectFace(polygon.halfEdge);
+      this.selectFace(polygon);
    }
    const wEdges = new Set();
    for (let polygon of intrude.invert) {
@@ -2440,7 +2416,7 @@ PreviewCage.prototype.holeSelectedFace = function() {
 PreviewCage.prototype.undoHoleSelectedFace = function(holes) {
    for (let hole of holes) {
       const polygon = this.geometry.undoHole(hole);
-      this.selectFace(polygon.halfEdge);
+      this.selectFace(polygon);
    }
 };
 

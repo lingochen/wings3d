@@ -14,9 +14,6 @@ import {action} from './wings3d';
 class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
    constructor(mode) {
       const self = this;
-      this.currentEdge = null;
-      this.shaderData = gl.createShaderData();
-      this.shaderData.setUniform4fv("uColor", [0.0, 1.0, 0.0, 0.3]); // hilite green, selected hilite yellow.
       // contextMenu
       this.contextMenu = {menu: document.querySelector("#"+mode+"-context-menu")};
       if (this.contextMenu.menu) {
@@ -88,7 +85,7 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
             View.attachHandlerMouseMove(new ExtrudeNormalHandler(this));
           });
       }
-   }
+   } 
 
    getContextMenu() {
       var hasSelection = false;
@@ -113,7 +110,7 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
 
    snapshotAll(func, ...args) {
       const snapshots = [];
-      for (let preview of this.world) {
+      for (let preview of View.getWorld()) {
          if (preview.hasSelection()) {
             const snapshot = func.call(preview, ...args);
             if (snapshot) {
@@ -132,20 +129,22 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
 
    // can be use arguments object?
    eachPreviewCage(func, items) {
+      const world = View.getWorld();
       if (items) {
-         for (var i = 0; i < this.world.length; ++i) {
-            func(this.world[i], items[i]);
+         for (var i = 0; i < world.length; ++i) {
+            func(world[i], items[i]);
          }
       } else {
-         for (var i = 0; i < this.world.length; ++i) {
-            func(this.world[i]);
+         for (var i = 0; i < world.length; ++i) {
+            func(world[i]);
          }
       }
    }
 
    * selectableCage() {
-      for (let i = 0; i < this.world.length; ++i) {
-         let cage = this.world[i];
+      const world = View.getWorld();
+      for (let i = 0; i < world.length; ++i) {
+         let cage = world[i];
          if (!cage.isLock() && cage.isVisible()) {
             yield cage;
          }
@@ -153,7 +152,7 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
    }
 
    * selectedCage() {
-      for (let cage of this.world) {
+      for (let cage of View.getWorld()) {
          if (cage.hasSelection()) {
             yield cage;
          }
@@ -161,7 +160,7 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
    }
 
    hasSelection() {
-      for (let cage of this.world) {
+      for (let cage of View.getWorld()) {
          if (cage.hasSelection()) {
             return true;
          }
@@ -201,32 +200,6 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       this.doAll(snapshots, PreviewCage.prototype.moveSelectionNew, movement);
    }
 
-   setWorld(world) {
-      this.world = world;
-   }
-
-   getPreview() {
-      return this.preview;
-   }
-
-   setPreview(preview) {
-      this.preview = preview;
-   }
-
-   setCurrent(edge, intersect, center) {
-      
-      if (this.currentEdge !== edge) {
-         if (this.currentEdge !== null) {
-            this.hideOldHilite(edge);
-         }
-         if (edge !== null) {
-            this.showNewHilite(edge, intersect, center);
-         }
-         this.currentEdge = edge;
-      }
-   }
-
-   hideOldHilite() {}
 
    _doSelection(doName, initialCount=0) {
       const snapshots = [];
@@ -289,16 +262,18 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       }, selection);     
    }
 
+   isVertexSelectable() { return false; }
+   isEdgeSelectable() { return false; }
+   isFaceSelectable() { return false; }
+
    draw(gl, draftBench) {
-      if (this.currentEdge) {
-         this.useShader(gl);
-         gl.bindTransform();
-         //gl.bindShaderData(this.shaderData, false);
-         this.drawObject(gl, draftBench);
-         //gl.disableShader();
-      }
+      this.useShader(gl);
+      gl.bindTransform();
+      this.drawObject(gl, draftBench);
+      //gl.disableShader();
    }
 }
+
 
 
 class DragSelect {
@@ -313,13 +288,13 @@ class DragSelect {
  //     return new EdgeSelectCommand(this.select);
  //  }
 
-   dragSelect(cage) {
+   dragSelect(cage, hilite) {
       var array = this.select.get(cage);
       if (array === undefined) {
          array = [];
          this.select.set(cage, array);
       }
-      this.madsor.dragSelect(cage, array, this.onOff);
+      this.madsor.dragSelect(cage, hilite, array, this.onOff);
    }
 }
 

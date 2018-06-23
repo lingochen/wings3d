@@ -404,6 +404,7 @@ const action = {
    faceBevel: () => {notImplemented(this);},
    faceBump: () => {notImplemented(this);},
    faceIntrude: () => {notImplemented(this);},
+   facePutOn: () => {notImplemented(this);},
    // vertex
    vertexConnect: () => {notImplemented(this);},
    vertexDissolve: () => {notImplemented(this);},
@@ -591,10 +592,6 @@ function initMode() {
    mode.vertex = new __WEBPACK_IMPORTED_MODULE_9__wings3d_vertexmads__["VertexMadsor"];
    mode.body = new __WEBPACK_IMPORTED_MODULE_10__wings3d_bodymads__["BodyMadsor"];
    mode.current = mode.face;
-   mode.face.setWorld(world);
-   mode.edge.setWorld(world);
-   mode.vertex.setWorld(world);
-   mode.body.setWorld(world);
 };
 
 
@@ -685,9 +682,7 @@ function restoreBodyMode(snapshots) {
    }
 };
 
-function currentMode() {
-   return mode.current;
-}
+const currentMode = () => mode.current;
 //- End of editing Mode ----------
 
 //
@@ -735,6 +730,97 @@ function makeCombineIntoWorld(cageSelection) {
 }
 //-- End of World objects management ----------------dra---------
 
+const isVertexSelectable = () => mode.current ? mode.current.isVertexSelectable() : true;
+const isEdgeSelectable = () => mode.current ? mode.current.isEdgeSelectable() : true;
+const isFaceSelectable = () => mode.current ? mode.current.isFaceSelectable() : true;
+//
+// hilite
+//
+const hilite = {cage: null, edge: null, vertex: null, face: null};
+let currentCage;
+function setCurrent(edge, intersect, center) {
+   // find out origin, dest. which is closer.
+   let hiliteVertex = null, hiliteEdge = null, hiliteFace = null, hiliteCage = null;
+   if (edge !== null) {
+      const a = vec3.create(), b = vec3.create(), c = vec3.create();
+      const destination = edge.destination().vertex; // find out if we are within the distance threshold
+      const origin = edge.origin.vertex;
+      vec3.sub(a, intersect, origin);
+      vec3.sub(b, intersect, destination);
+      vec3.sub(c, destination, origin);
+      const dist0 = vec3.length(a);
+      const dist1 = vec3.length(b);
+      const dist2 = vec3.length(c);
+      const threshold = dist2 / 4.0;
+      const isVertex = isVertexSelectable();
+      const isEdge = isEdgeSelectable();
+      const isFace = isFaceSelectable();
+      if (isVertex) {
+         if (dist0 < dist1) {
+            if (!(isEdge || isFace) || (dist0 < threshold)) {  // only multiple selectable needs to check threshold
+               hiliteVertex = edge.origin;
+            }
+         } else {
+            if (!(isEdge || isFace) || (dist1 < threshold)) {
+               hiliteVertex = edge.destination();
+            }
+         }
+      }
+      if (isEdge && (hiliteVertex === null)) { // check out if edge is close enough
+         vec3.cross(a, a, b);
+         vec3.sub(b, destination, origin);
+         const distance = vec3.length(a) / dist2;
+         if (!(isVertex || isFace) || (distance < threshold)) {
+            hiliteEdge = edge;
+         }
+      }
+      if (isFace && (hiliteEdge === null)) {   // now hilite face
+         hiliteFace = edge.face;
+      }
+      if (!(isVertex || isEdge || isFace)) {    // all 3 mode not true then only bodyMode possible.
+         hiliteCage = currentCage;
+      }
+   }
+   // now do hilite.
+   if (hiliteVertex !== hilite.vertex) {  
+      if (hilite.vertex !== null) {
+         draftBench.hiliteVertex(hilite.vertex, false);
+      }
+      if (hiliteVertex !== null) {
+         draftBench.hiliteVertex(hiliteVertex, true);
+      }
+      hilite.vertex = hiliteVertex;
+   }
+   if (hiliteEdge !== hilite.edge) {
+      if (hilite.edge !== null) {
+         draftBench.hiliteEdge(hilite.edge, false);
+      }
+      if (hiliteEdge !== null) {
+         draftBench.hiliteEdge(hiliteEdge, true);
+      }
+      hilite.edge = hiliteEdge;
+   }
+   if (hiliteFace !== hilite.face) {
+      if (hilite.face !== null) {
+         draftBench.hiliteFace(hilite.face, false); // hiliteFace(null, false)?
+      }
+      if (hiliteFace !== null) {
+         draftBench.hiliteFace(hiliteFace, true);
+      }
+      hilite.face = hiliteFace;
+   }
+   if (hiliteCage !== hilite.cage) {
+      if (hilite.cage !== null) {
+         hilite.cage.hiliteBody(false);
+      }
+      if (hiliteCage) {
+         hiliteCage.hiliteBody(true);
+      }
+      hilite.cage = hiliteCage;
+   }
+}
+
+
 //
 // mouse handling
 //
@@ -751,7 +837,7 @@ function rayPick(ray) {
       }
    }
    if (pick !== null) {
-      mode.current.setPreview(pick.model);
+      currentCage = pick.model;
       //if (lastPick !== null && lastPick.model !== pick.model) {
       //   lastPick.model.setCurrentSelect(null);
       //}
@@ -759,12 +845,12 @@ function rayPick(ray) {
       lastPick = pick;
       let intersect = vec3.create();
       vec3.scaleAndAdd(intersect, ray.origin, ray.direction, pick.t);
-      mode.current.setCurrent(pick.edge, intersect, pick.center);
+      setCurrent(pick.edge, intersect, pick.center);
       __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
    } else {
       if (lastPick !== null) {
-         // no current selection.
-         mode.current.setCurrent(null);
+         // deselect last selection
+         setCurrent(null);
          __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
       }
    }
@@ -775,7 +861,7 @@ function rayPick(ray) {
 let dragMode = null;
 function selectStart() {
    if (lastPick !== null) {
-      dragMode = mode.current.selectStart(lastPick.model);
+      dragMode = mode.current.selectStart(lastPick.model, hilite);
       __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
    }
 };
@@ -783,7 +869,7 @@ function selectStart() {
 function selectDrag() {
    if ((dragMode !== null)) {// &&
        if ((lastPick !== null)) {
-         dragMode.dragSelect(lastPick.model);
+         dragMode.dragSelect(lastPick.model, hilite);
          __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
       }
    }
@@ -808,7 +894,7 @@ function canvasHandleMouseDown(ev) {
          undoQueue( handler.mousemove );  // put on queue, commit()?
          handler.mousemove = null;
       } else if (handler.mouseSelect !== null) {
-         if (handler.mouseSelect.select()) {
+         if (handler.mouseSelect.select(hilite)) {
             handler.mouseSelect.doIt();
             undoQueue( handler.mouseSelect );
             handler.mouseSelect = null;
@@ -1060,7 +1146,9 @@ function drawWorld(gl) {
       gl.enable(gl.BLEND);
       gl.blendFunc(gl.SRC_COLOR, gl.DST_COLOR);
       // draw Current Select Mode (vertex, edge, or face)
-      mode.current.draw(gl, draftBench);
+      //if (hilite.vertex || hilite.edge || hilite.face || hilite.cage) {
+         mode.current.draw(gl, draftBench);
+      //}
       gl.disable(gl.BLEND);
    }
 }
@@ -1888,7 +1976,7 @@ PreviewCage.prototype.changeFromBodyToVertexSelect = function() {
 
 PreviewCage.prototype.restoreFaceSelection = function(snapshot) {
    for (let polygon of snapshot.selectedFaces) {
-      this.selectFace(polygon.halfEdge);
+      this.selectFace(polygon);
    }
 };
 
@@ -2007,17 +2095,6 @@ PreviewCage.prototype.snapshotSelection = function() {
 PreviewCage.prototype.setVertexColor = function(vertex, color) {
    // selected color
    this.bench.setVertexColor(vertex, color, this.groupSelection);
-};
-
-PreviewCage.prototype.hiliteVertex = function(vertex, show) {
-   // select polygon set color,
-   var color;
-   if (show) {
-      color = 0.5;
-   } else {
-      color = -0.5;
-   }
-   this.setVertexColor(vertex, color);
 };
 
 PreviewCage.prototype.dragSelectVertex = function(vertex, onOff) {
@@ -2148,7 +2225,7 @@ PreviewCage.prototype.changeFromVertexToFaceSelect = function() {
       // select all face that is connected to the vertex.
       vertex.eachOutEdge(function(edge) {
          if (!self.selectedSet.has(edge.face)) {
-            self.selectFace(edge);
+            self.selectFace(edge.face);
          }
       });
    }
@@ -2209,18 +2286,6 @@ PreviewCage.prototype.restoreFromVertexToBodySelect = function(snapshot) {
 PreviewCage.prototype.setEdgeColor = function(wingedEdge, color) {
    // selected color
    this.bench.setEdgeColor(wingedEdge, color, this.groupSelection);
-};
-
-PreviewCage.prototype.hiliteEdge = function(selectEdge, show) {
-   // select polygon set color,
-   var color;
-   var wingedEdge = selectEdge.wingedEdge;
-   if (show) {
-      color = 0.5;
-   } else {
-      color = -0.5;
-   }
-   this.setEdgeColor(wingedEdge, color);
 };
 
 PreviewCage.prototype.dragSelectEdge = function(selectEdge, dragOn) {
@@ -2712,7 +2777,7 @@ PreviewCage.prototype.changeFromEdgeToFaceSelect = function() {
       // for each WingedEdge, select both it face.
       for (let halfEdge of wingedEdge) {
          if (!this.selectedSet.has(halfEdge.face)) {
-            this.selectFace(halfEdge);
+            this.selectFace(halfEdge.face);
          }
       }
    }
@@ -2797,9 +2862,8 @@ PreviewCage.prototype.dragSelectFace = function(selectEdge, onOff) {
 /**
  * 
  */
-PreviewCage.prototype.selectFace = function(selectEdge) {
+PreviewCage.prototype.selectFace = function(polygon) {
    var onOff;
-   var polygon = selectEdge.face;
    if (this.selectedSet.has(polygon)) {
       this.setFaceSelectionOff(polygon);
       __WEBPACK_IMPORTED_MODULE_4__wings3d__["log"]("faceSelectOff", polygon.index);
@@ -2829,7 +2893,7 @@ PreviewCage.prototype._selectFaceMore = function() {
       for (let face of polygon.oneRing()) {
          // check if face is not selected.
          if ( (face !== null) && !this.selectedSet.has(face) ) {
-            this.selectFace(face.halfEdge);
+            this.selectFace(face);
          }
       }
    }
@@ -2844,7 +2908,7 @@ PreviewCage.prototype._selectFaceLess = function() {
    for (let selected of oldSelection) {
       for (let polygon of selected.adjacent()) {
          if (!oldSelection.has(polygon)) {      // selected is a boundary polygon
-            this.selectFace(selected.halfEdge); // now removed.
+            this.selectFace(selected); // now removed.
             break;
          }
       }
@@ -2859,7 +2923,7 @@ PreviewCage.prototype._selectFaceAll = function() {
 
    for (let polygon of this.geometry.faces) {
       if (polygon.isLive && !oldSelection.has(polygon)) {
-         this.selectFace(polygon.halfEdge);
+         this.selectFace(polygon);
       }
    }
 
@@ -2871,7 +2935,7 @@ PreviewCage.prototype._selectFaceInvert = function() {
 
    for (let polygon of this.geometry.faces) {
       if (polygon.isLive()) {
-         this.selectFace(polygon.halfEdge);
+         this.selectFace(polygon);
       }
    }
 
@@ -2886,7 +2950,7 @@ PreviewCage.prototype._selectFaceAdjacent = function() {
       for (let face of polygon.adjacent()) {
          // check if face is not selected.
          if ( (face !== null) && !this.selectedSet.has(face) ) {
-            this.selectFace(face.halfEdge);
+            this.selectFace(face);
          }
       }
    }
@@ -2900,7 +2964,7 @@ PreviewCage.prototype._selectFaceSimilar = function() {
 
    for (let polygon of this.geometry.faces) {
       if (polygon.isLive && !snapshot.has(polygon) && similarFace.find(polygon)) {
-         this.selectFace(polygon.halfEdge);
+         this.selectFace(polygon);
       }
    }
 
@@ -3254,7 +3318,7 @@ PreviewCage.prototype.extrudeFace = function(contours) {
    // reselect face
    const oldSelected = this._resetSelectFace();
    for (let polygon of oldSelected) {
-      this.selectFace(polygon.halfEdge);
+      this.selectFace(polygon);
    }
 
    return contours; //edgeLoops;
@@ -3276,7 +3340,7 @@ PreviewCage.prototype.collapseExtrudeEdge = function(edges) {
    // reselect face
    const oldSelected = this._resetSelectFace();
    for (let polygon of oldSelected) {
-      this.selectFace(polygon.halfEdge);
+      this.selectFace(polygon);
    }
 
    // update all affected polygon(use sphere). recompute centroid.
@@ -3655,7 +3719,7 @@ PreviewCage.prototype.undoDissolveFace = function(dissolve) {
    this.selectedSet.clear();
    // reselected the polygon in order.
    for (let polygon of dissolve.selection) {
-      this.selectFace(polygon.halfEdge);
+      this.selectFace(polygon);
    }
    // update previewBox.
    this._updatePreviewAll(oldSize, this.geometry.affected);
@@ -3763,7 +3827,7 @@ PreviewCage.prototype.bevelFace = function() {
    // reselect faces again. because polygon's edges were changed.
    const oldSelected = this._resetSelectFace();
    for (let polygon of oldSelected) {
-      this.selectFace(polygon.halfEdge);
+      this.selectFace(polygon);
    }
 
    return result;
@@ -3948,7 +4012,7 @@ PreviewCage.prototype.insetFace = function() {
    // reselect face, or it won't show up. a limitation.
    const oldSelected = this._resetSelectFace();
    for (let polygon of oldSelected) {
-      this.selectFace(polygon.halfEdge);
+      this.selectFace(polygon);
    }
 
 
@@ -4065,7 +4129,7 @@ PreviewCage.prototype.intrudeFace = function() {
    ret.holed = this.holeSelectedFace();
    // select all newly created polygon
    for (let polygon of newPolygons) {
-      this.selectFace(polygon.halfEdge);
+      this.selectFace(polygon);
    }
    ret.invert = newPolygons;
 
@@ -4087,7 +4151,7 @@ PreviewCage.prototype.undoIntrudeFace = function(intrude) {
 
    // now deselect inverts, and remove all polygon' and it edges and vertex
    for (let polygon of intrude.invert) {
-      this.selectFace(polygon.halfEdge);
+      this.selectFace(polygon);
    }
    const wEdges = new Set();
    for (let polygon of intrude.invert) {
@@ -4123,7 +4187,7 @@ PreviewCage.prototype.holeSelectedFace = function() {
 PreviewCage.prototype.undoHoleSelectedFace = function(holes) {
    for (let hole of holes) {
       const polygon = this.geometry.undoHole(hole);
-      this.selectFace(polygon.halfEdge);
+      this.selectFace(polygon);
    }
 };
 
@@ -8302,6 +8366,15 @@ DraftBench.prototype.uploadVertexPreview = function() {
 };
 
 
+DraftBench.prototype.hiliteVertex = function(vertex, show) {
+   // select polygon set color,
+   if (show) {
+      this.setVertexColor(vertex, 0.5);
+   } else {
+      this.setVertexColor(vertex, -0.5);
+   }
+};
+
 DraftBench.prototype.setVertexColor = function(vertex, color, groupSelection) {
    // selected color
    const j = vertex.index;  
@@ -8317,6 +8390,16 @@ DraftBench.prototype.resetSelectVertex = function() {
    this.previewVertex.color.fill(0.0);
    this.previewVertex.shaderData.uploadAttribute('color', 0, this.previewVertex.color);
 };
+
+DraftBench.prototype.hiliteEdge = function(hEdge, onOff) {
+   // select polygon set color,
+   if (onOff) {
+      this.setEdgeColor(hEdge.wingedEdge, 0.5);
+   } else {
+      this.setEdgeColor(hEdge.wingedEdge, -0.5);
+   }
+
+}
 
 DraftBench.prototype.setEdgeColor = function(wingedEdge, color, groupSelection) {
    // selected color
@@ -8743,34 +8826,24 @@ class FaceMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
       return this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.insetFace);
    }
 
-   dragSelect(cage, selectArray, onOff) {
-      if (this.currentEdge !== null) {
-        if (cage.dragSelectFace(this.currentEdge, onOff)) {
-            selectArray.push(this.currentEdge);
+   dragSelect(cage, hilite, selectArray, onOff) {
+      if (hilite.face !== null) {
+        if (cage.dragSelectFace(hilite.face, onOff)) {
+            selectArray.push(hilite.face);
         }
       }
    }
 
    // select, hilite
-   selectStart(preview) {
+   selectStart(preview, hilite) {
       // check not null, shouldn't happened
-      if (this.currentEdge !== null) {
-         var onOff = preview.selectFace(this.currentEdge);
-         return new DragFaceSelect(this, preview, this.currentEdge, onOff);
+      if (hilite.face !== null) {
+         var onOff = preview.selectFace(hilite.face);
+         return new DragFaceSelect(this, preview, hilite.face, onOff);
       }    
    }
 
-   hideOldHilite(edge) {
-      if ((edge === null) || (this.currentEdge.face !== edge.face)) {
-         __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["draftBench"].hiliteFace(null, false);
-      }
-   }
-
-   showNewHilite(edge, intersect, center, draftBench) {
-      if ((this.currentEdge === null) || (this.currentEdge.face !== edge.face)) {   // make sure it new face
-         __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["draftBench"].hiliteFace(edge.face, true);
-      }
-   }
+   isFaceSelectable() { return true; }
 
    _resetSelection(cage) {
       return this._wrapSelection(cage._resetSelectFace());
@@ -9045,6 +9118,35 @@ class IntrudeFaceHandler extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["Mo
 }
 
 
+//
+class PutOnCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
+   constructor(madsor, preview) {
+      super();
+      this.madsor = madsor;
+      this.preview = preview;
+   }
+
+   select() { // return true for accepting, false for continue doing things.
+      const vertex = this.madsor.getCurrent();
+      if (vertex) {
+         this.collapseHEdge = this.preview.weldableVertex(vertex);
+         return (this.collapseHEdge != false);
+      }
+      return false;
+   }
+
+   doIt() {
+      this.restore = this.preview.weldVertex(this.collapseHEdge);
+      return true;
+   }
+
+   undo() {
+      this.preview.undoWeldVertex(this.restore);
+   }
+}
+
+
+
 
 /***/ }),
 /* 10 */
@@ -9081,9 +9183,6 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
    constructor(mode) {
       const self = this;
-      this.currentEdge = null;
-      this.shaderData = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].createShaderData();
-      this.shaderData.setUniform4fv("uColor", [0.0, 1.0, 0.0, 0.3]); // hilite green, selected hilite yellow.
       // contextMenu
       this.contextMenu = {menu: document.querySelector("#"+mode+"-context-menu")};
       if (this.contextMenu.menu) {
@@ -9155,7 +9254,7 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
             __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["attachHandlerMouseMove"](new ExtrudeNormalHandler(this));
           });
       }
-   }
+   } 
 
    getContextMenu() {
       var hasSelection = false;
@@ -9180,7 +9279,7 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
 
    snapshotAll(func, ...args) {
       const snapshots = [];
-      for (let preview of this.world) {
+      for (let preview of __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["getWorld"]()) {
          if (preview.hasSelection()) {
             const snapshot = func.call(preview, ...args);
             if (snapshot) {
@@ -9199,20 +9298,22 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
 
    // can be use arguments object?
    eachPreviewCage(func, items) {
+      const world = __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["getWorld"]();
       if (items) {
-         for (var i = 0; i < this.world.length; ++i) {
-            func(this.world[i], items[i]);
+         for (var i = 0; i < world.length; ++i) {
+            func(world[i], items[i]);
          }
       } else {
-         for (var i = 0; i < this.world.length; ++i) {
-            func(this.world[i]);
+         for (var i = 0; i < world.length; ++i) {
+            func(world[i]);
          }
       }
    }
 
    * selectableCage() {
-      for (let i = 0; i < this.world.length; ++i) {
-         let cage = this.world[i];
+      const world = __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["getWorld"]();
+      for (let i = 0; i < world.length; ++i) {
+         let cage = world[i];
          if (!cage.isLock() && cage.isVisible()) {
             yield cage;
          }
@@ -9220,7 +9321,7 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
    }
 
    * selectedCage() {
-      for (let cage of this.world) {
+      for (let cage of __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["getWorld"]()) {
          if (cage.hasSelection()) {
             yield cage;
          }
@@ -9228,7 +9329,7 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
    }
 
    hasSelection() {
-      for (let cage of this.world) {
+      for (let cage of __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["getWorld"]()) {
          if (cage.hasSelection()) {
             return true;
          }
@@ -9268,32 +9369,6 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_2__wings3d_model__["PreviewCage"].prototype.moveSelectionNew, movement);
    }
 
-   setWorld(world) {
-      this.world = world;
-   }
-
-   getPreview() {
-      return this.preview;
-   }
-
-   setPreview(preview) {
-      this.preview = preview;
-   }
-
-   setCurrent(edge, intersect, center) {
-      
-      if (this.currentEdge !== edge) {
-         if (this.currentEdge !== null) {
-            this.hideOldHilite(edge);
-         }
-         if (edge !== null) {
-            this.showNewHilite(edge, intersect, center);
-         }
-         this.currentEdge = edge;
-      }
-   }
-
-   hideOldHilite() {}
 
    _doSelection(doName, initialCount=0) {
       const snapshots = [];
@@ -9356,16 +9431,18 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       }, selection);     
    }
 
+   isVertexSelectable() { return false; }
+   isEdgeSelectable() { return false; }
+   isFaceSelectable() { return false; }
+
    draw(gl, draftBench) {
-      if (this.currentEdge) {
-         this.useShader(gl);
-         gl.bindTransform();
-         //gl.bindShaderData(this.shaderData, false);
-         this.drawObject(gl, draftBench);
-         //gl.disableShader();
-      }
+      this.useShader(gl);
+      gl.bindTransform();
+      this.drawObject(gl, draftBench);
+      //gl.disableShader();
    }
 }
+
 
 
 class DragSelect {
@@ -9380,13 +9457,13 @@ class DragSelect {
  //     return new EdgeSelectCommand(this.select);
  //  }
 
-   dragSelect(cage) {
+   dragSelect(cage, hilite) {
       var array = this.select.get(cage);
       if (array === undefined) {
          array = [];
          this.select.set(cage, array);
       }
-      this.madsor.dragSelect(cage, array, this.onOff);
+      this.madsor.dragSelect(cage, hilite, array, this.onOff);
    }
 }
 
@@ -9818,7 +9895,7 @@ class EdgeMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
 
    undoLoopCut(snapshots) {
       this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.undoLoopCut);
-      for (let snapshot of snapshots) {
+      for (let snapshot of snapshots) {   // we have to remove later because of removeFromWorld will set invisible flag on polygon.
          for (let preview of snapshot.snapshot.separateCages) {
             //preview.selectBody();
             __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["removeFromWorld"](preview);
@@ -9952,35 +10029,24 @@ class EdgeMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
    }
 
 
-   dragSelect(cage, selectArray, onOff) {
-      if (this.currentEdge !== null) {
-        if (cage.dragSelectEdge(this.currentEdge, onOff)) {
-            selectArray.push(this.currentEdge);
+   dragSelect(cage, hilite, selectArray, onOff) {
+      if (hilite.edge !== null) {
+        if (cage.dragSelectEdge(hilite.edge, onOff)) {
+            selectArray.push(hilite.edge);
         }
       }
    }
 
    // select, hilite
-   selectStart(cage) {
-      if (this.currentEdge !== null) {
-         var onOff = cage.selectEdge(this.currentEdge);
-         return new DragEdgeSelect(this, cage, this.currentEdge, onOff);
+   selectStart(cage, hilite) {
+      if (hilite.edge !== null) {
+         var onOff = cage.selectEdge(hilite.edge);
+         return new DragEdgeSelect(this, cage, hilite.edge, onOff);
       }
       return null;
    }
 
-   hideOldHilite() {
-      //if (this.currentEdge) {
-         this.preview.hiliteEdge(this.currentEdge, false);
-      //}
-   }
-
-   showNewHilite(edge, intersect, _center) {
-      // setting of setCurrentEdge
-      //if (this.currentEdge) {
-         this.preview.hiliteEdge(edge, true);
-      //}
-   }
+   isEdgeSelectable() { return true; }
 
    _wrapSelection(selection) {
       return {wingedEdges: selection};
@@ -10447,8 +10513,8 @@ class BodyMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
       return this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.bodyCentroid);
    }
 
-   dragSelect(cage, selectArray, onOff) {
-      if (this.currentEdge !== null) {
+   dragSelect(cage, hilite, selectArray, onOff) {
+      if (hilite.edge !== null) {
        // if (cage.dragSelectFace(this.currentEdge, onOff)) {
        //     selectArray.push(this.currentEdge);
        // }
@@ -10456,28 +10522,12 @@ class BodyMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
    }
 
    // select, hilite
-   selectStart(preview) {
+   selectStart(preview, hilite) {
       // check not null, shouldn't happened
-      if (this.currentEdge !== null) {
+      if (hilite.cage !== null) {
          var onOff = preview.selectBody();
-         return new DragBodySelect(this, preview, this.currentEdge, onOff);
+         return new DragBodySelect(this, preview, hilite.edge, onOff);
       }    
-   }
-
-   hideOldHilite() {
-      if (this.hiliteView !== this.preview) {
-         if (this.preview) {
-            this.preview.hiliteBody(false);
-         }
-         this.hiliteView = null;
-      }
-   }
-
-   showNewHilite(_edge, _intersect, _center) {
-      if (this.preview !== null && this.hiliteView !== this.preview) {  // this.preview !== null should not happened, but just make sure
-         this.preview.hiliteBody(true);
-         this.hiliteView = this.preview;
-      }
    }
 
    similarSelection() {
@@ -10534,9 +10584,9 @@ class BodyMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
    }
 
    toggleFunc(toMadsor) {
-      this.hiliteView = null;
-      this.hideOldHilite();
-      this.hiliteView = null;
+//      this.hiliteView = null;
+//      this.hideOldHilite();
+//      this.hiliteView = null;
       const self = this;
       var redoFn;
       var snapshots = [];
@@ -10862,7 +10912,6 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 class VertexMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
    constructor() {
       super('vertex');
-      this.currentVertex = null;
       const self = this;
       __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].vertexConnect.name, function(ev) {
             self.connectVertex();
@@ -10891,10 +10940,6 @@ class VertexMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"]
             geometryStatus("You can only Weld one vertex");
          }
         });
-   }
-
-   getCurrentVertex() {
-      return this.currentVertex;
    }
 
    modeName() {
@@ -11002,45 +11047,23 @@ class VertexMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"]
       }, dissolveArray);
    }
 
-   dragSelect(cage, selectArray, onOff) {
-      if (this.currentVertex !== null) {
-        if (cage.dragSelectVertex(this.currentVertex, onOff)) {
-            selectArray.push(this.currentVertex);
+   dragSelect(cage, hilite, selectArray, onOff) {
+      if (hilite.vertex !== null) {
+        if (cage.dragSelectVertex(hilite.vertex, onOff)) {
+            selectArray.push(hilite.vertex);
         }
       }
    }
 
-   selectStart(cage) {
-      //
-      if (this.currentVertex !== null) {
-         var onOff = this.preview.selectVertex(this.currentVertex);
-         return new DragVertexSelect(this, cage, this.currentVertex, onOff);
+   selectStart(cage, hilite) {
+      if (hilite.vertex !== null) {
+         var onOff = cage.selectVertex(hilite.vertex);
+         return new DragVertexSelect(this, cage, hilite.vertex, onOff);
       }
       return null;
    }
 
-   setCurrent(edge, intersect, center) {
-      // find out origin, dest. which is closer.
-      var currentVertex = null;
-      if (edge !== null) {
-         currentVertex = edge.destination();
-         var distance0 = vec3.distance(edge.origin.vertex, intersect);
-         var distance1 = vec3.distance(currentVertex.vertex, intersect);
-         if (distance0 < distance1) {
-            currentVertex = edge.origin;
-         }
-      }
-      if (currentVertex !== this.currentVertex) {
-         if (this.currentVertex !== null) {
-            this.preview.hiliteVertex(this.currentVertex, false);
-         }
-         if (currentVertex !== null) {
-            this.preview.hiliteVertex(currentVertex, true);
-         }
-         this.currentVertex = currentVertex;
-      }
-      this.currentEdge = edge;
-   }
+   isVertexSelectable() { return true; }
 
    _resetSelection(cage) {
       return this._wrapSelection(cage._resetSelectVertex());
@@ -11215,8 +11238,8 @@ class VertexWeldCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["Edi
       this.preview = preview;
    }
 
-   select() { // return true for accepting, false for continue doing things.
-      const vertex = this.madsor.getCurrentVertex();
+   select(hilite) { // return true for accepting, false for continue doing things.
+      const vertex = hilite.vertex;
       if (vertex) {
          this.collapseHEdge = this.preview.weldableVertex(vertex);
          return (this.collapseHEdge != false);

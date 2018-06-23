@@ -211,34 +211,24 @@ class FaceMadsor extends Madsor {
       return this.snapshotAll(PreviewCage.prototype.insetFace);
    }
 
-   dragSelect(cage, selectArray, onOff) {
-      if (this.currentEdge !== null) {
-        if (cage.dragSelectFace(this.currentEdge, onOff)) {
-            selectArray.push(this.currentEdge);
+   dragSelect(cage, hilite, selectArray, onOff) {
+      if (hilite.face !== null) {
+        if (cage.dragSelectFace(hilite.face, onOff)) {
+            selectArray.push(hilite.face);
         }
       }
    }
 
    // select, hilite
-   selectStart(preview) {
+   selectStart(preview, hilite) {
       // check not null, shouldn't happened
-      if (this.currentEdge !== null) {
-         var onOff = preview.selectFace(this.currentEdge);
-         return new DragFaceSelect(this, preview, this.currentEdge, onOff);
+      if (hilite.face !== null) {
+         var onOff = preview.selectFace(hilite.face);
+         return new DragFaceSelect(this, preview, hilite.face, onOff);
       }    
    }
 
-   hideOldHilite(edge) {
-      if ((edge === null) || (this.currentEdge.face !== edge.face)) {
-         View.draftBench.hiliteFace(null, false);
-      }
-   }
-
-   showNewHilite(edge, intersect, center, draftBench) {
-      if ((this.currentEdge === null) || (this.currentEdge.face !== edge.face)) {   // make sure it new face
-         View.draftBench.hiliteFace(edge.face, true);
-      }
-   }
+   isFaceSelectable() { return true; }
 
    _resetSelection(cage) {
       return this._wrapSelection(cage._resetSelectFace());
@@ -511,6 +501,35 @@ class IntrudeFaceHandler extends MoveableCommand {
       this.madsor.undoIntrude(this.intrude);
    }
 }
+
+
+//
+class PutOnCommand extends EditCommand {
+   constructor(madsor, preview) {
+      super();
+      this.madsor = madsor;
+      this.preview = preview;
+   }
+
+   select() { // return true for accepting, false for continue doing things.
+      const vertex = this.madsor.getCurrent();
+      if (vertex) {
+         this.collapseHEdge = this.preview.weldableVertex(vertex);
+         return (this.collapseHEdge != false);
+      }
+      return false;
+   }
+
+   doIt() {
+      this.restore = this.preview.weldVertex(this.collapseHEdge);
+      return true;
+   }
+
+   undo() {
+      this.preview.undoWeldVertex(this.restore);
+   }
+}
+
 
 export {
    FaceMadsor,

@@ -520,6 +520,15 @@ DraftBench.prototype.uploadVertexPreview = function() {
 };
 
 
+DraftBench.prototype.hiliteVertex = function(vertex, show) {
+   // select polygon set color,
+   if (show) {
+      this.setVertexColor(vertex, 0.5);
+   } else {
+      this.setVertexColor(vertex, -0.5);
+   }
+};
+
 DraftBench.prototype.setVertexColor = function(vertex, color, groupSelection) {
    // selected color
    const j = vertex.index;  
@@ -535,6 +544,16 @@ DraftBench.prototype.resetSelectVertex = function() {
    this.previewVertex.color.fill(0.0);
    this.previewVertex.shaderData.uploadAttribute('color', 0, this.previewVertex.color);
 };
+
+DraftBench.prototype.hiliteEdge = function(hEdge, onOff) {
+   // select polygon set color,
+   if (onOff) {
+      this.setEdgeColor(hEdge.wingedEdge, 0.5);
+   } else {
+      this.setEdgeColor(hEdge.wingedEdge, -0.5);
+   }
+
+}
 
 DraftBench.prototype.setEdgeColor = function(wingedEdge, color, groupSelection) {
    // selected color

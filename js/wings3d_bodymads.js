@@ -188,8 +188,8 @@ class BodyMadsor extends Madsor {
       return this.snapshotAll(PreviewCage.prototype.bodyCentroid);
    }
 
-   dragSelect(cage, selectArray, onOff) {
-      if (this.currentEdge !== null) {
+   dragSelect(cage, hilite, selectArray, onOff) {
+      if (hilite.edge !== null) {
        // if (cage.dragSelectFace(this.currentEdge, onOff)) {
        //     selectArray.push(this.currentEdge);
        // }
@@ -197,28 +197,12 @@ class BodyMadsor extends Madsor {
    }
 
    // select, hilite
-   selectStart(preview) {
+   selectStart(preview, hilite) {
       // check not null, shouldn't happened
-      if (this.currentEdge !== null) {
+      if (hilite.cage !== null) {
          var onOff = preview.selectBody();
-         return new DragBodySelect(this, preview, this.currentEdge, onOff);
+         return new DragBodySelect(this, preview, hilite.edge, onOff);
       }    
-   }
-
-   hideOldHilite() {
-      if (this.hiliteView !== this.preview) {
-         if (this.preview) {
-            this.preview.hiliteBody(false);
-         }
-         this.hiliteView = null;
-      }
-   }
-
-   showNewHilite(_edge, _intersect, _center) {
-      if (this.preview !== null && this.hiliteView !== this.preview) {  // this.preview !== null should not happened, but just make sure
-         this.preview.hiliteBody(true);
-         this.hiliteView = this.preview;
-      }
    }
 
    similarSelection() {
@@ -275,9 +259,9 @@ class BodyMadsor extends Madsor {
    }
 
    toggleFunc(toMadsor) {
-      this.hiliteView = null;
-      this.hideOldHilite();
-      this.hiliteView = null;
+//      this.hiliteView = null;
+//      this.hideOldHilite();
+//      this.hiliteView = null;
       const self = this;
       var redoFn;
       var snapshots = [];

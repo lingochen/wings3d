@@ -306,35 +306,24 @@ class EdgeMadsor extends Madsor {
    }
 
 
-   dragSelect(cage, selectArray, onOff) {
-      if (this.currentEdge !== null) {
-        if (cage.dragSelectEdge(this.currentEdge, onOff)) {
-            selectArray.push(this.currentEdge);
+   dragSelect(cage, hilite, selectArray, onOff) {
+      if (hilite.edge !== null) {
+        if (cage.dragSelectEdge(hilite.edge, onOff)) {
+            selectArray.push(hilite.edge);
         }
       }
    }
 
    // select, hilite
-   selectStart(cage) {
-      if (this.currentEdge !== null) {
-         var onOff = cage.selectEdge(this.currentEdge);
-         return new DragEdgeSelect(this, cage, this.currentEdge, onOff);
+   selectStart(cage, hilite) {
+      if (hilite.edge !== null) {
+         var onOff = cage.selectEdge(hilite.edge);
+         return new DragEdgeSelect(this, cage, hilite.edge, onOff);
       }
       return null;
    }
 
-   hideOldHilite() {
-      //if (this.currentEdge) {
-         this.preview.hiliteEdge(this.currentEdge, false);
-      //}
-   }
-
-   showNewHilite(edge, intersect, _center) {
-      // setting of setCurrentEdge
-      //if (this.currentEdge) {
-         this.preview.hiliteEdge(edge, true);
-      //}
-   }
+   isEdgeSelectable() { return true; }
 
    _wrapSelection(selection) {
       return {wingedEdges: selection};

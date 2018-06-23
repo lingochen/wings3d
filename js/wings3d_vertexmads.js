@@ -20,7 +20,6 @@ import {DraftBench} from './wings3d_draftbench';
 class VertexMadsor extends Madsor {
    constructor() {
       super('vertex');
-      this.currentVertex = null;
       const self = this;
       UI.bindMenuItem(action.vertexConnect.name, function(ev) {
             self.connectVertex();
@@ -49,10 +48,6 @@ class VertexMadsor extends Madsor {
             geometryStatus("You can only Weld one vertex");
          }
         });
-   }
-
-   getCurrentVertex() {
-      return this.currentVertex;
    }
 
    modeName() {
@@ -160,45 +155,23 @@ class VertexMadsor extends Madsor {
       }, dissolveArray);
    }
 
-   dragSelect(cage, selectArray, onOff) {
-      if (this.currentVertex !== null) {
-        if (cage.dragSelectVertex(this.currentVertex, onOff)) {
-            selectArray.push(this.currentVertex);
+   dragSelect(cage, hilite, selectArray, onOff) {
+      if (hilite.vertex !== null) {
+        if (cage.dragSelectVertex(hilite.vertex, onOff)) {
+            selectArray.push(hilite.vertex);
         }
       }
    }
 
-   selectStart(cage) {
-      //
-      if (this.currentVertex !== null) {
-         var onOff = this.preview.selectVertex(this.currentVertex);
-         return new DragVertexSelect(this, cage, this.currentVertex, onOff);
+   selectStart(cage, hilite) {
+      if (hilite.vertex !== null) {
+         var onOff = cage.selectVertex(hilite.vertex);
+         return new DragVertexSelect(this, cage, hilite.vertex, onOff);
       }
       return null;
    }
 
-   setCurrent(edge, intersect, center) {
-      // find out origin, dest. which is closer.
-      var currentVertex = null;
-      if (edge !== null) {
-         currentVertex = edge.destination();
-         var distance0 = vec3.distance(edge.origin.vertex, intersect);
-         var distance1 = vec3.distance(currentVertex.vertex, intersect);
-         if (distance0 < distance1) {
-            currentVertex = edge.origin;
-         }
-      }
-      if (currentVertex !== this.currentVertex) {
-         if (this.currentVertex !== null) {
-            this.preview.hiliteVertex(this.currentVertex, false);
-         }
-         if (currentVertex !== null) {
-            this.preview.hiliteVertex(currentVertex, true);
-         }
-         this.currentVertex = currentVertex;
-      }
-      this.currentEdge = edge;
-   }
+   isVertexSelectable() { return true; }
 
    _resetSelection(cage) {
       return this._wrapSelection(cage._resetSelectVertex());
@@ -373,8 +346,8 @@ class VertexWeldCommand extends EditCommand {
       this.preview = preview;
    }
 
-   select() { // return true for accepting, false for continue doing things.
-      const vertex = this.madsor.getCurrentVertex();
+   select(hilite) { // return true for accepting, false for continue doing things.
+      const vertex = hilite.vertex;
       if (vertex) {
          this.collapseHEdge = this.preview.weldableVertex(vertex);
          return (this.collapseHEdge != false);
