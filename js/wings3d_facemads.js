@@ -72,6 +72,20 @@ class FaceMadsor extends Madsor {
       UI.bindMenuItem(action.faceIntrude.name, (ev) => {
          View.attachHandlerMouseMove(new IntrudeFaceHandler(this));
        });
+       UI.bindMenuItem(action.facePutOn.name, (ev)=> {
+         let snapshot = [];
+         this.eachPreviewCage( (preview) => {
+            if (preview.selectionSize() == 1) {
+               snapshot.push( preview );
+            }
+          });
+         if (snapshot.length == 1) {
+            const putOn = new PutOnCommand(this, snapshot[0]);
+            View.attachHandlerMouseSelect(putOn);
+         } else {
+            geometryStatus("You can only PutOn one face");
+         }
+        });
    }
 
    modeName() {
@@ -513,19 +527,18 @@ class PutOnCommand extends EditSelectHandler {
 
    select(hilite) { // return true for accepting, false for continue doing things.
       if (hilite.vertex) {
-         this.collapseHEdge = this.preview.weldableVertex(vertex);
-         return (this.collapseHEdge != false);
+         return true;
       }
       return false;
    }
 
    doIt() {
-      this.restore = this.preview.weldVertex(this.collapseHEdge);
+      //this.restore = this.preview.weldVertex(this.collapseHEdge);
       return true;
    }
 
    undo() {
-      this.preview.undoWeldVertex(this.restore);
+      //this.preview.undoWeldVertex(this.restore);
    }
 }
 

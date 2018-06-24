@@ -284,7 +284,7 @@ function setCurrent(edge, intersect, center) {
             hiliteEdge = edge;
          }
       }
-      if (isFace && (hiliteEdge === null)) {   // now hilite face
+      if (isFace && (hiliteVertex === null) && (hiliteEdge === null)) {   // now hilite face
          hiliteFace = edge.face;
       }
       if (!(isVertex || isEdge || isFace)) {    // all 3 mode not true then only bodyMode possible.
@@ -658,6 +658,17 @@ function drawWorld(gl) {
       //if (hilite.vertex || hilite.edge || hilite.face || hilite.cage) {
          mode.current.draw(gl, draftBench);
       //}
+      // hack -- draw other hilite selection if any
+      if (hilite.vertex && (mode.current !== mode.vertex)) {
+         mode.vertex.draw(gl, draftBench);
+      }
+      if (hilite.edge && (mode.current !== mode.edge)) {
+         mode.edge.draw(gl, draftBench);
+      }
+      if (hilite.face && (mode.current !== mode.face)) {
+         mode.face.draw(gl, draftBench);
+      }
+
       gl.disable(gl.BLEND);
    }
 }

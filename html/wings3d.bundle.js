@@ -777,7 +777,7 @@ function setCurrent(edge, intersect, center) {
             hiliteEdge = edge;
          }
       }
-      if (isFace && (hiliteEdge === null)) {   // now hilite face
+      if (isFace && (hiliteVertex === null) && (hiliteEdge === null)) {   // now hilite face
          hiliteFace = edge.face;
       }
       if (!(isVertex || isEdge || isFace)) {    // all 3 mode not true then only bodyMode possible.
@@ -1151,6 +1151,17 @@ function drawWorld(gl) {
       //if (hilite.vertex || hilite.edge || hilite.face || hilite.cage) {
          mode.current.draw(gl, draftBench);
       //}
+      // draw other hilite selection if any, hack
+      if (hilite.vertex && (mode.current !== mode.vertex)) {
+         mode.vertex.draw(gl, draftBench);
+      }
+      if (hilite.edge && (mode.current !== mode.edge)) {
+         mode.edge.draw(gl, draftBench);
+      }
+      if (hilite.face && (mode.current !== mode.face)) {
+         mode.face.draw(gl, draftBench);
+      }
+
       gl.disable(gl.BLEND);
    }
 }
@@ -8703,6 +8714,20 @@ class FaceMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
       __WEBPACK_IMPORTED_MODULE_9__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_10__wings3d__["action"].faceIntrude.name, (ev) => {
          __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["attachHandlerMouseMove"](new IntrudeFaceHandler(this));
        });
+       __WEBPACK_IMPORTED_MODULE_9__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_10__wings3d__["action"].facePutOn.name, (ev)=> {
+         let snapshot = [];
+         this.eachPreviewCage( (preview) => {
+            if (preview.selectionSize() == 1) {
+               snapshot.push( preview );
+            }
+          });
+         if (snapshot.length == 1) {
+            const putOn = new PutOnCommand(this, snapshot[0]);
+            __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["attachHandlerMouseSelect"](putOn);
+         } else {
+            geometryStatus("You can only PutOn one face");
+         }
+        });
    }
 
    modeName() {
@@ -9144,19 +9169,18 @@ class PutOnCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditSele
 
    select(hilite) { // return true for accepting, false for continue doing things.
       if (hilite.vertex) {
-         this.collapseHEdge = this.preview.weldableVertex(vertex);
-         return (this.collapseHEdge != false);
+         return true;
       }
       return false;
    }
 
    doIt() {
-      this.restore = this.preview.weldVertex(this.collapseHEdge);
+      //this.restore = this.preview.weldVertex(this.collapseHEdge);
       return true;
    }
 
    undo() {
-      this.preview.undoWeldVertex(this.restore);
+      //this.preview.undoWeldVertex(this.restore);
    }
 }
 
