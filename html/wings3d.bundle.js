@@ -790,7 +790,11 @@ function setCurrent(edge, intersect, center) {
          draftBench.hiliteVertex(hilite.vertex, false);
       }
       if (hiliteVertex !== null) {
-         draftBench.hiliteVertex(hiliteVertex, true);
+         if (handler.mouseSelect && !handler.mouseSelect.hilite( {vertex: hiliteVertex}, currentCage)) {
+            hiliteVertex = null;
+         } else {
+            draftBench.hiliteVertex(hiliteVertex, true);
+         }
       }
       hilite.vertex = hiliteVertex;
    }
@@ -799,7 +803,11 @@ function setCurrent(edge, intersect, center) {
          draftBench.hiliteEdge(hilite.edge, false);
       }
       if (hiliteEdge !== null) {
-         draftBench.hiliteEdge(hiliteEdge, true);
+         if (handler.mouseSelect && !handler.mouseSelect.hilite( {edge: hiliteEdge}, currentCage)) {
+            hiliteEdge = null;
+         } else {
+            draftBench.hiliteEdge(hiliteEdge, true);
+         }
       }
       hilite.edge = hiliteEdge;
    }
@@ -808,7 +816,11 @@ function setCurrent(edge, intersect, center) {
          draftBench.hiliteFace(hilite.face, false); // hiliteFace(null, false)?
       }
       if (hiliteFace !== null) {
-         draftBench.hiliteFace(hiliteFace, true);
+         if (handler.mouseSelect && !handler.mouseSelect.hilite( {face: hiliteFace}, currentCage)) {
+            hiliteFace = null;
+         } else {
+            draftBench.hiliteFace(hiliteFace, true);
+         }
       }
       hilite.face = hiliteFace;
    }
@@ -1151,7 +1163,7 @@ function drawWorld(gl) {
       //if (hilite.vertex || hilite.edge || hilite.face || hilite.cage) {
          mode.current.draw(gl, draftBench);
       //}
-      // draw other hilite selection if any, hack
+      // hack -- draw other hilite selection if any
       if (hilite.vertex && (mode.current !== mode.vertex)) {
          mode.vertex.draw(gl, draftBench);
       }
@@ -1161,6 +1173,7 @@ function drawWorld(gl) {
       if (hilite.face && (mode.current !== mode.face)) {
          mode.face.draw(gl, draftBench);
       }
+      // end of hack ----
 
       gl.disable(gl.BLEND);
    }
@@ -1698,7 +1711,8 @@ class EditSelectHandler extends EditCommand {
    isEdgeSelectable() { return this.selectable.isEdge; }
    isFaceSelectable() { return this.selectable.isFace; }
 
-   // select(hilite)
+   // hilite(hilite, currentCage) - to be implemented by subclass
+   // select(hilite) - to be implemented by subclass
 }
 
 class MouseMoveHandler extends EditCommand {
@@ -9167,10 +9181,27 @@ class PutOnCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditSele
       this.preview = preview;
    }
 
+
+   hilite(_hilite, currentCage) {
+      // show that hilite.vertex is actually ok or not, by changing mouse cursor.
+      if (currentCage === this.preview) { // not good, we can only put on other object
+         return false;
+      }
+      return true;
+   }
+
    select(hilite) { // return true for accepting, false for continue doing things.
       if (hilite.vertex) {
+         
+         return true;
+      } else if (hilite.edge) {
+
+         return true;
+      } else if (hilite.face) {
+
          return true;
       }
+      // cannot possibly reach here.
       return false;
    }
 
@@ -11275,6 +11306,13 @@ class VertexWeldCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["Edi
       super(true, false, false);
       this.madsor = madsor;
       this.preview = preview;
+   }
+
+   hilite(hilite, currentCage) {  // no needs for currentCage
+      if ((currentCage === this.preview) && hilite.vertex) {
+         return  this.preview.weldableVertex(hilite.vertex) !== false;
+      }
+      return false;
    }
 
    select(hilite) { // return true for accepting, false for continue doing things.

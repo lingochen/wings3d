@@ -346,6 +346,13 @@ class VertexWeldCommand extends EditSelectHandler {
       this.preview = preview;
    }
 
+   hilite(hilite, currentCage) {  // no needs for currentCage
+      if ((currentCage === this.preview) && hilite.vertex) {
+         return  this.preview.weldableVertex(hilite.vertex) !== false;
+      }
+      return false;
+   }
+
    select(hilite) { // return true for accepting, false for continue doing things.
       const vertex = hilite.vertex;
       if (vertex) {

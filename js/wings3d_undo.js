@@ -42,7 +42,8 @@ class EditSelectHandler extends EditCommand {
    isEdgeSelectable() { return this.selectable.isEdge; }
    isFaceSelectable() { return this.selectable.isFace; }
 
-   // select(hilite)
+   // hilite(hilite, currentCage) - to be implemented by subclass
+   // select(hilite) - to be implemented by subclass
 }
 
 class MouseMoveHandler extends EditCommand {

@@ -525,10 +525,27 @@ class PutOnCommand extends EditSelectHandler {
       this.preview = preview;
    }
 
+
+   hilite(_hilite, currentCage) {
+      // show that hilite.vertex is actually ok or not, by changing mouse cursor.
+      if (currentCage === this.preview) { // not good, we can only put on other object
+         return false;
+      }
+      return true;
+   }
+
    select(hilite) { // return true for accepting, false for continue doing things.
       if (hilite.vertex) {
+         
+         return true;
+      } else if (hilite.edge) {
+
+         return true;
+      } else if (hilite.face) {
+
          return true;
       }
+      // cannot possibly reach here.
       return false;
    }
 

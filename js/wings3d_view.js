@@ -297,7 +297,11 @@ function setCurrent(edge, intersect, center) {
          draftBench.hiliteVertex(hilite.vertex, false);
       }
       if (hiliteVertex !== null) {
-         draftBench.hiliteVertex(hiliteVertex, true);
+         if (handler.mouseSelect && !handler.mouseSelect.hilite( {vertex: hiliteVertex}, currentCage)) {
+            hiliteVertex = null;
+         } else {
+            draftBench.hiliteVertex(hiliteVertex, true);
+         }
       }
       hilite.vertex = hiliteVertex;
    }
@@ -306,7 +310,11 @@ function setCurrent(edge, intersect, center) {
          draftBench.hiliteEdge(hilite.edge, false);
       }
       if (hiliteEdge !== null) {
-         draftBench.hiliteEdge(hiliteEdge, true);
+         if (handler.mouseSelect && !handler.mouseSelect.hilite( {edge: hiliteEdge}, currentCage)) {
+            hiliteEdge = null;
+         } else {
+            draftBench.hiliteEdge(hiliteEdge, true);
+         }
       }
       hilite.edge = hiliteEdge;
    }
@@ -315,7 +323,11 @@ function setCurrent(edge, intersect, center) {
          draftBench.hiliteFace(hilite.face, false); // hiliteFace(null, false)?
       }
       if (hiliteFace !== null) {
-         draftBench.hiliteFace(hiliteFace, true);
+         if (handler.mouseSelect && !handler.mouseSelect.hilite( {face: hiliteFace}, currentCage)) {
+            hiliteFace = null;
+         } else {
+            draftBench.hiliteFace(hiliteFace, true);
+         }
       }
       hilite.face = hiliteFace;
    }
@@ -668,6 +680,7 @@ function drawWorld(gl) {
       if (hilite.face && (mode.current !== mode.face)) {
          mode.face.draw(gl, draftBench);
       }
+      // end of hack ----
 
       gl.disable(gl.BLEND);
    }
