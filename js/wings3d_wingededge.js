@@ -97,6 +97,16 @@ WingedEdge.prototype.wing = function* () {
    yield this.right.next;
 };
 
+WingedEdge.prototype.getNormal = function(normal) {
+   if (this.left.face) {
+      vec3.add(normal, normal, this.left.face.normal);
+   }
+   if (this.right.face) {
+      vec3.add(normal, normal, this.right.face.normal);
+   }
+   vec3.normalize(normal, normal);
+};
+
 var HalfEdge = function(vert, edge) {  // should only be created by WingedEdge
    this.next = null;
 //   this.prev = null;       // not required, but very nice to have shortcut
@@ -361,6 +371,21 @@ Vertex.prototype.numberOfEdge = function() {
       current = current.pair.next;
    } while ((current !== start) || (count > limits));
    return count;
+};
+
+Vertex.prototype.getNormal = function(normal) {
+   const start = this.outEdge;
+   let current = start;
+   const a = vec3.create(), b = vec3.create(), temp = vec3.create();
+   vec3.sub(a, current.destination().vertex, current.origin.vertex);
+   do {
+      current = current.pair.next;
+      vec3.sub(b, current.destination().vertex, current.origin.vertex);
+      vec3.cross(temp, b, a);
+      vec3.add(normal, normal, temp);
+      vec3.copy(a, b);
+   } while (current !== start);
+   vec3.normalize(normal, normal);
 };
 
 

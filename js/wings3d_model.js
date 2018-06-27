@@ -15,6 +15,7 @@ import * as View from './wings3d_view';
 import * as Wings3D from './wings3d';
 import {EditCommand} from './wings3d_undo';
 import {DraftBench} from './wings3d_draftbench';
+import * as Util from './wings3d_util';
 
 
 const PreviewCage = function(bench) {
@@ -730,7 +731,7 @@ PreviewCage.prototype.snapshotFacePositionAndNormal = function() {
             normalMap.set(vertex, normal);
          } else {
             const normal = normalMap.get(vertex);
-            if (vec3.dot(normal, polygon.normal) < 0.98) {  // check for nearly same normal, or only added if hard edge?
+            if (vec3.dot(normal, polygon.normal) < 0.999) {  // check for nearly same normal, or only added if hard edge?
                vec3.add(normal, normal, polygon.normal);
             } 
          }
@@ -2503,7 +2504,6 @@ PreviewCage.prototype.loopCut = function() {
    return ret;
 };
 
-
 PreviewCage.prototype.undoLoopCut = function(undo) {
    // merge back to this
    this.merge(undo.separateCages);
@@ -2524,6 +2524,60 @@ PreviewCage.prototype.undoLoopCut = function(undo) {
    }
 };
 
+
+// the real workhorse.
+PreviewCage.prototype._putOn = function(target) {
+   let fromFace = this.selectedSet.values().next().value; // must be true
+
+   const center = this.bench.boundingSpheres[fromFace.index].center;
+   const normal = vec3.create();
+   vec3.copy(normal, fromFace.normal);
+   vec3.negate(normal, normal);
+
+   const rotAxis = mat4.create();
+   Util.rotationFromToVec3(rotAxis, normal, target.normal);
+   
+   const transform = mat4.create();
+   mat4.fromTranslation(transform, target.center);
+   mat4.mul(transform, transform, rotAxis);
+   vec3.negate(center, center);
+   mat4.fromTranslation(rotAxis, center);    // rotAxis is repurpose for -(center)
+   mat4.mul(transform, transform, rotAxis);
+
+   // now transform all vertex
+   for (let vertex of this.geometry.vertices) {
+      vec3.transformMat4(vertex.vertex, vertex.vertex, transform);
+      this.geometry.addAffectedVertex(vertex);
+      this.geometry.addAffectedEdgeAndFace(vertex);
+   }
+
+   this._updatePreviewAll();
+};
+
+
+PreviewCage.prototype.putOnVertex = function(vertex) {
+   const normal = vec3.create();
+   vertex.getNormal(normal);
+
+   this._putOn({normal: normal, center: vertex.vertex});
+};
+
+PreviewCage.prototype.putOnEdge = function(hEdge) {
+   const normal = vec3.create();
+   hEdge.wingedEdge.getNormal(normal);
+   const center = vec3.create();
+   vec3.add(center, hEdge.origin.vertex, hEdge.destination().vertex);
+   vec3.scale(center, center, 0.5);
+
+   this._putOn({normal: normal, center: center});
+};
+
+PreviewCage.prototype.putOnFace = function(polygon) {
+   const normal = polygon.normal;
+   const center = this.bench.boundingSpheres[polygon.index].center;
+   
+   this._putOn({normal:normal, center: center});
+};
 
 
 //----------------------------------------------------------------------------------------------------------

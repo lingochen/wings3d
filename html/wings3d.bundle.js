@@ -60,7 +60,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 21);
+/******/ 	return __webpack_require__(__webpack_require__.s = 22);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -1810,6 +1810,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_undo__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_draftbench__ = __webpack_require__(8);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_util__ = __webpack_require__(21);
 /*
 *  hold onto a WingedEdgeTopology. adds index, texture, etc....
 *  bounding box, picking.
@@ -1821,6 +1822,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 */
 
  
+
 
 
 
@@ -2542,7 +2544,7 @@ PreviewCage.prototype.snapshotFacePositionAndNormal = function() {
             normalMap.set(vertex, normal);
          } else {
             const normal = normalMap.get(vertex);
-            if (vec3.dot(normal, polygon.normal) < 0.98) {  // check for nearly same normal, or only added if hard edge?
+            if (vec3.dot(normal, polygon.normal) < 0.999) {  // check for nearly same normal, or only added if hard edge?
                vec3.add(normal, normal, polygon.normal);
             } 
          }
@@ -4315,7 +4317,6 @@ PreviewCage.prototype.loopCut = function() {
    return ret;
 };
 
-
 PreviewCage.prototype.undoLoopCut = function(undo) {
    // merge back to this
    this.merge(undo.separateCages);
@@ -4336,6 +4337,60 @@ PreviewCage.prototype.undoLoopCut = function(undo) {
    }
 };
 
+
+// the real workhorse.
+PreviewCage.prototype._putOn = function(target) {
+   let fromFace = this.selectedSet.values().next().value; // must be true
+
+   const center = this.bench.boundingSpheres[fromFace.index].center;
+   const normal = vec3.create();
+   vec3.copy(normal, fromFace.normal);
+   vec3.negate(normal, normal);
+
+   const rotAxis = mat4.create();
+   __WEBPACK_IMPORTED_MODULE_7__wings3d_util__["rotationFromToVec3"](rotAxis, normal, target.normal);
+   
+   const transform = mat4.create();
+   mat4.fromTranslation(transform, target.center);
+   mat4.mul(transform, transform, rotAxis);
+   vec3.negate(center, center);
+   mat4.fromTranslation(rotAxis, center);    // rotAxis is repurpose for -(center)
+   mat4.mul(transform, transform, rotAxis);
+
+   // now transform all vertex
+   for (let vertex of this.geometry.vertices) {
+      vec3.transformMat4(vertex.vertex, vertex.vertex, transform);
+      this.geometry.addAffectedVertex(vertex);
+      this.geometry.addAffectedEdgeAndFace(vertex);
+   }
+
+   this._updatePreviewAll();
+};
+
+
+PreviewCage.prototype.putOnVertex = function(vertex) {
+   const normal = vec3.create();
+   vertex.getNormal(normal);
+
+   this._putOn({normal: normal, center: vertex.vertex});
+};
+
+PreviewCage.prototype.putOnEdge = function(hEdge) {
+   const normal = vec3.create();
+   hEdge.wingedEdge.getNormal(normal);
+   const center = vec3.create();
+   vec3.add(center, hEdge.origin.vertex, hEdge.destination().vertex);
+   vec3.scale(center, center, 0.5);
+
+   this._putOn({normal: normal, center: center});
+};
+
+PreviewCage.prototype.putOnFace = function(polygon) {
+   const normal = polygon.normal;
+   const center = this.bench.boundingSpheres[polygon.index].center;
+   
+   this._putOn({normal:normal, center: center});
+};
 
 
 //----------------------------------------------------------------------------------------------------------
@@ -5437,6 +5492,16 @@ WingedEdge.prototype.wing = function* () {
    yield this.right.next;
 };
 
+WingedEdge.prototype.getNormal = function(normal) {
+   if (this.left.face) {
+      vec3.add(normal, normal, this.left.face.normal);
+   }
+   if (this.right.face) {
+      vec3.add(normal, normal, this.right.face.normal);
+   }
+   vec3.normalize(normal, normal);
+};
+
 var HalfEdge = function(vert, edge) {  // should only be created by WingedEdge
    this.next = null;
 //   this.prev = null;       // not required, but very nice to have shortcut
@@ -5701,6 +5766,21 @@ Vertex.prototype.numberOfEdge = function() {
       current = current.pair.next;
    } while ((current !== start) || (count > limits));
    return count;
+};
+
+Vertex.prototype.getNormal = function(normal) {
+   const start = this.outEdge;
+   let current = start;
+   const a = vec3.create(), b = vec3.create(), temp = vec3.create();
+   vec3.sub(a, current.destination().vertex, current.origin.vertex);
+   do {
+      current = current.pair.next;
+      vec3.sub(b, current.destination().vertex, current.origin.vertex);
+      vec3.cross(temp, b, a);
+      vec3.add(normal, normal, temp);
+      vec3.copy(a, b);
+   } while (current !== start);
+   vec3.normalize(normal, normal);
 };
 
 
@@ -9181,7 +9261,6 @@ class PutOnCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditSele
       this.preview = preview;
    }
 
-
    hilite(_hilite, currentCage) {
       // show that hilite.vertex is actually ok or not, by changing mouse cursor.
       if (currentCage === this.preview) { // not good, we can only put on other object
@@ -9190,15 +9269,15 @@ class PutOnCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditSele
       return true;
    }
 
-   select(hilite) { // return true for accepting, false for continue doing things.
+   select(hilite, _currentCage) { // return true for accepting, false for continue doing things.
       if (hilite.vertex) {
-         
+         this.vertex = hilite.vertex;
          return true;
       } else if (hilite.edge) {
-
+         this.edge = hilite.edge;
          return true;
       } else if (hilite.face) {
-
+         this.face = hilite.face;
          return true;
       }
       // cannot possibly reach here.
@@ -9206,7 +9285,15 @@ class PutOnCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditSele
    }
 
    doIt() {
-      //this.restore = this.preview.weldVertex(this.collapseHEdge);
+      if (this.vertex) {
+         this.preview.putOnVertex(this.vertex);
+      } else if (this.edge) {
+         this.preview.putOnEdge(this.edge);
+      } else if (this.face) {
+         this.preview.putOnFace(this.face);
+      } else {
+         return false;  // should not happened.
+      }
       return true;
    }
 
@@ -13153,9 +13240,97 @@ class ImportExporter {
 
 /***/ }),
 /* 21 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "rotationFromToVec3", function() { return rotationFromToVec3; });
+
+
+
+const kEPSILON = 0.000001;
+/* from
+ * @article{MollerHughes99,
+  author = "Tomas Möller and John F. Hughes",
+  title = "Efficiently Building a Matrix to Rotate One Vector to Another",
+  journal = "journal of graphics tools",
+  volume = "4",
+  number = "4",
+  pages = "1-4",
+  year = "1999",
+}
+http://jgt.akpeters.com/papers/MollerHughes99/code.html
+*/
+function rotationFromToVec3(mtx, from, to) {
+
+  let e = vec3.dot(from, to);
+  if (Math.abs(e) > (1.0-kEPSILON) ) { // "from" and "to"-vector almost parallel
+      // find closest axis
+      const x = vec3.fromValues(Math.abs(from[0]), Math.abs(from[1]), Math.abs(from[2]));   // vector most nearly orthogonal to "from"
+      if (x[0] < x[1]) {
+         if( x[0] < x[2] ) {
+            x[0] = 1.0; x[1] = x[2] = 0.0;
+         } else {
+            x[2] = 1.0; x[0] = x[1] = 0.0;
+         }
+      } else {
+         if( x[1] < x[2] ) {
+            x[1] = 1.0; x[0] = x[2] = 0.0;
+         } else {
+            x[2] = 1.0; x[0] = x[1] = 0.0;
+         }
+      }
+
+      // compute the matrix
+      let ut = vec3.fromValues(x[0] - from[0], x[1] - from[1], x[2] - from[2]);  // sub(v, x, from);
+      let vt = vec3.fromValues(x[0] - to[0],   x[1] - to[1],   x[2] - to[2]);
+
+      let c1 = 2.0 / vec3.dot(ut, ut);       // coefficients
+      let c2 = 2.0 / vec3.dot(vt, vt);
+      let c3 = c1 * c2  * vec3.dot(ut, vt);
+      for (let i = 0; i < 3; i++) {
+         let k = i*4;      // stride.
+         for (let j = 0; j < 3; j++) {
+            mtx[k+j] =  -c1 * ut[i] * ut[j] - c2 * vt[i] * vt[j] + c3 * vt[i] * ut[j];
+         }
+         mtx[k+i] += 1.0;
+      }
+   } else  {// the most common case, unless "from"="to", or "from"=-"to" 
+      let v = vec3.create();
+      vec3.cross(v, from, to);
+      // ...otherwise use this hand optimized version (9 mults less)
+      //let h = 1.0 / (1.0 + e);      // optimization by Gottfried Chen
+      let h = (1.0 -e)/ vec3.dot(v, v);
+      let hvx = h * v[0];
+      let hvz = h * v[2];
+      let hvxy = hvx * v[1];
+      let hvxz = hvx * v[2];
+      let hvyz = hvz * v[1];
+      mtx[0] = e + hvx * v[0];
+      mtx[1] = hvxy + v[2];
+      mtx[2] = hvxz - v[1];
+
+      mtx[4] = hvxy - v[2];
+      mtx[5] = e + h * v[1] * v[1];
+      mtx[6] = hvyz + v[0];
+
+      mtx[8] = hvxz + v[1];
+      mtx[9] = hvyz - v[0];
+      mtx[10] = e + hvz * v[2];
+   }
+
+   return mtx;
+};
+
+
+
+
+
+/***/ }),
+/* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(22);
+__webpack_require__(23);
 __webpack_require__(12);
 __webpack_require__(15);
 __webpack_require__(14);
@@ -13163,7 +13338,7 @@ __webpack_require__(8);
 __webpack_require__(11);
 __webpack_require__(9);
 __webpack_require__(5);
-__webpack_require__(29);
+__webpack_require__(30);
 __webpack_require__(17);
 __webpack_require__(20);
 __webpack_require__(16);
@@ -13171,10 +13346,11 @@ __webpack_require__(10);
 __webpack_require__(4);
 __webpack_require__(18);
 __webpack_require__(6);
-__webpack_require__(30);
 __webpack_require__(31);
+__webpack_require__(32);
 __webpack_require__(2);
 __webpack_require__(3);
+__webpack_require__(21);
 __webpack_require__(13);
 __webpack_require__(1);
 __webpack_require__(7);
@@ -13182,27 +13358,27 @@ module.exports = __webpack_require__(0);
 
 
 /***/ }),
-/* 22 */
+/* 23 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__css_default_css__ = __webpack_require__(23);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__css_default_css__ = __webpack_require__(24);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__css_default_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__css_default_css__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__css_menu_css__ = __webpack_require__(24);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__css_menu_css__ = __webpack_require__(25);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__css_menu_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__css_menu_css__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__css_button_css__ = __webpack_require__(25);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__css_button_css__ = __webpack_require__(26);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__css_button_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__css_button_css__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__css_form_css__ = __webpack_require__(26);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__css_form_css__ = __webpack_require__(27);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__css_form_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3__css_form_css__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__css_bubble_css__ = __webpack_require__(27);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__css_bubble_css__ = __webpack_require__(28);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__css_bubble_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4__css_bubble_css__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_view__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_camera__ = __webpack_require__(14);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_interact__ = __webpack_require__(16);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__wings3d_ui__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__js_plugins_cubeshape_js__ = __webpack_require__(28);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__js_plugins_cubeshape_js__ = __webpack_require__(29);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__js_plugins_wavefront_obj_js__ = __webpack_require__(19);
 // app.js
 //  for bundling and initialization
@@ -13230,12 +13406,6 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 __WEBPACK_IMPORTED_MODULE_8__wings3d__["start"]('glcanvas');
 
 /***/ }),
-/* 23 */
-/***/ (function(module, exports) {
-
-// removed by extract-text-webpack-plugin
-
-/***/ }),
 /* 24 */
 /***/ (function(module, exports) {
 
@@ -13261,6 +13431,12 @@ __WEBPACK_IMPORTED_MODULE_8__wings3d__["start"]('glcanvas');
 
 /***/ }),
 /* 28 */
+/***/ (function(module, exports) {
+
+// removed by extract-text-webpack-plugin
+
+/***/ }),
+/* 29 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -13614,7 +13790,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 /***/ }),
-/* 29 */
+/* 30 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -13747,7 +13923,7 @@ __WEBPACK_IMPORTED_MODULE_2__wings3d__["onReady"](createGuideTour);
 
 
 /***/ }),
-/* 30 */
+/* 31 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -13966,7 +14142,7 @@ class SimilarVertex extends SimilarGeometry {
 
 
 /***/ }),
-/* 31 */
+/* 32 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";

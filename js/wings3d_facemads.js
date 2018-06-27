@@ -525,7 +525,6 @@ class PutOnCommand extends EditSelectHandler {
       this.preview = preview;
    }
 
-
    hilite(_hilite, currentCage) {
       // show that hilite.vertex is actually ok or not, by changing mouse cursor.
       if (currentCage === this.preview) { // not good, we can only put on other object
@@ -534,15 +533,15 @@ class PutOnCommand extends EditSelectHandler {
       return true;
    }
 
-   select(hilite) { // return true for accepting, false for continue doing things.
+   select(hilite, _currentCage) { // return true for accepting, false for continue doing things.
       if (hilite.vertex) {
-         
+         this.vertex = hilite.vertex;
          return true;
       } else if (hilite.edge) {
-
+         this.edge = hilite.edge;
          return true;
       } else if (hilite.face) {
-
+         this.face = hilite.face;
          return true;
       }
       // cannot possibly reach here.
@@ -550,7 +549,15 @@ class PutOnCommand extends EditSelectHandler {
    }
 
    doIt() {
-      //this.restore = this.preview.weldVertex(this.collapseHEdge);
+      if (this.vertex) {
+         this.preview.putOnVertex(this.vertex);
+      } else if (this.edge) {
+         this.preview.putOnEdge(this.edge);
+      } else if (this.face) {
+         this.preview.putOnFace(this.face);
+      } else {
+         return false;  // should not happened.
+      }
       return true;
    }
 
