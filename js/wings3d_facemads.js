@@ -523,6 +523,7 @@ class PutOnCommand extends EditSelectHandler {
       super(true, true, true);
       this.madsor = madsor;
       this.preview = preview;
+      this.snapshot = preview.snapshotPositionAll();
    }
 
    hilite(_hilite, currentCage) {
@@ -562,7 +563,7 @@ class PutOnCommand extends EditSelectHandler {
    }
 
    undo() {
-      //this.preview.undoWeldVertex(this.restore);
+      this.preview.restoreMoveSelection(this.snapshot);
    }
 }
 
