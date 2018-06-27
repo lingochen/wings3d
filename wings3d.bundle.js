@@ -2461,6 +2461,10 @@ PreviewCage.prototype.transformSelection = function(snapshot, transformFn) {
 };
 
 
+PreviewCage.prototype.snapshotPositionAll = function() {
+   return this.snapshotPosition(this.geometry.vertices);
+};
+
 PreviewCage.prototype.snapshotPosition = function(vertices, normalArray) {
    var ret = {
       faces: new Set,
@@ -2884,9 +2888,8 @@ PreviewCage.prototype.setFaceSelectionOn = function(polygon) {
    this.selectedSet.add(polygon);
 };
 
-PreviewCage.prototype.dragSelectFace = function(selectEdge, onOff) {
+PreviewCage.prototype.dragSelectFace = function(polygon, onOff) {
    // select polygon set color,
-   var polygon = selectEdge.face;
    if (this.selectedSet.has(polygon)) {
       if (onOff === false) {
          this.setFaceSelectionOff(polygon);
@@ -9259,6 +9262,7 @@ class PutOnCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditSele
       super(true, true, true);
       this.madsor = madsor;
       this.preview = preview;
+      this.snapshot = preview.snapshotPositionAll();
    }
 
    hilite(_hilite, currentCage) {
@@ -9298,7 +9302,7 @@ class PutOnCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditSele
    }
 
    undo() {
-      //this.preview.undoWeldVertex(this.restore);
+      this.preview.restoreMoveSelection(this.snapshot);
    }
 }
 
