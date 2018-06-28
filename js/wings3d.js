@@ -320,6 +320,7 @@ const action = {
    faceBump: () => {notImplemented(this);},
    faceIntrude: () => {notImplemented(this);},
    facePutOn: () => {notImplemented(this);},
+   faceLift: () => {notImplemented(this);},
    // vertex
    vertexConnect: () => {notImplemented(this);},
    vertexDissolve: () => {notImplemented(this);},

@@ -48,8 +48,9 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       }
       // rotate x, y, z
       for (let axis = 0; axis < 3; ++axis) {
-         UI.bindMenuItem(mode + 'Rotate' + axisName[axis], function(ev) {
-            View.attachHandlerMouseMove(new MouseRotateAlongAxis(self, axis));
+         UI.bindMenuItem(mode + 'Rotate' + axisName[axis], (ev) => {
+            const vec = [0, 0, 0]; vec[axis] = 1.0;
+            View.attachHandlerMouseMove(new MouseRotateAlongAxis(this, vec));
           });
       }
       // Bevel
@@ -424,13 +425,12 @@ class ScaleUniformHandler extends EditCommand {
 
 // movement handler.
 class MouseRotateAlongAxis extends EditCommand {
-   constructor(madsor, axis) {   // 0 = x axis, 1 = y axis, 2 = z axis.
+   constructor(madsor, axis) {   // axis directly
       super();
       this.madsor = madsor;
       this.snapshots = madsor.snapshotTransformGroup();
       this.movement = 0.0;             // cumulative movement.
-      this.axisVec3 = vec3.create();
-      this.axisVec3[axis] = 1.0;
+      this.axisVec3 = vec3.clone(axis);
    }
 
    handleMouseMove(ev) {

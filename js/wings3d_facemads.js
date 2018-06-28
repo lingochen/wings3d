@@ -72,7 +72,10 @@ class FaceMadsor extends Madsor {
       UI.bindMenuItem(action.faceIntrude.name, (ev) => {
          View.attachHandlerMouseMove(new IntrudeFaceHandler(this));
        });
-       UI.bindMenuItem(action.facePutOn.name, (ev)=> {
+      UI.bindMenuItem(action.faceLift.name, (ev) => {
+         View.attachHandlerMouseSelect(new LiftFaceHandler(this));
+        });
+      UI.bindMenuItem(action.facePutOn.name, (ev)=> {
          let snapshot = [];
          this.eachPreviewCage( (preview) => {
             if (preview.selectionSize() == 1) {
@@ -86,6 +89,7 @@ class FaceMadsor extends Madsor {
             geometryStatus("You can only PutOn one face");
          }
         });
+
    }
 
    modeName() {
@@ -514,6 +518,17 @@ class IntrudeFaceHandler extends MoveableCommand {
       super.undo(); //this.madsor.restoreMoveSelection(this.snapshots);
       this.madsor.undoIntrude(this.intrude);
    }
+}
+
+
+class LiftFaceHandler extends EditSelectHandler {  // also moveable
+   constructor(madsor, preview) {
+      super(false, true, false);
+      this.madsor = madsor;
+      this.preview = preview;
+      this.moveHandler = new RotateHandler(madsor);
+   }
+
 }
 
 

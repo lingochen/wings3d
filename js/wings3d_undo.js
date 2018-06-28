@@ -32,20 +32,6 @@ class EditCommand {
    //undo() {}
 }
 
-class EditSelectHandler extends EditCommand {
-   constructor(isVertex, isEdge, isFace) {
-      super();
-      this.selectable = {isVertex: isVertex, isEdge: isEdge, isFace: isFace};
-   }
-
-   isVertexSelectable() { return this.selectable.isVertex; }
-   isEdgeSelectable() { return this.selectable.isEdge; }
-   isFaceSelectable() { return this.selectable.isFace; }
-
-   // hilite(hilite, currentCage) - to be implemented by subclass
-   // select(hilite) - to be implemented by subclass
-}
-
 class MouseMoveHandler extends EditCommand {
 
    //handleMouseMove(ev) {}
@@ -66,6 +52,13 @@ class MouseMoveHandler extends EditCommand {
 // delegate mouse movement to MouseMoveHandler
 class MoveableCommand extends EditCommand {
 
+   isMoveable() {
+      if (this.moveHandler) {
+         return true;
+      }
+      return false;
+   }
+
    handleMouseMove(ev, cameraView) {
       if (this.moveHandler) {
          this.moveHandler.handleMouseMove(ev, cameraView);
@@ -83,6 +76,20 @@ class MoveableCommand extends EditCommand {
          this.moveHandler.undo();
       }
    }
+}
+
+class EditSelectHandler extends MoveableCommand {
+   constructor(isVertex, isEdge, isFace) {
+      super();
+      this.selectable = {isVertex: isVertex, isEdge: isEdge, isFace: isFace};
+   }
+
+   isVertexSelectable() { return this.selectable.isVertex; }
+   isEdgeSelectable() { return this.selectable.isEdge; }
+   isFaceSelectable() { return this.selectable.isFace; }
+
+   // hilite(hilite, currentCage) - to be implemented by subclass
+   // select(hilite) - to be implemented by subclass
 }
 
 class EditCommandSimple extends EditCommand {
