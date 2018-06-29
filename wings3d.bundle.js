@@ -405,6 +405,7 @@ const action = {
    faceBump: () => {notImplemented(this);},
    faceIntrude: () => {notImplemented(this);},
    facePutOn: () => {notImplemented(this);},
+   faceLift: () => {notImplemented(this);},
    // vertex
    vertexConnect: () => {notImplemented(this);},
    vertexDissolve: () => {notImplemented(this);},
@@ -1701,20 +1702,6 @@ class EditCommand {
    //undo() {}
 }
 
-class EditSelectHandler extends EditCommand {
-   constructor(isVertex, isEdge, isFace) {
-      super();
-      this.selectable = {isVertex: isVertex, isEdge: isEdge, isFace: isFace};
-   }
-
-   isVertexSelectable() { return this.selectable.isVertex; }
-   isEdgeSelectable() { return this.selectable.isEdge; }
-   isFaceSelectable() { return this.selectable.isFace; }
-
-   // hilite(hilite, currentCage) - to be implemented by subclass
-   // select(hilite) - to be implemented by subclass
-}
-
 class MouseMoveHandler extends EditCommand {
 
    //handleMouseMove(ev) {}
@@ -1735,6 +1722,13 @@ class MouseMoveHandler extends EditCommand {
 // delegate mouse movement to MouseMoveHandler
 class MoveableCommand extends EditCommand {
 
+   isMoveable() {
+      if (this.moveHandler) {
+         return true;
+      }
+      return false;
+   }
+
    handleMouseMove(ev, cameraView) {
       if (this.moveHandler) {
          this.moveHandler.handleMouseMove(ev, cameraView);
@@ -1752,6 +1746,20 @@ class MoveableCommand extends EditCommand {
          this.moveHandler.undo();
       }
    }
+}
+
+class EditSelectHandler extends MoveableCommand {
+   constructor(isVertex, isEdge, isFace) {
+      super();
+      this.selectable = {isVertex: isVertex, isEdge: isEdge, isFace: isFace};
+   }
+
+   isVertexSelectable() { return this.selectable.isVertex; }
+   isEdgeSelectable() { return this.selectable.isEdge; }
+   isFaceSelectable() { return this.selectable.isFace; }
+
+   // hilite(hilite, currentCage) - to be implemented by subclass
+   // select(hilite) - to be implemented by subclass
 }
 
 class EditCommandSimple extends EditCommand {
@@ -4393,6 +4401,39 @@ PreviewCage.prototype.putOnFace = function(polygon) {
    const center = this.bench.boundingSpheres[polygon.index].center;
    
    this._putOn({normal:normal, center: center});
+};
+
+
+PreviewCage.prototype.getSelectedFaceContours = function() {
+   let contours = this.geometry.findContours();
+
+   contours.edges = new Set;
+   // copy to a set, so searching is easier.
+   for (let edgeLoop of contours.edgeLoops) {
+      for (let edge of edgeLoop) {
+         contours.edges.add(edge.outer.wingedEdge);
+      }
+   }
+
+   return contours;
+};
+
+PreviewCage.prototype.liftFace = function(contours, hEdgeHinge) {
+   // extrude edges
+   contours.edgeLoops = this.geometry.liftContours(contours.edgeLoops);
+   contours.extrudeEdges = this.geometry.extrudeContours(contours.edgeLoops);
+
+   // collapse hEdgeHinge
+
+   // reselect face, due to rendering requirement
+   this._updatePreviewAll(oldSize, this.geometry.affected);
+   // reselect face
+   const oldSelected = this._resetSelectFace();
+   for (let polygon of oldSelected) {
+      this.selectFace(polygon);
+   }
+
+   return contours;
 };
 
 
@@ -8811,7 +8852,16 @@ class FaceMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
       __WEBPACK_IMPORTED_MODULE_9__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_10__wings3d__["action"].faceIntrude.name, (ev) => {
          __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["attachHandlerMouseMove"](new IntrudeFaceHandler(this));
        });
-       __WEBPACK_IMPORTED_MODULE_9__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_10__wings3d__["action"].facePutOn.name, (ev)=> {
+      __WEBPACK_IMPORTED_MODULE_9__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_10__wings3d__["action"].faceLift.name, (ev) => {
+         const snapshots = this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.snapshotTransformFaceGroup);
+         if (snapshots.length === 1) {
+            const snapshot = snapshots[0];
+            __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["attachHandlerMouseSelect"](new LiftFaceHandler(this, snapshot.preview, snapshot.snapshot));
+         } else {
+            // helpBar("Lift works only in one Cage");
+         }
+        });
+      __WEBPACK_IMPORTED_MODULE_9__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_10__wings3d__["action"].facePutOn.name, (ev)=> {
          let snapshot = [];
          this.eachPreviewCage( (preview) => {
             if (preview.selectionSize() == 1) {
@@ -8825,6 +8875,7 @@ class FaceMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
             geometryStatus("You can only PutOn one face");
          }
         });
+
    }
 
    modeName() {
@@ -9224,7 +9275,7 @@ class BumpFaceHandler extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["Movea
    }
 
    doIt() {
-      this.bump = this.madsor.bump(this.contourEdges);
+      this.bump = this.madsor.bump(this.bump);
       super.doIt();     // = this.madsor.moveSelection(this.movement, this.snapshots);
    }
 
@@ -9252,6 +9303,40 @@ class IntrudeFaceHandler extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["Mo
    undo() {
       super.undo(); //this.madsor.restoreMoveSelection(this.snapshots);
       this.madsor.undoIntrude(this.intrude);
+   }
+}
+
+
+class LiftFaceHandler extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditSelectHandler"] {  // also moveable
+   constructor(madsor, preview, snapshot) {
+      super(false, true, false);
+      this.madsor = madsor;
+      this.preview = preview;
+      this.snapshot = snapshot;
+      // find contours
+      this.contours = this.preview.getSelectedFaceContours();
+      
+   }
+
+   select(hilite) {
+      if (hilite.edge && (this.contours.edges.has(hilite.edge.wingedEdge))) {
+         // this will be the axis.
+         this.axis = hilite.edge;
+         // lift
+         this.lift = this.preview.liftFace(this.contours, hilite.edge);
+         // now ready for rotation.
+         this.moveHandler = new MouseRotateAxisHandler(madsor, this.axis, this.center);
+         return true;
+      }
+      return false;
+   }
+
+   doIt() {
+
+   }
+
+   undo() {
+
    }
 }
 
@@ -9378,8 +9463,9 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       }
       // rotate x, y, z
       for (let axis = 0; axis < 3; ++axis) {
-         __WEBPACK_IMPORTED_MODULE_4__wings3d_ui__["bindMenuItem"](mode + 'Rotate' + axisName[axis], function(ev) {
-            __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["attachHandlerMouseMove"](new MouseRotateAlongAxis(self, axis));
+         __WEBPACK_IMPORTED_MODULE_4__wings3d_ui__["bindMenuItem"](mode + 'Rotate' + axisName[axis], (ev) => {
+            const vec = [0, 0, 0]; vec[axis] = 1.0;
+            __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["attachHandlerMouseMove"](new MouseRotateAlongAxis(this, vec));
           });
       }
       // Bevel
@@ -9754,13 +9840,12 @@ class ScaleUniformHandler extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["E
 
 // movement handler.
 class MouseRotateAlongAxis extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["EditCommand"] {
-   constructor(madsor, axis) {   // 0 = x axis, 1 = y axis, 2 = z axis.
+   constructor(madsor, axis) {   // axis directly
       super();
       this.madsor = madsor;
       this.snapshots = madsor.snapshotTransformGroup();
       this.movement = 0.0;             // cumulative movement.
-      this.axisVec3 = vec3.create();
-      this.axisVec3[axis] = 1.0;
+      this.axisVec3 = vec3.clone(axis);
    }
 
    handleMouseMove(ev) {
