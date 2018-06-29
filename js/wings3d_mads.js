@@ -192,8 +192,8 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
    }
 
    // rotate vertices
-   rotateSelection(snapshots, quatRotate) {
-      this.doAll(snapshots, PreviewCage.prototype.rotateSelection, quatRotate);
+   rotateSelection(snapshots, quatRotate, center) {
+      this.doAll(snapshots, PreviewCage.prototype.rotateSelection, quatRotate, center);
    }
 
    // move vertices
@@ -425,26 +425,27 @@ class ScaleUniformHandler extends EditCommand {
 
 // movement handler.
 class MouseRotateAlongAxis extends EditCommand {
-   constructor(madsor, axis) {   // axis directly
+   constructor(madsor, axis, center) {   // axis directly
       super();
       this.madsor = madsor;
       this.snapshots = madsor.snapshotTransformGroup();
       this.movement = 0.0;             // cumulative movement.
       this.axisVec3 = vec3.clone(axis);
+      this.center = center;
    }
 
    handleMouseMove(ev) {
       const move = this._xPercentMovement(ev)*5;
       const quatRotate = quat.create();
       quat.setAxisAngle(quatRotate, this.axisVec3, move);
-      this.madsor.rotateSelection(this.snapshots, quatRotate);
+      this.madsor.rotateSelection(this.snapshots, quatRotate, this.center);
       this.movement += move;
    }
 
    doIt() {
       const quatRotate = quat.create();
       quat.setAxisAngle(quatRotate, this.axisVec3, this.movement);
-      this.madsor.rotateSelection(this.snapshots, quatRotate);
+      this.madsor.rotateSelection(this.snapshots, quatRotate, this.center);
    }
 
    undo() {
@@ -539,5 +540,6 @@ export {
    MouseMoveAlongAxis,
    MoveAlongNormal,
    MoveFreePositionHandler,
+   MouseRotateAlongAxis,
    ToggleModeCommand,
 }

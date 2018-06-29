@@ -910,8 +910,12 @@ function canvasHandleMouseDown(ev) {
          handler.mousemove = null;
       } else if (handler.mouseSelect !== null) {
          if (handler.mouseSelect.select(hilite)) {
-            handler.mouseSelect.doIt();
-            undoQueue( handler.mouseSelect );
+            if (handler.mouseSelect.isMoveable()) {   // now do mousemove.
+               // handler.mousemove must be null.
+               handler.mousemove = handler.mouseSelect;
+            } else {
+               undoQueue( handler.mouseSelect );
+            }
             handler.mouseSelect = null;
          }
       } else {
@@ -2429,11 +2433,11 @@ PreviewCage.prototype.moveSelection = function(movement, snapshot) {
 //
 // rotate selection, with a center
 //
-PreviewCage.prototype.rotateSelection = function(snapshot, quatRotate) {
+PreviewCage.prototype.rotateSelection = function(snapshot, quatRotate, center) {
    const translate = vec3.create();
    const scale = vec3.fromValues(1, 1, 1);
    this.transformSelection(snapshot, (transform, origin) => {
-      mat4.fromRotationTranslationScaleOrigin(transform, quatRotate, translate, scale, origin);   
+      mat4.fromRotationTranslationScaleOrigin(transform, quatRotate, translate, scale, (center ? center : origin));   
     });
 };
 
@@ -4405,7 +4409,8 @@ PreviewCage.prototype.putOnFace = function(polygon) {
 
 
 PreviewCage.prototype.getSelectedFaceContours = function() {
-   let contours = this.geometry.findContours();
+   let contours = {};
+   contours.edgeLoops = this.geometry.findContours(this.selectedSet);
 
    contours.edges = new Set;
    // copy to a set, so searching is easier.
@@ -4426,7 +4431,7 @@ PreviewCage.prototype.liftFace = function(contours, hEdgeHinge) {
    // collapse hEdgeHinge
 
    // reselect face, due to rendering requirement
-   this._updatePreviewAll(oldSize, this.geometry.affected);
+   this._updatePreviewAll();
    // reselect face
    const oldSelected = this._resetSelectFace();
    for (let polygon of oldSelected) {
@@ -9318,14 +9323,22 @@ class LiftFaceHandler extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditS
       
    }
 
+   hilite(hilite, currentCage) {  // no needs for currentCage
+      if ((currentCage === this.preview) && hilite.edge) {
+         return  this.contours.edges.has(hilite.edge.wingedEdge);
+      }
+      return false;
+   }
+
    select(hilite) {
       if (hilite.edge && (this.contours.edges.has(hilite.edge.wingedEdge))) {
-         // this will be the axis.
-         this.axis = hilite.edge;
+         // compute axis and center.
+         this.axis = vec3.create();
+         vec3.sub(this.axis, hilite.edge.destination().vertex, hilite.edge.origin.vertex);
          // lift
          this.lift = this.preview.liftFace(this.contours, hilite.edge);
          // now ready for rotation.
-         this.moveHandler = new MouseRotateAxisHandler(madsor, this.axis, this.center);
+         this.moveHandler = new __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["MouseRotateAlongAxis"](this.madsor, this.axis, hilite.edge.origin.vertex);
          return true;
       }
       return false;
@@ -9361,12 +9374,15 @@ class PutOnCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditSele
    select(hilite, _currentCage) { // return true for accepting, false for continue doing things.
       if (hilite.vertex) {
          this.vertex = hilite.vertex;
+         this.doIt();
          return true;
       } else if (hilite.edge) {
          this.edge = hilite.edge;
+         this.doIt();
          return true;
       } else if (hilite.face) {
          this.face = hilite.face;
+         this.doIt();
          return true;
       }
       // cannot possibly reach here.
@@ -9406,6 +9422,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "MouseMoveAlongAxis", function() { return MouseMoveAlongAxis; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "MoveAlongNormal", function() { return MoveAlongNormal; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "MoveFreePositionHandler", function() { return MoveFreePositionHandler; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "MouseRotateAlongAxis", function() { return MouseRotateAlongAxis; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ToggleModeCommand", function() { return ToggleModeCommand; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__ = __webpack_require__(5);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__ = __webpack_require__(3);
@@ -9607,8 +9624,8 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
    }
 
    // rotate vertices
-   rotateSelection(snapshots, quatRotate) {
-      this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_2__wings3d_model__["PreviewCage"].prototype.rotateSelection, quatRotate);
+   rotateSelection(snapshots, quatRotate, center) {
+      this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_2__wings3d_model__["PreviewCage"].prototype.rotateSelection, quatRotate, center);
    }
 
    // move vertices
@@ -9840,26 +9857,27 @@ class ScaleUniformHandler extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["E
 
 // movement handler.
 class MouseRotateAlongAxis extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["EditCommand"] {
-   constructor(madsor, axis) {   // axis directly
+   constructor(madsor, axis, center) {   // axis directly
       super();
       this.madsor = madsor;
       this.snapshots = madsor.snapshotTransformGroup();
       this.movement = 0.0;             // cumulative movement.
       this.axisVec3 = vec3.clone(axis);
+      this.center = center;
    }
 
    handleMouseMove(ev) {
       const move = this._xPercentMovement(ev)*5;
       const quatRotate = quat.create();
       quat.setAxisAngle(quatRotate, this.axisVec3, move);
-      this.madsor.rotateSelection(this.snapshots, quatRotate);
+      this.madsor.rotateSelection(this.snapshots, quatRotate, this.center);
       this.movement += move;
    }
 
    doIt() {
       const quatRotate = quat.create();
       quat.setAxisAngle(quatRotate, this.axisVec3, this.movement);
-      this.madsor.rotateSelection(this.snapshots, quatRotate);
+      this.madsor.rotateSelection(this.snapshots, quatRotate, this.center);
    }
 
    undo() {
@@ -11495,7 +11513,9 @@ class VertexWeldCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["Edi
       const vertex = hilite.vertex;
       if (vertex) {
          this.collapseHEdge = this.preview.weldableVertex(vertex);
-         return (this.collapseHEdge != false);
+         if (this.collapseHEdge != false) {
+            return this.doIt();
+         }
       }
       return false;
    }

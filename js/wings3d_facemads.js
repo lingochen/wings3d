@@ -3,7 +3,7 @@
 //
 //    
 **/
-import {Madsor, DragSelect, MovePositionHandler, MoveAlongNormal, ToggleModeCommand} from './wings3d_mads';
+import {Madsor, DragSelect, MovePositionHandler, MoveAlongNormal, MouseRotateAlongAxis, ToggleModeCommand} from './wings3d_mads';
 import {EdgeMadsor} from './wings3d_edgemads';   // for switching
 import {BodyMadsor} from './wings3d_bodymads';
 import {VertexMadsor} from './wings3d_vertexmads';
@@ -538,14 +538,22 @@ class LiftFaceHandler extends EditSelectHandler {  // also moveable
       
    }
 
+   hilite(hilite, currentCage) {  // no needs for currentCage
+      if ((currentCage === this.preview) && hilite.edge) {
+         return  this.contours.edges.has(hilite.edge.wingedEdge);
+      }
+      return false;
+   }
+
    select(hilite) {
       if (hilite.edge && (this.contours.edges.has(hilite.edge.wingedEdge))) {
-         // this will be the axis.
-         this.axis = hilite.edge;
+         // compute axis and center.
+         this.axis = vec3.create();
+         vec3.sub(this.axis, hilite.edge.destination().vertex, hilite.edge.origin.vertex);
          // lift
          this.lift = this.preview.liftFace(this.contours, hilite.edge);
          // now ready for rotation.
-         this.moveHandler = new MouseRotateAxisHandler(madsor, this.axis, this.center);
+         this.moveHandler = new MouseRotateAlongAxis(this.madsor, this.axis, hilite.edge.origin.vertex);
          return true;
       }
       return false;

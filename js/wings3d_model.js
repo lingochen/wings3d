@@ -608,11 +608,11 @@ PreviewCage.prototype.moveSelection = function(movement, snapshot) {
 //
 // rotate selection, with a center
 //
-PreviewCage.prototype.rotateSelection = function(snapshot, quatRotate) {
+PreviewCage.prototype.rotateSelection = function(snapshot, quatRotate, center) {
    const translate = vec3.create();
    const scale = vec3.fromValues(1, 1, 1);
    this.transformSelection(snapshot, (transform, origin) => {
-      mat4.fromRotationTranslationScaleOrigin(transform, quatRotate, translate, scale, origin);   
+      mat4.fromRotationTranslationScaleOrigin(transform, quatRotate, translate, scale, (center ? center : origin));   
     });
 };
 
@@ -621,7 +621,7 @@ PreviewCage.prototype.rotateSelection = function(snapshot, quatRotate) {
 //
 PreviewCage.prototype.scaleSelection = function(snapshot, scale) {
    const scaleV = vec3.fromValues(scale, scale, scale);
-   this.transformSelection(snapshot, (transform, origin) => {
+   this.transformSelection(snapshot, (transform, _origin) => {
       mat4.fromScaling(transform, scaleV);   
     });
 };
@@ -2584,7 +2584,8 @@ PreviewCage.prototype.putOnFace = function(polygon) {
 
 
 PreviewCage.prototype.getSelectedFaceContours = function() {
-   let contours = this.geometry.findContours();
+   let contours = {};
+   contours.edgeLoops = this.geometry.findContours(this.selectedSet);
 
    contours.edges = new Set;
    // copy to a set, so searching is easier.
@@ -2605,7 +2606,7 @@ PreviewCage.prototype.liftFace = function(contours, hEdgeHinge) {
    // collapse hEdgeHinge
 
    // reselect face, due to rendering requirement
-   this._updatePreviewAll(oldSize, this.geometry.affected);
+   this._updatePreviewAll();
    // reselect face
    const oldSelected = this._resetSelectFace();
    for (let polygon of oldSelected) {
