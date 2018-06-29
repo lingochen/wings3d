@@ -2446,7 +2446,7 @@ PreviewCage.prototype.rotateSelection = function(snapshot, quatRotate, center) {
 //
 PreviewCage.prototype.scaleSelection = function(snapshot, scale) {
    const scaleV = vec3.fromValues(scale, scale, scale);
-   this.transformSelection(snapshot, (transform, origin) => {
+   this.transformSelection(snapshot, (transform, _origin) => {
       mat4.fromScaling(transform, scaleV);   
     });
 };
@@ -4423,12 +4423,28 @@ PreviewCage.prototype.getSelectedFaceContours = function() {
    return contours;
 };
 
-PreviewCage.prototype.liftFace = function(contours, hEdgeHinge) {
+PreviewCage.prototype.liftFace = function(contours, hingeHEdge) {
    // extrude edges
    contours.edgeLoops = this.geometry.liftContours(contours.edgeLoops);
    contours.extrudeEdges = this.geometry.extrudeContours(contours.edgeLoops);
-
+   
+   this._updatePreviewAll();
    // collapse hEdgeHinge
+   const length = contours.extrudeEdges.length
+   for (let i = 0; i < length; ++i) {
+      const hEdge = contours.extrudeEdges[i];
+      if (hEdge.next.wingedEdge === hingeHEdge.wingedEdge) {
+         this.geometry.collapseEdge(hEdge);
+         if (i === length-1) {
+            this.geometry.collapseEdge(contours.extrudeEdges[0]);
+            contours.extrudeEdges = contours.extrudeEdges.slice(1, length-1); // remove collapseEdges
+         } else {
+            this.geometry.collapseEdge(contours.extrudeEdges[i+1]);
+            contours.extrudeEdges.splice(i, 2);     // remove collapseEdges
+         }
+         break;
+      }
+   }
 
    // reselect face, due to rendering requirement
    this._updatePreviewAll();
@@ -8861,7 +8877,7 @@ class FaceMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
          const snapshots = this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.snapshotTransformFaceGroup);
          if (snapshots.length === 1) {
             const snapshot = snapshots[0];
-            __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["attachHandlerMouseSelect"](new LiftFaceHandler(this, snapshot.preview, snapshot.snapshot));
+            __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["attachHandlerMouseSelect"](new LiftFaceHandler(this, snapshot.preview));
          } else {
             // helpBar("Lift works only in one Cage");
          }
@@ -9313,11 +9329,11 @@ class IntrudeFaceHandler extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["Mo
 
 
 class LiftFaceHandler extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditSelectHandler"] {  // also moveable
-   constructor(madsor, preview, snapshot) {
+   constructor(madsor, preview) {
       super(false, true, false);
       this.madsor = madsor;
       this.preview = preview;
-      this.snapshot = snapshot;
+      //this.snapshot = snapshot;
       // find contours
       this.contours = this.preview.getSelectedFaceContours();
       
@@ -9335,6 +9351,7 @@ class LiftFaceHandler extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditS
          // compute axis and center.
          this.axis = vec3.create();
          vec3.sub(this.axis, hilite.edge.destination().vertex, hilite.edge.origin.vertex);
+         this.hiliteEdge = hilite.edge;
          // lift
          this.lift = this.preview.liftFace(this.contours, hilite.edge);
          // now ready for rotation.
@@ -9345,11 +9362,15 @@ class LiftFaceHandler extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditS
    }
 
    doIt() {
-
+      this.lift = this.preview.liftFace(this.contours, this.hiliteEdge);
+      super.doIt();
+      return true;
    }
 
    undo() {
-
+      super.doIt();  // this really not needede.
+      // collapseFace
+      this.preview.collapseExtrudeEdge(this.lift.extrudeEdges);
    }
 }
 
