@@ -416,8 +416,12 @@ function canvasHandleMouseDown(ev) {
          handler.mousemove = null;
       } else if (handler.mouseSelect !== null) {
          if (handler.mouseSelect.select(hilite)) {
-            handler.mouseSelect.doIt();
-            undoQueue( handler.mouseSelect );
+            if (handler.mouseSelect.isMoveable()) {   // now do mousemove.
+               // handler.mousemove must be null.
+               handler.mousemove = handler.mouseSelect;
+            } else {
+               undoQueue( handler.mouseSelect );
+            }
             handler.mouseSelect = null;
          }
       } else {

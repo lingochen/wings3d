@@ -73,7 +73,13 @@ class FaceMadsor extends Madsor {
          View.attachHandlerMouseMove(new IntrudeFaceHandler(this));
        });
       UI.bindMenuItem(action.faceLift.name, (ev) => {
-         View.attachHandlerMouseSelect(new LiftFaceHandler(this));
+         const snapshots = this.snapshotAll(PreviewCage.prototype.snapshotTransformFaceGroup);
+         if (snapshots.length === 1) {
+            const snapshot = snapshots[0];
+            View.attachHandlerMouseSelect(new LiftFaceHandler(this, snapshot.preview, snapshot.snapshot));
+         } else {
+            // helpBar("Lift works only in one Cage");
+         }
         });
       UI.bindMenuItem(action.facePutOn.name, (ev)=> {
          let snapshot = [];
@@ -489,7 +495,7 @@ class BumpFaceHandler extends MoveableCommand {
    }
 
    doIt() {
-      this.bump = this.madsor.bump(this.contourEdges);
+      this.bump = this.madsor.bump(this.bump);
       super.doIt();     // = this.madsor.moveSelection(this.movement, this.snapshots);
    }
 
@@ -522,13 +528,36 @@ class IntrudeFaceHandler extends MoveableCommand {
 
 
 class LiftFaceHandler extends EditSelectHandler {  // also moveable
-   constructor(madsor, preview) {
+   constructor(madsor, preview, snapshot) {
       super(false, true, false);
       this.madsor = madsor;
       this.preview = preview;
-      this.moveHandler = new RotateHandler(madsor);
+      this.snapshot = snapshot;
+      // find contours
+      this.contours = this.preview.getSelectedFaceContours();
+      
    }
 
+   select(hilite) {
+      if (hilite.edge && (this.contours.edges.has(hilite.edge.wingedEdge))) {
+         // this will be the axis.
+         this.axis = hilite.edge;
+         // lift
+         this.lift = this.preview.liftFace(this.contours, hilite.edge);
+         // now ready for rotation.
+         this.moveHandler = new MouseRotateAxisHandler(madsor, this.axis, this.center);
+         return true;
+      }
+      return false;
+   }
+
+   doIt() {
+
+   }
+
+   undo() {
+
+   }
 }
 
 
@@ -552,12 +581,15 @@ class PutOnCommand extends EditSelectHandler {
    select(hilite, _currentCage) { // return true for accepting, false for continue doing things.
       if (hilite.vertex) {
          this.vertex = hilite.vertex;
+         this.doIt();
          return true;
       } else if (hilite.edge) {
          this.edge = hilite.edge;
+         this.doIt();
          return true;
       } else if (hilite.face) {
          this.face = hilite.face;
+         this.doIt();
          return true;
       }
       // cannot possibly reach here.

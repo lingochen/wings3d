@@ -2583,6 +2583,39 @@ PreviewCage.prototype.putOnFace = function(polygon) {
 };
 
 
+PreviewCage.prototype.getSelectedFaceContours = function() {
+   let contours = this.geometry.findContours();
+
+   contours.edges = new Set;
+   // copy to a set, so searching is easier.
+   for (let edgeLoop of contours.edgeLoops) {
+      for (let edge of edgeLoop) {
+         contours.edges.add(edge.outer.wingedEdge);
+      }
+   }
+
+   return contours;
+};
+
+PreviewCage.prototype.liftFace = function(contours, hEdgeHinge) {
+   // extrude edges
+   contours.edgeLoops = this.geometry.liftContours(contours.edgeLoops);
+   contours.extrudeEdges = this.geometry.extrudeContours(contours.edgeLoops);
+
+   // collapse hEdgeHinge
+
+   // reselect face, due to rendering requirement
+   this._updatePreviewAll(oldSize, this.geometry.affected);
+   // reselect face
+   const oldSelected = this._resetSelectFace();
+   for (let polygon of oldSelected) {
+      this.selectFace(polygon);
+   }
+
+   return contours;
+};
+
+
 //----------------------------------------------------------------------------------------------------------
 
 PreviewCage.prototype.EPSILON = 0.000001;

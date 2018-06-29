@@ -357,7 +357,9 @@ class VertexWeldCommand extends EditSelectHandler {
       const vertex = hilite.vertex;
       if (vertex) {
          this.collapseHEdge = this.preview.weldableVertex(vertex);
-         return (this.collapseHEdge != false);
+         if (this.collapseHEdge != false) {
+            return this.doIt();
+         }
       }
       return false;
    }
