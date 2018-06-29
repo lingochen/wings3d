@@ -76,7 +76,7 @@ class FaceMadsor extends Madsor {
          const snapshots = this.snapshotAll(PreviewCage.prototype.snapshotTransformFaceGroup);
          if (snapshots.length === 1) {
             const snapshot = snapshots[0];
-            View.attachHandlerMouseSelect(new LiftFaceHandler(this, snapshot.preview, snapshot.snapshot));
+            View.attachHandlerMouseSelect(new LiftFaceHandler(this, snapshot.preview));
          } else {
             // helpBar("Lift works only in one Cage");
          }
@@ -528,11 +528,11 @@ class IntrudeFaceHandler extends MoveableCommand {
 
 
 class LiftFaceHandler extends EditSelectHandler {  // also moveable
-   constructor(madsor, preview, snapshot) {
+   constructor(madsor, preview) {
       super(false, true, false);
       this.madsor = madsor;
       this.preview = preview;
-      this.snapshot = snapshot;
+      //this.snapshot = snapshot;
       // find contours
       this.contours = this.preview.getSelectedFaceContours();
       
@@ -550,6 +550,7 @@ class LiftFaceHandler extends EditSelectHandler {  // also moveable
          // compute axis and center.
          this.axis = vec3.create();
          vec3.sub(this.axis, hilite.edge.destination().vertex, hilite.edge.origin.vertex);
+         this.hiliteEdge = hilite.edge;
          // lift
          this.lift = this.preview.liftFace(this.contours, hilite.edge);
          // now ready for rotation.
@@ -560,11 +561,15 @@ class LiftFaceHandler extends EditSelectHandler {  // also moveable
    }
 
    doIt() {
-
+      this.lift = this.preview.liftFace(this.contours, this.hiliteEdge);
+      super.doIt();
+      return true;
    }
 
    undo() {
-
+      super.doIt();  // this really not needede.
+      // collapseFace
+      this.preview.collapseExtrudeEdge(this.lift.extrudeEdges);
    }
 }
 

@@ -2598,12 +2598,28 @@ PreviewCage.prototype.getSelectedFaceContours = function() {
    return contours;
 };
 
-PreviewCage.prototype.liftFace = function(contours, hEdgeHinge) {
+PreviewCage.prototype.liftFace = function(contours, hingeHEdge) {
    // extrude edges
    contours.edgeLoops = this.geometry.liftContours(contours.edgeLoops);
    contours.extrudeEdges = this.geometry.extrudeContours(contours.edgeLoops);
-
+   
+   this._updatePreviewAll();
    // collapse hEdgeHinge
+   const length = contours.extrudeEdges.length
+   for (let i = 0; i < length; ++i) {
+      const hEdge = contours.extrudeEdges[i];
+      if (hEdge.next.wingedEdge === hingeHEdge.wingedEdge) {
+         this.geometry.collapseEdge(hEdge);
+         if (i === length-1) {
+            this.geometry.collapseEdge(contours.extrudeEdges[0]);
+            contours.extrudeEdges = contours.extrudeEdges.slice(1, length-1); // remove collapseEdges
+         } else {
+            this.geometry.collapseEdge(contours.extrudeEdges[i+1]);
+            contours.extrudeEdges.splice(i, 2);     // remove collapseEdges
+         }
+         break;
+      }
+   }
 
    // reselect face, due to rendering requirement
    this._updatePreviewAll();
