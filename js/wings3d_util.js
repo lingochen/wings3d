@@ -2,6 +2,55 @@
 
 
 const kEPSILON = 0.000001;
+
+// Möller–Trumbore ray-triangle intersection algorithm
+// should I use float64array? 
+function intersectTriangle(ray, triangle) {
+   var edge1 = vec3.create(), edge2 = vec3.create();
+   /* find vectors for two edges sharing vert0 */
+   vec3.sub(edge1, triangle[1], triangle[0]);
+   vec3.sub(edge2, triangle[2], triangle[0]);
+
+   /* begin calculating determinant - also used to calculate U parameter */
+   var pvec = vec3.create();
+   vec3.cross(pvec, ray.direction, edge2);
+
+   /* if determinant is near zero, ray lies in plane of triangle */
+   var det = vec3.dot(edge1, pvec);
+
+   if (det < kEPSILON) { // cull backface, and nearly parallel ray
+      return 0.0;
+   }
+   //if (det > -kEPSILON && det < kEPSILON), nearly parallel
+   //  return 0;
+
+   var inv_det = 1.0 / det;
+
+   /* calculate distance from vert0 to ray origin */
+   var tvec = vec3.create();
+   vec3.sub(tvec, ray.origin, triangle[0]);
+
+   /* calculate U parameter and test bounds */
+   var u = vec3.dot(tvec, pvec) * inv_det;
+   if (u < 0.0 || u > 1.0) {
+     return 0.0;
+   }
+
+   /* prepare to test V parameter */
+   var qvec = vec3.create();
+   vec3.cross(qvec, tvec, edge1);
+
+   /* calculate V parameter and test bounds */
+   var v = vec3.dot(ray.direction, qvec) * inv_det;
+   if (v < 0.0 || u + v > 1.0) {
+     return 0.0;
+   }
+
+   /* calculate t, ray intersects triangle */
+   var t = vec3.dot(edge2, qvec) * inv_det;
+   return t;
+};
+
 /* from
  * @article{MollerHughes99,
   author = "Tomas Möller and John F. Hughes",
@@ -75,7 +124,40 @@ function rotationFromToVec3(mtx, from, to) {
    return mtx;
 };
 
+/*
+References
+https://www.opengl.org/discussion_boards/showthread.php/147784-Mirror-Matrices
+https://www.opengl.org/discussion_boards/showthread.php/169605-reflection-matrix-how-to-derive
+"3D Math Primer for Graphics andGame Development" by Fletcher Dunn, Ian Parberry
+*/
+function reflectionMat4(mat, norm, pt) {
+   const d = -vec3.dot(norm, pt);
+
+	mat[0] = -2 * norm.x * norm.x + 1;
+	mat[1] = -2 * norm.y * norm.x;
+	mat[2] = -2 * norm.z * norm.x;
+	mat[3] = 0;
+ 
+	mat[4] = -2 * norm.x * norm.y;
+	mat[5] = -2 * norm.y * norm.y + 1;
+	mat[6] = -2 * norm.z * norm.y;
+	mat[7] = 0;
+ 
+	mat[8] =	-2 * norm.x * norm.z;
+	mat[9] = -2 * norm.y * norm.z;
+	mat[10] = -2 * norm.z * norm.z + 1;
+	mat[11] = 0;
+ 
+	mat[12] = -2 * norm.x * d;
+	mat[13] = -2 * norm.y * d;
+	mat[14] = -2 * norm.z * d;
+   mat[15] = 1;
+   return mat;
+};
+
 
 export {
+   intersectTriangle,
    rotationFromToVec3,
+   reflectionMat4,
 };

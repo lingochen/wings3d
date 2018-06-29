@@ -150,7 +150,7 @@ PreviewCage.prototype.rayPick = function(ray) {
       var sphere = hitSphere[i];
       sphere.polygon.eachEdge( function(edge) {
          // now check the triangle is ok?
-         var t = that.intersectTriangle(ray, [sphere.center, edge.origin.vertex, edge.destination().vertex]);
+         var t = Util.intersectTriangle(ray, [sphere.center, edge.origin.vertex, edge.destination().vertex]);
          if ((t != 0.0) && (t < hitT)) {
             // intersection, check for smallest t, closest intersection
             hitT = t;
@@ -2634,55 +2634,6 @@ PreviewCage.prototype.liftFace = function(contours, hingeHEdge) {
 
 
 //----------------------------------------------------------------------------------------------------------
-
-PreviewCage.prototype.EPSILON = 0.000001;
-// Möller–Trumbore ray-triangle intersection algorithm
-// should I use float64array? 
-PreviewCage.prototype.intersectTriangle = function(ray, triangle) {
-   var edge1 = vec3.create(), edge2 = vec3.create();
-   /* find vectors for two edges sharing vert0 */
-   vec3.sub(edge1, triangle[1], triangle[0]);
-   vec3.sub(edge2, triangle[2], triangle[0]);
-
-   /* begin calculating determinant - also used to calculate U parameter */
-   var pvec = vec3.create();
-   vec3.cross(pvec, ray.direction, edge2);
-
-   /* if determinant is near zero, ray lies in plane of triangle */
-   var det = vec3.dot(edge1, pvec);
-
-   if (det < this.EPSILON) { // cull backface, and nearly parallel ray
-      return 0.0;
-   }
-   //if (det > -this.EPSILON && det < this.EPSILON), nearly parallel
-   //  return 0;
-
-   var inv_det = 1.0 / det;
-
-   /* calculate distance from vert0 to ray origin */
-   var tvec = vec3.create();
-   vec3.sub(tvec, ray.origin, triangle[0]);
-
-   /* calculate U parameter and test bounds */
-   var u = vec3.dot(tvec, pvec) * inv_det;
-   if (u < 0.0 || u > 1.0) {
-     return 0.0;
-   }
-
-   /* prepare to test V parameter */
-   var qvec = vec3.create();
-   vec3.cross(qvec, tvec, edge1);
-
-   /* calculate V parameter and test bounds */
-   var v = vec3.dot(ray.direction, qvec) * inv_det;
-   if (v < 0.0 || u + v > 1.0) {
-     return 0.0;
-   }
-
-   /* calculate t, ray intersects triangle */
-   var t = vec3.dot(edge2, qvec) * inv_det;
-   return t;
-};
 
 
 
