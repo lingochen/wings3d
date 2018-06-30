@@ -36,6 +36,13 @@ PreviewCage.prototype.freeBuffer = function() {
 };
 
 
+PreviewCage.prototype.getSelectedFace = function() {
+   let selectedFaces = Array.from(this.selectedSet);
+   selectedFaces.sort((a, b) => {return a.index - b.index;});  // iterated selectedFaces in index order.
+   return selectedFaces;
+}
+
+
 PreviewCage.duplicate = function(originalCage) {
    // copy geometry.
    const indexMap = new Map;
@@ -2411,7 +2418,7 @@ PreviewCage.prototype.holeSelectedFace = function() {
    const holes = new Set(this.selectedSet);
    const ret = [];
    for (let polygon of holes) {
-      this.selectFace(polygon.halfEdge);
+      this.selectFace(polygon);
       ret.push( this.geometry.makeHole(polygon) );
    }
 
@@ -2630,6 +2637,100 @@ PreviewCage.prototype.liftFace = function(contours, hingeHEdge) {
    }
 
    return contours;
+};
+
+
+//
+// mirror object, select polygon will become hole and connect the mirror object to original object
+//
+PreviewCage.prototype.mirrorFace = function() {
+   const selectedPolygons = this.getSelectedFace();
+
+   const mirrorMat = mat4.create();
+   const protectVertex = new Set;
+   const protectWEdge = new Set;
+   const uniqueVertex = new Map;
+   function resetAddVertex(targetFace) {
+      uniqueVertex.clear();
+      for (let hEdge of targetFace.hEdges()) {
+         uniqueVertex.set(hEdge.origin, hEdge.origin);   // targetFace's pts are shared to the newly mirror faces.
+         protectVertex.add(hEdge.origin);
+         protectWEdge.add(hEdge.wingedEdge);
+      }
+      Util.reflectionMat4(mirrorMat, targetFace.normal, targetFace.halfEdge.origin.vertex);
+   };
+   const addVertex = (vertex) => {
+      let pt = uniqueVertex.get(vertex);
+      if (!pt) {
+         pt = this.geometry.addVertex(vertex.vertex);
+         vec3.transformMat4(pt.vertex, pt.vertex, mirrorMat);
+         uniqueVertex.set(vertex, pt);
+      }
+      return pt.index;
+   };
+
+   const originalFaces = Array.from(this.geometry.faces);
+   const newGroups = [];
+   for (let target of selectedPolygons) {
+      resetAddVertex(target);
+      const newPolygons = [];
+      for (let polygon of originalFaces) {
+         if (polygon !== target) {  // add polygon
+            const ptsLoop = [];
+            for (let hEdge of polygon.hEdges()) {
+               ptsLoop.push( addVertex(hEdge.origin) );
+            }
+            ptsLoop.reverse();   // new face is invert
+            newPolygons.push( ptsLoop );
+         }
+      }
+      newGroups.push( newPolygons );
+   }
+
+         
+   this._updatePreviewAll();  // temp Fix: needs to update Preview before holeSelectedFace
+   // now we can safely create new polygons to connect everything together
+   const mirrorGroups = [];
+   for (let i = 0; i < selectedPolygons.length; ++i) {
+      const polygon = selectedPolygons[i];
+      this.selectFace(polygon);
+      const holed = this.geometry.makeHole(polygon);   // remove selected polygon so mirror face connect through
+      const newPolygons = newGroups[i];
+      const newMirrors = [];
+      for (let ptsLoop of newPolygons) {
+         newMirrors.push( this.geometry.addPolygon(ptsLoop) );
+      }
+      mirrorGroups.push( {holed: holed, newMirrors: newMirrors} );
+   }
+
+   this._updatePreviewAll();
+
+   return {mirrorGroups: mirrorGroups, protectVertex: protectVertex, protectWEdge: protectWEdge};
+}
+
+PreviewCage.prototype.undoMirrorFace = function(undoMirror) {
+   for (let undo of undoMirror.mirrorGroups) {
+      const wEdges = new Set();
+      for (let polygon of undo.newMirrors) {
+         for (let hEdge of polygon.hEdges()) {
+            if (!undoMirror.protectVertex.has(hEdge.origin)) {
+               this.geometry._freeVertex(hEdge.origin);
+            }
+            if (undoMirror.protectWEdge.has(hEdge.wingedEdge)) {
+               hEdge.next = hEdge.next.pair.next;     // hacky: restore to original connection.
+            } else {
+               wEdges.add( hEdge.wingedEdge );
+            }
+         }
+         this.geometry._freePolygon(polygon);
+      }
+      for (let wEdge of wEdges) {
+         this.geometry._freeEdge(wEdge.left);
+      }
+      // restore hole
+      this.undoHoleSelectedFace([undo.holed]);
+   }
+   this._updatePreviewAll();
 };
 
 

@@ -95,7 +95,11 @@ class FaceMadsor extends Madsor {
             geometryStatus("You can only PutOn one face");
          }
         });
-
+      UI.bindMenuItem(action.faceMirror.name, (ev) => {
+         const command = new MirrorFaceCommand(this);
+         command.doIt();
+         View.undoQueue(command);
+       });
    }
 
    modeName() {
@@ -233,6 +237,14 @@ class FaceMadsor extends Madsor {
    // Inset
    inset() {
       return this.snapshotAll(PreviewCage.prototype.insetFace);
+   }
+
+   mirror() {
+      return this.snapshotAll(PreviewCage.prototype.mirrorFace);
+   }
+
+   undoMirror(snapshots) {
+      return this.doAll(snapshots, PreviewCage.prototype.undoMirrorFace);
    }
 
    dragSelect(cage, hilite, selectArray, onOff) {
@@ -573,7 +585,6 @@ class LiftFaceHandler extends EditSelectHandler {  // also moveable
    }
 }
 
-
 //
 class PutOnCommand extends EditSelectHandler {
    constructor(madsor, preview) {
@@ -624,6 +635,22 @@ class PutOnCommand extends EditSelectHandler {
 
    undo() {
       this.preview.restoreMoveSelection(this.snapshot);
+   }
+}
+
+
+class MirrorFaceCommand extends EditCommand {
+   constructor(madsor) {
+      super();
+      this.madsor = madsor;
+   }
+
+   doIt() {
+      this.mirror = this.madsor.mirror();
+   }
+
+   undo() {
+      this.madsor.undoMirror(this.mirror);
    }
 }
 

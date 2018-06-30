@@ -321,6 +321,7 @@ const action = {
    faceIntrude: () => {notImplemented(this);},
    facePutOn: () => {notImplemented(this);},
    faceLift: () => {notImplemented(this);},
+   faceMirror: () => {notImplemented(this);},
    // vertex
    vertexConnect: () => {notImplemented(this);},
    vertexDissolve: () => {notImplemented(this);},

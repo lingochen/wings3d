@@ -133,24 +133,24 @@ https://www.opengl.org/discussion_boards/showthread.php/169605-reflection-matrix
 function reflectionMat4(mat, norm, pt) {
    const d = -vec3.dot(norm, pt);
 
-	mat[0] = -2 * norm.x * norm.x + 1;
-	mat[1] = -2 * norm.y * norm.x;
-	mat[2] = -2 * norm.z * norm.x;
+	mat[0] = -2 * norm[0] * norm[0] + 1;
+	mat[1] = -2 * norm[1] * norm[0];
+	mat[2] = -2 * norm[2] * norm[0];
 	mat[3] = 0;
  
-	mat[4] = -2 * norm.x * norm.y;
-	mat[5] = -2 * norm.y * norm.y + 1;
-	mat[6] = -2 * norm.z * norm.y;
+	mat[4] = -2 * norm[0] * norm[1];
+	mat[5] = -2 * norm[1] * norm[1] + 1;
+	mat[6] = -2 * norm[2] * norm[1];
 	mat[7] = 0;
  
-	mat[8] =	-2 * norm.x * norm.z;
-	mat[9] = -2 * norm.y * norm.z;
-	mat[10] = -2 * norm.z * norm.z + 1;
+	mat[8] =	-2 * norm[0] * norm[2];
+	mat[9] = -2 * norm[1] * norm[2];
+	mat[10] = -2 * norm[2] * norm[2] + 1;
 	mat[11] = 0;
  
-	mat[12] = -2 * norm.x * d;
-	mat[13] = -2 * norm.y * d;
-	mat[14] = -2 * norm.z * d;
+	mat[12] = -2 * norm[0] * d;
+	mat[13] = -2 * norm[1] * d;
+	mat[14] = -2 * norm[2] * d;
    mat[15] = 1;
    return mat;
 };
