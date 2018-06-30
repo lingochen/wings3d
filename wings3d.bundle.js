@@ -406,6 +406,7 @@ const action = {
    faceIntrude: () => {notImplemented(this);},
    facePutOn: () => {notImplemented(this);},
    faceLift: () => {notImplemented(this);},
+   faceMirror: () => {notImplemented(this);},
    // vertex
    vertexConnect: () => {notImplemented(this);},
    vertexDissolve: () => {notImplemented(this);},
@@ -1859,6 +1860,13 @@ const PreviewCage = function(bench) {
 PreviewCage.prototype.freeBuffer = function() {
    this.geometry.free();
 };
+
+
+PreviewCage.prototype.getSelectedFace = function() {
+   let selectedFaces = Array.from(this.selectedSet);
+   selectedFaces.sort((a, b) => {return a.index - b.index;});  // iterated selectedFaces in index order.
+   return selectedFaces;
+}
 
 
 PreviewCage.duplicate = function(originalCage) {
@@ -4236,7 +4244,7 @@ PreviewCage.prototype.holeSelectedFace = function() {
    const holes = new Set(this.selectedSet);
    const ret = [];
    for (let polygon of holes) {
-      this.selectFace(polygon.halfEdge);
+      this.selectFace(polygon);
       ret.push( this.geometry.makeHole(polygon) );
    }
 
@@ -4455,6 +4463,100 @@ PreviewCage.prototype.liftFace = function(contours, hingeHEdge) {
    }
 
    return contours;
+};
+
+
+//
+// mirror object, select polygon will become hole and connect the mirror object to original object
+//
+PreviewCage.prototype.mirrorFace = function() {
+   const selectedPolygons = this.getSelectedFace();
+
+   const mirrorMat = mat4.create();
+   const protectVertex = new Set;
+   const protectWEdge = new Set;
+   const uniqueVertex = new Map;
+   function resetAddVertex(targetFace) {
+      uniqueVertex.clear();
+      for (let hEdge of targetFace.hEdges()) {
+         uniqueVertex.set(hEdge.origin, hEdge.origin);   // targetFace's pts are shared to the newly mirror faces.
+         protectVertex.add(hEdge.origin);
+         protectWEdge.add(hEdge.wingedEdge);
+      }
+      __WEBPACK_IMPORTED_MODULE_7__wings3d_util__["reflectionMat4"](mirrorMat, targetFace.normal, targetFace.halfEdge.origin.vertex);
+   };
+   const addVertex = (vertex) => {
+      let pt = uniqueVertex.get(vertex);
+      if (!pt) {
+         pt = this.geometry.addVertex(vertex.vertex);
+         vec3.transformMat4(pt.vertex, pt.vertex, mirrorMat);
+         uniqueVertex.set(vertex, pt);
+      }
+      return pt.index;
+   };
+
+   const originalFaces = Array.from(this.geometry.faces);
+   const newGroups = [];
+   for (let target of selectedPolygons) {
+      resetAddVertex(target);
+      const newPolygons = [];
+      for (let polygon of originalFaces) {
+         if (polygon !== target) {  // add polygon
+            const ptsLoop = [];
+            for (let hEdge of polygon.hEdges()) {
+               ptsLoop.push( addVertex(hEdge.origin) );
+            }
+            ptsLoop.reverse();   // new face is invert
+            newPolygons.push( ptsLoop );
+         }
+      }
+      newGroups.push( newPolygons );
+   }
+
+         
+   this._updatePreviewAll();  // temp Fix: needs to update Preview before holeSelectedFace
+   // now we can safely create new polygons to connect everything together
+   const mirrorGroups = [];
+   for (let i = 0; i < selectedPolygons.length; ++i) {
+      const polygon = selectedPolygons[i];
+      this.selectFace(polygon);
+      const holed = this.geometry.makeHole(polygon);   // remove selected polygon so mirror face connect through
+      const newPolygons = newGroups[i];
+      const newMirrors = [];
+      for (let ptsLoop of newPolygons) {
+         newMirrors.push( this.geometry.addPolygon(ptsLoop) );
+      }
+      mirrorGroups.push( {holed: holed, newMirrors: newMirrors} );
+   }
+
+   this._updatePreviewAll();
+
+   return {mirrorGroups: mirrorGroups, protectVertex: protectVertex, protectWEdge: protectWEdge};
+}
+
+PreviewCage.prototype.undoMirrorFace = function(undoMirror) {
+   for (let undo of undoMirror.mirrorGroups) {
+      const wEdges = new Set();
+      for (let polygon of undo.newMirrors) {
+         for (let hEdge of polygon.hEdges()) {
+            if (!undoMirror.protectVertex.has(hEdge.origin)) {
+               this.geometry._freeVertex(hEdge.origin);
+            }
+            if (undoMirror.protectWEdge.has(hEdge.wingedEdge)) {
+               hEdge.next = hEdge.next.pair.next;     // hacky: restore to original connection.
+            } else {
+               wEdges.add( hEdge.wingedEdge );
+            }
+         }
+         this.geometry._freePolygon(polygon);
+      }
+      for (let wEdge of wEdges) {
+         this.geometry._freeEdge(wEdge.left);
+      }
+      // restore hole
+      this.undoHoleSelectedFace([undo.holed]);
+   }
+   this._updatePreviewAll();
 };
 
 
@@ -8847,7 +8949,11 @@ class FaceMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
             geometryStatus("You can only PutOn one face");
          }
         });
-
+      __WEBPACK_IMPORTED_MODULE_9__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_10__wings3d__["action"].faceMirror.name, (ev) => {
+         const command = new MirrorFaceCommand(this);
+         command.doIt();
+         __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"](command);
+       });
    }
 
    modeName() {
@@ -8985,6 +9091,14 @@ class FaceMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
    // Inset
    inset() {
       return this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.insetFace);
+   }
+
+   mirror() {
+      return this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.mirrorFace);
+   }
+
+   undoMirror(snapshots) {
+      return this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.undoMirrorFace);
    }
 
    dragSelect(cage, hilite, selectArray, onOff) {
@@ -9325,7 +9439,6 @@ class LiftFaceHandler extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditS
    }
 }
 
-
 //
 class PutOnCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditSelectHandler"] {
    constructor(madsor, preview) {
@@ -9376,6 +9489,22 @@ class PutOnCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditSele
 
    undo() {
       this.preview.restoreMoveSelection(this.snapshot);
+   }
+}
+
+
+class MirrorFaceCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
+   constructor(madsor) {
+      super();
+      this.madsor = madsor;
+   }
+
+   doIt() {
+      this.mirror = this.madsor.mirror();
+   }
+
+   undo() {
+      this.madsor.undoMirror(this.mirror);
    }
 }
 
@@ -13348,10 +13477,10 @@ function intersectTriangle(ray, triangle) {
    /* if determinant is near zero, ray lies in plane of triangle */
    var det = vec3.dot(edge1, pvec);
 
-   if (det < this.EPSILON) { // cull backface, and nearly parallel ray
+   if (det < kEPSILON) { // cull backface, and nearly parallel ray
       return 0.0;
    }
-   //if (det > -this.EPSILON && det < this.EPSILON), nearly parallel
+   //if (det > -kEPSILON && det < kEPSILON), nearly parallel
    //  return 0;
 
    var inv_det = 1.0 / det;
@@ -13463,24 +13592,24 @@ https://www.opengl.org/discussion_boards/showthread.php/169605-reflection-matrix
 function reflectionMat4(mat, norm, pt) {
    const d = -vec3.dot(norm, pt);
 
-	mat[0] = -2 * norm.x * norm.x + 1;
-	mat[1] = -2 * norm.y * norm.x;
-	mat[2] = -2 * norm.z * norm.x;
+	mat[0] = -2 * norm[0] * norm[0] + 1;
+	mat[1] = -2 * norm[1] * norm[0];
+	mat[2] = -2 * norm[2] * norm[0];
 	mat[3] = 0;
  
-	mat[4] = -2 * norm.x * norm.y;
-	mat[5] = -2 * norm.y * norm.y + 1;
-	mat[6] = -2 * norm.z * norm.y;
+	mat[4] = -2 * norm[0] * norm[1];
+	mat[5] = -2 * norm[1] * norm[1] + 1;
+	mat[6] = -2 * norm[2] * norm[1];
 	mat[7] = 0;
  
-	mat[8] =	-2 * norm.x * norm.z;
-	mat[9] = -2 * norm.y * norm.z;
-	mat[10] = -2 * norm.z * norm.z + 1;
+	mat[8] =	-2 * norm[0] * norm[2];
+	mat[9] = -2 * norm[1] * norm[2];
+	mat[10] = -2 * norm[2] * norm[2] + 1;
 	mat[11] = 0;
  
-	mat[12] = -2 * norm.x * d;
-	mat[13] = -2 * norm.y * d;
-	mat[14] = -2 * norm.z * d;
+	mat[12] = -2 * norm[0] * d;
+	mat[13] = -2 * norm[1] * d;
+	mat[14] = -2 * norm[2] * d;
    mat[15] = 1;
    return mat;
 };
