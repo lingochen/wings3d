@@ -2015,7 +2015,6 @@ WingedTopology.prototype.connectVertex = function(selectedVertex) {
    for (let [polygon, faceCount] of selectedFace) {
       if (faceCount > 1) {
          // at least 2 vertex selected.
-         let special = true;
          let prevEdgeNumber = -1;
          let edgeNumber = -1;
          let outEdge = polygon.halfEdge;
@@ -2055,7 +2054,7 @@ WingedTopology.prototype.connectVertex = function(selectedVertex) {
       // check for special case. one interior selected vertex per edge. update. includeing zero selected vertex per edge.
       let specialCase = true;
       let prevEdgeNumber = -1;
-      for (let [index, edge] of edges.entries()) {
+      for (let [_i, edge] of edges.entries()) {
          if ( (edge.prevEdgeNumber !== edge.edgeNumber) || (prevEdgeNumber == edge.edgeNumber) ) {   // corner or more than 1 vertex on same Edge.
             specialCase = false;
             break;
@@ -2063,19 +2062,22 @@ WingedTopology.prototype.connectVertex = function(selectedVertex) {
          prevEdgeNumber = edge.edgeNumber;
       }
       if (specialCase) {
-         const edge0Prev = edges[0].outEdge.prev();
-         for (let i = 0; i < edges.length; ++i) {
-            let origin = edges[i];
-            let destination;
-            let edge;
-            if ( (i+1) < edges.length) {
-               destination = edges[i+1];
-               edge = this.insertEdge(origin.outEdge.prev(), destination.outEdge);
-            } else {
-               edge = this.insertEdge(origin.outEdge.prev(), edge0Prev.next);
+         if (edges.length === 2) {  // connect 2 edges will have a 2 side polygon, so just connect one edge. last to first, first to last is the same edge.
+            edgeList.push( this.insertEdge(edges[0].outEdge.prev(), edges[1].outEdge));
+         } else {
+            const edge0Prev = edges[0].outEdge.prev();
+            for (let i = 0; i < edges.length; ++i) {
+               let origin = edges[i];
+               let destination;
+               let edge;
+               if ( (i+1) < edges.length) {
+                  destination = edges[i+1];
+                  edge = this.insertEdge(origin.outEdge.prev(), destination.outEdge);
+               } else { // connect last to first.
+                  edge = this.insertEdge(origin.outEdge.prev(), edge0Prev.next);
+               }
+               edgeList.push( edge );
             }
-
-            edgeList.push( edge );
          }
       } else {
          // walk from beginning++, and end--.

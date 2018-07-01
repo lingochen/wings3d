@@ -378,6 +378,7 @@ const action = {
    edgeExtrudeZ: () =>{notImplemented(this);},
    edgeCrease: () =>{notImplemented(this);},
    edgeLoopCut: () =>{notImplemented(this);},
+   edgeCorner: () =>{notImplemented(this);},
    // face
    faceExtrudeMenu: () =>{notImplemented(this);},
    faceExtrudeX: () =>{notImplemented(this);},
@@ -1862,10 +1863,10 @@ PreviewCage.prototype.freeBuffer = function() {
 };
 
 
-PreviewCage.prototype.getSelectedFace = function() {
-   let selectedFaces = Array.from(this.selectedSet);
-   selectedFaces.sort((a, b) => {return a.index - b.index;});  // iterated selectedFaces in index order.
-   return selectedFaces;
+PreviewCage.prototype.getSelectedSorted = function() {
+   let selectedSort = Array.from(this.selectedSet);
+   selectedSort.sort((a, b) => {return a.index - b.index;});  // iterated selectedFaces in index order.
+   return selectedSort;
 }
 
 
@@ -4470,7 +4471,7 @@ PreviewCage.prototype.liftFace = function(contours, hingeHEdge) {
 // mirror object, select polygon will become hole and connect the mirror object to original object
 //
 PreviewCage.prototype.mirrorFace = function() {
-   const selectedPolygons = this.getSelectedFace();
+   const selectedPolygons = this.getSelectedSorted();
 
    const mirrorMat = mat4.create();
    const protectVertex = new Set;
@@ -4557,6 +4558,50 @@ PreviewCage.prototype.undoMirrorFace = function(undoMirror) {
       this.undoHoleSelectedFace([undo.holed]);
    }
    this._updatePreviewAll();
+};
+
+
+PreviewCage.prototype.cornerEdge = function() {
+   const selectedEdge = this.getSelectedSorted();
+
+   let vertices = [];
+   let splitEdges = [];
+   let dissolveEdges = new Set;
+   let vertex = vec3.create();
+   for (let wEdge of selectedEdge) {
+      let three;
+      let five = wEdge.left;
+      if (five.face) {
+         if (five.face.numberOfVertex == 5) {
+            three = wEdge.right;
+            if (three.face && (three.face.numberOfVertex !== 3)) {
+               three = null;
+            }
+         } else if (five.face.numberOfVertex === 3) {
+            three = five;
+            five = wEdge.right;
+            if (five.face && (five.face.numberOfVertex !== 5)) {
+               five = null;
+            }
+         }
+      }
+      if (three && five) {
+         // insert mid point at wEdge.
+         vec3.add(vertex, three.origin.vertex, five.origin.vertex);
+         vec3.scale(vertex, 0.5);
+         let outEdge = this.geometry.splitEdge(five, vertex);
+         vertices.push(five.origin);
+         splitEdges.push(outEdge.pair);
+         // insert edge from mid-pt to five's diagonal point.
+         let connectOut = this.geometry.insertEdge(outEdge, five.next.next.next);
+         dissolveEdges.add(connectOut.pair);
+      }
+   }
+   this._updatePreviewAll();
+   // reselect splitEdges
+
+   // undo stuff
+   return {vertices: vertices, splitEdgs: splitEdges, dissolveEdges: dissolveEdges}; 
 };
 
 
@@ -7528,7 +7573,6 @@ WingedTopology.prototype.connectVertex = function(selectedVertex) {
    for (let [polygon, faceCount] of selectedFace) {
       if (faceCount > 1) {
          // at least 2 vertex selected.
-         let special = true;
          let prevEdgeNumber = -1;
          let edgeNumber = -1;
          let outEdge = polygon.halfEdge;
@@ -7568,7 +7612,7 @@ WingedTopology.prototype.connectVertex = function(selectedVertex) {
       // check for special case. one interior selected vertex per edge. update. includeing zero selected vertex per edge.
       let specialCase = true;
       let prevEdgeNumber = -1;
-      for (let [index, edge] of edges.entries()) {
+      for (let [_i, edge] of edges.entries()) {
          if ( (edge.prevEdgeNumber !== edge.edgeNumber) || (prevEdgeNumber == edge.edgeNumber) ) {   // corner or more than 1 vertex on same Edge.
             specialCase = false;
             break;
@@ -7576,19 +7620,22 @@ WingedTopology.prototype.connectVertex = function(selectedVertex) {
          prevEdgeNumber = edge.edgeNumber;
       }
       if (specialCase) {
-         const edge0Prev = edges[0].outEdge.prev();
-         for (let i = 0; i < edges.length; ++i) {
-            let origin = edges[i];
-            let destination;
-            let edge;
-            if ( (i+1) < edges.length) {
-               destination = edges[i+1];
-               edge = this.insertEdge(origin.outEdge.prev(), destination.outEdge);
-            } else {
-               edge = this.insertEdge(origin.outEdge.prev(), edge0Prev.next);
+         if (edges.length === 2) {  // connect 2 edges will have a 2 side polygon, so just connect one edge. last to first, first to last is the same edge.
+            edgeList.push( this.insertEdge(edges[0].outEdge.prev(), edges[1].outEdge));
+         } else {
+            const edge0Prev = edges[0].outEdge.prev();
+            for (let i = 0; i < edges.length; ++i) {
+               let origin = edges[i];
+               let destination;
+               let edge;
+               if ( (i+1) < edges.length) {
+                  destination = edges[i+1];
+                  edge = this.insertEdge(origin.outEdge.prev(), destination.outEdge);
+               } else { // connect last to first.
+                  edge = this.insertEdge(origin.outEdge.prev(), edge0Prev.next);
+               }
+               edgeList.push( edge );
             }
-
-            edgeList.push( edge );
          }
       } else {
          // walk from beginning++, and end--.
@@ -10220,6 +10267,9 @@ class EdgeMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
 
          }
         });
+      __WEBPACK_IMPORTED_MODULE_6__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].edgeCorner.name, (ev) => {
+         __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["attachHandlerMouseMove"](new EdgeCornerHandler(this));
+       });
    }
 
    modeName() {
@@ -10391,6 +10441,10 @@ class EdgeMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
       this.eachPreviewCage(function(cage, collapse) {
          cage.restoreCollapseEdge(collapse);
       }, collapseEdgesArray);
+   }
+
+   corner() {
+      return this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.cornerEdge);
    }
 
 
@@ -10667,6 +10721,24 @@ class LoopCutCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCo
          this.madsor.undoLoopCut(this.loopCut);
       }
    }
+}
+
+class EdgeCornerHandler extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["MoveableCommand"] {
+   constructor(madsor) {
+      super();
+      this.madsor = madsor;
+      this.cornerEdges = madsor.corner();
+      //this.moveHandler = new MoveAlongNormal(madsor);
+   }
+
+   doIt() {
+
+   }
+
+   undo() {
+
+   }
+
 }
 
 

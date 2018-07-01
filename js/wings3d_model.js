@@ -36,10 +36,10 @@ PreviewCage.prototype.freeBuffer = function() {
 };
 
 
-PreviewCage.prototype.getSelectedFace = function() {
-   let selectedFaces = Array.from(this.selectedSet);
-   selectedFaces.sort((a, b) => {return a.index - b.index;});  // iterated selectedFaces in index order.
-   return selectedFaces;
+PreviewCage.prototype.getSelectedSorted = function() {
+   let selectedSort = Array.from(this.selectedSet);
+   selectedSort.sort((a, b) => {return a.index - b.index;});  // iterated selectedFaces in index order.
+   return selectedSort;
 }
 
 
@@ -2644,7 +2644,7 @@ PreviewCage.prototype.liftFace = function(contours, hingeHEdge) {
 // mirror object, select polygon will become hole and connect the mirror object to original object
 //
 PreviewCage.prototype.mirrorFace = function() {
-   const selectedPolygons = this.getSelectedFace();
+   const selectedPolygons = this.getSelectedSorted();
 
    const mirrorMat = mat4.create();
    const protectVertex = new Set;
@@ -2731,6 +2731,50 @@ PreviewCage.prototype.undoMirrorFace = function(undoMirror) {
       this.undoHoleSelectedFace([undo.holed]);
    }
    this._updatePreviewAll();
+};
+
+
+PreviewCage.prototype.cornerEdge = function() {
+   const selectedEdge = this.getSelectedSorted();
+
+   let vertices = [];
+   let splitEdges = [];
+   let dissolveEdges = new Set;
+   let vertex = vec3.create();
+   for (let wEdge of selectedEdge) {
+      let three;
+      let five = wEdge.left;
+      if (five.face) {
+         if (five.face.numberOfVertex == 5) {
+            three = wEdge.right;
+            if (three.face && (three.face.numberOfVertex !== 3)) {
+               three = null;
+            }
+         } else if (five.face.numberOfVertex === 3) {
+            three = five;
+            five = wEdge.right;
+            if (five.face && (five.face.numberOfVertex !== 5)) {
+               five = null;
+            }
+         }
+      }
+      if (three && five) {
+         // insert mid point at wEdge.
+         vec3.add(vertex, three.origin.vertex, five.origin.vertex);
+         vec3.scale(vertex, 0.5);
+         let outEdge = this.geometry.splitEdge(five, vertex);
+         vertices.push(five.origin);
+         splitEdges.push(outEdge.pair);
+         // insert edge from mid-pt to five's diagonal point.
+         let connectOut = this.geometry.insertEdge(outEdge, five.next.next.next);
+         dissolveEdges.add(connectOut.pair);
+      }
+   }
+   this._updatePreviewAll();
+   // reselect splitEdges
+
+   // undo stuff
+   return {vertices: vertices, splitEdgs: splitEdges, dissolveEdges: dissolveEdges}; 
 };
 
 

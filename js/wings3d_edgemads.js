@@ -132,6 +132,9 @@ class EdgeMadsor extends Madsor {
 
          }
         });
+      UI.bindMenuItem(action.edgeCorner.name, (ev) => {
+         View.attachHandlerMouseMove(new EdgeCornerHandler(this));
+       });
    }
 
    modeName() {
@@ -303,6 +306,10 @@ class EdgeMadsor extends Madsor {
       this.eachPreviewCage(function(cage, collapse) {
          cage.restoreCollapseEdge(collapse);
       }, collapseEdgesArray);
+   }
+
+   corner() {
+      return this.snapshotAll(PreviewCage.prototype.cornerEdge);
    }
 
 
@@ -579,6 +586,24 @@ class LoopCutCommand extends EditCommand {
          this.madsor.undoLoopCut(this.loopCut);
       }
    }
+}
+
+class EdgeCornerHandler extends MoveableCommand {
+   constructor(madsor) {
+      super();
+      this.madsor = madsor;
+      this.cornerEdges = madsor.corner();
+      //this.moveHandler = new MoveAlongNormal(madsor);
+   }
+
+   doIt() {
+
+   }
+
+   undo() {
+
+   }
+
 }
 
 export {
