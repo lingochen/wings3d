@@ -143,19 +143,11 @@ class EdgeMadsor extends Madsor {
 
    // get selected Edge's vertex snapshot. for doing, and redo queue. 
    snapshotPosition() {
-      var snapshots = [];
-      this.eachPreviewCage( function(preview) {
-         snapshots.push( preview.snapshotEdgePosition() );
-      });
-      return snapshots;
+      return this.snapshotAll(Preview.prototype.snapshotEdgePosition());
    }
 
    snapshotPositionAndNormal() {
-      var snapshots = [];
-      this.eachPreviewCage( function(preview) {
-         snapshots.push( preview.snapshotEdgePositionAndNormal() );
-      });
-      return snapshots;
+      return this.snapshotAll(PreviewCage.snapshotEdgePositionAndNormal());
    }
 
    snapshotTransformGroup() {
@@ -184,17 +176,14 @@ class EdgeMadsor extends Madsor {
    }
 
    bevel() {
-      var snapshots = [];
-      this.eachPreviewCage( function(preview) {
-         snapshots.push( preview.bevelEdge() );
-      });
+      const snapshots = this.snapshotAll(PreviewCage.prototype.bevelEdge);
       // change to facemode.
       View.restoreFaceMode(snapshots);
       return snapshots;
    }
 
    undoBevel(snapshots, selection) {
-      this.restoreMoveSelection(snapshots);
+      this.restoreSelectionPosition(snapshots);
       this.collapseEdge(snapshots);
       View.restoreEdgeMode(selection);
    }
@@ -268,10 +257,8 @@ class EdgeMadsor extends Madsor {
       });
       return loop;
    }
-   collapseEdge(collapseArray) {  // undo of splitEdge.
-      this.eachPreviewCage(function(cage, collapse) {
-         cage.collapseSplitOrBevelEdge(collapse);
-      }, collapseArray);
+   collapseEdge(snapshots) {  // undo of splitEdge.
+      this.doAll(snapshots, PreviewCage.prototype.collapseSplitOrBevelEdge);
    }
 
    // dissolve edge
@@ -310,6 +297,10 @@ class EdgeMadsor extends Madsor {
 
    corner() {
       return this.snapshotAll(PreviewCage.prototype.cornerEdge);
+   }
+
+   undoCorner(snapshots) {
+      this.doAll(snapshots, PreviewCage.prototype.undoCornerEdge);
    }
 
 
@@ -520,7 +511,7 @@ class CreaseEdgeHandler extends MoveableCommand {
    }
 
    undo() {
-      super.undo(); //this.madsor.restoreMoveSelection(this.snapshots);
+      super.undo(); //this.madsor.restoreSelectionPosition(this.snapshots);
       this.madsor.undoExtrude(this.contourEdges);
    }
 }
@@ -593,15 +584,17 @@ class EdgeCornerHandler extends MoveableCommand {
       super();
       this.madsor = madsor;
       this.cornerEdges = madsor.corner();
-      //this.moveHandler = new MoveAlongNormal(madsor);
+      this.moveHandler = new MoveAlongNormal(madsor, false, this.cornerEdges);
    }
 
    doIt() {
-
+      this.cornerEdges = this.madsor.corner();
+      super.doIt();
    }
 
    undo() {
-
+      // super.undo();  // not need, because movement was deleted
+      this.madsor.undoCorner(this.cornerEdges);
    }
 
 }

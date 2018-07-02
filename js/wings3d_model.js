@@ -669,7 +669,8 @@ PreviewCage.prototype.snapshotPosition = function(vertices, normalArray) {
    };
    ret.vertices = vertices;
    // allocated save position data.
-   ret.position = new Float32Array(ret.vertices.size*3);
+   const length = vertices.length ? vertices.length : vertices.size; // could be array or set
+   ret.position = new Float32Array(length*3);
    // use the vertex to collect the affected polygon and the affected edge.
    let i = 0;
    for (let vertex of ret.vertices) {
@@ -2737,10 +2738,11 @@ PreviewCage.prototype.undoMirrorFace = function(undoMirror) {
 PreviewCage.prototype.cornerEdge = function() {
    const selectedEdge = this.getSelectedSorted();
 
-   let vertices = [];
-   let splitEdges = [];
-   let dissolveEdges = new Set;
-   let vertex = vec3.create();
+   const faces = [];
+   const vertices = [];
+   const splitEdges = [];
+   const dissolveEdges = [];
+   const vertex = vec3.create();
    for (let wEdge of selectedEdge) {
       let three;
       let five = wEdge.left;
@@ -2759,23 +2761,54 @@ PreviewCage.prototype.cornerEdge = function() {
          }
       }
       if (three && five) {
+         faces.push( three.face );
+         faces.push( five.face );
          // insert mid point at wEdge.
          vec3.add(vertex, three.origin.vertex, five.origin.vertex);
-         vec3.scale(vertex, 0.5);
+         vec3.scale(vertex, vertex, 0.5);
          let outEdge = this.geometry.splitEdge(five, vertex);
          vertices.push(five.origin);
          splitEdges.push(outEdge.pair);
          // insert edge from mid-pt to five's diagonal point.
          let connectOut = this.geometry.insertEdge(outEdge, five.next.next.next);
-         dissolveEdges.add(connectOut.pair);
+         dissolveEdges.push(connectOut.pair);
+         faces.push(connectOut.face);
       }
    }
+   // compute direction, and copy position.
+   let count = 0;
+   let direction = new Float32Array(dissolveEdges.length*3);
+   for (let connect of dissolveEdges) {
+      const dir = direction.subarray(count, count+3);
+      vec3.sub(dir, connect.origin.vertex, connect.destination().vertex);
+      vec3.normalize(dir, dir);
+      count += 3;
+   }
+   const ret = this.snapshotPosition(vertices, direction);
    this._updatePreviewAll();
    // reselect splitEdges
+   for (let hEdge of splitEdges) {
+      this.selectEdge(hEdge);
+   }
 
    // undo stuff
-   return {vertices: vertices, splitEdgs: splitEdges, dissolveEdges: dissolveEdges}; 
+   ret.splitEdges = splitEdges;
+   ret.dissolveEdges = dissolveEdges;
+   return ret; 
 };
+PreviewCage.prototype.undoCornerEdge = function(undo) {
+   // dissolveEdges first
+   for (let hEdge of undo.dissolveEdges) {
+      this.geometry.removeEdge(hEdge);
+   }
+
+   // unselect the splitEdges then restore to original situation
+   for (let hEdge of undo.splitEdges) {
+      this.selectEdge(hEdge);
+      this.geometry.collapseEdge(hEdge);
+   }
+   this._updatePreviewAll();
+}
 
 
 //----------------------------------------------------------------------------------------------------------

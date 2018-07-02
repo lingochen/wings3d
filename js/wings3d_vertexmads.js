@@ -56,19 +56,11 @@ class VertexMadsor extends Madsor {
 
    // get selected vertex snapshot. for doing, and redo queue. 
    snapshotPosition() {
-      var snapshots = [];
-      this.eachPreviewCage( function(preview) {
-         snapshots.push( preview.snapshotVertexPosition() );
-      });
-      return snapshots;
+      return this.snapshotAll(PreviewCage.prototype.snapshotVertexPosition);
    }
 
    snapshotPositionAndNormal() {
-      var snapshots = [];
-      this.eachPreviewCage( function(preview) {
-         snapshots.push( preview.snapshotVertexPositionAndNormal() );
-      });
-      return snapshots;
+      return this.snapshotAll(PreviewCage.prototype.snapshotVertexPositionAndNormal);
    }
 
    snapshotTransformGroup() {
@@ -76,21 +68,17 @@ class VertexMadsor extends Madsor {
    }
 
    bevel() {
-      var snapshots = [];
-      this.eachPreviewCage( function(preview) {
-         snapshots.push( preview.bevelVertex() );
-      });
+      let snapshots = this.snapshotAll(PreviewCage.prototype.bevelVertex);
       // change to facemode.
       View.restoreFaceMode(snapshots);
       return snapshots;
+   
    }
 
    undoBevel(snapshots, selection) {
-      this.restoreMoveSelection(snapshots);
+      this.restoreSelectionPosition(snapshots);
       // collapse extrudeEdge
-      this.eachPreviewCage(function(cage, collapse) {
-         cage.collapseSplitOrBevelEdge(collapse);
-      }, snapshots);
+      this.doAll(snapshots, PreviewCage.prototype.collapseSplitOrBevelEdge);
       // restore Vertex Selection
       View.restoreVertexMode(selection); 
    }

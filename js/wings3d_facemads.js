@@ -108,19 +108,11 @@ class FaceMadsor extends Madsor {
 
    // get selected Face's vertex snapshot. for doing, and redo queue. 
    snapshotPosition() {
-      var snapshots = [];
-      this.eachPreviewCage( function(preview) {
-         snapshots.push( preview.snapshotFacePosition() );
-      });
-      return snapshots;
+      return this.snapshotAll(PreviewCage.prototype.snapshotFacePosition);
    }
 
    snapshotPositionAndNormal() {
-      var snapshots = [];
-      this.eachPreviewCage( function(preview) {
-         snapshots.push( preview.snapshotFacePositionAndNormal() );
-      });
-      return snapshots;
+      return this.snapshotAll(PreviewCage.prototype.snapshotFacePositionAndNormal);
    }
 
    snapshotTransformGroup() {
@@ -128,19 +120,13 @@ class FaceMadsor extends Madsor {
    }
 
    bevel() {
-      const snapshots = [];
-      this.eachPreviewCage( function(preview) {
-         snapshots.push( preview.bevelFace() );
-      });
-      return snapshots;
+      return this.snapshotAll(PreviewCage.prototype.bevelFace);
    }
 
    undoBevel(snapshots, selection) {
-      this.restoreMoveSelection(snapshots);
+      this.restoreSelectionPosition(snapshots);
       // collapse extrudeEdge
-      this.eachPreviewCage(function(cage, collapse) {
-         cage.collapseSplitOrBevelEdge(collapse);
-      }, snapshots);
+      this.doAll(snapshots, PreviewCage.prototype.collapseSplitOrBevelEdge);
       // rehilite selectedFace
       this.resetSelection();
       this.restoreSelection(selection);
@@ -491,7 +477,7 @@ class InsetFaceHandler extends MovePositionHandler {
    }
 
    undo() {
-      //this.madsor.restoreMoveSelection(this.snapshots);  // do we realy needs this. since we are destroying it.
+      //this.madsor.restoreSelectionPosition(this.snapshots);  // do we realy needs this. since we are destroying it.
       this.madsor.collapseEdgeNew(this.snapshots);
       //this.snapshots = undefined;
    }
@@ -508,11 +494,11 @@ class BumpFaceHandler extends MoveableCommand {
 
    doIt() {
       this.bump = this.madsor.bump(this.bump);
-      super.doIt();     // = this.madsor.moveSelection(this.movement, this.snapshots);
+      super.doIt();     // = this.madsor.moveSelection(this.snapshots, this.movement);
    }
 
    undo() {
-      super.undo(); //this.madsor.restoreMoveSelection(this.snapshots);
+      super.undo(); //this.madsor.restoreSelectionPosition(this.snapshots);
       this.madsor.undoBump(this.bump);
    }
 }
@@ -528,12 +514,12 @@ class IntrudeFaceHandler extends MoveableCommand {
 
    doIt() {
       this.intrude = this.madsor.intrude();
-      super.doIt();     // = this.madsor.moveSelection(this.movement, this.snapshots);
+      super.doIt();     // = this.madsor.moveSelection(this.snapshots, this.movement);
       return true;
    }
 
    undo() {
-      super.undo(); //this.madsor.restoreMoveSelection(this.snapshots);
+      super.undo(); //this.madsor.restoreSelectionPosition(this.snapshots);
       this.madsor.undoIntrude(this.intrude);
    }
 }

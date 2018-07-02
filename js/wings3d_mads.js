@@ -169,17 +169,14 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       return false;
    }
 
-   // move edge along movement.
-   moveSelection(movement, snapshots) {
-      this.eachPreviewCage( function(cage, snapshot) {
-         cage.moveSelection(movement, snapshot);
-      }, snapshots);
-   }
-
-   restoreMoveSelection(snapshots) {
+   restoreMoveSelection(snapshots) {   // tobe refactor out
       this.eachPreviewCage( function(cage, snapshot) {
          cage.restoreMoveSelection(snapshot);
       }, snapshots);
+}
+   // move vertices
+   moveSelectionNew(snapshots, movement) {
+      this.doAll(snapshots, PreviewCage.prototype.moveSelectionNew, movement);
    }
 
    restoreSelectionPosition(snapshots) {
@@ -195,12 +192,6 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
    rotateSelection(snapshots, quatRotate, center) {
       this.doAll(snapshots, PreviewCage.prototype.rotateSelection, quatRotate, center);
    }
-
-   // move vertices
-   moveSelectionNew(snapshots, movement) {
-      this.doAll(snapshots, PreviewCage.prototype.moveSelectionNew, movement);
-   }
-
 
    _doSelection(doName, initialCount=0) {
       const snapshots = [];
@@ -328,15 +319,15 @@ class MovePositionHandler extends MouseMoveHandler {
    }
 
    doIt() {
-      this.madsor.moveSelection(this.movement, this.snapshots);
+      this.madsor.moveSelectionNew(this.snapshots, this.movement);
    }
 
    undo() {
-      this.madsor.restoreMoveSelection(this.snapshots);
+      this.madsor.restoreSelectionPosition(this.snapshots);
    }
 
    handleMouseMove(ev, cameraView) {
-      this.madsor.moveSelection(this._updateMovement(ev, cameraView), this.snapshots);
+      this.madsor.moveSelectionNew(this.snapshots, this._updateMovement(ev, cameraView));
    }
 }
 
@@ -359,8 +350,11 @@ class MouseMoveAlongAxis extends MovePositionHandler {
 
 
 class MoveAlongNormal extends MovePositionHandler {
-   constructor(madsor, noNegative = false) {
-      super(madsor, madsor.snapshotPositionAndNormal(), 0.0);
+   constructor(madsor, noNegative = false, snapshots) {
+      if (!snapshots) {
+         snapshots = madsor.snapshotPositionAndNormal();
+      }
+      super(madsor, snapshots, 0.0);
       this.noNegative = noNegative;
    }
 
@@ -481,7 +475,7 @@ class BevelHandler extends MovePositionHandler {
       this.snapshots = this.madsor.bevel();   // should test for current snapshots and prev snapshots? should not change
       // no needs to recompute limit, wont change, 
       // move 
-      super.doIt();  // = this.madsor.moveSelection(this.movement, this.snapshots);
+      super.doIt();  // = this.madsor.moveSelection(this.snapshots, this.movement);
    }
 
    undo() {
@@ -500,11 +494,11 @@ class ExtrudeHandler extends MoveableCommand {
 
    doIt() {
       this.contourEdges = this.madsor.extrude(this.contourEdges);
-      super.doIt();     // = this.madsor.moveSelection(this.movement, this.snapshots);
+      super.doIt();     // = this.madsor.moveSelection(this.snapshots, this.movement);
    }
 
    undo() {
-      super.undo(); //this.madsor.restoreMoveSelection(this.snapshots);
+      super.undo(); //this.madsor.restoreSelectionPosition(this.snapshots);
       this.madsor.undoExtrude(this.contourEdges);
    }
 }
