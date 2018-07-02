@@ -2496,7 +2496,8 @@ PreviewCage.prototype.snapshotPosition = function(vertices, normalArray) {
    };
    ret.vertices = vertices;
    // allocated save position data.
-   ret.position = new Float32Array(ret.vertices.size*3);
+   const length = vertices.length ? vertices.length : vertices.size; // could be array or set
+   ret.position = new Float32Array(length*3);
    // use the vertex to collect the affected polygon and the affected edge.
    let i = 0;
    for (let vertex of ret.vertices) {
@@ -4564,10 +4565,11 @@ PreviewCage.prototype.undoMirrorFace = function(undoMirror) {
 PreviewCage.prototype.cornerEdge = function() {
    const selectedEdge = this.getSelectedSorted();
 
-   let vertices = [];
-   let splitEdges = [];
-   let dissolveEdges = new Set;
-   let vertex = vec3.create();
+   const faces = [];
+   const vertices = [];
+   const splitEdges = [];
+   const dissolveEdges = [];
+   const vertex = vec3.create();
    for (let wEdge of selectedEdge) {
       let three;
       let five = wEdge.left;
@@ -4586,23 +4588,54 @@ PreviewCage.prototype.cornerEdge = function() {
          }
       }
       if (three && five) {
+         faces.push( three.face );
+         faces.push( five.face );
          // insert mid point at wEdge.
          vec3.add(vertex, three.origin.vertex, five.origin.vertex);
-         vec3.scale(vertex, 0.5);
+         vec3.scale(vertex, vertex, 0.5);
          let outEdge = this.geometry.splitEdge(five, vertex);
          vertices.push(five.origin);
          splitEdges.push(outEdge.pair);
          // insert edge from mid-pt to five's diagonal point.
          let connectOut = this.geometry.insertEdge(outEdge, five.next.next.next);
-         dissolveEdges.add(connectOut.pair);
+         dissolveEdges.push(connectOut.pair);
+         faces.push(connectOut.face);
       }
    }
+   // compute direction, and copy position.
+   let count = 0;
+   let direction = new Float32Array(dissolveEdges.length*3);
+   for (let connect of dissolveEdges) {
+      const dir = direction.subarray(count, count+3);
+      vec3.sub(dir, connect.origin.vertex, connect.destination().vertex);
+      vec3.normalize(dir, dir);
+      count += 3;
+   }
+   const ret = this.snapshotPosition(vertices, direction);
    this._updatePreviewAll();
    // reselect splitEdges
+   for (let hEdge of splitEdges) {
+      this.selectEdge(hEdge);
+   }
 
    // undo stuff
-   return {vertices: vertices, splitEdgs: splitEdges, dissolveEdges: dissolveEdges}; 
+   ret.splitEdges = splitEdges;
+   ret.dissolveEdges = dissolveEdges;
+   return ret; 
 };
+PreviewCage.prototype.undoCornerEdge = function(undo) {
+   // dissolveEdges first
+   for (let hEdge of undo.dissolveEdges) {
+      this.geometry.removeEdge(hEdge);
+   }
+
+   // unselect the splitEdges then restore to original situation
+   for (let hEdge of undo.splitEdges) {
+      this.selectEdge(hEdge);
+      this.geometry.collapseEdge(hEdge);
+   }
+   this._updatePreviewAll();
+}
 
 
 //----------------------------------------------------------------------------------------------------------
@@ -9009,19 +9042,11 @@ class FaceMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
 
    // get selected Face's vertex snapshot. for doing, and redo queue. 
    snapshotPosition() {
-      var snapshots = [];
-      this.eachPreviewCage( function(preview) {
-         snapshots.push( preview.snapshotFacePosition() );
-      });
-      return snapshots;
+      return this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.snapshotFacePosition);
    }
 
    snapshotPositionAndNormal() {
-      var snapshots = [];
-      this.eachPreviewCage( function(preview) {
-         snapshots.push( preview.snapshotFacePositionAndNormal() );
-      });
-      return snapshots;
+      return this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.snapshotFacePositionAndNormal);
    }
 
    snapshotTransformGroup() {
@@ -9029,19 +9054,13 @@ class FaceMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
    }
 
    bevel() {
-      const snapshots = [];
-      this.eachPreviewCage( function(preview) {
-         snapshots.push( preview.bevelFace() );
-      });
-      return snapshots;
+      return this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.bevelFace);
    }
 
    undoBevel(snapshots, selection) {
-      this.restoreMoveSelection(snapshots);
+      this.restoreSelectionPosition(snapshots);
       // collapse extrudeEdge
-      this.eachPreviewCage(function(cage, collapse) {
-         cage.collapseSplitOrBevelEdge(collapse);
-      }, snapshots);
+      this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.collapseSplitOrBevelEdge);
       // rehilite selectedFace
       this.resetSelection();
       this.restoreSelection(selection);
@@ -9392,7 +9411,7 @@ class InsetFaceHandler extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Move
    }
 
    undo() {
-      //this.madsor.restoreMoveSelection(this.snapshots);  // do we realy needs this. since we are destroying it.
+      //this.madsor.restoreSelectionPosition(this.snapshots);  // do we realy needs this. since we are destroying it.
       this.madsor.collapseEdgeNew(this.snapshots);
       //this.snapshots = undefined;
    }
@@ -9409,11 +9428,11 @@ class BumpFaceHandler extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["Movea
 
    doIt() {
       this.bump = this.madsor.bump(this.bump);
-      super.doIt();     // = this.madsor.moveSelection(this.movement, this.snapshots);
+      super.doIt();     // = this.madsor.moveSelection(this.snapshots, this.movement);
    }
 
    undo() {
-      super.undo(); //this.madsor.restoreMoveSelection(this.snapshots);
+      super.undo(); //this.madsor.restoreSelectionPosition(this.snapshots);
       this.madsor.undoBump(this.bump);
    }
 }
@@ -9429,12 +9448,12 @@ class IntrudeFaceHandler extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["Mo
 
    doIt() {
       this.intrude = this.madsor.intrude();
-      super.doIt();     // = this.madsor.moveSelection(this.movement, this.snapshots);
+      super.doIt();     // = this.madsor.moveSelection(this.snapshots, this.movement);
       return true;
    }
 
    undo() {
-      super.undo(); //this.madsor.restoreMoveSelection(this.snapshots);
+      super.undo(); //this.madsor.restoreSelectionPosition(this.snapshots);
       this.madsor.undoIntrude(this.intrude);
    }
 }
@@ -9749,17 +9768,14 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       return false;
    }
 
-   // move edge along movement.
-   moveSelection(movement, snapshots) {
-      this.eachPreviewCage( function(cage, snapshot) {
-         cage.moveSelection(movement, snapshot);
-      }, snapshots);
-   }
-
-   restoreMoveSelection(snapshots) {
+   restoreMoveSelection(snapshots) {   // tobe refactor out
       this.eachPreviewCage( function(cage, snapshot) {
          cage.restoreMoveSelection(snapshot);
       }, snapshots);
+}
+   // move vertices
+   moveSelectionNew(snapshots, movement) {
+      this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_2__wings3d_model__["PreviewCage"].prototype.moveSelectionNew, movement);
    }
 
    restoreSelectionPosition(snapshots) {
@@ -9775,12 +9791,6 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
    rotateSelection(snapshots, quatRotate, center) {
       this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_2__wings3d_model__["PreviewCage"].prototype.rotateSelection, quatRotate, center);
    }
-
-   // move vertices
-   moveSelectionNew(snapshots, movement) {
-      this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_2__wings3d_model__["PreviewCage"].prototype.moveSelectionNew, movement);
-   }
-
 
    _doSelection(doName, initialCount=0) {
       const snapshots = [];
@@ -9908,15 +9918,15 @@ class MovePositionHandler extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["M
    }
 
    doIt() {
-      this.madsor.moveSelection(this.movement, this.snapshots);
+      this.madsor.moveSelectionNew(this.snapshots, this.movement);
    }
 
    undo() {
-      this.madsor.restoreMoveSelection(this.snapshots);
+      this.madsor.restoreSelectionPosition(this.snapshots);
    }
 
    handleMouseMove(ev, cameraView) {
-      this.madsor.moveSelection(this._updateMovement(ev, cameraView), this.snapshots);
+      this.madsor.moveSelectionNew(this.snapshots, this._updateMovement(ev, cameraView));
    }
 }
 
@@ -9939,8 +9949,11 @@ class MouseMoveAlongAxis extends MovePositionHandler {
 
 
 class MoveAlongNormal extends MovePositionHandler {
-   constructor(madsor, noNegative = false) {
-      super(madsor, madsor.snapshotPositionAndNormal(), 0.0);
+   constructor(madsor, noNegative = false, snapshots) {
+      if (!snapshots) {
+         snapshots = madsor.snapshotPositionAndNormal();
+      }
+      super(madsor, snapshots, 0.0);
       this.noNegative = noNegative;
    }
 
@@ -10061,7 +10074,7 @@ class BevelHandler extends MovePositionHandler {
       this.snapshots = this.madsor.bevel();   // should test for current snapshots and prev snapshots? should not change
       // no needs to recompute limit, wont change, 
       // move 
-      super.doIt();  // = this.madsor.moveSelection(this.movement, this.snapshots);
+      super.doIt();  // = this.madsor.moveSelection(this.snapshots, this.movement);
    }
 
    undo() {
@@ -10080,11 +10093,11 @@ class ExtrudeHandler extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["Moveab
 
    doIt() {
       this.contourEdges = this.madsor.extrude(this.contourEdges);
-      super.doIt();     // = this.madsor.moveSelection(this.movement, this.snapshots);
+      super.doIt();     // = this.madsor.moveSelection(this.snapshots, this.movement);
    }
 
    undo() {
-      super.undo(); //this.madsor.restoreMoveSelection(this.snapshots);
+      super.undo(); //this.madsor.restoreSelectionPosition(this.snapshots);
       this.madsor.undoExtrude(this.contourEdges);
    }
 }
@@ -10278,19 +10291,11 @@ class EdgeMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
 
    // get selected Edge's vertex snapshot. for doing, and redo queue. 
    snapshotPosition() {
-      var snapshots = [];
-      this.eachPreviewCage( function(preview) {
-         snapshots.push( preview.snapshotEdgePosition() );
-      });
-      return snapshots;
+      return this.snapshotAll(Preview.prototype.snapshotEdgePosition());
    }
 
    snapshotPositionAndNormal() {
-      var snapshots = [];
-      this.eachPreviewCage( function(preview) {
-         snapshots.push( preview.snapshotEdgePositionAndNormal() );
-      });
-      return snapshots;
+      return this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].snapshotEdgePositionAndNormal());
    }
 
    snapshotTransformGroup() {
@@ -10319,17 +10324,14 @@ class EdgeMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
    }
 
    bevel() {
-      var snapshots = [];
-      this.eachPreviewCage( function(preview) {
-         snapshots.push( preview.bevelEdge() );
-      });
+      const snapshots = this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.bevelEdge);
       // change to facemode.
       __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["restoreFaceMode"](snapshots);
       return snapshots;
    }
 
    undoBevel(snapshots, selection) {
-      this.restoreMoveSelection(snapshots);
+      this.restoreSelectionPosition(snapshots);
       this.collapseEdge(snapshots);
       __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["restoreEdgeMode"](selection);
    }
@@ -10403,10 +10405,8 @@ class EdgeMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
       });
       return loop;
    }
-   collapseEdge(collapseArray) {  // undo of splitEdge.
-      this.eachPreviewCage(function(cage, collapse) {
-         cage.collapseSplitOrBevelEdge(collapse);
-      }, collapseArray);
+   collapseEdge(snapshots) {  // undo of splitEdge.
+      this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.collapseSplitOrBevelEdge);
    }
 
    // dissolve edge
@@ -10445,6 +10445,10 @@ class EdgeMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
 
    corner() {
       return this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.cornerEdge);
+   }
+
+   undoCorner(snapshots) {
+      this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.undoCornerEdge);
    }
 
 
@@ -10655,7 +10659,7 @@ class CreaseEdgeHandler extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["Mov
    }
 
    undo() {
-      super.undo(); //this.madsor.restoreMoveSelection(this.snapshots);
+      super.undo(); //this.madsor.restoreSelectionPosition(this.snapshots);
       this.madsor.undoExtrude(this.contourEdges);
    }
 }
@@ -10728,15 +10732,17 @@ class EdgeCornerHandler extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["Mov
       super();
       this.madsor = madsor;
       this.cornerEdges = madsor.corner();
-      //this.moveHandler = new MoveAlongNormal(madsor);
+      this.moveHandler = new __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["MoveAlongNormal"](madsor, false, this.cornerEdges);
    }
 
    doIt() {
-
+      this.cornerEdges = this.madsor.corner();
+      super.doIt();
    }
 
    undo() {
-
+      // super.undo();  // not need, because movement was deleted
+      this.madsor.undoCorner(this.cornerEdges);
    }
 
 }
@@ -11385,19 +11391,11 @@ class VertexMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"]
 
    // get selected vertex snapshot. for doing, and redo queue. 
    snapshotPosition() {
-      var snapshots = [];
-      this.eachPreviewCage( function(preview) {
-         snapshots.push( preview.snapshotVertexPosition() );
-      });
-      return snapshots;
+      return this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.snapshotVertexPosition);
    }
 
    snapshotPositionAndNormal() {
-      var snapshots = [];
-      this.eachPreviewCage( function(preview) {
-         snapshots.push( preview.snapshotVertexPositionAndNormal() );
-      });
-      return snapshots;
+      return this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.snapshotVertexPositionAndNormal);
    }
 
    snapshotTransformGroup() {
@@ -11405,21 +11403,17 @@ class VertexMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"]
    }
 
    bevel() {
-      var snapshots = [];
-      this.eachPreviewCage( function(preview) {
-         snapshots.push( preview.bevelVertex() );
-      });
+      let snapshots = this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.bevelVertex);
       // change to facemode.
       __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreFaceMode"](snapshots);
       return snapshots;
+   
    }
 
    undoBevel(snapshots, selection) {
-      this.restoreMoveSelection(snapshots);
+      this.restoreSelectionPosition(snapshots);
       // collapse extrudeEdge
-      this.eachPreviewCage(function(cage, collapse) {
-         cage.collapseSplitOrBevelEdge(collapse);
-      }, snapshots);
+      this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.collapseSplitOrBevelEdge);
       // restore Vertex Selection
       __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreVertexMode"](selection); 
    }
