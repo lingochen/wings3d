@@ -99,12 +99,12 @@ class EditCommandSimple extends EditCommand {
    }
 
    doIt(currentMadsor) {
-      this.undo = currentMadsor[this.commandName]();
-      return (this.undo !== false);
+      this.result = currentMadsor[this.commandName]();
+      return (this.result !== false);
    }
 
    undo(currentMadsor) {
-      this.undo.undo.call(currentMadsor, this.undo.snapshots);
+      this.result.undo.call(currentMadsor, this.result.snapshots);
       //this.undo(currentMadsor);   // originally using return function, but now we needs to serialize EditCommand, so pass back function and argument.
    }
 }

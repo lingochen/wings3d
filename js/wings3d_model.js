@@ -1170,17 +1170,16 @@ PreviewCage.prototype.selectFace = function(polygon) {
 
 
 PreviewCage.prototype._resetSelectFace = function() {
-   var oldSelected = this.selectedSet;
+   const oldSelectedFaces = this.selectedSet;
    this.selectedSet = new Set;
    this.bench.resetSelectFace();
-   return oldSelected;
+   return oldSelectedFaces;
 }
 
 PreviewCage.prototype._selectFaceMore = function() {
-   const oldSelected = this.selectedSet;
-   this.selectedSet = new Set(oldSelected);
+   const snapshot = this.snapshotSelectionFace();
    // seleceted selectedFace's vertex's all faces.
-   for (let polygon of oldSelected) {
+   for (let polygon of snapshot.selectedFaces) {
       for (let face of polygon.oneRing()) {
          // check if face is not selected.
          if ( (face !== null) && !this.selectedSet.has(face) ) {
@@ -1189,40 +1188,38 @@ PreviewCage.prototype._selectFaceMore = function() {
       }
    }
 
-   return oldSelected;
+   return snapshot;
 };
 
 PreviewCage.prototype._selectFaceLess = function() {
-   const oldSelection = this.selectedSet;
-   this.selectedSet = new Set(oldSelection);
+   const snapshot = this.snapshotSelectionFace();
 
-   for (let selected of oldSelection) {
+   for (let selected of snapshot.selectedFaces) {
       for (let polygon of selected.adjacent()) {
-         if (!oldSelection.has(polygon)) {      // selected is a boundary polygon
+         if (!snapshot.selectedFaces.has(polygon)) {      // selected is a boundary polygon
             this.selectFace(selected); // now removed.
             break;
          }
       }
    }
 
-   return oldSelection;
+   return snapshot;
 };
 
 PreviewCage.prototype._selectFaceAll = function() {
-   const oldSelection = this.selectedSet;
-   this.selectedSet = new Set(oldSelection);
+   const snapshot = this.snapshotSelectionFace();
 
    for (let polygon of this.geometry.faces) {
-      if (polygon.isLive && !oldSelection.has(polygon)) {
+      if (polygon.isLive && !snapshot.selectedFaces.has(polygon)) {
          this.selectFace(polygon);
       }
    }
 
-   return oldSelection;
+   return snapshot;
 };
 
 PreviewCage.prototype._selectFaceInvert = function() {
-   const snapshot = new Set(this.selectedSet);
+   const snapshot = this.snapshotSelectionFace();;
 
    for (let polygon of this.geometry.faces) {
       if (polygon.isLive()) {
@@ -1234,10 +1231,10 @@ PreviewCage.prototype._selectFaceInvert = function() {
 };
 
 PreviewCage.prototype._selectFaceAdjacent = function() {
-   const snapshot = new Set(this.selectedSet);
+   const snapshot = this.snapshotSelectionFace();;
 
    // seleceted selectedFace's vertex's all faces.
-   for (let polygon of snapshot) {
+   for (let polygon of snapshot.selectedFaces) {
       for (let face of polygon.adjacent()) {
          // check if face is not selected.
          if ( (face !== null) && !this.selectedSet.has(face) ) {
@@ -1250,11 +1247,11 @@ PreviewCage.prototype._selectFaceAdjacent = function() {
 };
 
 PreviewCage.prototype._selectFaceSimilar = function() {
-   const snapshot = new Set(this.selectedSet);
-   const similarFace = new SimilarFace(snapshot);
+   const snapshot = this.snapshotSelectionFace();;
+   const similarFace = new SimilarFace(snapshot.selectedFaces);
 
    for (let polygon of this.geometry.faces) {
-      if (polygon.isLive && !snapshot.has(polygon) && similarFace.find(polygon)) {
+      if (polygon.isLive() && !snapshot.selectedFaces.has(polygon) && similarFace.find(polygon)) {
          this.selectFace(polygon);
       }
    }

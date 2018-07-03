@@ -583,7 +583,8 @@ function redoEdit() {
 
 function undoEdit() {
    if (undo.current >= 0) {
-      undo.queue[undo.current--].undo(mode.current);
+      const cmd = undo.queue[undo.current--];
+      cmd.undo(mode.current);
       Renderer.needToRedraw();
    }
 };
