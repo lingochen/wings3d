@@ -179,9 +179,12 @@ PreviewCage.prototype.rayPick = function(ray) {
 // body selection.
 PreviewCage.prototype.changeFromBodyToFaceSelect = function() {
    // do nothing, already selected or deselected.
+   return this.snapshotSelectionBody();
 };
 
 PreviewCage.prototype.changeFromBodyToEdgeSelect = function() {
+   const snapshot = this.snapshotSelectionBody();
+
    if (this.hasSelection()) {
       this._resetBody();
       this.groupSelection = true;
@@ -194,9 +197,13 @@ PreviewCage.prototype.changeFromBodyToEdgeSelect = function() {
       this.groupSelection = false;
       this.bench.uploadEdgePreview();
    }
+
+   return snapshot;
 };
 
 PreviewCage.prototype.changeFromBodyToVertexSelect = function() {
+   const snapshot = this.snapshotSelectionBody();
+
    if (this.hasSelection()) {
       this._resetBody();
       this.groupSelection = true;
@@ -209,7 +216,14 @@ PreviewCage.prototype.changeFromBodyToVertexSelect = function() {
       this.groupSelection = false;
       this.bench.uploadVertexPreview();
    }
+
+   return snapshot;
 };
+
+// hack for calling restoerXXXSelection. double dispatch?
+PreviewCage.prototype.restoreSelection = function(snapshot, madsor) {
+   madsor._restoreSelection(this, snapshot);
+}
 
 PreviewCage.prototype.restoreFaceSelection = function(snapshot) {
    for (let polygon of snapshot.selectedFaces) {
@@ -324,10 +338,25 @@ PreviewCage.prototype.selectionSize = function() {
    return this.selectedSet.size;
 }
 
-
 PreviewCage.prototype.snapshotSelection = function() {
    return new Set(this.selectedSet);
 };
+
+PreviewCage.prototype.snapshotSelectionFace = function() {
+   return {selectedFaces: new Set(this.selectedSet)};
+}
+
+PreviewCage.prototype.snapshotSelectionEdge = function() {
+   return {wingedEdges: new Set(this.selectedSet)};
+}
+
+PreviewCage.prototype.snapshotSelectionVertex = function() {
+   return {vertices: new Set(this.selectedSet)};
+}
+
+PreviewCage.prototype.snapshotSelectionBody = function() {
+   return {body: new Set(this.selectedSet)};
+}
 
 PreviewCage.prototype.setVertexColor = function(vertex, color) {
    // selected color
@@ -455,6 +484,8 @@ PreviewCage.prototype._selectVertexSimilar = function() {
 };
 
 PreviewCage.prototype.changeFromVertexToFaceSelect = function() {
+   const snapshot = this.snapshotSelectionVertex();
+
    var self = this;
    var oldSelected = this._resetSelectVertex();
    //
@@ -466,9 +497,13 @@ PreviewCage.prototype.changeFromVertexToFaceSelect = function() {
          }
       });
    }
+
+   return snapshot;
 };
 
 PreviewCage.prototype.changeFromVertexToEdgeSelect = function() {
+   const snapshot = this.snapshotSelectionVertex();
+
    var self = this;
    var oldSelected = this._resetSelectVertex();
    //
@@ -480,14 +515,20 @@ PreviewCage.prototype.changeFromVertexToEdgeSelect = function() {
          }
       });
    }
+
+   return snapshot;
 };
 
 PreviewCage.prototype.changeFromVertexToBodySelect = function() {
+   const snapshot = this.snapshotSelectionVertex();
+
    if (this.hasSelection()) {
       // select whole body,
       this._resetSelectVertex();
       this.selectBody();
    }
+
+   return snapshot;
 };
 
 PreviewCage.prototype.restoreFromVertexToFaceSelect = function(snapshot) {
@@ -1013,8 +1054,9 @@ PreviewCage.prototype._selectEdgeSimilar = function() {
 
 
 PreviewCage.prototype.changeFromEdgeToFaceSelect = function() {
+   const snapshot = this.snapshotSelectionEdge();
+
    const oldSelected = this._resetSelectEdge();
-   //
    for (let wingedEdge of oldSelected) {
       // for each WingedEdge, select both it face.
       for (let halfEdge of wingedEdge) {
@@ -1023,11 +1065,14 @@ PreviewCage.prototype.changeFromEdgeToFaceSelect = function() {
          }
       }
    }
+
+   return snapshot;
 };
 
 PreviewCage.prototype.changeFromEdgeToVertexSelect = function() {
+   const snapshot = this.snapshotSelectionEdge();
+
    const oldSelected = this._resetSelectEdge();
-   //
    for (let wingedEdge of oldSelected) {
       // for each WingedEdge, select both it face.
       for (let halfEdge of wingedEdge) {
@@ -1035,14 +1080,19 @@ PreviewCage.prototype.changeFromEdgeToVertexSelect = function() {
             this.selectVertex(halfEdge.origin);
          }
       }
-   } 
+   }
+   return snapshot;
 };
 
 PreviewCage.prototype.changeFromEdgeToBodySelect = function() {
+   const snapshot = this.snapshotSelectionEdge();
+
    if (this.hasSelection()) {
       this._resetSelectEdge();
       this.selectBody();
    }
+
+   return snapshot;
 };
 
 PreviewCage.prototype.restoreFromEdgeToFaceSelect = function(snapshot) {
@@ -1214,6 +1264,8 @@ PreviewCage.prototype._selectFaceSimilar = function() {
 
 
 PreviewCage.prototype.changeFromFaceToEdgeSelect = function() {
+   const snapshot = this.snapshotSelectionFace();
+
    var self = this;
    var oldSelected = this._resetSelectFace();
    for (let polygon of oldSelected) {
@@ -1224,9 +1276,13 @@ PreviewCage.prototype.changeFromFaceToEdgeSelect = function() {
          }
       });
    }
+
+   return snapshot;
 };
 
 PreviewCage.prototype.changeFromFaceToVertexSelect = function() {
+   const snapshot = this.snapshotSelectionFace();
+
    var self = this
    var oldSelected = this._resetSelectFace();
    for (let polygon of oldSelected) {
@@ -1237,13 +1293,19 @@ PreviewCage.prototype.changeFromFaceToVertexSelect = function() {
          }
       });
    }
+
+   return snapshot;
 };
 
 PreviewCage.prototype.changeFromFaceToBodySelect = function() {
+   const snapshot = this.snapshotSelectionFace();
+
    if (this.hasSelection()) {
       this._resetSelectFace();
       this.selectBody();
    }
+
+   return snapshot;
 };
 
 PreviewCage.prototype.restoreFromFaceToEdgeSelect = function(snapshot) {
@@ -1567,7 +1629,8 @@ PreviewCage.prototype.extrudeFace = function(contours) {
 
 
 // collapse list of edges
-PreviewCage.prototype.collapseExtrudeEdge = function(edges) {
+PreviewCage.prototype.collapseExtrudeEdge = function(undo) {
+   const edges = undo.extrudeEdges;
    const affectedPolygon = new Set;
    const oldSize = this._getGeometrySize();
    for (let edge of edges) {
@@ -1795,7 +1858,8 @@ PreviewCage.prototype.connectVertex = function() {
    return {halfEdges: edgeList, wingedEdges: wingedEdgeList};
 };
 // pair with connectVertex.
-PreviewCage.prototype.dissolveConnect = function(insertEdges) {
+PreviewCage.prototype.dissolveConnect = function(connect) {
+   const insertEdges = connect.halfEdges;
    const oldSize = this._getGeometrySize();
 
    // dissolve in reverse direction
@@ -1828,7 +1892,7 @@ PreviewCage.prototype.reinsertDissolveEdge = function(dissolveEdges) {
    // walk form last to first.
    for (let i = (dissolveEdges.length-1); i >= 0; --i) {
       let dissolve = dissolveEdges[i];
-      dissolve.undo();
+      this.geometry.restoreDissolveEdge(dissolve.undo);
       this.selectEdge(dissolve.halfEdge);
    }
    this._updatePreviewAll(oldSize, this.geometry.affected);
@@ -1988,7 +2052,7 @@ PreviewCage.prototype.dissolveSelectedVertex = function() {
    const undoArray = {array: [], selectedFaces: []};
    for (let vertex of this.selectedSet) {
       let result = this.geometry.dissolveVertex(vertex);
-      undoArray.array.unshift( result.undo );
+      undoArray.array.unshift( result );
       undoArray.selectedFaces.push( result.polygon );
    }
    this._resetSelectVertex();
@@ -1998,9 +2062,9 @@ PreviewCage.prototype.dissolveSelectedVertex = function() {
 };
 PreviewCage.prototype.undoDissolveVertex = function(undoArray) {
    const oldSize = this._getGeometrySize();
-   for (let undo of undoArray) {
-      let vertex = undo();
-      this.selectVertex(vertex);
+   for (let undo of undoArray.array) {
+      this.geometry.restoreDissolveVertex(undo);
+      this.selectVertex(undo.vertex);
    }
    // update previewBox.
    this._updatePreviewAll(oldSize, this.geometry.affected);

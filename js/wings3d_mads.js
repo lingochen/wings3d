@@ -89,24 +89,11 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
    } 
 
    getContextMenu() {
-      var hasSelection = false;
-      this.eachPreviewCage( function(cage) {
-         hasSelection = hasSelection || cage.hasSelection();
-      });
-      if (hasSelection) {
+      if (this.hasSelection()) {
          return this.contextMenu;
       } else {
          return null;
       }
-   }
-
-   snapshotSelection() {
-      const snapshots = [];
-      const self = this;
-      this.eachPreviewCage( function(cage) {
-         snapshots.push( self._wrapSelection(cage.snapshotSelection()) );
-      });
-      return snapshots;
    }
 
    snapshotAll(func, ...args) {
@@ -123,22 +110,20 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
    }
 
    doAll(snapshots, func, ...args) {
-      for (let obj of snapshots) {
-         func.call(obj.preview, obj.snapshot, ...args);
+      if (snapshots) {
+         for (let obj of snapshots) {
+            func.call(obj.preview, obj.snapshot, ...args);
+         }
+      } else {
+         for (let preview of this.eachCage()) {
+            func.call(preview, undefined, ...args);
+         }
       }
    }
 
-   // can be use arguments object?
-   eachPreviewCage(func, items) {
-      const world = View.getWorld();
-      if (items) {
-         for (var i = 0; i < world.length; ++i) {
-            func(world[i], items[i]);
-         }
-      } else {
-         for (var i = 0; i < world.length; ++i) {
-            func(world[i]);
-         }
+   * eachCage() {
+      for (let cage of View.getWorld()) {
+         yield cage;
       }
    }
 
@@ -160,6 +145,14 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       }
    }
 
+   * notSelectedCage() {
+      for (let cage of View.getWorld()) {
+         if (!cage.hasSelection()) {
+            yield cage;
+         }
+      }
+   }
+
    hasSelection() {
       for (let cage of View.getWorld()) {
          if (cage.hasSelection()) {
@@ -169,11 +162,10 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       return false;
    }
 
-   restoreMoveSelection(snapshots) {   // tobe refactor out
-      this.eachPreviewCage( function(cage, snapshot) {
-         cage.restoreMoveSelection(snapshot);
-      }, snapshots);
-}
+   restoreMoveSelection(snapshots) {
+      this.doAll(snapshots, PreviewCage.prototype.restoreMoveSelection);
+   }
+
    // move vertices
    moveSelectionNew(snapshots, movement) {
       this.doAll(snapshots, PreviewCage.prototype.moveSelectionNew, movement);
@@ -193,23 +185,22 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       this.doAll(snapshots, PreviewCage.prototype.rotateSelection, quatRotate, center);
    }
 
-   _doSelection(doName, initialCount=0) {
-      const snapshots = [];
-      const self = this;
+   snapshotSelection() {
+      return this.snapshotAll(PreviewCage.prototype['snapshotSelection' + this.modeName()]);
+   }
+
+   _doSelection(doName, forceAll=false) {
       doName = '_select' + this.modeName() + doName;
-      let count = initialCount;        // set initialCount, so we can force undo
-      this.eachPreviewCage( function(cage) {
-         const selection = cage[doName]();
-         snapshots.push( self._wrapSelection(selection) );
-         count += selection.size;
-      });
-      if (count != 0) {
-         return function() {
-            self.resetSelection();
-            self.restoreSelection(snapshots);
+      const snapshots = [];
+      for (let cage of this.eachCage()) {    // this is snapshot all
+         if (forceAll || cage.hasSelection()) {
+            snapshots.push( {preview: cage, snapshot: cage[doName]()} );
          }
-      } // else
-      return null;  
+      }
+      if (snapshots.length > 0) {
+         return {undo: this.undoDoSelection, snapshots: snapshots};
+      }
+      return false;  // null? 
    }
 
    similarSelection() {
@@ -221,11 +212,11 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
    }
 
    invertSelection() {
-      return this._doSelection('Invert', 1);
+      return this._doSelection('Invert', true);
    }
 
    allSelection() {
-      return this._doSelection('All', 1);
+      return this._doSelection('All', true);
    }
 
    lessSelection() {
@@ -237,21 +228,18 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
    }
 
    resetSelection() {
-      const snapshots = [];
-      const self = this;
-      this.eachPreviewCage( function(cage) {
-         snapshots.push( self._resetSelection(cage) );
-      });
-      return function() {
-         self.restoreSelection(snapshots);
+      for (let cage of this.selectedCage()) {
+         this._resetSelection(cage);
       }
    }
 
    restoreSelection(selection) {
-      const self = this;
-      this.eachPreviewCage( function(cage, snapshot) {
-         self._restoreSelection(cage, snapshot);
-      }, selection);     
+      this.doAll(selection, PreviewCage.prototype.restoreSelection, this); 
+   }
+
+   undoDoSelection(snapshots) {
+      this.resetSelection();
+      this.restoreSelection(snapshots);
    }
 
    isVertexSelectable() { return false; }

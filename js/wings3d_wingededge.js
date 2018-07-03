@@ -1965,28 +1965,37 @@ WingedTopology.prototype.removeEdge = function(outEdge) {
 
    if (delFace !== null) {    // guaranteed to be non-null, but maybe later use case will change
       this._freePolygon(delFace);
+      remove.delFace = delFace;
    }
    this._freeEdge(outEdge);
-   // return undo functions
-   const self = this;
-   return function() {
-      self.insertEdge(remove.inPrev, remove.inNext, inEdge, delFace);
-   };
+
+   // return undo function
+   return remove;
    //return face;   // return the remaining face handle
 };
+WingedTopology.prototype.restoreRemoveEdge = function(undo) {
+   this.insertEdge(undo.inPrev, undo.inNext, undo.inEdge, undo.delFace);
+};
+
 
 
 WingedTopology.prototype.dissolveEdge = function(outEdge, collapsibleWings) {
    // check next only connect to outEdge? 
-   const self = this;
    const inEdge = outEdge.pair;
    if (outEdge.next.pair.next === inEdge) {
-      const outNext = outEdge.next;
       return this.collapseEdge(inEdge, collapsibleWings);   // collapse inward
    } else if (inEdge.next.pair.next === outEdge) {
       return this.collapseEdge(outEdge, collapsibleWings);  // collapse outward
    } else {
       return this.removeEdge(outEdge);    // normal dissolve
+   }
+};
+
+WingedTopology.prototype.restoreDissolveEdge = function(undo) {
+   if (undo.inPrev) {
+      this.restoreRemoveEdge(undo);
+   } else {
+      this.restoreCollapseEdge(undo);
    }
 };
 
@@ -2125,15 +2134,13 @@ WingedTopology.prototype.dissolveVertex = function(vertex) {
    vec3.copy(pt, vertex.vertex);
    if (vertex.isIsolated()) {
       this._freeVertex(vertex);
-      return function() {
-         self.addVertex(pt, vertex);
-      };
+      return {pt: pt, vertex: vertex};
    } else {
       this.addAffectedEdgeAndFace(vertex);
       let count = 0;
       const firstIn = vertex.outEdge.pair;
       let lastIn;
-      // slide edge, move edge down like collapse edge, withou thehe collapsing.
+      // slide edge, move edge down like collapse edge, without the collapsing.
       let outEdge;    // outEdge for new Polygon
       vertex.eachInEdge( function(inEdge) {
          //inEdges.unshift( inEdge );
@@ -2168,37 +2175,42 @@ WingedTopology.prototype.dissolveVertex = function(vertex) {
       } while (outEdge !== vertexOutEdge);
       // free vertex
       this._freeVertex(vertex);
-      return {polygon: polygon, undo: function() {
-         // reallocated free vertex
-         self.addVertex(pt, vertex);
-         // undo collapse loop
-         for (let undo of undoCollapseLoop) {
-            undo();
-         }
-         // reattach edges to vertex
-         let inEdge = lastIn;
-         lastIn = lastIn.next.pair;
-         let prevIn = firstIn;
-         do {
-            let outEdge = inEdge.pair;
-            outEdge.origin = vertex;
-            let prevOut = prevIn.pair;
-            prevOut.next = inEdge.next;
-            inEdge.next = prevOut;
-            prevOut.face = inEdge.face;  
-            ++prevOut.face.numberOfVertex;
-            // ready for next.
-            prevIn = inEdge;
-            inEdge = outEdge.next.pair;
-         } while (inEdge !== lastIn);
-         vertex.outEdge = firstIn.pair;
-         // free polygon
-         self._freePolygon(polygon);
-         // selected vertex
-         self.addAffectedEdgeAndFace(vertex);
-         return vertex;
-      }};
+      return {polygon: polygon, pt: pt, vertex: vertex, undoCollapseLoop: undoCollapseLoop, lastIn: lastIn, firstIn: firstIn};
    }
+};
+WingedTopology.prototype.restoreDissolveVertex = function(undo) {
+   if (undo.polygon) {
+      // reallocated free vertex
+      const vertex = this.addVertex(undo.pt, undo.vertex);
+      // undo collapse loop
+      for (let loop of undo.undoCollapseLoop) {
+         this._restoreLoop(loop.next, loop.hEdge, loop.polygon);
+      }
+      // reattach edges to vertex
+      let inEdge = undo.lastIn;
+      let lastIn = undo.lastIn.next.pair;
+      let prevIn = undo.firstIn;
+      do {
+         let outEdge = inEdge.pair;
+         outEdge.origin = vertex;
+         let prevOut = prevIn.pair;
+         prevOut.next = inEdge.next;
+         inEdge.next = prevOut;
+         prevOut.face = inEdge.face;  
+         ++prevOut.face.numberOfVertex;
+         // ready for next.
+         prevIn = inEdge;
+         inEdge = outEdge.next.pair;
+      } while (inEdge !== lastIn);
+      vertex.outEdge = undo.firstIn.pair;
+      // free polygon
+      this._freePolygon(undo.polygon);
+      // selected vertex
+      this.addAffectedEdgeAndFace(vertex);
+   } else { // isolated vertex
+      this.addVertex(undo.pt, undo.vertex);
+   }
+   return undo.vertex;
 };
 
 //

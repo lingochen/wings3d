@@ -94,20 +94,14 @@ class BodyMadsor extends Madsor {
 
    getSelected() {
       const selection = [];
-      this.eachPreviewCage( function(cage) {
-         if (cage.hasSelection()) {
-            selection.push(cage);
-         }
-      });
+      for (let cage of this.selectedCage()) {
+         selection.push(cage);
+      }
       return selection;
    }
 
    snapshotPosition() {
-      var snapshots = [];
-      this.eachPreviewCage( function(preview) {
-         snapshots.push( preview.snapshotBodyPosition() );
-      });
-      return snapshots;
+      return this.snapshotAll(PreviewCage.prototype.snapshotBodyPosition);
    }
 
    snapshotTransformGroup() {
@@ -116,11 +110,9 @@ class BodyMadsor extends Madsor {
 
    combine() {
       const cageSelection = [];
-      this.eachPreviewCage((cage)=> {
-         if (cage.hasSelection()) {
-            cageSelection.push( cage );
-         }
-       });
+      for (let cage of this.selectedCage()) {
+         cageSelection.push( cage );
+      }
       // got at least 2 selected cage2.
       if (cageSelection.length >= 2) {
          // now do merge operation.
@@ -169,11 +161,9 @@ class BodyMadsor extends Madsor {
    }
 
    invert() {
-      this.eachPreviewCage((cage)=> {
-         if (cage.hasSelection()) {
-            cage.invertBody();
-         }
-       });
+      for (let cage of this.selectedCage()) {
+         cage.invertBody();
+      }
       // invert the draftBench's preview and update
       View.updateWorld();
       this.hiliteView = null; // invalidate hilite
@@ -205,57 +195,50 @@ class BodyMadsor extends Madsor {
       }    
    }
 
-   similarSelection() {
-      // first compute selected body's metric
-      const snapshot = new Set;
-      this.eachPreviewCage( function(cage) {
-         if (cage.hasSelection()) {
-            const size = cage._getGeometrySize();
-            const metric = size.vertex*3 + size.edge*2 + size.face;
-            snapshot.add(metric);
-         } 
-      });
-      const restore = [];
-      // now check if some of the unselected bodys match selected body.
-      this.eachPreviewCage( function(cage) {
-         if (!cage.hasSelection()) {
-            const size = cage._getGeometrySize();
-            const metric = size.vertex*3 + size.edge*2 + size.face;
-            if (snapshot.has(metric)) {
-               cage.selectBody();
-               restore.push(cage);
-            }
-         }
-      });
-      if (restore.length > 0) {
-         return function() {  // restore to previous state
-            for (let cage in restore) {
-               cage.selectBody();
-            }
-         };
-      } else {
-         return null;
+   selectBody(snapshots) { // use for unselect by similarSelection.
+      for (let cage of snapshots) {
+         cage.selectBody();
       }
    }
 
+   similarSelection() {
+      // first compute selected body's metric
+      const snapshot = new Set;
+      for (let cage of this.selectedCage()) {
+         const size = cage._getGeometrySize();
+         const metric = size.vertex*3 + size.edge*2 + size.face;
+         snapshot.add(metric);
+      }
+      const restore = [];
+      // now check if some of the unselected bodys match selected body.
+      for (let cage of this.notSelectedCage()) {
+         const size = cage._getGeometrySize();
+         const metric = size.vertex*3 + size.edge*2 + size.face;
+         if (snapshot.has(metric)) {
+            cage.selectBody();
+            restore.push(cage);
+         }
+      }
+      if (restore.length > 0) {
+         return {undo: this.selectBody, snapshots: restore};   // restore all 
+      }
+      return false;
+   }
+
    adjacentSelection() {
-      return null;   // does nothing.
+      return false;   // does nothing.
    }
 
    moreSelection() {
-      return null;      // does nothing.
+      return false;      // does nothing.
    }
 
    _resetSelection(cage) {
-      return this._wrapSelection(cage._resetBody());
+      cage._resetBody();
    }
 
    _restoreSelection(cage, snapshot) {
       cage.restoreBodySelection(snapshot);
-   }
-
-   _wrapSelection(selection) {
-      return {body: selection};
    }
 
    toggleFunc(toMadsor) {
@@ -264,42 +247,27 @@ class BodyMadsor extends Madsor {
 //      this.hiliteView = null;
       const self = this;
       var redoFn;
-      var snapshots = [];
+      var snapshots;
       if (toMadsor instanceof FaceMadsor) {
          redoFn = View.restoreFaceMode;
-         this.eachPreviewCage( function(cage) {
-            snapshots.push( self._wrapSelection(cage.snapshotSelection()) );
-            cage.changeFromBodyToFaceSelect();
-         });
+         snapshots = this.snapshotAll(PreviewCage.prototype.changeFromBodyToFaceSelect);
       } else if (toMadsor instanceof VertexMadsor) {
          redoFn = View.restoreVertexMode;
-         this.eachPreviewCage( function(cage) {
-            snapshots.push( self._wrapSelection(cage.snapshotSelection()) );
-            cage.changeFromBodyToVertexSelect();
-         });
+         snapshots = this.snapshotAll(PreviewCage.prototype.changeFromBodyToVertexSelect);
       } else {
          redoFn = View.restoreEdgeMode;
-         this.eachPreviewCage( function(cage) {
-            snapshots.push( self._wrapSelection(cage.snapshotSelection()) );
-            cage.changeFromBodyToEdgeSelect();
-         });
+         snapshots = this.snapshotAll(PreviewCage.prototype.changeFromBodyToEdgeSelect);
       }
       View.undoQueue(new ToggleModeCommand(redoFn, View.restoreBodyMode, snapshots));
    }
 
    restoreMode(toMadsor, snapshots) {
       if (toMadsor instanceof FaceMadsor) {
-         this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromBodyToFaceSelect(snapshot);
-         }, snapshots);
+         this.doAll(snapshots, PreviewCage.prototype.restoreFromBodyToFaceSelect);
       } else if (toMadsor instanceof VertexMadsor) {
-         this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromBodyToVertexSelect(snapshot);
-         }, snapshots);
+         this.doAll(snapshots, PreviewCage.prototype.restoreFromBodyToVertexSelect);
       } else {
-         this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromBodyToEdgeSelect(snapshot);
-         }, snapshots);
+         this.doAll(snapshots, PreviewCage.prototype.restoreFromBodyToEdgeSelect);
       }
    }
 

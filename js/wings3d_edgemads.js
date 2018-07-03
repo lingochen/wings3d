@@ -47,8 +47,8 @@ class EdgeMadsor extends Madsor {
       // Dissolve
       UI.bindMenuItem(action.edgeDissolve.name, function(ev) {
             const dissolve = self.dissolve();
-            if (dissolve.count > 0) {
-               View.undoQueue(new DissolveEdgeCommand(self, dissolve.record));
+            if (dissolve.length > 0) {
+               View.undoQueue(new DissolveEdgeCommand(self, dissolve));
             } else {
                // should not happened.
             }
@@ -143,11 +143,11 @@ class EdgeMadsor extends Madsor {
 
    // get selected Edge's vertex snapshot. for doing, and redo queue. 
    snapshotPosition() {
-      return this.snapshotAll(Preview.prototype.snapshotEdgePosition());
+      return this.snapshotAll(PreviewCage.prototype.snapshotEdgePosition);
    }
 
    snapshotPositionAndNormal() {
-      return this.snapshotAll(PreviewCage.snapshotEdgePositionAndNormal());
+      return this.snapshotAll(PreviewCage.prototype.snapshotEdgePositionAndNormal);
    }
 
    snapshotTransformGroup() {
@@ -189,25 +189,15 @@ class EdgeMadsor extends Madsor {
    }
 
    crease() {
-      const edgeLoops = [];
-      this.eachPreviewCage( function(preview) {
-         edgeLoops.push( preview.creaseEdge() );
-      });
-      return edgeLoops;
+      return this.snapshotAll(PreviewCage.prototype.creaseEdge);
    }
 
    extrude() {
-      const edgeLoops = [];
-      this.eachPreviewCage( function(preview) {
-         edgeLoops.push( preview.extrudeEdge() );
-      });
-      return edgeLoops;
+      return this.snapshotAll(PreviewCage.prototype.extrudeEdge);
    }
 
    undoExtrude(contourEdges) {
-      this.eachPreviewCage(function(cage, extrude) {
-         cage.undoExtrudeEdge(extrude);
-      }, contourEdges);
+      this.doAll(contourEdges, PreviewCage.prototype.undoExtrudeEdge);
    }
 
    cutEdge(numberOfSegments) {
@@ -231,31 +221,15 @@ class EdgeMadsor extends Madsor {
    }
 
    cut(numberOfSegments) {
-      var snapshots = [];
-      this.eachPreviewCage( function(preview) {
-         snapshots.push( preview.cutEdge(numberOfSegments) );
-      });
-      return snapshots;
+      return this.snapshotAll(PreviewCage.prototype.cutEdge, numberOfSegments);
    }
 
    edgeLoop(nth) {
-      const loop = {count: 0, selection: []};
-      this.eachPreviewCage( function(preview) {
-         const record = preview.edgeLoop(nth);
-         loop.count += record.length;
-         loop.selection.push( record );
-      });
-      return loop;
+      return this.snapshotAll(PreviewCage.prototype.edgeLoop, nth);
    }
 
    edgeRing(nth) {
-      const loop = {count: 0, selection: []};
-      this.eachPreviewCage( function(preview) {
-         const record = preview.edgeRing(nth);
-         loop.count += record.length;
-         loop.selection.push( record );
-      });
-      return loop;
+      return this.snapshotAll(PreviewCage.prototype.edgeRing, nth);
    }
    collapseEdge(snapshots) {  // undo of splitEdge.
       this.doAll(snapshots, PreviewCage.prototype.collapseSplitOrBevelEdge);
@@ -263,36 +237,19 @@ class EdgeMadsor extends Madsor {
 
    // dissolve edge
    dissolve() {
-      const dissolve = {count: 0, record: []};
-      this.eachPreviewCage(function(cage) {
-         const record = cage.dissolveSelectedEdge();
-         dissolve.count += record.length;
-         dissolve.record.push( record );
-      });
-      return dissolve;
+      return this.snapshotAll(PreviewCage.prototype.dissolveSelectedEdge);
    }
    reinsertDissolve(dissolveEdgesArray) {
-      this.eachPreviewCage(function(cage, dissolveEdges) {
-         cage.reinsertDissolveEdge(dissolveEdges);
-      }, dissolveEdgesArray);
+      this.doAll(dissolveEdgesArray, PreviewCage.prototype.reinsertDissolveEdge);
    }
 
    // collapse edge
    collapse() {
-      const collapse = {count: 0, array: []};
-      const selectedVertex = [];
-      this.eachPreviewCage(function(cage) {
-         const record = cage.collapseSelectedEdge();
-         collapse.count += record.collapse.edges.length;
-         collapse.array.push( record );
-      });
-      return collapse;
+      return this.snapshotAll(PreviewCage.prototype.collapseSelectedEdge);
    }
 
    restoreEdge(collapseEdgesArray) {
-      this.eachPreviewCage(function(cage, collapse) {
-         cage.restoreCollapseEdge(collapse);
-      }, collapseEdgesArray);
+      this.doAll(collapseEdgesArray, PreviewCage.prototype.restoreCollapseEdge);
    }
 
    corner() {
@@ -323,12 +280,8 @@ class EdgeMadsor extends Madsor {
 
    isEdgeSelectable() { return true; }
 
-   _wrapSelection(selection) {
-      return {wingedEdges: selection};
-   }
-
    _resetSelection(cage) {
-      return {wingedEdges: cage._resetSelectEdge()};
+      cage._resetSelectEdge();
    }
 
    _restoreSelection(cage, snapshot) {
@@ -338,42 +291,27 @@ class EdgeMadsor extends Madsor {
    toggleFunc(toMadsor) {
       const self = this;
       var redoFn;
-      var snapshots = [];
+      var snapshots;
       if (toMadsor instanceof FaceMadsor) {
          redoFn = View.restoreFaceMode;
-         this.eachPreviewCage( function(cage) {
-            snapshots.push( self._wrapSelection(cage.snapshotSelection()) );
-            cage.changeFromEdgeToFaceSelect();
-         });
+         snapshots = this.snapshotAll(PreviewCage.prototype.changeFromEdgeToFaceSelect);
       } else if (toMadsor instanceof VertexMadsor) {
          redoFn = View.restoreVertexMode;
-         this.eachPreviewCage( function(cage) {
-            snapshots.push( self._wrapSelection(cage.snapshotSelection()) );
-            cage.changeFromEdgeToVertexSelect();
-         });         
+         snapshots = this.snapshotAll(PreviewCage.prototype.changeFromEdgeToVertexSelect);      
       } else {
          redoFn = View.restoreBodyMode;
-         this.eachPreviewCage( function(cage) {
-            snapshots.push( self._wrapSelection(cage.snapshotSelection()) );
-            cage.changeFromEdgeToBodySelect();
-         });
+         snapshots = this.snapshotAll(PreviewCage.prototype.changeFromEdgeToBodySelect);
       }
       View.undoQueue(new ToggleModeCommand(redoFn, View.restoreEdgeMode, snapshots));
    }
 
    restoreMode(toMadsor, snapshots) {
       if (toMadsor instanceof FaceMadsor) {
-         this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromEdgeToFaceSelect(snapshot);
-         }, snapshots);
+         this.doAll(snapshots, PreviewCage.prototype.restoreFromEdgeToFaceSelect);
       } else if (toMadsor instanceof VertexMadsor) {
-         this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromEdgeToVertexSelect(snapshot);
-         }, snapshots);
+         this.doAll(snapshots, PreviewCage.prototype.restoreFromEdgeToVertexSelect);
       } else {
-           this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromEdgeToBodySelect(snapshot);
-         }, snapshots);       
+         this.doAll(snapshots, PreviewCage.prototype.restoreFromEdgeToBodySelect);      
       }
    }
 
@@ -381,9 +319,7 @@ class EdgeMadsor extends Madsor {
       //if (this.currentEdge) {
          this.useShader(gl);
          gl.bindTransform();
-         //this.eachPreviewCage( function(preview) {
             draftBench.drawEdge(gl);
-         //});
          gl.disableShader();
       //}
    }
@@ -480,8 +416,8 @@ class CollapseEdgeCommand extends EditCommand {
 
    doIt() {
       const collapse = this.madsor.collapse();
-      if (collapse.count > 0) {
-         this.collapse = collapse.array;
+      if (collapse.length > 0) {
+         this.collapse = collapse;
          View.restoreVertexMode(this.collapse);
          return true;
       } else {
@@ -526,8 +462,8 @@ class EdgeLoopCommand extends EditCommand {
    }
 
    doIt() {
-      this.loopSelection = this.madsor.edgeLoop(this.nth);
-      return (this.loopSelection.count > 0);
+      const loopSelection = this.madsor.edgeLoop(this.nth);
+      return (loopSelection.length > 0);
    }
 
    undo() {
@@ -545,8 +481,8 @@ class EdgeRingCommand extends EditCommand {
    }
 
    doIt() {
-      this.loopSelection = this.madsor.edgeRing(this.nth);
-      return (this.loopSelection.count > 0);
+      const loopSelection = this.madsor.edgeRing(this.nth);
+      return (loopSelection.length > 0);
    }
 
    undo() {

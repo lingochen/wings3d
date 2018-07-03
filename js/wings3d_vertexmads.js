@@ -36,11 +36,11 @@ class VertexMadsor extends Madsor {
          });
       UI.bindMenuItem(action.vertexWeld.name, (ev)=> {
          let snapshot = [];
-         this.eachPreviewCage( (preview) => {
+         for (let preview of this.selectedCage()) {
             if (preview.selectionSize() == 1) {
                snapshot.push( preview );
             }
-          });
+          }
          if (snapshot.length == 1) {
             const weld = new VertexWeldCommand(this, snapshot[0]);
             View.attachHandlerMouseSelect(weld);
@@ -85,16 +85,10 @@ class VertexMadsor extends Madsor {
 
    // extrude Vertex
    extrude() {
-      const edgeLoops = [];
-      this.eachPreviewCage( function(preview, contours) {
-         edgeLoops.push( preview.extrudeVertex(contours) );
-      });
-      return edgeLoops;
+      return this.snapshotAll(PreviewCage.prototype.extrudeVertex);
    }
    undoExtrude(extrudeData) {
-      this.eachPreviewCage(function(cage, extrude) {
-         cage.undoExtrudeVertex(extrude);
-      }, extrudeData);
+      this.doAll(extrudeData, PreviewCage.prototype.undoExtrudeVertex);
    }
 
    connectVertex() {
@@ -107,40 +101,19 @@ class VertexMadsor extends Madsor {
    }
 
    connect() {
-      let snapshots = [];
-      let total = 0;
-      this.eachPreviewCage( function(cage) {
-         const snapshot = cage.connectVertex();
-         total += snapshot.halfEdges.length;
-         snapshots.push( snapshot );
-      });
-      if (total > 0) {
-         return snapshots;
-      }
-      // return undefined, or null?
-      return undefined;
+      return this.snapshotAll(PreviewCage.prototype.connectVertex);
    };
 
-   dissolveConnect(edgesArray) {
-      this.eachPreviewCage( function(cage, edges) {
-         cage.dissolveConnect(edges.halfEdges);
-      }, edgesArray);
+   dissolveConnect(snapshots) {
+      this.doAll(snapshots, PreviewCage.prototype.dissolveConnect);
    }
 
    dissolve() {
-      const dissolve = {count: 0, undo: []};
-      this.eachPreviewCage(function(cage) {
-         const undo = cage.dissolveSelectedVertex();
-         dissolve.count += undo.array.length;
-         dissolve.undo.push( undo );
-      });
-      return dissolve;
+      return this.snapshotAll(PreviewCage.prototype.dissolveSelectedVertex);
    }
 
    undoDissolve(dissolveArray) {
-      this.eachPreviewCage( function(cage, dissolveVertex) {
-         cage.undoDissolveVertex(dissolveVertex.array);
-      }, dissolveArray);
+      this.doAll(dissolveArray, PreviewCage.prototype.undoDissolveVertex);
    }
 
    dragSelect(cage, hilite, selectArray, onOff) {
@@ -162,39 +135,26 @@ class VertexMadsor extends Madsor {
    isVertexSelectable() { return true; }
 
    _resetSelection(cage) {
-      return this._wrapSelection(cage._resetSelectVertex());
+      cage._resetSelectVertex();
    }
 
    _restoreSelection(cage, snapshot) {
       cage.restoreVertexSelection(snapshot);
    }
 
-   _wrapSelection(selection) {
-      return {vertices: selection};
-   }
-
    toggleFunc(toMadsor) {
       const self = this;
       var redoFn;
-      var snapshots = [];
+      var snapshots;
       if (toMadsor instanceof FaceMadsor) {
          redoFn = View.restoreFaceMode;
-         this.eachPreviewCage( function(cage) {
-            snapshots.push( self._wrapSelection(cage.snapshotSelection()) );
-            cage.changeFromVertexToFaceSelect();
-         } );
+         snapshots = this.snapshotAll(PreviewCage.prototype.changeFromVertexToFaceSelect);
       } else if (toMadsor instanceof EdgeMadsor) {
          redoFn = View.restoreEdgeMode;
-         this.eachPreviewCage( function(cage) {
-            snapshots.push( self._wrapSelection(cage.snapshotSelection())  );
-            cage.changeFromVertexToEdgeSelect();
-         });
+         snapshots = this.snapshotAll(PreviewCage.prototype.changeFromVertexToEdgeSelect);
       } else {
          redoFn = View.restoreEdgeMode;
-         this.eachPreviewCage( function(cage) {
-            snapshots.push( self._wrapSelection(cage.snapshotSelection())  );
-            cage.changeFromVertexToBodySelect();
-         });      
+         snapshots = this.snapshotAll(PreviewCage.prototype.changeFromVertexToBodySelect);
       }
       View.undoQueue( new ToggleModeCommand(redoFn, View.restoreVertexMode, snapshots) );
    }
@@ -202,17 +162,11 @@ class VertexMadsor extends Madsor {
 
    restoreMode(toMadsor, snapshots) {
       if (toMadsor instanceof FaceMadsor) {
-         this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromVertexToFaceSelect(snapshot);
-         }, snapshots);
+         this.doAll(snapshots, PreviewCage.prototype.restoreFromVertexToFaceSelect);
       } else if (toMadsor instanceof EdgeMadsor) {
-         this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromVertexToEdgeSelect(snapshot);
-         }, snapshots);
+         this.doAll(snapshots, PreviewCage.prototype.restoreFromVertexToEdgeSelect);
       } else {
-         this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromVertexToBodySelect(snapshot);
-         }, snapshots);
+         this.doAll(snapshots, PreviewCage.prototype.restoreFromVertexToBodySelect);
       }
    }
 
@@ -221,9 +175,7 @@ class VertexMadsor extends Madsor {
       //if (this.currentEdge) {
          this.useShader(gl);
          gl.bindTransform();
-         //this.eachPreviewCage( function(preview) {
             draftBench.drawVertex(gl);
-         //});
          gl.disableShader();
       //}
    }
@@ -276,7 +228,7 @@ class VertexConnectCommand extends EditCommand {
    doIt() {
       // reconnect
       this.cageArray = this.madsor.connect();
-      if (this.cageArray) { // goes to edgeMode.
+      if (this.cageArray.length > 0) { // goes to edgeMode.
          View.restoreEdgeMode(this.cageArray);    // abusing the api?
          return true;
       }
@@ -299,7 +251,7 @@ class VertexDissolveCommand extends EditCommand {
 
    doIt() {
       // dissolve, guaranteed dissolveCount > 0
-      ({count: this.dissolveCount, undo: this.dissolve} = this.madsor.dissolve());
+      this.dissolve = this.madsor.dissolve();
    }
 
    undo() {
@@ -315,7 +267,7 @@ class VertexCollapseCommand extends EditCommand {
 
    doIt() {
       // collapse, is just like dissolve, but switch to facemode
-      ({count: this.dissovleCount, undo: this.dissolve} = this.madsor.dissolve());
+      this.dissolve = this.madsor.dissolve();
       View.restoreFaceMode(this.dissolve);
    }
 

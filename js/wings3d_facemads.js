@@ -83,11 +83,11 @@ class FaceMadsor extends Madsor {
         });
       UI.bindMenuItem(action.facePutOn.name, (ev)=> {
          let snapshot = [];
-         this.eachPreviewCage( (preview) => {
+         for (let preview of this.selectedCage()) {
             if (preview.selectionSize() == 1) {
                snapshot.push( preview );
             }
-          });
+          }
          if (snapshot.length == 1) {
             const putOn = new PutOnCommand(this, snapshot[0]);
             View.attachHandlerMouseSelect(putOn);
@@ -132,72 +132,41 @@ class FaceMadsor extends Madsor {
       this.restoreSelection(selection);
    }
 
-   bump(reuseLoops) {
-      const edgeLoops = [];
-      this.eachPreviewCage( function(preview, contours) {
-         edgeLoops.push( preview.bumpFace(contours) );
-      }, reuseLoops);
-      return edgeLoops;
+   bump() {
+      return this.snapshotAll(PreviewCage.prototype.bumpFace);
    }
 
    undoBump(snapshots) {
-      // collapse extrudeEdge
-      this.eachPreviewCage(function(cage, collapse) {
-         cage.undoExtrudeEdge(collapse);
-      }, snapshots);  
+      this.doAll(snapshots, PreviewCage.prototype.undoExtrudeEdge);
    }
 
    // extrude Face
-   extrude(reuseLoops) {
-      const edgeLoops = [];
-      this.eachPreviewCage( function(preview, contours) {
-         edgeLoops.push( preview.extrudeFace(contours) );
-      }, reuseLoops);
-      return edgeLoops;
+   extrude() {
+      return this.snapshotAll(PreviewCage.prototype.extrudeFace);
    }
 
    undoExtrude(extrudeEdgesContoursArray) {
-      this.eachPreviewCage(function(cage, extrudeEdgesContours) {
-         cage.collapseExtrudeEdge(extrudeEdgesContours.extrudeEdges);
-      }, extrudeEdgesContoursArray);
+      this.doAll(extrudeEdgesContoursArray, PreviewCage.prototype.collapseExtrudeEdge);
    }
 
    collapseEdgeNew(snapshots) {
-      this.eachPreviewCage(function(cage, obj) {
-         cage.collapseExtrudeEdge(obj.snapshot.extrudeEdges);
-      }, snapshots);
+      this.doAll(snapshots, PreviewCage.prototype.collapseExtrudeEdge);
    }
 
    // face dissolve mode
    dissolve() {
-      const dissolve = {count: 0, record: []};
-      this.eachPreviewCage(function(cage) {
-         const record = cage.dissolveSelectedFace();
-         dissolve.count += record.edges.length;
-         dissolve.record.push( record );
-      });
-      return dissolve;
+      return this.snapshotAll(PreviewCage.prototype.dissolveSelectedFace);
    }
    undoDissolve(dissolveArray) {
-      this.eachPreviewCage( function(cage, dissolveEdge) {
-         cage.undoDissolveFace(dissolveEdge);
-      }, dissolveArray);
+      this.doAll(dissolveArray, PreviewCage.prototype.undoDissolveFace);
    }
 
    // face collapse 
    collapse() {
-      const collapse = {count: 0, collapse: []};
-      this.eachPreviewCage(function(cage) {
-         const record = cage.collapseSelectedFace();
-         collapse.count += record.collapse.edges.length;
-         collapse.collapse.push( record );
-      });
-      return collapse;
+      return this.snapshotAll(PreviewCage.prototype.collapseSelectedFace);
    }
    undoCollapse(collapseArray) {
-      this.eachPreviewCage( function(cage, collapse) {
-         cage.undoCollapseFace(collapse);
-      }, collapseArray);
+      this.doAll(collapseArray, PreviewCage.prototype.undoCollapseFace);
    }
 
    // intrude, 
@@ -211,12 +180,12 @@ class FaceMadsor extends Madsor {
    // bridge
    getBridgeFaces() {
       const snapshot = [];
-      this.eachPreviewCage( (cage) => {
+      for (let cage of this.selectedCage()) {
          const selection = cage.snapshotSelection();
          for (let selected of selection) {
             snapshot.push( {preview: cage, face: selected} );
          }
-      });
+      }
       return snapshot;
    }
 
@@ -253,56 +222,37 @@ class FaceMadsor extends Madsor {
    isFaceSelectable() { return true; }
 
    _resetSelection(cage) {
-      return this._wrapSelection(cage._resetSelectFace());
+      cage._resetSelectFace();
    }
 
    _restoreSelection(cage, snapshot) {
       cage.restoreFaceSelection(snapshot);
    }
-
-   _wrapSelection(selection) {
-      return {selectedFaces: selection };
-   }
    
    toggleFunc(toMadsor) {
       const self = this;
       var redoFn;
-      var snapshots = [];
+      var snapshots;
       if (toMadsor instanceof EdgeMadsor) {
          redoFn = View.restoreEdgeMode;
-         this.eachPreviewCage( function(cage) {
-            snapshots.push( self._wrapSelection(cage.snapshotSelection()) );
-            cage.changeFromFaceToEdgeSelect();
-         });
+         snapshots = this.snapshotAll(PreviewCage.prototype.changeFromFaceToEdgeSelect);
       } else if (toMadsor instanceof VertexMadsor) {
          redoFn = View.restoreVertexMode;
-         this.eachPreviewCage( function(cage) {
-            snapshots.push(  self._wrapSelection(cage.snapshotSelection()) );
-            cage.changeFromFaceToVertexSelect();
-         });
+         snapshots = this.snapshotAll(PreviewCage.prototype.changeFromFaceToVertexSelect);
       } else {
          redoFn = View.restoreBodyMode;
-         this.eachPreviewCage( function(cage) {
-            snapshots.push(  self._wrapSelection(cage.snapshotSelection()) );
-            cage.changeFromFaceToBodySelect();
-         });
+         snapshots = this.snapshotAll(PreviewCage.prototype.changeFromFaceToBodySelect);
       }
       View.undoQueue(new ToggleModeCommand(redoFn, View.restoreFaceMode, snapshots));
    }
 
    restoreMode(toMadsor, snapshots) {
       if (toMadsor instanceof EdgeMadsor) {
-         this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromFaceToEdgeSelect(snapshot);
-         }, snapshots);
+         this.doAll(snapshots, PreviewCage.prototype.restoreFromFaceToEdgeSelect);
       } else if (toMadsor instanceof VertexMadsor) {
-         this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromFaceToVertexSelect(snapshot);
-         }, snapshots);
+         this.doAll(snapshots, PreviewCage.prototype.restoreFromFaceToVertexSelect);
       } else {
-         this.eachPreviewCage( function(cage, snapshot) {
-            cage.restoreFromFaceToBodySelect(snapshot);
-         }, snapshots);
+         this.doAll(snapshots, PreviewCage.prototype.restoreFromFaceToBodySelect);
       }
    }
 
@@ -360,8 +310,8 @@ class DissolveFaceCommand extends EditCommand {
 
    doIt() {
       const dissolve = this.madsor.dissolve();
-      if (dissolve.count > 0) {
-         this.dissolve = dissolve.record;
+      if (dissolve.length > 0) {
+         this.dissolve = dissolve;
          return true;
       } else {
          return false;
@@ -380,9 +330,9 @@ class CollapseFaceCommand extends EditCommand {
    }
 
    doIt() {
-      let collapseCount;
-      ({count: collapseCount, collapse: this.collapse} = this.madsor.collapse());
-      if (collapseCount > 0) {
+      const collapse = this.madsor.collapse();
+      if (collapse.length > 0) {
+         this.collapse = collapse;
          View.restoreVertexMode(this.collapse);
          return true;
       } else {
