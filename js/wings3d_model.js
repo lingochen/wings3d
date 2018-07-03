@@ -309,7 +309,7 @@ PreviewCage.prototype._selectBodyInvert = function() {
 }
 
 PreviewCage.prototype.selectBody = function() {
-   let faceColor;
+   //let faceColor;
    // we change interior color to show the selection
    if (this.hasSelection()) {
       this.bench.selectGroup(this.selectedSet, false);
@@ -410,11 +410,10 @@ PreviewCage.prototype._resetSelectVertex = function() {
 };
 
 PreviewCage.prototype._selectVertexMore = function() {
-   const oldSelection = this.selectedSet;
-   this.selectedSet = new Set(oldSelection);
+   const snapshot = this.snapshotSelectionVertex();
 
    const self = this;
-   for (let vertex of oldSelection) {
+   for (let vertex of snapshot.vertices) {
       vertex.eachInEdge( function(inEdge) {
          if (!self.selectedSet.has(inEdge.origin)) {
             self.selectVertex(inEdge.origin);
@@ -422,40 +421,38 @@ PreviewCage.prototype._selectVertexMore = function() {
       });
    }
 
-   return oldSelection;
+   return snapshot;
 };
 
 PreviewCage.prototype._selectVertexLess = function() {
-   const oldSelection = this.selectedSet;
-   this.selectedSet = new Set(oldSelection);
+   const snapshot = this.snapshotSelectionVertex();
 
-   for (let vertex of oldSelection) {
+   for (let vertex of snapshot.vertices) {
       for (let ringV of vertex.oneRing()) {
-         if (!oldSelection.has(ringV)) {
+         if (!snapshot.vertices.has(ringV)) {
             this.selectVertex(vertex);
             break;
          }
       }
    }
 
-   return oldSelection;
+   return snapshot;
 };
 
 PreviewCage.prototype._selectVertexAll = function() {
-   const oldSelection = this.selectedSet;
-   this.selectedSet = new Set(oldSelection);
+   const snapshot = this.snapshotSelectionVertex();
 
    for (let vertex of this.geometry.vertices) {
-      if (vertex.isLive() && !oldSelection.has(vertex)) {
+      if (vertex.isLive() && !snapshot.vertices.has(vertex)) {
          this.selectVertex(vertex);
       }
    }
 
-   return oldSelection;
+   return snapshot;
 };
 
 PreviewCage.prototype._selectVertexInvert = function() {
-   const snapshot = new Set(this.selectedSet);
+   const snapshot = this.snapshotSelectionVertex();
 
    for (let vertex of this.geometry.vertices) {
       if (vertex.isLive()) {
@@ -471,11 +468,11 @@ PreviewCage.prototype._selectVertexAdjacent = function() {
 };
 
 PreviewCage.prototype._selectVertexSimilar = function() {
-   const snapshot = new Set(this.selectedSet);
-   const similarVertex = new SimilarVertex(snapshot);
+   const snapshot = this.snapshotSelectionVertex();
+   const similarVertex = new SimilarVertex(snapshot.vertices);
 
    for (let vertex of this.geometry.vertices) {
-      if (vertex.isLive() && !snapshot.has(vertex) && similarVertex.find(vertex)) {
+      if (vertex.isLive() && !snapshot.vertices.has(vertex) && similarVertex.find(vertex)) {
          this.selectVertex(vertex);
       }
    }
@@ -966,54 +963,51 @@ PreviewCage.prototype._resetSelectEdge = function() {
 };
 
 PreviewCage.prototype._selectEdgeMore = function() {
-   const oldSelection = new Set(this.selectedSet);
+   const snapshot = this.snapshotSelectionEdge();
 
-   const self = this;
-   for (let wingedEdge of oldSelection) {
+   for (let wingedEdge of snapshot.wingedEdges) {
       for (let halfEdge of wingedEdge) {
-         halfEdge.eachEdge( function(edge) {
-            if (!self.selectedSet.has(edge.wingedEdge)) {
-               self.selectEdge(edge);
+         halfEdge.eachEdge( (edge) => {
+            if (!this.selectedSet.has(edge.wingedEdge)) {
+               this.selectEdge(edge);
             }
          });
       }
    }
 
-   return oldSelection;
+   return snapshot;
 };
 
 PreviewCage.prototype._selectEdgeLess = function() {
-   const oldSelection = this.selectedSet;
-   this.selectedSet = new Set(oldSelection);
+   const snapshot = this.snapshotSelectionEdge();
 
    const self = this;
-   for (let selectedWinged of oldSelection) {
+   for (let selectedWinged of snapshot.wingedEdges) {
       for (let wingedEdge of selectedWinged.oneRing()) {
-         if (!oldSelection.has(wingedEdge)) {
+         if (!snapshot.wingedEdges.has(wingedEdge)) {
             this.selectEdge(selectedWinged.left);
             break;
          }
       }
    }
 
-   return oldSelection;
+   return snapshot;
 }
 
 PreviewCage.prototype._selectEdgeAll = function() {
-   const oldSelection = this.selectedSet;
-   this.selectedSet = new Set(oldSelection);
+   const snapshot = this.snapshotSelectionEdge();
 
    for (let wingedEdge of this.geometry.edges) {
-      if (wingedEdge.isLive() && !oldSelection.has(wingedEdge)) {
+      if (wingedEdge.isLive() && !snapshot.wingedEdges.has(wingedEdge)) {
          this.selectEdge(wingedEdge.left);
       }
    }
 
-   return oldSelection;
+   return snapshot;
 }
 
 PreviewCage.prototype._selectEdgeInvert = function() {
-   const snapshot = new Set(this.selectedSet);
+   const snapshot = this.snapshotSelectionEdge();
 
    for (let wingedEdge of this.geometry.edges) {
       if (wingedEdge.isLive()) {
@@ -1025,9 +1019,9 @@ PreviewCage.prototype._selectEdgeInvert = function() {
 };
 
 PreviewCage.prototype._selectEdgeAdjacent = function() {
-   const oldSelection = new Set(this.selectedSet);
+   const snapshot = this.snapshotSelectionEdge();
 
-   for (let wingedEdge of oldSelection) {
+   for (let wingedEdge of snapshot.wingedEdges) {
       for (let adjacent of wingedEdge.adjacent()) {
          if (!this.selectedSet.has(adjacent)) {
             this.selectEdge(adjacent.left);
@@ -1035,16 +1029,16 @@ PreviewCage.prototype._selectEdgeAdjacent = function() {
       }
    }
 
-   return oldSelection;
+   return snapshot;
 };
 
 
 PreviewCage.prototype._selectEdgeSimilar = function() {
-   const snapshot = new Set(this.selectedSet);
-   const similarEdge = new SimilarWingedEdge(snapshot);
+   const snapshot = this.snapshotSelectionEdge();
+   const similarEdge = new SimilarWingedEdge(snapshot.wingedEdges);
 
    for (let wingedEdge of this.geometry.edges) {
-      if (wingedEdge.isLive && !snapshot.has(wingedEdge) && similarEdge.find(wingedEdge)) {
+      if (wingedEdge.isLive && !snapshot.wingedEdges.has(wingedEdge) && similarEdge.find(wingedEdge)) {
          this.selectEdge(wingedEdge.left);
       }
    }
