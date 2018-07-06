@@ -232,8 +232,10 @@ Vertex.prototype.isLive = function() {
    return (this.outEdge !== null);
 };
 
-Vertex.prototype.oneRing = function* () {
-   const start = this.outEdge; // we want inEdge.
+Vertex.prototype.oneRing = function* (start) {
+   if (!start) {
+      start = this.outEdge; // we want inEdge.
+   }
    let current = start;
    do {
       const inEdge = current.pair;
@@ -242,8 +244,10 @@ Vertex.prototype.oneRing = function* () {
    } while(current !== start);
 };
 
-Vertex.prototype.edgeRing = function* () {
-   const start = this.outEdge;
+Vertex.prototype.edgeRing = function* (start) {
+   if (!start) {
+      start = this.outEdge;
+   }
    let current = start;
    do {
       yield current;

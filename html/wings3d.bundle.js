@@ -347,6 +347,7 @@ const action = {
    bodyFlipX: () => {notImplemented(this);},
    bodyFlipY: () => {notImplemented(this);},
    bodyFlipZ: () => {notImplemented(this);},
+   //bodySlice: () => {notImplemented(this);},
    // edge
    cutMenu: () => {notImplemented(this);},
    cutLine2: () => {notImplemented(this);},
@@ -379,6 +380,7 @@ const action = {
    edgeCrease: () =>{notImplemented(this);},
    edgeLoopCut: () =>{notImplemented(this);},
    edgeCorner: () =>{notImplemented(this);},
+   edgeSlide: () =>{notImplemented(this);},
    // face
    faceExtrudeMenu: () =>{notImplemented(this);},
    faceExtrudeX: () =>{notImplemented(this);},
@@ -2458,11 +2460,9 @@ PreviewCage.prototype.restoreMoveSelection = function(snapshot) {
    this.computeSnapshot(snapshot);
 };
 
-PreviewCage.prototype.moveSelectionNew = function(snapshot, movement) {
-   this.moveSelection(movement, snapshot);
-}
+
 // 3-15 - add limit to movement.
-PreviewCage.prototype.moveSelection = function(movement, snapshot) {
+PreviewCage.prototype.moveSelection = function(snapshot, movement) {
    // first move geometry's position
    if (snapshot.direction) {
       let i = 0; 
@@ -4694,6 +4694,59 @@ PreviewCage.prototype.undoCornerEdge = function(undo) {
    this._updatePreviewAll();
 }
 
+PreviewCage.prototype.slideEdge = function() {
+   const selection = this.snapshotSelectionEdge();
+
+   const vertices = new Map;
+   const pt = vec3.create();
+   for (let wEdge of selection.wingedEdges) {
+      for (let hEdge of wEdge) {
+         // compute the direction
+         let dir = vertices.get(hEdge.origin);
+         if (!dir) {
+            dir = {positive: vec3.create(), negative: vec3.create()};
+            vertices.set(hEdge.origin, dir);
+         }
+         // positive dir
+         const prev = hEdge.prev();
+         vec3.sub(pt, prev.origin.vertex, hEdge.origin.vertex);
+         vec3.add(dir.positive, dir.positive, pt);
+         // negative dir
+         const next = hEdge.pair.next;
+         vec3.sub(pt, next.origin.vertex, next.destination().vertex);
+         vec3.add(dir.negative, dir.negative, pt);
+      }
+   }
+
+   // copy to array and normalize.
+   let count = 0;
+   const retVertices = [];
+   const positiveDir = new Float32Array(vertices.size*3);
+   const negativeDir = new Float32Array(vertices.size*3);
+   for (const [vertex, dir] of vertices) {
+      retVertices.push( vertex );
+      const positive = positiveDir.subarray(count, count+3);
+      vec3.copy(positive, dir.positive);
+      vec3.normalize(positive, positive);
+      const negative = negativeDir.subarray(count, count+3);
+      vec3.copy(negative, dir.negative);
+      vec3.normalize(negative, negative);
+      count += 3;
+   }
+
+   const ret = this.snapshotPosition(retVertices, positiveDir);
+   ret.directionPositive = positiveDir;
+   ret.directionNegative = negativeDir;
+
+   return ret;
+};
+PreviewCage.prototype.positiveDirection = function(snapshot) {
+   snapshot.direction = snapshot.directionPositive;
+};
+PreviewCage.prototype.negativeDirection = function(snapshot) {
+   snapshot.direction = snapshot.directionNegative;
+};
+
 
 //----------------------------------------------------------------------------------------------------------
 
@@ -5880,8 +5933,10 @@ Vertex.prototype.isLive = function() {
    return (this.outEdge !== null);
 };
 
-Vertex.prototype.oneRing = function* () {
-   const start = this.outEdge; // we want inEdge.
+Vertex.prototype.oneRing = function* (start) {
+   if (!start) {
+      start = this.outEdge; // we want inEdge.
+   }
    let current = start;
    do {
       const inEdge = current.pair;
@@ -5890,8 +5945,10 @@ Vertex.prototype.oneRing = function* () {
    } while(current !== start);
 };
 
-Vertex.prototype.edgeRing = function* () {
-   const start = this.outEdge;
+Vertex.prototype.edgeRing = function* (start) {
+   if (!start) {
+      start = this.outEdge;
+   }
    let current = start;
    do {
       yield current;
@@ -9604,8 +9661,11 @@ class MirrorFaceCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["Edi
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "Madsor", function() { return Madsor; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "DragSelect", function() { return DragSelect; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "GenericEditCommand", function() { return GenericEditCommand; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "MovePositionHandler", function() { return MovePositionHandler; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "MouseMoveAlongAxis", function() { return MouseMoveAlongAxis; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "MoveDirectionHandler", function() { return MoveDirectionHandler; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "MoveBidirectionHandler", function() { return MoveBidirectionHandler; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "MoveAlongNormal", function() { return MoveAlongNormal; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "MoveFreePositionHandler", function() { return MoveFreePositionHandler; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "MouseRotateAlongAxis", function() { return MouseRotateAlongAxis; });
@@ -9786,7 +9846,7 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
 
    // move vertices
    moveSelectionNew(snapshots, movement) {
-      this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_2__wings3d_model__["PreviewCage"].prototype.moveSelectionNew, movement);
+      this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_2__wings3d_model__["PreviewCage"].prototype.moveSelection, movement);
    }
 
    restoreSelectionPosition(snapshots) {
@@ -9916,6 +9976,7 @@ class ToggleModeCommand extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["Edi
 }
 
 
+
 class MovePositionHandler extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["MouseMoveHandler"] {
    constructor(madsor, snapshots, movement) {
       super();
@@ -9925,7 +9986,9 @@ class MovePositionHandler extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["M
    }
 
    doIt() {
-      this.madsor.moveSelectionNew(this.snapshots, this.movement);
+      if (this.movement !== 0) {
+         this.madsor.moveSelectionNew(this.snapshots, this.movement);
+      }
    }
 
    undo() {
@@ -9934,6 +9997,34 @@ class MovePositionHandler extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["M
 
    handleMouseMove(ev, cameraView) {
       this.madsor.moveSelectionNew(this.snapshots, this._updateMovement(ev, cameraView));
+   }
+}
+
+
+class MoveVertexHandler extends MovePositionHandler { // temp refactoring class
+   constructor(madsor, movement, cmd) {
+      super(madsor, null, movement);
+      this.cmd = cmd;
+   }
+
+   doIt() {
+      if (this.cmd) {
+         this.cmd.doIt();
+         this.snapshots = this.cmd.snapshotPosition();
+      } else {
+         this.snapshots = this.snapshotPosition();
+      }
+      super.doIt();
+      return true;
+   }
+
+   undo() {
+      if (this.cmd) {
+         this.cmd.undo();   // no need to restore to be deleted position
+      } else {
+         super.undo();
+      }
+
    }
 }
 
@@ -9954,6 +10045,51 @@ class MouseMoveAlongAxis extends MovePositionHandler {
    }
 }
 
+class MoveDirectionHandler extends MoveVertexHandler {
+   constructor(madsor, cmd, noNegative=false) {
+      super(madsor, 0, cmd);
+      this.noNegative = noNegative;
+   }
+   
+   _updateMovement(ev) {
+      let move = this._calibrateMovement(ev.movementX);
+      this.movement += move;
+      if (this.noNegative && (this.movement < 0)) {
+         move -= this.movement;
+         this.movement = 0.0;
+      }
+      return move;
+   }
+}
+
+
+class MoveBidirectionHandler extends MoveVertexHandler {
+   constructor(madsor, cmd) {
+      super(madsor, 0, cmd);
+   }
+
+   // override original handler. this
+   handleMouseMove(ev, _cameraView) {
+      let move = this._calibrateMovement(ev.movementX);
+      if (move > 0) {
+         if ((this.movement < 0) && ((this.movement+move) >=0)) { // negativeDir done
+            this.madsor.moveSelectionNew(this.snapshots, -this.movement);
+            move += this.movement;
+            this.movement = 0;
+            this.madsor.doAll(this.snapshots, __WEBPACK_IMPORTED_MODULE_2__wings3d_model__["PreviewCage"].prototype.positiveDirection);
+         }
+      } else {
+         if ((this.movement >= 0) && ((this.movement+move) < 0)) {
+            this.madsor.moveSelectionNew(this.snapshots, -this.movement);
+            move += this.movement;
+            this.movement = 0;
+            this.madsor.doAll(this.snapshots, __WEBPACK_IMPORTED_MODULE_2__wings3d_model__["PreviewCage"].prototype.negativeDirection);
+         }
+      }
+      this.movement += move;
+      this.madsor.moveSelectionNew(this.snapshots, move);
+   }
+}
 
 class MoveAlongNormal extends MovePositionHandler {
    constructor(madsor, noNegative = false, snapshots) {
@@ -10132,6 +10268,32 @@ class ExtrudeNormalHandler extends ExtrudeHandler {
 }
 // end of extrude
 
+class GenericEditCommand extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["EditCommand"] {
+   constructor(madsor, doCmd, undoCmd) {
+      super();
+      this.madsor = madsor;
+      this.doCmd = doCmd;
+      this.undoCmd = undoCmd; 
+   }
+
+   doIt(_currentMadsor) {
+      this.snapshots = this.doCmd.call(this.madsor);
+      return (this.snapshots.length > 1);
+   }
+
+   undo(_currentMadsor) {
+      if (this.undoCmd) {
+         this.undoCmd.call(this.madsor, this.snapshots);
+      } else {
+         this.madsor.restoreSelectionPosition(this.snapshots);
+      }
+   }
+
+   snapshotPosition() {
+      return this.snapshots;
+   }
+}
+
 
 
 
@@ -10290,6 +10452,11 @@ class EdgeMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
       __WEBPACK_IMPORTED_MODULE_6__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].edgeCorner.name, (ev) => {
          __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["attachHandlerMouseMove"](new EdgeCornerHandler(this));
        });
+      __WEBPACK_IMPORTED_MODULE_6__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].edgeSlide.name, (ev) => {
+         const handler = new __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["MoveBidirectionHandler"](this, new __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["GenericEditCommand"](this, this.slide));
+         handler.doIt();
+         __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["attachHandlerMouseMove"](handler);
+        });
    }
 
    modeName() {
@@ -10413,6 +10580,10 @@ class EdgeMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
 
    undoCorner(snapshots) {
       this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.undoCornerEdge);
+   }
+
+   slide() {
+      return this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.slideEdge);
    }
 
 
@@ -10797,6 +10968,8 @@ class BodyMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
                 __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["undoQueue"](command);
              });
        }
+       //UI.bindMenuItem(action.bodySlice.name, (ev) => {
+       // });
    }
 
    modeName() {

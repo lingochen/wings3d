@@ -3,7 +3,7 @@
 //
 //    
 **/
-import {Madsor, DragSelect, ToggleModeCommand, MoveAlongNormal} from './wings3d_mads';
+import {Madsor, DragSelect, ToggleModeCommand, MoveAlongNormal, MoveBidirectionHandler, GenericEditCommand} from './wings3d_mads';
 import {FaceMadsor} from './wings3d_facemads';   // for switching
 import {BodyMadsor} from './wings3d_bodymads';
 import {VertexMadsor, VertexConnectCommand} from './wings3d_vertexmads';
@@ -135,6 +135,11 @@ class EdgeMadsor extends Madsor {
       UI.bindMenuItem(action.edgeCorner.name, (ev) => {
          View.attachHandlerMouseMove(new EdgeCornerHandler(this));
        });
+      UI.bindMenuItem(action.edgeSlide.name, (ev) => {
+         const handler = new MoveBidirectionHandler(this, new GenericEditCommand(this, this.slide));
+         handler.doIt();
+         View.attachHandlerMouseMove(handler);
+        });
    }
 
    modeName() {
@@ -258,6 +263,10 @@ class EdgeMadsor extends Madsor {
 
    undoCorner(snapshots) {
       this.doAll(snapshots, PreviewCage.prototype.undoCornerEdge);
+   }
+
+   slide() {
+      return this.snapshotAll(PreviewCage.prototype.slideEdge);
    }
 
 

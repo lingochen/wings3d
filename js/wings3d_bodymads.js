@@ -86,6 +86,8 @@ class BodyMadsor extends Madsor {
                 View.undoQueue(command);
              });
        }
+       //UI.bindMenuItem(action.bodySlice.name, (ev) => {
+       // });
    }
 
    modeName() {

@@ -262,6 +262,7 @@ const action = {
    bodyFlipX: () => {notImplemented(this);},
    bodyFlipY: () => {notImplemented(this);},
    bodyFlipZ: () => {notImplemented(this);},
+   //bodySlice: () => {notImplemented(this);},
    // edge
    cutMenu: () => {notImplemented(this);},
    cutLine2: () => {notImplemented(this);},
@@ -294,6 +295,7 @@ const action = {
    edgeCrease: () =>{notImplemented(this);},
    edgeLoopCut: () =>{notImplemented(this);},
    edgeCorner: () =>{notImplemented(this);},
+   edgeSlide: () =>{notImplemented(this);},
    // face
    faceExtrudeMenu: () =>{notImplemented(this);},
    faceExtrudeX: () =>{notImplemented(this);},

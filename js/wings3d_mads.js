@@ -168,7 +168,7 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
 
    // move vertices
    moveSelectionNew(snapshots, movement) {
-      this.doAll(snapshots, PreviewCage.prototype.moveSelectionNew, movement);
+      this.doAll(snapshots, PreviewCage.prototype.moveSelection, movement);
    }
 
    restoreSelectionPosition(snapshots) {
@@ -298,6 +298,7 @@ class ToggleModeCommand extends EditCommand {
 }
 
 
+
 class MovePositionHandler extends MouseMoveHandler {
    constructor(madsor, snapshots, movement) {
       super();
@@ -307,7 +308,9 @@ class MovePositionHandler extends MouseMoveHandler {
    }
 
    doIt() {
-      this.madsor.moveSelectionNew(this.snapshots, this.movement);
+      if (this.movement !== 0) {
+         this.madsor.moveSelectionNew(this.snapshots, this.movement);
+      }
    }
 
    undo() {
@@ -316,6 +319,34 @@ class MovePositionHandler extends MouseMoveHandler {
 
    handleMouseMove(ev, cameraView) {
       this.madsor.moveSelectionNew(this.snapshots, this._updateMovement(ev, cameraView));
+   }
+}
+
+
+class MoveVertexHandler extends MovePositionHandler { // temp refactoring class
+   constructor(madsor, movement, cmd) {
+      super(madsor, null, movement);
+      this.cmd = cmd;
+   }
+
+   doIt() {
+      if (this.cmd) {
+         this.cmd.doIt();
+         this.snapshots = this.cmd.snapshotPosition();
+      } else {
+         this.snapshots = this.snapshotPosition();
+      }
+      super.doIt();
+      return true;
+   }
+
+   undo() {
+      if (this.cmd) {
+         this.cmd.undo();   // no need to restore to be deleted position
+      } else {
+         super.undo();
+      }
+
    }
 }
 
@@ -336,6 +367,51 @@ class MouseMoveAlongAxis extends MovePositionHandler {
    }
 }
 
+class MoveDirectionHandler extends MoveVertexHandler {
+   constructor(madsor, cmd, noNegative=false) {
+      super(madsor, 0, cmd);
+      this.noNegative = noNegative;
+   }
+   
+   _updateMovement(ev) {
+      let move = this._calibrateMovement(ev.movementX);
+      this.movement += move;
+      if (this.noNegative && (this.movement < 0)) {
+         move -= this.movement;
+         this.movement = 0.0;
+      }
+      return move;
+   }
+}
+
+
+class MoveBidirectionHandler extends MoveVertexHandler {
+   constructor(madsor, cmd) {
+      super(madsor, 0, cmd);
+   }
+
+   // override original handler. this
+   handleMouseMove(ev, _cameraView) {
+      let move = this._calibrateMovement(ev.movementX);
+      if (move > 0) {
+         if ((this.movement < 0) && ((this.movement+move) >=0)) { // negativeDir done
+            this.madsor.moveSelectionNew(this.snapshots, -this.movement);
+            move += this.movement;
+            this.movement = 0;
+            this.madsor.doAll(this.snapshots, PreviewCage.prototype.positiveDirection);
+         }
+      } else {
+         if ((this.movement >= 0) && ((this.movement+move) < 0)) {
+            this.madsor.moveSelectionNew(this.snapshots, -this.movement);
+            move += this.movement;
+            this.movement = 0;
+            this.madsor.doAll(this.snapshots, PreviewCage.prototype.negativeDirection);
+         }
+      }
+      this.movement += move;
+      this.madsor.moveSelectionNew(this.snapshots, move);
+   }
+}
 
 class MoveAlongNormal extends MovePositionHandler {
    constructor(madsor, noNegative = false, snapshots) {
@@ -514,12 +590,41 @@ class ExtrudeNormalHandler extends ExtrudeHandler {
 }
 // end of extrude
 
+class GenericEditCommand extends EditCommand {
+   constructor(madsor, doCmd, undoCmd) {
+      super();
+      this.madsor = madsor;
+      this.doCmd = doCmd;
+      this.undoCmd = undoCmd; 
+   }
+
+   doIt(_currentMadsor) {
+      this.snapshots = this.doCmd.call(this.madsor);
+      return (this.snapshots.length > 1);
+   }
+
+   undo(_currentMadsor) {
+      if (this.undoCmd) {
+         this.undoCmd.call(this.madsor, this.snapshots);
+      } else {
+         this.madsor.restoreSelectionPosition(this.snapshots);
+      }
+   }
+
+   snapshotPosition() {
+      return this.snapshots;
+   }
+}
+
 
 export {
    Madsor,
    DragSelect,
+   GenericEditCommand,
    MovePositionHandler,
    MouseMoveAlongAxis,
+   MoveDirectionHandler,
+   MoveBidirectionHandler,
    MoveAlongNormal,
    MoveFreePositionHandler,
    MouseRotateAlongAxis,

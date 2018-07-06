@@ -629,11 +629,9 @@ PreviewCage.prototype.restoreMoveSelection = function(snapshot) {
    this.computeSnapshot(snapshot);
 };
 
-PreviewCage.prototype.moveSelectionNew = function(snapshot, movement) {
-   this.moveSelection(movement, snapshot);
-}
+
 // 3-15 - add limit to movement.
-PreviewCage.prototype.moveSelection = function(movement, snapshot) {
+PreviewCage.prototype.moveSelection = function(snapshot, movement) {
    // first move geometry's position
    if (snapshot.direction) {
       let i = 0; 
@@ -2864,6 +2862,59 @@ PreviewCage.prototype.undoCornerEdge = function(undo) {
    }
    this._updatePreviewAll();
 }
+
+PreviewCage.prototype.slideEdge = function() {
+   const selection = this.snapshotSelectionEdge();
+
+   const vertices = new Map;
+   const pt = vec3.create();
+   for (let wEdge of selection.wingedEdges) {
+      for (let hEdge of wEdge) {
+         // compute the direction
+         let dir = vertices.get(hEdge.origin);
+         if (!dir) {
+            dir = {positive: vec3.create(), negative: vec3.create()};
+            vertices.set(hEdge.origin, dir);
+         }
+         // positive dir
+         const prev = hEdge.prev();
+         vec3.sub(pt, prev.origin.vertex, hEdge.origin.vertex);
+         vec3.add(dir.positive, dir.positive, pt);
+         // negative dir
+         const next = hEdge.pair.next;
+         vec3.sub(pt, next.origin.vertex, next.destination().vertex);
+         vec3.add(dir.negative, dir.negative, pt);
+      }
+   }
+
+   // copy to array and normalize.
+   let count = 0;
+   const retVertices = [];
+   const positiveDir = new Float32Array(vertices.size*3);
+   const negativeDir = new Float32Array(vertices.size*3);
+   for (const [vertex, dir] of vertices) {
+      retVertices.push( vertex );
+      const positive = positiveDir.subarray(count, count+3);
+      vec3.copy(positive, dir.positive);
+      vec3.normalize(positive, positive);
+      const negative = negativeDir.subarray(count, count+3);
+      vec3.copy(negative, dir.negative);
+      vec3.normalize(negative, negative);
+      count += 3;
+   }
+
+   const ret = this.snapshotPosition(retVertices, positiveDir);
+   ret.directionPositive = positiveDir;
+   ret.directionNegative = negativeDir;
+
+   return ret;
+};
+PreviewCage.prototype.positiveDirection = function(snapshot) {
+   snapshot.direction = snapshot.directionPositive;
+};
+PreviewCage.prototype.negativeDirection = function(snapshot) {
+   snapshot.direction = snapshot.directionNegative;
+};
 
 
 //----------------------------------------------------------------------------------------------------------
