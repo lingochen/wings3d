@@ -2866,6 +2866,7 @@ PreviewCage.prototype.undoCornerEdge = function(undo) {
 PreviewCage.prototype.slideEdge = function() {
    const selection = this.snapshotSelectionEdge();
 
+   const sixAxis = [[0, 0, 1], [0, 1, 0], [1, 0, 0], [0, 0, -1], [0, -1, 0], [-1, 0, 0]];
    const vertices = new Map;
    const pt = vec3.create();
    for (let wEdge of selection.wingedEdges) {
@@ -2876,14 +2877,35 @@ PreviewCage.prototype.slideEdge = function() {
             dir = {positive: vec3.create(), negative: vec3.create()};
             vertices.set(hEdge.origin, dir);
          }
-         // positive dir
          const prev = hEdge.prev();
-         vec3.sub(pt, prev.origin.vertex, hEdge.origin.vertex);
-         vec3.add(dir.positive, dir.positive, pt);
-         // negative dir
          const next = hEdge.pair.next;
-         vec3.sub(pt, next.origin.vertex, next.destination().vertex);
-         vec3.add(dir.negative, dir.negative, pt);
+         // compute which quadrant, pt(normal) is normalized.
+         Util.computeEdgeNormal(pt, next, prev.pair);
+         let max;
+         let index;
+         for (let i = 0; i < 6; ++i) {
+            let axis = sixAxis[i];
+            let angle =  vec3.dot(axis, pt);
+            if (i === 0) {
+               max = angle;
+               index = 0;
+            } else if (max < angle) {
+               max = angle;
+               index = i;
+            }
+         }
+         // now compute the dir
+         if (index > 2) {   // check if needs to reverse negative and positive.
+            vec3.sub(pt, hEdge.origin.vertex, prev.origin.vertex);
+            vec3.add(dir.negative, dir.negative, pt);
+            vec3.sub(pt, next.destination().vertex, next.origin.vertex);
+            vec3.add(dir.positive, dir.positive, pt);
+         } else {
+            vec3.sub(pt, prev.origin.vertex, hEdge.origin.vertex);
+            vec3.add(dir.positive, dir.positive, pt);
+            vec3.sub(pt, next.origin.vertex, next.destination().vertex);
+            vec3.add(dir.negative, dir.negative, pt);
+         }
       }
    }
 

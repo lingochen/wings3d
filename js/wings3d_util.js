@@ -156,7 +156,39 @@ function reflectionMat4(mat, norm, pt) {
 };
 
 
+// angle is between (-PI, PI). equivalent to (-180, 180) degree.
+function computeAngle(crossNorm, v0, v1, v2) {
+   let edge0 = vec3.create(), edge1 = vec3.create();
+   // angle = pi - atan2(v[i] x v[i+1].magnitude, v[i] * v[i+1]);
+   vec3.sub(edge0, v0.vertex, v1.vertex);
+   vec3.sub(edge1, v2.vertex, v1.vertex);
+   vec3.cross(crossNorm, edge0, edge1);
+   return Math.atan2(vec3.length(crossNorm), vec3.dot(edge0, edge1));
+}
+
+
+// the input (left, right) is on the same Vertex.
+function computeEdgeNormal(normal, leftHEdge, rightHEdge) {
+   //let normal = vec3.create();
+   let radian = computeAngle(normal, leftHEdge.destination(), leftHEdge.origin, rightHEdge.destination());
+   radian = Math.abs(radian);
+   if ((radian < kEPSILON) || (radian > (Math.PI-kEPSILON))) {   // nearly parallel, now get face
+      vec3.set(normal, 0, 0, 0);
+      if (leftHEdge.face) {
+         vec3.add(normal, normal, leftHEdge.face.normal);
+      }
+      if (rightHEdge.pair.face) {
+         vec3.add(normal, normal, rightHEdge.pair.face);
+      }
+   }
+   // compute normal
+   vec3.normalize(normal, normal);
+};
+
+
 export {
+   computeAngle,
+   computeEdgeNormal,
    intersectTriangle,
    rotationFromToVec3,
    reflectionMat4,
