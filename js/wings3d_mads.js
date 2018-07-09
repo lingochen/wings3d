@@ -88,8 +88,8 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       }
       // flatten x,y,z
       const flatten = {face: [action.faceFlattenX, action.faceFlattenY, action.faceFlattenZ],
-                       edge: [action.edgeFlattenX, action.faceFlattenY, action.faceFlattenZ],
-                       vertex: [action.vertexFlattenX, action.faceFlattenY, action.faceFlattenZ] };
+                       edge: [action.edgeFlattenX, action.edgeFlattenY, action.edgeFlattenZ],
+                       vertex: [action.vertexFlattenX, action.vertexFlattenY, action.vertexFlattenZ] };
       let flattenMode = flatten[mode];
       if (flattenMode) {
          for (let axis = 0; axis < 3; ++axis) {

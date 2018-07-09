@@ -2733,11 +2733,12 @@ PreviewCage.prototype.snapshotTransformFaceGroup = function() {
    const vertices = new Set;
    const matrixGroup = [];
    // array of edgeLoop. 
-   let faceGroup = this.geometry.findFaceGroup(this.selectedSet);
+   let faceGroup = this.geometry.findFaceGroup(this.getSelectedSorted());
    // compute center of loop, gather all the vertices, create the scaling matrix
+   const center = vec3.create();
    for (let group of faceGroup) {
       let count = 0;
-      const center = vec3.create();
+      vec3.set(center, 0, 0, 0);
       for (let face of group) {
          face.eachVertex(function(vertex) {
             if (!vertices.has(vertex)){
@@ -4784,15 +4785,13 @@ PreviewCage.prototype.negativeDirection = function(snapshot) {
 
 // flatten
 PreviewCage.prototype.flattenEdge = function(axis) {
-   const selectWEdges = this.getSelectedSorted();
-
    // first snapshot original position
    const ret = this.snapshotEdgePosition();
 
    // project onto axis.
    const center = vec3.create();
    const vertices = new Set;
-   const edgeGroups = this.geometry.findEdgeGroup(selectWEdges);
+   const edgeGroups = this.geometry.findEdgeGroup(this.getSelectedSorted());
    for (let group of edgeGroups) {
       // compute center of a plane
       vertices.clear();
@@ -4811,10 +4810,38 @@ PreviewCage.prototype.flattenEdge = function(axis) {
       __WEBPACK_IMPORTED_MODULE_7__wings3d_util__["projectVec3"](vertices, axis, center);
    }
 
+
    this._updatePreviewAll();
    return ret;
 };
 
+
+PreviewCage.prototype.flattenFace = function(planeNormal) {
+   // first snapshot original position.
+   const ret = this.snapshotFacePosition();
+
+   const faceGroups = this.geometry.findFaceGroup(this.getSelectedSorted());
+   const center = vec3.create();
+   const vertices = new Set;
+   for (let group of faceGroups) {
+      vertices.clear();
+      vec3.set(center, 0, 0, 0);
+      for (let face of group) {
+         for (let hEdge of face.hEdges()) {
+            if (!vertices.has(hEdge.origin)) {
+               vertices.add(hEdge.origin);
+               vec3.add(center, center, hEdge.origin.vertex);
+               this.geometry.addAffectedEdgeAndFace(hEdge.origin);
+            }
+         }
+      }
+      vec3.scale(center, center, 1/vertices.size);
+      __WEBPACK_IMPORTED_MODULE_7__wings3d_util__["projectVec3"](vertices, planeNormal, center);
+   }
+
+   this._updatePreviewAll();
+   return ret;
+};
 
 //----------------------------------------------------------------------------------------------------------
 
@@ -9330,6 +9357,10 @@ class FaceMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
       return this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.undoMirrorFace);
    }
 
+   flatten(axis) {
+      return this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.flattenFace, axis);
+   }
+
    dragSelect(cage, hilite, selectArray, onOff) {
       if (hilite.face !== null) {
         if (cage.dragSelectFace(hilite.face, onOff)) {
@@ -9834,8 +9865,8 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       }
       // flatten x,y,z
       const flatten = {face: [__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceFlattenX, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceFlattenY, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceFlattenZ],
-                       edge: [__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].edgeFlattenX, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceFlattenY, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceFlattenZ],
-                       vertex: [__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].vertexFlattenX, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceFlattenY, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceFlattenZ] };
+                       edge: [__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].edgeFlattenX, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].edgeFlattenY, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].edgeFlattenZ],
+                       vertex: [__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].vertexFlattenX, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].vertexFlattenY, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].vertexFlattenZ] };
       let flattenMode = flatten[mode];
       if (flattenMode) {
          for (let axis = 0; axis < 3; ++axis) {

@@ -202,6 +202,10 @@ class FaceMadsor extends Madsor {
       return this.doAll(snapshots, PreviewCage.prototype.undoMirrorFace);
    }
 
+   flatten(axis) {
+      return this.snapshotAll(PreviewCage.prototype.flattenFace, axis);
+   }
+
    dragSelect(cage, hilite, selectArray, onOff) {
       if (hilite.face !== null) {
         if (cage.dragSelectFace(hilite.face, onOff)) {
