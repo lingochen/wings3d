@@ -185,11 +185,23 @@ function computeEdgeNormal(normal, leftHEdge, rightHEdge) {
    vec3.normalize(normal, normal);
 };
 
+function projectVec3(vertices, planeNormal, planeOrigin) {
+   const pt = vec3.create();
+
+   for (let vertex of vertices) {
+      vec3.sub(pt, vertex.vertex, planeOrigin);
+      let d = vec3.dot(pt, planeNormal);
+      vec3.scale(pt, planeNormal, d);
+      vec3.sub(vertex.vertex, vertex.vertex, pt);
+   }
+};
+
 
 export {
    computeAngle,
    computeEdgeNormal,
    intersectTriangle,
+   projectVec3,
    rotationFromToVec3,
    reflectionMat4,
 };

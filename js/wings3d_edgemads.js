@@ -269,6 +269,9 @@ class EdgeMadsor extends Madsor {
       return this.snapshotAll(PreviewCage.prototype.slideEdge);
    }
 
+   flatten(axis) {
+      return this.snapshotAll(PreviewCage.prototype.flattenEdge, axis);
+   }
 
    dragSelect(cage, hilite, selectArray, onOff) {
       if (hilite.edge !== null) {

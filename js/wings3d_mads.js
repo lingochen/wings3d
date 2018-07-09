@@ -19,6 +19,7 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       if (this.contextMenu.menu) {
          this.contextMenu.menuItems = this.contextMenu.menu.querySelectorAll(".context-menu__item");
       }
+      const axisVec = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
       const axisName = ['X', 'Y', 'Z'];
       // type handler 
       // movement for (x, y, z)
@@ -63,8 +64,7 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       // extrude
       const extrude = {face: [action.faceExtrudeX, action.faceExtrudeY, action.faceExtrudeZ],
                        edge: [action.edgeExtrudeX, action.edgeExtrudeY, action.edgeExtrudeZ],
-                       vertex:  [action.vertexExtrudeX, action.vertexExtrudeY, action.vertexExtrudeZ],
-                      };
+                       vertex:  [action.vertexExtrudeX, action.vertexExtrudeY, action.vertexExtrudeZ],};
       let extrudeMode = extrude[mode];
       if (extrudeMode) {
          // movement for (x, y, z)
@@ -86,6 +86,25 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
             View.attachHandlerMouseMove(new ExtrudeNormalHandler(this));
           });
       }
+      // flatten x,y,z
+      const flatten = {face: [action.faceFlattenX, action.faceFlattenY, action.faceFlattenZ],
+                       edge: [action.edgeFlattenX, action.faceFlattenY, action.faceFlattenZ],
+                       vertex: [action.vertexFlattenX, action.faceFlattenY, action.faceFlattenZ] };
+      let flattenMode = flatten[mode];
+      if (flattenMode) {
+         for (let axis = 0; axis < 3; ++axis) {
+            UI.bindMenuItem(flattenMode[axis].name, (_ev) => {
+               const cmd = new GenericEditCommand(this, this.flatten, [axisVec[axis]]);
+               if (cmd.doIt()) {
+                  View.undoQueue(cmd);
+               }
+             });
+         }
+      }
+      // flatten face to normal
+
+      // flatten edge to edgeLoop normal
+
    } 
 
    getContextMenu() {
@@ -591,16 +610,17 @@ class ExtrudeNormalHandler extends ExtrudeHandler {
 // end of extrude
 
 class GenericEditCommand extends EditCommand {
-   constructor(madsor, doCmd, undoCmd) {
+   constructor(madsor, doCmd, doParams, undoCmd) {
       super();
       this.madsor = madsor;
       this.doCmd = doCmd;
+      this.doParams = doParams;
       this.undoCmd = undoCmd; 
    }
 
    doIt(_currentMadsor) {
-      this.snapshots = this.doCmd.call(this.madsor);
-      return (this.snapshots.length > 1);
+      this.snapshots = this.doCmd.call(this.madsor, ...(this.doParams? this.doParams : []));
+      return (this.snapshots.length > 0);
    }
 
    undo(_currentMadsor) {

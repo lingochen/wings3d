@@ -2939,6 +2939,40 @@ PreviewCage.prototype.negativeDirection = function(snapshot) {
 };
 
 
+// flatten
+PreviewCage.prototype.flattenEdge = function(axis) {
+   const selectWEdges = this.getSelectedSorted();
+
+   // first snapshot original position
+   const ret = this.snapshotEdgePosition();
+
+   // project onto axis.
+   const center = vec3.create();
+   const vertices = new Set;
+   const edgeGroups = this.geometry.findEdgeGroup(selectWEdges);
+   for (let group of edgeGroups) {
+      // compute center of a plane
+      vertices.clear();
+      vec3.set(center, 0, 0, 0);
+      for (let wEdge of group) { // compute center.
+         for (let hEdge of wEdge) {
+            if (!vertices.has(hEdge.origin)) {
+               vec3.add(center, center, hEdge.origin.vertex);
+               vertices.add(hEdge.origin);
+               this.geometry.addAffectedEdgeAndFace(hEdge.origin);
+            }
+         }
+      }
+      vec3.scale(center, center, 1/vertices.size);
+      // now project all vertex to (axis, center) plane.
+      Util.projectVec3(vertices, axis, center);
+   }
+
+   this._updatePreviewAll();
+   return ret;
+};
+
+
 //----------------------------------------------------------------------------------------------------------
 
 

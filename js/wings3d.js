@@ -296,6 +296,10 @@ const action = {
    edgeLoopCut: () =>{notImplemented(this);},
    edgeCorner: () =>{notImplemented(this);},
    edgeSlide: () =>{notImplemented(this);},
+   edgeFlatten: ()=> {notImplemented(this);},
+   edgeFlattenX: ()=> {notImplemented(this);},
+   edgeFlattenY: ()=> {notImplemented(this);},
+   edgeFlattenZ: ()=> {notImplemented(this);},
    // face
    faceExtrudeMenu: () =>{notImplemented(this);},
    faceExtrudeX: () =>{notImplemented(this);},
@@ -325,6 +329,10 @@ const action = {
    facePutOn: () => {notImplemented(this);},
    faceLift: () => {notImplemented(this);},
    faceMirror: () => {notImplemented(this);},
+   faceFlatten: () =>  {notImplemented(this);},
+   faceFlattenX: () => {notImplemented(this);},
+   faceFlattenY: () =>  {notImplemented(this);},
+   faceFlattenZ: () =>  {notImplemented(this);},
    // vertex
    vertexConnect: () => {notImplemented(this);},
    vertexDissolve: () => {notImplemented(this);},
@@ -348,6 +356,10 @@ const action = {
    vertexExtrudeY: () =>{notImplemented(this);},
    vertexExtrudeZ: () =>{notImplemented(this);},
    vertexWeld: () =>{notImplemented(this);},
+   vertexFlatten: ()=>  {notImplemented(this);},
+   vertexFlattenX: ()=>  {notImplemented(this);},
+   vertexFlattenY: ()=>  {notImplemented(this);},
+   vertexFlattenZ: ()=>  {notImplemented(this);},
    // guide tour
    helpMenu: () => {notImplemented(this);},
    about: () => {notImplemented(this);},
