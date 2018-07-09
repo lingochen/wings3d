@@ -3000,6 +3000,29 @@ PreviewCage.prototype.flattenFace = function(planeNormal) {
    return ret;
 };
 
+
+PreviewCage.prototype.flattenVertex = function(planeNormal) {
+   if (this.selectedSet.size > 1) { // needs at least 2 vertex to get a center.
+      const selectedVertices = this.getSelectedSorted();
+      const ret = this.snapshotVertexPosition();
+
+      const center = vec3.create();
+      for (let vertex of selectedVertices) {
+         vec3.add(center, center, vertex.vertex);
+         this.geometry.addAffectedEdgeAndFace(vertex);
+      }
+      vec3.scale(center, center, 1/selectedVertices.length);
+      Util.projectVec3(selectedVertices, planeNormal, center);
+
+      this._updatePreviewAll();
+
+      return ret;
+   }
+   return null;
+};
+
+
+
 //----------------------------------------------------------------------------------------------------------
 
 

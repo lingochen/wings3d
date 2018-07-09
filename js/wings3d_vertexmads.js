@@ -116,6 +116,10 @@ class VertexMadsor extends Madsor {
       this.doAll(dissolveArray, PreviewCage.prototype.undoDissolveVertex);
    }
 
+   flatten(axis) {
+      return this.snapshotAll(PreviewCage.prototype.flattenVertex, axis);
+   }
+
    dragSelect(cage, hilite, selectArray, onOff) {
       if (hilite.vertex !== null) {
         if (cage.dragSelectVertex(hilite.vertex, onOff)) {
