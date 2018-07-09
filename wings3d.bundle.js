@@ -381,6 +381,10 @@ const action = {
    edgeLoopCut: () =>{notImplemented(this);},
    edgeCorner: () =>{notImplemented(this);},
    edgeSlide: () =>{notImplemented(this);},
+   edgeFlatten: ()=> {notImplemented(this);},
+   edgeFlattenX: ()=> {notImplemented(this);},
+   edgeFlattenY: ()=> {notImplemented(this);},
+   edgeFlattenZ: ()=> {notImplemented(this);},
    // face
    faceExtrudeMenu: () =>{notImplemented(this);},
    faceExtrudeX: () =>{notImplemented(this);},
@@ -410,6 +414,10 @@ const action = {
    facePutOn: () => {notImplemented(this);},
    faceLift: () => {notImplemented(this);},
    faceMirror: () => {notImplemented(this);},
+   faceFlatten: () =>  {notImplemented(this);},
+   faceFlattenX: () => {notImplemented(this);},
+   faceFlattenY: () =>  {notImplemented(this);},
+   faceFlattenZ: () =>  {notImplemented(this);},
    // vertex
    vertexConnect: () => {notImplemented(this);},
    vertexDissolve: () => {notImplemented(this);},
@@ -433,6 +441,10 @@ const action = {
    vertexExtrudeY: () =>{notImplemented(this);},
    vertexExtrudeZ: () =>{notImplemented(this);},
    vertexWeld: () =>{notImplemented(this);},
+   vertexFlatten: ()=>  {notImplemented(this);},
+   vertexFlattenX: ()=>  {notImplemented(this);},
+   vertexFlattenY: ()=>  {notImplemented(this);},
+   vertexFlattenZ: ()=>  {notImplemented(this);},
    // guide tour
    helpMenu: () => {notImplemented(this);},
    about: () => {notImplemented(this);},
@@ -4767,6 +4779,40 @@ PreviewCage.prototype.positiveDirection = function(snapshot) {
 };
 PreviewCage.prototype.negativeDirection = function(snapshot) {
    snapshot.direction = snapshot.directionNegative;
+};
+
+
+// flatten
+PreviewCage.prototype.flattenEdge = function(axis) {
+   const selectWEdges = this.getSelectedSorted();
+
+   // first snapshot original position
+   const ret = this.snapshotEdgePosition();
+
+   // project onto axis.
+   const center = vec3.create();
+   const vertices = new Set;
+   const edgeGroups = this.geometry.findEdgeGroup(selectWEdges);
+   for (let group of edgeGroups) {
+      // compute center of a plane
+      vertices.clear();
+      vec3.set(center, 0, 0, 0);
+      for (let wEdge of group) { // compute center.
+         for (let hEdge of wEdge) {
+            if (!vertices.has(hEdge.origin)) {
+               vec3.add(center, center, hEdge.origin.vertex);
+               vertices.add(hEdge.origin);
+               this.geometry.addAffectedEdgeAndFace(hEdge.origin);
+            }
+         }
+      }
+      vec3.scale(center, center, 1/vertices.size);
+      // now project all vertex to (axis, center) plane.
+      __WEBPACK_IMPORTED_MODULE_7__wings3d_util__["projectVec3"](vertices, axis, center);
+   }
+
+   this._updatePreviewAll();
+   return ret;
 };
 
 
@@ -9719,6 +9765,7 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       if (this.contextMenu.menu) {
          this.contextMenu.menuItems = this.contextMenu.menu.querySelectorAll(".context-menu__item");
       }
+      const axisVec = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
       const axisName = ['X', 'Y', 'Z'];
       // type handler 
       // movement for (x, y, z)
@@ -9763,8 +9810,7 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       // extrude
       const extrude = {face: [__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceExtrudeX, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceExtrudeY, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceExtrudeZ],
                        edge: [__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].edgeExtrudeX, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].edgeExtrudeY, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].edgeExtrudeZ],
-                       vertex:  [__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].vertexExtrudeX, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].vertexExtrudeY, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].vertexExtrudeZ],
-                      };
+                       vertex:  [__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].vertexExtrudeX, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].vertexExtrudeY, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].vertexExtrudeZ],};
       let extrudeMode = extrude[mode];
       if (extrudeMode) {
          // movement for (x, y, z)
@@ -9786,6 +9832,25 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
             __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["attachHandlerMouseMove"](new ExtrudeNormalHandler(this));
           });
       }
+      // flatten x,y,z
+      const flatten = {face: [__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceFlattenX, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceFlattenY, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceFlattenZ],
+                       edge: [__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].edgeFlattenX, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceFlattenY, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceFlattenZ],
+                       vertex: [__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].vertexFlattenX, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceFlattenY, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceFlattenZ] };
+      let flattenMode = flatten[mode];
+      if (flattenMode) {
+         for (let axis = 0; axis < 3; ++axis) {
+            __WEBPACK_IMPORTED_MODULE_4__wings3d_ui__["bindMenuItem"](flattenMode[axis].name, (_ev) => {
+               const cmd = new GenericEditCommand(this, this.flatten, [axisVec[axis]]);
+               if (cmd.doIt()) {
+                  __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["undoQueue"](cmd);
+               }
+             });
+         }
+      }
+      // flatten face to normal
+
+      // flatten edge to edgeLoop normal
+
    } 
 
    getContextMenu() {
@@ -10291,16 +10356,17 @@ class ExtrudeNormalHandler extends ExtrudeHandler {
 // end of extrude
 
 class GenericEditCommand extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["EditCommand"] {
-   constructor(madsor, doCmd, undoCmd) {
+   constructor(madsor, doCmd, doParams, undoCmd) {
       super();
       this.madsor = madsor;
       this.doCmd = doCmd;
+      this.doParams = doParams;
       this.undoCmd = undoCmd; 
    }
 
    doIt(_currentMadsor) {
-      this.snapshots = this.doCmd.call(this.madsor);
-      return (this.snapshots.length > 1);
+      this.snapshots = this.doCmd.call(this.madsor, ...(this.doParams? this.doParams : []));
+      return (this.snapshots.length > 0);
    }
 
    undo(_currentMadsor) {
@@ -10608,6 +10674,9 @@ class EdgeMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
       return this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.slideEdge);
    }
 
+   flatten(axis) {
+      return this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.flattenEdge, axis);
+   }
 
    dragSelect(cage, hilite, selectArray, onOff) {
       if (hilite.edge !== null) {
@@ -13581,6 +13650,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "computeAngle", function() { return computeAngle; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "computeEdgeNormal", function() { return computeEdgeNormal; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "intersectTriangle", function() { return intersectTriangle; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "projectVec3", function() { return projectVec3; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "rotationFromToVec3", function() { return rotationFromToVec3; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "reflectionMat4", function() { return reflectionMat4; });
 
@@ -13768,6 +13838,17 @@ function computeEdgeNormal(normal, leftHEdge, rightHEdge) {
    }
    // compute normal
    vec3.normalize(normal, normal);
+};
+
+function projectVec3(vertices, planeNormal, planeOrigin) {
+   const pt = vec3.create();
+
+   for (let vertex of vertices) {
+      vec3.sub(pt, vertex.vertex, planeOrigin);
+      let d = vec3.dot(pt, planeNormal);
+      vec3.scale(pt, planeNormal, d);
+      vec3.sub(vertex.vertex, vertex.vertex, pt);
+   }
 };
 
 
