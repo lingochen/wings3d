@@ -4843,6 +4843,29 @@ PreviewCage.prototype.flattenFace = function(planeNormal) {
    return ret;
 };
 
+
+PreviewCage.prototype.flattenVertex = function(planeNormal) {
+   if (this.selectedSet.size > 1) { // needs at least 2 vertex to get a center.
+      const selectedVertices = this.getSelectedSorted();
+      const ret = this.snapshotVertexPosition();
+
+      const center = vec3.create();
+      for (let vertex of selectedVertices) {
+         vec3.add(center, center, vertex.vertex);
+         this.geometry.addAffectedEdgeAndFace(vertex);
+      }
+      vec3.scale(center, center, 1/selectedVertices.length);
+      __WEBPACK_IMPORTED_MODULE_7__wings3d_util__["projectVec3"](selectedVertices, planeNormal, center);
+
+      this._updatePreviewAll();
+
+      return ret;
+   }
+   return null;
+};
+
+
+
 //----------------------------------------------------------------------------------------------------------
 
 
@@ -11655,6 +11678,10 @@ class VertexMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"]
 
    undoDissolve(dissolveArray) {
       this.doAll(dissolveArray, __WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.undoDissolveVertex);
+   }
+
+   flatten(axis) {
+      return this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.flattenVertex, axis);
    }
 
    dragSelect(cage, hilite, selectArray, onOff) {
