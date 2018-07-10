@@ -385,6 +385,10 @@ const action = {
    edgeFlattenX: ()=> {notImplemented(this);},
    edgeFlattenY: ()=> {notImplemented(this);},
    edgeFlattenZ: ()=> {notImplemented(this);},
+   edgeScaleAxis: ()=> {notImplemented(this);},
+   edgeScaleAxisX: ()=> {notImplemented(this);},
+   edgeScaleAxisY: ()=> {notImplemented(this);},
+   edgeScaleAxisZ: ()=> {notImplemented(this);},
    // face
    faceExtrudeMenu: () =>{notImplemented(this);},
    faceExtrudeX: () =>{notImplemented(this);},
@@ -419,6 +423,10 @@ const action = {
    faceFlattenX: () => {notImplemented(this);},
    faceFlattenY: () =>  {notImplemented(this);},
    faceFlattenZ: () =>  {notImplemented(this);},
+   faceScaleAxis: ()=> {notImplemented(this);},
+   faceScaleAxisX: ()=> {notImplemented(this);},
+   faceScaleAxisY: ()=> {notImplemented(this);},
+   faceScaleAxisZ: ()=> {notImplemented(this);},
    // vertex
    vertexConnect: () => {notImplemented(this);},
    vertexDissolve: () => {notImplemented(this);},
@@ -446,6 +454,10 @@ const action = {
    vertexFlattenX: ()=>  {notImplemented(this);},
    vertexFlattenY: ()=>  {notImplemented(this);},
    vertexFlattenZ: ()=>  {notImplemented(this);},
+   vertexScaleAxis: ()=> {notImplemented(this);},
+   vertexScaleAxisX: ()=> {notImplemented(this);},
+   vertexScaleAxisY: ()=> {notImplemented(this);},
+   vertexScaleAxisZ: ()=> {notImplemented(this);},
    // guide tour
    helpMenu: () => {notImplemented(this);},
    about: () => {notImplemented(this);},
@@ -2506,8 +2518,10 @@ PreviewCage.prototype.rotateSelection = function(snapshot, quatRotate, center) {
 //
 // scale selection, by moving vertices
 //
-PreviewCage.prototype.scaleSelection = function(snapshot, scale) {
-   const scaleV = vec3.fromValues(scale, scale, scale);
+PreviewCage.prototype.scaleSelection = function(snapshot, scale, axis) {
+   const scaleV = vec3.fromValues(axis[0] ? scale * axis[0] : 1, 
+                                  axis[1] ? scale * axis[1] : 1, 
+                                  axis[2] ? scale * axis[2] : 1);
    this.transformSelection(snapshot, (transform, _origin) => {
       mat4.fromScaling(transform, scaleV);   
     });
@@ -9605,7 +9619,7 @@ class InsetFaceHandler extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Move
 
    doIt() {
       this.snapshots = this.madsor.inset();   // should we test for current snapshots and prev snapshots?
-      this.madsor.moveSelectionNew(this.snapshots, this.movement);
+      this.madsor.moveSelection(this.snapshots, this.movement);
       // get limit
       this.vertexLimit = Number.MAX_SAFE_INTEGER;
       for (let obj of this.snapshots) {
@@ -9613,7 +9627,7 @@ class InsetFaceHandler extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Move
       } 
    }
 
-   //_updateMovement(ev) {  // change back when we all move to moveSelectionNew
+   //_updateMovement(ev) {  // change back when we all move to moveSelection
    handleMouseMove(ev) {
       let move = this._calibrateMovement(ev.movementX);
       if ((this.movement+move) > this.vertexLimit) {
@@ -9622,7 +9636,7 @@ class InsetFaceHandler extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Move
          move = 0 - this.movement;
       }
       this.movement += move;
-      this.madsor.moveSelectionNew(this.snapshots, move);
+      this.madsor.moveSelection(this.snapshots, move);
       return move;
    }
 
@@ -9862,7 +9876,7 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       const scaleUniform = {face: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceScaleUniform};
       if (scaleUniform[mode]) {
          __WEBPACK_IMPORTED_MODULE_4__wings3d_ui__["bindMenuItem"](scaleUniform[mode].name, function(ev) {
-            __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["attachHandlerMouseMove"](new ScaleUniformHandler(self));
+            __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["attachHandlerMouseMove"](new ScaleHandler(self, [1, 1, 1]));
           });
       }
       // rotate x, y, z
@@ -9919,10 +9933,18 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
              });
          }
       }
-      // flatten face to normal
-
-      // flatten edge to edgeLoop normal
-
+      // scale axis,
+      const scaleAxis = {face: [__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceScaleAxisX, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceScaleAxisY, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceScaleAxisZ],
+                         edge: [__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].edgeScaleAxisX, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].edgeScaleAxisY, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].edgeScaleAxisZ],
+                       vertex: [__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].vertexScaleAxisX, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].vertexScaleAxisY, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].vertexScaleAxisZ]};
+      const scaleAxisMode = scaleAxis[mode];
+      if (scaleAxisMode) {
+         for (let axis = 0; axis < 3; ++axis) {
+            __WEBPACK_IMPORTED_MODULE_4__wings3d_ui__["bindMenuItem"](scaleAxisMode[axis].name, (_ev) => {
+               __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["attachHandlerMouseMove"](new ScaleHandler(this, axisVec[axis]));
+             });
+         }
+      }
    } 
 
    getContextMenu() {
@@ -10004,7 +10026,7 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
    }
 
    // move vertices
-   moveSelectionNew(snapshots, movement) {
+   moveSelection(snapshots, movement) {
       this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_2__wings3d_model__["PreviewCage"].prototype.moveSelection, movement);
    }
 
@@ -10013,8 +10035,8 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
    }
 
    // scale vertices along axis
-   scaleSelection(snapshots, scale) {
-      this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_2__wings3d_model__["PreviewCage"].prototype.scaleSelection, scale);
+   scaleSelection(snapshots, scale, axis) {
+      this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_2__wings3d_model__["PreviewCage"].prototype.scaleSelection, scale, axis);
    }
 
    // rotate vertices
@@ -10146,7 +10168,7 @@ class MovePositionHandler extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["M
 
    doIt() {
       if (this.movement !== 0) {
-         this.madsor.moveSelectionNew(this.snapshots, this.movement);
+         this._transformSelection(this.movement);
       }
    }
 
@@ -10155,7 +10177,11 @@ class MovePositionHandler extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["M
    }
 
    handleMouseMove(ev, cameraView) {
-      this.madsor.moveSelectionNew(this.snapshots, this._updateMovement(ev, cameraView));
+      this._transformSelection(this._updateMovement(ev, cameraView));
+   }
+
+   _transformSelection(transform) {
+      this.madsor.moveSelection(this.snapshots, transform);
    }
 }
 
@@ -10232,21 +10258,21 @@ class MoveBidirectionHandler extends MoveVertexHandler {
       let move = this._calibrateMovement(ev.movementX);
       if (move > 0) {
          if ((this.movement < 0) && ((this.movement+move) >=0)) { // negativeDir done
-            this.madsor.moveSelectionNew(this.snapshots, -this.movement);
+            this.madsor.moveSelection(this.snapshots, -this.movement);
             move += this.movement;
             this.movement = 0;
             this.madsor.doAll(this.snapshots, __WEBPACK_IMPORTED_MODULE_2__wings3d_model__["PreviewCage"].prototype.positiveDirection);
          }
       } else {
          if ((this.movement >= 0) && ((this.movement+move) < 0)) {
-            this.madsor.moveSelectionNew(this.snapshots, -this.movement);
+            this.madsor.moveSelection(this.snapshots, -this.movement);
             move += this.movement;
             this.movement = 0;
             this.madsor.doAll(this.snapshots, __WEBPACK_IMPORTED_MODULE_2__wings3d_model__["PreviewCage"].prototype.negativeDirection);
          }
       }
       this.movement += move;
-      this.madsor.moveSelectionNew(this.snapshots, move);
+      this.madsor.moveSelection(this.snapshots, move);
    }
 }
 
@@ -10288,32 +10314,26 @@ class MoveFreePositionHandler extends MovePositionHandler {
 }
 
 
-class ScaleUniformHandler extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["EditCommand"] {
-   constructor(madsor) {
-      super();
-      this.madsor = madsor;
-      this.snapshots = madsor.snapshotTransformGroup();
-      this.scale = 1.0;                    // cumulative movement.
+class ScaleHandler extends MovePositionHandler {
+   constructor(madsor, axis) {
+      const snapshots = madsor.snapshotTransformGroup();
+      super(madsor, snapshots, 1.0);
+      this.axis = axis;
    }
 
-   handleMouseMove(ev) {
+   _transformSelection(scale) {
+      this.madsor.scaleSelection(this.snapshots, scale, this.axis);
+   }
+
+   _updateMovement(ev, _camera) {
       let scale = this._xPercentMovement(ev);   // return (100% to -100%)
       if (scale < 0) {
          scale = 1.0 + Math.abs(scale);
       } else {
          scale = 1.0 / (1.0 + scale);
       }
-      this.madsor.scaleSelection(this.snapshots, scale);
-      this.scale *= scale;
-   }
-
-  
-   doIt() {
-      this.madsor.scaleSelection(this.snapshots, this.movement);
-   }
-
-   undo() {
-      this.madsor.restoreSelectionPosition(this.snapshots);
+      this.movement *= scale;
+      return scale;
    }
 }
 
