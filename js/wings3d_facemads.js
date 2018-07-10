@@ -3,7 +3,7 @@
 //
 //    
 **/
-import {Madsor, DragSelect, MovePositionHandler, MoveAlongNormal, MouseRotateAlongAxis, ToggleModeCommand} from './wings3d_mads';
+import {Madsor, DragSelect, MovePositionHandler, GenericEditCommand, MoveAlongNormal, MouseRotateAlongAxis, ToggleModeCommand} from './wings3d_mads';
 import {EdgeMadsor} from './wings3d_edgemads';   // for switching
 import {BodyMadsor} from './wings3d_bodymads';
 import {VertexMadsor} from './wings3d_vertexmads';
@@ -99,6 +99,12 @@ class FaceMadsor extends Madsor {
          const command = new MirrorFaceCommand(this);
          command.doIt();
          View.undoQueue(command);
+       });
+       UI.bindMenuItem(action.faceFlattenNormal.name, (_ev) => {
+         const cmd = new GenericEditCommand(this, this.flatten);
+         if (cmd.doIt()) {
+            View.undoQueue(cmd);
+         }
        });
    }
 

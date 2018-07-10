@@ -330,6 +330,7 @@ const action = {
    faceLift: () => {notImplemented(this);},
    faceMirror: () => {notImplemented(this);},
    faceFlatten: () =>  {notImplemented(this);},
+   faceFlattenNormal: ()=> {notImplemented(this);},
    faceFlattenX: () => {notImplemented(this);},
    faceFlattenY: () =>  {notImplemented(this);},
    faceFlattenZ: () =>  {notImplemented(this);},

@@ -2973,6 +2973,7 @@ PreviewCage.prototype.flattenEdge = function(axis) {
 };
 
 
+// add group normal if planeNormal not present.
 PreviewCage.prototype.flattenFace = function(planeNormal) {
    // first snapshot original position.
    const ret = this.snapshotFacePosition();
@@ -2980,6 +2981,10 @@ PreviewCage.prototype.flattenFace = function(planeNormal) {
    const faceGroups = this.geometry.findFaceGroup(this.getSelectedSorted());
    const center = vec3.create();
    const vertices = new Set;
+   let normal = planeNormal;
+   if (!planeNormal) {
+      normal = vec3.create();
+   }
    for (let group of faceGroups) {
       vertices.clear();
       vec3.set(center, 0, 0, 0);
@@ -2991,9 +2996,15 @@ PreviewCage.prototype.flattenFace = function(planeNormal) {
                this.geometry.addAffectedEdgeAndFace(hEdge.origin);
             }
          }
+         if (!planeNormal) {
+            vec3.add(normal, normal, face.normal);
+         }
       }
       vec3.scale(center, center, 1/vertices.size);
-      Util.projectVec3(vertices, planeNormal, center);
+      if (!planeNormal) {
+         vec3.normalize(normal, normal);
+      }
+      Util.projectVec3(vertices, normal, center);
    }
 
    this._updatePreviewAll();
