@@ -27,6 +27,8 @@ class EditCommand {
 
    free() {}
 
+   isDoable() { return true; }
+
    //doIt() {}
 
    //undo() {}

@@ -41,10 +41,10 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
           });
       }
       // scale uniform
-      const scaleUniform = {face: action.faceScaleUniform};
+      const scaleUniform = {face: action.faceScaleUniform, edge: action.edgeScaleUniform, vertex: action.vertexScaleUniform};
       if (scaleUniform[mode]) {
-         UI.bindMenuItem(scaleUniform[mode].name, function(ev) {
-            View.attachHandlerMouseMove(new ScaleHandler(self, [1, 1, 1]));
+         UI.bindMenuItem(scaleUniform[mode].name, (_ev) => {
+            View.attachHandlerMouseMove(new ScaleHandler(this, [1, 1, 1]));
           });
       }
       // rotate x, y, z
@@ -334,10 +334,18 @@ class MovePositionHandler extends MouseMoveHandler {
       this.movement = movement;
    }
 
+   isDoable() {
+      return (this.snapshots.length > 0);
+   }
+
    doIt() {
-      if (this.movement !== 0) {
-         this._transformSelection(this.movement);
+      if (this.snapshots.length > 0) {
+         //if (this.movement !== 0) {
+            this._transformSelection(this.movement);
+         //}
+         return true;
       }
+      return false;
    }
 
    undo() {

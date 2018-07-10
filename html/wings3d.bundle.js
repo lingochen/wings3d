@@ -385,6 +385,7 @@ const action = {
    edgeFlattenX: ()=> {notImplemented(this);},
    edgeFlattenY: ()=> {notImplemented(this);},
    edgeFlattenZ: ()=> {notImplemented(this);},
+   edgeScaleUniform: ()=> {notImplemented(this);},
    edgeScaleAxis: ()=> {notImplemented(this);},
    edgeScaleAxisX: ()=> {notImplemented(this);},
    edgeScaleAxisY: ()=> {notImplemented(this);},
@@ -454,6 +455,7 @@ const action = {
    vertexFlattenX: ()=>  {notImplemented(this);},
    vertexFlattenY: ()=>  {notImplemented(this);},
    vertexFlattenZ: ()=>  {notImplemented(this);},
+   vertexScaleUniform: ()=> {notImplemented(this);},
    vertexScaleAxis: ()=> {notImplemented(this);},
    vertexScaleAxisX: ()=> {notImplemented(this);},
    vertexScaleAxisY: ()=> {notImplemented(this);},
@@ -1730,6 +1732,8 @@ class EditCommand {
    }
 
    free() {}
+
+   isDoable() { return true; }
 
    //doIt() {}
 
@@ -9873,10 +9877,10 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
           });
       }
       // scale uniform
-      const scaleUniform = {face: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceScaleUniform};
+      const scaleUniform = {face: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceScaleUniform, edge: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].edgeScaleUniform, vertex: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].vertexScaleUniform};
       if (scaleUniform[mode]) {
-         __WEBPACK_IMPORTED_MODULE_4__wings3d_ui__["bindMenuItem"](scaleUniform[mode].name, function(ev) {
-            __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["attachHandlerMouseMove"](new ScaleHandler(self, [1, 1, 1]));
+         __WEBPACK_IMPORTED_MODULE_4__wings3d_ui__["bindMenuItem"](scaleUniform[mode].name, (_ev) => {
+            __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["attachHandlerMouseMove"](new ScaleHandler(this, [1, 1, 1]));
           });
       }
       // rotate x, y, z
@@ -10166,10 +10170,18 @@ class MovePositionHandler extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["M
       this.movement = movement;
    }
 
+   isDoable() {
+      return (this.snapshots.length > 0);
+   }
+
    doIt() {
-      if (this.movement !== 0) {
-         this._transformSelection(this.movement);
+      if (this.snapshots.length > 0) {
+         //if (this.movement !== 0) {
+            this._transformSelection(this.movement);
+         //}
+         return true;
       }
+      return false;
    }
 
    undo() {
