@@ -415,6 +415,7 @@ const action = {
    faceLift: () => {notImplemented(this);},
    faceMirror: () => {notImplemented(this);},
    faceFlatten: () =>  {notImplemented(this);},
+   faceFlattenNormal: ()=> {notImplemented(this);},
    faceFlattenX: () => {notImplemented(this);},
    faceFlattenY: () =>  {notImplemented(this);},
    faceFlattenZ: () =>  {notImplemented(this);},
@@ -4816,6 +4817,7 @@ PreviewCage.prototype.flattenEdge = function(axis) {
 };
 
 
+// add group normal if planeNormal not present.
 PreviewCage.prototype.flattenFace = function(planeNormal) {
    // first snapshot original position.
    const ret = this.snapshotFacePosition();
@@ -4823,6 +4825,10 @@ PreviewCage.prototype.flattenFace = function(planeNormal) {
    const faceGroups = this.geometry.findFaceGroup(this.getSelectedSorted());
    const center = vec3.create();
    const vertices = new Set;
+   let normal = planeNormal;
+   if (!planeNormal) {
+      normal = vec3.create();
+   }
    for (let group of faceGroups) {
       vertices.clear();
       vec3.set(center, 0, 0, 0);
@@ -4834,9 +4840,15 @@ PreviewCage.prototype.flattenFace = function(planeNormal) {
                this.geometry.addAffectedEdgeAndFace(hEdge.origin);
             }
          }
+         if (!planeNormal) {
+            vec3.add(normal, normal, face.normal);
+         }
       }
       vec3.scale(center, center, 1/vertices.size);
-      __WEBPACK_IMPORTED_MODULE_7__wings3d_util__["projectVec3"](vertices, planeNormal, center);
+      if (!planeNormal) {
+         vec3.normalize(normal, normal);
+      }
+      __WEBPACK_IMPORTED_MODULE_7__wings3d_util__["projectVec3"](vertices, normal, center);
    }
 
    this._updatePreviewAll();
@@ -9277,6 +9289,12 @@ class FaceMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
          const command = new MirrorFaceCommand(this);
          command.doIt();
          __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"](command);
+       });
+       __WEBPACK_IMPORTED_MODULE_9__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_10__wings3d__["action"].faceFlattenNormal.name, (_ev) => {
+         const cmd = new __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["GenericEditCommand"](this, this.flatten);
+         if (cmd.doIt()) {
+            __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"](cmd);
+         }
        });
    }
 
