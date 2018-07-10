@@ -101,10 +101,18 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
              });
          }
       }
-      // flatten face to normal
-
-      // flatten edge to edgeLoop normal
-
+      // scale axis,
+      const scaleAxis = {face: [action.faceScaleX, action.faceScaleY, action.faceScaleZ],
+                         edge: [action.edgeScaleX, action.edgeScaleY, action.edgeScaleZ],
+                       vertex: [action.vertexScaleX, action.vertexScaleY, action.vertexScaleZ]};
+      const scaleAxisMode = scaleAxis[mode];
+      if (scaleAxisMode) {
+         for (let axis = 0; axis < 3; ++axis) {
+            UI.bindMenuItem(scaleAxisMode[axis].name, (_ev) => {
+               View.attachHandlerMouseMove();
+             });
+         }
+      }
    } 
 
    getContextMenu() {
@@ -186,7 +194,7 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
    }
 
    // move vertices
-   moveSelectionNew(snapshots, movement) {
+   moveSelection(snapshots, movement) {
       this.doAll(snapshots, PreviewCage.prototype.moveSelection, movement);
    }
 
@@ -328,7 +336,7 @@ class MovePositionHandler extends MouseMoveHandler {
 
    doIt() {
       if (this.movement !== 0) {
-         this.madsor.moveSelectionNew(this.snapshots, this.movement);
+         this._transformSelection(this.movement);
       }
    }
 
@@ -337,7 +345,11 @@ class MovePositionHandler extends MouseMoveHandler {
    }
 
    handleMouseMove(ev, cameraView) {
-      this.madsor.moveSelectionNew(this.snapshots, this._updateMovement(ev, cameraView));
+      this._transformSelection(this._updateMovement(ev, cameraView));
+   }
+
+   _transformSelection(transform) {
+      this.madsor.moveSelection(this.snapshots, transform);
    }
 }
 
@@ -414,21 +426,21 @@ class MoveBidirectionHandler extends MoveVertexHandler {
       let move = this._calibrateMovement(ev.movementX);
       if (move > 0) {
          if ((this.movement < 0) && ((this.movement+move) >=0)) { // negativeDir done
-            this.madsor.moveSelectionNew(this.snapshots, -this.movement);
+            this.madsor.moveSelection(this.snapshots, -this.movement);
             move += this.movement;
             this.movement = 0;
             this.madsor.doAll(this.snapshots, PreviewCage.prototype.positiveDirection);
          }
       } else {
          if ((this.movement >= 0) && ((this.movement+move) < 0)) {
-            this.madsor.moveSelectionNew(this.snapshots, -this.movement);
+            this.madsor.moveSelection(this.snapshots, -this.movement);
             move += this.movement;
             this.movement = 0;
             this.madsor.doAll(this.snapshots, PreviewCage.prototype.negativeDirection);
          }
       }
       this.movement += move;
-      this.madsor.moveSelectionNew(this.snapshots, move);
+      this.madsor.moveSelection(this.snapshots, move);
    }
 }
 
@@ -470,6 +482,30 @@ class MoveFreePositionHandler extends MovePositionHandler {
 }
 
 
+class ScaleHandler extends MovePositionHandler {
+   constructor(madsor, axis) {
+      const snapshots = madsor.snapshotTransformGroup();
+      super(madsor, snapshots, 1.0);
+      this.axis = axis;
+   }
+
+   _transformsSelection(scale) {
+      this.madsor.scaleSelection(this.snapshots, scale, this.axis);
+   }
+
+   _updateMovement(ev, _camera) {
+      let scale = this._xPercentMovement(ev);   // return (100% to -100%)
+      if (scale < 0) {
+         scale = 1.0 + Math.abs(scale);
+      } else {
+         scale = 1.0 / (1.0 + scale);
+      }
+      this.movement *= scale;
+      return scale;
+   }
+}
+
+
 class ScaleUniformHandler extends EditCommand {
    constructor(madsor) {
       super();
@@ -491,7 +527,7 @@ class ScaleUniformHandler extends EditCommand {
 
   
    doIt() {
-      this.madsor.scaleSelection(this.snapshots, this.movement);
+      this.madsor.scaleSelection(this.snapshots, this.scale);
    }
 
    undo() {

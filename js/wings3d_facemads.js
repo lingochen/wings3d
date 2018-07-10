@@ -415,7 +415,7 @@ class InsetFaceHandler extends MovePositionHandler {
 
    doIt() {
       this.snapshots = this.madsor.inset();   // should we test for current snapshots and prev snapshots?
-      this.madsor.moveSelectionNew(this.snapshots, this.movement);
+      this.madsor.moveSelection(this.snapshots, this.movement);
       // get limit
       this.vertexLimit = Number.MAX_SAFE_INTEGER;
       for (let obj of this.snapshots) {
@@ -423,7 +423,7 @@ class InsetFaceHandler extends MovePositionHandler {
       } 
    }
 
-   //_updateMovement(ev) {  // change back when we all move to moveSelectionNew
+   //_updateMovement(ev) {  // change back when we all move to moveSelection
    handleMouseMove(ev) {
       let move = this._calibrateMovement(ev.movementX);
       if ((this.movement+move) > this.vertexLimit) {
@@ -432,7 +432,7 @@ class InsetFaceHandler extends MovePositionHandler {
          move = 0 - this.movement;
       }
       this.movement += move;
-      this.madsor.moveSelectionNew(this.snapshots, move);
+      this.madsor.moveSelection(this.snapshots, move);
       return move;
    }
 
