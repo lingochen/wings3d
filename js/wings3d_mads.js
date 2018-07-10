@@ -44,7 +44,7 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       const scaleUniform = {face: action.faceScaleUniform};
       if (scaleUniform[mode]) {
          UI.bindMenuItem(scaleUniform[mode].name, function(ev) {
-            View.attachHandlerMouseMove(new ScaleUniformHandler(self));
+            View.attachHandlerMouseMove(new ScaleHandler(self, [1, 1, 1]));
           });
       }
       // rotate x, y, z
@@ -102,14 +102,14 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
          }
       }
       // scale axis,
-      const scaleAxis = {face: [action.faceScaleX, action.faceScaleY, action.faceScaleZ],
-                         edge: [action.edgeScaleX, action.edgeScaleY, action.edgeScaleZ],
-                       vertex: [action.vertexScaleX, action.vertexScaleY, action.vertexScaleZ]};
+      const scaleAxis = {face: [action.faceScaleAxisX, action.faceScaleAxisY, action.faceScaleAxisZ],
+                         edge: [action.edgeScaleAxisX, action.edgeScaleAxisY, action.edgeScaleAxisZ],
+                       vertex: [action.vertexScaleAxisX, action.vertexScaleAxisY, action.vertexScaleAxisZ]};
       const scaleAxisMode = scaleAxis[mode];
       if (scaleAxisMode) {
          for (let axis = 0; axis < 3; ++axis) {
             UI.bindMenuItem(scaleAxisMode[axis].name, (_ev) => {
-               View.attachHandlerMouseMove();
+               View.attachHandlerMouseMove(new ScaleHandler(this, axisVec[axis]));
              });
          }
       }
@@ -203,8 +203,8 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
    }
 
    // scale vertices along axis
-   scaleSelection(snapshots, scale) {
-      this.doAll(snapshots, PreviewCage.prototype.scaleSelection, scale);
+   scaleSelection(snapshots, scale, axis) {
+      this.doAll(snapshots, PreviewCage.prototype.scaleSelection, scale, axis);
    }
 
    // rotate vertices
@@ -489,7 +489,7 @@ class ScaleHandler extends MovePositionHandler {
       this.axis = axis;
    }
 
-   _transformsSelection(scale) {
+   _transformSelection(scale) {
       this.madsor.scaleSelection(this.snapshots, scale, this.axis);
    }
 
@@ -502,36 +502,6 @@ class ScaleHandler extends MovePositionHandler {
       }
       this.movement *= scale;
       return scale;
-   }
-}
-
-
-class ScaleUniformHandler extends EditCommand {
-   constructor(madsor) {
-      super();
-      this.madsor = madsor;
-      this.snapshots = madsor.snapshotTransformGroup();
-      this.scale = 1.0;                    // cumulative movement.
-   }
-
-   handleMouseMove(ev) {
-      let scale = this._xPercentMovement(ev);   // return (100% to -100%)
-      if (scale < 0) {
-         scale = 1.0 + Math.abs(scale);
-      } else {
-         scale = 1.0 / (1.0 + scale);
-      }
-      this.madsor.scaleSelection(this.snapshots, scale);
-      this.scale *= scale;
-   }
-
-  
-   doIt() {
-      this.madsor.scaleSelection(this.snapshots, this.scale);
-   }
-
-   undo() {
-      this.madsor.restoreSelectionPosition(this.snapshots);
    }
 }
 

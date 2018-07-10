@@ -662,8 +662,10 @@ PreviewCage.prototype.rotateSelection = function(snapshot, quatRotate, center) {
 //
 // scale selection, by moving vertices
 //
-PreviewCage.prototype.scaleSelection = function(snapshot, scale) {
-   const scaleV = vec3.fromValues(scale, scale, scale);
+PreviewCage.prototype.scaleSelection = function(snapshot, scale, axis) {
+   const scaleV = vec3.fromValues(axis[0] ? scale * axis[0] : 1, 
+                                  axis[1] ? scale * axis[1] : 1, 
+                                  axis[2] ? scale * axis[2] : 1);
    this.transformSelection(snapshot, (transform, _origin) => {
       mat4.fromScaling(transform, scaleV);   
     });
