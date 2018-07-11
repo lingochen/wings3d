@@ -99,15 +99,24 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
              });
          }
       }
-      // scale axis,
+      // scale axis and radial
+      const radialVec = [[0, 1, 1], [1, 0, 1], [1, 1, 0]];
       const scaleAxis = {face: [action.faceScaleAxisX, action.faceScaleAxisY, action.faceScaleAxisZ],
                          edge: [action.edgeScaleAxisX, action.edgeScaleAxisY, action.edgeScaleAxisZ],
                        vertex: [action.vertexScaleAxisX, action.vertexScaleAxisY, action.vertexScaleAxisZ],
                          body: [action.bodyScaleAxisX, action.bodyScaleAxisY, action.bodyScaleAxisZ]};
       const scaleAxisMode = scaleAxis[mode];
+      const scaleRadial = {face: [action.faceScaleRadialX, action.faceScaleRadialY, action.faceScaleRadialZ],
+                           edge: [action.edgeScaleRadialX, action.edgeScaleRadialY, action.edgeScaleRadialZ],
+                         vertex: [action.vertexScaleRadialX, action.vertexScaleRadialY, action.vertexScaleRadialZ],
+                           body: [action.bodyScaleRadialX, action.bodyScaleRadialY, action.bodyScaleRadialZ]};
+      const scaleRadialMode = scaleRadial[mode];
       for (let axis = 0; axis < 3; ++axis) {
          UI.bindMenuItem(scaleAxisMode[axis].name, (_ev) => {
             View.attachHandlerMouseMove(new ScaleHandler(this, axisVec[axis]));
+          });
+         UI.bindMenuItem(scaleRadialMode[axis].name, (_ev) => {
+            View.attachHandlerMouseMove(new ScaleHandler(this, radialVec[axis]));
           });
       }
    } 

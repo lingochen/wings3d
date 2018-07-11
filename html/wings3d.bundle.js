@@ -352,6 +352,10 @@ const action = {
    bodyScaleAxisX: ()=> {notImplemented(this);},
    bodyScaleAxisY: ()=> {notImplemented(this);},
    bodyScaleAxisZ: ()=> {notImplemented(this);},
+   bodyScaleRadial: ()=> {notImplemented(this);},
+   bodyScaleRadialX: ()=> {notImplemented(this);},
+   bodyScaleRadialY: ()=> {notImplemented(this);},
+   bodyScaleRadialZ: ()=> {notImplemented(this);},
    //bodySlice: () => {notImplemented(this);},
    // edge
    cutMenu: () => {notImplemented(this);},
@@ -395,6 +399,10 @@ const action = {
    edgeScaleAxisX: ()=> {notImplemented(this);},
    edgeScaleAxisY: ()=> {notImplemented(this);},
    edgeScaleAxisZ: ()=> {notImplemented(this);},
+   edgeScaleRadial: ()=> {notImplemented(this);},
+   edgeScaleRadialX: ()=> {notImplemented(this);},
+   edgeScaleRadialY: ()=> {notImplemented(this);},
+   edgeScaleRadialZ: ()=> {notImplemented(this);},
    // face
    faceExtrudeMenu: () =>{notImplemented(this);},
    faceExtrudeX: () =>{notImplemented(this);},
@@ -433,6 +441,10 @@ const action = {
    faceScaleAxisX: ()=> {notImplemented(this);},
    faceScaleAxisY: ()=> {notImplemented(this);},
    faceScaleAxisZ: ()=> {notImplemented(this);},
+   faceScaleRadial: ()=> {notImplemented(this);},
+   faceScaleRadialX: ()=> {notImplemented(this);},
+   faceScaleRadialY: ()=> {notImplemented(this);},
+   faceScaleRadialZ: ()=> {notImplemented(this);},
    // vertex
    vertexConnect: () => {notImplemented(this);},
    vertexDissolve: () => {notImplemented(this);},
@@ -465,6 +477,10 @@ const action = {
    vertexScaleAxisX: ()=> {notImplemented(this);},
    vertexScaleAxisY: ()=> {notImplemented(this);},
    vertexScaleAxisZ: ()=> {notImplemented(this);},
+   vertexScaleRadial: ()=> {notImplemented(this);},
+   vertexScaleRadialX: ()=> {notImplemented(this);},
+   vertexScaleRadialY: ()=> {notImplemented(this);},
+   vertexScaleRadialZ: ()=> {notImplemented(this);},
    // guide tour
    helpMenu: () => {notImplemented(this);},
    about: () => {notImplemented(this);},
@@ -9940,15 +9956,24 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
              });
          }
       }
-      // scale axis,
+      // scale axis and radial
+      const radialVec = [[0, 1, 1], [1, 0, 1], [1, 1, 0]];
       const scaleAxis = {face: [__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceScaleAxisX, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceScaleAxisY, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceScaleAxisZ],
                          edge: [__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].edgeScaleAxisX, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].edgeScaleAxisY, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].edgeScaleAxisZ],
                        vertex: [__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].vertexScaleAxisX, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].vertexScaleAxisY, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].vertexScaleAxisZ],
                          body: [__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].bodyScaleAxisX, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].bodyScaleAxisY, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].bodyScaleAxisZ]};
       const scaleAxisMode = scaleAxis[mode];
+      const scaleRadial = {face: [__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceScaleRadialX, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceScaleRadialY, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceScaleRadialZ],
+                           edge: [__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].edgeScaleRadialX, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].edgeScaleRadialY, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].edgeScaleRadialZ],
+                         vertex: [__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].vertexScaleRadialX, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].vertexScaleRadialY, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].vertexScaleRadialZ],
+                           body: [__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].bodyScaleRadialX, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].bodyScaleRadialY, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].bodyScaleRadialZ]};
+      const scaleRadialMode = scaleRadial[mode];
       for (let axis = 0; axis < 3; ++axis) {
          __WEBPACK_IMPORTED_MODULE_4__wings3d_ui__["bindMenuItem"](scaleAxisMode[axis].name, (_ev) => {
             __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["attachHandlerMouseMove"](new ScaleHandler(this, axisVec[axis]));
+          });
+         __WEBPACK_IMPORTED_MODULE_4__wings3d_ui__["bindMenuItem"](scaleRadialMode[axis].name, (_ev) => {
+            __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["attachHandlerMouseMove"](new ScaleHandler(this, radialVec[axis]));
           });
       }
    } 

@@ -267,6 +267,10 @@ const action = {
    bodyScaleAxisX: ()=> {notImplemented(this);},
    bodyScaleAxisY: ()=> {notImplemented(this);},
    bodyScaleAxisZ: ()=> {notImplemented(this);},
+   bodyScaleRadial: ()=> {notImplemented(this);},
+   bodyScaleRadialX: ()=> {notImplemented(this);},
+   bodyScaleRadialY: ()=> {notImplemented(this);},
+   bodyScaleRadialZ: ()=> {notImplemented(this);},
    //bodySlice: () => {notImplemented(this);},
    // edge
    cutMenu: () => {notImplemented(this);},
@@ -310,6 +314,10 @@ const action = {
    edgeScaleAxisX: ()=> {notImplemented(this);},
    edgeScaleAxisY: ()=> {notImplemented(this);},
    edgeScaleAxisZ: ()=> {notImplemented(this);},
+   edgeScaleRadial: ()=> {notImplemented(this);},
+   edgeScaleRadialX: ()=> {notImplemented(this);},
+   edgeScaleRadialY: ()=> {notImplemented(this);},
+   edgeScaleRadialZ: ()=> {notImplemented(this);},
    // face
    faceExtrudeMenu: () =>{notImplemented(this);},
    faceExtrudeX: () =>{notImplemented(this);},
@@ -348,6 +356,10 @@ const action = {
    faceScaleAxisX: ()=> {notImplemented(this);},
    faceScaleAxisY: ()=> {notImplemented(this);},
    faceScaleAxisZ: ()=> {notImplemented(this);},
+   faceScaleRadial: ()=> {notImplemented(this);},
+   faceScaleRadialX: ()=> {notImplemented(this);},
+   faceScaleRadialY: ()=> {notImplemented(this);},
+   faceScaleRadialZ: ()=> {notImplemented(this);},
    // vertex
    vertexConnect: () => {notImplemented(this);},
    vertexDissolve: () => {notImplemented(this);},
@@ -380,6 +392,10 @@ const action = {
    vertexScaleAxisX: ()=> {notImplemented(this);},
    vertexScaleAxisY: ()=> {notImplemented(this);},
    vertexScaleAxisZ: ()=> {notImplemented(this);},
+   vertexScaleRadial: ()=> {notImplemented(this);},
+   vertexScaleRadialX: ()=> {notImplemented(this);},
+   vertexScaleRadialY: ()=> {notImplemented(this);},
+   vertexScaleRadialZ: ()=> {notImplemented(this);},
    // guide tour
    helpMenu: () => {notImplemented(this);},
    about: () => {notImplemented(this);},
