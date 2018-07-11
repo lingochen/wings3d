@@ -347,6 +347,11 @@ const action = {
    bodyFlipX: () => {notImplemented(this);},
    bodyFlipY: () => {notImplemented(this);},
    bodyFlipZ: () => {notImplemented(this);},
+   bodyScaleUniform: ()=> {notImplemented(this);},
+   bodyScaleAxis: ()=> {notImplemented(this);},
+   bodyScaleAxisX: ()=> {notImplemented(this);},
+   bodyScaleAxisY: ()=> {notImplemented(this);},
+   bodyScaleAxisZ: ()=> {notImplemented(this);},
    //bodySlice: () => {notImplemented(this);},
    // edge
    cutMenu: () => {notImplemented(this);},
@@ -9877,12 +9882,10 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
           });
       }
       // scale uniform
-      const scaleUniform = {face: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceScaleUniform, edge: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].edgeScaleUniform, vertex: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].vertexScaleUniform};
-      if (scaleUniform[mode]) {
-         __WEBPACK_IMPORTED_MODULE_4__wings3d_ui__["bindMenuItem"](scaleUniform[mode].name, (_ev) => {
-            __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["attachHandlerMouseMove"](new ScaleHandler(this, [1, 1, 1]));
-          });
-      }
+      const scaleUniform = {face: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceScaleUniform, edge: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].edgeScaleUniform, vertex: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].vertexScaleUniform, body: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].bodyScaleUniform};
+      __WEBPACK_IMPORTED_MODULE_4__wings3d_ui__["bindMenuItem"](scaleUniform[mode].name, (_ev) => {
+         __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["attachHandlerMouseMove"](new ScaleHandler(this, [1, 1, 1]));
+       });
       // rotate x, y, z
       for (let axis = 0; axis < 3; ++axis) {
          __WEBPACK_IMPORTED_MODULE_4__wings3d_ui__["bindMenuItem"](mode + 'Rotate' + axisName[axis], (ev) => {
@@ -9940,14 +9943,13 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       // scale axis,
       const scaleAxis = {face: [__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceScaleAxisX, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceScaleAxisY, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].faceScaleAxisZ],
                          edge: [__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].edgeScaleAxisX, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].edgeScaleAxisY, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].edgeScaleAxisZ],
-                       vertex: [__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].vertexScaleAxisX, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].vertexScaleAxisY, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].vertexScaleAxisZ]};
+                       vertex: [__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].vertexScaleAxisX, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].vertexScaleAxisY, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].vertexScaleAxisZ],
+                         body: [__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].bodyScaleAxisX, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].bodyScaleAxisY, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].bodyScaleAxisZ]};
       const scaleAxisMode = scaleAxis[mode];
-      if (scaleAxisMode) {
-         for (let axis = 0; axis < 3; ++axis) {
-            __WEBPACK_IMPORTED_MODULE_4__wings3d_ui__["bindMenuItem"](scaleAxisMode[axis].name, (_ev) => {
-               __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["attachHandlerMouseMove"](new ScaleHandler(this, axisVec[axis]));
-             });
-         }
+      for (let axis = 0; axis < 3; ++axis) {
+         __WEBPACK_IMPORTED_MODULE_4__wings3d_ui__["bindMenuItem"](scaleAxisMode[axis].name, (_ev) => {
+            __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["attachHandlerMouseMove"](new ScaleHandler(this, axisVec[axis]));
+          });
       }
    } 
 

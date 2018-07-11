@@ -262,6 +262,11 @@ const action = {
    bodyFlipX: () => {notImplemented(this);},
    bodyFlipY: () => {notImplemented(this);},
    bodyFlipZ: () => {notImplemented(this);},
+   bodyScaleUniform: ()=> {notImplemented(this);},
+   bodyScaleAxis: ()=> {notImplemented(this);},
+   bodyScaleAxisX: ()=> {notImplemented(this);},
+   bodyScaleAxisY: ()=> {notImplemented(this);},
+   bodyScaleAxisZ: ()=> {notImplemented(this);},
    //bodySlice: () => {notImplemented(this);},
    // edge
    cutMenu: () => {notImplemented(this);},

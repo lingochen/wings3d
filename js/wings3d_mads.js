@@ -41,12 +41,10 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
           });
       }
       // scale uniform
-      const scaleUniform = {face: action.faceScaleUniform, edge: action.edgeScaleUniform, vertex: action.vertexScaleUniform};
-      if (scaleUniform[mode]) {
-         UI.bindMenuItem(scaleUniform[mode].name, (_ev) => {
-            View.attachHandlerMouseMove(new ScaleHandler(this, [1, 1, 1]));
-          });
-      }
+      const scaleUniform = {face: action.faceScaleUniform, edge: action.edgeScaleUniform, vertex: action.vertexScaleUniform, body: action.bodyScaleUniform};
+      UI.bindMenuItem(scaleUniform[mode].name, (_ev) => {
+         View.attachHandlerMouseMove(new ScaleHandler(this, [1, 1, 1]));
+       });
       // rotate x, y, z
       for (let axis = 0; axis < 3; ++axis) {
          UI.bindMenuItem(mode + 'Rotate' + axisName[axis], (ev) => {
@@ -104,14 +102,13 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       // scale axis,
       const scaleAxis = {face: [action.faceScaleAxisX, action.faceScaleAxisY, action.faceScaleAxisZ],
                          edge: [action.edgeScaleAxisX, action.edgeScaleAxisY, action.edgeScaleAxisZ],
-                       vertex: [action.vertexScaleAxisX, action.vertexScaleAxisY, action.vertexScaleAxisZ]};
+                       vertex: [action.vertexScaleAxisX, action.vertexScaleAxisY, action.vertexScaleAxisZ],
+                         body: [action.bodyScaleAxisX, action.bodyScaleAxisY, action.bodyScaleAxisZ]};
       const scaleAxisMode = scaleAxis[mode];
-      if (scaleAxisMode) {
-         for (let axis = 0; axis < 3; ++axis) {
-            UI.bindMenuItem(scaleAxisMode[axis].name, (_ev) => {
-               View.attachHandlerMouseMove(new ScaleHandler(this, axisVec[axis]));
-             });
-         }
+      for (let axis = 0; axis < 3; ++axis) {
+         UI.bindMenuItem(scaleAxisMode[axis].name, (_ev) => {
+            View.attachHandlerMouseMove(new ScaleHandler(this, axisVec[axis]));
+          });
       }
    } 
 
