@@ -485,7 +485,7 @@ function canvasHandleMouseMove(e) {
 
       vec3.sub(ptFar, ptFar, ptNear);
       vec3.normalize(ptFar, ptFar);
-      var ray = {origin: ptNear, direction: ptFar};
+      var ray = {origin: ptNear, direction: ptFar, invDir: vec3.fromValues(1/ptFar[0], 1/ptFar[1], 1/ptFar[2])};  // 1/0 still work for our purpose.
       //geometryStatus("mouse position: " + ptNear[0] + ", " + ptNear[1] + "," + ptNear[2] + ", <br />"+ ptFar[0] + ", " + ptFar[1] + ", " + ptFar[2]);
       rayPick(ray);
       // selectDrag if left button mousedown

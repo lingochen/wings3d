@@ -51,6 +51,26 @@ function intersectTriangle(ray, triangle) {
    return t;
 };
 
+// http://psgraphics.blogspot.com/2016/02/new-simple-ray-box-test-from-andrew.html
+function intersectRayAABB(ray, aabb) {
+   let tmin = Number.NEGATIVE_INFINITY;
+   let tmax = Number.POSITIVE_INFINITY;
+   for (let axis = 0; axis < 3; ++axis) {
+      //const invD = 1.0 / ray.direction[axis];    // expect to be precalculate.
+      let t0 = (aabb.min[axis] - ray.origin[axis]) * ray.invDir[axis];
+      let t1 = (aabb.max[axis] - ray.origin[axis]) * ray.invDir[axis];
+      if (ray.invDir[axis] < 0.0) { // swap
+         let temp = t0; t0 = t1; t1 = temp;
+      }
+      tmin = t0 > tmin ? t0 : tmin;
+      tmax = t1 < tmax ? t1 : tmax;
+      if (tmax <= tmin) {
+         return false;
+      }
+   }
+   return (tmax > 0);
+}
+
 /* from
  * @article{MollerHughes99,
   author = "Tomas Möller and John F. Hughes",
@@ -201,6 +221,7 @@ export {
    computeAngle,
    computeEdgeNormal,
    intersectTriangle,
+   intersectRayAABB,
    projectVec3,
    rotationFromToVec3,
    reflectionMat4,

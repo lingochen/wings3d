@@ -9,7 +9,7 @@
 */
 "use strict";
 import {gl, ShaderData} from './wings3d_gl'; 
-import {BoundingSphere} from './wings3d_boundingvolume';
+import {BoundingSphere, LooseOctree} from './wings3d_boundingvolume';
 import {WingedTopology} from './wings3d_wingededge';
 import * as View from './wings3d_view';
 import * as Wings3D from './wings3d';
@@ -27,12 +27,99 @@ const PreviewCage = function(bench) {
    this.groupSelection = false;
    // default no name
    this.name = "";
+   // bvh
+   this.bvh = {root: null, queue: []};       // queue is for lazy evaluation.
 };
 
 
 // act as destructor
 PreviewCage.prototype.freeBuffer = function() {
    this.geometry.free();
+};
+
+//-- bvh -----
+
+PreviewCage.prototype.initBVH = function() {
+   const faceSet = this.geometry.faces;
+
+   let max, min;
+   const center = vec3.create();
+   // first compute midPoint.
+   const spheres = [];
+   for (let face of faceSet) {
+      const sphere = this.bench.boundingSpheres[face.index];
+      spheres.push(sphere);
+      vec3.add(center, center, sphere.center);
+      if (!max) {
+         max = vec3.fromValues(sphere.center[0]+sphere.radius, sphere.center[1]+sphere.radius, sphere.center[2]+sphere.radius);
+         min = vec3.fromValues(sphere.center[0]-sphere.radius, sphere.center[1]-sphere.radius, sphere.center[2]-sphere.radius);
+      } else {
+         for (let axis = 0; axis < 3; ++axis) {
+            if (max[axis] < (sphere.center[axis]+sphere.radius)) {
+               max[axis] = sphere.center[axis]+sphere.radius;
+            } else if (min[axis] > (sphere.center[axis]-sphere.radius)) {
+               min[axis] = sphere.center[axis] - sphere.radius;
+            }
+         }
+      }
+   }
+   // mid point of a bunch of spheres will likely split more evently.
+   const bound = {center: center, halfSize: vec3.fromValues((max[0]-min[0])/2, (max[1]-min[1])/2, (max[2]-min[2])/2)};
+   this.bvh.root = new LooseOctree(this, bound, 0);
+   // now insert every spheres onto the root
+   for (let sphere of spheres) {
+      this.bvh.root.getBound(bound);
+      this.bvh.root.insert(sphere, bound);
+   }
+}
+
+PreviewCage.prototype.insert = function(face) {
+   const sphere = this.bench.boundingSpheres[face.index];
+   this.bvh.root.insert(sphere);
+}
+
+//-- end of bvh
+
+// todo: octree optimization.
+PreviewCage.prototype.rayPick = function(ray) {
+   if (this.bvh.root === null) {
+      this.initBVH();
+   }
+   // return the closest face (triangle) that intersect ray.
+ /*  var hitSphere = [];
+   for (let polygon of this.geometry.faces) {
+      const sphere = this.bench.boundingSpheres[polygon.index];
+      if (sphere.isIntersect(ray)){
+         hitSphere.push( sphere );
+      }
+   } */
+   // check for triangle intersection, select the hit Face, hit Edge(closest), and hit Vertex (closest).
+   var hitEdge = null;
+   var center;
+   var hitT = Number.POSITIVE_INFINITY;   // z_far is the furthest possible intersection
+   const extent = {min: vec3.create(), max:vec3.create()};
+   //for (let i = 0; i < hitSphere.length; ++i) {
+      // walk the face, build a triangle on centroid + edge's 2 point. check for intersection
+   //   var sphere = hitSphere[i];
+   for (let sphere of this.bvh.root.intersectRay(ray, extent)) {
+      sphere.polygon.eachEdge( function(edge) {
+         // now check the triangle is ok?
+         var t = Util.intersectTriangle(ray, [sphere.center, edge.origin.vertex, edge.destination().vertex]);
+         if ((t != 0.0) && (t < hitT)) {
+            // intersection, check for smallest t, closest intersection
+            hitT = t;
+            hitEdge = edge;
+            center = sphere.center;
+         }
+      });
+   }
+   // yes, we have an hit
+   if (hitEdge) {
+      return {t: hitT, model: this, center: center, edge: hitEdge};
+      // p = o + td; intersection point.
+   } else {
+      return null;
+   }
 };
 
 
@@ -133,46 +220,6 @@ PreviewCage.prototype._getGeometrySize = function() {
 
 PreviewCage.prototype._updatePreviewAll = function() {
    this.bench.updatePreview();
-};
-
-
-// todo: octree optimization.
-PreviewCage.prototype.rayPick = function(ray) {
-   var that = this;
-   // return the closest face (triangle) that intersect ray.
-   var intersect = {polygon: [], pt: []};
-   var hitSphere = [];
-   for (let polygon of this.geometry.faces) {
-      const sphere = this.bench.boundingSpheres[polygon.index];
-      if (sphere.isIntersect(ray)){
-         hitSphere.push( sphere );
-      }
-   }
-   // check for triangle intersection, select the hit Face, hit Edge(closest), and hit Vertex (closest).
-   var hitEdge = null;
-   var center;
-   var hitT = 10000000;   // z_far is the furthest possible intersection
-   for (let i = 0; i < hitSphere.length; ++i) {
-      // walk the face, build a triangle on centroid + edge's 2 point. check for intersection
-      var sphere = hitSphere[i];
-      sphere.polygon.eachEdge( function(edge) {
-         // now check the triangle is ok?
-         var t = Util.intersectTriangle(ray, [sphere.center, edge.origin.vertex, edge.destination().vertex]);
-         if ((t != 0.0) && (t < hitT)) {
-            // intersection, check for smallest t, closest intersection
-            hitT = t;
-            hitEdge = edge;
-            center = sphere.center;
-         }
-      });
-   }
-   // yes, we have an hit
-   if (hitEdge) {
-      return {t: hitT, model: this, center: center, edge: hitEdge};
-      // p = o + td; intersection point.
-   } else {
-      return null;
-   }
 };
 
 
