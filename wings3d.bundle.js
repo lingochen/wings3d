@@ -532,10 +532,10 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "drawWorld", function() { return drawWorld; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "render", function() { return render; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_render__ = __webpack_require__(18);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_render__ = __webpack_require__(19);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_camera__ = __webpack_require__(14);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_gl__ = __webpack_require__(5);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__plugins_wavefront_obj__ = __webpack_require__(19);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__plugins_wavefront_obj__ = __webpack_require__(20);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_undo__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_facemads__ = __webpack_require__(9);
@@ -1031,7 +1031,7 @@ function canvasHandleMouseMove(e) {
 
       vec3.sub(ptFar, ptFar, ptNear);
       vec3.normalize(ptFar, ptFar);
-      var ray = {origin: ptNear, direction: ptFar};
+      var ray = {origin: ptNear, direction: ptFar, invDir: vec3.fromValues(1/ptFar[0], 1/ptFar[1], 1/ptFar[2])};  // 1/0 still work for our purpose.
       //geometryStatus("mouse position: " + ptNear[0] + ", " + ptNear[1] + "," + ptNear[2] + ", <br />"+ ptFar[0] + ", " + ptFar[1] + ", " + ptFar[2]);
       rayPick(ray);
       // selectDrag if left button mousedown
@@ -1368,7 +1368,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "showContextMenu", function() { return showContextMenu; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "queuePopupMenu", function() { return queuePopupMenu; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "toggleSubmenu", function() { return toggleSubmenu; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_hotkey__ = __webpack_require__(17);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_hotkey__ = __webpack_require__(18);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d__ = __webpack_require__(0);
 /*
    wings3d, ui and ui utility functions. including tutor.
@@ -1878,7 +1878,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_undo__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_draftbench__ = __webpack_require__(8);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_util__ = __webpack_require__(21);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_util__ = __webpack_require__(16);
 /*
 *  hold onto a WingedEdgeTopology. adds index, texture, etc....
 *  bounding box, picking.
@@ -1908,12 +1908,99 @@ const PreviewCage = function(bench) {
    this.groupSelection = false;
    // default no name
    this.name = "";
+   // bvh
+   this.bvh = {root: null, queue: []};       // queue is for lazy evaluation.
 };
 
 
 // act as destructor
 PreviewCage.prototype.freeBuffer = function() {
    this.geometry.free();
+};
+
+//-- bvh -----
+
+PreviewCage.prototype.initBVH = function() {
+   const faceSet = this.geometry.faces;
+
+   let max, min;
+   const center = vec3.create();
+   // first compute midPoint.
+   const spheres = [];
+   for (let face of faceSet) {
+      const sphere = this.bench.boundingSpheres[face.index];
+      spheres.push(sphere);
+      vec3.add(center, center, sphere.center);
+      if (!max) {
+         max = vec3.fromValues(sphere.center[0]+sphere.radius, sphere.center[1]+sphere.radius, sphere.center[2]+sphere.radius);
+         min = vec3.fromValues(sphere.center[0]-sphere.radius, sphere.center[1]-sphere.radius, sphere.center[2]-sphere.radius);
+      } else {
+         for (let axis = 0; axis < 3; ++axis) {
+            if (max[axis] < (sphere.center[axis]+sphere.radius)) {
+               max[axis] = sphere.center[axis]+sphere.radius;
+            } else if (min[axis] > (sphere.center[axis]-sphere.radius)) {
+               min[axis] = sphere.center[axis] - sphere.radius;
+            }
+         }
+      }
+   }
+   // mid point of a bunch of spheres will likely split more evently.
+   const bound = {center: center, halfSize: vec3.fromValues((max[0]-min[0])/2, (max[1]-min[1])/2, (max[2]-min[2])/2)};
+   this.bvh.root = new __WEBPACK_IMPORTED_MODULE_1__wings3d_boundingvolume__["LooseOctree"](this, bound, 0);
+   // now insert every spheres onto the root
+   for (let sphere of spheres) {
+      this.bvh.root.getBound(bound);
+      this.bvh.root.insert(sphere, bound);
+   }
+}
+
+PreviewCage.prototype.insert = function(face) {
+   const sphere = this.bench.boundingSpheres[face.index];
+   this.bvh.root.insert(sphere);
+}
+
+//-- end of bvh
+
+// todo: octree optimization.
+PreviewCage.prototype.rayPick = function(ray) {
+   if (this.bvh.root === null) {
+      this.initBVH();
+   }
+   // return the closest face (triangle) that intersect ray.
+ /*  var hitSphere = [];
+   for (let polygon of this.geometry.faces) {
+      const sphere = this.bench.boundingSpheres[polygon.index];
+      if (sphere.isIntersect(ray)){
+         hitSphere.push( sphere );
+      }
+   } */
+   // check for triangle intersection, select the hit Face, hit Edge(closest), and hit Vertex (closest).
+   var hitEdge = null;
+   var center;
+   var hitT = Number.POSITIVE_INFINITY;   // z_far is the furthest possible intersection
+   const extent = {min: vec3.create(), max:vec3.create()};
+   //for (let i = 0; i < hitSphere.length; ++i) {
+      // walk the face, build a triangle on centroid + edge's 2 point. check for intersection
+   //   var sphere = hitSphere[i];
+   for (let sphere of this.bvh.root.intersectRay(ray, extent)) {
+      sphere.polygon.eachEdge( function(edge) {
+         // now check the triangle is ok?
+         var t = __WEBPACK_IMPORTED_MODULE_7__wings3d_util__["intersectTriangle"](ray, [sphere.center, edge.origin.vertex, edge.destination().vertex]);
+         if ((t != 0.0) && (t < hitT)) {
+            // intersection, check for smallest t, closest intersection
+            hitT = t;
+            hitEdge = edge;
+            center = sphere.center;
+         }
+      });
+   }
+   // yes, we have an hit
+   if (hitEdge) {
+      return {t: hitT, model: this, center: center, edge: hitEdge};
+      // p = o + td; intersection point.
+   } else {
+      return null;
+   }
 };
 
 
@@ -2014,46 +2101,6 @@ PreviewCage.prototype._getGeometrySize = function() {
 
 PreviewCage.prototype._updatePreviewAll = function() {
    this.bench.updatePreview();
-};
-
-
-// todo: octree optimization.
-PreviewCage.prototype.rayPick = function(ray) {
-   var that = this;
-   // return the closest face (triangle) that intersect ray.
-   var intersect = {polygon: [], pt: []};
-   var hitSphere = [];
-   for (let polygon of this.geometry.faces) {
-      const sphere = this.bench.boundingSpheres[polygon.index];
-      if (sphere.isIntersect(ray)){
-         hitSphere.push( sphere );
-      }
-   }
-   // check for triangle intersection, select the hit Face, hit Edge(closest), and hit Vertex (closest).
-   var hitEdge = null;
-   var center;
-   var hitT = 10000000;   // z_far is the furthest possible intersection
-   for (let i = 0; i < hitSphere.length; ++i) {
-      // walk the face, build a triangle on centroid + edge's 2 point. check for intersection
-      var sphere = hitSphere[i];
-      sphere.polygon.eachEdge( function(edge) {
-         // now check the triangle is ok?
-         var t = __WEBPACK_IMPORTED_MODULE_7__wings3d_util__["intersectTriangle"](ray, [sphere.center, edge.origin.vertex, edge.destination().vertex]);
-         if ((t != 0.0) && (t < hitT)) {
-            // intersection, check for smallest t, closest intersection
-            hitT = t;
-            hitEdge = edge;
-            center = sphere.center;
-         }
-      });
-   }
-   // yes, we have an hit
-   if (hitEdge) {
-      return {t: hitT, model: this, center: center, edge: hitEdge};
-      // p = o + td; intersection point.
-   } else {
-      return null;
-   }
 };
 
 
@@ -12414,9 +12461,16 @@ __WEBPACK_IMPORTED_MODULE_1__wings3d_js__["onReady"](init);
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "BoundingSphere", function() { return BoundingSphere; });
-/*
-   require glmatrix
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "LooseOctree", function() { return LooseOctree; });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_util__ = __webpack_require__(16);
+/*   require glmatrix
+//
+// LooseOctree and BoundingSphere.
 */
+
+
+
+
 
 
 const BoundingSphere = function(center, radius, polygon) {
@@ -12478,9 +12532,372 @@ BoundingSphere.create = function(polygon, center) {
 }
 
 
+// loose octree for ease of implementation, and adequate performance. AABB tree, OBB tree can wait if needed.
+// http://www.tulrich.com/geekstuff/partitioning.html by Thatcher Ulrich
+class LooseOctree {  // this is really node
+   constructor(bvh, bound, level) {
+      this.bvh = bvh;
+      this.level = level;
+      this.node = [];
+      if (bound) {
+         this.bound = {center: vec3.clone(bound.center), halfSize: vec3.clone(bound.halfSize)};
+      }
+      //
+   }
+
+   getBound(bound) {
+      vec3.copy(bound.center, this.bound.center);
+      vec3.copy(bound.halfSize, this.bound.halfSize);
+   }
+
+   getExtent(extent, looseNess = 1.0) {
+      for (let axis=0; axis < 3; ++axis) {
+         const length = this.bound.halfSize[axis]*looseNess;   
+         extent.min[axis] = this.bound.center[axis]-length;
+         extent.max[axis] = this.bound.center[axis]+length;
+      } 
+   }
+
+   getLooseExtent(extent) {
+      this.getExtent(extent, LooseOctree.kLOOSENESS); // looseOctree's extent is 2x bigger.
+   }
+
+   static getOctant(sphere, bound) {
+      let index = 0;
+      const octant = [1, 2, 4];        // octant mapping
+      for (let axis = 0; axis < 3; ++axis) {
+         bound.halfSize[axis] /= 2;
+         if (sphere.radius > bound.halfSize[axis]) {  // does not fit in the children's bound
+            return -1;
+         } else if (sphere.center[axis] < bound.center[axis]) {
+            index += octant[axis];     // |= octant[axis] faster?
+            bound.center[axis] -= bound.halfSize[axis];
+         } else {
+            bound.center[axis] += bound.halfSize[axis];
+         }
+      }
+      return index;
+   }
+
+   // only expand when this.node.length > kTHRESHOLD. and this.leaf will double as this.node.
+   insert(sphere, bound) {
+      if (this.node) { // keep pushing.
+         this.node.push(sphere);
+         if (this.node.length >= LooseOctree.kTHRESHOLD) {  // now expand to children node if possible
+            this.leaf = [null, null, null, null, null, null, null, null];  // now setup leaf octant
+            let newBound = {center: vec3.create(), halfSize: vec3.create()};
+            let ret;
+            const node = this.node;
+            this.node = undefined;
+            for (let sphere of node) {  // redistribute to children.
+               vec3.copy(newBound.center, bound.center);
+               vec3.copy(newBound.halfSize, bound.halfSize);
+               ret = this.insert(sphere, newBound);
+            }
+            return ret;
+         }
+      } else {// not leaf node.
+         let index = LooseOctree.getOctant(sphere, bound);
+         if (index >= 0) {  // descent to children
+            let child = this.leaf[index];
+            if (child === null) {
+               child = new LooseOctree(this.bvh, bound, this.level+1);
+               this.leaf[index] = child;
+            }
+            return child.insert(sphere, bound);  
+         }
+         // larger than child size, so insert here.
+         this.leaf.push(sphere);
+      }
+      return this;
+   }
+
+   //
+   // Revelles' algorithm, "An efficient parametric algorithm for octree traversal". <= todo
+   * intersectRay(ray, extent) {   // act as generator
+      if (this.node) {
+         for (let sphere of this.node) {
+            if (sphere.isIntersect(ray)) {
+               yield sphere;
+            }
+         }
+      } else {
+         for (let i = 8; i < this.leaf.length; ++i) {
+            const sphere = this.leaf[i];
+            if (sphere.isIntersect(ray)) {
+               yield sphere;
+            }
+         }
+         // check children, this is the hard part
+         for (let i = 0; i < 8; ++i) {
+            const child = this.leaf[i];
+            if (child) {
+               child.getLooseExtent(extent);
+               if (__WEBPACK_IMPORTED_MODULE_0__wings3d_util__["intersectRayAABB"](ray, extent)) {
+                  yield* child.intersectRay(ray, extent);
+               }
+            }
+         }
+      }
+   }
+
+   *[Symbol.iterator]() {
+      yield this;
+      if (this.leaf) {
+         for (let i = 0; i < 8; ++i) {
+            const node = this.leaf[i];
+            if (node) {
+               yield* node;
+            }
+         }
+      }
+   }
+}
+LooseOctree.kTHRESHOLD = 16;    // read somewhere, 8-15 is a good number for octree node. expand to child only when node.length >= kTHRESHOLD
+LooseOctree.kLOOSENESS = 1.5;
+
+
+
+
+
 
 /***/ }),
 /* 16 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "computeAngle", function() { return computeAngle; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "computeEdgeNormal", function() { return computeEdgeNormal; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "intersectTriangle", function() { return intersectTriangle; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "intersectRayAABB", function() { return intersectRayAABB; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "projectVec3", function() { return projectVec3; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "rotationFromToVec3", function() { return rotationFromToVec3; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "reflectionMat4", function() { return reflectionMat4; });
+
+
+
+const kEPSILON = 0.000001;
+
+// Möller–Trumbore ray-triangle intersection algorithm
+// should I use float64array? 
+function intersectTriangle(ray, triangle) {
+   var edge1 = vec3.create(), edge2 = vec3.create();
+   /* find vectors for two edges sharing vert0 */
+   vec3.sub(edge1, triangle[1], triangle[0]);
+   vec3.sub(edge2, triangle[2], triangle[0]);
+
+   /* begin calculating determinant - also used to calculate U parameter */
+   var pvec = vec3.create();
+   vec3.cross(pvec, ray.direction, edge2);
+
+   /* if determinant is near zero, ray lies in plane of triangle */
+   var det = vec3.dot(edge1, pvec);
+
+   if (det < kEPSILON) { // cull backface, and nearly parallel ray
+      return 0.0;
+   }
+   //if (det > -kEPSILON && det < kEPSILON), nearly parallel
+   //  return 0;
+
+   var inv_det = 1.0 / det;
+
+   /* calculate distance from vert0 to ray origin */
+   var tvec = vec3.create();
+   vec3.sub(tvec, ray.origin, triangle[0]);
+
+   /* calculate U parameter and test bounds */
+   var u = vec3.dot(tvec, pvec) * inv_det;
+   if (u < 0.0 || u > 1.0) {
+     return 0.0;
+   }
+
+   /* prepare to test V parameter */
+   var qvec = vec3.create();
+   vec3.cross(qvec, tvec, edge1);
+
+   /* calculate V parameter and test bounds */
+   var v = vec3.dot(ray.direction, qvec) * inv_det;
+   if (v < 0.0 || u + v > 1.0) {
+     return 0.0;
+   }
+
+   /* calculate t, ray intersects triangle */
+   var t = vec3.dot(edge2, qvec) * inv_det;
+   return t;
+};
+
+// http://psgraphics.blogspot.com/2016/02/new-simple-ray-box-test-from-andrew.html
+function intersectRayAABB(ray, aabb) {
+   let tmin = Number.NEGATIVE_INFINITY;
+   let tmax = Number.POSITIVE_INFINITY;
+   for (let axis = 0; axis < 3; ++axis) {
+      //const invD = 1.0 / ray.direction[axis];    // expect to be precalculate.
+      let t0 = (aabb.min[axis] - ray.origin[axis]) * ray.invDir[axis];
+      let t1 = (aabb.max[axis] - ray.origin[axis]) * ray.invDir[axis];
+      if (ray.invDir[axis] < 0.0) { // swap
+         let temp = t0; t0 = t1; t1 = temp;
+      }
+      tmin = t0 > tmin ? t0 : tmin;
+      tmax = t1 < tmax ? t1 : tmax;
+      if (tmax <= tmin) {
+         return false;
+      }
+   }
+   return (tmax > 0);
+}
+
+/* from
+ * @article{MollerHughes99,
+  author = "Tomas Möller and John F. Hughes",
+  title = "Efficiently Building a Matrix to Rotate One Vector to Another",
+  journal = "journal of graphics tools",
+  volume = "4",
+  number = "4",
+  pages = "1-4",
+  year = "1999",
+}
+http://jgt.akpeters.com/papers/MollerHughes99/code.html
+*/
+function rotationFromToVec3(mtx, from, to) {
+
+  let e = vec3.dot(from, to);
+  if (Math.abs(e) > (1.0-kEPSILON) ) { // "from" and "to"-vector almost parallel
+      // find closest axis
+      const x = vec3.fromValues(Math.abs(from[0]), Math.abs(from[1]), Math.abs(from[2]));   // vector most nearly orthogonal to "from"
+      if (x[0] < x[1]) {
+         if( x[0] < x[2] ) {
+            x[0] = 1.0; x[1] = x[2] = 0.0;
+         } else {
+            x[2] = 1.0; x[0] = x[1] = 0.0;
+         }
+      } else {
+         if( x[1] < x[2] ) {
+            x[1] = 1.0; x[0] = x[2] = 0.0;
+         } else {
+            x[2] = 1.0; x[0] = x[1] = 0.0;
+         }
+      }
+
+      // compute the matrix
+      let ut = vec3.fromValues(x[0] - from[0], x[1] - from[1], x[2] - from[2]);  // sub(v, x, from);
+      let vt = vec3.fromValues(x[0] - to[0],   x[1] - to[1],   x[2] - to[2]);
+
+      let c1 = 2.0 / vec3.dot(ut, ut);       // coefficients
+      let c2 = 2.0 / vec3.dot(vt, vt);
+      let c3 = c1 * c2  * vec3.dot(ut, vt);
+      for (let i = 0; i < 3; i++) {
+         let k = i*4;      // stride.
+         for (let j = 0; j < 3; j++) {
+            mtx[k+j] =  -c1 * ut[i] * ut[j] - c2 * vt[i] * vt[j] + c3 * vt[i] * ut[j];
+         }
+         mtx[k+i] += 1.0;
+      }
+   } else  {// the most common case, unless "from"="to", or "from"=-"to" 
+      let v = vec3.create();
+      vec3.cross(v, from, to);
+      // ...otherwise use this hand optimized version (9 mults less)
+      //let h = 1.0 / (1.0 + e);      // optimization by Gottfried Chen
+      let h = (1.0 -e)/ vec3.dot(v, v);
+      let hvx = h * v[0];
+      let hvz = h * v[2];
+      let hvxy = hvx * v[1];
+      let hvxz = hvx * v[2];
+      let hvyz = hvz * v[1];
+      mtx[0] = e + hvx * v[0];
+      mtx[1] = hvxy + v[2];
+      mtx[2] = hvxz - v[1];
+
+      mtx[4] = hvxy - v[2];
+      mtx[5] = e + h * v[1] * v[1];
+      mtx[6] = hvyz + v[0];
+
+      mtx[8] = hvxz + v[1];
+      mtx[9] = hvyz - v[0];
+      mtx[10] = e + hvz * v[2];
+   }
+
+   return mtx;
+};
+
+/*
+References
+https://www.opengl.org/discussion_boards/showthread.php/147784-Mirror-Matrices
+https://www.opengl.org/discussion_boards/showthread.php/169605-reflection-matrix-how-to-derive
+"3D Math Primer for Graphics andGame Development" by Fletcher Dunn, Ian Parberry
+*/
+function reflectionMat4(mat, norm, pt) {
+   const d = -vec3.dot(norm, pt);
+
+	mat[0] = -2 * norm[0] * norm[0] + 1;
+	mat[1] = -2 * norm[1] * norm[0];
+	mat[2] = -2 * norm[2] * norm[0];
+	mat[3] = 0;
+ 
+	mat[4] = -2 * norm[0] * norm[1];
+	mat[5] = -2 * norm[1] * norm[1] + 1;
+	mat[6] = -2 * norm[2] * norm[1];
+	mat[7] = 0;
+ 
+	mat[8] =	-2 * norm[0] * norm[2];
+	mat[9] = -2 * norm[1] * norm[2];
+	mat[10] = -2 * norm[2] * norm[2] + 1;
+	mat[11] = 0;
+ 
+	mat[12] = -2 * norm[0] * d;
+	mat[13] = -2 * norm[1] * d;
+	mat[14] = -2 * norm[2] * d;
+   mat[15] = 1;
+   return mat;
+};
+
+
+// angle is between (-PI, PI). equivalent to (-180, 180) degree.
+function computeAngle(crossNorm, v0, v1, v2) {
+   let edge0 = vec3.create(), edge1 = vec3.create();
+   // angle = pi - atan2(v[i] x v[i+1].magnitude, v[i] * v[i+1]);
+   vec3.sub(edge0, v0.vertex, v1.vertex);
+   vec3.sub(edge1, v2.vertex, v1.vertex);
+   vec3.cross(crossNorm, edge0, edge1);
+   return Math.atan2(vec3.length(crossNorm), vec3.dot(edge0, edge1));
+}
+
+
+// the input (left, right) is on the same Vertex.
+function computeEdgeNormal(normal, leftHEdge, rightHEdge) {
+   //let normal = vec3.create();
+   let radian = computeAngle(normal, leftHEdge.destination(), leftHEdge.origin, rightHEdge.destination());
+   radian = Math.abs(radian);
+   if ((radian < kEPSILON) || (radian > (Math.PI-kEPSILON))) {   // nearly parallel, now get face
+      vec3.set(normal, 0, 0, 0);
+      if (leftHEdge.face) {
+         vec3.add(normal, normal, leftHEdge.face.normal);
+      }
+      if (rightHEdge.pair.face) {
+         vec3.add(normal, normal, rightHEdge.pair.face);
+      }
+   }
+   // compute normal
+   vec3.normalize(normal, normal);
+};
+
+function projectVec3(vertices, planeNormal, planeOrigin) {
+   const pt = vec3.create();
+
+   for (let vertex of vertices) {
+      vec3.sub(pt, vertex.vertex, planeOrigin);
+      let d = vec3.dot(pt, planeNormal);
+      vec3.scale(pt, planeNormal, d);
+      vec3.sub(vertex.vertex, vertex.vertex, pt);
+   }
+};
+
+
+
+
+
+/***/ }),
+/* 17 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -12944,7 +13361,7 @@ __WEBPACK_IMPORTED_MODULE_1__wings3d__["onReady"](init);
 
 
 /***/ }),
-/* 17 */
+/* 18 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -12996,7 +13413,7 @@ function setHotkey(id, hotkey, meta='') {
 
 
 /***/ }),
-/* 18 */
+/* 19 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -13562,12 +13979,12 @@ function render(gl, drawWorldFn) {
 
 
 /***/ }),
-/* 19 */
+/* 20 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return WavefrontObjImportExporter; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_importexport__ = __webpack_require__(20);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_importexport__ = __webpack_require__(21);
 //
 // Wavefront Obj Loader and Writer.
 //
@@ -13685,7 +14102,7 @@ class WavefrontObjImportExporter extends __WEBPACK_IMPORTED_MODULE_0__wings3d_im
 
 
 /***/ }),
-/* 20 */
+/* 21 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -13777,220 +14194,6 @@ class ImportExporter {
 
 
 /***/ }),
-/* 21 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "computeAngle", function() { return computeAngle; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "computeEdgeNormal", function() { return computeEdgeNormal; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "intersectTriangle", function() { return intersectTriangle; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "projectVec3", function() { return projectVec3; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "rotationFromToVec3", function() { return rotationFromToVec3; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "reflectionMat4", function() { return reflectionMat4; });
-
-
-
-const kEPSILON = 0.000001;
-
-// Möller–Trumbore ray-triangle intersection algorithm
-// should I use float64array? 
-function intersectTriangle(ray, triangle) {
-   var edge1 = vec3.create(), edge2 = vec3.create();
-   /* find vectors for two edges sharing vert0 */
-   vec3.sub(edge1, triangle[1], triangle[0]);
-   vec3.sub(edge2, triangle[2], triangle[0]);
-
-   /* begin calculating determinant - also used to calculate U parameter */
-   var pvec = vec3.create();
-   vec3.cross(pvec, ray.direction, edge2);
-
-   /* if determinant is near zero, ray lies in plane of triangle */
-   var det = vec3.dot(edge1, pvec);
-
-   if (det < kEPSILON) { // cull backface, and nearly parallel ray
-      return 0.0;
-   }
-   //if (det > -kEPSILON && det < kEPSILON), nearly parallel
-   //  return 0;
-
-   var inv_det = 1.0 / det;
-
-   /* calculate distance from vert0 to ray origin */
-   var tvec = vec3.create();
-   vec3.sub(tvec, ray.origin, triangle[0]);
-
-   /* calculate U parameter and test bounds */
-   var u = vec3.dot(tvec, pvec) * inv_det;
-   if (u < 0.0 || u > 1.0) {
-     return 0.0;
-   }
-
-   /* prepare to test V parameter */
-   var qvec = vec3.create();
-   vec3.cross(qvec, tvec, edge1);
-
-   /* calculate V parameter and test bounds */
-   var v = vec3.dot(ray.direction, qvec) * inv_det;
-   if (v < 0.0 || u + v > 1.0) {
-     return 0.0;
-   }
-
-   /* calculate t, ray intersects triangle */
-   var t = vec3.dot(edge2, qvec) * inv_det;
-   return t;
-};
-
-/* from
- * @article{MollerHughes99,
-  author = "Tomas Möller and John F. Hughes",
-  title = "Efficiently Building a Matrix to Rotate One Vector to Another",
-  journal = "journal of graphics tools",
-  volume = "4",
-  number = "4",
-  pages = "1-4",
-  year = "1999",
-}
-http://jgt.akpeters.com/papers/MollerHughes99/code.html
-*/
-function rotationFromToVec3(mtx, from, to) {
-
-  let e = vec3.dot(from, to);
-  if (Math.abs(e) > (1.0-kEPSILON) ) { // "from" and "to"-vector almost parallel
-      // find closest axis
-      const x = vec3.fromValues(Math.abs(from[0]), Math.abs(from[1]), Math.abs(from[2]));   // vector most nearly orthogonal to "from"
-      if (x[0] < x[1]) {
-         if( x[0] < x[2] ) {
-            x[0] = 1.0; x[1] = x[2] = 0.0;
-         } else {
-            x[2] = 1.0; x[0] = x[1] = 0.0;
-         }
-      } else {
-         if( x[1] < x[2] ) {
-            x[1] = 1.0; x[0] = x[2] = 0.0;
-         } else {
-            x[2] = 1.0; x[0] = x[1] = 0.0;
-         }
-      }
-
-      // compute the matrix
-      let ut = vec3.fromValues(x[0] - from[0], x[1] - from[1], x[2] - from[2]);  // sub(v, x, from);
-      let vt = vec3.fromValues(x[0] - to[0],   x[1] - to[1],   x[2] - to[2]);
-
-      let c1 = 2.0 / vec3.dot(ut, ut);       // coefficients
-      let c2 = 2.0 / vec3.dot(vt, vt);
-      let c3 = c1 * c2  * vec3.dot(ut, vt);
-      for (let i = 0; i < 3; i++) {
-         let k = i*4;      // stride.
-         for (let j = 0; j < 3; j++) {
-            mtx[k+j] =  -c1 * ut[i] * ut[j] - c2 * vt[i] * vt[j] + c3 * vt[i] * ut[j];
-         }
-         mtx[k+i] += 1.0;
-      }
-   } else  {// the most common case, unless "from"="to", or "from"=-"to" 
-      let v = vec3.create();
-      vec3.cross(v, from, to);
-      // ...otherwise use this hand optimized version (9 mults less)
-      //let h = 1.0 / (1.0 + e);      // optimization by Gottfried Chen
-      let h = (1.0 -e)/ vec3.dot(v, v);
-      let hvx = h * v[0];
-      let hvz = h * v[2];
-      let hvxy = hvx * v[1];
-      let hvxz = hvx * v[2];
-      let hvyz = hvz * v[1];
-      mtx[0] = e + hvx * v[0];
-      mtx[1] = hvxy + v[2];
-      mtx[2] = hvxz - v[1];
-
-      mtx[4] = hvxy - v[2];
-      mtx[5] = e + h * v[1] * v[1];
-      mtx[6] = hvyz + v[0];
-
-      mtx[8] = hvxz + v[1];
-      mtx[9] = hvyz - v[0];
-      mtx[10] = e + hvz * v[2];
-   }
-
-   return mtx;
-};
-
-/*
-References
-https://www.opengl.org/discussion_boards/showthread.php/147784-Mirror-Matrices
-https://www.opengl.org/discussion_boards/showthread.php/169605-reflection-matrix-how-to-derive
-"3D Math Primer for Graphics andGame Development" by Fletcher Dunn, Ian Parberry
-*/
-function reflectionMat4(mat, norm, pt) {
-   const d = -vec3.dot(norm, pt);
-
-	mat[0] = -2 * norm[0] * norm[0] + 1;
-	mat[1] = -2 * norm[1] * norm[0];
-	mat[2] = -2 * norm[2] * norm[0];
-	mat[3] = 0;
- 
-	mat[4] = -2 * norm[0] * norm[1];
-	mat[5] = -2 * norm[1] * norm[1] + 1;
-	mat[6] = -2 * norm[2] * norm[1];
-	mat[7] = 0;
- 
-	mat[8] =	-2 * norm[0] * norm[2];
-	mat[9] = -2 * norm[1] * norm[2];
-	mat[10] = -2 * norm[2] * norm[2] + 1;
-	mat[11] = 0;
- 
-	mat[12] = -2 * norm[0] * d;
-	mat[13] = -2 * norm[1] * d;
-	mat[14] = -2 * norm[2] * d;
-   mat[15] = 1;
-   return mat;
-};
-
-
-// angle is between (-PI, PI). equivalent to (-180, 180) degree.
-function computeAngle(crossNorm, v0, v1, v2) {
-   let edge0 = vec3.create(), edge1 = vec3.create();
-   // angle = pi - atan2(v[i] x v[i+1].magnitude, v[i] * v[i+1]);
-   vec3.sub(edge0, v0.vertex, v1.vertex);
-   vec3.sub(edge1, v2.vertex, v1.vertex);
-   vec3.cross(crossNorm, edge0, edge1);
-   return Math.atan2(vec3.length(crossNorm), vec3.dot(edge0, edge1));
-}
-
-
-// the input (left, right) is on the same Vertex.
-function computeEdgeNormal(normal, leftHEdge, rightHEdge) {
-   //let normal = vec3.create();
-   let radian = computeAngle(normal, leftHEdge.destination(), leftHEdge.origin, rightHEdge.destination());
-   radian = Math.abs(radian);
-   if ((radian < kEPSILON) || (radian > (Math.PI-kEPSILON))) {   // nearly parallel, now get face
-      vec3.set(normal, 0, 0, 0);
-      if (leftHEdge.face) {
-         vec3.add(normal, normal, leftHEdge.face.normal);
-      }
-      if (rightHEdge.pair.face) {
-         vec3.add(normal, normal, rightHEdge.pair.face);
-      }
-   }
-   // compute normal
-   vec3.normalize(normal, normal);
-};
-
-function projectVec3(vertices, planeNormal, planeOrigin) {
-   const pt = vec3.create();
-
-   for (let vertex of vertices) {
-      vec3.sub(pt, vertex.vertex, planeOrigin);
-      let d = vec3.dot(pt, planeNormal);
-      vec3.scale(pt, planeNormal, d);
-      vec3.sub(vertex.vertex, vertex.vertex, pt);
-   }
-};
-
-
-
-
-
-/***/ }),
 /* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -14003,18 +14206,18 @@ __webpack_require__(11);
 __webpack_require__(9);
 __webpack_require__(5);
 __webpack_require__(30);
+__webpack_require__(18);
+__webpack_require__(21);
 __webpack_require__(17);
-__webpack_require__(20);
-__webpack_require__(16);
 __webpack_require__(10);
 __webpack_require__(4);
-__webpack_require__(18);
+__webpack_require__(19);
 __webpack_require__(6);
 __webpack_require__(31);
 __webpack_require__(32);
 __webpack_require__(2);
 __webpack_require__(3);
-__webpack_require__(21);
+__webpack_require__(16);
 __webpack_require__(13);
 __webpack_require__(1);
 __webpack_require__(7);
@@ -14039,11 +14242,11 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__css_bubble_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4__css_bubble_css__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_view__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_camera__ = __webpack_require__(14);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_interact__ = __webpack_require__(16);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_interact__ = __webpack_require__(17);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__wings3d_ui__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__js_plugins_cubeshape_js__ = __webpack_require__(29);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__js_plugins_wavefront_obj_js__ = __webpack_require__(19);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__js_plugins_wavefront_obj_js__ = __webpack_require__(20);
 // app.js
 //  for bundling and initialization
 //
@@ -14460,7 +14663,7 @@ document.addEventListener('DOMContentLoaded', function() {
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "tours", function() { return tours; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_interact__ = __webpack_require__(16);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_interact__ = __webpack_require__(17);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_ui__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d__ = __webpack_require__(0);
 /*
