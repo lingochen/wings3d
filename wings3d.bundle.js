@@ -1944,8 +1944,12 @@ PreviewCage.prototype.initBVH = function() {
          }
       }
    }
+   vec3.scale(center, center, 1/spheres.length);
    // mid point of a bunch of spheres will likely split more evently.
-   const bound = {center: center, halfSize: vec3.fromValues((max[0]-min[0])/2, (max[1]-min[1])/2, (max[2]-min[2])/2)};
+   const bound = {center: center, 
+                  halfSize: vec3.fromValues(Math.max(max[0]-center[0], center[0]-min[0]), 
+                                            Math.max(max[1]-center[1], center[1]-min[1]), 
+                                            Math.max(max[2]-center[2], center[2]-min[2]) )};
    this.bvh.root = new __WEBPACK_IMPORTED_MODULE_1__wings3d_boundingvolume__["LooseOctree"](this, bound, 0);
    // now insert every spheres onto the root
    for (let sphere of spheres) {
@@ -1954,35 +1958,68 @@ PreviewCage.prototype.initBVH = function() {
    }
 }
 
-PreviewCage.prototype.insert = function(face) {
+PreviewCage.prototype.rebuildBVH = function() {
+   // first clear out queue.
+   this.bvh.queue = [];
+   // rebuild, probably needs to collect metrics and build.
+   this.initBVH();
+};
+
+PreviewCage.prototype.insertFace = function(face) {
    const sphere = this.bench.boundingSpheres[face.index];
    this.bvh.root.insert(sphere);
+}
+
+PreviewCage.prototype.moveSphere = function(sphere) { // lazy evaluation.
+   this.bvh.queue.push(sphere);
+}
+
+PreviewCage.prototype.removeFace = function(face) { 
+   const sphere = this.bench.boundingSpheres[face.index];
+   if (sphere.octree) { // octree should exist.
+      sphere.octree._remove(sphere);                     
+   }
+}
+
+// check if we needs to resize, if yes then might as well rebuild.
+PreviewCage.prototype.updateBVH = function() {
+   // check if any sphere is outside of original bound.
+   for (let sphere of this.bvh.queue) {
+      if (!this.bvh.root.isInside(sphere)) {
+         this.rebuildBVH();
+         return;
+      }
+   }
+   
+   // now insert the queue moved polygons
+   for (let sphere of this.bvh.queue) {
+      this.bvh.root.insert(sphere);
+   }
 }
 
 //-- end of bvh
 
 // todo: octree optimization.
+PreviewCage.prototype.intersectRay = function * (ray) {
+   const extent = {min: vec3.create(), max:vec3.create()};
+   this.bvh.root.getLooseExtent(extent);
+   if (__WEBPACK_IMPORTED_MODULE_7__wings3d_util__["intersectRayAABB"](ray, extent)) {
+      yield* this.bvh.root.intersectRay(ray, extent);
+   }
+};
 PreviewCage.prototype.rayPick = function(ray) {
    if (this.bvh.root === null) {
       this.initBVH();
+   } else {
+      this.updateBVH();
    }
    // return the closest face (triangle) that intersect ray.
- /*  var hitSphere = [];
-   for (let polygon of this.geometry.faces) {
-      const sphere = this.bench.boundingSpheres[polygon.index];
-      if (sphere.isIntersect(ray)){
-         hitSphere.push( sphere );
-      }
-   } */
    // check for triangle intersection, select the hit Face, hit Edge(closest), and hit Vertex (closest).
    var hitEdge = null;
    var center;
    var hitT = Number.POSITIVE_INFINITY;   // z_far is the furthest possible intersection
-   const extent = {min: vec3.create(), max:vec3.create()};
-   //for (let i = 0; i < hitSphere.length; ++i) {
-      // walk the face, build a triangle on centroid + edge's 2 point. check for intersection
-   //   var sphere = hitSphere[i];
-   for (let sphere of this.bvh.root.intersectRay(ray, extent)) {
+
+   for (let sphere of this.intersectRay(ray)) {
       sphere.polygon.eachEdge( function(edge) {
          // now check the triangle is ok?
          var t = __WEBPACK_IMPORTED_MODULE_7__wings3d_util__["intersectTriangle"](ray, [sphere.center, edge.origin.vertex, edge.destination().vertex]);
@@ -12478,6 +12515,7 @@ const BoundingSphere = function(center, radius, polygon) {
    this.radius = radius;
    this.radius2 = radius*radius;
    this.polygon = polygon;
+   this.octree = null;
 };
 
 BoundingSphere.prototype.isLive = function() {
@@ -12505,6 +12543,9 @@ BoundingSphere.prototype.setSphere = function(sphere) {
    this.center = sphere.center;
    this.radius = sphere.radius;
    this.radius2 = sphere.radius*sphere.radius;
+   if (this.octree) {
+      this.octree._move(this);
+   }
 };
 
 BoundingSphere.computeSphere = function(polygon, center) {  // vec3
@@ -12545,6 +12586,18 @@ class LooseOctree {  // this is really node
       //
    }
 
+   *[Symbol.iterator]() {
+      yield this;
+      if (this.leaf) {
+         for (let i = 0; i < 8; ++i) {
+            const node = this.leaf[i];
+            if (node) {
+               yield* node;
+            }
+         }
+      }
+   }
+
    getBound(bound) {
       vec3.copy(bound.center, this.bound.center);
       vec3.copy(bound.halfSize, this.bound.halfSize);
@@ -12583,13 +12636,14 @@ class LooseOctree {  // this is really node
    insert(sphere, bound) {
       if (this.node) { // keep pushing.
          this.node.push(sphere);
+         sphere.octree = this;
          if (this.node.length >= LooseOctree.kTHRESHOLD) {  // now expand to children node if possible
             this.leaf = [null, null, null, null, null, null, null, null];  // now setup leaf octant
             let newBound = {center: vec3.create(), halfSize: vec3.create()};
             let ret;
             const node = this.node;
-            this.node = undefined;
-            for (let sphere of node) {  // redistribute to children.
+            delete this.node;
+            for (let sphere of node) {  // redistribute to children or self.
                vec3.copy(newBound.center, bound.center);
                vec3.copy(newBound.halfSize, bound.halfSize);
                ret = this.insert(sphere, newBound);
@@ -12608,8 +12662,41 @@ class LooseOctree {  // this is really node
          }
          // larger than child size, so insert here.
          this.leaf.push(sphere);
+         sphere.octree = this;
       }
       return this;
+   }
+
+   _move(sphere) {   // sphere size or center changed, check for moving to different node.
+      if (!this.isInside(sphere)) {
+         this._remove(sphere);
+         this.bvh.moveSphere(sphere);
+      }
+   }
+
+   _remove(sphere) {
+      if (sphere.octree === this) {
+         if (this.node) {
+            this.node.splice(this.node.indexOf(sphere), 1);
+         } else {
+            this.leaf.splice(this.leaf.indexOf(sphere), 1);
+         }
+         sphere.octree = null;
+      } else {
+         console.log("LooseOctree _remove error");
+      }
+   }
+
+   isInside(sphere) {
+      for (let axis = 0; axis < 3; ++axis) {
+         let length = this.bound.halfSize[axis];
+         if ( (length < sphere.radius) || 
+              (this.bound.center[axis]+length) < sphere.center[axis] ||
+              (this.bound.center[axis]-length) > sphere.center[axis]) {
+            return false;
+         }
+      }
+      return true;
    }
 
    //
@@ -12628,7 +12715,7 @@ class LooseOctree {  // this is really node
                yield sphere;
             }
          }
-         // check children, this is the hard part
+         // check children, this is the hard part of Revelle's algorithm.
          for (let i = 0; i < 8; ++i) {
             const child = this.leaf[i];
             if (child) {
@@ -12640,21 +12727,9 @@ class LooseOctree {  // this is really node
          }
       }
    }
-
-   *[Symbol.iterator]() {
-      yield this;
-      if (this.leaf) {
-         for (let i = 0; i < 8; ++i) {
-            const node = this.leaf[i];
-            if (node) {
-               yield* node;
-            }
-         }
-      }
-   }
 }
 LooseOctree.kTHRESHOLD = 16;    // read somewhere, 8-15 is a good number for octree node. expand to child only when node.length >= kTHRESHOLD
-LooseOctree.kLOOSENESS = 1.5;
+LooseOctree.kLOOSENESS = 1.5;    // cannot change. because isInside depend on this property.
 
 
 
