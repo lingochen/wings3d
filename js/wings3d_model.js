@@ -63,8 +63,12 @@ PreviewCage.prototype.initBVH = function() {
          }
       }
    }
+   vec3.scale(center, center, 1/spheres.length);
    // mid point of a bunch of spheres will likely split more evently.
-   const bound = {center: center, halfSize: vec3.fromValues((max[0]-min[0])/2, (max[1]-min[1])/2, (max[2]-min[2])/2)};
+   const bound = {center: center, 
+                  halfSize: vec3.fromValues(Math.max(max[0]-center[0], center[0]-min[0]), 
+                                            Math.max(max[1]-center[1], center[1]-min[1]), 
+                                            Math.max(max[2]-center[2], center[2]-min[2]) )};
    this.bvh.root = new LooseOctree(this, bound, 0);
    // now insert every spheres onto the root
    for (let sphere of spheres) {
@@ -73,35 +77,68 @@ PreviewCage.prototype.initBVH = function() {
    }
 }
 
-PreviewCage.prototype.insert = function(face) {
+PreviewCage.prototype.rebuildBVH = function() {
+   // first clear out queue.
+   this.bvh.queue = [];
+   // rebuild, probably needs to collect metrics and build.
+   this.initBVH();
+};
+
+PreviewCage.prototype.insertFace = function(face) {
    const sphere = this.bench.boundingSpheres[face.index];
    this.bvh.root.insert(sphere);
+}
+
+PreviewCage.prototype.moveSphere = function(sphere) { // lazy evaluation.
+   this.bvh.queue.push(sphere);
+}
+
+PreviewCage.prototype.removeFace = function(face) { 
+   const sphere = this.bench.boundingSpheres[face.index];
+   if (sphere.octree) { // octree should exist.
+      sphere.octree._remove(sphere);                     
+   }
+}
+
+// check if we needs to resize, if yes then might as well rebuild.
+PreviewCage.prototype.updateBVH = function() {
+   // check if any sphere is outside of original bound.
+   for (let sphere of this.bvh.queue) {
+      if (!this.bvh.root.isInside(sphere)) {
+         this.rebuildBVH();
+         return;
+      }
+   }
+   
+   // now insert the queue moved polygons
+   for (let sphere of this.bvh.queue) {
+      this.bvh.root.insert(sphere);
+   }
 }
 
 //-- end of bvh
 
 // todo: octree optimization.
+PreviewCage.prototype.intersectRay = function * (ray) {
+   const extent = {min: vec3.create(), max:vec3.create()};
+   this.bvh.root.getLooseExtent(extent);
+   if (Util.intersectRayAABB(ray, extent)) {
+      yield* this.bvh.root.intersectRay(ray, extent);
+   }
+};
 PreviewCage.prototype.rayPick = function(ray) {
    if (this.bvh.root === null) {
       this.initBVH();
+   } else {
+      this.updateBVH();
    }
    // return the closest face (triangle) that intersect ray.
- /*  var hitSphere = [];
-   for (let polygon of this.geometry.faces) {
-      const sphere = this.bench.boundingSpheres[polygon.index];
-      if (sphere.isIntersect(ray)){
-         hitSphere.push( sphere );
-      }
-   } */
    // check for triangle intersection, select the hit Face, hit Edge(closest), and hit Vertex (closest).
    var hitEdge = null;
    var center;
    var hitT = Number.POSITIVE_INFINITY;   // z_far is the furthest possible intersection
-   const extent = {min: vec3.create(), max:vec3.create()};
-   //for (let i = 0; i < hitSphere.length; ++i) {
-      // walk the face, build a triangle on centroid + edge's 2 point. check for intersection
-   //   var sphere = hitSphere[i];
-   for (let sphere of this.bvh.root.intersectRay(ray, extent)) {
+
+   for (let sphere of this.intersectRay(ray)) {
       sphere.polygon.eachEdge( function(edge) {
          // now check the triangle is ok?
          var t = Util.intersectTriangle(ray, [sphere.center, edge.origin.vertex, edge.destination().vertex]);

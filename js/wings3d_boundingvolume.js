@@ -13,6 +13,7 @@ const BoundingSphere = function(center, radius, polygon) {
    this.radius = radius;
    this.radius2 = radius*radius;
    this.polygon = polygon;
+   this.octree = null;
 };
 
 BoundingSphere.prototype.isLive = function() {
@@ -40,6 +41,9 @@ BoundingSphere.prototype.setSphere = function(sphere) {
    this.center = sphere.center;
    this.radius = sphere.radius;
    this.radius2 = sphere.radius*sphere.radius;
+   if (this.octree) {
+      this.octree._move(this);
+   }
 };
 
 BoundingSphere.computeSphere = function(polygon, center) {  // vec3
@@ -80,6 +84,18 @@ class LooseOctree {  // this is really node
       //
    }
 
+   *[Symbol.iterator]() {
+      yield this;
+      if (this.leaf) {
+         for (let i = 0; i < 8; ++i) {
+            const node = this.leaf[i];
+            if (node) {
+               yield* node;
+            }
+         }
+      }
+   }
+
    getBound(bound) {
       vec3.copy(bound.center, this.bound.center);
       vec3.copy(bound.halfSize, this.bound.halfSize);
@@ -118,13 +134,14 @@ class LooseOctree {  // this is really node
    insert(sphere, bound) {
       if (this.node) { // keep pushing.
          this.node.push(sphere);
+         sphere.octree = this;
          if (this.node.length >= LooseOctree.kTHRESHOLD) {  // now expand to children node if possible
             this.leaf = [null, null, null, null, null, null, null, null];  // now setup leaf octant
             let newBound = {center: vec3.create(), halfSize: vec3.create()};
             let ret;
             const node = this.node;
-            this.node = undefined;
-            for (let sphere of node) {  // redistribute to children.
+            delete this.node;
+            for (let sphere of node) {  // redistribute to children or self.
                vec3.copy(newBound.center, bound.center);
                vec3.copy(newBound.halfSize, bound.halfSize);
                ret = this.insert(sphere, newBound);
@@ -143,8 +160,41 @@ class LooseOctree {  // this is really node
          }
          // larger than child size, so insert here.
          this.leaf.push(sphere);
+         sphere.octree = this;
       }
       return this;
+   }
+
+   _move(sphere) {   // sphere size or center changed, check for moving to different node.
+      if (!this.isInside(sphere)) {
+         this._remove(sphere);
+         this.bvh.moveSphere(sphere);
+      }
+   }
+
+   _remove(sphere) {
+      if (sphere.octree === this) {
+         if (this.node) {
+            this.node.splice(this.node.indexOf(sphere), 1);
+         } else {
+            this.leaf.splice(this.leaf.indexOf(sphere), 1);
+         }
+         sphere.octree = null;
+      } else {
+         console.log("LooseOctree _remove error");
+      }
+   }
+
+   isInside(sphere) {
+      for (let axis = 0; axis < 3; ++axis) {
+         let length = this.bound.halfSize[axis];
+         if ( (length < sphere.radius) || 
+              (this.bound.center[axis]+length) < sphere.center[axis] ||
+              (this.bound.center[axis]-length) > sphere.center[axis]) {
+            return false;
+         }
+      }
+      return true;
    }
 
    //
@@ -163,7 +213,7 @@ class LooseOctree {  // this is really node
                yield sphere;
             }
          }
-         // check children, this is the hard part
+         // check children, this is the hard part of Revelle's algorithm.
          for (let i = 0; i < 8; ++i) {
             const child = this.leaf[i];
             if (child) {
@@ -175,21 +225,9 @@ class LooseOctree {  // this is really node
          }
       }
    }
-
-   *[Symbol.iterator]() {
-      yield this;
-      if (this.leaf) {
-         for (let i = 0; i < 8; ++i) {
-            const node = this.leaf[i];
-            if (node) {
-               yield* node;
-            }
-         }
-      }
-   }
 }
 LooseOctree.kTHRESHOLD = 16;    // read somewhere, 8-15 is a good number for octree node. expand to child only when node.length >= kTHRESHOLD
-LooseOctree.kLOOSENESS = 1.5;
+LooseOctree.kLOOSENESS = 1.5;    // cannot change. because isInside depend on this property.
 
 
 
