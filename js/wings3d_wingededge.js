@@ -1,4 +1,5 @@
 import { PreviewCage } from "./wings3d_model";
+import { runInThisContext } from "vm";
 
 /* require glmatrix
 * http://kaba.hilvi.org/homepage/blog/halfedge/halfedge.htm. very nicely written half-edge explanation and pseudo code.
@@ -710,13 +711,25 @@ MeshAllocator.prototype.freePolygon = function(polygon) {
 };
 
 
+MeshAllocator.prototype.getVertices = function(index) {
+   return this.vertices[index];
+}
+
 // update for affected (vertex, edge, and polygon)
 MeshAllocator.prototype.clearAffected = function() {
    this.affected.vertices.clear();
    this.affected.edges.clear();
    this.affected.faces.clear();
 };
-
+MeshAllocator.prototype.addAffectedWEdge = function(wEdge) {
+   this.affected.edges.add(wEdge);
+};
+MeshAllocator.prototype.addAffectedFace = function(polygon) {
+   this.affected.faces.add(polygon);
+};
+MeshAllocator.prototype.addAffectedVertex = function(vertex) {
+   this.affected.vertices.add(vertex);
+};
 MeshAllocator.prototype.addAffectedEdgeAndFace = function(vertex) {
    this.affected.vertices.add(vertex);
    const self = this;
@@ -861,15 +874,15 @@ WingedTopology.prototype.sanityCheck = function() {
 };
 
 WingedTopology.prototype.addAffectedWEdge = function(wEdge) {
-   this.alloc.affected.edges.add(wEdge);
+   this.alloc.addAffectedWEdge(wEdge);
 };
 
 WingedTopology.prototype.addAffectedFace = function(polygon) {
-   this.alloc.affected.faces.add(polygon);
+   this.alloc.addAffectedFace(polygon);
 };
 
 WingedTopology.prototype.addAffectedVertex = function(vertex) {
-   this.alloc.affected.vertices.add(vertex);
+   this.alloc.addAffectedVertex(vertex);
 };
 
 WingedTopology.prototype.clearAffected = function() {
@@ -1030,8 +1043,8 @@ WingedTopology.prototype.addPolygon = function(pts) {
          nextIndex = 0;
       }
 
-      var v0 = this.alloc.vertices[pts[i]];
-      var v1 = this.alloc.vertices[pts[nextIndex]];
+      var v0 = this.alloc.getVertices(pts[i]);
+      var v1 = this.alloc.getVertices(pts[nextIndex]);
       var edge = this.findHalfEdge(v0, v1);
       if (edge === null) { // not found, create one
          edge = this.addEdge(v0, v1);

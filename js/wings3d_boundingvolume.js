@@ -8,10 +8,12 @@ import * as Util from './wings3d_util';
 
 
 
-const BoundingSphere = function(center, radius, polygon) {
+const BoundingSphere = function(polygon, center, radius) {
    this.center = center;
    this.radius = radius;
-   this.radius2 = radius*radius;
+   if (radius) {
+      this.radius2 = radius*radius;
+   }
    this.polygon = polygon;
    this.octree = null;
 };
@@ -67,7 +69,10 @@ BoundingSphere.computeSphere = function(polygon, center) {  // vec3
 // simple minded bounding sphere builder.
 BoundingSphere.create = function(polygon, center) {
    var sphere = BoundingSphere.computeSphere(polygon, center);
-   return new BoundingSphere(sphere.center, sphere.radius, polygon);
+   return new BoundingSphere(polygon, sphere.center, sphere.radius);
+}
+BoundingSphere.allocate = function(polygon) {
+   return new BoundingSphere(polygon);
 }
 
 

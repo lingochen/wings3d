@@ -118,17 +118,23 @@ DraftBench.prototype._resizeBoundingSphere = function() {
          const buf = new ArrayBuffer(this.allocMesh.faces.length * 3 * Float32Array.BYTES_PER_ELEMENT * 2); // twice the current size
          this.preview.centroid.buf = {buffer: buf, data: new Float32Array(buf), len: 0};
          // assign a boundingsphere for each polygon.
-         this.boundingSpheres = new Array(this.allocMesh.faces.length);
-         this.boundingSpheres.length = 0;
+         //this.boundingSpheres = new Array(this.allocMesh.faces.length);
+         //this.boundingSpheres.length = 0;
       }
       // create New, should not have deleted sphere to mess up things
       const centroid = this.preview.centroid;   // 
       for (let i = oldSize; i < this.allocMesh.faces.length; ++i) {
-         const center = new Float32Array(centroid.buf.buffer, Float32Array.BYTES_PER_ELEMENT*centroid.buf.len, 3);
-         centroid.buf.len += 3;
          const polygon = this.allocMesh.faces[i];
+         const sphere = this.boundingSpheres[i];
+         let center = sphere.center;
+         if (!center) {
+            center = new Float32Array(centroid.buf.buffer, Float32Array.BYTES_PER_ELEMENT*centroid.buf.len, 3);
+            centroid.buf.len += 3;
+         }
          //polygon.index = i; // recalibrate index for free.
-         this.boundingSpheres.push( BoundingSphere.create(polygon, center) );
+         //this.boundingSpheres.push( BoundingSphere.create(polygon, center) );
+         sphere.setSphere( BoundingSphere.computeSphere(polygon, center) );
+
       }
       // vertices is geometry data + centroid data.
    }

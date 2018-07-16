@@ -60,7 +60,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 22);
+/******/ 	return __webpack_require__(__webpack_require__.s = 23);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -1879,6 +1879,8 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_undo__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_draftbench__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_util__ = __webpack_require__(16);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8_vm__ = __webpack_require__(22);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8_vm___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_8_vm__);
 /*
 *  hold onto a WingedEdgeTopology. adds index, texture, etc....
 *  bounding box, picking.
@@ -1899,8 +1901,46 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 
 
+
+class MeshAllocatorProxy { // we could use Proxy, but ....
+   constructor(preview) {
+      this.preview = preview;
+   }
+
+   allocVertex(...args) { return this.preview.bench.allocMesh.allocVertex(...args); }
+
+   allocEdge(...args) { return this.preview.bench.allocMesh.allocEdge(...args); }
+
+   allocPolygon(...args) {
+      const face = this.preview.bench.allocMesh.allocPolygon(...args);
+      if (this.preview.bench.boundingSpheres.length < this.preview.bench.allocMesh.faces.length) {   // now create sphere and insert to preview's bvh
+         this.preview.bench.boundingSpheres.push( __WEBPACK_IMPORTED_MODULE_1__wings3d_boundingvolume__["BoundingSphere"].allocate(face) );
+      }
+      this.preview.insertFace(face);
+      return face;
+   }
+
+   freeVertex(vertex) { this.preview.bench.allocMesh.freeVertex(vertex); }
+
+   freeHEdge(hEdge) { this.preview.bench.allocMesh.freeHEdge(hEdge); }
+
+   freePolygon(polygon) {
+      this.preview.removeFace(polygon);
+      this.preview.bench.allocMesh.freePolygon(polygon);
+   }
+
+   getVertices(index) { return this.preview.bench.allocMesh.getVertices(index); }
+
+   clearAffected() { this.preview.bench.allocMesh.clearAffected(); }
+
+   addAffectedEdgeAndFace(...args) { this.preview.bench.allocMesh.addAffecedEdgeAndFace(...args); }
+   addAffectedWEdge(wEdge) {this.preview.bench.allocMesh.addAffectedWEdge(wEdge);}
+   addAffectedFace(polygon) {this.preview.bench.allocMesh.addAffectedFace(polygon);}
+   addAffectedVertex(vertex) {this.preview.bench.allocMesh.addAffectedVertex(vertex);}
+}
+
 const PreviewCage = function(bench) {
-   this.geometry = new __WEBPACK_IMPORTED_MODULE_2__wings3d_wingededge__["WingedTopology"](bench.allocMesh);
+   this.geometry = new __WEBPACK_IMPORTED_MODULE_2__wings3d_wingededge__["WingedTopology"](new MeshAllocatorProxy(this));
    this.bench = bench;
 
    // selecte(Vertex,Edge,Face)here
@@ -1909,7 +1949,7 @@ const PreviewCage = function(bench) {
    // default no name
    this.name = "";
    // bvh
-   this.bvh = {root: null, queue: []};       // queue is for lazy evaluation.
+   this.bvh = {root: null, queue: new Set};       // queue is for lazy evaluation.
 };
 
 
@@ -1960,24 +2000,27 @@ PreviewCage.prototype.initBVH = function() {
 
 PreviewCage.prototype.rebuildBVH = function() {
    // first clear out queue.
-   this.bvh.queue = [];
+   this.bvh.queue.clear();
    // rebuild, probably needs to collect metrics and build.
    this.initBVH();
 };
 
 PreviewCage.prototype.insertFace = function(face) {
    const sphere = this.bench.boundingSpheres[face.index];
-   this.bvh.root.insert(sphere);
+   this.bvh.queue.add(sphere);
+   //this.bvh.root.insert(sphere);
 }
 
 PreviewCage.prototype.moveSphere = function(sphere) { // lazy evaluation.
-   this.bvh.queue.push(sphere);
+   this.bvh.queue.add(sphere);
 }
 
 PreviewCage.prototype.removeFace = function(face) { 
    const sphere = this.bench.boundingSpheres[face.index];
-   if (sphere.octree) { // octree should exist.
+   if (sphere.octree) { // octree should exist, or 
       sphere.octree._remove(sphere);                     
+   } else {
+      this.bvh.queue.delete(sphere);
    }
 }
 
@@ -1992,8 +2035,10 @@ PreviewCage.prototype.updateBVH = function() {
    }
    
    // now insert the queue moved polygons
+   const bound = {center: vec3.create(), halfSize: vec3.create()};
    for (let sphere of this.bvh.queue) {
-      this.bvh.root.insert(sphere);
+      this.bvh.root.getBound(bound);
+      this.bvh.root.insert(sphere, bound);
    }
 }
 
@@ -5952,6 +5997,9 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "MeshAllocator", function() { return MeshAllocator; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "WingedTopology", function() { return WingedTopology; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_model__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_vm__ = __webpack_require__(22);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_vm___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_vm__);
+
 
 
 /* require glmatrix
@@ -6664,13 +6712,25 @@ MeshAllocator.prototype.freePolygon = function(polygon) {
 };
 
 
+MeshAllocator.prototype.getVertices = function(index) {
+   return this.vertices[index];
+}
+
 // update for affected (vertex, edge, and polygon)
 MeshAllocator.prototype.clearAffected = function() {
    this.affected.vertices.clear();
    this.affected.edges.clear();
    this.affected.faces.clear();
 };
-
+MeshAllocator.prototype.addAffectedWEdge = function(wEdge) {
+   this.affected.edges.add(wEdge);
+};
+MeshAllocator.prototype.addAffectedFace = function(polygon) {
+   this.affected.faces.add(polygon);
+};
+MeshAllocator.prototype.addAffectedVertex = function(vertex) {
+   this.affected.vertices.add(vertex);
+};
 MeshAllocator.prototype.addAffectedEdgeAndFace = function(vertex) {
    this.affected.vertices.add(vertex);
    const self = this;
@@ -6815,15 +6875,15 @@ WingedTopology.prototype.sanityCheck = function() {
 };
 
 WingedTopology.prototype.addAffectedWEdge = function(wEdge) {
-   this.alloc.affected.edges.add(wEdge);
+   this.alloc.addAffectedWEdge(wEdge);
 };
 
 WingedTopology.prototype.addAffectedFace = function(polygon) {
-   this.alloc.affected.faces.add(polygon);
+   this.alloc.addAffectedFace(polygon);
 };
 
 WingedTopology.prototype.addAffectedVertex = function(vertex) {
-   this.alloc.affected.vertices.add(vertex);
+   this.alloc.addAffectedVertex(vertex);
 };
 
 WingedTopology.prototype.clearAffected = function() {
@@ -6984,8 +7044,8 @@ WingedTopology.prototype.addPolygon = function(pts) {
          nextIndex = 0;
       }
 
-      var v0 = this.alloc.vertices[pts[i]];
-      var v1 = this.alloc.vertices[pts[nextIndex]];
+      var v0 = this.alloc.getVertices(pts[i]);
+      var v1 = this.alloc.getVertices(pts[nextIndex]);
       var edge = this.findHalfEdge(v0, v1);
       if (edge === null) { // not found, create one
          edge = this.addEdge(v0, v1);
@@ -8662,17 +8722,23 @@ DraftBench.prototype._resizeBoundingSphere = function() {
          const buf = new ArrayBuffer(this.allocMesh.faces.length * 3 * Float32Array.BYTES_PER_ELEMENT * 2); // twice the current size
          this.preview.centroid.buf = {buffer: buf, data: new Float32Array(buf), len: 0};
          // assign a boundingsphere for each polygon.
-         this.boundingSpheres = new Array(this.allocMesh.faces.length);
-         this.boundingSpheres.length = 0;
+         //this.boundingSpheres = new Array(this.allocMesh.faces.length);
+         //this.boundingSpheres.length = 0;
       }
       // create New, should not have deleted sphere to mess up things
       const centroid = this.preview.centroid;   // 
       for (let i = oldSize; i < this.allocMesh.faces.length; ++i) {
-         const center = new Float32Array(centroid.buf.buffer, Float32Array.BYTES_PER_ELEMENT*centroid.buf.len, 3);
-         centroid.buf.len += 3;
          const polygon = this.allocMesh.faces[i];
+         const sphere = this.boundingSpheres[i];
+         let center = sphere.center;
+         if (!center) {
+            center = new Float32Array(centroid.buf.buffer, Float32Array.BYTES_PER_ELEMENT*centroid.buf.len, 3);
+            centroid.buf.len += 3;
+         }
          //polygon.index = i; // recalibrate index for free.
-         this.boundingSpheres.push( __WEBPACK_IMPORTED_MODULE_1__wings3d_boundingvolume__["BoundingSphere"].create(polygon, center) );
+         //this.boundingSpheres.push( BoundingSphere.create(polygon, center) );
+         sphere.setSphere( __WEBPACK_IMPORTED_MODULE_1__wings3d_boundingvolume__["BoundingSphere"].computeSphere(polygon, center) );
+
       }
       // vertices is geometry data + centroid data.
    }
@@ -12510,10 +12576,12 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 
 
-const BoundingSphere = function(center, radius, polygon) {
+const BoundingSphere = function(polygon, center, radius) {
    this.center = center;
    this.radius = radius;
-   this.radius2 = radius*radius;
+   if (radius) {
+      this.radius2 = radius*radius;
+   }
    this.polygon = polygon;
    this.octree = null;
 };
@@ -12569,7 +12637,10 @@ BoundingSphere.computeSphere = function(polygon, center) {  // vec3
 // simple minded bounding sphere builder.
 BoundingSphere.create = function(polygon, center) {
    var sphere = BoundingSphere.computeSphere(polygon, center);
-   return new BoundingSphere(sphere.center, sphere.radius, polygon);
+   return new BoundingSphere(polygon, sphere.center, sphere.radius);
+}
+BoundingSphere.allocate = function(polygon) {
+   return new BoundingSphere(polygon);
 }
 
 
@@ -14272,7 +14343,151 @@ class ImportExporter {
 /* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(23);
+var indexOf = __webpack_require__(30);
+
+var Object_keys = function (obj) {
+    if (Object.keys) return Object.keys(obj)
+    else {
+        var res = [];
+        for (var key in obj) res.push(key)
+        return res;
+    }
+};
+
+var forEach = function (xs, fn) {
+    if (xs.forEach) return xs.forEach(fn)
+    else for (var i = 0; i < xs.length; i++) {
+        fn(xs[i], i, xs);
+    }
+};
+
+var defineProp = (function() {
+    try {
+        Object.defineProperty({}, '_', {});
+        return function(obj, name, value) {
+            Object.defineProperty(obj, name, {
+                writable: true,
+                enumerable: false,
+                configurable: true,
+                value: value
+            })
+        };
+    } catch(e) {
+        return function(obj, name, value) {
+            obj[name] = value;
+        };
+    }
+}());
+
+var globals = ['Array', 'Boolean', 'Date', 'Error', 'EvalError', 'Function',
+'Infinity', 'JSON', 'Math', 'NaN', 'Number', 'Object', 'RangeError',
+'ReferenceError', 'RegExp', 'String', 'SyntaxError', 'TypeError', 'URIError',
+'decodeURI', 'decodeURIComponent', 'encodeURI', 'encodeURIComponent', 'escape',
+'eval', 'isFinite', 'isNaN', 'parseFloat', 'parseInt', 'undefined', 'unescape'];
+
+function Context() {}
+Context.prototype = {};
+
+var Script = exports.Script = function NodeScript (code) {
+    if (!(this instanceof Script)) return new Script(code);
+    this.code = code;
+};
+
+Script.prototype.runInContext = function (context) {
+    if (!(context instanceof Context)) {
+        throw new TypeError("needs a 'context' argument.");
+    }
+    
+    var iframe = document.createElement('iframe');
+    if (!iframe.style) iframe.style = {};
+    iframe.style.display = 'none';
+    
+    document.body.appendChild(iframe);
+    
+    var win = iframe.contentWindow;
+    var wEval = win.eval, wExecScript = win.execScript;
+
+    if (!wEval && wExecScript) {
+        // win.eval() magically appears when this is called in IE:
+        wExecScript.call(win, 'null');
+        wEval = win.eval;
+    }
+    
+    forEach(Object_keys(context), function (key) {
+        win[key] = context[key];
+    });
+    forEach(globals, function (key) {
+        if (context[key]) {
+            win[key] = context[key];
+        }
+    });
+    
+    var winKeys = Object_keys(win);
+
+    var res = wEval.call(win, this.code);
+    
+    forEach(Object_keys(win), function (key) {
+        // Avoid copying circular objects like `top` and `window` by only
+        // updating existing context properties or new properties in the `win`
+        // that was only introduced after the eval.
+        if (key in context || indexOf(winKeys, key) === -1) {
+            context[key] = win[key];
+        }
+    });
+
+    forEach(globals, function (key) {
+        if (!(key in context)) {
+            defineProp(context, key, win[key]);
+        }
+    });
+    
+    document.body.removeChild(iframe);
+    
+    return res;
+};
+
+Script.prototype.runInThisContext = function () {
+    return eval(this.code); // maybe...
+};
+
+Script.prototype.runInNewContext = function (context) {
+    var ctx = Script.createContext(context);
+    var res = this.runInContext(ctx);
+
+    forEach(Object_keys(ctx), function (key) {
+        context[key] = ctx[key];
+    });
+
+    return res;
+};
+
+forEach(Object_keys(Script.prototype), function (name) {
+    exports[name] = Script[name] = function (code) {
+        var s = Script(code);
+        return s[name].apply(s, [].slice.call(arguments, 1));
+    };
+});
+
+exports.createScript = function (code) {
+    return exports.Script(code);
+};
+
+exports.createContext = Script.createContext = function (context) {
+    var copy = new Context();
+    if(typeof context === 'object') {
+        forEach(Object_keys(context), function (key) {
+            copy[key] = context[key];
+        });
+    }
+    return copy;
+};
+
+
+/***/ }),
+/* 23 */
+/***/ (function(module, exports, __webpack_require__) {
+
+__webpack_require__(24);
 __webpack_require__(12);
 __webpack_require__(15);
 __webpack_require__(14);
@@ -14280,7 +14495,7 @@ __webpack_require__(8);
 __webpack_require__(11);
 __webpack_require__(9);
 __webpack_require__(5);
-__webpack_require__(30);
+__webpack_require__(32);
 __webpack_require__(18);
 __webpack_require__(21);
 __webpack_require__(17);
@@ -14288,8 +14503,8 @@ __webpack_require__(10);
 __webpack_require__(4);
 __webpack_require__(19);
 __webpack_require__(6);
-__webpack_require__(31);
-__webpack_require__(32);
+__webpack_require__(33);
+__webpack_require__(34);
 __webpack_require__(2);
 __webpack_require__(3);
 __webpack_require__(16);
@@ -14300,27 +14515,27 @@ module.exports = __webpack_require__(0);
 
 
 /***/ }),
-/* 23 */
+/* 24 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__css_default_css__ = __webpack_require__(24);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__css_default_css__ = __webpack_require__(25);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__css_default_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__css_default_css__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__css_menu_css__ = __webpack_require__(25);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__css_menu_css__ = __webpack_require__(26);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__css_menu_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__css_menu_css__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__css_button_css__ = __webpack_require__(26);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__css_button_css__ = __webpack_require__(27);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__css_button_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__css_button_css__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__css_form_css__ = __webpack_require__(27);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__css_form_css__ = __webpack_require__(28);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__css_form_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3__css_form_css__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__css_bubble_css__ = __webpack_require__(28);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__css_bubble_css__ = __webpack_require__(29);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__css_bubble_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4__css_bubble_css__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_view__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_camera__ = __webpack_require__(14);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_interact__ = __webpack_require__(17);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__wings3d_ui__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__js_plugins_cubeshape_js__ = __webpack_require__(29);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__js_plugins_cubeshape_js__ = __webpack_require__(31);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__js_plugins_wavefront_obj_js__ = __webpack_require__(20);
 // app.js
 //  for bundling and initialization
@@ -14348,12 +14563,6 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 __WEBPACK_IMPORTED_MODULE_8__wings3d__["start"]('glcanvas');
 
 /***/ }),
-/* 24 */
-/***/ (function(module, exports) {
-
-// removed by extract-text-webpack-plugin
-
-/***/ }),
 /* 25 */
 /***/ (function(module, exports) {
 
@@ -14379,6 +14588,27 @@ __WEBPACK_IMPORTED_MODULE_8__wings3d__["start"]('glcanvas');
 
 /***/ }),
 /* 29 */
+/***/ (function(module, exports) {
+
+// removed by extract-text-webpack-plugin
+
+/***/ }),
+/* 30 */
+/***/ (function(module, exports) {
+
+
+var indexOf = [].indexOf;
+
+module.exports = function(arr, obj){
+  if (indexOf) return arr.indexOf(obj);
+  for (var i = 0; i < arr.length; ++i) {
+    if (arr[i] === obj) return i;
+  }
+  return -1;
+};
+
+/***/ }),
+/* 31 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -14732,7 +14962,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 /***/ }),
-/* 30 */
+/* 32 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -14865,7 +15095,7 @@ __WEBPACK_IMPORTED_MODULE_2__wings3d__["onReady"](createGuideTour);
 
 
 /***/ }),
-/* 31 */
+/* 33 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -15084,7 +15314,7 @@ class SimilarVertex extends SimilarGeometry {
 
 
 /***/ }),
-/* 32 */
+/* 34 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";

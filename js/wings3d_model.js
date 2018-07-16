@@ -16,10 +16,48 @@ import * as Wings3D from './wings3d';
 import {EditCommand} from './wings3d_undo';
 import {DraftBench} from './wings3d_draftbench';
 import * as Util from './wings3d_util';
+import { runInThisContext } from 'vm';
 
+
+class MeshAllocatorProxy { // we could use Proxy, but ....
+   constructor(preview) {
+      this.preview = preview;
+   }
+
+   allocVertex(...args) { return this.preview.bench.allocMesh.allocVertex(...args); }
+
+   allocEdge(...args) { return this.preview.bench.allocMesh.allocEdge(...args); }
+
+   allocPolygon(...args) {
+      const face = this.preview.bench.allocMesh.allocPolygon(...args);
+      if (this.preview.bench.boundingSpheres.length < this.preview.bench.allocMesh.faces.length) {   // now create sphere and insert to preview's bvh
+         this.preview.bench.boundingSpheres.push( BoundingSphere.allocate(face) );
+      }
+      this.preview.insertFace(face);
+      return face;
+   }
+
+   freeVertex(vertex) { this.preview.bench.allocMesh.freeVertex(vertex); }
+
+   freeHEdge(hEdge) { this.preview.bench.allocMesh.freeHEdge(hEdge); }
+
+   freePolygon(polygon) {
+      this.preview.removeFace(polygon);
+      this.preview.bench.allocMesh.freePolygon(polygon);
+   }
+
+   getVertices(index) { return this.preview.bench.allocMesh.getVertices(index); }
+
+   clearAffected() { this.preview.bench.allocMesh.clearAffected(); }
+
+   addAffectedEdgeAndFace(...args) { this.preview.bench.allocMesh.addAffecedEdgeAndFace(...args); }
+   addAffectedWEdge(wEdge) {this.preview.bench.allocMesh.addAffectedWEdge(wEdge);}
+   addAffectedFace(polygon) {this.preview.bench.allocMesh.addAffectedFace(polygon);}
+   addAffectedVertex(vertex) {this.preview.bench.allocMesh.addAffectedVertex(vertex);}
+}
 
 const PreviewCage = function(bench) {
-   this.geometry = new WingedTopology(bench.allocMesh);
+   this.geometry = new WingedTopology(new MeshAllocatorProxy(this));
    this.bench = bench;
 
    // selecte(Vertex,Edge,Face)here
@@ -28,7 +66,7 @@ const PreviewCage = function(bench) {
    // default no name
    this.name = "";
    // bvh
-   this.bvh = {root: null, queue: []};       // queue is for lazy evaluation.
+   this.bvh = {root: null, queue: new Set};       // queue is for lazy evaluation.
 };
 
 
@@ -79,24 +117,27 @@ PreviewCage.prototype.initBVH = function() {
 
 PreviewCage.prototype.rebuildBVH = function() {
    // first clear out queue.
-   this.bvh.queue = [];
+   this.bvh.queue.clear();
    // rebuild, probably needs to collect metrics and build.
    this.initBVH();
 };
 
 PreviewCage.prototype.insertFace = function(face) {
    const sphere = this.bench.boundingSpheres[face.index];
-   this.bvh.root.insert(sphere);
+   this.bvh.queue.add(sphere);
+   //this.bvh.root.insert(sphere);
 }
 
 PreviewCage.prototype.moveSphere = function(sphere) { // lazy evaluation.
-   this.bvh.queue.push(sphere);
+   this.bvh.queue.add(sphere);
 }
 
 PreviewCage.prototype.removeFace = function(face) { 
    const sphere = this.bench.boundingSpheres[face.index];
-   if (sphere.octree) { // octree should exist.
+   if (sphere.octree) { // octree should exist, or 
       sphere.octree._remove(sphere);                     
+   } else {
+      this.bvh.queue.delete(sphere);
    }
 }
 
@@ -111,8 +152,10 @@ PreviewCage.prototype.updateBVH = function() {
    }
    
    // now insert the queue moved polygons
+   const bound = {center: vec3.create(), halfSize: vec3.create()};
    for (let sphere of this.bvh.queue) {
-      this.bvh.root.insert(sphere);
+      this.bvh.root.getBound(bound);
+      this.bvh.root.insert(sphere, bound);
    }
 }
 
