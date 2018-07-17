@@ -114,20 +114,15 @@ PreviewCage.prototype.initBVH = function() {
    if (this.bvh.root) {
       this.bvh.root.free();
    }
+   this.bvh.queue.clear();
    this.bvh.root = new LooseOctree(this, bound, 0);
    // now insert every spheres onto the root
    for (let sphere of spheres) {
       this.bvh.root.getBound(bound);
       this.bvh.root.insert(sphere, bound);
    }
+   //this.bvh.root.check(new Set);
 }
-
-PreviewCage.prototype.rebuildBVH = function() {
-   // first clear out queue.
-   this.bvh.queue.clear();
-   // rebuild, probably needs to collect metrics and build.
-   this.initBVH();
-};
 
 PreviewCage.prototype.insertFace = function(face) {
    const sphere = this.bench.boundingSpheres[face.index];
@@ -157,7 +152,8 @@ PreviewCage.prototype.updateBVH = function() {
    // check if any sphere is outside of original bound.
    for (let sphere of this.bvh.queue) {
       if (!this.bvh.root.isInside(sphere)) {
-         this.rebuildBVH();
+         this.bvh.queue.clear();
+         this.initBVH();
          return;
       }
    }
@@ -168,6 +164,8 @@ PreviewCage.prototype.updateBVH = function() {
       this.bvh.root.getBound(bound);
       this.bvh.root.insert(sphere, bound);
    }
+   //this.bvh.root.check(new Set);
+   this.bvh.queue.clear();
 }
 
 //-- end of bvh

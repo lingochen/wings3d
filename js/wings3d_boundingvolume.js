@@ -135,6 +135,33 @@ class LooseOctree {  // this is really node
       return index;
    }
 
+   check(duplicateSet) {
+      if (this.node) {
+         for (let sphere of this.node) {
+            if (duplicateSet.has(sphere)) {
+               console.log("octree problems");
+            } else {
+               duplicateSet.add(sphere);
+            }
+         }
+      } else {
+         for (let i = 0; i < 8; ++i) {
+            const octreeNode = this.leaf[i];
+            if (octreeNode) {
+               octreeNode.check(duplicateSet);
+            }
+         }
+         for (let i = 8; i < this.leaf.length; ++i) {
+            const sphere = this.leaf[i];
+            if (duplicateSet.has(sphere)) {
+               console.log("octree problems");
+            } else {
+               duplicateSet.add(sphere);
+            }
+         }
+      }
+   }
+
    free() {
       if (this.node) {
          for (let sphere of this.node) {
