@@ -2051,7 +2051,7 @@ PreviewCage.prototype.updateBVH = function() {
       this.bvh.root.getBound(bound);
       this.bvh.root.insert(sphere, bound);
    }
-   //this.bvh.root.check(new Set);
+   this.bvh.root.check(new Set);
    this.bvh.queue.clear();
 }
 
@@ -14191,10 +14191,12 @@ function render(gl, drawWorldFn) {
 "use strict";
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return WavefrontObjImportExporter; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_importexport__ = __webpack_require__(21);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_view__ = __webpack_require__(1);
 //
 // Wavefront Obj Loader and Writer.
 //
 //
+
 
 
 
@@ -14250,24 +14252,26 @@ class WavefrontObjImportExporter extends __WEBPACK_IMPORTED_MODULE_0__wings3d_im
             }
          }
          // done reading, return the object.
-         this.objs.push( this.obj );
          return this.objs;
       }
    }
 
    o(objName) {
-      if (this.obj.vertices.length == 0) {   //
-         // no needs to create a new one.
-      } else {
-         this.objs.push( this.obj );
-         this.obj = new WingedTopology;
-      }
+      this.objView = __WEBPACK_IMPORTED_MODULE_1__wings3d_view__["putIntoWorld"]();
+      this.obj = this.objView.geometry;
+      this.objs.push( this.objView );
+
       this.obj.clearAffected();
       // assignedName
-      this.obj.name = objName;
+      this.objView.name = objName;
    }
 
    g(groupNames) {
+      if (!this.objView) {
+         this.objView = __WEBPACK_IMPORTED_MODULE_1__wings3d_view__["putIntoWorld"]();
+         this.obj = this.objView.geometry;
+         this.objs.push( this.objView );
+      }
       // to be implemented later
 
    }
@@ -14287,7 +14291,7 @@ class WavefrontObjImportExporter extends __WEBPACK_IMPORTED_MODULE_0__wings3d_im
       for (let i of index) {
          let split = i.split('/');
          let idx = split[0] - 1;          // convert 1-based index to 0-based index.
-         if ( (idx >= 0) && (idx < this.obj.vertices.length)) {
+         if ( (idx >= 0) && (idx < this.obj.vertices.size)) {
             faceIndex.push( idx );
          } else {
             console.log("face index out of bound: " + idx);
@@ -14369,10 +14373,9 @@ class ImportExporter {
 
       reader.onload = function(ev) {
          const text = reader.result;
-         const meshes = self._import(text);
+         const world = self._import(text);
          const cages = [];
-         for (let mesh of meshes) {
-            let cage = __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["putIntoWorld"](mesh);
+         for (let cage of world) {
             cages.push( new __WEBPACK_IMPORTED_MODULE_0__wings3d_model__["CreatePreviewCageCommand"](cage) );
          }
          if (cages.length > 1) {
@@ -14381,8 +14384,9 @@ class ImportExporter {
          } else if (cages.length > 0) {
             __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["undoQueue"](cages[0]);
          }
-         // after we finisehd _reset too.
+         // after we finalised _reset too.
          self._reset();
+         __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["updateWorld"]();
       }
 
       reader.readAsText(file);
@@ -14390,7 +14394,8 @@ class ImportExporter {
 
    _reset() {
       this.objs = [];
-      this.obj = new __WEBPACK_IMPORTED_MODULE_1__wings3d_wingededge__["WingedTopology"];
+      this.obj = null;
+      this.objView = null;
       this.polygonCount = 0;
       this.vertexCount = 0;
       this.non_manifold = [];
