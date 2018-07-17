@@ -277,7 +277,7 @@ class LooseOctree {  // this is really node
       }
    }
 }
-LooseOctree.kTHRESHOLD = 16;    // read somewhere, 8-15 is a good number for octree node. expand to child only when node.length >= kTHRESHOLD
+LooseOctree.kTHRESHOLD = 128;    // read somewhere, 8-15 is a good number for octree node. expand to child only when node.length >= kTHRESHOLD
 LooseOctree.kLOOSENESS = 1.5;    // cannot change. because isInside depend on this property.
 
 

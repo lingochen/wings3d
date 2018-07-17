@@ -24,13 +24,13 @@ class WavefrontObjImportExporter extends ImportExporter {
          const mesh = cage.geometry;
          text += "o " + index.toString() + "\n";
          // now append the "v x y z\n"
-         text += "\n#vertex total " + mesh.vertices.length + "\n";
+         text += "\n#vertex total " + mesh.vertices.size + "\n";
          for (let vertex of mesh.vertices) {
             const vert = vertex.vertex;
             text += "v " + vert[0] + " " + vert[1] + " " + vert[2] + "\n";
          }
          // "f index+1 index+1 index+1"
-         text += "\n#face list total " + mesh.faces.length + "\n";
+         text += "\n#face list total " + mesh.faces.size + "\n";
          for (let polygon of mesh.faces) {
             text += "f";
             polygon.eachVertex(fn);

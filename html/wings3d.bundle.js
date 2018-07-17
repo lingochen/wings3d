@@ -1924,6 +1924,8 @@ class MeshAllocatorProxy { // we could use Proxy, but ....
       return face;
    }
 
+   freeAll(polygons, wEdges, vertices) { this.preview.bench.freeAll(polygons, wEdges, vertices); }
+
    freeVertex(vertex) { this.preview.bench.freeVertex(vertex); }
 
    freeHEdge(hEdge) { this.preview.bench.freeHEdge(hEdge); }
@@ -6721,6 +6723,31 @@ MeshAllocator.prototype.freePolygon = function(polygon) {
    this.affected.faces.add( polygon );
 };
 
+MeshAllocator.prototype.freeAll = function(polygons, wEdges, vertices) {
+   function compare(a, b) {return b-a;}
+   for (let polygon of polygons) {
+      this.free.faces.push(polygon.index);
+      polygon.halfEdge = null;
+      polygon.numberOfVertex = 0;
+   }
+   this.free.faces.sort(compare);
+   for (let wEdge of wEdges) {
+      this.free.edges.push(wEdge.index);
+      wEdge.left.face = null;
+      wEdge.left.origin = null;
+      wEdge.right.face = null;
+      wEdge.right.face = null;
+      wEdge.left.next = wEdge.right;
+      wEdge.right.next = wEdge.left;
+   }
+   this.free.edges.sort(compare);
+   for (let vertex of vertices) {
+      this.free.vertices.push(vertex.index);
+      vertex.outEdge = null;
+   }
+   this.free.vertices.sort(compare);
+}
+
 
 MeshAllocator.prototype.getVertices = function(index) {
    return this.vertices[index];
@@ -6766,17 +6793,9 @@ var WingedTopology = function(allocator) {
 
 // act as destructor
 WingedTopology.prototype.free = function() {
-   for (let polygon of this.faces) {
-      this.alloc.freePolygon(polygon);
-   }
+   this.alloc.freeAll(this.faces, this.edges, this.vertices);
    this.faces = new Set;
-   for (let wedge of this.edges) {
-      this.alloc.freeHEdge(wedge.left);
-   }
    this.edges = new Set;
-   for (let vertex of this.vertices) {
-      this.alloc.freeVertex(vertex);
-   }
    this.vertices = new Set;
 };
 
@@ -12859,7 +12878,7 @@ class LooseOctree {  // this is really node
       }
    }
 }
-LooseOctree.kTHRESHOLD = 16;    // read somewhere, 8-15 is a good number for octree node. expand to child only when node.length >= kTHRESHOLD
+LooseOctree.kTHRESHOLD = 128;    // read somewhere, 8-15 is a good number for octree node. expand to child only when node.length >= kTHRESHOLD
 LooseOctree.kLOOSENESS = 1.5;    // cannot change. because isInside depend on this property.
 
 
@@ -14218,13 +14237,13 @@ class WavefrontObjImportExporter extends __WEBPACK_IMPORTED_MODULE_0__wings3d_im
          const mesh = cage.geometry;
          text += "o " + index.toString() + "\n";
          // now append the "v x y z\n"
-         text += "\n#vertex total " + mesh.vertices.length + "\n";
+         text += "\n#vertex total " + mesh.vertices.size + "\n";
          for (let vertex of mesh.vertices) {
             const vert = vertex.vertex;
             text += "v " + vert[0] + " " + vert[1] + " " + vert[2] + "\n";
          }
          // "f index+1 index+1 index+1"
-         text += "\n#face list total " + mesh.faces.length + "\n";
+         text += "\n#face list total " + mesh.faces.size + "\n";
          for (let polygon of mesh.faces) {
             text += "f";
             polygon.eachVertex(fn);

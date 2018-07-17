@@ -707,6 +707,31 @@ MeshAllocator.prototype.freePolygon = function(polygon) {
    this.affected.faces.add( polygon );
 };
 
+MeshAllocator.prototype.freeAll = function(polygons, wEdges, vertices) {
+   function compare(a, b) {return b-a;}
+   for (let polygon of polygons) {
+      this.free.faces.push(polygon.index);
+      polygon.halfEdge = null;
+      polygon.numberOfVertex = 0;
+   }
+   this.free.faces.sort(compare);
+   for (let wEdge of wEdges) {
+      this.free.edges.push(wEdge.index);
+      wEdge.left.face = null;
+      wEdge.left.origin = null;
+      wEdge.right.face = null;
+      wEdge.right.face = null;
+      wEdge.left.next = wEdge.right;
+      wEdge.right.next = wEdge.left;
+   }
+   this.free.edges.sort(compare);
+   for (let vertex of vertices) {
+      this.free.vertices.push(vertex.index);
+      vertex.outEdge = null;
+   }
+   this.free.vertices.sort(compare);
+}
+
 
 MeshAllocator.prototype.getVertices = function(index) {
    return this.vertices[index];
@@ -752,17 +777,9 @@ var WingedTopology = function(allocator) {
 
 // act as destructor
 WingedTopology.prototype.free = function() {
-   for (let polygon of this.faces) {
-      this.alloc.freePolygon(polygon);
-   }
+   this.alloc.freeAll(this.faces, this.edges, this.vertices);
    this.faces = new Set;
-   for (let wedge of this.edges) {
-      this.alloc.freeHEdge(wedge.left);
-   }
    this.edges = new Set;
-   for (let vertex of this.vertices) {
-      this.alloc.freeVertex(vertex);
-   }
    this.vertices = new Set;
 };
 

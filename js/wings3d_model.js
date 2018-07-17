@@ -37,6 +37,8 @@ class MeshAllocatorProxy { // we could use Proxy, but ....
       return face;
    }
 
+   freeAll(polygons, wEdges, vertices) { this.preview.bench.freeAll(polygons, wEdges, vertices); }
+
    freeVertex(vertex) { this.preview.bench.freeVertex(vertex); }
 
    freeHEdge(hEdge) { this.preview.bench.freeHEdge(hEdge); }
