@@ -164,7 +164,7 @@ PreviewCage.prototype.updateBVH = function() {
       this.bvh.root.getBound(bound);
       this.bvh.root.insert(sphere, bound);
    }
-   //this.bvh.root.check(new Set);
+   this.bvh.root.check(new Set);
    this.bvh.queue.clear();
 }
 

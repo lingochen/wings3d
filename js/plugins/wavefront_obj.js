@@ -3,6 +3,7 @@
 //
 //
 import {ImportExporter} from "../wings3d_importexport";
+import * as View from "../wings3d_view";
 
 
 class WavefrontObjImportExporter extends ImportExporter {
@@ -57,24 +58,26 @@ class WavefrontObjImportExporter extends ImportExporter {
             }
          }
          // done reading, return the object.
-         this.objs.push( this.obj );
          return this.objs;
       }
    }
 
    o(objName) {
-      if (this.obj.vertices.length == 0) {   //
-         // no needs to create a new one.
-      } else {
-         this.objs.push( this.obj );
-         this.obj = new WingedTopology;
-      }
+      this.objView = View.putIntoWorld();
+      this.obj = this.objView.geometry;
+      this.objs.push( this.objView );
+
       this.obj.clearAffected();
       // assignedName
-      this.obj.name = objName;
+      this.objView.name = objName;
    }
 
    g(groupNames) {
+      if (!this.objView) {
+         this.objView = View.putIntoWorld();
+         this.obj = this.objView.geometry;
+         this.objs.push( this.objView );
+      }
       // to be implemented later
 
    }
@@ -94,7 +97,7 @@ class WavefrontObjImportExporter extends ImportExporter {
       for (let i of index) {
          let split = i.split('/');
          let idx = split[0] - 1;          // convert 1-based index to 0-based index.
-         if ( (idx >= 0) && (idx < this.obj.vertices.length)) {
+         if ( (idx >= 0) && (idx < this.obj.vertices.size)) {
             faceIndex.push( idx );
          } else {
             console.log("face index out of bound: " + idx);

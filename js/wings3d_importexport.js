@@ -49,10 +49,9 @@ class ImportExporter {
 
       reader.onload = function(ev) {
          const text = reader.result;
-         const meshes = self._import(text);
+         const world = self._import(text);
          const cages = [];
-         for (let mesh of meshes) {
-            let cage = View.putIntoWorld(mesh);
+         for (let cage of world) {
             cages.push( new CreatePreviewCageCommand(cage) );
          }
          if (cages.length > 1) {
@@ -61,8 +60,9 @@ class ImportExporter {
          } else if (cages.length > 0) {
             View.undoQueue(cages[0]);
          }
-         // after we finisehd _reset too.
+         // after we finalised _reset too.
          self._reset();
+         View.updateWorld();
       }
 
       reader.readAsText(file);
@@ -70,7 +70,8 @@ class ImportExporter {
 
    _reset() {
       this.objs = [];
-      this.obj = new WingedTopology;
+      this.obj = null;
+      this.objView = null;
       this.polygonCount = 0;
       this.vertexCount = 0;
       this.non_manifold = [];
