@@ -135,6 +135,25 @@ class LooseOctree {  // this is really node
       return index;
    }
 
+   free() {
+      if (this.node) {
+         for (let sphere of this.node) {
+            sphere.octree = null;
+         }
+      } else {
+         for (let i = 0; i < 8; ++i) {
+            const octreeNode = this.leaf[i];
+            if (octreeNode) {
+               octreeNode.free();
+            }
+         }
+         for (let i = 8; i < this.leaf.length; ++i) {
+            const sphere = this.leaf[i];
+            sphere.octree = null;
+         }
+      }
+   }
+
    // only expand when this.node.length > kTHRESHOLD. and this.leaf will double as this.node.
    insert(sphere, bound) {
       if (this.node) { // keep pushing.

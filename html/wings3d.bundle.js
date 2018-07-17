@@ -445,6 +445,10 @@ const action = {
    faceScaleRadialX: ()=> {notImplemented(this);},
    faceScaleRadialY: ()=> {notImplemented(this);},
    faceScaleRadialZ: ()=> {notImplemented(this);},
+   facePlaneCut: ()=> {notImplemented(this);},
+   facePlaneCutX: ()=> {notImplemented(this);},
+   facePlaneCutY: ()=> {notImplemented(this);},
+   facePlaneCutZ: ()=> {notImplemented(this);},
    // vertex
    vertexConnect: () => {notImplemented(this);},
    vertexDissolve: () => {notImplemented(this);},
@@ -1907,36 +1911,36 @@ class MeshAllocatorProxy { // we could use Proxy, but ....
       this.preview = preview;
    }
 
-   allocVertex(...args) { return this.preview.bench.allocMesh.allocVertex(...args); }
+   allocVertex(...args) { return this.preview.bench.allocVertex(...args); }
 
-   allocEdge(...args) { return this.preview.bench.allocMesh.allocEdge(...args); }
+   allocEdge(...args) { return this.preview.bench.allocEdge(...args); }
 
    allocPolygon(...args) {
-      const face = this.preview.bench.allocMesh.allocPolygon(...args);
-      if (this.preview.bench.boundingSpheres.length < this.preview.bench.allocMesh.faces.length) {   // now create sphere and insert to preview's bvh
+      const face = this.preview.bench.allocPolygon(...args);
+      if (this.preview.bench.boundingSpheres.length < this.preview.bench.faces.length) {   // now create sphere and insert to preview's bvh
          this.preview.bench.boundingSpheres.push( __WEBPACK_IMPORTED_MODULE_1__wings3d_boundingvolume__["BoundingSphere"].allocate(face) );
       }
       this.preview.insertFace(face);
       return face;
    }
 
-   freeVertex(vertex) { this.preview.bench.allocMesh.freeVertex(vertex); }
+   freeVertex(vertex) { this.preview.bench.freeVertex(vertex); }
 
-   freeHEdge(hEdge) { this.preview.bench.allocMesh.freeHEdge(hEdge); }
+   freeHEdge(hEdge) { this.preview.bench.freeHEdge(hEdge); }
 
    freePolygon(polygon) {
       this.preview.removeFace(polygon);
-      this.preview.bench.allocMesh.freePolygon(polygon);
+      this.preview.bench.freePolygon(polygon);
    }
 
-   getVertices(index) { return this.preview.bench.allocMesh.getVertices(index); }
+   getVertices(index) { return this.preview.bench.getVertices(index); }
 
-   clearAffected() { this.preview.bench.allocMesh.clearAffected(); }
+   clearAffected() { this.preview.bench.clearAffected(); }
 
-   addAffectedEdgeAndFace(...args) { this.preview.bench.allocMesh.addAffecedEdgeAndFace(...args); }
-   addAffectedWEdge(wEdge) {this.preview.bench.allocMesh.addAffectedWEdge(wEdge);}
-   addAffectedFace(polygon) {this.preview.bench.allocMesh.addAffectedFace(polygon);}
-   addAffectedVertex(vertex) {this.preview.bench.allocMesh.addAffectedVertex(vertex);}
+   addAffectedEdgeAndFace(...args) { this.preview.bench.addAffecedEdgeAndFace(...args); }
+   addAffectedWEdge(wEdge) {this.preview.bench.addAffectedWEdge(wEdge);}
+   addAffectedFace(polygon) {this.preview.bench.addAffectedFace(polygon);}
+   addAffectedVertex(vertex) {this.preview.bench.addAffectedVertex(vertex);}
 }
 
 const PreviewCage = function(bench) {
@@ -1955,6 +1959,10 @@ const PreviewCage = function(bench) {
 
 // act as destructor
 PreviewCage.prototype.freeBuffer = function() {
+   if (this.bvh.root) {
+      this.bvh.root.free();
+      this.bvh.root = null;
+   }
    this.geometry.free();
 };
 
@@ -1990,6 +1998,9 @@ PreviewCage.prototype.initBVH = function() {
                   halfSize: vec3.fromValues(Math.max(max[0]-center[0], center[0]-min[0]), 
                                             Math.max(max[1]-center[1], center[1]-min[1]), 
                                             Math.max(max[2]-center[2], center[2]-min[2]) )};
+   if (this.bvh.root) {
+      this.bvh.root.free();
+   }
    this.bvh.root = new __WEBPACK_IMPORTED_MODULE_1__wings3d_boundingvolume__["LooseOctree"](this, bound, 0);
    // now insert every spheres onto the root
    for (let sphere of spheres) {
@@ -2007,7 +2018,11 @@ PreviewCage.prototype.rebuildBVH = function() {
 
 PreviewCage.prototype.insertFace = function(face) {
    const sphere = this.bench.boundingSpheres[face.index];
-   this.bvh.queue.add(sphere);
+   if (!sphere.octree) {
+      this.bvh.queue.add(sphere);
+   } else {
+      console.log("octree insert duplicated");
+   }
    //this.bvh.root.insert(sphere);
 }
 
@@ -6553,21 +6568,18 @@ let MeshAllocator = function(allocatedSize = 1024) {
    this.vertices = [];     // class Vertex
    this.edges = [];        // class WingedEdge
    this.faces = [];        // class Polygon
-   this.freeVertices = [];
-   this.freeEdges = [];
-   this.freeFaces = [];
-   // affected is when reuse, deleted, or change vital stats.
-   this.affected = {vertices: new Set, edges: new Set, faces: new Set};
+   this.free = {vertices: [], edges: [], faces: []};
+   this.affected = {vertices: new Set, edges: new Set, faces: new Set};// affected is when reuse, deleted, or change vital stats.
 };
 // allocation,
 MeshAllocator.prototype.allocVertex = function(pt, delVertex) {
-   if (this.freeVertices.length > 0) {
+   if (this.free.vertices.length > 0) {
       let vertex;
       if (typeof delVertex === 'undefined') {
-         vertex = this.vertices[this.freeVertices.pop()];
+         vertex = this.vertices[this.free.vertices.pop()];
       } else {
          const index = delVertex.index;   // remove delOutEdge from freeEdges list
-         this.freeVertices = this.freeVertices.filter(function(element) {
+         this.free.vertices = this.free.vertices.filter(function(element) {
             return element !== index;
          });
          vertex = delVertex;
@@ -6607,16 +6619,16 @@ MeshAllocator.prototype.allocVertex = function(pt, delVertex) {
 MeshAllocator.prototype.allocEdge = function(begVert, endVert, delOutEdge) {
    let edge;
    let outEdge;
-   if (this.freeEdges.length > 0) { // prefered recycle edge.
+   if (this.free.edges.length > 0) { // prefered recycle edge.
       if (typeof delOutEdge !== "undefined") {
          const index = delOutEdge.wingedEdge.index;   // remove delOutEdge from freeEdges list
-         this.freeEdges = this.freeEdges.filter(function(element) {
+         this.free.edges = this.free.edges.filter(function(element) {
             return element !== index;
          });
          edge = delOutEdge.wingedEdge;
          outEdge = delOutEdge;
       } else {
-         edge = this.edges[this.freeEdges.pop()];
+         edge = this.edges[this.free.edges.pop()];
          outEdge = edge.left;
       }
       outEdge.origin = begVert;
@@ -6637,15 +6649,15 @@ MeshAllocator.prototype.allocEdge = function(begVert, endVert, delOutEdge) {
 // todo: ?binary search for delPolygon, then use splice. a win? for large freelist yes, but, I don't think it a common situation.
 MeshAllocator.prototype.allocPolygon = function(halfEdge, numberOfVertex, delPolygon) {
    let polygon;
-   if (this.freeFaces.length > 0) {
+   if (this.free.faces.length > 0) {
       if (typeof delPolygon !== "undefined") {
          const index = delPolygon.index;   // remove delOutEdge from freeEdges list
-         this.freeFaces = this.freeFaces.filter(function(element) {
+         this.free.faces = this.free.faces.filter(function(element) {
             return element !== index;
          });
          polygon = delPolygon;
       } else {
-         polygon = this.faces[ this.freeFaces.pop() ];
+         polygon = this.faces[ this.free.faces.pop() ];
       }
       polygon.halfEdge = halfEdge;
       polygon.numberOfVertex = numberOfVertex;
@@ -6682,8 +6694,8 @@ MeshAllocator.prototype.freeVertex = function(vertex) {
    vertex.outEdge = null;
    //vertex.vertex.fill(0.0);
    // assert !freeVertices.has(vertex);
-   //this.freeVertices.push( vertex );
-   this._insertFreeList(vertex.index, this.freeVertices);
+   //this.free.vertices.push( vertex );
+   this._insertFreeList(vertex.index, this.free.vertices);
    this.affected.vertices.add( vertex );
 };
 
@@ -6696,9 +6708,9 @@ MeshAllocator.prototype.freeHEdge = function(edge) {
    // link together for a complete loop
    edge.next = pair;
    pair.next = edge;
-   // assert !this.freeEdges.has( edge.wingedEdge );
-   //this.freeEdges.push( edge.wingedEdge );
-   this._insertFreeList(edge.wingedEdge.index, this.freeEdges);
+   // assert !this.free.edges.has( edge.wingedEdge );
+   //this.free.edges.push( edge.wingedEdge );
+   this._insertFreeList(edge.wingedEdge.index, this.free.edges);
    this.affected.edges.add( edge.wingedEdge );
 };
 
@@ -6706,8 +6718,8 @@ MeshAllocator.prototype.freePolygon = function(polygon) {
    polygon.halfEdge = null;
    polygon.numberOfVertex = 0;
    // assert !freeFaces.has( polygon );
-   //this.freeFaces.push( polygon );
-   this._insertFreeList(polygon.index, this.freeFaces);
+   //this.free.faces.push( polygon );
+   this._insertFreeList(polygon.index, this.free.faces);
    this.affected.faces.add( polygon );
 };
 
@@ -8627,7 +8639,8 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 
 const DraftBench = function(defaultSize = 2048) {  // should only be created by View
-   this.allocMesh = new __WEBPACK_IMPORTED_MODULE_2__wings3d_wingededge__["MeshAllocator"](defaultSize);
+   __WEBPACK_IMPORTED_MODULE_2__wings3d_wingededge__["MeshAllocator"].call(this, defaultSize); // constructor.
+  
    this.lastPreviewSize = { vertices: 0, edges: 0, faces: 0};
    this.boundingSpheres = [];
    this.hilite = {index: null, indexLength: 0, numberOfTriangles: 0};  // the hilite index triangle list.
@@ -8679,6 +8692,9 @@ DraftBench.CONST = (function() {
    return constant;
 }());
 
+// draftBench inherited from MeshAllocator, so we canintercept freeXXX and allocXXX call easier. It also makes logical sense.
+DraftBench.prototype = Object.create(__WEBPACK_IMPORTED_MODULE_2__wings3d_wingededge__["MeshAllocator"].prototype);
+
 // free webgl buffer.
 DraftBench.prototype.freeBuffer = function() {
    this.preview.shaderData.freeAllAttributes();
@@ -8695,7 +8711,7 @@ DraftBench.prototype.updatePreview = function() {
    this._resizePreviewEdge();
    this._resizePreviewVertex();
    this._updatePreviewSize();
-   this._updateAffected(this.allocMesh.affected);
+   this._updateAffected(this.affected);
    // compute index
    //this._computePreviewIndex();
 };
@@ -8703,12 +8719,12 @@ DraftBench.prototype.updatePreview = function() {
 
 DraftBench.prototype._resizeBoundingSphere = function() {
    let oldSize = this.lastPreviewSize.faces
-   let size = this.allocMesh.faces.length - oldSize;
+   let size = this.faces.length - oldSize;
    if (size > 0) {   // we only care about growth for now
       if (oldSize > 0) {
          if (this.preview.centroid.buf.data.length < (this.preview.centroid.buf.len+(size*3))) {
             // needs to resize, and copy
-            const buf = new ArrayBuffer(this.allocMesh.faces.length * 3 * Float32Array.BYTES_PER_ELEMENT * 2);
+            const buf = new ArrayBuffer(this.faces.length * 3 * Float32Array.BYTES_PER_ELEMENT * 2);
             const centroid = {buf: {buffer: buf, data: new Float32Array(buf), len: 0} };
             // 
             centroid.buf.data.set(this.preview.centroid.buf.data);  // copy old data
@@ -8719,16 +8735,16 @@ DraftBench.prototype._resizeBoundingSphere = function() {
             this.preview.centroid.buf = centroid.buf;
          }
       } else {
-         const buf = new ArrayBuffer(this.allocMesh.faces.length * 3 * Float32Array.BYTES_PER_ELEMENT * 2); // twice the current size
+         const buf = new ArrayBuffer(this.faces.length * 3 * Float32Array.BYTES_PER_ELEMENT * 2); // twice the current size
          this.preview.centroid.buf = {buffer: buf, data: new Float32Array(buf), len: 0};
          // assign a boundingsphere for each polygon.
-         //this.boundingSpheres = new Array(this.allocMesh.faces.length);
+         //this.boundingSpheres = new Array(this.faces.length);
          //this.boundingSpheres.length = 0;
       }
       // create New, should not have deleted sphere to mess up things
       const centroid = this.preview.centroid;   // 
-      for (let i = oldSize; i < this.allocMesh.faces.length; ++i) {
-         const polygon = this.allocMesh.faces[i];
+      for (let i = oldSize; i < this.faces.length; ++i) {
+         const polygon = this.faces[i];
          const sphere = this.boundingSpheres[i];
          let center = sphere.center;
          if (!center) {
@@ -8748,11 +8764,11 @@ DraftBench.prototype._resizePreview = function() {
    let oldSize = this.lastPreviewSize.vertices;
    let oldCentroidSize = this.lastPreviewSize.faces;
 
-   const size = this.allocMesh.vertices.length - oldSize;
-   const centroidSize = this.allocMesh.faces.length - oldCentroidSize;
+   const size = this.vertices.length - oldSize;
+   const centroidSize = this.faces.length - oldCentroidSize;
    if ((size > 0) || (centroidSize > 0)) {
       const model = this;
-      let length = model.allocMesh.buf.data.length;
+      let length = model.buf.data.length;
       let centroidLength = model.preview.centroid.buf.data.length;
       if (oldSize > 0) {
          if (length > model.preview.barycentric.length) {
@@ -8781,10 +8797,10 @@ DraftBench.prototype._resizePreview = function() {
       model.preview.centroid.barycentric.fill(1.0);
       model.preview.centroid.selected.fill(0.0, oldCentroidSize);
       // upload the data to webgl
-      length = this.allocMesh.buf.len;
+      length = this.buf.len;
       centroidLength = this.preview.centroid.buf.len;
       model.preview.shaderData.resizeAttribute('position', (length+centroidLength)*4);
-      model.preview.shaderData.uploadAttribute('position', 0, this.allocMesh.buf.data.subarray(0, length));
+      model.preview.shaderData.uploadAttribute('position', 0, this.buf.data.subarray(0, length));
       model.preview.shaderData.uploadAttribute('position', length*4, this.preview.centroid.buf.data.subarray(0, centroidLength));
       model.preview.shaderData.resizeAttribute('barycentric', (length+centroidLength)*4);
       model.preview.shaderData.uploadAttribute('barycentric', 0, this.preview.barycentric.subarray(0, length));
@@ -8803,13 +8819,13 @@ DraftBench.prototype._resizePreview = function() {
 };
 
 DraftBench.prototype._computePreviewIndex = function() {
-   this.numberOfTriangles = this.allocMesh.faces.reduce( function(acc, element) {
+   this.numberOfTriangles = this.faces.reduce( function(acc, element) {
       return acc + element.numberOfVertex; // -2; for half the vertex
    }, 0);
    const index = new Uint32Array( this.numberOfTriangles*3 );
    let length = 0;
    // recompute all index. (no optimization unless prove to be bottleneck)
-   let barycentric = this.allocMesh.vertices.length;
+   let barycentric = this.vertices.length;
    for (let sphere of this.boundingSpheres) {
       if (sphere.isLive()) {     // skip over deleted sphere.
          const polygon = sphere.polygon;
@@ -8847,7 +8863,7 @@ DraftBench.prototype._computeFaceHiliteIndex = function(polygon, offset) {
    }
    let index = polygon.index;
    let indicesLength = 0;
-   let barycentric = this.allocMesh.vertices.length + polygon.index;
+   let barycentric = this.vertices.length + polygon.index;
    for (let hEdge of polygon.hEdges()) {
       const vertex = hEdge.origin;
       if (indicesLength > 0) {
@@ -8882,21 +8898,21 @@ DraftBench.prototype._computeGroupHiliteIndex = function(faceGroup) {
 DraftBench.prototype._resizePreviewEdge = function() {
    let oldSize = this.lastPreviewSize.edges;
 
-   const size = this.allocMesh.edges.length - oldSize;
+   const size = this.edges.length - oldSize;
    if (size > 0) {
       if (oldSize > 0) {
-         let line = new Float32Array(this.allocMesh.edges.length*2*3);
+         let line = new Float32Array(this.edges.length*2*3);
          line.set(this.previewEdge.line);
          this.previewEdge.line = line;
-         let color = new Float32Array(this.allocMesh.edges.length*2);
+         let color = new Float32Array(this.edges.length*2);
          color.set(this.previewEdge.color);
          this.previewEdge.color = color;
       } else { // brand new
-         this.previewEdge.line = new Float32Array(this.allocMesh.edges.length*2*3);
-         this.previewEdge.color = new Float32Array(this.allocMesh.edges.length*2);
+         this.previewEdge.line = new Float32Array(this.edges.length*2*3);
+         this.previewEdge.color = new Float32Array(this.edges.length*2);
       }
-      for (let i = oldSize, j=(oldSize*2*3); i < this.allocMesh.edges.length; i++) {
-         let wingedEdge = this.allocMesh.edges[i];
+      for (let i = oldSize, j=(oldSize*2*3); i < this.edges.length; i++) {
+         let wingedEdge = this.edges[i];
          for (let halfEdge of wingedEdge) {
             if (wingedEdge.isLive()) {
                this.previewEdge.line.set(halfEdge.origin.vertex, j);
@@ -8919,7 +8935,7 @@ DraftBench.prototype._resizePreviewEdge = function() {
 
 DraftBench.prototype._resizePreviewVertex = function() {
    const oldSize = this.lastPreviewSize.vertices;
-   const length = this.allocMesh.vertices.length;
+   const length = this.vertices.length;
    const size = length - oldSize;
    if (size > 0) {
       const preview = this.previewVertex;
@@ -8931,7 +8947,7 @@ DraftBench.prototype._resizePreviewVertex = function() {
       preview.color = color;
       // 
       preview.shaderData.resizeAttribute('position', length*4*3);
-      preview.shaderData.uploadAttribute('position', 0, this.allocMesh.buf.data.subarray(0, length*3));
+      preview.shaderData.uploadAttribute('position', 0, this.buf.data.subarray(0, length*3));
       preview.shaderData.resizeAttribute('color', length*4);
       preview.shaderData.uploadAttribute('color', 0, preview.color);
    }
@@ -8939,7 +8955,7 @@ DraftBench.prototype._resizePreviewVertex = function() {
    const index = new Uint32Array(length);
    let j = 0;
    for (let i = 0; i < length; ++i) {
-      if (this.allocMesh.vertices[i].isLive()) {
+      if (this.vertices[i].isLive()) {
          index[j++] = i;
       }
    }
@@ -8950,9 +8966,9 @@ DraftBench.prototype._resizePreviewVertex = function() {
 
 
 DraftBench.prototype._updatePreviewSize = function() {
-   this.lastPreviewSize.vertices = this.allocMesh.vertices.length;
-   this.lastPreviewSize.edges = this.allocMesh.edges.length;
-   this.lastPreviewSize.faces = this.allocMesh.faces.length;
+   this.lastPreviewSize.vertices = this.vertices.length;
+   this.lastPreviewSize.edges = this.edges.length;
+   this.lastPreviewSize.faces = this.faces.length;
 };
 
 
@@ -8975,7 +8991,7 @@ DraftBench.prototype._updateAffected = function(affected) {
 
    }
 
-   this.allocMesh.clearAffected();
+   this.clearAffected();
 };
 
 DraftBench.prototype._updateVertex = function(vertex, affected) {
@@ -9006,7 +9022,7 @@ DraftBench.prototype._updatePreviewFace = function(polygon) {
       const sphere = this.boundingSpheres[ polygon.index ];
       sphere.setSphere( __WEBPACK_IMPORTED_MODULE_1__wings3d_boundingvolume__["BoundingSphere"].computeSphere(sphere.polygon, sphere.center) ); 
       // update center.
-      const index = this.allocMesh.vertices.length+polygon.index;
+      const index = this.vertices.length+polygon.index;
       this.preview.shaderData.uploadAttribute('position', index*3*4, sphere.center);
    }
 };
@@ -9083,7 +9099,7 @@ DraftBench.prototype.drawVertex = function(gl) {
    // drawing using vertex array
    try {
       gl.bindShaderData(this.previewVertex.shaderData);
-      //gl.drawArrays(gl.POINTS, 0, this.allocMesh.vertices.length);
+      //gl.drawArrays(gl.POINTS, 0, this.vertices.length);
       gl.drawElements(gl.POINTS, this.previewVertex.indexLength, gl.UNSIGNED_INT, 0);
    } catch (e) {
       console.log(e);
@@ -9197,13 +9213,13 @@ DraftBench.prototype.updateWEdges = function(wingedEdges) {
 DraftBench.prototype.updateCentroid = function(snapshot) {
    // done, update shader data, should we update each vertex individually?
    const centroids = this.preview.centroid.buf.data.subarray(0, this.preview.centroid.buf.len)
-   this.preview.shaderData.uploadAttribute('position', this.allocMesh.buf.len*4, centroids);
+   this.preview.shaderData.uploadAttribute('position', this.buf.len*4, centroids);
 };
 
 
 DraftBench.prototype.updatePosition = function() {
    // todo: we really should update as little as possible.
-   const vertices = this.allocMesh.buf.data.subarray(0, this.allocMesh.buf.len);
+   const vertices = this.buf.data.subarray(0, this.buf.len);
    this.preview.shaderData.uploadAttribute('position', 0, vertices);
    this.previewVertex.shaderData.uploadAttribute('position', 0, vertices);
 };
@@ -9226,7 +9242,7 @@ DraftBench.prototype.setFaceSelectionOff = function(polygon, selectedSet) {
    });
    selected = this.preview.centroid.selected;
    selected[polygon.index]= 0.0;
-   var byteOffset = (this.allocMesh.vertices.length+polygon.index)*4;
+   var byteOffset = (this.vertices.length+polygon.index)*4;
    this.preview.shaderData.uploadAttribute("selected", byteOffset, DraftBench.CONST.SELECTOFF);
 };
 DraftBench.prototype.setFaceSelectionOn = function(polygon) {
@@ -9239,14 +9255,14 @@ DraftBench.prototype.setFaceSelectionOn = function(polygon) {
    });
    selected = this.preview.centroid.selected;
    selected[polygon.index]= 1.0;
-   var byteOffset = (this.allocMesh.vertices.length+polygon.index)*4;
+   var byteOffset = (this.vertices.length+polygon.index)*4;
    this.preview.shaderData.uploadAttribute("selected", byteOffset, DraftBench.CONST.SELECTON);
 };
 
 DraftBench.prototype.resetSelectFace = function() {
    this.preview.selected.fill(0.0);          // reset all polygon to non-selected 
    this.preview.centroid.selected.fill(0.0);
-   var length = this.allocMesh.buf.len/3;
+   var length = this.buf.len/3;
    this.preview.shaderData.uploadAttribute("selected", 0, this.preview.selected.subarray(0, length));
    var centroidLength = this.preview.centroid.buf.len/3;
    this.preview.shaderData.uploadAttribute('selected', length*4, this.preview.centroid.selected.subarray(0, centroidLength));
@@ -12701,6 +12717,25 @@ class LooseOctree {  // this is really node
          }
       }
       return index;
+   }
+
+   free() {
+      if (this.node) {
+         for (let sphere of this.node) {
+            sphere.octree = null;
+         }
+      } else {
+         for (let i = 0; i < 8; ++i) {
+            const octreeNode = this.leaf[i];
+            if (octreeNode) {
+               octreeNode.free();
+            }
+         }
+         for (let i = 8; i < this.leaf.length; ++i) {
+            const sphere = this.leaf[i];
+            sphere.octree = null;
+         }
+      }
    }
 
    // only expand when this.node.length > kTHRESHOLD. and this.leaf will double as this.node.

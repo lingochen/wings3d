@@ -360,6 +360,10 @@ const action = {
    faceScaleRadialX: ()=> {notImplemented(this);},
    faceScaleRadialY: ()=> {notImplemented(this);},
    faceScaleRadialZ: ()=> {notImplemented(this);},
+   facePlaneCut: ()=> {notImplemented(this);},
+   facePlaneCutX: ()=> {notImplemented(this);},
+   facePlaneCutY: ()=> {notImplemented(this);},
+   facePlaneCutZ: ()=> {notImplemented(this);},
    // vertex
    vertexConnect: () => {notImplemented(this);},
    vertexDissolve: () => {notImplemented(this);},

@@ -552,21 +552,18 @@ let MeshAllocator = function(allocatedSize = 1024) {
    this.vertices = [];     // class Vertex
    this.edges = [];        // class WingedEdge
    this.faces = [];        // class Polygon
-   this.freeVertices = [];
-   this.freeEdges = [];
-   this.freeFaces = [];
-   // affected is when reuse, deleted, or change vital stats.
-   this.affected = {vertices: new Set, edges: new Set, faces: new Set};
+   this.free = {vertices: [], edges: [], faces: []};
+   this.affected = {vertices: new Set, edges: new Set, faces: new Set};// affected is when reuse, deleted, or change vital stats.
 };
 // allocation,
 MeshAllocator.prototype.allocVertex = function(pt, delVertex) {
-   if (this.freeVertices.length > 0) {
+   if (this.free.vertices.length > 0) {
       let vertex;
       if (typeof delVertex === 'undefined') {
-         vertex = this.vertices[this.freeVertices.pop()];
+         vertex = this.vertices[this.free.vertices.pop()];
       } else {
          const index = delVertex.index;   // remove delOutEdge from freeEdges list
-         this.freeVertices = this.freeVertices.filter(function(element) {
+         this.free.vertices = this.free.vertices.filter(function(element) {
             return element !== index;
          });
          vertex = delVertex;
@@ -606,16 +603,16 @@ MeshAllocator.prototype.allocVertex = function(pt, delVertex) {
 MeshAllocator.prototype.allocEdge = function(begVert, endVert, delOutEdge) {
    let edge;
    let outEdge;
-   if (this.freeEdges.length > 0) { // prefered recycle edge.
+   if (this.free.edges.length > 0) { // prefered recycle edge.
       if (typeof delOutEdge !== "undefined") {
          const index = delOutEdge.wingedEdge.index;   // remove delOutEdge from freeEdges list
-         this.freeEdges = this.freeEdges.filter(function(element) {
+         this.free.edges = this.free.edges.filter(function(element) {
             return element !== index;
          });
          edge = delOutEdge.wingedEdge;
          outEdge = delOutEdge;
       } else {
-         edge = this.edges[this.freeEdges.pop()];
+         edge = this.edges[this.free.edges.pop()];
          outEdge = edge.left;
       }
       outEdge.origin = begVert;
@@ -636,15 +633,15 @@ MeshAllocator.prototype.allocEdge = function(begVert, endVert, delOutEdge) {
 // todo: ?binary search for delPolygon, then use splice. a win? for large freelist yes, but, I don't think it a common situation.
 MeshAllocator.prototype.allocPolygon = function(halfEdge, numberOfVertex, delPolygon) {
    let polygon;
-   if (this.freeFaces.length > 0) {
+   if (this.free.faces.length > 0) {
       if (typeof delPolygon !== "undefined") {
          const index = delPolygon.index;   // remove delOutEdge from freeEdges list
-         this.freeFaces = this.freeFaces.filter(function(element) {
+         this.free.faces = this.free.faces.filter(function(element) {
             return element !== index;
          });
          polygon = delPolygon;
       } else {
-         polygon = this.faces[ this.freeFaces.pop() ];
+         polygon = this.faces[ this.free.faces.pop() ];
       }
       polygon.halfEdge = halfEdge;
       polygon.numberOfVertex = numberOfVertex;
@@ -681,8 +678,8 @@ MeshAllocator.prototype.freeVertex = function(vertex) {
    vertex.outEdge = null;
    //vertex.vertex.fill(0.0);
    // assert !freeVertices.has(vertex);
-   //this.freeVertices.push( vertex );
-   this._insertFreeList(vertex.index, this.freeVertices);
+   //this.free.vertices.push( vertex );
+   this._insertFreeList(vertex.index, this.free.vertices);
    this.affected.vertices.add( vertex );
 };
 
@@ -695,9 +692,9 @@ MeshAllocator.prototype.freeHEdge = function(edge) {
    // link together for a complete loop
    edge.next = pair;
    pair.next = edge;
-   // assert !this.freeEdges.has( edge.wingedEdge );
-   //this.freeEdges.push( edge.wingedEdge );
-   this._insertFreeList(edge.wingedEdge.index, this.freeEdges);
+   // assert !this.free.edges.has( edge.wingedEdge );
+   //this.free.edges.push( edge.wingedEdge );
+   this._insertFreeList(edge.wingedEdge.index, this.free.edges);
    this.affected.edges.add( edge.wingedEdge );
 };
 
@@ -705,8 +702,8 @@ MeshAllocator.prototype.freePolygon = function(polygon) {
    polygon.halfEdge = null;
    polygon.numberOfVertex = 0;
    // assert !freeFaces.has( polygon );
-   //this.freeFaces.push( polygon );
-   this._insertFreeList(polygon.index, this.freeFaces);
+   //this.free.faces.push( polygon );
+   this._insertFreeList(polygon.index, this.free.faces);
    this.affected.faces.add( polygon );
 };
 

@@ -23,7 +23,8 @@ import {EditCommand} from './wings3d_undo';
 
 
 const DraftBench = function(defaultSize = 2048) {  // should only be created by View
-   this.allocMesh = new MeshAllocator(defaultSize);
+   MeshAllocator.call(this, defaultSize); // constructor.
+  
    this.lastPreviewSize = { vertices: 0, edges: 0, faces: 0};
    this.boundingSpheres = [];
    this.hilite = {index: null, indexLength: 0, numberOfTriangles: 0};  // the hilite index triangle list.
@@ -75,6 +76,9 @@ DraftBench.CONST = (function() {
    return constant;
 }());
 
+// draftBench inherited from MeshAllocator, so we canintercept freeXXX and allocXXX call easier. It also makes logical sense.
+DraftBench.prototype = Object.create(MeshAllocator.prototype);
+
 // free webgl buffer.
 DraftBench.prototype.freeBuffer = function() {
    this.preview.shaderData.freeAllAttributes();
@@ -91,7 +95,7 @@ DraftBench.prototype.updatePreview = function() {
    this._resizePreviewEdge();
    this._resizePreviewVertex();
    this._updatePreviewSize();
-   this._updateAffected(this.allocMesh.affected);
+   this._updateAffected(this.affected);
    // compute index
    //this._computePreviewIndex();
 };
@@ -99,12 +103,12 @@ DraftBench.prototype.updatePreview = function() {
 
 DraftBench.prototype._resizeBoundingSphere = function() {
    let oldSize = this.lastPreviewSize.faces
-   let size = this.allocMesh.faces.length - oldSize;
+   let size = this.faces.length - oldSize;
    if (size > 0) {   // we only care about growth for now
       if (oldSize > 0) {
          if (this.preview.centroid.buf.data.length < (this.preview.centroid.buf.len+(size*3))) {
             // needs to resize, and copy
-            const buf = new ArrayBuffer(this.allocMesh.faces.length * 3 * Float32Array.BYTES_PER_ELEMENT * 2);
+            const buf = new ArrayBuffer(this.faces.length * 3 * Float32Array.BYTES_PER_ELEMENT * 2);
             const centroid = {buf: {buffer: buf, data: new Float32Array(buf), len: 0} };
             // 
             centroid.buf.data.set(this.preview.centroid.buf.data);  // copy old data
@@ -115,16 +119,16 @@ DraftBench.prototype._resizeBoundingSphere = function() {
             this.preview.centroid.buf = centroid.buf;
          }
       } else {
-         const buf = new ArrayBuffer(this.allocMesh.faces.length * 3 * Float32Array.BYTES_PER_ELEMENT * 2); // twice the current size
+         const buf = new ArrayBuffer(this.faces.length * 3 * Float32Array.BYTES_PER_ELEMENT * 2); // twice the current size
          this.preview.centroid.buf = {buffer: buf, data: new Float32Array(buf), len: 0};
          // assign a boundingsphere for each polygon.
-         //this.boundingSpheres = new Array(this.allocMesh.faces.length);
+         //this.boundingSpheres = new Array(this.faces.length);
          //this.boundingSpheres.length = 0;
       }
       // create New, should not have deleted sphere to mess up things
       const centroid = this.preview.centroid;   // 
-      for (let i = oldSize; i < this.allocMesh.faces.length; ++i) {
-         const polygon = this.allocMesh.faces[i];
+      for (let i = oldSize; i < this.faces.length; ++i) {
+         const polygon = this.faces[i];
          const sphere = this.boundingSpheres[i];
          let center = sphere.center;
          if (!center) {
@@ -144,11 +148,11 @@ DraftBench.prototype._resizePreview = function() {
    let oldSize = this.lastPreviewSize.vertices;
    let oldCentroidSize = this.lastPreviewSize.faces;
 
-   const size = this.allocMesh.vertices.length - oldSize;
-   const centroidSize = this.allocMesh.faces.length - oldCentroidSize;
+   const size = this.vertices.length - oldSize;
+   const centroidSize = this.faces.length - oldCentroidSize;
    if ((size > 0) || (centroidSize > 0)) {
       const model = this;
-      let length = model.allocMesh.buf.data.length;
+      let length = model.buf.data.length;
       let centroidLength = model.preview.centroid.buf.data.length;
       if (oldSize > 0) {
          if (length > model.preview.barycentric.length) {
@@ -177,10 +181,10 @@ DraftBench.prototype._resizePreview = function() {
       model.preview.centroid.barycentric.fill(1.0);
       model.preview.centroid.selected.fill(0.0, oldCentroidSize);
       // upload the data to webgl
-      length = this.allocMesh.buf.len;
+      length = this.buf.len;
       centroidLength = this.preview.centroid.buf.len;
       model.preview.shaderData.resizeAttribute('position', (length+centroidLength)*4);
-      model.preview.shaderData.uploadAttribute('position', 0, this.allocMesh.buf.data.subarray(0, length));
+      model.preview.shaderData.uploadAttribute('position', 0, this.buf.data.subarray(0, length));
       model.preview.shaderData.uploadAttribute('position', length*4, this.preview.centroid.buf.data.subarray(0, centroidLength));
       model.preview.shaderData.resizeAttribute('barycentric', (length+centroidLength)*4);
       model.preview.shaderData.uploadAttribute('barycentric', 0, this.preview.barycentric.subarray(0, length));
@@ -199,13 +203,13 @@ DraftBench.prototype._resizePreview = function() {
 };
 
 DraftBench.prototype._computePreviewIndex = function() {
-   this.numberOfTriangles = this.allocMesh.faces.reduce( function(acc, element) {
+   this.numberOfTriangles = this.faces.reduce( function(acc, element) {
       return acc + element.numberOfVertex; // -2; for half the vertex
    }, 0);
    const index = new Uint32Array( this.numberOfTriangles*3 );
    let length = 0;
    // recompute all index. (no optimization unless prove to be bottleneck)
-   let barycentric = this.allocMesh.vertices.length;
+   let barycentric = this.vertices.length;
    for (let sphere of this.boundingSpheres) {
       if (sphere.isLive()) {     // skip over deleted sphere.
          const polygon = sphere.polygon;
@@ -243,7 +247,7 @@ DraftBench.prototype._computeFaceHiliteIndex = function(polygon, offset) {
    }
    let index = polygon.index;
    let indicesLength = 0;
-   let barycentric = this.allocMesh.vertices.length + polygon.index;
+   let barycentric = this.vertices.length + polygon.index;
    for (let hEdge of polygon.hEdges()) {
       const vertex = hEdge.origin;
       if (indicesLength > 0) {
@@ -278,21 +282,21 @@ DraftBench.prototype._computeGroupHiliteIndex = function(faceGroup) {
 DraftBench.prototype._resizePreviewEdge = function() {
    let oldSize = this.lastPreviewSize.edges;
 
-   const size = this.allocMesh.edges.length - oldSize;
+   const size = this.edges.length - oldSize;
    if (size > 0) {
       if (oldSize > 0) {
-         let line = new Float32Array(this.allocMesh.edges.length*2*3);
+         let line = new Float32Array(this.edges.length*2*3);
          line.set(this.previewEdge.line);
          this.previewEdge.line = line;
-         let color = new Float32Array(this.allocMesh.edges.length*2);
+         let color = new Float32Array(this.edges.length*2);
          color.set(this.previewEdge.color);
          this.previewEdge.color = color;
       } else { // brand new
-         this.previewEdge.line = new Float32Array(this.allocMesh.edges.length*2*3);
-         this.previewEdge.color = new Float32Array(this.allocMesh.edges.length*2);
+         this.previewEdge.line = new Float32Array(this.edges.length*2*3);
+         this.previewEdge.color = new Float32Array(this.edges.length*2);
       }
-      for (let i = oldSize, j=(oldSize*2*3); i < this.allocMesh.edges.length; i++) {
-         let wingedEdge = this.allocMesh.edges[i];
+      for (let i = oldSize, j=(oldSize*2*3); i < this.edges.length; i++) {
+         let wingedEdge = this.edges[i];
          for (let halfEdge of wingedEdge) {
             if (wingedEdge.isLive()) {
                this.previewEdge.line.set(halfEdge.origin.vertex, j);
@@ -315,7 +319,7 @@ DraftBench.prototype._resizePreviewEdge = function() {
 
 DraftBench.prototype._resizePreviewVertex = function() {
    const oldSize = this.lastPreviewSize.vertices;
-   const length = this.allocMesh.vertices.length;
+   const length = this.vertices.length;
    const size = length - oldSize;
    if (size > 0) {
       const preview = this.previewVertex;
@@ -327,7 +331,7 @@ DraftBench.prototype._resizePreviewVertex = function() {
       preview.color = color;
       // 
       preview.shaderData.resizeAttribute('position', length*4*3);
-      preview.shaderData.uploadAttribute('position', 0, this.allocMesh.buf.data.subarray(0, length*3));
+      preview.shaderData.uploadAttribute('position', 0, this.buf.data.subarray(0, length*3));
       preview.shaderData.resizeAttribute('color', length*4);
       preview.shaderData.uploadAttribute('color', 0, preview.color);
    }
@@ -335,7 +339,7 @@ DraftBench.prototype._resizePreviewVertex = function() {
    const index = new Uint32Array(length);
    let j = 0;
    for (let i = 0; i < length; ++i) {
-      if (this.allocMesh.vertices[i].isLive()) {
+      if (this.vertices[i].isLive()) {
          index[j++] = i;
       }
    }
@@ -346,9 +350,9 @@ DraftBench.prototype._resizePreviewVertex = function() {
 
 
 DraftBench.prototype._updatePreviewSize = function() {
-   this.lastPreviewSize.vertices = this.allocMesh.vertices.length;
-   this.lastPreviewSize.edges = this.allocMesh.edges.length;
-   this.lastPreviewSize.faces = this.allocMesh.faces.length;
+   this.lastPreviewSize.vertices = this.vertices.length;
+   this.lastPreviewSize.edges = this.edges.length;
+   this.lastPreviewSize.faces = this.faces.length;
 };
 
 
@@ -371,7 +375,7 @@ DraftBench.prototype._updateAffected = function(affected) {
 
    }
 
-   this.allocMesh.clearAffected();
+   this.clearAffected();
 };
 
 DraftBench.prototype._updateVertex = function(vertex, affected) {
@@ -402,7 +406,7 @@ DraftBench.prototype._updatePreviewFace = function(polygon) {
       const sphere = this.boundingSpheres[ polygon.index ];
       sphere.setSphere( BoundingSphere.computeSphere(sphere.polygon, sphere.center) ); 
       // update center.
-      const index = this.allocMesh.vertices.length+polygon.index;
+      const index = this.vertices.length+polygon.index;
       this.preview.shaderData.uploadAttribute('position', index*3*4, sphere.center);
    }
 };
@@ -479,7 +483,7 @@ DraftBench.prototype.drawVertex = function(gl) {
    // drawing using vertex array
    try {
       gl.bindShaderData(this.previewVertex.shaderData);
-      //gl.drawArrays(gl.POINTS, 0, this.allocMesh.vertices.length);
+      //gl.drawArrays(gl.POINTS, 0, this.vertices.length);
       gl.drawElements(gl.POINTS, this.previewVertex.indexLength, gl.UNSIGNED_INT, 0);
    } catch (e) {
       console.log(e);
@@ -593,13 +597,13 @@ DraftBench.prototype.updateWEdges = function(wingedEdges) {
 DraftBench.prototype.updateCentroid = function(snapshot) {
    // done, update shader data, should we update each vertex individually?
    const centroids = this.preview.centroid.buf.data.subarray(0, this.preview.centroid.buf.len)
-   this.preview.shaderData.uploadAttribute('position', this.allocMesh.buf.len*4, centroids);
+   this.preview.shaderData.uploadAttribute('position', this.buf.len*4, centroids);
 };
 
 
 DraftBench.prototype.updatePosition = function() {
    // todo: we really should update as little as possible.
-   const vertices = this.allocMesh.buf.data.subarray(0, this.allocMesh.buf.len);
+   const vertices = this.buf.data.subarray(0, this.buf.len);
    this.preview.shaderData.uploadAttribute('position', 0, vertices);
    this.previewVertex.shaderData.uploadAttribute('position', 0, vertices);
 };
@@ -622,7 +626,7 @@ DraftBench.prototype.setFaceSelectionOff = function(polygon, selectedSet) {
    });
    selected = this.preview.centroid.selected;
    selected[polygon.index]= 0.0;
-   var byteOffset = (this.allocMesh.vertices.length+polygon.index)*4;
+   var byteOffset = (this.vertices.length+polygon.index)*4;
    this.preview.shaderData.uploadAttribute("selected", byteOffset, DraftBench.CONST.SELECTOFF);
 };
 DraftBench.prototype.setFaceSelectionOn = function(polygon) {
@@ -635,14 +639,14 @@ DraftBench.prototype.setFaceSelectionOn = function(polygon) {
    });
    selected = this.preview.centroid.selected;
    selected[polygon.index]= 1.0;
-   var byteOffset = (this.allocMesh.vertices.length+polygon.index)*4;
+   var byteOffset = (this.vertices.length+polygon.index)*4;
    this.preview.shaderData.uploadAttribute("selected", byteOffset, DraftBench.CONST.SELECTON);
 };
 
 DraftBench.prototype.resetSelectFace = function() {
    this.preview.selected.fill(0.0);          // reset all polygon to non-selected 
    this.preview.centroid.selected.fill(0.0);
-   var length = this.allocMesh.buf.len/3;
+   var length = this.buf.len/3;
    this.preview.shaderData.uploadAttribute("selected", 0, this.preview.selected.subarray(0, length));
    var centroidLength = this.preview.centroid.buf.len/3;
    this.preview.shaderData.uploadAttribute('selected', length*4, this.preview.centroid.selected.subarray(0, centroidLength));

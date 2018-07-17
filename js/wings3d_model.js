@@ -24,36 +24,36 @@ class MeshAllocatorProxy { // we could use Proxy, but ....
       this.preview = preview;
    }
 
-   allocVertex(...args) { return this.preview.bench.allocMesh.allocVertex(...args); }
+   allocVertex(...args) { return this.preview.bench.allocVertex(...args); }
 
-   allocEdge(...args) { return this.preview.bench.allocMesh.allocEdge(...args); }
+   allocEdge(...args) { return this.preview.bench.allocEdge(...args); }
 
    allocPolygon(...args) {
-      const face = this.preview.bench.allocMesh.allocPolygon(...args);
-      if (this.preview.bench.boundingSpheres.length < this.preview.bench.allocMesh.faces.length) {   // now create sphere and insert to preview's bvh
+      const face = this.preview.bench.allocPolygon(...args);
+      if (this.preview.bench.boundingSpheres.length < this.preview.bench.faces.length) {   // now create sphere and insert to preview's bvh
          this.preview.bench.boundingSpheres.push( BoundingSphere.allocate(face) );
       }
       this.preview.insertFace(face);
       return face;
    }
 
-   freeVertex(vertex) { this.preview.bench.allocMesh.freeVertex(vertex); }
+   freeVertex(vertex) { this.preview.bench.freeVertex(vertex); }
 
-   freeHEdge(hEdge) { this.preview.bench.allocMesh.freeHEdge(hEdge); }
+   freeHEdge(hEdge) { this.preview.bench.freeHEdge(hEdge); }
 
    freePolygon(polygon) {
       this.preview.removeFace(polygon);
-      this.preview.bench.allocMesh.freePolygon(polygon);
+      this.preview.bench.freePolygon(polygon);
    }
 
-   getVertices(index) { return this.preview.bench.allocMesh.getVertices(index); }
+   getVertices(index) { return this.preview.bench.getVertices(index); }
 
-   clearAffected() { this.preview.bench.allocMesh.clearAffected(); }
+   clearAffected() { this.preview.bench.clearAffected(); }
 
-   addAffectedEdgeAndFace(...args) { this.preview.bench.allocMesh.addAffecedEdgeAndFace(...args); }
-   addAffectedWEdge(wEdge) {this.preview.bench.allocMesh.addAffectedWEdge(wEdge);}
-   addAffectedFace(polygon) {this.preview.bench.allocMesh.addAffectedFace(polygon);}
-   addAffectedVertex(vertex) {this.preview.bench.allocMesh.addAffectedVertex(vertex);}
+   addAffectedEdgeAndFace(...args) { this.preview.bench.addAffecedEdgeAndFace(...args); }
+   addAffectedWEdge(wEdge) {this.preview.bench.addAffectedWEdge(wEdge);}
+   addAffectedFace(polygon) {this.preview.bench.addAffectedFace(polygon);}
+   addAffectedVertex(vertex) {this.preview.bench.addAffectedVertex(vertex);}
 }
 
 const PreviewCage = function(bench) {
@@ -72,6 +72,10 @@ const PreviewCage = function(bench) {
 
 // act as destructor
 PreviewCage.prototype.freeBuffer = function() {
+   if (this.bvh.root) {
+      this.bvh.root.free();
+      this.bvh.root = null;
+   }
    this.geometry.free();
 };
 
@@ -107,6 +111,9 @@ PreviewCage.prototype.initBVH = function() {
                   halfSize: vec3.fromValues(Math.max(max[0]-center[0], center[0]-min[0]), 
                                             Math.max(max[1]-center[1], center[1]-min[1]), 
                                             Math.max(max[2]-center[2], center[2]-min[2]) )};
+   if (this.bvh.root) {
+      this.bvh.root.free();
+   }
    this.bvh.root = new LooseOctree(this, bound, 0);
    // now insert every spheres onto the root
    for (let sphere of spheres) {
@@ -124,7 +131,11 @@ PreviewCage.prototype.rebuildBVH = function() {
 
 PreviewCage.prototype.insertFace = function(face) {
    const sphere = this.bench.boundingSpheres[face.index];
-   this.bvh.queue.add(sphere);
+   if (!sphere.octree) {
+      this.bvh.queue.add(sphere);
+   } else {
+      console.log("octree insert duplicated");
+   }
    //this.bvh.root.insert(sphere);
 }
 
