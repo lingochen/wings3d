@@ -2001,20 +2001,15 @@ PreviewCage.prototype.initBVH = function() {
    if (this.bvh.root) {
       this.bvh.root.free();
    }
+   this.bvh.queue.clear();
    this.bvh.root = new __WEBPACK_IMPORTED_MODULE_1__wings3d_boundingvolume__["LooseOctree"](this, bound, 0);
    // now insert every spheres onto the root
    for (let sphere of spheres) {
       this.bvh.root.getBound(bound);
       this.bvh.root.insert(sphere, bound);
    }
+   //this.bvh.root.check(new Set);
 }
-
-PreviewCage.prototype.rebuildBVH = function() {
-   // first clear out queue.
-   this.bvh.queue.clear();
-   // rebuild, probably needs to collect metrics and build.
-   this.initBVH();
-};
 
 PreviewCage.prototype.insertFace = function(face) {
    const sphere = this.bench.boundingSpheres[face.index];
@@ -2044,7 +2039,8 @@ PreviewCage.prototype.updateBVH = function() {
    // check if any sphere is outside of original bound.
    for (let sphere of this.bvh.queue) {
       if (!this.bvh.root.isInside(sphere)) {
-         this.rebuildBVH();
+         this.bvh.queue.clear();
+         this.initBVH();
          return;
       }
    }
@@ -2055,6 +2051,8 @@ PreviewCage.prototype.updateBVH = function() {
       this.bvh.root.getBound(bound);
       this.bvh.root.insert(sphere, bound);
    }
+   //this.bvh.root.check(new Set);
+   this.bvh.queue.clear();
 }
 
 //-- end of bvh
@@ -12717,6 +12715,33 @@ class LooseOctree {  // this is really node
          }
       }
       return index;
+   }
+
+   check(duplicateSet) {
+      if (this.node) {
+         for (let sphere of this.node) {
+            if (duplicateSet.has(sphere)) {
+               console.log("octree problems");
+            } else {
+               duplicateSet.add(sphere);
+            }
+         }
+      } else {
+         for (let i = 0; i < 8; ++i) {
+            const octreeNode = this.leaf[i];
+            if (octreeNode) {
+               octreeNode.check(duplicateSet);
+            }
+         }
+         for (let i = 8; i < this.leaf.length; ++i) {
+            const sphere = this.leaf[i];
+            if (duplicateSet.has(sphere)) {
+               console.log("octree problems");
+            } else {
+               duplicateSet.add(sphere);
+            }
+         }
+      }
    }
 
    free() {
