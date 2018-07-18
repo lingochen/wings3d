@@ -72,6 +72,7 @@ class ImportExporter {
       this.objs = [];
       this.obj = null;
       this.objView = null;
+      this.realVertices = []; // convert index
       this.polygonCount = 0;
       this.vertexCount = 0;
       this.non_manifold = [];
