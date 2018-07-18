@@ -14301,7 +14301,8 @@ class WavefrontObjImportExporter extends __WEBPACK_IMPORTED_MODULE_0__wings3d_im
 
    v(vertex) {
       // should we do error check?
-      this.obj.addVertex(vertex);
+      const vert = this.obj.addVertex(vertex);
+      this.realVertices.push(vert.index);
       this.vertexCount++;
    }
 
@@ -14311,7 +14312,7 @@ class WavefrontObjImportExporter extends __WEBPACK_IMPORTED_MODULE_0__wings3d_im
          let split = i.split('/');
          let idx = split[0] - 1;          // convert 1-based index to 0-based index.
          if ( (idx >= 0) && (idx < this.obj.vertices.size)) {
-            faceIndex.push( idx );
+            faceIndex.push( this.realVertices[idx] );
          } else {
             console.log("face index out of bound: " + idx);
          }
@@ -14415,6 +14416,7 @@ class ImportExporter {
       this.objs = [];
       this.obj = null;
       this.objView = null;
+      this.realVertices = []; // convert index
       this.polygonCount = 0;
       this.vertexCount = 0;
       this.non_manifold = [];
