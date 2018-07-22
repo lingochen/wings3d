@@ -81,14 +81,16 @@ class MoveableCommand extends EditCommand {
 }
 
 class EditSelectHandler extends MoveableCommand {
-   constructor(isVertex, isEdge, isFace) {
+   constructor(isVertex, isEdge, isFace, planeNormal) {
       super();
       this.selectable = {isVertex: isVertex, isEdge: isEdge, isFace: isFace};
+      this.planeNormal = planeNormal;
    }
 
    isVertexSelectable() { return this.selectable.isVertex; }
    isEdgeSelectable() { return this.selectable.isEdge; }
    isFaceSelectable() { return this.selectable.isFace; }
+   getPlaneNormal() { return this.planeNormal; }
 
    // hilite(hilite, currentCage) - to be implemented by subclass
    // select(hilite) - to be implemented by subclass

@@ -60,7 +60,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 23);
+/******/ 	return __webpack_require__(__webpack_require__.s = 22);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -542,12 +542,12 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__plugins_wavefront_obj__ = __webpack_require__(20);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_undo__ = __webpack_require__(3);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_facemads__ = __webpack_require__(9);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d_edgemads__ = __webpack_require__(11);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__wings3d_vertexmads__ = __webpack_require__(13);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__wings3d_bodymads__ = __webpack_require__(12);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_facemads__ = __webpack_require__(8);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d_edgemads__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__wings3d_vertexmads__ = __webpack_require__(12);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__wings3d_bodymads__ = __webpack_require__(11);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__wings3d_model__ = __webpack_require__(4);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12__wings3d_draftbench__ = __webpack_require__(8);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12__wings3d_draftbench__ = __webpack_require__(13);
 /*
 //     This module implements most of the commands in the View menu. 
 //
@@ -790,18 +790,27 @@ function makeCombineIntoWorld(cageSelection) {
 //
 // mouse handling hilite
 //
-const hilite = {cage: null, edge: null, vertex: null, face: null};
+const hilite = {cage: null, edge: null, vertex: null, face: null, plane: null};
 let currentCage;
 const handler = {camera: null, mousemove: null, mouseSelect: null};
 
 const isVertexSelectable = () => handler.mouseSelect ? handler.mouseSelect.isVertexSelectable() : (mode.current ? mode.current.isVertexSelectable() : true);
 const isEdgeSelectable = () => handler.mouseSelect ? handler.mouseSelect.isEdgeSelectable() : (mode.current ? mode.current.isEdgeSelectable() : true);
 const isFaceSelectable = () => handler.mouseSelect ? handler.mouseSelect.isFaceSelectable() : (mode.current ? mode.current.isFaceSelectable() : true);
+const isPlaneShown = ()=> handler.mouseSelect ? handler.mouseSelect.getPlaneNormal() : false;
 
 function setCurrent(edge, intersect, center) {
    // find out origin, dest. which is closer.
    let hiliteVertex = null, hiliteEdge = null, hiliteFace = null, hiliteCage = null;
    if (edge !== null) {
+      if (isPlaneShown()) {
+         const sphere = draftBench.boundingSpheres[edge.face.index];
+         const halfSize = sphere.getBVHRoot().getHalfSize();
+         hilite.plane = {center: intersect, normal: handler.mouseSelect.getPlaneNormal(), halfSize: halfSize};
+         return;
+      }
+      hilite.plane = null;
+
       const a = vec3.create(), b = vec3.create(), c = vec3.create();
       const destination = edge.destination().vertex; // find out if we are within the distance threshold
       const origin = edge.origin.vertex;
@@ -1226,6 +1235,9 @@ function drawWorld(gl) {
          mode.current.draw(gl, draftBench);
       //}
       // hack -- draw other hilite selection if any
+      if (hilite.plane) {
+         draftBench.drawPlane(gl, hilite.plane);
+      }
       if (hilite.vertex && (mode.current !== mode.vertex)) {
          mode.vertex.draw(gl, draftBench);
       }
@@ -1812,14 +1824,16 @@ class MoveableCommand extends EditCommand {
 }
 
 class EditSelectHandler extends MoveableCommand {
-   constructor(isVertex, isEdge, isFace) {
+   constructor(isVertex, isEdge, isFace, planeNormal) {
       super();
       this.selectable = {isVertex: isVertex, isEdge: isEdge, isFace: isFace};
+      this.planeNormal = planeNormal;
    }
 
    isVertexSelectable() { return this.selectable.isVertex; }
    isEdgeSelectable() { return this.selectable.isEdge; }
    isFaceSelectable() { return this.selectable.isFace; }
+   getPlaneNormal() { return this.planeNormal; }
 
    // hilite(hilite, currentCage) - to be implemented by subclass
    // select(hilite) - to be implemented by subclass
@@ -1876,15 +1890,12 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "PreviewCage", function() { return PreviewCage; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "CreatePreviewCageCommand", function() { return CreatePreviewCageCommand; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__ = __webpack_require__(5);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_boundingvolume__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_boundingvolume__ = __webpack_require__(16);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_wingededge__ = __webpack_require__(7);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_view__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_undo__ = __webpack_require__(3);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_draftbench__ = __webpack_require__(8);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_util__ = __webpack_require__(16);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8_vm__ = __webpack_require__(22);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8_vm___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_8_vm__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_util__ = __webpack_require__(15);
 /*
 *  hold onto a WingedEdgeTopology. adds index, texture, etc....
 *  bounding box, picking.
@@ -1896,8 +1907,6 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 */
 
  
-
-
 
 
 
@@ -2063,7 +2072,7 @@ PreviewCage.prototype.updateBVH = function() {
 PreviewCage.prototype.intersectRay = function * (ray) {
    const extent = {min: vec3.create(), max:vec3.create()};
    this.bvh.root.getLooseExtent(extent);
-   if (__WEBPACK_IMPORTED_MODULE_7__wings3d_util__["intersectRayAABB"](ray, extent)) {
+   if (__WEBPACK_IMPORTED_MODULE_6__wings3d_util__["intersectRayAABB"](ray, extent)) {
       yield* this.bvh.root.intersectRay(ray, extent);
    }
 };
@@ -2082,7 +2091,7 @@ PreviewCage.prototype.rayPick = function(ray) {
    for (let sphere of this.intersectRay(ray)) {
       sphere.polygon.eachEdge( function(edge) {
          // now check the triangle is ok?
-         var t = __WEBPACK_IMPORTED_MODULE_7__wings3d_util__["intersectTriangle"](ray, [sphere.center, edge.origin.vertex, edge.destination().vertex]);
+         var t = __WEBPACK_IMPORTED_MODULE_6__wings3d_util__["intersectTriangle"](ray, [sphere.center, edge.origin.vertex, edge.destination().vertex]);
          if ((t != 0.0) && (t < hitT)) {
             // intersection, check for smallest t, closest intersection
             hitT = t;
@@ -4627,7 +4636,7 @@ PreviewCage.prototype._putOn = function(target) {
    vec3.negate(normal, normal);
 
    const rotAxis = mat4.create();
-   __WEBPACK_IMPORTED_MODULE_7__wings3d_util__["rotationFromToVec3"](rotAxis, normal, target.normal);
+   __WEBPACK_IMPORTED_MODULE_6__wings3d_util__["rotationFromToVec3"](rotAxis, normal, target.normal);
    
    const transform = mat4.create();
    mat4.fromTranslation(transform, target.center);
@@ -4739,7 +4748,7 @@ PreviewCage.prototype.mirrorFace = function() {
          protectVertex.add(hEdge.origin);
          protectWEdge.add(hEdge.wingedEdge);
       }
-      __WEBPACK_IMPORTED_MODULE_7__wings3d_util__["reflectionMat4"](mirrorMat, targetFace.normal, targetFace.halfEdge.origin.vertex);
+      __WEBPACK_IMPORTED_MODULE_6__wings3d_util__["reflectionMat4"](mirrorMat, targetFace.normal, targetFace.halfEdge.origin.vertex);
    };
    const addVertex = (vertex) => {
       let pt = uniqueVertex.get(vertex);
@@ -4908,7 +4917,7 @@ PreviewCage.prototype.slideEdge = function() {
          const prev = hEdge.prev();
          const next = hEdge.pair.next;
          // compute which quadrant, pt(normal) is normalized.
-         __WEBPACK_IMPORTED_MODULE_7__wings3d_util__["computeEdgeNormal"](pt, next, prev.pair);
+         __WEBPACK_IMPORTED_MODULE_6__wings3d_util__["computeEdgeNormal"](pt, next, prev.pair);
          let max;
          let index;
          for (let i = 0; i < 6; ++i) {
@@ -4991,7 +5000,7 @@ PreviewCage.prototype.flattenEdge = function(axis) {
       }
       vec3.scale(center, center, 1/vertices.size);
       // now project all vertex to (axis, center) plane.
-      __WEBPACK_IMPORTED_MODULE_7__wings3d_util__["projectVec3"](vertices, axis, center);
+      __WEBPACK_IMPORTED_MODULE_6__wings3d_util__["projectVec3"](vertices, axis, center);
    }
 
 
@@ -5031,7 +5040,7 @@ PreviewCage.prototype.flattenFace = function(planeNormal) {
       if (!planeNormal) {
          vec3.normalize(normal, normal);
       }
-      __WEBPACK_IMPORTED_MODULE_7__wings3d_util__["projectVec3"](vertices, normal, center);
+      __WEBPACK_IMPORTED_MODULE_6__wings3d_util__["projectVec3"](vertices, normal, center);
    }
 
    this._updatePreviewAll();
@@ -5050,7 +5059,7 @@ PreviewCage.prototype.flattenVertex = function(planeNormal) {
          this.geometry.addAffectedEdgeAndFace(vertex);
       }
       vec3.scale(center, center, 1/selectedVertices.length);
-      __WEBPACK_IMPORTED_MODULE_7__wings3d_util__["projectVec3"](selectedVertices, planeNormal, center);
+      __WEBPACK_IMPORTED_MODULE_6__wings3d_util__["projectVec3"](selectedVertices, planeNormal, center);
 
       this._updatePreviewAll();
 
@@ -6012,7 +6021,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "MeshAllocator", function() { return MeshAllocator; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "WingedTopology", function() { return WingedTopology; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_model__ = __webpack_require__(4);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_vm__ = __webpack_require__(22);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_vm__ = __webpack_require__(29);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_vm___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_vm__);
 
 
@@ -8623,785 +8632,11 @@ WingedTopology.prototype.undoHole = function(hole) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "DraftBench", function() { return DraftBench; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "CheckPoint", function() { return CheckPoint; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__ = __webpack_require__(5);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_boundingvolume__ = __webpack_require__(15);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_wingededge__ = __webpack_require__(7);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_view__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_undo__ = __webpack_require__(3);
-//
-// strategy:
-//    use GPU as much as possible. multiple passes for drawing. we have more than enough GPU power.
-//
-//    update as little as possible on cpu side. 
-//
-// todo:
-//    first pass: draw line (select, unselected) first (using triangles). 
-//
-//    second pass: draw polygon (selected, unseleced) using slightly optimized index.
-//
-//    third pass?: draw vertex.
-//
-//    last pass: draw hilite (line, polygon, or vertex).
-//
-
- 
-
-
-
-
-
-
-
-const DraftBench = function(defaultSize = 2048) {  // should only be created by View
-   __WEBPACK_IMPORTED_MODULE_2__wings3d_wingededge__["MeshAllocator"].call(this, defaultSize); // constructor.
-  
-   this.lastPreviewSize = { vertices: 0, edges: 0, faces: 0};
-   this.boundingSpheres = [];
-   this.hilite = {index: null, indexLength: 0, numberOfTriangles: 0};  // the hilite index triangle list.
-
-   this.preview = {centroid: {},};
-   this.preview.shaderData = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].createShaderData();
-   this.preview.shaderData.setUniform4fv("faceColor", [0.5, 0.5, 0.5, 1.0]);
-   this.preview.shaderData.setUniform4fv("selectedColor", [1.0, 0.0, 0.0, 1.0]);
-   var layoutVec = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["ShaderData"].attribLayout();
-   var layoutFloat = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["ShaderData"].attribLayout(1);
-   this.preview.shaderData.createAttribute('position', layoutVec, __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].STATIC_DRAW);
-   this.preview.shaderData.createAttribute('barycentric', layoutVec, __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].STATIC_DRAW);
-   this.preview.shaderData.createAttribute('selected', layoutFloat, __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].DYNAMIC_DRAW);
-   this._resizeBoundingSphere(0);
-   this._resizePreview(0, 0);
-
-   // previewEdge
-   this.previewEdge = {};
-   this.previewEdge.shaderData = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].createShaderData();
-   this.previewEdge.shaderData.setUniform4fv("selectedColor", [1.0, 0.0, 0.0, 1.0]);
-   this.previewEdge.shaderData.setUniform4fv('hiliteColor', [0.0, 1.0, 0.0, 1.0]);
-   this.previewEdge.shaderData.createAttribute('position', layoutVec, __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].STATIC_DRAW);
-   this.previewEdge.shaderData.createAttribute('color', layoutFloat, __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].DYNAMIC_DRAW);
-   this._resizePreviewEdge(0);
-
-   // previewVertex
-   this.previewVertex = {};
-   this.previewVertex.shaderData = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].createShaderData();
-   this.previewVertex.shaderData.setUniform4fv("selectedColor", [1.0, 0.0, 0.0, 1.0]);
-   this.previewVertex.shaderData.setUniform4fv('hiliteColor', [0.0, 1.0, 0.0, 1.0]);
-   this.previewVertex.shaderData.createAttribute('position', layoutVec, __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].STATIC_DRAW);
-   this.previewVertex.shaderData.createAttribute('color', layoutFloat, __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].DYNAMIC_DRAW);
-   this._resizePreviewVertex(0);
-   // body state.
-   this.previewBody = {hilite: false};
-};
-
-DraftBench.CONST = (function() {
-   const constant = {};
-
-   constant.SELECTON  = new Float32Array(1);
-   constant.SELECTON[0] = 1.0;
-   constant.SELECTOFF = new Float32Array(1);
-   constant.SELECTOFF[0] = 0.0;
-   constant.BARYCENTRIC = new Float32Array(3);
-   constant.BARYCENTRIC[0] = 1.0;
-   constant.BARYCENTRIC[1] = 0.0;
-   constant.BARYCENTRIC[2] = 1.0;
-   return constant;
-}());
-
-// draftBench inherited from MeshAllocator, so we canintercept freeXXX and allocXXX call easier. It also makes logical sense.
-DraftBench.prototype = Object.create(__WEBPACK_IMPORTED_MODULE_2__wings3d_wingededge__["MeshAllocator"].prototype);
-
-// free webgl buffer.
-DraftBench.prototype.freeBuffer = function() {
-   this.preview.shaderData.freeAllAttributes();
-   this.preview.shaderData =  null;
-   this.previewEdge.shaderData.freeAllAttributes();
-   this.previewEdge.shaderData = null;
-   this.previewVertex.shaderData.freeAllAttributes();
-   this.previewVertex.shaderData = null;
-};
-
-DraftBench.prototype.updatePreview = function() {
-   this._resizeBoundingSphere();
-   this._resizePreview();
-   this._resizePreviewEdge();
-   this._resizePreviewVertex();
-   this._updatePreviewSize();
-   this._updateAffected(this.affected);
-   // compute index
-   //this._computePreviewIndex();
-};
-
-
-DraftBench.prototype._resizeBoundingSphere = function() {
-   let oldSize = this.lastPreviewSize.faces
-   let size = this.faces.length - oldSize;
-   if (size > 0) {   // we only care about growth for now
-      if (oldSize > 0) {
-         if (this.preview.centroid.buf.data.length < (this.preview.centroid.buf.len+(size*3))) {
-            // needs to resize, and copy
-            const buf = new ArrayBuffer(this.faces.length * 3 * Float32Array.BYTES_PER_ELEMENT * 2);
-            const centroid = {buf: {buffer: buf, data: new Float32Array(buf), len: 0} };
-            // 
-            centroid.buf.data.set(this.preview.centroid.buf.data);  // copy old data
-            for (let sphere of this.boundingSpheres) {
-               sphere.center = new Float32Array(centroid.buf.buffer, Float32Array.BYTES_PER_ELEMENT*centroid.buf.len, 3); 
-               centroid.buf.len += 3;             
-            }
-            this.preview.centroid.buf = centroid.buf;
-         }
-      } else {
-         const buf = new ArrayBuffer(this.faces.length * 3 * Float32Array.BYTES_PER_ELEMENT * 2); // twice the current size
-         this.preview.centroid.buf = {buffer: buf, data: new Float32Array(buf), len: 0};
-         // assign a boundingsphere for each polygon.
-         //this.boundingSpheres = new Array(this.faces.length);
-         //this.boundingSpheres.length = 0;
-      }
-      // create New, should not have deleted sphere to mess up things
-      const centroid = this.preview.centroid;   // 
-      for (let i = oldSize; i < this.faces.length; ++i) {
-         const polygon = this.faces[i];
-         const sphere = this.boundingSpheres[i];
-         let center = sphere.center;
-         if (!center) {
-            center = new Float32Array(centroid.buf.buffer, Float32Array.BYTES_PER_ELEMENT*centroid.buf.len, 3);
-            centroid.buf.len += 3;
-         }
-         //polygon.index = i; // recalibrate index for free.
-         //this.boundingSpheres.push( BoundingSphere.create(polygon, center) );
-         sphere.setSphere( __WEBPACK_IMPORTED_MODULE_1__wings3d_boundingvolume__["BoundingSphere"].computeSphere(polygon, center) );
-
-      }
-      // vertices is geometry data + centroid data.
-   }
-};
-
-DraftBench.prototype._resizePreview = function() {
-   let oldSize = this.lastPreviewSize.vertices;
-   let oldCentroidSize = this.lastPreviewSize.faces;
-
-   const size = this.vertices.length - oldSize;
-   const centroidSize = this.faces.length - oldCentroidSize;
-   if ((size > 0) || (centroidSize > 0)) {
-      const model = this;
-      let length = model.buf.data.length;
-      let centroidLength = model.preview.centroid.buf.data.length;
-      if (oldSize > 0) {
-         if (length > model.preview.barycentric.length) {
-            // create new length
-            model.preview.barycentric = new Float32Array(length);
-            let selected = new Float32Array(length/3);
-            selected.set(model.preview.selected);
-            model.preview.selected = selected;
-         }
-         if (centroidLength > model.preview.centroid.barycentric.length) {
-            model.preview.centroid.barycentric = new Float32Array(centroidLength);
-            let selected = new Float32Array(centroidLength/3);
-            selected.set(model.preview.centroid.selected);
-            model.preview.centroid.selected = selected;
-         }
-      } else { // brand new
-         // created array
-         model.preview.barycentric = new Float32Array(length);
-         model.preview.selected = new Float32Array(length/3);
-      
-         model.preview.centroid.barycentric = new Float32Array(centroidLength);
-         model.preview.centroid.selected = new Float32Array(centroidLength/3);
-      }
-      model.preview.barycentric.set(DraftBench.CONST.BARYCENTRIC);
-      model.preview.selected.fill(0.0, oldSize);
-      model.preview.centroid.barycentric.fill(1.0);
-      model.preview.centroid.selected.fill(0.0, oldCentroidSize);
-      // upload the data to webgl
-      length = this.buf.len;
-      centroidLength = this.preview.centroid.buf.len;
-      model.preview.shaderData.resizeAttribute('position', (length+centroidLength)*4);
-      model.preview.shaderData.uploadAttribute('position', 0, this.buf.data.subarray(0, length));
-      model.preview.shaderData.uploadAttribute('position', length*4, this.preview.centroid.buf.data.subarray(0, centroidLength));
-      model.preview.shaderData.resizeAttribute('barycentric', (length+centroidLength)*4);
-      model.preview.shaderData.uploadAttribute('barycentric', 0, this.preview.barycentric.subarray(0, length));
-      model.preview.shaderData.uploadAttribute('barycentric', length*4, this.preview.centroid.barycentric.subarray(0, centroidLength));
-      length /= 3;
-      centroidLength /= 3;
-      model.preview.shaderData.resizeAttribute('selected', (length+centroidLength) * 4);
-      model.preview.shaderData.uploadAttribute('selected', 0, this.preview.selected.subarray(0, length));
-      model.preview.shaderData.uploadAttribute('selected', length*4, this.preview.centroid.selected.subarray(0, centroidLength));
-      // invalidate hilite
-      model.hilite.indexLength = 0;
-   }
-      
-   // compute index.
-   this._computePreviewIndex();
-};
-
-DraftBench.prototype._computePreviewIndex = function() {
-   this.numberOfTriangles = this.faces.reduce( function(acc, element) {
-      return acc + element.numberOfVertex; // -2; for half the vertex
-   }, 0);
-   const index = new Uint32Array( this.numberOfTriangles*3 );
-   let length = 0;
-   // recompute all index. (no optimization unless prove to be bottleneck)
-   let barycentric = this.vertices.length;
-   for (let sphere of this.boundingSpheres) {
-      if (sphere.isLive()) {     // skip over deleted sphere.
-         const polygon = sphere.polygon;
-         //sphere.indexStart = model.preview.index.length;
-         let indicesLength = 0;
-         polygon.eachEdge( function(edge) {
-            const vertex = edge.origin;
-            if (indicesLength > 0) {
-               index[length+indicesLength++] = vertex.index;
-               index[length+indicesLength++] = barycentric; 
-            }
-            index[length+indicesLength++] = vertex.index;         
-         });
-         // last triangle using the first vertices.
-         index[length+indicesLength++] = index[length];
-         index[length+indicesLength++] = barycentric;
-         length += indicesLength;
-         //sphere.indexEnd = model.preview.index.length;
-      }
-      barycentric++;
-   }
-   // save it to the buffer 
-   this.preview.shaderData.setIndex(index);
-   this.preview.index = index;
-   this.preview.indexLength = length;
-};
-
-DraftBench.prototype._computeFaceHiliteIndex = function(polygon, offset) {
-   if (this.hilite.numberOfTriangles < polygon.numberOfVertex) {
-      this.hilite.numberOfTriangles = polygon.numberOfVertex;
-      this.hilite.index = new Uint32Array(this.hilite.numberOfTriangles*3);
-   }
-   if (offset === undefined) {
-      offset = 0;
-   }
-   let index = polygon.index;
-   let indicesLength = 0;
-   let barycentric = this.vertices.length + polygon.index;
-   for (let hEdge of polygon.hEdges()) {
-      const vertex = hEdge.origin;
-      if (indicesLength > 0) {
-         this.hilite.index[offset+indicesLength++] = vertex.index;
-         this.hilite.index[offset+indicesLength++] = barycentric;
-      }
-      this.hilite.index[offset+indicesLength++] = vertex.index;
-   }
-   // last triangle using the first vertices
-   this.hilite.index[offset+indicesLength++] = this.hilite.index[offset];
-   this.hilite.index[offset+indicesLength++] = barycentric;
-
-   this.hilite.indexLength = offset+indicesLength;
-};
-
-DraftBench.prototype._computeGroupHiliteIndex = function(faceGroup) {
-   let numberOfTriangles = 0;
-   for (let polygon of faceGroup) {
-      numberOfTriangles += polygon.numberOfVertex;
-   }
-   if (this.hilite.numberOfTriangles < numberOfTriangles) {
-      this.hilite.numberOfTriangles = numberOfTriangles;
-      this.hilite.index = new Uint32Array(this.hilite.numberOfTriangles*3);
-   }
-   this.hilite.indexLength = 0;
-   for (let polygon of faceGroup) {
-      this._computeFaceHiliteIndex(polygon, this.hilite.indexLength);
-   }
-};
-
-
-DraftBench.prototype._resizePreviewEdge = function() {
-   let oldSize = this.lastPreviewSize.edges;
-
-   const size = this.edges.length - oldSize;
-   if (size > 0) {
-      if (oldSize > 0) {
-         let line = new Float32Array(this.edges.length*2*3);
-         line.set(this.previewEdge.line);
-         this.previewEdge.line = line;
-         let color = new Float32Array(this.edges.length*2);
-         color.set(this.previewEdge.color);
-         this.previewEdge.color = color;
-      } else { // brand new
-         this.previewEdge.line = new Float32Array(this.edges.length*2*3);
-         this.previewEdge.color = new Float32Array(this.edges.length*2);
-      }
-      for (let i = oldSize, j=(oldSize*2*3); i < this.edges.length; i++) {
-         let wingedEdge = this.edges[i];
-         for (let halfEdge of wingedEdge) {
-            if (wingedEdge.isLive()) {
-               this.previewEdge.line.set(halfEdge.origin.vertex, j);
-            } else {
-               this.previewEdge.line.fill(0.0, j, j+3);
-            }
-            j += 3;
-         }
-      }
-      //
-      this.previewEdge.color.fill(0.0, oldSize*2);
-      // update GPU
-      this.previewEdge.shaderData.resizeAttribute('position', this.previewEdge.line.length*4);
-      this.previewEdge.shaderData.uploadAttribute('position', 0, this.previewEdge.line);
-      this.previewEdge.shaderData.resizeAttribute('color', this.previewEdge.color.length*4);
-      this.previewEdge.shaderData.uploadAttribute('color', 0, this.previewEdge.color);
-   }
-};
-
-
-DraftBench.prototype._resizePreviewVertex = function() {
-   const oldSize = this.lastPreviewSize.vertices;
-   const length = this.vertices.length;
-   const size = length - oldSize;
-   if (size > 0) {
-      const preview = this.previewVertex;
-      const color = new Float32Array(length);
-      if (oldSize > 0) {
-         color.set(preview.color);
-      }
-      color.fill(0.0, oldSize);
-      preview.color = color;
-      // 
-      preview.shaderData.resizeAttribute('position', length*4*3);
-      preview.shaderData.uploadAttribute('position', 0, this.buf.data.subarray(0, length*3));
-      preview.shaderData.resizeAttribute('color', length*4);
-      preview.shaderData.uploadAttribute('color', 0, preview.color);
-   }
-   // rebuild index.
-   const index = new Uint32Array(length);
-   let j = 0;
-   for (let i = 0; i < length; ++i) {
-      if (this.vertices[i].isLive()) {
-         index[j++] = i;
-      }
-   }
-   // 
-   this.previewVertex.shaderData.setIndex(index);
-   this.previewVertex.indexLength = j;
-};
-
-
-DraftBench.prototype._updatePreviewSize = function() {
-   this.lastPreviewSize.vertices = this.vertices.length;
-   this.lastPreviewSize.edges = this.edges.length;
-   this.lastPreviewSize.faces = this.faces.length;
-};
-
-
-DraftBench.prototype._updateAffected = function(affected) {
-   if (affected.vertices.size > 0) {
-      for (let vertex of affected.vertices) {
-         this._updateVertex(vertex, affected);
-      }
-   }
-   if (affected.edges.size > 0) {
-      for (let edge of affected.edges) {
-         this._updatePreviewEdge(edge.left, true);
-      }
-   }
-   if (affected.faces.size > 0) {
-      for (let face of affected.faces) {
-         this._updatePreviewFace(face);
-      }
-      // update index
-
-   }
-
-   this.clearAffected();
-};
-
-DraftBench.prototype._updateVertex = function(vertex, affected) {
-   if (vertex.isLive()) {
-      // first the simple case, update the vertexPreview,
-      const index = vertex.index;
-      this.previewVertex.shaderData.uploadAttribute('position', vertex.vertex.byteOffset, vertex.vertex);
-
-      // then update the effectedEdge and effectedFaces.
-//      vertex.eachOutEdge( function(halfEdge) {
-//         if (!affected.edges.has(halfEdge.wingedEdge)) {    // check edge
-//            affected.edges.add(halfEdge.wingedEdge);        // should not happened, for debugging purpose.
-//         }
-      //   const face = halfEdge.face;
-      //   if ((face!==null) && !affected.faces.has(face)) {  // check face
-      //      affected.faces.add(face);               // should not happened, for debugging purpose.
-      //   }
-//      });
-
-      // update preview too.
-      this.preview.shaderData.uploadAttribute('position', vertex.vertex.byteOffset, vertex.vertex);
-   }
-};
-
-DraftBench.prototype._updatePreviewFace = function(polygon) {
-   // recompute boundingSphere centroid, and if numberOfVertex changed, needs to recompute index.
-   if ((polygon.index < this.boundingSpheres.length) && polygon.isLive()) { // will be get recompute on resize
-      const sphere = this.boundingSpheres[ polygon.index ];
-      sphere.setSphere( __WEBPACK_IMPORTED_MODULE_1__wings3d_boundingvolume__["BoundingSphere"].computeSphere(sphere.polygon, sphere.center) ); 
-      // update center.
-      const index = this.vertices.length+polygon.index;
-      this.preview.shaderData.uploadAttribute('position', index*3*4, sphere.center);
-   }
-};
-
-
-DraftBench.prototype._updatePreviewEdge = function(edge, updateShader) {
-   const wingedEdge = edge.wingedEdge;
-   if (wingedEdge.isLive()) {
-      const index = wingedEdge.index * 6; // 2*3
-      this.previewEdge.line.set(edge.origin.vertex, index);
-      this.previewEdge.line.set(edge.pair.origin.vertex, index+3);
-
-      if (updateShader) {
-         this.previewEdge.shaderData.uploadAttribute('position', index*4, this.previewEdge.line.subarray(index, index+6));
-      }
-   } else {    // deleted edge. deselcted, dehilite.
-      const index = wingedEdge.index*2;
-      const color = this.previewEdge.color.subarray(index, index+2);
-      color.fill(0.0);
-      //this.previewEdge.color.fill(0.0, wingedEdge.index, wingedEdge.index+2);
-
-      //if (updateShader) {
-         this.previewEdge.shaderData.uploadAttribute('color', index*4, color);
-      //}
-   }
-};
-
-
-DraftBench.prototype.hiliteFace = function(polygon, isHilite) {
-   if (isHilite) {   // show
-      this._computeFaceHiliteIndex(polygon);
-   } else { // hide
-      this.hilite.indexLength = 0;
-   }
-};
-
-DraftBench.prototype.hiliteBody = function(faceGroup, isHilite) {
-   if (isHilite) { // show
-      this._computeGroupHiliteIndex(faceGroup);
-   } else { // hide 
-      this.hilite.indexLength = 0;
-   }
-};
-
-
-// drawing routines -- draw selected polygon first, then draw unselected one, this is offseted
-DraftBench.prototype.draw = function(gl) {
-   // draw using index
-   try {
-      gl.bindShaderData(this.preview.shaderData);
-      gl.drawElements(gl.TRIANGLES, this.preview.indexLength, gl.UNSIGNED_INT, 0);
-   } catch (e) {
-      console.log(e);
-   }
-};
-
-// draw hilite polygon. not offset
-DraftBench.prototype.drawHilite = function(gl) {
-   if (this.hilite.indexLength == 0) {
-      return;
-   }
-   // set hilite color and hilite index
-   this.preview.shaderData.setIndex(this.hilite.index);
-   this.preview.shaderData.setUniform4fv("faceColor", [0.0, 1.0, 0.0, 0.35]);
-   gl.bindShaderData(this.preview.shaderData);
-   gl.drawElements(gl.TRIANGLES, this.hilite.indexLength, gl.UNSIGNED_INT, 0);
-   // restore color and index
-   this.preview.shaderData.setIndex(this.preview.index);
-   this.preview.shaderData.setUniform4fv("faceColor", [0.5, 0.5, 0.5, 1.0]);
-};
-
-// draw vertex, select color, 
-DraftBench.prototype.drawVertex = function(gl) {
-   // drawing using vertex array
-   try {
-      gl.bindShaderData(this.previewVertex.shaderData);
-      //gl.drawArrays(gl.POINTS, 0, this.vertices.length);
-      gl.drawElements(gl.POINTS, this.previewVertex.indexLength, gl.UNSIGNED_INT, 0);
-   } catch (e) {
-      console.log(e);
-   }
-};
-
-// draw edge, select color
-DraftBench.prototype.drawEdge = function(gl) {
-   gl.bindShaderData(this.previewEdge.shaderData);
-   gl.drawArrays(gl.LINES, 0, this.previewEdge.line.length/3);
-}
-
-
-DraftBench.prototype.selectGroup = function(selection, isOn) {
-   const noSelection = new Set;
-   for (let polygon of selection) {
-      if (isOn) {
-         this.setFaceSelectionOn(polygon);
-      } else {
-         this.setFaceSelectionOff(polygon, noSelection);
-      }
-   }
-};
-
-
-DraftBench.prototype.resetBody = function(bodyGroup) {
-   this.selectGroup(bodyGroup, false);    // turn group off.
-};
-
-
-DraftBench.prototype.uploadFacePreview = function() {
-
-};
-
-DraftBench.prototype.uploadEdgePreview = function() {
-   this.previewEdge.shaderData.uploadAttribute('color', 0, this.previewEdge.color);
-};
-
-DraftBench.prototype.uploadVertexPreview = function() {
-   //if (this.locked) {
-      this.previewVertex.shaderData.uploadAttribute('color', 0, this.previewVertex.color);
-      //this.locked = false;
-   //}
-};
-
-
-DraftBench.prototype.hiliteVertex = function(vertex, show) {
-   // select polygon set color,
-   if (show) {
-      this.setVertexColor(vertex, 0.5);
-   } else {
-      this.setVertexColor(vertex, -0.5);
-   }
-};
-
-DraftBench.prototype.setVertexColor = function(vertex, color, groupSelection) {
-   // selected color
-   const j = vertex.index;  
-   this.previewVertex.color[j] += color;
-   if (!groupSelection) {
-      const point = this.previewVertex.color.subarray(j, j+1);
-      this.previewVertex.shaderData.uploadAttribute('color', j*Float32Array.BYTES_PER_ELEMENT, point);
-   }
-};
-
-DraftBench.prototype.resetSelectVertex = function() {
-   // zeroout the edge seleciton.
-   this.previewVertex.color.fill(0.0);
-   this.previewVertex.shaderData.uploadAttribute('color', 0, this.previewVertex.color);
-};
-
-DraftBench.prototype.hiliteEdge = function(hEdge, onOff) {
-   // select polygon set color,
-   if (onOff) {
-      this.setEdgeColor(hEdge.wingedEdge, 0.5);
-   } else {
-      this.setEdgeColor(hEdge.wingedEdge, -0.5);
-   }
-
-}
-
-DraftBench.prototype.setEdgeColor = function(wingedEdge, color, groupSelection) {
-   // selected color
-   const j = wingedEdge.index * 2;  
-   this.previewEdge.color[j] += color;
-   this.previewEdge.color[j+1] += color;
-   if (!groupSelection) {
-      const line = this.previewEdge.color.subarray(j, j+2);
-      this.previewEdge.shaderData.uploadAttribute('color', j*Float32Array.BYTES_PER_ELEMENT, line);
-   }
-};
-
-DraftBench.prototype.resetSelectEdge = function() {
-   // zeroout the edge seleciton.
-   this.previewEdge.color.fill(0.0);
-   this.previewEdge.shaderData.uploadAttribute('color', 0, this.previewEdge.color);
-};
-
-DraftBench.prototype.updateWEdges = function(wingedEdges) {
-   // update the edges.vertex
-   for (let wingedEdge of wingedEdges) {
-      let index = wingedEdge.index * 2 * 3;
-      for (let halfEdge of wingedEdge) {
-         this.previewEdge.line.set(halfEdge.origin.vertex, index);
-         index += 3;
-      }
-   }
-   this.previewEdge.shaderData.uploadAttribute('position', 0, this.previewEdge.line);
-}
-
-DraftBench.prototype.updateCentroid = function(snapshot) {
-   // done, update shader data, should we update each vertex individually?
-   const centroids = this.preview.centroid.buf.data.subarray(0, this.preview.centroid.buf.len)
-   this.preview.shaderData.uploadAttribute('position', this.buf.len*4, centroids);
-};
-
-
-DraftBench.prototype.updatePosition = function() {
-   // todo: we really should update as little as possible.
-   const vertices = this.buf.data.subarray(0, this.buf.len);
-   this.preview.shaderData.uploadAttribute('position', 0, vertices);
-   this.previewVertex.shaderData.uploadAttribute('position', 0, vertices);
-};
-
-DraftBench.prototype.setFaceSelectionOff = function(polygon, selectedSet) {
-   var self = this;
-   var selected = this.preview.selected;    // filled triangle's selection status.
-   polygon.eachVertex( function(vertex) {
-      // restore drawing color
-      var vertexSelected = false;
-      vertex.eachOutEdge( function(edge) {
-         if (edge.isNotBoundary() && (edge.face !== polygon) && selectedSet.has(edge.face)) {
-            vertexSelected = true;
-         }
-      }); 
-      if (vertexSelected === false) {  // no more sharing, can safely reset
-         selected[vertex.index] = 0.0;
-         self.preview.shaderData.uploadAttribute('selected', vertex.index*4, DraftBench.CONST.SELECTOFF);
-      }
-   });
-   selected = this.preview.centroid.selected;
-   selected[polygon.index]= 0.0;
-   var byteOffset = (this.vertices.length+polygon.index)*4;
-   this.preview.shaderData.uploadAttribute("selected", byteOffset, DraftBench.CONST.SELECTOFF);
-};
-DraftBench.prototype.setFaceSelectionOn = function(polygon) {
-   var self = this;
-   var selected = this.preview.selected;      // filled triangle's selection status.
-   // set the drawing color
-   polygon.eachVertex( function(vertex) {
-      selected[vertex.index] = 1.0;
-      self.preview.shaderData.uploadAttribute('selected', vertex.index*4, DraftBench.CONST.SELECTON);
-   });
-   selected = this.preview.centroid.selected;
-   selected[polygon.index]= 1.0;
-   var byteOffset = (this.vertices.length+polygon.index)*4;
-   this.preview.shaderData.uploadAttribute("selected", byteOffset, DraftBench.CONST.SELECTON);
-};
-
-DraftBench.prototype.resetSelectFace = function() {
-   this.preview.selected.fill(0.0);          // reset all polygon to non-selected 
-   this.preview.centroid.selected.fill(0.0);
-   var length = this.buf.len/3;
-   this.preview.shaderData.uploadAttribute("selected", 0, this.preview.selected.subarray(0, length));
-   var centroidLength = this.preview.centroid.buf.len/3;
-   this.preview.shaderData.uploadAttribute('selected', length*4, this.preview.centroid.selected.subarray(0, centroidLength));
-};
-
-
-DraftBench.prototype.hide = function(faceGroup) {
-   for (let polygon of faceGroup) {
-      polygon.isVisible = false;
-   }
-};
-
-DraftBench.prototype.show = function(faceGroup) {
-   for (let polygon of faceGroup) {
-      polygon.isVisible = true;
-   }
-};
-
-
-class CheckPoint extends __WEBPACK_IMPORTED_MODULE_5__wings3d_undo__["EditCommand"] { // do we really needs to inherited form EditCommand?
-   CheckPoint(draftBench, editCommand) {
-      this.command = editCommand;
-      this.draftBench = draftBench;
-      // map the (vertices, edges, faces) value.
-      this.vertices = [];
-      for (let vertex of draftBench.vertices) {
-         // outEdge index, need real pt?
-         if (vertex.isLive()) {
-            this.vertices.push( vertex.outEdge.wingedEdge.index );
-         } else {
-            this.vertices.push( -1 );
-         }
-      }
-      this.edges = [];
-      for (let wEdge of draftBench.edges) {
-         // left->next index, right->next index, origin index, dest index.
-         if (wEdge.isLive()) {
-            this.edges.push( wEdge.left.next.index, wEdge.right.next.index, wEdge.left.origin.index, wEdge.right.origin.index);
-         } else {
-            this.edges.push( -1, -1, -1, -1 );
-         }
-      }
-      this.faces = [];
-      for (let polygon of draftBench.faces) {
-         // halfEdge index.
-         if (polygon.isLive()) {
-            this.faces.push( polygon.halfEdge.index );
-         } else {
-            this.faces.push( -1 );
-         }
-      }
-   }
-
-   doIt() {
-      return this.command.doIt();
-   }
-
-   undo() {
-      this.command.undo();
-      // now check draftBench and our saved value.
-      // use index because draftBench could have more faces(all dead) than our Saved one due to expansion.
-      for (let i = 0; i < this.faces.length; ++i) {   // check polygon first, most like to have problems
-         const polygon = this.draftBench.faces[i];
-         if (polygon.isLive) {
-            if (polygon.halfEdge.index != this.faces[i]) {
-               geometryStatus("CheckPoint failed. non matching polygon halfEdge");
-               return;
-            }
-         } else {
-            if (this.faces[i] != -1) {
-               geometryStatus("CheckPoint failed. extra face");
-               return
-            }
-         }
-      }
-      for (let i = 0; i < this.vertices.lenth; ++i ) {   // check vertex next because of simplicity.
-         const vertex = this.draftBench.vertices[i];
-         if (vertex.isLive()) {
-            if (vertex.outEdge.wingedEdge.index != this.vertices[i]) {
-               geometryStatus("CheckPoint failed. non-matching vertex outEdge");
-               return;
-            }
-         } else {
-            if (this.vertices[i] != -1) {
-               geometryStatus("CheckPoint failed. extra vertex");
-               return;
-            }
-         }
-      }
-      // check edges
-      for (let i = 0; i < this.edges.length; i+=4) {
-         const wEdge = this.draftBench.edges[i];
-         if (wEdge.isAlive()) {
-            if (wEdge.left.next.index != this.edges[i] || wEdge.right.next.index != [i+1] ||
-                 wEdge.left.origin.index != this.edges[i+2] || wEdge.right.origin.index != this.edges[i+3]) {
-               geometryStatus("CheckPoint failed. non matching wEdge");
-               return;
-            }
-         } else {
-            if (this.edges[i] != -1) {
-               geometryStatus("CheckPoint failed. extra wEdge");
-               return;
-            }
-         }
-      }
-   }
-};
-
-
-
-
-/***/ }),
-/* 9 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "FaceMadsor", function() { return FaceMadsor; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__ = __webpack_require__(10);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_edgemads__ = __webpack_require__(11);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_bodymads__ = __webpack_require__(12);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__ = __webpack_require__(13);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_edgemads__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_bodymads__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__ = __webpack_require__(12);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_model__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_view__ = __webpack_require__(1);
@@ -9409,7 +8644,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d_shaderprog__ = __webpack_require__(6);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__wings3d_ui__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__wings3d__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__wings3d_draftbench__ = __webpack_require__(8);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__wings3d_draftbench__ = __webpack_require__(13);
 /**
 //    This module contains most face command and face utility functions.
 //
@@ -9512,7 +8747,7 @@ class FaceMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
          command.doIt();
          __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"](command);
        });
-       __WEBPACK_IMPORTED_MODULE_9__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_10__wings3d__["action"].faceFlattenNormal.name, (_ev) => {
+      __WEBPACK_IMPORTED_MODULE_9__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_10__wings3d__["action"].faceFlattenNormal.name, (_ev) => {
          const cmd = new __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["GenericEditCommand"](this, this.flatten);
          if (cmd.doIt()) {
             __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"](cmd);
@@ -10016,7 +9251,7 @@ class MirrorFaceCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["Edi
 
 
 /***/ }),
-/* 10 */
+/* 9 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -10158,6 +9393,17 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
          __WEBPACK_IMPORTED_MODULE_4__wings3d_ui__["bindMenuItem"](scaleRadialMode[axis].name, (_ev) => {
             __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["attachHandlerMouseMove"](new ScaleHandler(this, radialVec[axis]));
           });
+      }
+      const planeNorm = [[0, 0, 1], [0, 1, 0], [1, 0, 0]];
+      // plane Cut
+      const planeCut = { face: [__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].facePlaneCutX, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].facePlaneCutY, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].facePlaneCutZ], };
+      const planeCutMode = planeCut[mode];
+      if (planeCutMode) {
+         for (let axis = 0; axis < 3; ++axis) {
+            __WEBPACK_IMPORTED_MODULE_4__wings3d_ui__["bindMenuItem"](planeCutMode[axis].name, (_ev) =>{
+               __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["attachHandlerMouseSelect"](new PlaneCutHandler(this, planeNorm[axis]));
+             });
+         }
       }
    } 
 
@@ -10669,6 +9915,27 @@ class ExtrudeNormalHandler extends ExtrudeHandler {
 }
 // end of extrude
 
+
+class PlaneCutHandler extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["EditSelectHandler"] {
+   constructor(madsor, planeNorm) {
+      super(true, true, true, planeNorm);
+      this.madsor = madsor;
+   }
+
+   hilite(hilite, currentCage) {}
+   select(hilite) {}
+
+   doIt() {
+   }
+
+   undo() {
+
+   }
+
+
+}
+
+
 class GenericEditCommand extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["EditCommand"] {
    constructor(madsor, doCmd, doParams, undoCmd) {
       super();
@@ -10700,23 +9967,23 @@ class GenericEditCommand extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["Ed
 
 
 /***/ }),
-/* 11 */
+/* 10 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "EdgeMadsor", function() { return EdgeMadsor; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__ = __webpack_require__(10);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__ = __webpack_require__(9);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_bodymads__ = __webpack_require__(12);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__ = __webpack_require__(13);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__ = __webpack_require__(8);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_bodymads__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__ = __webpack_require__(12);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_model__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_ui__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_view__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d_shaderprog__ = __webpack_require__(6);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__wings3d__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__wings3d_draftbench__ = __webpack_require__(8);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__wings3d_draftbench__ = __webpack_require__(13);
 /**
 //    This module contains most edge command and edge utility functions.
 //
@@ -11269,16 +10536,16 @@ class EdgeCornerHandler extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["Mov
 
 
 /***/ }),
-/* 12 */
+/* 11 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "BodyMadsor", function() { return BodyMadsor; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__ = __webpack_require__(10);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__ = __webpack_require__(9);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_edgemads__ = __webpack_require__(11);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__ = __webpack_require__(13);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__ = __webpack_require__(8);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_edgemads__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__ = __webpack_require__(12);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_model__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_shaderprog__ = __webpack_require__(6);
@@ -11804,24 +11071,24 @@ class FlipBodyAxis extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditComm
 
 
 /***/ }),
-/* 13 */
+/* 12 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "VertexMadsor", function() { return VertexMadsor; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "VertexConnectCommand", function() { return VertexConnectCommand; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__ = __webpack_require__(10);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__ = __webpack_require__(9);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_bodymads__ = __webpack_require__(12);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_edgemads__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__ = __webpack_require__(8);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_bodymads__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_edgemads__ = __webpack_require__(10);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_model__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_view__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_shaderprog__ = __webpack_require__(6);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__wings3d__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__wings3d_draftbench__ = __webpack_require__(8);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__wings3d_draftbench__ = __webpack_require__(13);
 /**
 //    This module handle most vertex edit command.
 //
@@ -12141,6 +11408,835 @@ class VertexWeldCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["Edi
       this.preview.undoWeldVertex(this.restore);
    }
 }
+
+
+
+
+/***/ }),
+/* 13 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "DraftBench", function() { return DraftBench; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "CheckPoint", function() { return CheckPoint; });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_shaderprog__ = __webpack_require__(6);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_util__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_boundingvolume__ = __webpack_require__(16);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_wingededge__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_undo__ = __webpack_require__(3);
+//
+// strategy:
+//    use GPU as much as possible. multiple passes for drawing. we have more than enough GPU power.
+//
+//    update as little as possible on cpu side. 
+//
+// todo:
+//    first pass: draw line (select, unselected) first (using triangles). 
+//
+//    second pass: draw polygon (selected, unseleced) using slightly optimized index.
+//
+//    third pass?: draw vertex.
+//
+//    last pass: draw hilite (line, polygon, or vertex).
+//
+
+
+
+
+
+
+
+
+
+const DraftBench = function(defaultSize = 2048) {  // should only be created by View
+   __WEBPACK_IMPORTED_MODULE_4__wings3d_wingededge__["MeshAllocator"].call(this, defaultSize); // constructor.
+  
+   this.lastPreviewSize = { vertices: 0, edges: 0, faces: 0};
+   this.boundingSpheres = [];
+   this.hilite = {index: null, indexLength: 0, numberOfTriangles: 0};  // the hilite index triangle list.
+
+   this.preview = {centroid: {},};
+   this.preview.shaderData = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].createShaderData();
+   this.preview.shaderData.setUniform4fv("faceColor", [0.5, 0.5, 0.5, 1.0]);
+   this.preview.shaderData.setUniform4fv("selectedColor", [1.0, 0.0, 0.0, 1.0]);
+   var layoutVec = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["ShaderData"].attribLayout();
+   var layoutFloat = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["ShaderData"].attribLayout(1);
+   this.preview.shaderData.createAttribute('position', layoutVec, __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].STATIC_DRAW);
+   this.preview.shaderData.createAttribute('barycentric', layoutVec, __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].STATIC_DRAW);
+   this.preview.shaderData.createAttribute('selected', layoutFloat, __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].DYNAMIC_DRAW);
+   this._resizeBoundingSphere(0);
+   this._resizePreview(0, 0);
+
+   // previewEdge
+   this.previewEdge = {};
+   this.previewEdge.shaderData = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].createShaderData();
+   this.previewEdge.shaderData.setUniform4fv("selectedColor", [1.0, 0.0, 0.0, 1.0]);
+   this.previewEdge.shaderData.setUniform4fv('hiliteColor', [0.0, 1.0, 0.0, 1.0]);
+   this.previewEdge.shaderData.createAttribute('position', layoutVec, __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].STATIC_DRAW);
+   this.previewEdge.shaderData.createAttribute('color', layoutFloat, __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].DYNAMIC_DRAW);
+   this._resizePreviewEdge(0);
+
+   // previewVertex
+   this.previewVertex = {};
+   this.previewVertex.shaderData = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].createShaderData();
+   this.previewVertex.shaderData.setUniform4fv("selectedColor", [1.0, 0.0, 0.0, 1.0]);
+   this.previewVertex.shaderData.setUniform4fv('hiliteColor', [0.0, 1.0, 0.0, 1.0]);
+   this.previewVertex.shaderData.createAttribute('position', layoutVec, __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].STATIC_DRAW);
+   this.previewVertex.shaderData.createAttribute('color', layoutFloat, __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].DYNAMIC_DRAW);
+   this._resizePreviewVertex(0);
+   // body state.
+   this.previewBody = {hilite: false};
+   // shown plane normal
+   this.previewPlane = {};
+   this.previewPlane.shaderData = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].createShaderData();
+   this.previewPlane.shaderData.setUniform4fv("faceColor", [1.0, 0.0, 0.0, 1.0]);
+   this.previewPlane.shaderData.createAttribute('position', layoutVec, __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].STATIC_DRAW);
+   this.previewPlane.rectangle = new Float32Array(3*4);  // 
+   this.previewPlane.shaderData.resizeAttribute('position', Float32Array.BYTES_PER_ELEMENT*3*4);
+   this.previewPlane.pts = [];
+   for (let i = 0; i < 4; ++i) {
+      this.previewPlane.pts[i] = this.previewPlane.rectangle.subarray(i*3, (i+1)*3);
+   }
+};
+
+DraftBench.CONST = (function() {
+   const constant = {};
+
+   constant.SELECTON  = new Float32Array(1);
+   constant.SELECTON[0] = 1.0;
+   constant.SELECTOFF = new Float32Array(1);
+   constant.SELECTOFF[0] = 0.0;
+   constant.BARYCENTRIC = new Float32Array(3);
+   constant.BARYCENTRIC[0] = 1.0;
+   constant.BARYCENTRIC[1] = 0.0;
+   constant.BARYCENTRIC[2] = 1.0;
+   return constant;
+}());
+
+// draftBench inherited from MeshAllocator, so we canintercept freeXXX and allocXXX call easier. It also makes logical sense.
+DraftBench.prototype = Object.create(__WEBPACK_IMPORTED_MODULE_4__wings3d_wingededge__["MeshAllocator"].prototype);
+
+// free webgl buffer.
+DraftBench.prototype.freeBuffer = function() {
+   this.preview.shaderData.freeAllAttributes();
+   this.preview.shaderData =  null;
+   this.previewEdge.shaderData.freeAllAttributes();
+   this.previewEdge.shaderData = null;
+   this.previewVertex.shaderData.freeAllAttributes();
+   this.previewVertex.shaderData = null;
+};
+
+DraftBench.prototype.updatePreview = function() {
+   this._resizeBoundingSphere();
+   this._resizePreview();
+   this._resizePreviewEdge();
+   this._resizePreviewVertex();
+   this._updatePreviewSize();
+   this._updateAffected(this.affected);
+   // compute index
+   //this._computePreviewIndex();
+};
+
+
+DraftBench.prototype._resizeBoundingSphere = function() {
+   let oldSize = this.lastPreviewSize.faces
+   let size = this.faces.length - oldSize;
+   if (size > 0) {   // we only care about growth for now
+      if (oldSize > 0) {
+         if (this.preview.centroid.buf.data.length < (this.preview.centroid.buf.len+(size*3))) {
+            // needs to resize, and copy
+            const buf = new ArrayBuffer(this.faces.length * 3 * Float32Array.BYTES_PER_ELEMENT * 2);
+            const centroid = {buf: {buffer: buf, data: new Float32Array(buf), len: 0} };
+            // 
+            centroid.buf.data.set(this.preview.centroid.buf.data);  // copy old data
+            for (let sphere of this.boundingSpheres) {
+               sphere.center = new Float32Array(centroid.buf.buffer, Float32Array.BYTES_PER_ELEMENT*centroid.buf.len, 3); 
+               centroid.buf.len += 3;             
+            }
+            this.preview.centroid.buf = centroid.buf;
+         }
+      } else {
+         const buf = new ArrayBuffer(this.faces.length * 3 * Float32Array.BYTES_PER_ELEMENT * 2); // twice the current size
+         this.preview.centroid.buf = {buffer: buf, data: new Float32Array(buf), len: 0};
+         // assign a boundingsphere for each polygon.
+         //this.boundingSpheres = new Array(this.faces.length);
+         //this.boundingSpheres.length = 0;
+      }
+      // create New, should not have deleted sphere to mess up things
+      const centroid = this.preview.centroid;   // 
+      for (let i = oldSize; i < this.faces.length; ++i) {
+         const polygon = this.faces[i];
+         const sphere = this.boundingSpheres[i];
+         let center = sphere.center;
+         if (!center) {
+            center = new Float32Array(centroid.buf.buffer, Float32Array.BYTES_PER_ELEMENT*centroid.buf.len, 3);
+            centroid.buf.len += 3;
+         }
+         //polygon.index = i; // recalibrate index for free.
+         //this.boundingSpheres.push( BoundingSphere.create(polygon, center) );
+         sphere.setSphere( __WEBPACK_IMPORTED_MODULE_3__wings3d_boundingvolume__["BoundingSphere"].computeSphere(polygon, center) );
+
+      }
+      // vertices is geometry data + centroid data.
+   }
+};
+
+DraftBench.prototype._resizePreview = function() {
+   let oldSize = this.lastPreviewSize.vertices;
+   let oldCentroidSize = this.lastPreviewSize.faces;
+
+   const size = this.vertices.length - oldSize;
+   const centroidSize = this.faces.length - oldCentroidSize;
+   if ((size > 0) || (centroidSize > 0)) {
+      const model = this;
+      let length = model.buf.data.length;
+      let centroidLength = model.preview.centroid.buf.data.length;
+      if (oldSize > 0) {
+         if (length > model.preview.barycentric.length) {
+            // create new length
+            model.preview.barycentric = new Float32Array(length);
+            let selected = new Float32Array(length/3);
+            selected.set(model.preview.selected);
+            model.preview.selected = selected;
+         }
+         if (centroidLength > model.preview.centroid.barycentric.length) {
+            model.preview.centroid.barycentric = new Float32Array(centroidLength);
+            let selected = new Float32Array(centroidLength/3);
+            selected.set(model.preview.centroid.selected);
+            model.preview.centroid.selected = selected;
+         }
+      } else { // brand new
+         // created array
+         model.preview.barycentric = new Float32Array(length);
+         model.preview.selected = new Float32Array(length/3);
+      
+         model.preview.centroid.barycentric = new Float32Array(centroidLength);
+         model.preview.centroid.selected = new Float32Array(centroidLength/3);
+      }
+      model.preview.barycentric.set(DraftBench.CONST.BARYCENTRIC);
+      model.preview.selected.fill(0.0, oldSize);
+      model.preview.centroid.barycentric.fill(1.0);
+      model.preview.centroid.selected.fill(0.0, oldCentroidSize);
+      // upload the data to webgl
+      length = this.buf.len;
+      centroidLength = this.preview.centroid.buf.len;
+      model.preview.shaderData.resizeAttribute('position', (length+centroidLength)*4);
+      model.preview.shaderData.uploadAttribute('position', 0, this.buf.data.subarray(0, length));
+      model.preview.shaderData.uploadAttribute('position', length*4, this.preview.centroid.buf.data.subarray(0, centroidLength));
+      model.preview.shaderData.resizeAttribute('barycentric', (length+centroidLength)*4);
+      model.preview.shaderData.uploadAttribute('barycentric', 0, this.preview.barycentric.subarray(0, length));
+      model.preview.shaderData.uploadAttribute('barycentric', length*4, this.preview.centroid.barycentric.subarray(0, centroidLength));
+      length /= 3;
+      centroidLength /= 3;
+      model.preview.shaderData.resizeAttribute('selected', (length+centroidLength) * 4);
+      model.preview.shaderData.uploadAttribute('selected', 0, this.preview.selected.subarray(0, length));
+      model.preview.shaderData.uploadAttribute('selected', length*4, this.preview.centroid.selected.subarray(0, centroidLength));
+      // invalidate hilite
+      model.hilite.indexLength = 0;
+   }
+      
+   // compute index.
+   this._computePreviewIndex();
+};
+
+DraftBench.prototype._computePreviewIndex = function() {
+   this.numberOfTriangles = this.faces.reduce( function(acc, element) {
+      return acc + element.numberOfVertex; // -2; for half the vertex
+   }, 0);
+   const index = new Uint32Array( this.numberOfTriangles*3 );
+   let length = 0;
+   // recompute all index. (no optimization unless prove to be bottleneck)
+   let barycentric = this.vertices.length;
+   for (let sphere of this.boundingSpheres) {
+      if (sphere.isLive()) {     // skip over deleted sphere.
+         const polygon = sphere.polygon;
+         //sphere.indexStart = model.preview.index.length;
+         let indicesLength = 0;
+         polygon.eachEdge( function(edge) {
+            const vertex = edge.origin;
+            if (indicesLength > 0) {
+               index[length+indicesLength++] = vertex.index;
+               index[length+indicesLength++] = barycentric; 
+            }
+            index[length+indicesLength++] = vertex.index;         
+         });
+         // last triangle using the first vertices.
+         index[length+indicesLength++] = index[length];
+         index[length+indicesLength++] = barycentric;
+         length += indicesLength;
+         //sphere.indexEnd = model.preview.index.length;
+      }
+      barycentric++;
+   }
+   // save it to the buffer 
+   this.preview.shaderData.setIndex(index);
+   this.preview.index = index;
+   this.preview.indexLength = length;
+};
+
+DraftBench.prototype._computeFaceHiliteIndex = function(polygon, offset) {
+   if (this.hilite.numberOfTriangles < polygon.numberOfVertex) {
+      this.hilite.numberOfTriangles = polygon.numberOfVertex;
+      this.hilite.index = new Uint32Array(this.hilite.numberOfTriangles*3);
+   }
+   if (offset === undefined) {
+      offset = 0;
+   }
+   let index = polygon.index;
+   let indicesLength = 0;
+   let barycentric = this.vertices.length + polygon.index;
+   for (let hEdge of polygon.hEdges()) {
+      const vertex = hEdge.origin;
+      if (indicesLength > 0) {
+         this.hilite.index[offset+indicesLength++] = vertex.index;
+         this.hilite.index[offset+indicesLength++] = barycentric;
+      }
+      this.hilite.index[offset+indicesLength++] = vertex.index;
+   }
+   // last triangle using the first vertices
+   this.hilite.index[offset+indicesLength++] = this.hilite.index[offset];
+   this.hilite.index[offset+indicesLength++] = barycentric;
+
+   this.hilite.indexLength = offset+indicesLength;
+};
+
+DraftBench.prototype._computeGroupHiliteIndex = function(faceGroup) {
+   let numberOfTriangles = 0;
+   for (let polygon of faceGroup) {
+      numberOfTriangles += polygon.numberOfVertex;
+   }
+   if (this.hilite.numberOfTriangles < numberOfTriangles) {
+      this.hilite.numberOfTriangles = numberOfTriangles;
+      this.hilite.index = new Uint32Array(this.hilite.numberOfTriangles*3);
+   }
+   this.hilite.indexLength = 0;
+   for (let polygon of faceGroup) {
+      this._computeFaceHiliteIndex(polygon, this.hilite.indexLength);
+   }
+};
+
+
+DraftBench.prototype._resizePreviewEdge = function() {
+   let oldSize = this.lastPreviewSize.edges;
+
+   const size = this.edges.length - oldSize;
+   if (size > 0) {
+      if (oldSize > 0) {
+         let line = new Float32Array(this.edges.length*2*3);
+         line.set(this.previewEdge.line);
+         this.previewEdge.line = line;
+         let color = new Float32Array(this.edges.length*2);
+         color.set(this.previewEdge.color);
+         this.previewEdge.color = color;
+      } else { // brand new
+         this.previewEdge.line = new Float32Array(this.edges.length*2*3);
+         this.previewEdge.color = new Float32Array(this.edges.length*2);
+      }
+      for (let i = oldSize, j=(oldSize*2*3); i < this.edges.length; i++) {
+         let wingedEdge = this.edges[i];
+         for (let halfEdge of wingedEdge) {
+            if (wingedEdge.isLive()) {
+               this.previewEdge.line.set(halfEdge.origin.vertex, j);
+            } else {
+               this.previewEdge.line.fill(0.0, j, j+3);
+            }
+            j += 3;
+         }
+      }
+      //
+      this.previewEdge.color.fill(0.0, oldSize*2);
+      // update GPU
+      this.previewEdge.shaderData.resizeAttribute('position', this.previewEdge.line.length*4);
+      this.previewEdge.shaderData.uploadAttribute('position', 0, this.previewEdge.line);
+      this.previewEdge.shaderData.resizeAttribute('color', this.previewEdge.color.length*4);
+      this.previewEdge.shaderData.uploadAttribute('color', 0, this.previewEdge.color);
+   }
+};
+
+
+DraftBench.prototype._resizePreviewVertex = function() {
+   const oldSize = this.lastPreviewSize.vertices;
+   const length = this.vertices.length;
+   const size = length - oldSize;
+   if (size > 0) {
+      const preview = this.previewVertex;
+      const color = new Float32Array(length);
+      if (oldSize > 0) {
+         color.set(preview.color);
+      }
+      color.fill(0.0, oldSize);
+      preview.color = color;
+      // 
+      preview.shaderData.resizeAttribute('position', length*4*3);
+      preview.shaderData.uploadAttribute('position', 0, this.buf.data.subarray(0, length*3));
+      preview.shaderData.resizeAttribute('color', length*4);
+      preview.shaderData.uploadAttribute('color', 0, preview.color);
+   }
+   // rebuild index.
+   const index = new Uint32Array(length);
+   let j = 0;
+   for (let i = 0; i < length; ++i) {
+      if (this.vertices[i].isLive()) {
+         index[j++] = i;
+      }
+   }
+   // 
+   this.previewVertex.shaderData.setIndex(index);
+   this.previewVertex.indexLength = j;
+};
+
+
+DraftBench.prototype._updatePreviewSize = function() {
+   this.lastPreviewSize.vertices = this.vertices.length;
+   this.lastPreviewSize.edges = this.edges.length;
+   this.lastPreviewSize.faces = this.faces.length;
+};
+
+
+DraftBench.prototype._updateAffected = function(affected) {
+   if (affected.vertices.size > 0) {
+      for (let vertex of affected.vertices) {
+         this._updateVertex(vertex, affected);
+      }
+   }
+   if (affected.edges.size > 0) {
+      for (let edge of affected.edges) {
+         this._updatePreviewEdge(edge.left, true);
+      }
+   }
+   if (affected.faces.size > 0) {
+      for (let face of affected.faces) {
+         this._updatePreviewFace(face);
+      }
+      // update index
+
+   }
+
+   this.clearAffected();
+};
+
+DraftBench.prototype._updateVertex = function(vertex, affected) {
+   if (vertex.isLive()) {
+      // first the simple case, update the vertexPreview,
+      const index = vertex.index;
+      this.previewVertex.shaderData.uploadAttribute('position', vertex.vertex.byteOffset, vertex.vertex);
+
+      // then update the effectedEdge and effectedFaces.
+//      vertex.eachOutEdge( function(halfEdge) {
+//         if (!affected.edges.has(halfEdge.wingedEdge)) {    // check edge
+//            affected.edges.add(halfEdge.wingedEdge);        // should not happened, for debugging purpose.
+//         }
+      //   const face = halfEdge.face;
+      //   if ((face!==null) && !affected.faces.has(face)) {  // check face
+      //      affected.faces.add(face);               // should not happened, for debugging purpose.
+      //   }
+//      });
+
+      // update preview too.
+      this.preview.shaderData.uploadAttribute('position', vertex.vertex.byteOffset, vertex.vertex);
+   }
+};
+
+DraftBench.prototype._updatePreviewFace = function(polygon) {
+   // recompute boundingSphere centroid, and if numberOfVertex changed, needs to recompute index.
+   if ((polygon.index < this.boundingSpheres.length) && polygon.isLive()) { // will be get recompute on resize
+      const sphere = this.boundingSpheres[ polygon.index ];
+      sphere.setSphere( __WEBPACK_IMPORTED_MODULE_3__wings3d_boundingvolume__["BoundingSphere"].computeSphere(sphere.polygon, sphere.center) ); 
+      // update center.
+      const index = this.vertices.length+polygon.index;
+      this.preview.shaderData.uploadAttribute('position', index*3*4, sphere.center);
+   }
+};
+
+
+DraftBench.prototype._updatePreviewEdge = function(edge, updateShader) {
+   const wingedEdge = edge.wingedEdge;
+   if (wingedEdge.isLive()) {
+      const index = wingedEdge.index * 6; // 2*3
+      this.previewEdge.line.set(edge.origin.vertex, index);
+      this.previewEdge.line.set(edge.pair.origin.vertex, index+3);
+
+      if (updateShader) {
+         this.previewEdge.shaderData.uploadAttribute('position', index*4, this.previewEdge.line.subarray(index, index+6));
+      }
+   } else {    // deleted edge. deselcted, dehilite.
+      const index = wingedEdge.index*2;
+      const color = this.previewEdge.color.subarray(index, index+2);
+      color.fill(0.0);
+      //this.previewEdge.color.fill(0.0, wingedEdge.index, wingedEdge.index+2);
+
+      //if (updateShader) {
+         this.previewEdge.shaderData.uploadAttribute('color', index*4, color);
+      //}
+   }
+};
+
+
+DraftBench.prototype.hiliteFace = function(polygon, isHilite) {
+   if (isHilite) {   // show
+      this._computeFaceHiliteIndex(polygon);
+   } else { // hide
+      this.hilite.indexLength = 0;
+   }
+};
+
+DraftBench.prototype.hiliteBody = function(faceGroup, isHilite) {
+   if (isHilite) { // show
+      this._computeGroupHiliteIndex(faceGroup);
+   } else { // hide 
+      this.hilite.indexLength = 0;
+   }
+};
+
+
+// drawing routines -- draw selected polygon first, then draw unselected one, this is offseted
+DraftBench.prototype.draw = function(gl) {
+   // draw using index
+   try {
+      gl.bindShaderData(this.preview.shaderData);
+      gl.drawElements(gl.TRIANGLES, this.preview.indexLength, gl.UNSIGNED_INT, 0);
+   } catch (e) {
+      console.log(e);
+   }
+};
+
+// draw hilite polygon. not offset
+DraftBench.prototype.drawHilite = function(gl) {
+   if (this.hilite.indexLength == 0) {
+      return;
+   }
+   // set hilite color and hilite index
+   this.preview.shaderData.setIndex(this.hilite.index);
+   this.preview.shaderData.setUniform4fv("faceColor", [0.0, 1.0, 0.0, 0.35]);
+   gl.bindShaderData(this.preview.shaderData);
+   gl.drawElements(gl.TRIANGLES, this.hilite.indexLength, gl.UNSIGNED_INT, 0);
+   // restore color and index
+   this.preview.shaderData.setIndex(this.preview.index);
+   this.preview.shaderData.setUniform4fv("faceColor", [0.5, 0.5, 0.5, 1.0]);
+};
+
+// draw vertex, select color, 
+DraftBench.prototype.drawVertex = function(gl) {
+   // drawing using vertex array
+   try {
+      gl.bindShaderData(this.previewVertex.shaderData);
+      //gl.drawArrays(gl.POINTS, 0, this.vertices.length);
+      gl.drawElements(gl.POINTS, this.previewVertex.indexLength, gl.UNSIGNED_INT, 0);
+   } catch (e) {
+      console.log(e);
+   }
+};
+
+// draw edge, select color
+DraftBench.prototype.drawEdge = function(gl) {
+   gl.bindShaderData(this.previewEdge.shaderData);
+   gl.drawArrays(gl.LINES, 0, this.previewEdge.line.length/3);
+};
+
+DraftBench.prototype.drawPlane = (function() {
+   const diagonal = vec3.create();   // a diagonal [1,0,1] normalize vector
+   const up = vec3.fromValues(0, 1, 0);
+   const rotate = quat.create();
+   const transform = mat4.create();
+   const halfSize = vec3.create();
+   
+   return function(gl, plane) {   // the real function
+      vec3.copy(halfSize, plane.halfSize);
+      vec3.normalize(halfSize, halfSize);
+      vec3.cross(diagonal, halfSize, up);
+      vec3.normalize(diagonal, diagonal);
+      // find rotation between planeNormal and Axis alignment
+      quat.rotationTo(rotate, plane.normal, diagonal);
+      mat4.fromQuat(transform, rotate);
+      //vec3.transformMat4(halfSize, plane.halfSize, transform);
+      vec3.copy(halfSize, plane.halfSize);
+      // setup halfSize, 
+      vec3.negate(this.previewPlane.pts[0], halfSize);
+      let pt = this.previewPlane.pts[1];
+      pt[0] = halfSize[0];
+      pt[1] = -halfSize[1];
+      pt[2] = halfSize[2];
+      vec3.copy(this.previewPlane.pts[2], halfSize);
+      vec3.negate(this.previewPlane.pts[3], pt);
+      // update position.
+      for (let i = 0; i < 4; ++i) {
+         const pt = this.previewPlane.pts[i];
+         vec3.transformMat4(pt, pt, transform);
+         vec3.add(pt, plane.center, pt);
+      }
+      // upload result
+      this.previewPlane.shaderData.uploadAttribute('position', 0, this.previewPlane.rectangle);
+      // draw the rectangle plane
+      gl.disable(gl.CULL_FACE);
+      gl.useShader(__WEBPACK_IMPORTED_MODULE_1__wings3d_shaderprog__["solidColor"]);
+      gl.bindTransform();
+      gl.bindShaderData(this.previewPlane.shaderData);
+      gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
+      gl.disableShader();
+      gl.enable(gl.CULL_FACE);
+   };
+})();
+
+
+DraftBench.prototype.selectGroup = function(selection, isOn) {
+   const noSelection = new Set;
+   for (let polygon of selection) {
+      if (isOn) {
+         this.setFaceSelectionOn(polygon);
+      } else {
+         this.setFaceSelectionOff(polygon, noSelection);
+      }
+   }
+};
+
+
+DraftBench.prototype.resetBody = function(bodyGroup) {
+   this.selectGroup(bodyGroup, false);    // turn group off.
+};
+
+
+DraftBench.prototype.uploadFacePreview = function() {
+
+};
+
+DraftBench.prototype.uploadEdgePreview = function() {
+   this.previewEdge.shaderData.uploadAttribute('color', 0, this.previewEdge.color);
+};
+
+DraftBench.prototype.uploadVertexPreview = function() {
+   //if (this.locked) {
+      this.previewVertex.shaderData.uploadAttribute('color', 0, this.previewVertex.color);
+      //this.locked = false;
+   //}
+};
+
+
+DraftBench.prototype.hiliteVertex = function(vertex, show) {
+   // select polygon set color,
+   if (show) {
+      this.setVertexColor(vertex, 0.5);
+   } else {
+      this.setVertexColor(vertex, -0.5);
+   }
+};
+
+DraftBench.prototype.setVertexColor = function(vertex, color, groupSelection) {
+   // selected color
+   const j = vertex.index;  
+   this.previewVertex.color[j] += color;
+   if (!groupSelection) {
+      const point = this.previewVertex.color.subarray(j, j+1);
+      this.previewVertex.shaderData.uploadAttribute('color', j*Float32Array.BYTES_PER_ELEMENT, point);
+   }
+};
+
+DraftBench.prototype.resetSelectVertex = function() {
+   // zeroout the edge seleciton.
+   this.previewVertex.color.fill(0.0);
+   this.previewVertex.shaderData.uploadAttribute('color', 0, this.previewVertex.color);
+};
+
+DraftBench.prototype.hiliteEdge = function(hEdge, onOff) {
+   // select polygon set color,
+   if (onOff) {
+      this.setEdgeColor(hEdge.wingedEdge, 0.5);
+   } else {
+      this.setEdgeColor(hEdge.wingedEdge, -0.5);
+   }
+
+}
+
+DraftBench.prototype.setEdgeColor = function(wingedEdge, color, groupSelection) {
+   // selected color
+   const j = wingedEdge.index * 2;  
+   this.previewEdge.color[j] += color;
+   this.previewEdge.color[j+1] += color;
+   if (!groupSelection) {
+      const line = this.previewEdge.color.subarray(j, j+2);
+      this.previewEdge.shaderData.uploadAttribute('color', j*Float32Array.BYTES_PER_ELEMENT, line);
+   }
+};
+
+DraftBench.prototype.resetSelectEdge = function() {
+   // zeroout the edge seleciton.
+   this.previewEdge.color.fill(0.0);
+   this.previewEdge.shaderData.uploadAttribute('color', 0, this.previewEdge.color);
+};
+
+DraftBench.prototype.updateWEdges = function(wingedEdges) {
+   // update the edges.vertex
+   for (let wingedEdge of wingedEdges) {
+      let index = wingedEdge.index * 2 * 3;
+      for (let halfEdge of wingedEdge) {
+         this.previewEdge.line.set(halfEdge.origin.vertex, index);
+         index += 3;
+      }
+   }
+   this.previewEdge.shaderData.uploadAttribute('position', 0, this.previewEdge.line);
+}
+
+DraftBench.prototype.updateCentroid = function(snapshot) {
+   // done, update shader data, should we update each vertex individually?
+   const centroids = this.preview.centroid.buf.data.subarray(0, this.preview.centroid.buf.len)
+   this.preview.shaderData.uploadAttribute('position', this.buf.len*4, centroids);
+};
+
+
+DraftBench.prototype.updatePosition = function() {
+   // todo: we really should update as little as possible.
+   const vertices = this.buf.data.subarray(0, this.buf.len);
+   this.preview.shaderData.uploadAttribute('position', 0, vertices);
+   this.previewVertex.shaderData.uploadAttribute('position', 0, vertices);
+};
+
+DraftBench.prototype.setFaceSelectionOff = function(polygon, selectedSet) {
+   var self = this;
+   var selected = this.preview.selected;    // filled triangle's selection status.
+   polygon.eachVertex( function(vertex) {
+      // restore drawing color
+      var vertexSelected = false;
+      vertex.eachOutEdge( function(edge) {
+         if (edge.isNotBoundary() && (edge.face !== polygon) && selectedSet.has(edge.face)) {
+            vertexSelected = true;
+         }
+      }); 
+      if (vertexSelected === false) {  // no more sharing, can safely reset
+         selected[vertex.index] = 0.0;
+         self.preview.shaderData.uploadAttribute('selected', vertex.index*4, DraftBench.CONST.SELECTOFF);
+      }
+   });
+   selected = this.preview.centroid.selected;
+   selected[polygon.index]= 0.0;
+   var byteOffset = (this.vertices.length+polygon.index)*4;
+   this.preview.shaderData.uploadAttribute("selected", byteOffset, DraftBench.CONST.SELECTOFF);
+};
+DraftBench.prototype.setFaceSelectionOn = function(polygon) {
+   var self = this;
+   var selected = this.preview.selected;      // filled triangle's selection status.
+   // set the drawing color
+   polygon.eachVertex( function(vertex) {
+      selected[vertex.index] = 1.0;
+      self.preview.shaderData.uploadAttribute('selected', vertex.index*4, DraftBench.CONST.SELECTON);
+   });
+   selected = this.preview.centroid.selected;
+   selected[polygon.index]= 1.0;
+   var byteOffset = (this.vertices.length+polygon.index)*4;
+   this.preview.shaderData.uploadAttribute("selected", byteOffset, DraftBench.CONST.SELECTON);
+};
+
+DraftBench.prototype.resetSelectFace = function() {
+   this.preview.selected.fill(0.0);          // reset all polygon to non-selected 
+   this.preview.centroid.selected.fill(0.0);
+   var length = this.buf.len/3;
+   this.preview.shaderData.uploadAttribute("selected", 0, this.preview.selected.subarray(0, length));
+   var centroidLength = this.preview.centroid.buf.len/3;
+   this.preview.shaderData.uploadAttribute('selected', length*4, this.preview.centroid.selected.subarray(0, centroidLength));
+};
+
+
+DraftBench.prototype.hide = function(faceGroup) {
+   for (let polygon of faceGroup) {
+      polygon.isVisible = false;
+   }
+};
+
+DraftBench.prototype.show = function(faceGroup) {
+   for (let polygon of faceGroup) {
+      polygon.isVisible = true;
+   }
+};
+
+
+class CheckPoint extends __WEBPACK_IMPORTED_MODULE_5__wings3d_undo__["EditCommand"] { // do we really needs to inherited form EditCommand?
+   CheckPoint(draftBench, editCommand) {
+      this.command = editCommand;
+      this.draftBench = draftBench;
+      // map the (vertices, edges, faces) value.
+      this.vertices = [];
+      for (let vertex of draftBench.vertices) {
+         // outEdge index, need real pt?
+         if (vertex.isLive()) {
+            this.vertices.push( vertex.outEdge.wingedEdge.index );
+         } else {
+            this.vertices.push( -1 );
+         }
+      }
+      this.edges = [];
+      for (let wEdge of draftBench.edges) {
+         // left->next index, right->next index, origin index, dest index.
+         if (wEdge.isLive()) {
+            this.edges.push( wEdge.left.next.index, wEdge.right.next.index, wEdge.left.origin.index, wEdge.right.origin.index);
+         } else {
+            this.edges.push( -1, -1, -1, -1 );
+         }
+      }
+      this.faces = [];
+      for (let polygon of draftBench.faces) {
+         // halfEdge index.
+         if (polygon.isLive()) {
+            this.faces.push( polygon.halfEdge.index );
+         } else {
+            this.faces.push( -1 );
+         }
+      }
+   }
+
+   doIt() {
+      return this.command.doIt();
+   }
+
+   undo() {
+      this.command.undo();
+      // now check draftBench and our saved value.
+      // use index because draftBench could have more faces(all dead) than our Saved one due to expansion.
+      for (let i = 0; i < this.faces.length; ++i) {   // check polygon first, most like to have problems
+         const polygon = this.draftBench.faces[i];
+         if (polygon.isLive) {
+            if (polygon.halfEdge.index != this.faces[i]) {
+               geometryStatus("CheckPoint failed. non matching polygon halfEdge");
+               return;
+            }
+         } else {
+            if (this.faces[i] != -1) {
+               geometryStatus("CheckPoint failed. extra face");
+               return
+            }
+         }
+      }
+      for (let i = 0; i < this.vertices.lenth; ++i ) {   // check vertex next because of simplicity.
+         const vertex = this.draftBench.vertices[i];
+         if (vertex.isLive()) {
+            if (vertex.outEdge.wingedEdge.index != this.vertices[i]) {
+               geometryStatus("CheckPoint failed. non-matching vertex outEdge");
+               return;
+            }
+         } else {
+            if (this.vertices[i] != -1) {
+               geometryStatus("CheckPoint failed. extra vertex");
+               return;
+            }
+         }
+      }
+      // check edges
+      for (let i = 0; i < this.edges.length; i+=4) {
+         const wEdge = this.draftBench.edges[i];
+         if (wEdge.isAlive()) {
+            if (wEdge.left.next.index != this.edges[i] || wEdge.right.next.index != [i+1] ||
+                 wEdge.left.origin.index != this.edges[i+2] || wEdge.right.origin.index != this.edges[i+3]) {
+               geometryStatus("CheckPoint failed. non matching wEdge");
+               return;
+            }
+         } else {
+            if (this.edges[i] != -1) {
+               geometryStatus("CheckPoint failed. extra wEdge");
+               return;
+            }
+         }
+      }
+   }
+};
 
 
 
@@ -12596,303 +12692,8 @@ __WEBPACK_IMPORTED_MODULE_1__wings3d_js__["onReady"](init);
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "BoundingSphere", function() { return BoundingSphere; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "LooseOctree", function() { return LooseOctree; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_util__ = __webpack_require__(16);
-/*   require glmatrix
-//
-// LooseOctree and BoundingSphere.
-*/
-
-
-
-
-
-
-const BoundingSphere = function(polygon, center, radius) {
-   this.center = center;
-   this.radius = radius;
-   if (radius) {
-      this.radius2 = radius*radius;
-   }
-   this.polygon = polygon;
-   this.octree = null;
-};
-
-BoundingSphere.prototype.isLive = function() {
-   return (this.polygon.isVisible && this.polygon.isLive());
-};
-
-BoundingSphere.prototype.isIntersect = function(ray) {
-	//  Fast Ray Sphere Intersection - eric haine, realtimerendering, similar to graphic gem's Jeff Hultquist
-	var l = vec3.create();
-   vec3.sub(l, this.center, ray.origin);
-	var l2 = vec3.dot(l, l);
-	var projection = vec3.dot(l, ray.direction);
-   if ((projection < 0.0) && (l2 > this.radius2)) { // sphere is totally behind the camera, not just sphere's origin
-      return false;
-   }
-   if ((l2 - (projection*projection)) > this.radius2) {   // discriminant < 0.0f, no sqrt, no intersection.
-      return false;
-   }
-
-   // don't care about true intersection of the 2, just there is a intersection.
-   return true;
-};
-
-BoundingSphere.prototype.setSphere = function(sphere) {
-   this.center = sphere.center;
-   this.radius = sphere.radius;
-   this.radius2 = sphere.radius*sphere.radius;
-   if (this.octree) {
-      this.octree._move(this);
-   }
-};
-
-BoundingSphere.computeSphere = function(polygon, center) {  // vec3
-   // get all the polygon's vertex. compute barycentric.
-   center.fill(0.0);
-   var ret = {center: center, radius: 0.0};
-   polygon.eachVertex( function(vertex) {
-      vec3.add(ret.center, ret.center, vertex.vertex);
-   });
-   vec3.scale(ret.center, ret.center, 1.0/polygon.numberOfVertex);
-   // get the furthest distance. that the radius.
-   polygon.eachVertex( function(vertex) {
-      var distance = vec3.distance(ret.center, vertex.vertex);
-      if (distance > ret.radius) {
-         ret.radius = distance;
-      }
-   });
-   return ret;
-};
-
-// simple minded bounding sphere builder.
-BoundingSphere.create = function(polygon, center) {
-   var sphere = BoundingSphere.computeSphere(polygon, center);
-   return new BoundingSphere(polygon, sphere.center, sphere.radius);
-}
-BoundingSphere.allocate = function(polygon) {
-   return new BoundingSphere(polygon);
-}
-
-
-// loose octree for ease of implementation, and adequate performance. AABB tree, OBB tree can wait if needed.
-// http://www.tulrich.com/geekstuff/partitioning.html by Thatcher Ulrich
-class LooseOctree {  // this is really node
-   constructor(bvh, bound, level) {
-      this.bvh = bvh;
-      this.level = level;
-      this.node = [];
-      if (bound) {
-         this.bound = {center: vec3.clone(bound.center), halfSize: vec3.clone(bound.halfSize)};
-      }
-      //
-   }
-
-   *[Symbol.iterator]() {
-      yield this;
-      if (this.leaf) {
-         for (let i = 0; i < 8; ++i) {
-            const node = this.leaf[i];
-            if (node) {
-               yield* node;
-            }
-         }
-      }
-   }
-
-   getBound(bound) {
-      vec3.copy(bound.center, this.bound.center);
-      vec3.copy(bound.halfSize, this.bound.halfSize);
-   }
-
-   getExtent(extent, looseNess = 1.0) {
-      for (let axis=0; axis < 3; ++axis) {
-         const length = this.bound.halfSize[axis]*looseNess;   
-         extent.min[axis] = this.bound.center[axis]-length;
-         extent.max[axis] = this.bound.center[axis]+length;
-      } 
-   }
-
-   getLooseExtent(extent) {
-      this.getExtent(extent, LooseOctree.kLOOSENESS); // looseOctree's extent is 2x bigger.
-   }
-
-   static getOctant(sphere, bound) {
-      let index = 0;
-      const octant = [1, 2, 4];        // octant mapping
-      for (let axis = 0; axis < 3; ++axis) {
-         bound.halfSize[axis] /= 2;
-         if (sphere.radius > bound.halfSize[axis]) {  // does not fit in the children's bound
-            return -1;
-         } else if (sphere.center[axis] < bound.center[axis]) {
-            index += octant[axis];     // |= octant[axis] faster?
-            bound.center[axis] -= bound.halfSize[axis];
-         } else {
-            bound.center[axis] += bound.halfSize[axis];
-         }
-      }
-      return index;
-   }
-
-   check(duplicateSet) {
-      if (this.node) {
-         for (let sphere of this.node) {
-            if (duplicateSet.has(sphere)) {
-               console.log("octree problems");
-            } else {
-               duplicateSet.add(sphere);
-            }
-         }
-      } else {
-         for (let i = 0; i < 8; ++i) {
-            const octreeNode = this.leaf[i];
-            if (octreeNode) {
-               octreeNode.check(duplicateSet);
-            }
-         }
-         for (let i = 8; i < this.leaf.length; ++i) {
-            const sphere = this.leaf[i];
-            if (duplicateSet.has(sphere)) {
-               console.log("octree problems");
-            } else {
-               duplicateSet.add(sphere);
-            }
-         }
-      }
-   }
-
-   free() {
-      if (this.node) {
-         for (let sphere of this.node) {
-            sphere.octree = null;
-         }
-      } else {
-         for (let i = 0; i < 8; ++i) {
-            const octreeNode = this.leaf[i];
-            if (octreeNode) {
-               octreeNode.free();
-            }
-         }
-         for (let i = 8; i < this.leaf.length; ++i) {
-            const sphere = this.leaf[i];
-            sphere.octree = null;
-         }
-      }
-   }
-
-   // only expand when this.node.length > kTHRESHOLD. and this.leaf will double as this.node.
-   insert(sphere, bound) {
-      if (this.node) { // keep pushing.
-         this.node.push(sphere);
-         sphere.octree = this;
-         if (this.node.length >= LooseOctree.kTHRESHOLD) {  // now expand to children node if possible
-            this.leaf = [null, null, null, null, null, null, null, null];  // now setup leaf octant
-            let newBound = {center: vec3.create(), halfSize: vec3.create()};
-            let ret;
-            const node = this.node;
-            delete this.node;
-            for (let sphere of node) {  // redistribute to children or self.
-               vec3.copy(newBound.center, bound.center);
-               vec3.copy(newBound.halfSize, bound.halfSize);
-               ret = this.insert(sphere, newBound);
-            }
-            return ret;
-         }
-      } else {// not leaf node.
-         let index = LooseOctree.getOctant(sphere, bound);
-         if (index >= 0) {  // descent to children
-            let child = this.leaf[index];
-            if (child === null) {
-               child = new LooseOctree(this.bvh, bound, this.level+1);
-               this.leaf[index] = child;
-            }
-            return child.insert(sphere, bound);  
-         }
-         // larger than child size, so insert here.
-         this.leaf.push(sphere);
-         sphere.octree = this;
-      }
-      return this;
-   }
-
-   _move(sphere) {   // sphere size or center changed, check for moving to different node.
-      if (!this.isInside(sphere)) {
-         this._remove(sphere);
-         this.bvh.moveSphere(sphere);
-      }
-   }
-
-   _remove(sphere) {
-      if (sphere.octree === this) {
-         if (this.node) {
-            this.node.splice(this.node.indexOf(sphere), 1);
-         } else {
-            this.leaf.splice(this.leaf.indexOf(sphere), 1);
-         }
-         sphere.octree = null;
-      } else {
-         console.log("LooseOctree _remove error");
-      }
-   }
-
-   isInside(sphere) {
-      for (let axis = 0; axis < 3; ++axis) {
-         let length = this.bound.halfSize[axis];
-         if ( (length < sphere.radius) || 
-              (this.bound.center[axis]+length) < sphere.center[axis] ||
-              (this.bound.center[axis]-length) > sphere.center[axis]) {
-            return false;
-         }
-      }
-      return true;
-   }
-
-   //
-   // Revelles' algorithm, "An efficient parametric algorithm for octree traversal". <= todo
-   * intersectRay(ray, extent) {   // act as generator
-      if (this.node) {
-         for (let sphere of this.node) {
-            if (sphere.isIntersect(ray)) {
-               yield sphere;
-            }
-         }
-      } else {
-         for (let i = 8; i < this.leaf.length; ++i) {
-            const sphere = this.leaf[i];
-            if (sphere.isIntersect(ray)) {
-               yield sphere;
-            }
-         }
-         // check children, this is the hard part of Revelle's algorithm.
-         for (let i = 0; i < 8; ++i) {
-            const child = this.leaf[i];
-            if (child) {
-               child.getLooseExtent(extent);
-               if (__WEBPACK_IMPORTED_MODULE_0__wings3d_util__["intersectRayAABB"](ray, extent)) {
-                  yield* child.intersectRay(ray, extent);
-               }
-            }
-         }
-      }
-   }
-}
-LooseOctree.kTHRESHOLD = 128;    // read somewhere, 8-15 is a good number for octree node. expand to child only when node.length >= kTHRESHOLD
-LooseOctree.kLOOSENESS = 1.5;    // cannot change. because isInside depend on this property.
-
-
-
-
-
-
-/***/ }),
-/* 16 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "computeAngle", function() { return computeAngle; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getAxisAngle", function() { return getAxisAngle; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "computeEdgeNormal", function() { return computeEdgeNormal; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "intersectTriangle", function() { return intersectTriangle; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "intersectRayAABB", function() { return intersectRayAABB; });
@@ -13084,7 +12885,17 @@ function computeAngle(crossNorm, v0, v1, v2) {
    vec3.sub(edge0, v0.vertex, v1.vertex);
    vec3.sub(edge1, v2.vertex, v1.vertex);
    vec3.cross(crossNorm, edge0, edge1);
-   return Math.atan2(vec3.length(crossNorm), vec3.dot(edge0, edge1));
+   let rad = Math.atan2(vec3.length(crossNorm), vec3.dot(edge0, edge1));
+   vec3.normalize(crossNorm, crossNorm);
+   return rad;
+}
+
+function getAxisAngle(axis, vFrom, vTo) {
+   vec3.cross(axis, vFrom, vTo);
+   let rad = Math.atan2(vec3.length(axis), vec3.dot(vFrom, vTo));
+   vec3.normalize(axis, axis);
+   return rad;
+   //return 2*Math.acos( Math.abs( vec3.dot(vFrom, vTo), -1, 1 ) );
 }
 
 
@@ -13116,6 +12927,311 @@ function projectVec3(vertices, planeNormal, planeOrigin) {
       vec3.sub(vertex.vertex, vertex.vertex, pt);
    }
 };
+
+
+
+
+
+/***/ }),
+/* 16 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "BoundingSphere", function() { return BoundingSphere; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "LooseOctree", function() { return LooseOctree; });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_util__ = __webpack_require__(15);
+/*   require glmatrix
+//
+// LooseOctree and BoundingSphere.
+*/
+
+
+
+
+
+
+const BoundingSphere = function(polygon, center, radius) {
+   this.center = center;
+   this.radius = radius;
+   if (radius) {
+      this.radius2 = radius*radius;
+   }
+   this.polygon = polygon;
+   this.octree = null;
+};
+
+BoundingSphere.prototype.isLive = function() {
+   return (this.polygon.isVisible && this.polygon.isLive());
+};
+
+BoundingSphere.prototype.isIntersect = function(ray) {
+	//  Fast Ray Sphere Intersection - eric haine, realtimerendering, similar to graphic gem's Jeff Hultquist
+	var l = vec3.create();
+   vec3.sub(l, this.center, ray.origin);
+	var l2 = vec3.dot(l, l);
+	var projection = vec3.dot(l, ray.direction);
+   if ((projection < 0.0) && (l2 > this.radius2)) { // sphere is totally behind the camera, not just sphere's origin
+      return false;
+   }
+   if ((l2 - (projection*projection)) > this.radius2) {   // discriminant < 0.0f, no sqrt, no intersection.
+      return false;
+   }
+
+   // don't care about true intersection of the 2, just there is a intersection.
+   return true;
+};
+
+BoundingSphere.prototype.setSphere = function(sphere) {
+   this.center = sphere.center;
+   this.radius = sphere.radius;
+   this.radius2 = sphere.radius*sphere.radius;
+   if (this.octree) {
+      this.octree._move(this);
+   }
+};
+
+BoundingSphere.prototype.getBVHRoot = function() {
+   return this.octree.bvh.bvh.root;
+};
+
+BoundingSphere.computeSphere = function(polygon, center) {  // vec3
+   // get all the polygon's vertex. compute barycentric.
+   center.fill(0.0);
+   var ret = {center: center, radius: 0.0};
+   polygon.eachVertex( function(vertex) {
+      vec3.add(ret.center, ret.center, vertex.vertex);
+   });
+   vec3.scale(ret.center, ret.center, 1.0/polygon.numberOfVertex);
+   // get the furthest distance. that the radius.
+   polygon.eachVertex( function(vertex) {
+      var distance = vec3.distance(ret.center, vertex.vertex);
+      if (distance > ret.radius) {
+         ret.radius = distance;
+      }
+   });
+   return ret;
+};
+
+
+// simple minded bounding sphere builder.
+BoundingSphere.create = function(polygon, center) {
+   var sphere = BoundingSphere.computeSphere(polygon, center);
+   return new BoundingSphere(polygon, sphere.center, sphere.radius);
+}
+BoundingSphere.allocate = function(polygon) {
+   return new BoundingSphere(polygon);
+}
+
+
+// loose octree for ease of implementation, and adequate performance. AABB tree, OBB tree can wait if needed.
+// http://www.tulrich.com/geekstuff/partitioning.html by Thatcher Ulrich
+class LooseOctree {  // this is really node
+   constructor(bvh, bound, level) {
+      this.bvh = bvh;
+      this.level = level;
+      this.node = [];
+      if (bound) {
+         this.bound = {center: vec3.clone(bound.center), halfSize: vec3.clone(bound.halfSize)};
+      }
+      //
+   }
+
+   *[Symbol.iterator]() {
+      yield this;
+      if (this.leaf) {
+         for (let i = 0; i < 8; ++i) {
+            const node = this.leaf[i];
+            if (node) {
+               yield* node;
+            }
+         }
+      }
+   }
+
+   getHalfSize() {
+      return this.bound.halfSize;
+   }
+
+   getBound(bound) {
+      vec3.copy(bound.center, this.bound.center);
+      vec3.copy(bound.halfSize, this.bound.halfSize);
+   }
+
+   getExtent(extent, looseNess = 1.0) {
+      for (let axis=0; axis < 3; ++axis) {
+         const length = this.bound.halfSize[axis]*looseNess;   
+         extent.min[axis] = this.bound.center[axis]-length;
+         extent.max[axis] = this.bound.center[axis]+length;
+      } 
+   }
+
+   getLooseExtent(extent) {
+      this.getExtent(extent, LooseOctree.kLOOSENESS); // looseOctree's extent is 2x bigger.
+   }
+
+   static getOctant(sphere, bound) {
+      let index = 0;
+      const octant = [1, 2, 4];        // octant mapping
+      for (let axis = 0; axis < 3; ++axis) {
+         bound.halfSize[axis] /= 2;
+         if (sphere.radius > bound.halfSize[axis]) {  // does not fit in the children's bound
+            return -1;
+         } else if (sphere.center[axis] < bound.center[axis]) {
+            index += octant[axis];     // |= octant[axis] faster?
+            bound.center[axis] -= bound.halfSize[axis];
+         } else {
+            bound.center[axis] += bound.halfSize[axis];
+         }
+      }
+      return index;
+   }
+
+   check(duplicateSet) {
+      if (this.node) {
+         for (let sphere of this.node) {
+            if (duplicateSet.has(sphere)) {
+               console.log("octree problems");
+            } else {
+               duplicateSet.add(sphere);
+            }
+         }
+      } else {
+         for (let i = 0; i < 8; ++i) {
+            const octreeNode = this.leaf[i];
+            if (octreeNode) {
+               octreeNode.check(duplicateSet);
+            }
+         }
+         for (let i = 8; i < this.leaf.length; ++i) {
+            const sphere = this.leaf[i];
+            if (duplicateSet.has(sphere)) {
+               console.log("octree problems");
+            } else {
+               duplicateSet.add(sphere);
+            }
+         }
+      }
+   }
+
+   free() {
+      if (this.node) {
+         for (let sphere of this.node) {
+            sphere.octree = null;
+         }
+      } else {
+         for (let i = 0; i < 8; ++i) {
+            const octreeNode = this.leaf[i];
+            if (octreeNode) {
+               octreeNode.free();
+            }
+         }
+         for (let i = 8; i < this.leaf.length; ++i) {
+            const sphere = this.leaf[i];
+            sphere.octree = null;
+         }
+      }
+   }
+
+   // only expand when this.node.length > kTHRESHOLD. and this.leaf will double as this.node.
+   insert(sphere, bound) {
+      if (this.node) { // keep pushing.
+         this.node.push(sphere);
+         sphere.octree = this;
+         if (this.node.length >= LooseOctree.kTHRESHOLD) {  // now expand to children node if possible
+            this.leaf = [null, null, null, null, null, null, null, null];  // now setup leaf octant
+            let newBound = {center: vec3.create(), halfSize: vec3.create()};
+            let ret;
+            const node = this.node;
+            delete this.node;
+            for (let sphere of node) {  // redistribute to children or self.
+               vec3.copy(newBound.center, bound.center);
+               vec3.copy(newBound.halfSize, bound.halfSize);
+               ret = this.insert(sphere, newBound);
+            }
+            return ret;
+         }
+      } else {// not leaf node.
+         let index = LooseOctree.getOctant(sphere, bound);
+         if (index >= 0) {  // descent to children
+            let child = this.leaf[index];
+            if (child === null) {
+               child = new LooseOctree(this.bvh, bound, this.level+1);
+               this.leaf[index] = child;
+            }
+            return child.insert(sphere, bound);  
+         }
+         // larger than child size, so insert here.
+         this.leaf.push(sphere);
+         sphere.octree = this;
+      }
+      return this;
+   }
+
+   _move(sphere) {   // sphere size or center changed, check for moving to different node.
+      if (!this.isInside(sphere)) {
+         this._remove(sphere);
+         this.bvh.moveSphere(sphere);
+      }
+   }
+
+   _remove(sphere) {
+      if (sphere.octree === this) {
+         if (this.node) {
+            this.node.splice(this.node.indexOf(sphere), 1);
+         } else {
+            this.leaf.splice(this.leaf.indexOf(sphere), 1);
+         }
+         sphere.octree = null;
+      } else {
+         console.log("LooseOctree _remove error");
+      }
+   }
+
+   isInside(sphere) {
+      for (let axis = 0; axis < 3; ++axis) {
+         let length = this.bound.halfSize[axis];
+         if ( (length < sphere.radius) || 
+              (this.bound.center[axis]+length) < sphere.center[axis] ||
+              (this.bound.center[axis]-length) > sphere.center[axis]) {
+            return false;
+         }
+      }
+      return true;
+   }
+
+   //
+   // Revelles' algorithm, "An efficient parametric algorithm for octree traversal". <= todo
+   * intersectRay(ray, extent) {   // act as generator
+      if (this.node) {
+         for (let sphere of this.node) {
+            if (sphere.isIntersect(ray)) {
+               yield sphere;
+            }
+         }
+      } else {
+         for (let i = 8; i < this.leaf.length; ++i) {
+            const sphere = this.leaf[i];
+            if (sphere.isIntersect(ray)) {
+               yield sphere;
+            }
+         }
+         // check children, this is the hard part of Revelle's algorithm.
+         for (let i = 0; i < 8; ++i) {
+            const child = this.leaf[i];
+            if (child) {
+               child.getLooseExtent(extent);
+               if (__WEBPACK_IMPORTED_MODULE_0__wings3d_util__["intersectRayAABB"](ray, extent)) {
+                  yield* child.intersectRay(ray, extent);
+               }
+            }
+         }
+      }
+   }
+}
+LooseOctree.kTHRESHOLD = 128;    // read somewhere, 8-15 is a good number for octree node. expand to child only when node.length >= kTHRESHOLD
+LooseOctree.kLOOSENESS = 1.5;    // cannot change. because isInside depend on this property.
+
 
 
 
@@ -14429,6 +14545,115 @@ class ImportExporter {
 /* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
+__webpack_require__(23);
+__webpack_require__(11);
+__webpack_require__(16);
+__webpack_require__(14);
+__webpack_require__(13);
+__webpack_require__(10);
+__webpack_require__(8);
+__webpack_require__(5);
+__webpack_require__(32);
+__webpack_require__(18);
+__webpack_require__(21);
+__webpack_require__(17);
+__webpack_require__(9);
+__webpack_require__(4);
+__webpack_require__(19);
+__webpack_require__(6);
+__webpack_require__(33);
+__webpack_require__(34);
+__webpack_require__(2);
+__webpack_require__(3);
+__webpack_require__(15);
+__webpack_require__(12);
+__webpack_require__(1);
+__webpack_require__(7);
+module.exports = __webpack_require__(0);
+
+
+/***/ }),
+/* 23 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__css_default_css__ = __webpack_require__(24);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__css_default_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__css_default_css__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__css_menu_css__ = __webpack_require__(25);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__css_menu_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__css_menu_css__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__css_button_css__ = __webpack_require__(26);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__css_button_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__css_button_css__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__css_form_css__ = __webpack_require__(27);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__css_form_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3__css_form_css__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__css_bubble_css__ = __webpack_require__(28);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__css_bubble_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4__css_bubble_css__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_view__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_camera__ = __webpack_require__(14);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_interact__ = __webpack_require__(17);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__wings3d_ui__ = __webpack_require__(2);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__js_plugins_cubeshape_js__ = __webpack_require__(31);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__js_plugins_wavefront_obj_js__ = __webpack_require__(20);
+// app.js
+//  for bundling and initialization
+//
+
+// import css, should bundle it to a different files.
+
+
+
+
+
+
+// import js
+
+
+
+
+
+
+// plugins
+
+
+
+
+__WEBPACK_IMPORTED_MODULE_8__wings3d__["start"]('glcanvas');
+
+/***/ }),
+/* 24 */
+/***/ (function(module, exports) {
+
+// removed by extract-text-webpack-plugin
+
+/***/ }),
+/* 25 */
+/***/ (function(module, exports) {
+
+// removed by extract-text-webpack-plugin
+
+/***/ }),
+/* 26 */
+/***/ (function(module, exports) {
+
+// removed by extract-text-webpack-plugin
+
+/***/ }),
+/* 27 */
+/***/ (function(module, exports) {
+
+// removed by extract-text-webpack-plugin
+
+/***/ }),
+/* 28 */
+/***/ (function(module, exports) {
+
+// removed by extract-text-webpack-plugin
+
+/***/ }),
+/* 29 */
+/***/ (function(module, exports, __webpack_require__) {
+
 var indexOf = __webpack_require__(30);
 
 var Object_keys = function (obj) {
@@ -14568,115 +14793,6 @@ exports.createContext = Script.createContext = function (context) {
     return copy;
 };
 
-
-/***/ }),
-/* 23 */
-/***/ (function(module, exports, __webpack_require__) {
-
-__webpack_require__(24);
-__webpack_require__(12);
-__webpack_require__(15);
-__webpack_require__(14);
-__webpack_require__(8);
-__webpack_require__(11);
-__webpack_require__(9);
-__webpack_require__(5);
-__webpack_require__(32);
-__webpack_require__(18);
-__webpack_require__(21);
-__webpack_require__(17);
-__webpack_require__(10);
-__webpack_require__(4);
-__webpack_require__(19);
-__webpack_require__(6);
-__webpack_require__(33);
-__webpack_require__(34);
-__webpack_require__(2);
-__webpack_require__(3);
-__webpack_require__(16);
-__webpack_require__(13);
-__webpack_require__(1);
-__webpack_require__(7);
-module.exports = __webpack_require__(0);
-
-
-/***/ }),
-/* 24 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__css_default_css__ = __webpack_require__(25);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__css_default_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__css_default_css__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__css_menu_css__ = __webpack_require__(26);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__css_menu_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__css_menu_css__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__css_button_css__ = __webpack_require__(27);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__css_button_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__css_button_css__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__css_form_css__ = __webpack_require__(28);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__css_form_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3__css_form_css__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__css_bubble_css__ = __webpack_require__(29);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__css_bubble_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4__css_bubble_css__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_view__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_camera__ = __webpack_require__(14);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_interact__ = __webpack_require__(17);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__wings3d_ui__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__js_plugins_cubeshape_js__ = __webpack_require__(31);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__js_plugins_wavefront_obj_js__ = __webpack_require__(20);
-// app.js
-//  for bundling and initialization
-//
-
-// import css, should bundle it to a different files.
-
-
-
-
-
-
-// import js
-
-
-
-
-
-
-// plugins
-
-
-
-
-__WEBPACK_IMPORTED_MODULE_8__wings3d__["start"]('glcanvas');
-
-/***/ }),
-/* 25 */
-/***/ (function(module, exports) {
-
-// removed by extract-text-webpack-plugin
-
-/***/ }),
-/* 26 */
-/***/ (function(module, exports) {
-
-// removed by extract-text-webpack-plugin
-
-/***/ }),
-/* 27 */
-/***/ (function(module, exports) {
-
-// removed by extract-text-webpack-plugin
-
-/***/ }),
-/* 28 */
-/***/ (function(module, exports) {
-
-// removed by extract-text-webpack-plugin
-
-/***/ }),
-/* 29 */
-/***/ (function(module, exports) {
-
-// removed by extract-text-webpack-plugin
 
 /***/ }),
 /* 30 */

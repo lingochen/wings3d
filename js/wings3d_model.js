@@ -14,9 +14,7 @@ import {WingedTopology} from './wings3d_wingededge';
 import * as View from './wings3d_view';
 import * as Wings3D from './wings3d';
 import {EditCommand} from './wings3d_undo';
-import {DraftBench} from './wings3d_draftbench';
 import * as Util from './wings3d_util';
-import { runInThisContext } from 'vm';
 
 
 class MeshAllocatorProxy { // we could use Proxy, but ....

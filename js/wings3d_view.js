@@ -240,18 +240,27 @@ function makeCombineIntoWorld(cageSelection) {
 //
 // mouse handling hilite
 //
-const hilite = {cage: null, edge: null, vertex: null, face: null};
+const hilite = {cage: null, edge: null, vertex: null, face: null, plane: null};
 let currentCage;
 const handler = {camera: null, mousemove: null, mouseSelect: null};
 
 const isVertexSelectable = () => handler.mouseSelect ? handler.mouseSelect.isVertexSelectable() : (mode.current ? mode.current.isVertexSelectable() : true);
 const isEdgeSelectable = () => handler.mouseSelect ? handler.mouseSelect.isEdgeSelectable() : (mode.current ? mode.current.isEdgeSelectable() : true);
 const isFaceSelectable = () => handler.mouseSelect ? handler.mouseSelect.isFaceSelectable() : (mode.current ? mode.current.isFaceSelectable() : true);
+const isPlaneShown = ()=> handler.mouseSelect ? handler.mouseSelect.getPlaneNormal() : false;
 
 function setCurrent(edge, intersect, center) {
    // find out origin, dest. which is closer.
    let hiliteVertex = null, hiliteEdge = null, hiliteFace = null, hiliteCage = null;
    if (edge !== null) {
+      if (isPlaneShown()) {
+         const sphere = draftBench.boundingSpheres[edge.face.index];
+         const halfSize = sphere.getBVHRoot().getHalfSize();
+         hilite.plane = {center: intersect, normal: handler.mouseSelect.getPlaneNormal(), halfSize: halfSize};
+         return;
+      }
+      hilite.plane = null;
+
       const a = vec3.create(), b = vec3.create(), c = vec3.create();
       const destination = edge.destination().vertex; // find out if we are within the distance threshold
       const origin = edge.origin.vertex;
@@ -676,6 +685,9 @@ function drawWorld(gl) {
          mode.current.draw(gl, draftBench);
       //}
       // hack -- draw other hilite selection if any
+      if (hilite.plane) {
+         draftBench.drawPlane(gl, hilite.plane);
+      }
       if (hilite.vertex && (mode.current !== mode.vertex)) {
          mode.vertex.draw(gl, draftBench);
       }

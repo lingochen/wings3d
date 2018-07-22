@@ -183,7 +183,17 @@ function computeAngle(crossNorm, v0, v1, v2) {
    vec3.sub(edge0, v0.vertex, v1.vertex);
    vec3.sub(edge1, v2.vertex, v1.vertex);
    vec3.cross(crossNorm, edge0, edge1);
-   return Math.atan2(vec3.length(crossNorm), vec3.dot(edge0, edge1));
+   let rad = Math.atan2(vec3.length(crossNorm), vec3.dot(edge0, edge1));
+   vec3.normalize(crossNorm, crossNorm);
+   return rad;
+}
+
+function getAxisAngle(axis, vFrom, vTo) {
+   vec3.cross(axis, vFrom, vTo);
+   let rad = Math.atan2(vec3.length(axis), vec3.dot(vFrom, vTo));
+   vec3.normalize(axis, axis);
+   return rad;
+   //return 2*Math.acos( Math.abs( vec3.dot(vFrom, vTo), -1, 1 ) );
 }
 
 
@@ -219,6 +229,7 @@ function projectVec3(vertices, planeNormal, planeOrigin) {
 
 export {
    computeAngle,
+   getAxisAngle,
    computeEdgeNormal,
    intersectTriangle,
    intersectRayAABB,

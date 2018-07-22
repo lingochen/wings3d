@@ -48,6 +48,10 @@ BoundingSphere.prototype.setSphere = function(sphere) {
    }
 };
 
+BoundingSphere.prototype.getBVHRoot = function() {
+   return this.octree.bvh.bvh.root;
+};
+
 BoundingSphere.computeSphere = function(polygon, center) {  // vec3
    // get all the polygon's vertex. compute barycentric.
    center.fill(0.0);
@@ -65,6 +69,7 @@ BoundingSphere.computeSphere = function(polygon, center) {  // vec3
    });
    return ret;
 };
+
 
 // simple minded bounding sphere builder.
 BoundingSphere.create = function(polygon, center) {
@@ -99,6 +104,10 @@ class LooseOctree {  // this is really node
             }
          }
       }
+   }
+
+   getHalfSize() {
+      return this.bound.halfSize;
    }
 
    getBound(bound) {

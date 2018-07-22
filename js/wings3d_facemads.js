@@ -100,7 +100,7 @@ class FaceMadsor extends Madsor {
          command.doIt();
          View.undoQueue(command);
        });
-       UI.bindMenuItem(action.faceFlattenNormal.name, (_ev) => {
+      UI.bindMenuItem(action.faceFlattenNormal.name, (_ev) => {
          const cmd = new GenericEditCommand(this, this.flatten);
          if (cmd.doIt()) {
             View.undoQueue(cmd);

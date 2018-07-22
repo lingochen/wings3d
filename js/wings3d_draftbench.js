@@ -14,11 +14,11 @@
 //    last pass: draw hilite (line, polygon, or vertex).
 //
 "use strict";
-import {gl, ShaderData} from './wings3d_gl'; 
+import {gl, ShaderData} from './wings3d_gl';
+import * as ShaderProg from './wings3d_shaderprog';
+import * as Util from './wings3d_util';
 import {BoundingSphere} from './wings3d_boundingvolume';
-import {WingedTopology, MeshAllocator} from './wings3d_wingededge';
-import * as View from './wings3d_view';
-import * as Wings3D from './wings3d';
+import {MeshAllocator} from './wings3d_wingededge';
 import {EditCommand} from './wings3d_undo';
 
 
@@ -60,6 +60,17 @@ const DraftBench = function(defaultSize = 2048) {  // should only be created by 
    this._resizePreviewVertex(0);
    // body state.
    this.previewBody = {hilite: false};
+   // shown plane normal
+   this.previewPlane = {};
+   this.previewPlane.shaderData = gl.createShaderData();
+   this.previewPlane.shaderData.setUniform4fv("faceColor", [1.0, 0.0, 0.0, 1.0]);
+   this.previewPlane.shaderData.createAttribute('position', layoutVec, gl.STATIC_DRAW);
+   this.previewPlane.rectangle = new Float32Array(3*4);  // 
+   this.previewPlane.shaderData.resizeAttribute('position', Float32Array.BYTES_PER_ELEMENT*3*4);
+   this.previewPlane.pts = [];
+   for (let i = 0; i < 4; ++i) {
+      this.previewPlane.pts[i] = this.previewPlane.rectangle.subarray(i*3, (i+1)*3);
+   }
 };
 
 DraftBench.CONST = (function() {
@@ -494,7 +505,51 @@ DraftBench.prototype.drawVertex = function(gl) {
 DraftBench.prototype.drawEdge = function(gl) {
    gl.bindShaderData(this.previewEdge.shaderData);
    gl.drawArrays(gl.LINES, 0, this.previewEdge.line.length/3);
-}
+};
+
+DraftBench.prototype.drawPlane = (function() {
+   const diagonal = vec3.create();   // a diagonal [1,0,1] normalize vector
+   const up = vec3.fromValues(0, 1, 0);
+   const rotate = quat.create();
+   const transform = mat4.create();
+   const halfSize = vec3.create();
+   
+   return function(gl, plane) {   // the real function
+      vec3.copy(halfSize, plane.halfSize);
+      vec3.normalize(halfSize, halfSize);
+      vec3.cross(diagonal, halfSize, up);
+      vec3.normalize(diagonal, diagonal);
+      // find rotation between planeNormal and Axis alignment
+      quat.rotationTo(rotate, plane.normal, diagonal);
+      mat4.fromQuat(transform, rotate);
+      //vec3.transformMat4(halfSize, plane.halfSize, transform);
+      vec3.copy(halfSize, plane.halfSize);
+      // setup halfSize, 
+      vec3.negate(this.previewPlane.pts[0], halfSize);
+      let pt = this.previewPlane.pts[1];
+      pt[0] = halfSize[0];
+      pt[1] = -halfSize[1];
+      pt[2] = halfSize[2];
+      vec3.copy(this.previewPlane.pts[2], halfSize);
+      vec3.negate(this.previewPlane.pts[3], pt);
+      // update position.
+      for (let i = 0; i < 4; ++i) {
+         const pt = this.previewPlane.pts[i];
+         vec3.transformMat4(pt, pt, transform);
+         vec3.add(pt, plane.center, pt);
+      }
+      // upload result
+      this.previewPlane.shaderData.uploadAttribute('position', 0, this.previewPlane.rectangle);
+      // draw the rectangle plane
+      gl.disable(gl.CULL_FACE);
+      gl.useShader(ShaderProg.solidColor);
+      gl.bindTransform();
+      gl.bindShaderData(this.previewPlane.shaderData);
+      gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
+      gl.disableShader();
+      gl.enable(gl.CULL_FACE);
+   };
+})();
 
 
 DraftBench.prototype.selectGroup = function(selection, isOn) {

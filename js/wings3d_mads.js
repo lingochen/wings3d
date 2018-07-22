@@ -4,7 +4,7 @@
  *
 **/
 import {gl} from './wings3d_gl';
-import {EditCommand, MouseMoveHandler, MoveableCommand} from './wings3d_undo';
+import {EditCommand, EditSelectHandler, MouseMoveHandler, MoveableCommand} from './wings3d_undo';
 import {PreviewCage} from './wings3d_model';
 import * as View from './wings3d_view';
 import * as UI from './wings3d_ui';
@@ -118,6 +118,17 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
          UI.bindMenuItem(scaleRadialMode[axis].name, (_ev) => {
             View.attachHandlerMouseMove(new ScaleHandler(this, radialVec[axis]));
           });
+      }
+      const planeNorm = [[0, 0, 1], [0, 1, 0], [1, 0, 0]];
+      // plane Cut
+      const planeCut = { face: [action.facePlaneCutX, action.facePlaneCutY, action.facePlaneCutZ], };
+      const planeCutMode = planeCut[mode];
+      if (planeCutMode) {
+         for (let axis = 0; axis < 3; ++axis) {
+            UI.bindMenuItem(planeCutMode[axis].name, (_ev) =>{
+               View.attachHandlerMouseSelect(new PlaneCutHandler(this, planeNorm[axis]));
+             });
+         }
       }
    } 
 
@@ -628,6 +639,27 @@ class ExtrudeNormalHandler extends ExtrudeHandler {
    }
 }
 // end of extrude
+
+
+class PlaneCutHandler extends EditSelectHandler {
+   constructor(madsor, planeNorm) {
+      super(true, true, true, planeNorm);
+      this.madsor = madsor;
+   }
+
+   hilite(hilite, currentCage) {}
+   select(hilite) {}
+
+   doIt() {
+   }
+
+   undo() {
+
+   }
+
+
+}
+
 
 class GenericEditCommand extends EditCommand {
    constructor(madsor, doCmd, doParams, undoCmd) {
