@@ -23,20 +23,7 @@ BoundingSphere.prototype.isLive = function() {
 };
 
 BoundingSphere.prototype.isIntersect = function(ray) {
-	//  Fast Ray Sphere Intersection - eric haine, realtimerendering, similar to graphic gem's Jeff Hultquist
-	var l = vec3.create();
-   vec3.sub(l, this.center, ray.origin);
-	var l2 = vec3.dot(l, l);
-	var projection = vec3.dot(l, ray.direction);
-   if ((projection < 0.0) && (l2 > this.radius2)) { // sphere is totally behind the camera, not just sphere's origin
-      return false;
-   }
-   if ((l2 - (projection*projection)) > this.radius2) {   // discriminant < 0.0f, no sqrt, no intersection.
-      return false;
-   }
-
-   // don't care about true intersection of the 2, just there is a intersection.
-   return true;
+   return Util.intersectRaySphere(ray, this);
 };
 
 BoundingSphere.prototype.setSphere = function(sphere) {
@@ -113,6 +100,11 @@ class LooseOctree {  // this is really node
    getBound(bound) {
       vec3.copy(bound.center, this.bound.center);
       vec3.copy(bound.halfSize, this.bound.halfSize);
+   }
+
+   getLooseBound(bound) {
+      vec3.copy(bound.center, this.bound.center);
+      vec3.scale(bound.halfSize, this.bound.halfSize, LooseOctree.kLOOSENESS);
    }
 
    getExtent(extent, looseNess = 1.0) {
@@ -257,19 +249,27 @@ class LooseOctree {  // this is really node
       return true;
    }
 
+
+   * intersectExtent(shape) {   // act as generator
+      const extent = {min: vec3.create(), max: vec3.create()};
+      this.getLooseExtent(extent);
+      if (shape.intersectAAExtent(extent)) {
+         yield* this._extentIntersect(shape, extent);
+      }
+   }
    //
    // Revelles' algorithm, "An efficient parametric algorithm for octree traversal". <= todo
-   * intersectRay(ray, extent) {   // act as generator
+   * _extentIntersect(shape, extent) {
       if (this.node) {
          for (let sphere of this.node) {
-            if (sphere.isIntersect(ray)) {
+            if (shape.intersectSphere(sphere)) {
                yield sphere;
             }
          }
       } else {
          for (let i = 8; i < this.leaf.length; ++i) {
             const sphere = this.leaf[i];
-            if (sphere.isIntersect(ray)) {
+            if (shape.intersectSphere(sphere)) {
                yield sphere;
             }
          }
@@ -278,21 +278,96 @@ class LooseOctree {  // this is really node
             const child = this.leaf[i];
             if (child) {
                child.getLooseExtent(extent);
-               if (Util.intersectRayAABB(ray, extent)) {
-                  yield* child.intersectRay(ray, extent);
+               if (shape.intersectAAExtent(extent)) {
+                  yield* child._extentIntersect(ray, extent);
+               }
+            }
+         }
+      }
+   }
+
+   // bound = {center, halfSize};
+   * intersectBound(shape) {
+      const bound = {center: vec3.create(), halfSize: vec3.create()};
+      this.getLooseBound(bound);
+      if (shape.intersectAABB(bound)) {
+         yield* this._boundIntersect(shape, bound);
+      }
+   }
+   * _boundIntersect(shape, bound) {
+      if (this.node) {
+         for (let sphere of this.node) {
+            if (shape.intersectSphere(sphere)) {
+               yield sphere;
+            }
+         }
+      } else {
+         for (let i = 8; i < this.leaf.length; ++i) {
+            const sphere = this.leaf[i];
+            if (shape.intersectSphere(sphere)) {
+               yield sphere;
+            }
+         }
+         // check children, this is the hard part of Revelle's algorithm.
+         for (let i = 0; i < 8; ++i) {
+            const child = this.leaf[i];
+            if (child) {
+               child.getLooseBound(bound);
+               if (shape.intersectAABB(bound)) {
+                  yield* child._boundIntersect(shape, bound);
                }
             }
          }
       }
    }
 }
-LooseOctree.kTHRESHOLD = 128;    // read somewhere, 8-15 is a good number for octree node. expand to child only when node.length >= kTHRESHOLD
+LooseOctree.kTHRESHOLD = 88;    // read somewhere, 8-15 is a good number for octree node. expand to child only when node.length >= kTHRESHOLD
 LooseOctree.kLOOSENESS = 1.5;    // cannot change. because isInside depend on this property.
 
 
+
+class Plane {
+   constructor(normal, pt) {
+      this.normal = vec3.clone(normal);
+      vec3.normalize(this.normal, this.normal);    // make sure.
+      this.pt = vec3.clone(pt);
+      this.distance = vec3.dot(this.normal, this.pt); // dot(n, pt) = k form.
+   }
+
+   closestPoint(out, point) { // projection to plane
+      Util.closestPointToPlane(out, point, this);
+   }
+
+   intersectAABB(box) {
+      return Util.intersectPlaneAABB(this, box);
+   }
+
+   intersectSphere(sphere) {
+      return Util.intersectPlaneSphere(this, sphere);
+   }
+}
+
+
+class Ray {
+   constructor(origin, dir) {
+      this.origin = origin;
+      this.direction = dir;
+      this.invDir = vec3.fromValues(1/dir[0], 1/dir[1], 1/dir[2]);   //1/0 still work for our purpose.
+   }
+
+   intersectSphere(sphere) {
+      return Util.intersectRaySphere(this, sphere);
+   }
+
+   intersectAAExtent(extent) {
+      return Util.intersectRayAAExtent(this, extent);
+   }
+}
 
 
 export {
    BoundingSphere,
    LooseOctree,
+   Plane,
+   Ray
 }

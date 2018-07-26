@@ -647,8 +647,13 @@ class PlaneCutHandler extends EditSelectHandler {
       this.madsor = madsor;
    }
 
-   hilite(hilite, currentCage) {}
-   select(hilite) {}
+   hilite(_hilite, _currentCage) { return true; }
+   
+   select(hilite) {
+      if (hilite) {
+
+      }
+   }
 
    doIt() {
    }

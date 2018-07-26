@@ -8,7 +8,7 @@ import * as UI from './wings3d_ui';
 import * as Renderer from './wings3d_render';
 import * as Camera from './wings3d_camera';
 import {gl} from './wings3d_gl';
-import { WavefrontObjImportExporter } from './plugins/wavefront_obj';
+import {WavefrontObjImportExporter } from './plugins/wavefront_obj';
 import * as Wings3D from './wings3d';
 import {EditCommandSimple, EditCommandCombo} from './wings3d_undo';
 import {FaceMadsor} from './wings3d_facemads';
@@ -17,6 +17,7 @@ import {VertexMadsor} from './wings3d_vertexmads';
 import {BodyMadsor} from './wings3d_bodymads';
 import {PreviewCage} from './wings3d_model';
 import {DraftBench, CheckPoint} from './wings3d_draftbench';
+import {Ray} from './wings3d_boundingvolume';
 
 
 // 
@@ -243,6 +244,8 @@ function makeCombineIntoWorld(cageSelection) {
 const hilite = {cage: null, edge: null, vertex: null, face: null, plane: null};
 let currentCage;
 const handler = {camera: null, mousemove: null, mouseSelect: null};
+const planeRect = {center: vec3.create(), halfSize: vec3.create(), normal: vec3.create()};
+
 
 const isVertexSelectable = () => handler.mouseSelect ? handler.mouseSelect.isVertexSelectable() : (mode.current ? mode.current.isVertexSelectable() : true);
 const isEdgeSelectable = () => handler.mouseSelect ? handler.mouseSelect.isEdgeSelectable() : (mode.current ? mode.current.isEdgeSelectable() : true);
@@ -252,15 +255,8 @@ const isPlaneShown = ()=> handler.mouseSelect ? handler.mouseSelect.getPlaneNorm
 function setCurrent(edge, intersect, center) {
    // find out origin, dest. which is closer.
    let hiliteVertex = null, hiliteEdge = null, hiliteFace = null, hiliteCage = null;
+   hilite.plane = null;
    if (edge !== null) {
-      if (isPlaneShown()) {
-         const sphere = draftBench.boundingSpheres[edge.face.index];
-         const halfSize = sphere.getBVHRoot().getHalfSize();
-         hilite.plane = {center: intersect, normal: handler.mouseSelect.getPlaneNormal(), halfSize: halfSize};
-         return;
-      }
-      hilite.plane = null;
-
       const a = vec3.create(), b = vec3.create(), c = vec3.create();
       const destination = edge.destination().vertex; // find out if we are within the distance threshold
       const origin = edge.origin.vertex;
@@ -348,6 +344,23 @@ function setCurrent(edge, intersect, center) {
          hiliteCage.hiliteBody(true);
       }
       hilite.cage = hiliteCage;
+   }
+   if (edge && isPlaneShown()) {
+      const sphere = draftBench.boundingSpheres[edge.face.index];
+      vec3.copy(planeRect.halfSize, sphere.getBVHRoot().getHalfSize());
+      vec3.copy(planeRect.normal, handler.mouseSelect.getPlaneNormal());
+      //vec3.copy(planeRect.center, intersect);
+      if (hilite.vertex) {
+         vec3.copy(planeRect.center, hilite.vertex.vertex);
+         hilite.plane = planeRect;
+      } else if (hilite.edge) {
+         vec3.add(planeRect.center, hilite.edge.origin.vertex, hilite.edge.destination().vertex);
+         vec3.scale(planeRect.center, planeRect.center, 0.5);
+         hilite.plane = planeRect;
+      } else if (hilite.face) {
+         vec3.copy(planeRect.center, sphere.center);
+         hilite.plane = planeRect;
+      }
    }
 }
 
@@ -494,7 +507,7 @@ function canvasHandleMouseMove(e) {
 
       vec3.sub(ptFar, ptFar, ptNear);
       vec3.normalize(ptFar, ptFar);
-      var ray = {origin: ptNear, direction: ptFar, invDir: vec3.fromValues(1/ptFar[0], 1/ptFar[1], 1/ptFar[2])};  // 1/0 still work for our purpose.
+      const ray = new Ray(ptNear, ptFar);
       //geometryStatus("mouse position: " + ptNear[0] + ", " + ptNear[1] + "," + ptNear[2] + ", <br />"+ ptFar[0] + ", " + ptFar[1] + ", " + ptFar[2]);
       rayPick(ray);
       // selectDrag if left button mousedown
@@ -685,9 +698,6 @@ function drawWorld(gl) {
          mode.current.draw(gl, draftBench);
       //}
       // hack -- draw other hilite selection if any
-      if (hilite.plane) {
-         draftBench.drawPlane(gl, hilite.plane);
-      }
       if (hilite.vertex && (mode.current !== mode.vertex)) {
          mode.vertex.draw(gl, draftBench);
       }
@@ -696,6 +706,9 @@ function drawWorld(gl) {
       }
       if (hilite.face && (mode.current !== mode.face)) {
          mode.face.draw(gl, draftBench);
+      }
+      if (hilite.plane) {
+         draftBench.drawPlane(gl, hilite.plane);
       }
       // end of hack ----
 

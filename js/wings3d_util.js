@@ -52,7 +52,7 @@ function intersectTriangle(ray, triangle) {
 };
 
 // http://psgraphics.blogspot.com/2016/02/new-simple-ray-box-test-from-andrew.html
-function intersectRayAABB(ray, aabb) {
+function intersectRayAAExtent(ray, aabb) {
    let tmin = Number.NEGATIVE_INFINITY;
    let tmax = Number.POSITIVE_INFINITY;
    for (let axis = 0; axis < 3; ++axis) {
@@ -69,7 +69,74 @@ function intersectRayAABB(ray, aabb) {
       }
    }
    return (tmax > 0);
-}
+};
+
+const intersectRaySphere = (function() {
+	//  Fast Ray Sphere Intersection - eric haine, realtimerendering, similar to graphic gem's Jeff Hultquist
+   const l = vec3.create();
+   return function(ray, sphere) {
+      vec3.sub(l, sphere.center, ray.origin);
+	   const l2 = vec3.dot(l, l);
+	   const projection = vec3.dot(l, ray.direction);
+      if ((projection < 0.0) && (l2 > sphere.radius2)) { // sphere is totally behind the camera, not just sphere's origin
+         return false;
+      }
+      if ((l2 - (projection*projection)) > sphere.radius2) {   // discriminant < 0.0f, no sqrt, no intersection.
+         return false;
+      }
+
+      // don't care about true intersection of the 2, just there is a intersection.
+      return true;
+   };
+})();
+
+
+const intersectPlaneSphere = (function() {
+   const pt = vec3.create();
+   return function(plane, sphere) {
+      closestPointToPlane(pt, sphere.center, plane);
+      return vec3.squaredDistance(pt, sphere.center) < sphere.radius2;
+   }
+})();
+
+// gamephysics cookbook.
+function intersectPlaneAABB(plane, box) {
+   const pLen = box.halfSize[0] * Math.abs(plane.normal[0]) + box.halfSize[1] * Math.abs(plane.normal[1]) + box.halfSize[2] * Math.abs(plane.normal[2]);
+   const distance = vec3.dot(plane.normal, box.center) - plane.distance;
+   return Math.abs(distance) <= pLen;
+};
+
+// paul burke explain the intersection code pretty clearly.
+// same side check and coplane check are from moller.
+function intersectPlaneHEdge(out, plane, hEdge) {
+   const pt0 = hEdge.origin().vertex;
+   const pt1 = hEdge.destination().vertex;
+
+   const d0 = vec3.dot(plane.normal, pt0) - plane.distance; 
+   const d1 = vec3.dot(plane.normal, pt1) - plane.distance;
+   // coplanarity check
+   if (Math.abs(d0) < kEPSILON) { d0=0.0; }
+   if (Math.abs(d1) < kEPSILON) { d1=0.0; }
+   
+   if ((d0*d1) > 0) {  // check if on the same side
+      return 0;
+   } else if ((d0 === 0.0) && (d1 === 0.0)) { // both point on the plane, we will said no intersection.
+      return -1;
+   }
+
+   // compute intersection pt (out).
+   if (out) {
+      // t = (plane.normal dot (plane.pt - pt0)) / (plane.normal dot (pt1-pt0))
+      vec3.sub(out, plane.pt, pt0);
+      const tDer = vec3.dot(plane.normal, out);
+      vec3.sub(out, pt1, pt0);
+      const t = tDer / vec3.dot(plane.normal, out);
+      // out = pt0 + t(pt1-pt0)
+      vec3.scaleAndAdd(out, pt0, out, t);
+   }
+
+   return 1;
+};
 
 /* from
  * @article{MollerHughes99,
@@ -226,13 +293,23 @@ function projectVec3(vertices, planeNormal, planeOrigin) {
    }
 };
 
+function closestPointToPlane(out, point, plane) { // projection to plane
+   const distance = vec3.dot(plane.normal, point) - plane.distance;
+   vec3.scaleAndAdd(out, point, plane.normal, -distance);
+}
+
 
 export {
+   closestPointToPlane,
    computeAngle,
    getAxisAngle,
    computeEdgeNormal,
    intersectTriangle,
-   intersectRayAABB,
+   intersectRayAAExtent,
+   intersectRaySphere,
+   intersectPlaneSphere,
+   intersectPlaneAABB,
+   intersectPlaneHEdge,
    projectVec3,
    rotationFromToVec3,
    reflectionMat4,

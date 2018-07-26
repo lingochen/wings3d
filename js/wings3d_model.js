@@ -170,14 +170,6 @@ PreviewCage.prototype.updateBVH = function() {
 
 //-- end of bvh
 
-// todo: octree optimization.
-PreviewCage.prototype.intersectRay = function * (ray) {
-   const extent = {min: vec3.create(), max:vec3.create()};
-   this.bvh.root.getLooseExtent(extent);
-   if (Util.intersectRayAABB(ray, extent)) {
-      yield* this.bvh.root.intersectRay(ray, extent);
-   }
-};
 PreviewCage.prototype.rayPick = function(ray) {
    if (this.bvh.root === null) {
       this.initBVH();
@@ -190,7 +182,7 @@ PreviewCage.prototype.rayPick = function(ray) {
    var center;
    var hitT = Number.POSITIVE_INFINITY;   // z_far is the furthest possible intersection
 
-   for (let sphere of this.intersectRay(ray)) {
+   for (let sphere of this.bvh.root.intersectExtent(ray)) {
       sphere.polygon.eachEdge( function(edge) {
          // now check the triangle is ok?
          var t = Util.intersectTriangle(ray, [sphere.center, edge.origin.vertex, edge.destination().vertex]);
@@ -3168,6 +3160,22 @@ PreviewCage.prototype.flattenVertex = function(planeNormal) {
       return ret;
    }
    return null;
+};
+
+
+// check if given plane can cut selected face. coplanar does not count.
+PreviewCage.prototype.planeCuttableFace = function(plane) {
+   for (let sphere of this.bvh.root.intersectBound(plane)) {
+      if (this.selectedSet.has(sphere.polygon)) {
+         // now, check hEdge against plane.
+         for (let hEdge of sphere.polygon.hEdges()) {
+            if (Util.intersectPlaneHEdge(null, plane, hEdge) > 0) {   // yes, at least an intersection. whole line on plane don't count
+               return true;
+            }
+         }
+      }
+   }
+   return false;
 };
 
 
