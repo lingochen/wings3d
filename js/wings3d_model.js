@@ -3169,7 +3169,8 @@ PreviewCage.prototype.planeCuttableFace = function(plane) {
       if (this.selectedSet.has(sphere.polygon)) {
          // now, check hEdge against plane.
          for (let hEdge of sphere.polygon.hEdges()) {
-            if (Util.intersectPlaneHEdge(null, plane, hEdge) > 0) {   // yes, at least an intersection. whole line on plane don't count
+            const t = Util.intersectPlaneHEdge(null, plane, hEdge);
+            if ((t>0) && (t<1)) {   // intersection at begin or end don't count
                return true;
             }
          }
@@ -3177,6 +3178,10 @@ PreviewCage.prototype.planeCuttableFace = function(plane) {
    }
    return false;
 };
+
+
+// cut the selected by the given plane, and reconnect
+
 
 
 

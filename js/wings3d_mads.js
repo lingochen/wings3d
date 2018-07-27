@@ -9,6 +9,7 @@ import {PreviewCage} from './wings3d_model';
 import * as View from './wings3d_view';
 import * as UI from './wings3d_ui';
 import {action} from './wings3d';
+import { Plane } from './wings3d_boundingvolume';
 
 
 class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
@@ -119,14 +120,13 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
             View.attachHandlerMouseMove(new ScaleHandler(this, radialVec[axis]));
           });
       }
-      const planeNorm = [[0, 0, 1], [0, 1, 0], [1, 0, 0]];
       // plane Cut
       const planeCut = { face: [action.facePlaneCutX, action.facePlaneCutY, action.facePlaneCutZ], };
       const planeCutMode = planeCut[mode];
       if (planeCutMode) {
          for (let axis = 0; axis < 3; ++axis) {
             UI.bindMenuItem(planeCutMode[axis].name, (_ev) =>{
-               View.attachHandlerMouseSelect(new PlaneCutHandler(this, planeNorm[axis]));
+               View.attachHandlerMouseSelect(new PlaneCutHandler(this, axisVec[axis]));
              });
          }
       }
@@ -163,6 +163,15 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
             func.call(preview, undefined, ...args);
          }
       }
+   }
+
+   resultAll(func, ...args) {
+      for (let preview of this.selectedCage()) {
+         if (func.call(preview, ...args)) {
+            return true;
+         }
+      }
+      return false;
    }
 
    * eachCage() {
@@ -645,13 +654,24 @@ class PlaneCutHandler extends EditSelectHandler {
    constructor(madsor, planeNorm) {
       super(true, true, true, planeNorm);
       this.madsor = madsor;
+      this.center = vec3.create();
    }
 
-   hilite(_hilite, _currentCage) { return true; }
+   hilite(hilite, _currentCage) {
+      if (hilite.plane) {
+         this.plane = new Plane(this.planeNormal, hilite.plane.center);
+         if (this.madsor.planeCuttable(this.plane)) {
+            hilite.plane.hilite = true;
+            return true;
+         }
+         hilite.plane.hilite = false;
+         delete this.plane;
+      }
+      return true;   // always true, we want user to see selection.
+   }
    
-   select(hilite) {
-      if (hilite) {
-
+   select(_hilite) {
+      if (this.plane) { // doIt    
       }
    }
 

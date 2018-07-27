@@ -244,7 +244,7 @@ function makeCombineIntoWorld(cageSelection) {
 const hilite = {cage: null, edge: null, vertex: null, face: null, plane: null};
 let currentCage;
 const handler = {camera: null, mousemove: null, mouseSelect: null};
-const planeRect = {center: vec3.create(), halfSize: vec3.create(), normal: vec3.create()};
+const planeRect = {center: vec3.create(), halfSize: vec3.create(), normal: vec3.create(), hilite: false};
 
 
 const isVertexSelectable = () => handler.mouseSelect ? handler.mouseSelect.isVertexSelectable() : (mode.current ? mode.current.isVertexSelectable() : true);
@@ -270,6 +270,12 @@ function setCurrent(edge, intersect, center) {
       const isVertex = isVertexSelectable();
       const isEdge = isEdgeSelectable();
       const isFace = isFaceSelectable();
+      const isPlane = isPlaneShown();
+      const sphere = draftBench.boundingSpheres[edge.face.index];
+      if (isPlane) {
+         vec3.copy(planeRect.halfSize, sphere.getBVHRoot().getHalfSize());
+         vec3.copy(planeRect.normal, handler.mouseSelect.getPlaneNormal());
+      }
       if (isVertex) {
          if (dist0 < dist1) {
             if (!(isEdge || isFace) || (dist0 < threshold)) {  // only multiple selectable needs to check threshold
@@ -280,6 +286,10 @@ function setCurrent(edge, intersect, center) {
                hiliteVertex = edge.destination();
             }
          }
+         if (hiliteVertex && isPlane) {
+            vec3.copy(planeRect.center, hiliteVertex.vertex);
+            hilite.plane = planeRect;
+         }
       }
       if (isEdge && (hiliteVertex === null)) { // check out if edge is close enough
          vec3.cross(a, a, b);
@@ -287,10 +297,19 @@ function setCurrent(edge, intersect, center) {
          const distance = vec3.length(a) / dist2;
          if (!(isVertex || isFace) || (distance < threshold)) {
             hiliteEdge = edge;
+            if (isPlane) {
+               vec3.add(planeRect.center, hiliteEdge.origin.vertex, hiliteEdge.destination().vertex);
+               vec3.scale(planeRect.center, planeRect.center, 0.5);
+               hilite.plane = planeRect;
+            }
          }
       }
       if (isFace && (hiliteVertex === null) && (hiliteEdge === null)) {   // now hilite face
          hiliteFace = edge.face;
+         if (isPlane) {
+            vec3.copy(planeRect.center, sphere.center);
+            hilite.plane = planeRect;
+         }
       }
       if (!(isVertex || isEdge || isFace)) {    // all 3 mode not true then only bodyMode possible.
          hiliteCage = currentCage;
@@ -302,7 +321,7 @@ function setCurrent(edge, intersect, center) {
          draftBench.hiliteVertex(hilite.vertex, false);
       }
       if (hiliteVertex !== null) {
-         if (handler.mouseSelect && !handler.mouseSelect.hilite( {vertex: hiliteVertex}, currentCage)) {
+         if (handler.mouseSelect && !handler.mouseSelect.hilite( {vertex: hiliteVertex, plane: hilite.plane}, currentCage)) {
             hiliteVertex = null;
          } else {
             draftBench.hiliteVertex(hiliteVertex, true);
@@ -315,7 +334,7 @@ function setCurrent(edge, intersect, center) {
          draftBench.hiliteEdge(hilite.edge, false);
       }
       if (hiliteEdge !== null) {
-         if (handler.mouseSelect && !handler.mouseSelect.hilite( {edge: hiliteEdge}, currentCage)) {
+         if (handler.mouseSelect && !handler.mouseSelect.hilite( {edge: hiliteEdge, plane: hilite.plane}, currentCage)) {
             hiliteEdge = null;
          } else {
             draftBench.hiliteEdge(hiliteEdge, true);
@@ -328,7 +347,7 @@ function setCurrent(edge, intersect, center) {
          draftBench.hiliteFace(hilite.face, false); // hiliteFace(null, false)?
       }
       if (hiliteFace !== null) {
-         if (handler.mouseSelect && !handler.mouseSelect.hilite( {face: hiliteFace}, currentCage)) {
+         if (handler.mouseSelect && !handler.mouseSelect.hilite( {face: hiliteFace, plane: hilite.plane}, currentCage)) {
             hiliteFace = null;
          } else {
             draftBench.hiliteFace(hiliteFace, true);
@@ -345,22 +364,8 @@ function setCurrent(edge, intersect, center) {
       }
       hilite.cage = hiliteCage;
    }
-   if (edge && isPlaneShown()) {
-      const sphere = draftBench.boundingSpheres[edge.face.index];
-      vec3.copy(planeRect.halfSize, sphere.getBVHRoot().getHalfSize());
-      vec3.copy(planeRect.normal, handler.mouseSelect.getPlaneNormal());
-      //vec3.copy(planeRect.center, intersect);
-      if (hilite.vertex) {
-         vec3.copy(planeRect.center, hilite.vertex.vertex);
-         hilite.plane = planeRect;
-      } else if (hilite.edge) {
-         vec3.add(planeRect.center, hilite.edge.origin.vertex, hilite.edge.destination().vertex);
-         vec3.scale(planeRect.center, planeRect.center, 0.5);
-         hilite.plane = planeRect;
-      } else if (hilite.face) {
-         vec3.copy(planeRect.center, sphere.center);
-         hilite.plane = planeRect;
-      }
+   if (!(hilite.vertex || hilite.edge || hilite.face)) {
+      hilite.plane = null;
    }
 }
 

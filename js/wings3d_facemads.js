@@ -212,6 +212,10 @@ class FaceMadsor extends Madsor {
       return this.snapshotAll(PreviewCage.prototype.flattenFace, axis);
    }
 
+   planeCuttable(plane) {
+      return this.resultAll(PreviewCage.prototype.planeCuttableFace, plane);
+   }
+
    dragSelect(cage, hilite, selectArray, onOff) {
       if (hilite.face !== null) {
         if (cage.dragSelectFace(hilite.face, onOff)) {

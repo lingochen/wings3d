@@ -279,7 +279,7 @@ class LooseOctree {  // this is really node
             if (child) {
                child.getLooseExtent(extent);
                if (shape.intersectAAExtent(extent)) {
-                  yield* child._extentIntersect(ray, extent);
+                  yield* child._extentIntersect(shape, extent);
                }
             }
          }

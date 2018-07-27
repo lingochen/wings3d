@@ -520,7 +520,7 @@ DraftBench.prototype.drawPlane = (function() {
       vec3.cross(diagonal, halfSize, up);
       vec3.normalize(diagonal, diagonal);
       // find rotation between planeNormal and Axis alignment
-      quat.rotationTo(rotate, plane.normal, diagonal);
+      quat.rotationTo(rotate, diagonal, plane.normal);//, diagonal);
       mat4.fromQuat(transform, rotate);
       //vec3.transformMat4(halfSize, plane.halfSize, transform);
       vec3.copy(halfSize, plane.halfSize);
@@ -540,6 +540,11 @@ DraftBench.prototype.drawPlane = (function() {
       }
       // upload result
       this.previewPlane.shaderData.uploadAttribute('position', 0, this.previewPlane.rectangle);
+      if (plane.hilite) {  // set color
+         this.previewPlane.shaderData.setUniform4fv("faceColor", [0.0, 1.0, 0.0, 1.0]);
+      } else {
+         this.previewPlane.shaderData.setUniform4fv("faceColor", [0.1, 0.1, 0.1, 1.0]);
+      }
       // draw the rectangle plane
       gl.disable(gl.CULL_FACE);
       gl.useShader(ShaderProg.solidColor);

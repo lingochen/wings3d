@@ -106,36 +106,50 @@ function intersectPlaneAABB(plane, box) {
    return Math.abs(distance) <= pLen;
 };
 
+// return value:
+// -2 for no intersection
+// -1 for co planar on the plane
+// 0-1 for intersection t.
+// 0.5 when no (out) intersection pt provided.
+// algorithm
 // paul burke explain the intersection code pretty clearly.
 // same side check and coplane check are from moller.
 function intersectPlaneHEdge(out, plane, hEdge) {
-   const pt0 = hEdge.origin().vertex;
+   const pt0 = hEdge.origin.vertex;
    const pt1 = hEdge.destination().vertex;
 
-   const d0 = vec3.dot(plane.normal, pt0) - plane.distance; 
-   const d1 = vec3.dot(plane.normal, pt1) - plane.distance;
+   let d0 = vec3.dot(plane.normal, pt0) - plane.distance; 
+   let d1 = vec3.dot(plane.normal, pt1) - plane.distance;
    // coplanarity check
    if (Math.abs(d0) < kEPSILON) { d0=0.0; }
    if (Math.abs(d1) < kEPSILON) { d1=0.0; }
    
+   let t;
    if ((d0*d1) > 0) {  // check if on the same side
-      return 0;
-   } else if ((d0 === 0.0) && (d1 === 0.0)) { // both point on the plane, we will said no intersection.
-      return -1;
+      return -2;
+   } else if (d0 == 0.0) {
+      if (d1 == 0.0) {  // co planar
+         return -1;
+      }
+      t = 0;            // intersect at begin
+   } else if (d1 == 0.0) {
+      t = 1;            // intersect at end
    }
 
    // compute intersection pt (out).
    if (out) {
-      // t = (plane.normal dot (plane.pt - pt0)) / (plane.normal dot (pt1-pt0))
-      vec3.sub(out, plane.pt, pt0);
-      const tDer = vec3.dot(plane.normal, out);
-      vec3.sub(out, pt1, pt0);
-      const t = tDer / vec3.dot(plane.normal, out);
+      if (t === undefined) {
+         // t = (plane.normal dot (plane.pt - pt0)) / (plane.normal dot (pt1-pt0))
+         vec3.sub(out, plane.pt, pt0);
+         const tDer = vec3.dot(plane.normal, out);
+         vec3.sub(out, pt1, pt0);
+         t = tDer / vec3.dot(plane.normal, out);
+      }
       // out = pt0 + t(pt1-pt0)
       vec3.scaleAndAdd(out, pt0, out, t);
    }
 
-   return 1;
+   return (t !== undefined)? t : 0.5;  // 0.5 for intersection not 0 or 1.
 };
 
 /* from
