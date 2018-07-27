@@ -537,18 +537,18 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "render", function() { return render; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_render__ = __webpack_require__(19);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_camera__ = __webpack_require__(14);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_camera__ = __webpack_require__(15);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_gl__ = __webpack_require__(5);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__plugins_wavefront_obj__ = __webpack_require__(20);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_undo__ = __webpack_require__(3);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_facemads__ = __webpack_require__(8);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d_edgemads__ = __webpack_require__(10);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__wings3d_vertexmads__ = __webpack_require__(12);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__wings3d_bodymads__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_facemads__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d_edgemads__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__wings3d_vertexmads__ = __webpack_require__(13);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__wings3d_bodymads__ = __webpack_require__(12);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__wings3d_model__ = __webpack_require__(4);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12__wings3d_draftbench__ = __webpack_require__(13);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_13__wings3d_boundingvolume__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12__wings3d_draftbench__ = __webpack_require__(14);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_13__wings3d_boundingvolume__ = __webpack_require__(8);
 /*
 //     This module implements most of the commands in the View menu. 
 //
@@ -795,7 +795,7 @@ function makeCombineIntoWorld(cageSelection) {
 const hilite = {cage: null, edge: null, vertex: null, face: null, plane: null};
 let currentCage;
 const handler = {camera: null, mousemove: null, mouseSelect: null};
-const planeRect = {center: vec3.create(), halfSize: vec3.create(), normal: vec3.create()};
+const planeRect = {center: vec3.create(), halfSize: vec3.create(), normal: vec3.create(), hilite: false};
 
 
 const isVertexSelectable = () => handler.mouseSelect ? handler.mouseSelect.isVertexSelectable() : (mode.current ? mode.current.isVertexSelectable() : true);
@@ -821,6 +821,12 @@ function setCurrent(edge, intersect, center) {
       const isVertex = isVertexSelectable();
       const isEdge = isEdgeSelectable();
       const isFace = isFaceSelectable();
+      const isPlane = isPlaneShown();
+      const sphere = draftBench.boundingSpheres[edge.face.index];
+      if (isPlane) {
+         vec3.copy(planeRect.halfSize, sphere.getBVHRoot().getHalfSize());
+         vec3.copy(planeRect.normal, handler.mouseSelect.getPlaneNormal());
+      }
       if (isVertex) {
          if (dist0 < dist1) {
             if (!(isEdge || isFace) || (dist0 < threshold)) {  // only multiple selectable needs to check threshold
@@ -831,6 +837,10 @@ function setCurrent(edge, intersect, center) {
                hiliteVertex = edge.destination();
             }
          }
+         if (hiliteVertex && isPlane) {
+            vec3.copy(planeRect.center, hiliteVertex.vertex);
+            hilite.plane = planeRect;
+         }
       }
       if (isEdge && (hiliteVertex === null)) { // check out if edge is close enough
          vec3.cross(a, a, b);
@@ -838,10 +848,19 @@ function setCurrent(edge, intersect, center) {
          const distance = vec3.length(a) / dist2;
          if (!(isVertex || isFace) || (distance < threshold)) {
             hiliteEdge = edge;
+            if (isPlane) {
+               vec3.add(planeRect.center, hiliteEdge.origin.vertex, hiliteEdge.destination().vertex);
+               vec3.scale(planeRect.center, planeRect.center, 0.5);
+               hilite.plane = planeRect;
+            }
          }
       }
       if (isFace && (hiliteVertex === null) && (hiliteEdge === null)) {   // now hilite face
          hiliteFace = edge.face;
+         if (isPlane) {
+            vec3.copy(planeRect.center, sphere.center);
+            hilite.plane = planeRect;
+         }
       }
       if (!(isVertex || isEdge || isFace)) {    // all 3 mode not true then only bodyMode possible.
          hiliteCage = currentCage;
@@ -853,7 +872,7 @@ function setCurrent(edge, intersect, center) {
          draftBench.hiliteVertex(hilite.vertex, false);
       }
       if (hiliteVertex !== null) {
-         if (handler.mouseSelect && !handler.mouseSelect.hilite( {vertex: hiliteVertex}, currentCage)) {
+         if (handler.mouseSelect && !handler.mouseSelect.hilite( {vertex: hiliteVertex, plane: hilite.plane}, currentCage)) {
             hiliteVertex = null;
          } else {
             draftBench.hiliteVertex(hiliteVertex, true);
@@ -866,7 +885,7 @@ function setCurrent(edge, intersect, center) {
          draftBench.hiliteEdge(hilite.edge, false);
       }
       if (hiliteEdge !== null) {
-         if (handler.mouseSelect && !handler.mouseSelect.hilite( {edge: hiliteEdge}, currentCage)) {
+         if (handler.mouseSelect && !handler.mouseSelect.hilite( {edge: hiliteEdge, plane: hilite.plane}, currentCage)) {
             hiliteEdge = null;
          } else {
             draftBench.hiliteEdge(hiliteEdge, true);
@@ -879,7 +898,7 @@ function setCurrent(edge, intersect, center) {
          draftBench.hiliteFace(hilite.face, false); // hiliteFace(null, false)?
       }
       if (hiliteFace !== null) {
-         if (handler.mouseSelect && !handler.mouseSelect.hilite( {face: hiliteFace}, currentCage)) {
+         if (handler.mouseSelect && !handler.mouseSelect.hilite( {face: hiliteFace, plane: hilite.plane}, currentCage)) {
             hiliteFace = null;
          } else {
             draftBench.hiliteFace(hiliteFace, true);
@@ -896,22 +915,8 @@ function setCurrent(edge, intersect, center) {
       }
       hilite.cage = hiliteCage;
    }
-   if (edge && isPlaneShown()) {
-      const sphere = draftBench.boundingSpheres[edge.face.index];
-      vec3.copy(planeRect.halfSize, sphere.getBVHRoot().getHalfSize());
-      vec3.copy(planeRect.normal, handler.mouseSelect.getPlaneNormal());
-      //vec3.copy(planeRect.center, intersect);
-      if (hilite.vertex) {
-         vec3.copy(planeRect.center, hilite.vertex.vertex);
-         hilite.plane = planeRect;
-      } else if (hilite.edge) {
-         vec3.add(planeRect.center, hilite.edge.origin.vertex, hilite.edge.destination().vertex);
-         vec3.scale(planeRect.center, planeRect.center, 0.5);
-         hilite.plane = planeRect;
-      } else if (hilite.face) {
-         vec3.copy(planeRect.center, sphere.center);
-         hilite.plane = planeRect;
-      }
+   if (!(hilite.vertex || hilite.edge || hilite.face)) {
+      hilite.plane = null;
    }
 }
 
@@ -1904,7 +1909,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "PreviewCage", function() { return PreviewCage; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "CreatePreviewCageCommand", function() { return CreatePreviewCageCommand; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__ = __webpack_require__(5);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_boundingvolume__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_boundingvolume__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_wingededge__ = __webpack_require__(7);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_view__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d__ = __webpack_require__(0);
@@ -5075,9 +5080,25 @@ PreviewCage.prototype.flattenVertex = function(planeNormal) {
 };
 
 
-PreviewCage.prototype.planeCutFace = function(plane) {
-
+// check if given plane can cut selected face. coplanar does not count.
+PreviewCage.prototype.planeCuttableFace = function(plane) {
+   for (let sphere of this.bvh.root.intersectBound(plane)) {
+      if (this.selectedSet.has(sphere.polygon)) {
+         // now, check hEdge against plane.
+         for (let hEdge of sphere.polygon.hEdges()) {
+            const t = __WEBPACK_IMPORTED_MODULE_6__wings3d_util__["intersectPlaneHEdge"](null, plane, hEdge);
+            if ((t>0) && (t<1)) {   // intersection at begin or end don't count
+               return true;
+            }
+         }
+      }
+   }
+   return false;
 };
+
+
+// cut the selected by the given plane, and reconnect
+
 
 
 
@@ -8643,11 +8664,391 @@ WingedTopology.prototype.undoHole = function(hole) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "BoundingSphere", function() { return BoundingSphere; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "LooseOctree", function() { return LooseOctree; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "Plane", function() { return Plane; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "Ray", function() { return Ray; });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_util__ = __webpack_require__(16);
+/*   require glmatrix
+//
+// LooseOctree and BoundingSphere.
+*/
+
+
+
+
+
+
+const BoundingSphere = function(polygon, center, radius) {
+   this.center = center;
+   this.radius = radius;
+   if (radius) {
+      this.radius2 = radius*radius;
+   }
+   this.polygon = polygon;
+   this.octree = null;
+};
+
+BoundingSphere.prototype.isLive = function() {
+   return (this.polygon.isVisible && this.polygon.isLive());
+};
+
+BoundingSphere.prototype.isIntersect = function(ray) {
+   return __WEBPACK_IMPORTED_MODULE_0__wings3d_util__["intersectRaySphere"](ray, this);
+};
+
+BoundingSphere.prototype.setSphere = function(sphere) {
+   this.center = sphere.center;
+   this.radius = sphere.radius;
+   this.radius2 = sphere.radius*sphere.radius;
+   if (this.octree) {
+      this.octree._move(this);
+   }
+};
+
+BoundingSphere.prototype.getBVHRoot = function() {
+   return this.octree.bvh.bvh.root;
+};
+
+BoundingSphere.computeSphere = function(polygon, center) {  // vec3
+   // get all the polygon's vertex. compute barycentric.
+   center.fill(0.0);
+   var ret = {center: center, radius: 0.0};
+   polygon.eachVertex( function(vertex) {
+      vec3.add(ret.center, ret.center, vertex.vertex);
+   });
+   vec3.scale(ret.center, ret.center, 1.0/polygon.numberOfVertex);
+   // get the furthest distance. that the radius.
+   polygon.eachVertex( function(vertex) {
+      var distance = vec3.distance(ret.center, vertex.vertex);
+      if (distance > ret.radius) {
+         ret.radius = distance;
+      }
+   });
+   return ret;
+};
+
+
+// simple minded bounding sphere builder.
+BoundingSphere.create = function(polygon, center) {
+   var sphere = BoundingSphere.computeSphere(polygon, center);
+   return new BoundingSphere(polygon, sphere.center, sphere.radius);
+}
+BoundingSphere.allocate = function(polygon) {
+   return new BoundingSphere(polygon);
+}
+
+
+// loose octree for ease of implementation, and adequate performance. AABB tree, OBB tree can wait if needed.
+// http://www.tulrich.com/geekstuff/partitioning.html by Thatcher Ulrich
+class LooseOctree {  // this is really node
+   constructor(bvh, bound, level) {
+      this.bvh = bvh;
+      this.level = level;
+      this.node = [];
+      if (bound) {
+         this.bound = {center: vec3.clone(bound.center), halfSize: vec3.clone(bound.halfSize)};
+      }
+      //
+   }
+
+   *[Symbol.iterator]() {
+      yield this;
+      if (this.leaf) {
+         for (let i = 0; i < 8; ++i) {
+            const node = this.leaf[i];
+            if (node) {
+               yield* node;
+            }
+         }
+      }
+   }
+
+   getHalfSize() {
+      return this.bound.halfSize;
+   }
+
+   getBound(bound) {
+      vec3.copy(bound.center, this.bound.center);
+      vec3.copy(bound.halfSize, this.bound.halfSize);
+   }
+
+   getLooseBound(bound) {
+      vec3.copy(bound.center, this.bound.center);
+      vec3.scale(bound.halfSize, this.bound.halfSize, LooseOctree.kLOOSENESS);
+   }
+
+   getExtent(extent, looseNess = 1.0) {
+      for (let axis=0; axis < 3; ++axis) {
+         const length = this.bound.halfSize[axis]*looseNess;   
+         extent.min[axis] = this.bound.center[axis]-length;
+         extent.max[axis] = this.bound.center[axis]+length;
+      } 
+   }
+
+   getLooseExtent(extent) {
+      this.getExtent(extent, LooseOctree.kLOOSENESS); // looseOctree's extent is 2x bigger.
+   }
+
+   static getOctant(sphere, bound) {
+      let index = 0;
+      const octant = [1, 2, 4];        // octant mapping
+      for (let axis = 0; axis < 3; ++axis) {
+         bound.halfSize[axis] /= 2;
+         if (sphere.radius > bound.halfSize[axis]) {  // does not fit in the children's bound
+            return -1;
+         } else if (sphere.center[axis] < bound.center[axis]) {
+            index += octant[axis];     // |= octant[axis] faster?
+            bound.center[axis] -= bound.halfSize[axis];
+         } else {
+            bound.center[axis] += bound.halfSize[axis];
+         }
+      }
+      return index;
+   }
+
+   check(duplicateSet) {
+      if (this.node) {
+         for (let sphere of this.node) {
+            if (duplicateSet.has(sphere)) {
+               console.log("octree problems");
+            } else {
+               duplicateSet.add(sphere);
+            }
+         }
+      } else {
+         for (let i = 0; i < 8; ++i) {
+            const octreeNode = this.leaf[i];
+            if (octreeNode) {
+               octreeNode.check(duplicateSet);
+            }
+         }
+         for (let i = 8; i < this.leaf.length; ++i) {
+            const sphere = this.leaf[i];
+            if (duplicateSet.has(sphere)) {
+               console.log("octree problems");
+            } else {
+               duplicateSet.add(sphere);
+            }
+         }
+      }
+   }
+
+   free() {
+      if (this.node) {
+         for (let sphere of this.node) {
+            sphere.octree = null;
+         }
+      } else {
+         for (let i = 0; i < 8; ++i) {
+            const octreeNode = this.leaf[i];
+            if (octreeNode) {
+               octreeNode.free();
+            }
+         }
+         for (let i = 8; i < this.leaf.length; ++i) {
+            const sphere = this.leaf[i];
+            sphere.octree = null;
+         }
+      }
+   }
+
+   // only expand when this.node.length > kTHRESHOLD. and this.leaf will double as this.node.
+   insert(sphere, bound) {
+      if (this.node) { // keep pushing.
+         this.node.push(sphere);
+         sphere.octree = this;
+         if (this.node.length >= LooseOctree.kTHRESHOLD) {  // now expand to children node if possible
+            this.leaf = [null, null, null, null, null, null, null, null];  // now setup leaf octant
+            let newBound = {center: vec3.create(), halfSize: vec3.create()};
+            let ret;
+            const node = this.node;
+            delete this.node;
+            for (let sphere of node) {  // redistribute to children or self.
+               vec3.copy(newBound.center, bound.center);
+               vec3.copy(newBound.halfSize, bound.halfSize);
+               ret = this.insert(sphere, newBound);
+            }
+            return ret;
+         }
+      } else {// not leaf node.
+         let index = LooseOctree.getOctant(sphere, bound);
+         if (index >= 0) {  // descent to children
+            let child = this.leaf[index];
+            if (child === null) {
+               child = new LooseOctree(this.bvh, bound, this.level+1);
+               this.leaf[index] = child;
+            }
+            return child.insert(sphere, bound);  
+         }
+         // larger than child size, so insert here.
+         this.leaf.push(sphere);
+         sphere.octree = this;
+      }
+      return this;
+   }
+
+   _move(sphere) {   // sphere size or center changed, check for moving to different node.
+      if (!this.isInside(sphere)) {
+         this._remove(sphere);
+         this.bvh.moveSphere(sphere);
+      }
+   }
+
+   _remove(sphere) {
+      if (sphere.octree === this) {
+         if (this.node) {
+            this.node.splice(this.node.indexOf(sphere), 1);
+         } else {
+            this.leaf.splice(this.leaf.indexOf(sphere), 1);
+         }
+         sphere.octree = null;
+      } else {
+         console.log("LooseOctree _remove error");
+      }
+   }
+
+   isInside(sphere) {
+      for (let axis = 0; axis < 3; ++axis) {
+         let length = this.bound.halfSize[axis];
+         if ( (length < sphere.radius) || 
+              (this.bound.center[axis]+length) < sphere.center[axis] ||
+              (this.bound.center[axis]-length) > sphere.center[axis]) {
+            return false;
+         }
+      }
+      return true;
+   }
+
+
+   * intersectExtent(shape) {   // act as generator
+      const extent = {min: vec3.create(), max: vec3.create()};
+      this.getLooseExtent(extent);
+      if (shape.intersectAAExtent(extent)) {
+         yield* this._extentIntersect(shape, extent);
+      }
+   }
+   //
+   // Revelles' algorithm, "An efficient parametric algorithm for octree traversal". <= todo
+   * _extentIntersect(shape, extent) {
+      if (this.node) {
+         for (let sphere of this.node) {
+            if (shape.intersectSphere(sphere)) {
+               yield sphere;
+            }
+         }
+      } else {
+         for (let i = 8; i < this.leaf.length; ++i) {
+            const sphere = this.leaf[i];
+            if (shape.intersectSphere(sphere)) {
+               yield sphere;
+            }
+         }
+         // check children, this is the hard part of Revelle's algorithm.
+         for (let i = 0; i < 8; ++i) {
+            const child = this.leaf[i];
+            if (child) {
+               child.getLooseExtent(extent);
+               if (shape.intersectAAExtent(extent)) {
+                  yield* child._extentIntersect(shape, extent);
+               }
+            }
+         }
+      }
+   }
+
+   // bound = {center, halfSize};
+   * intersectBound(shape) {
+      const bound = {center: vec3.create(), halfSize: vec3.create()};
+      this.getLooseBound(bound);
+      if (shape.intersectAABB(bound)) {
+         yield* this._boundIntersect(shape, bound);
+      }
+   }
+   * _boundIntersect(shape, bound) {
+      if (this.node) {
+         for (let sphere of this.node) {
+            if (shape.intersectSphere(sphere)) {
+               yield sphere;
+            }
+         }
+      } else {
+         for (let i = 8; i < this.leaf.length; ++i) {
+            const sphere = this.leaf[i];
+            if (shape.intersectSphere(sphere)) {
+               yield sphere;
+            }
+         }
+         // check children, this is the hard part of Revelle's algorithm.
+         for (let i = 0; i < 8; ++i) {
+            const child = this.leaf[i];
+            if (child) {
+               child.getLooseBound(bound);
+               if (shape.intersectAABB(bound)) {
+                  yield* child._boundIntersect(shape, bound);
+               }
+            }
+         }
+      }
+   }
+}
+LooseOctree.kTHRESHOLD = 88;    // read somewhere, 8-15 is a good number for octree node. expand to child only when node.length >= kTHRESHOLD
+LooseOctree.kLOOSENESS = 1.5;    // cannot change. because isInside depend on this property.
+
+
+
+class Plane {
+   constructor(normal, pt) {
+      this.normal = vec3.clone(normal);
+      vec3.normalize(this.normal, this.normal);    // make sure.
+      this.pt = vec3.clone(pt);
+      this.distance = vec3.dot(this.normal, this.pt); // dot(n, pt) = k form.
+   }
+
+   closestPoint(out, point) { // projection to plane
+      __WEBPACK_IMPORTED_MODULE_0__wings3d_util__["closestPointToPlane"](out, point, this);
+   }
+
+   intersectAABB(box) {
+      return __WEBPACK_IMPORTED_MODULE_0__wings3d_util__["intersectPlaneAABB"](this, box);
+   }
+
+   intersectSphere(sphere) {
+      return __WEBPACK_IMPORTED_MODULE_0__wings3d_util__["intersectPlaneSphere"](this, sphere);
+   }
+}
+
+
+class Ray {
+   constructor(origin, dir) {
+      this.origin = origin;
+      this.direction = dir;
+      this.invDir = vec3.fromValues(1/dir[0], 1/dir[1], 1/dir[2]);   //1/0 still work for our purpose.
+   }
+
+   intersectSphere(sphere) {
+      return __WEBPACK_IMPORTED_MODULE_0__wings3d_util__["intersectRaySphere"](this, sphere);
+   }
+
+   intersectAAExtent(extent) {
+      return __WEBPACK_IMPORTED_MODULE_0__wings3d_util__["intersectRayAAExtent"](this, extent);
+   }
+}
+
+
+
+
+/***/ }),
+/* 9 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "FaceMadsor", function() { return FaceMadsor; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__ = __webpack_require__(9);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_edgemads__ = __webpack_require__(10);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_bodymads__ = __webpack_require__(11);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__ = __webpack_require__(12);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_edgemads__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_bodymads__ = __webpack_require__(12);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__ = __webpack_require__(13);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_model__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_view__ = __webpack_require__(1);
@@ -8655,7 +9056,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d_shaderprog__ = __webpack_require__(6);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__wings3d_ui__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__wings3d__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__wings3d_draftbench__ = __webpack_require__(13);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__wings3d_draftbench__ = __webpack_require__(14);
 /**
 //    This module contains most face command and face utility functions.
 //
@@ -8868,6 +9269,10 @@ class FaceMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
 
    flatten(axis) {
       return this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.flattenFace, axis);
+   }
+
+   planeCuttable(plane) {
+      return this.resultAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.planeCuttableFace, plane);
    }
 
    dragSelect(cage, hilite, selectArray, onOff) {
@@ -9262,7 +9667,7 @@ class MirrorFaceCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["Edi
 
 
 /***/ }),
-/* 9 */
+/* 10 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -9284,11 +9689,13 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_view__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_ui__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_boundingvolume__ = __webpack_require__(8);
 /*
  *
  * MADS (Modify, Add, Delete, Select) operation. 
  *
 **/
+
 
 
 
@@ -9405,14 +9812,13 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
             __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["attachHandlerMouseMove"](new ScaleHandler(this, radialVec[axis]));
           });
       }
-      const planeNorm = [[0, 0, 1], [0, 1, 0], [1, 0, 0]];
       // plane Cut
       const planeCut = { face: [__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].facePlaneCutX, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].facePlaneCutY, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].facePlaneCutZ], };
       const planeCutMode = planeCut[mode];
       if (planeCutMode) {
          for (let axis = 0; axis < 3; ++axis) {
             __WEBPACK_IMPORTED_MODULE_4__wings3d_ui__["bindMenuItem"](planeCutMode[axis].name, (_ev) =>{
-               __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["attachHandlerMouseSelect"](new PlaneCutHandler(this, planeNorm[axis]));
+               __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["attachHandlerMouseSelect"](new PlaneCutHandler(this, axisVec[axis]));
              });
          }
       }
@@ -9449,6 +9855,15 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
             func.call(preview, undefined, ...args);
          }
       }
+   }
+
+   resultAll(func, ...args) {
+      for (let preview of this.selectedCage()) {
+         if (func.call(preview, ...args)) {
+            return true;
+         }
+      }
+      return false;
    }
 
    * eachCage() {
@@ -9931,12 +10346,25 @@ class PlaneCutHandler extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["EditS
    constructor(madsor, planeNorm) {
       super(true, true, true, planeNorm);
       this.madsor = madsor;
+      this.center = vec3.create();
    }
 
-   hilite(_hilite, _currentCage) { return true; }
+   hilite(hilite, _currentCage) {
+      if (hilite.plane) {
+         this.plane = new __WEBPACK_IMPORTED_MODULE_6__wings3d_boundingvolume__["Plane"](this.planeNormal, hilite.plane.center);
+         if (this.madsor.planeCuttable(this.plane)) {
+            hilite.plane.hilite = true;
+            return true;
+         }
+         hilite.plane.hilite = false;
+         delete this.plane;
+      }
+      return true;   // always true, we want user to see selection.
+   }
    
-   select(hilite) {
-
+   select(_hilite) {
+      if (this.plane) { // doIt    
+      }
    }
 
    doIt() {
@@ -9981,23 +10409,23 @@ class GenericEditCommand extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["Ed
 
 
 /***/ }),
-/* 10 */
+/* 11 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "EdgeMadsor", function() { return EdgeMadsor; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__ = __webpack_require__(9);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__ = __webpack_require__(8);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_bodymads__ = __webpack_require__(11);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__ = __webpack_require__(12);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_bodymads__ = __webpack_require__(12);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__ = __webpack_require__(13);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_model__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_ui__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_view__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d_shaderprog__ = __webpack_require__(6);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__wings3d__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__wings3d_draftbench__ = __webpack_require__(13);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__wings3d_draftbench__ = __webpack_require__(14);
 /**
 //    This module contains most edge command and edge utility functions.
 //
@@ -10550,16 +10978,16 @@ class EdgeCornerHandler extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["Mov
 
 
 /***/ }),
-/* 11 */
+/* 12 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "BodyMadsor", function() { return BodyMadsor; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__ = __webpack_require__(9);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__ = __webpack_require__(8);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_edgemads__ = __webpack_require__(10);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__ = __webpack_require__(12);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_edgemads__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__ = __webpack_require__(13);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_model__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_shaderprog__ = __webpack_require__(6);
@@ -11085,24 +11513,24 @@ class FlipBodyAxis extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditComm
 
 
 /***/ }),
-/* 12 */
+/* 13 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "VertexMadsor", function() { return VertexMadsor; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "VertexConnectCommand", function() { return VertexConnectCommand; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__ = __webpack_require__(9);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__ = __webpack_require__(8);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_bodymads__ = __webpack_require__(11);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_edgemads__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_bodymads__ = __webpack_require__(12);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_edgemads__ = __webpack_require__(11);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_model__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_view__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_shaderprog__ = __webpack_require__(6);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__wings3d__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__wings3d_draftbench__ = __webpack_require__(13);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__wings3d_draftbench__ = __webpack_require__(14);
 /**
 //    This module handle most vertex edit command.
 //
@@ -11427,7 +11855,7 @@ class VertexWeldCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["Edi
 
 
 /***/ }),
-/* 13 */
+/* 14 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -11437,7 +11865,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__ = __webpack_require__(5);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_shaderprog__ = __webpack_require__(6);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_util__ = __webpack_require__(16);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_boundingvolume__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_boundingvolume__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_wingededge__ = __webpack_require__(7);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_undo__ = __webpack_require__(3);
 //
@@ -11962,7 +12390,7 @@ DraftBench.prototype.drawPlane = (function() {
       vec3.cross(diagonal, halfSize, up);
       vec3.normalize(diagonal, diagonal);
       // find rotation between planeNormal and Axis alignment
-      quat.rotationTo(rotate, plane.normal, diagonal);
+      quat.rotationTo(rotate, diagonal, plane.normal);//, diagonal);
       mat4.fromQuat(transform, rotate);
       //vec3.transformMat4(halfSize, plane.halfSize, transform);
       vec3.copy(halfSize, plane.halfSize);
@@ -11982,6 +12410,11 @@ DraftBench.prototype.drawPlane = (function() {
       }
       // upload result
       this.previewPlane.shaderData.uploadAttribute('position', 0, this.previewPlane.rectangle);
+      if (plane.hilite) {  // set color
+         this.previewPlane.shaderData.setUniform4fv("faceColor", [0.0, 1.0, 0.0, 1.0]);
+      } else {
+         this.previewPlane.shaderData.setUniform4fv("faceColor", [0.1, 0.1, 0.1, 1.0]);
+      }
       // draw the rectangle plane
       gl.disable(gl.CULL_FACE);
       gl.useShader(__WEBPACK_IMPORTED_MODULE_1__wings3d_shaderprog__["solidColor"]);
@@ -12256,7 +12689,7 @@ class CheckPoint extends __WEBPACK_IMPORTED_MODULE_5__wings3d_undo__["EditComman
 
 
 /***/ }),
-/* 14 */
+/* 15 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -12701,386 +13134,6 @@ format([]) -> [].
 __WEBPACK_IMPORTED_MODULE_1__wings3d_js__["onReady"](init);
 
 /***/ }),
-/* 15 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "BoundingSphere", function() { return BoundingSphere; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "LooseOctree", function() { return LooseOctree; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "Plane", function() { return Plane; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "Ray", function() { return Ray; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_util__ = __webpack_require__(16);
-/*   require glmatrix
-//
-// LooseOctree and BoundingSphere.
-*/
-
-
-
-
-
-
-const BoundingSphere = function(polygon, center, radius) {
-   this.center = center;
-   this.radius = radius;
-   if (radius) {
-      this.radius2 = radius*radius;
-   }
-   this.polygon = polygon;
-   this.octree = null;
-};
-
-BoundingSphere.prototype.isLive = function() {
-   return (this.polygon.isVisible && this.polygon.isLive());
-};
-
-BoundingSphere.prototype.isIntersect = function(ray) {
-   return __WEBPACK_IMPORTED_MODULE_0__wings3d_util__["intersectRaySphere"](ray, this);
-};
-
-BoundingSphere.prototype.setSphere = function(sphere) {
-   this.center = sphere.center;
-   this.radius = sphere.radius;
-   this.radius2 = sphere.radius*sphere.radius;
-   if (this.octree) {
-      this.octree._move(this);
-   }
-};
-
-BoundingSphere.prototype.getBVHRoot = function() {
-   return this.octree.bvh.bvh.root;
-};
-
-BoundingSphere.computeSphere = function(polygon, center) {  // vec3
-   // get all the polygon's vertex. compute barycentric.
-   center.fill(0.0);
-   var ret = {center: center, radius: 0.0};
-   polygon.eachVertex( function(vertex) {
-      vec3.add(ret.center, ret.center, vertex.vertex);
-   });
-   vec3.scale(ret.center, ret.center, 1.0/polygon.numberOfVertex);
-   // get the furthest distance. that the radius.
-   polygon.eachVertex( function(vertex) {
-      var distance = vec3.distance(ret.center, vertex.vertex);
-      if (distance > ret.radius) {
-         ret.radius = distance;
-      }
-   });
-   return ret;
-};
-
-
-// simple minded bounding sphere builder.
-BoundingSphere.create = function(polygon, center) {
-   var sphere = BoundingSphere.computeSphere(polygon, center);
-   return new BoundingSphere(polygon, sphere.center, sphere.radius);
-}
-BoundingSphere.allocate = function(polygon) {
-   return new BoundingSphere(polygon);
-}
-
-
-// loose octree for ease of implementation, and adequate performance. AABB tree, OBB tree can wait if needed.
-// http://www.tulrich.com/geekstuff/partitioning.html by Thatcher Ulrich
-class LooseOctree {  // this is really node
-   constructor(bvh, bound, level) {
-      this.bvh = bvh;
-      this.level = level;
-      this.node = [];
-      if (bound) {
-         this.bound = {center: vec3.clone(bound.center), halfSize: vec3.clone(bound.halfSize)};
-      }
-      //
-   }
-
-   *[Symbol.iterator]() {
-      yield this;
-      if (this.leaf) {
-         for (let i = 0; i < 8; ++i) {
-            const node = this.leaf[i];
-            if (node) {
-               yield* node;
-            }
-         }
-      }
-   }
-
-   getHalfSize() {
-      return this.bound.halfSize;
-   }
-
-   getBound(bound) {
-      vec3.copy(bound.center, this.bound.center);
-      vec3.copy(bound.halfSize, this.bound.halfSize);
-   }
-
-   getLooseBound(bound) {
-      vec3.copy(bound.center, this.bound.center);
-      vec3.scale(bound.halfSize, this.bound.halfSize, LooseOctree.kLOOSENESS);
-   }
-
-   getExtent(extent, looseNess = 1.0) {
-      for (let axis=0; axis < 3; ++axis) {
-         const length = this.bound.halfSize[axis]*looseNess;   
-         extent.min[axis] = this.bound.center[axis]-length;
-         extent.max[axis] = this.bound.center[axis]+length;
-      } 
-   }
-
-   getLooseExtent(extent) {
-      this.getExtent(extent, LooseOctree.kLOOSENESS); // looseOctree's extent is 2x bigger.
-   }
-
-   static getOctant(sphere, bound) {
-      let index = 0;
-      const octant = [1, 2, 4];        // octant mapping
-      for (let axis = 0; axis < 3; ++axis) {
-         bound.halfSize[axis] /= 2;
-         if (sphere.radius > bound.halfSize[axis]) {  // does not fit in the children's bound
-            return -1;
-         } else if (sphere.center[axis] < bound.center[axis]) {
-            index += octant[axis];     // |= octant[axis] faster?
-            bound.center[axis] -= bound.halfSize[axis];
-         } else {
-            bound.center[axis] += bound.halfSize[axis];
-         }
-      }
-      return index;
-   }
-
-   check(duplicateSet) {
-      if (this.node) {
-         for (let sphere of this.node) {
-            if (duplicateSet.has(sphere)) {
-               console.log("octree problems");
-            } else {
-               duplicateSet.add(sphere);
-            }
-         }
-      } else {
-         for (let i = 0; i < 8; ++i) {
-            const octreeNode = this.leaf[i];
-            if (octreeNode) {
-               octreeNode.check(duplicateSet);
-            }
-         }
-         for (let i = 8; i < this.leaf.length; ++i) {
-            const sphere = this.leaf[i];
-            if (duplicateSet.has(sphere)) {
-               console.log("octree problems");
-            } else {
-               duplicateSet.add(sphere);
-            }
-         }
-      }
-   }
-
-   free() {
-      if (this.node) {
-         for (let sphere of this.node) {
-            sphere.octree = null;
-         }
-      } else {
-         for (let i = 0; i < 8; ++i) {
-            const octreeNode = this.leaf[i];
-            if (octreeNode) {
-               octreeNode.free();
-            }
-         }
-         for (let i = 8; i < this.leaf.length; ++i) {
-            const sphere = this.leaf[i];
-            sphere.octree = null;
-         }
-      }
-   }
-
-   // only expand when this.node.length > kTHRESHOLD. and this.leaf will double as this.node.
-   insert(sphere, bound) {
-      if (this.node) { // keep pushing.
-         this.node.push(sphere);
-         sphere.octree = this;
-         if (this.node.length >= LooseOctree.kTHRESHOLD) {  // now expand to children node if possible
-            this.leaf = [null, null, null, null, null, null, null, null];  // now setup leaf octant
-            let newBound = {center: vec3.create(), halfSize: vec3.create()};
-            let ret;
-            const node = this.node;
-            delete this.node;
-            for (let sphere of node) {  // redistribute to children or self.
-               vec3.copy(newBound.center, bound.center);
-               vec3.copy(newBound.halfSize, bound.halfSize);
-               ret = this.insert(sphere, newBound);
-            }
-            return ret;
-         }
-      } else {// not leaf node.
-         let index = LooseOctree.getOctant(sphere, bound);
-         if (index >= 0) {  // descent to children
-            let child = this.leaf[index];
-            if (child === null) {
-               child = new LooseOctree(this.bvh, bound, this.level+1);
-               this.leaf[index] = child;
-            }
-            return child.insert(sphere, bound);  
-         }
-         // larger than child size, so insert here.
-         this.leaf.push(sphere);
-         sphere.octree = this;
-      }
-      return this;
-   }
-
-   _move(sphere) {   // sphere size or center changed, check for moving to different node.
-      if (!this.isInside(sphere)) {
-         this._remove(sphere);
-         this.bvh.moveSphere(sphere);
-      }
-   }
-
-   _remove(sphere) {
-      if (sphere.octree === this) {
-         if (this.node) {
-            this.node.splice(this.node.indexOf(sphere), 1);
-         } else {
-            this.leaf.splice(this.leaf.indexOf(sphere), 1);
-         }
-         sphere.octree = null;
-      } else {
-         console.log("LooseOctree _remove error");
-      }
-   }
-
-   isInside(sphere) {
-      for (let axis = 0; axis < 3; ++axis) {
-         let length = this.bound.halfSize[axis];
-         if ( (length < sphere.radius) || 
-              (this.bound.center[axis]+length) < sphere.center[axis] ||
-              (this.bound.center[axis]-length) > sphere.center[axis]) {
-            return false;
-         }
-      }
-      return true;
-   }
-
-
-   * intersectExtent(shape) {   // act as generator
-      const extent = {min: vec3.create(), max: vec3.create()};
-      this.getLooseExtent(extent);
-      if (shape.intersectAAExtent(extent)) {
-         yield* this._extentIntersect(shape, extent);
-      }
-   }
-   //
-   // Revelles' algorithm, "An efficient parametric algorithm for octree traversal". <= todo
-   * _extentIntersect(shape, extent) {
-      if (this.node) {
-         for (let sphere of this.node) {
-            if (shape.intersectSphere(sphere)) {
-               yield sphere;
-            }
-         }
-      } else {
-         for (let i = 8; i < this.leaf.length; ++i) {
-            const sphere = this.leaf[i];
-            if (shape.intersectSphere(sphere)) {
-               yield sphere;
-            }
-         }
-         // check children, this is the hard part of Revelle's algorithm.
-         for (let i = 0; i < 8; ++i) {
-            const child = this.leaf[i];
-            if (child) {
-               child.getLooseExtent(extent);
-               if (shape.intersectAAExtent(extent)) {
-                  yield* child._extentIntersect(ray, extent);
-               }
-            }
-         }
-      }
-   }
-
-   // bound = {center, halfSize};
-   * intersectBound(shape) {
-      const bound = {center: vec3.create(), halfSize: vec3.create()};
-      this.getLooseBound(bound);
-      if (shape.intersectAABB(bound)) {
-         yield* this._boundIntersect(shape, bound);
-      }
-   }
-   * _boundIntersect(shape, bound) {
-      if (this.node) {
-         for (let sphere of this.node) {
-            if (shape.intersectSphere(sphere)) {
-               yield sphere;
-            }
-         }
-      } else {
-         for (let i = 8; i < this.leaf.length; ++i) {
-            const sphere = this.leaf[i];
-            if (shape.intersectSphere(sphere)) {
-               yield sphere;
-            }
-         }
-         // check children, this is the hard part of Revelle's algorithm.
-         for (let i = 0; i < 8; ++i) {
-            const child = this.leaf[i];
-            if (child) {
-               child.getLooseBound(bound);
-               if (shape.intersectAABB(bound)) {
-                  yield* child._boundIntersect(shape, bound);
-               }
-            }
-         }
-      }
-   }
-}
-LooseOctree.kTHRESHOLD = 88;    // read somewhere, 8-15 is a good number for octree node. expand to child only when node.length >= kTHRESHOLD
-LooseOctree.kLOOSENESS = 1.5;    // cannot change. because isInside depend on this property.
-
-
-
-class Plane {
-   constructor(normal, pt) {
-      this.normal = vec3.clone(normal);
-      vec3.normalize(this.normal, this.normal);    // make sure.
-      this.pt = vec3.clone(pt);
-      this.distance = vec3.dot(this.normal, this.pt); // ax+by+cz = d form.
-   }
-
-   closestPoint(out, point) { // projection to plane
-      __WEBPACK_IMPORTED_MODULE_0__wings3d_util__["closestPointToPlane"](out, point, this);
-   }
-
-   intersectAABB(box) {
-      return __WEBPACK_IMPORTED_MODULE_0__wings3d_util__["intersectPlaneAABB"](this, box);
-   }
-
-   intersectSphere(sphere) {
-      return __WEBPACK_IMPORTED_MODULE_0__wings3d_util__["intersectPlaneSphere"](this, sphere);
-   }
-}
-
-
-class Ray {
-   constructor(origin, dir) {
-      this.origin = origin;
-      this.direction = dir;
-      this.invDir = vec3.fromValues(1/dir[0], 1/dir[1], 1/dir[2]);   //1/0 still work for our purpose.
-   }
-
-   intersectSphere(sphere) {
-      return __WEBPACK_IMPORTED_MODULE_0__wings3d_util__["intersectRaySphere"](this, sphere);
-   }
-
-   intersectAAExtent(extent) {
-      return __WEBPACK_IMPORTED_MODULE_0__wings3d_util__["intersectRayAAExtent"](this, extent);
-   }
-}
-
-
-
-
-/***/ }),
 /* 16 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -13095,6 +13148,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "intersectRaySphere", function() { return intersectRaySphere; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "intersectPlaneSphere", function() { return intersectPlaneSphere; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "intersectPlaneAABB", function() { return intersectPlaneAABB; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "intersectPlaneHEdge", function() { return intersectPlaneHEdge; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "projectVec3", function() { return projectVec3; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "rotationFromToVec3", function() { return rotationFromToVec3; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "reflectionMat4", function() { return reflectionMat4; });
@@ -13204,7 +13258,53 @@ function intersectPlaneAABB(plane, box) {
    const pLen = box.halfSize[0] * Math.abs(plane.normal[0]) + box.halfSize[1] * Math.abs(plane.normal[1]) + box.halfSize[2] * Math.abs(plane.normal[2]);
    const distance = vec3.dot(plane.normal, box.center) - plane.distance;
    return Math.abs(distance) <= pLen;
-}
+};
+
+// return value:
+// -2 for no intersection
+// -1 for co planar on the plane
+// 0-1 for intersection t.
+// 0.5 when no (out) intersection pt provided.
+// algorithm
+// paul burke explain the intersection code pretty clearly.
+// same side check and coplane check are from moller.
+function intersectPlaneHEdge(out, plane, hEdge) {
+   const pt0 = hEdge.origin.vertex;
+   const pt1 = hEdge.destination().vertex;
+
+   let d0 = vec3.dot(plane.normal, pt0) - plane.distance; 
+   let d1 = vec3.dot(plane.normal, pt1) - plane.distance;
+   // coplanarity check
+   if (Math.abs(d0) < kEPSILON) { d0=0.0; }
+   if (Math.abs(d1) < kEPSILON) { d1=0.0; }
+   
+   let t;
+   if ((d0*d1) > 0) {  // check if on the same side
+      return -2;
+   } else if (d0 == 0.0) {
+      if (d1 == 0.0) {  // co planar
+         return -1;
+      }
+      t = 0;            // intersect at begin
+   } else if (d1 == 0.0) {
+      t = 1;            // intersect at end
+   }
+
+   // compute intersection pt (out).
+   if (out) {
+      if (t === undefined) {
+         // t = (plane.normal dot (plane.pt - pt0)) / (plane.normal dot (pt1-pt0))
+         vec3.sub(out, plane.pt, pt0);
+         const tDer = vec3.dot(plane.normal, out);
+         vec3.sub(out, pt1, pt0);
+         t = tDer / vec3.dot(plane.normal, out);
+      }
+      // out = pt0 + t(pt1-pt0)
+      vec3.scaleAndAdd(out, pt0, out, t);
+   }
+
+   return (t !== undefined)? t : 0.5;  // 0.5 for intersection not 0 or 1.
+};
 
 /* from
  * @article{MollerHughes99,
@@ -13897,7 +13997,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "render", function() { return render; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__ = __webpack_require__(5);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_view__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_camera__ = __webpack_require__(14);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_camera__ = __webpack_require__(15);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_shaderprog__ = __webpack_require__(6);
 /*
@@ -14679,18 +14779,18 @@ class ImportExporter {
 /***/ (function(module, exports, __webpack_require__) {
 
 __webpack_require__(23);
-__webpack_require__(11);
+__webpack_require__(12);
+__webpack_require__(8);
 __webpack_require__(15);
 __webpack_require__(14);
-__webpack_require__(13);
-__webpack_require__(10);
-__webpack_require__(8);
+__webpack_require__(11);
+__webpack_require__(9);
 __webpack_require__(5);
 __webpack_require__(32);
 __webpack_require__(18);
 __webpack_require__(21);
 __webpack_require__(17);
-__webpack_require__(9);
+__webpack_require__(10);
 __webpack_require__(4);
 __webpack_require__(19);
 __webpack_require__(6);
@@ -14699,7 +14799,7 @@ __webpack_require__(34);
 __webpack_require__(2);
 __webpack_require__(3);
 __webpack_require__(16);
-__webpack_require__(12);
+__webpack_require__(13);
 __webpack_require__(1);
 __webpack_require__(7);
 module.exports = __webpack_require__(0);
@@ -14722,7 +14822,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__css_bubble_css__ = __webpack_require__(28);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__css_bubble_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4__css_bubble_css__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_view__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_camera__ = __webpack_require__(14);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_camera__ = __webpack_require__(15);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_interact__ = __webpack_require__(17);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__wings3d_ui__ = __webpack_require__(2);
