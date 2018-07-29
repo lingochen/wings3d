@@ -216,6 +216,13 @@ class FaceMadsor extends Madsor {
       return this.resultAll(PreviewCage.prototype.planeCuttableFace, plane);
    }
 
+   planeCut(plane) {
+      return this.snapshotAll(PreviewCage.prototype.planeCutFace, plane);
+   }
+   undoPlaneCut(snapshots) { // undo of splitEdge.
+      this.doAll(snapshots, PreviewCage.prototype.collapseSplitOrBevelEdge);
+   }
+
    dragSelect(cage, hilite, selectArray, onOff) {
       if (hilite.face !== null) {
         if (cage.dragSelectFace(hilite.face, onOff)) {

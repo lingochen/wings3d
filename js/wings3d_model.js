@@ -3179,8 +3179,37 @@ PreviewCage.prototype.planeCuttableFace = function(plane) {
    return false;
 };
 
-
 // cut the selected by the given plane, and reconnect
+PreviewCage.prototype.planeCutFace = function(plane) {
+   const cutList = [];
+   for (let sphere of this.bvh.root.intersectBound(plane)) {
+      if (this.selectedSet.has(sphere.polygon)) {
+         cutList.push(sphere.polygon);
+      }
+   }
+
+   // sort cutList, guarantee ordering.
+   cutList.sort( (a,b)=> { return a.index - b.index;} );
+
+   // now cut, and select vertex for later connect phase.
+   const selectedVertex = new Set;
+   const splitEdges = [];
+   const pt = vec3.create();
+   for (let polygon of cutList) {
+      for (let hEdge of polygon.hEdges()) {
+         const t = Util.intersectPlaneHEdge(pt, plane, hEdge);
+         if (t == 0) {  // select origin
+            selectedVertex.add( hEdge.origin );
+         } else if ( (t>0) && (t<1)) { // spliEdge, and select
+            let newOut = this.geometry.splitEdge(hEdge, pt);   // pt is the split point.
+            splitEdges.push( newOut.pair );
+            selectedVertex.add( hEdge.origin );
+         }
+      }
+   }
+   this._updatePreviewAll();  // update drawing buffer.
+   return {selectedFaces: this.selectedSet, vertices: selectedVertex, halfEdges: splitEdges};
+};
 
 
 

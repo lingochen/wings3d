@@ -649,7 +649,6 @@ class ExtrudeNormalHandler extends ExtrudeHandler {
 }
 // end of extrude
 
-
 class PlaneCutHandler extends EditSelectHandler {
    constructor(madsor, planeNorm) {
       super(true, true, true, planeNorm);
@@ -671,18 +670,32 @@ class PlaneCutHandler extends EditSelectHandler {
    }
    
    select(_hilite) {
-      if (this.plane) { // doIt    
+      if (this.plane) { // doIt   
+         return this.doIt();
       }
+      return false;
    }
 
    doIt() {
+      if (this.plane) {
+         this.cut = this.madsor.planeCut(this.plane);
+         if (this.cut.length > 0) {
+            View.restoreVertexMode(this.cut);
+            this.vertexConnect = View.currentMode().connectVertex();   // assurely it vertexMode
+            return this.vertexConnect.doIt();
+         }
+      }
+      return false;
    }
 
    undo() {
-
+      if (this.vertexConnect) {
+         this.vertexConnect.undo();
+         delete this.vertexConnect; // we are in vertex mode
+         this.madsor.undoPlaneCut(this.cut);
+         View.restoreFaceMode(this.cut);
+      }
    }
-
-
 }
 
 

@@ -5096,8 +5096,37 @@ PreviewCage.prototype.planeCuttableFace = function(plane) {
    return false;
 };
 
-
 // cut the selected by the given plane, and reconnect
+PreviewCage.prototype.planeCutFace = function(plane) {
+   const cutList = [];
+   for (let sphere of this.bvh.root.intersectBound(plane)) {
+      if (this.selectedSet.has(sphere.polygon)) {
+         cutList.push(sphere.polygon);
+      }
+   }
+
+   // sort cutList, guarantee ordering.
+   cutList.sort( (a,b)=> { return a.index - b.index;} );
+
+   // now cut, and select vertex for later connect phase.
+   const selectedVertex = new Set;
+   const splitEdges = [];
+   const pt = vec3.create();
+   for (let polygon of cutList) {
+      for (let hEdge of polygon.hEdges()) {
+         const t = __WEBPACK_IMPORTED_MODULE_6__wings3d_util__["intersectPlaneHEdge"](pt, plane, hEdge);
+         if (t == 0) {  // select origin
+            selectedVertex.add( hEdge.origin );
+         } else if ( (t>0) && (t<1)) { // spliEdge, and select
+            let newOut = this.geometry.splitEdge(hEdge, pt);   // pt is the split point.
+            splitEdges.push( newOut.pair );
+            selectedVertex.add( hEdge.origin );
+         }
+      }
+   }
+   this._updatePreviewAll();  // update drawing buffer.
+   return {selectedFaces: this.selectedSet, vertices: selectedVertex, halfEdges: splitEdges};
+};
 
 
 
@@ -9275,6 +9304,13 @@ class FaceMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
       return this.resultAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.planeCuttableFace, plane);
    }
 
+   planeCut(plane) {
+      return this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.planeCutFace, plane);
+   }
+   undoPlaneCut(snapshots) { // undo of splitEdge.
+      this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.collapseSplitOrBevelEdge);
+   }
+
    dragSelect(cage, hilite, selectArray, onOff) {
       if (hilite.face !== null) {
         if (cage.dragSelectFace(hilite.face, onOff)) {
@@ -10341,7 +10377,6 @@ class ExtrudeNormalHandler extends ExtrudeHandler {
 }
 // end of extrude
 
-
 class PlaneCutHandler extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["EditSelectHandler"] {
    constructor(madsor, planeNorm) {
       super(true, true, true, planeNorm);
@@ -10363,18 +10398,32 @@ class PlaneCutHandler extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["EditS
    }
    
    select(_hilite) {
-      if (this.plane) { // doIt    
+      if (this.plane) { // doIt   
+         return this.doIt();
       }
+      return false;
    }
 
    doIt() {
+      if (this.plane) {
+         this.cut = this.madsor.planeCut(this.plane);
+         if (this.cut.length > 0) {
+            __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["restoreVertexMode"](this.cut);
+            this.vertexConnect = __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["currentMode"]().connectVertex();   // assurely it vertexMode
+            return this.vertexConnect.doIt();
+         }
+      }
+      return false;
    }
 
    undo() {
-
+      if (this.vertexConnect) {
+         this.vertexConnect.undo();
+         delete this.vertexConnect; // we are in vertex mode
+         this.madsor.undoPlaneCut(this.cut);
+         __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["restoreFaceMode"](this.cut);
+      }
    }
-
-
 }
 
 
@@ -11554,8 +11603,13 @@ class VertexMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"]
    constructor() {
       super('vertex');
       const self = this;
-      __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].vertexConnect.name, function(ev) {
-            self.connectVertex();
+      __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].vertexConnect.name, (ev) => {
+            const vertexConnect = this.connectVertex();
+            if (vertexConnect.doIt()) {
+               __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"](vertexConnect);   // saved for undo
+            } else {
+               // show no connection possible message.
+            }
          });
       __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].vertexDissolve.name, function(ev) {
             const dissolve = new VertexDissolveCommand(self);
@@ -11625,12 +11679,7 @@ class VertexMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"]
    }
 
    connectVertex() {
-      const vertexConnect = new VertexConnectCommand(this);
-      if (vertexConnect.doIt()) {
-         __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"](vertexConnect);   // saved for undo
-      } else {
-         // show no connection possible message.
-      }
+      return  new VertexConnectCommand(this);
    }
 
    connect() {

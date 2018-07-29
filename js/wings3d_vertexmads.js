@@ -21,8 +21,13 @@ class VertexMadsor extends Madsor {
    constructor() {
       super('vertex');
       const self = this;
-      UI.bindMenuItem(action.vertexConnect.name, function(ev) {
-            self.connectVertex();
+      UI.bindMenuItem(action.vertexConnect.name, (ev) => {
+            const vertexConnect = this.connectVertex();
+            if (vertexConnect.doIt()) {
+               View.undoQueue(vertexConnect);   // saved for undo
+            } else {
+               // show no connection possible message.
+            }
          });
       UI.bindMenuItem(action.vertexDissolve.name, function(ev) {
             const dissolve = new VertexDissolveCommand(self);
@@ -92,12 +97,7 @@ class VertexMadsor extends Madsor {
    }
 
    connectVertex() {
-      const vertexConnect = new VertexConnectCommand(this);
-      if (vertexConnect.doIt()) {
-         View.undoQueue(vertexConnect);   // saved for undo
-      } else {
-         // show no connection possible message.
-      }
+      return  new VertexConnectCommand(this);
    }
 
    connect() {
