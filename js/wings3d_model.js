@@ -3211,7 +3211,12 @@ PreviewCage.prototype.planeCutFace = function(plane) {
    return {selectedFaces: this.selectedSet, vertices: selectedVertex, halfEdges: splitEdges};
 };
 
+PreviewCage.prototype.planeCutBody = function(plane) {
+   const result = this.planeCutFace(plane);
 
+   // adjust result to body
+   return {body: result.selectedFaces, vertices: result.vertices, halfEdges: result.halfEdges};
+};
 
 
 //----------------------------------------------------------------------------------------------------------

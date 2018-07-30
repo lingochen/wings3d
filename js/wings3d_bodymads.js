@@ -176,6 +176,17 @@ class BodyMadsor extends Madsor {
       View.updateWorld();
    }
 
+   planeCuttable(plane) {
+      return this.resultAll(PreviewCage.prototype.planeCuttableFace, plane);
+   }
+   planeCut(plane) {
+      return this.snapshotAll(PreviewCage.prototype.planeCutBody, plane);
+   }
+   undoPlaneCut(snapshots) { // undo of splitEdge.
+      this.doAll(snapshots, PreviewCage.prototype.collapseSplitOrBevelEdge);
+      View.restoreBodyMode(snapshots);
+   }
+
    centroid() {
       return this.snapshotAll(PreviewCage.prototype.bodyCentroid);
    }

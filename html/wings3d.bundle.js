@@ -356,6 +356,10 @@ const action = {
    bodyScaleRadialX: ()=> {notImplemented(this);},
    bodyScaleRadialY: ()=> {notImplemented(this);},
    bodyScaleRadialZ: ()=> {notImplemented(this);},
+   bodyPlaneCut: ()=> {notImplemented(this);},
+   bodyPlaneCutX: ()=> {notImplemented(this);},
+   bodyPlaneCutY: ()=> {notImplemented(this);},
+   bodyPlaneCutZ: ()=> {notImplemented(this);},
    //bodySlice: () => {notImplemented(this);},
    // edge
    cutMenu: () => {notImplemented(this);},
@@ -5128,7 +5132,12 @@ PreviewCage.prototype.planeCutFace = function(plane) {
    return {selectedFaces: this.selectedSet, vertices: selectedVertex, halfEdges: splitEdges};
 };
 
+PreviewCage.prototype.planeCutBody = function(plane) {
+   const result = this.planeCutFace(plane);
 
+   // adjust result to body
+   return {body: result.selectedFaces, vertices: result.vertices, halfEdges: result.halfEdges};
+};
 
 
 //----------------------------------------------------------------------------------------------------------
@@ -9303,12 +9312,12 @@ class FaceMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
    planeCuttable(plane) {
       return this.resultAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.planeCuttableFace, plane);
    }
-
    planeCut(plane) {
       return this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.planeCutFace, plane);
    }
    undoPlaneCut(snapshots) { // undo of splitEdge.
       this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.collapseSplitOrBevelEdge);
+      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreFaceMode"](snapshots);
    }
 
    dragSelect(cage, hilite, selectArray, onOff) {
@@ -9849,7 +9858,8 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
           });
       }
       // plane Cut
-      const planeCut = { face: [__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].facePlaneCutX, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].facePlaneCutY, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].facePlaneCutZ], };
+      const planeCut = { face: [__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].facePlaneCutX, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].facePlaneCutY, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].facePlaneCutZ], 
+                         body: [__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].bodyPlaneCutX, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].bodyPlaneCutY, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].bodyPlaneCutZ], };
       const planeCutMode = planeCut[mode];
       if (planeCutMode) {
          for (let axis = 0; axis < 3; ++axis) {
@@ -10421,7 +10431,6 @@ class PlaneCutHandler extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["EditS
          this.vertexConnect.undo();
          delete this.vertexConnect; // we are in vertex mode
          this.madsor.undoPlaneCut(this.cut);
-         __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["restoreFaceMode"](this.cut);
       }
    }
 }
@@ -11219,6 +11228,17 @@ class BodyMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
    flipAxis(snapShotPivot, axis) {
       this.doAll(snapShotPivot, __WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.flipBodyAxis, axis);
       __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["updateWorld"]();
+   }
+
+   planeCuttable(plane) {
+      return this.resultAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.planeCuttableFace, plane);
+   }
+   planeCut(plane) {
+      return this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.planeCutBody, plane);
+   }
+   undoPlaneCut(snapshots) { // undo of splitEdge.
+      this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.collapseSplitOrBevelEdge);
+      __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["restoreBodyMode"](snapshots);
    }
 
    centroid() {

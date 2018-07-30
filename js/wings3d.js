@@ -271,6 +271,10 @@ const action = {
    bodyScaleRadialX: ()=> {notImplemented(this);},
    bodyScaleRadialY: ()=> {notImplemented(this);},
    bodyScaleRadialZ: ()=> {notImplemented(this);},
+   bodyPlaneCut: ()=> {notImplemented(this);},
+   bodyPlaneCutX: ()=> {notImplemented(this);},
+   bodyPlaneCutY: ()=> {notImplemented(this);},
+   bodyPlaneCutZ: ()=> {notImplemented(this);},
    //bodySlice: () => {notImplemented(this);},
    // edge
    cutMenu: () => {notImplemented(this);},

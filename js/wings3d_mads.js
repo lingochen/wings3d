@@ -121,7 +121,8 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
           });
       }
       // plane Cut
-      const planeCut = { face: [action.facePlaneCutX, action.facePlaneCutY, action.facePlaneCutZ], };
+      const planeCut = { face: [action.facePlaneCutX, action.facePlaneCutY, action.facePlaneCutZ], 
+                         body: [action.bodyPlaneCutX, action.bodyPlaneCutY, action.bodyPlaneCutZ], };
       const planeCutMode = planeCut[mode];
       if (planeCutMode) {
          for (let axis = 0; axis < 3; ++axis) {
@@ -693,7 +694,6 @@ class PlaneCutHandler extends EditSelectHandler {
          this.vertexConnect.undo();
          delete this.vertexConnect; // we are in vertex mode
          this.madsor.undoPlaneCut(this.cut);
-         View.restoreFaceMode(this.cut);
       }
    }
 }
