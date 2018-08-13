@@ -5120,16 +5120,24 @@ PreviewCage.prototype._planeCutFace = function(cutPlanes) {
       cutList.sort( (a,b)=> { return a.index - b.index;} );
 
       // now cut, and select vertex for later connect phase.
+      const cuthEdgeList = [];
+      const wEdgeList = new Set;
       for (let polygon of cutList) {
          for (let hEdge of polygon.hEdges()) {
-            const t = __WEBPACK_IMPORTED_MODULE_6__wings3d_util__["intersectPlaneHEdge"](pt, plane, hEdge);
-            if (t == 0) {  // select origin
-               selectedVertex.add( hEdge.origin );
-            } else if ( (t>0) && (t<1)) { // spliEdge, and select
-               let newOut = this.geometry.splitEdge(hEdge, pt);   // pt is the split point.
-               splitEdges.push( newOut.pair );
-               selectedVertex.add( hEdge.origin );
+            if (!wEdgeList.has(hEdge.wingedEdge)) {
+               cuthEdgeList.push(hEdge);
+               wEdgeList.add(hEdge.wingedEdge);
             }
+         }
+      }
+      for (let hEdge of cuthEdgeList) {   // only iterate once for every potentail edges
+         const t = __WEBPACK_IMPORTED_MODULE_6__wings3d_util__["intersectPlaneHEdge"](pt, plane, hEdge);
+         if (t == 0) {  // select origin
+            selectedVertex.add( hEdge.origin );
+         } else if ( (t>0) && (t<1)) { // spliEdge, and select
+            let newOut = this.geometry.splitEdge(hEdge, pt);   // pt is the split point.
+            splitEdges.push( newOut.pair );
+            selectedVertex.add( hEdge.origin );
          }
       }
    }
@@ -11309,7 +11317,7 @@ class BodyMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
 
    slice(planeNormal, numberOfPart) {
       const snapshots = this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.sliceBody, planeNormal, numberOfPart);
-      __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["restoreVertexMode"](this.snapshots);
+      __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["restoreVertexMode"](snapshots);
       return snapshots;
    }
 
