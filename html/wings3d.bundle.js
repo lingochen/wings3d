@@ -360,7 +360,10 @@ const action = {
    bodyPlaneCutX: ()=> {notImplemented(this);},
    bodyPlaneCutY: ()=> {notImplemented(this);},
    bodyPlaneCutZ: ()=> {notImplemented(this);},
-   //bodySlice: () => {notImplemented(this);},
+   bodySlice: () => {notImplemented(this);},
+   bodySliceX: () => {notImplemented(this);},
+   bodySliceY: () => {notImplemented(this);},
+   bodySliceZ: () => {notImplemented(this);},
    // edge
    cutMenu: () => {notImplemented(this);},
    cutLine2: () => {notImplemented(this);},
@@ -5101,30 +5104,32 @@ PreviewCage.prototype.planeCuttableFace = function(plane) {
 };
 
 // cut the selected by the given plane, and reconnect
-PreviewCage.prototype.planeCutFace = function(plane) {
-   const cutList = [];
-   for (let sphere of this.bvh.root.intersectBound(plane)) {
-      if (this.selectedSet.has(sphere.polygon)) {
-         cutList.push(sphere.polygon);
-      }
-   }
-
-   // sort cutList, guarantee ordering.
-   cutList.sort( (a,b)=> { return a.index - b.index;} );
-
-   // now cut, and select vertex for later connect phase.
+PreviewCage.prototype._planeCutFace = function(cutPlanes) {
    const selectedVertex = new Set;
    const splitEdges = [];
    const pt = vec3.create();
-   for (let polygon of cutList) {
-      for (let hEdge of polygon.hEdges()) {
-         const t = __WEBPACK_IMPORTED_MODULE_6__wings3d_util__["intersectPlaneHEdge"](pt, plane, hEdge);
-         if (t == 0) {  // select origin
-            selectedVertex.add( hEdge.origin );
-         } else if ( (t>0) && (t<1)) { // spliEdge, and select
-            let newOut = this.geometry.splitEdge(hEdge, pt);   // pt is the split point.
-            splitEdges.push( newOut.pair );
-            selectedVertex.add( hEdge.origin );
+   for (let plane of cutPlanes) {
+      const cutList = [];
+      for (let sphere of this.bvh.root.intersectBound(plane)) {
+         if (this.selectedSet.has(sphere.polygon)) {
+            cutList.push(sphere.polygon);
+         }
+      }
+
+      // sort cutList, guarantee ordering.
+      cutList.sort( (a,b)=> { return a.index - b.index;} );
+
+      // now cut, and select vertex for later connect phase.
+      for (let polygon of cutList) {
+         for (let hEdge of polygon.hEdges()) {
+            const t = __WEBPACK_IMPORTED_MODULE_6__wings3d_util__["intersectPlaneHEdge"](pt, plane, hEdge);
+            if (t == 0) {  // select origin
+               selectedVertex.add( hEdge.origin );
+            } else if ( (t>0) && (t<1)) { // spliEdge, and select
+               let newOut = this.geometry.splitEdge(hEdge, pt);   // pt is the split point.
+               splitEdges.push( newOut.pair );
+               selectedVertex.add( hEdge.origin );
+            }
          }
       }
    }
@@ -5132,14 +5137,40 @@ PreviewCage.prototype.planeCutFace = function(plane) {
    return {selectedFaces: this.selectedSet, vertices: selectedVertex, halfEdges: splitEdges};
 };
 
+PreviewCage.prototype.planeCutFace = function(plane) {
+   return this._planeCutFace([plane]);
+};
+
 PreviewCage.prototype.planeCutBody = function(plane) {
-   const result = this.planeCutFace(plane);
+   const result = this._planeCutFace([plane]);
 
    // adjust result to body
    return {body: result.selectedFaces, vertices: result.vertices, halfEdges: result.halfEdges};
 };
 
 
+PreviewCage.prototype.sliceBody = function(planeNormal, numberOfPart) {
+   // first get tight bounding box.
+   const min = vec3.create();
+   const max = vec3.create();
+   this.geometry.getExtent(min, max);
+   const size = vec3.create();
+   vec3.sub(size, max, min);
+   // find the number of cuts.
+   const cutPlanes = [];
+   const center = vec3.create();
+   const numberOfCuts = numberOfPart-1;
+   for (let i = 1; i <= numberOfCuts; ++i) {
+      vec3.lerp(center, min, max, i/(numberOfCuts+1));
+      cutPlanes.push( new __WEBPACK_IMPORTED_MODULE_1__wings3d_boundingvolume__["Plane"](planeNormal, center) );
+   }
+
+   // iterate through the cut
+   const result = this._planeCutFace(cutPlanes);
+
+   // adjust result to body
+   return {body: result.selectedFaces, vertices: result.vertices, halfEdges: result.halfEdges};
+};
 //----------------------------------------------------------------------------------------------------------
 
 
@@ -7038,6 +7069,23 @@ WingedTopology.prototype._freePolygon = function(polygon) {
       this.alloc.freePolygon(polygon);
    }
 };
+
+
+WingedTopology.prototype.getExtent = function(min, max) {
+   min[0] = min[1] = min[2] = Number.MAX_VALUE;
+   max[0] = max[1] = max[2] = Number.MIN_VALUE;
+   for (let vertex of this.vertices) {
+      const pt = vertex.vertex;
+      for (let i = 0; i < 3; ++i) {
+         if (pt[i] > max[i]) {
+            max[i] = pt[i];
+         } else if (pt[i] < min[i]) {
+            min[i] = pt[i];
+         }
+      }
+   }
+};
+
 
 // return winged edge ptr because internal use only.
 WingedTopology.prototype.addEdge = function(begVert, endVert, delOutEdge) {
@@ -11130,18 +11178,36 @@ class BodyMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
             __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["undoQueue"](command);
          }
        });
-       const flip = [__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].bodyFlipX, __WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].bodyFlipY, __WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].bodyFlipZ];
-       // flip for (x, y, z)
-       for (let axis=0; axis < 3; ++axis) {
-          __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](flip[axis].name, (ev) => { //action.bodyFlipX(Y,Z)
-                //View.undoQueue(new FlipBodyAxis(this, axis));
-                const command = new FlipBodyAxis(this, axis);
-                command.doIt();
-                __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["undoQueue"](command);
-             });
-       }
-       //UI.bindMenuItem(action.bodySlice.name, (ev) => {
-       // });
+      const flip = [__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].bodyFlipX, __WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].bodyFlipY, __WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].bodyFlipZ];
+      // flip for (x, y, z)
+      for (let axis=0; axis < 3; ++axis) {
+         __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](flip[axis].name, (ev) => { //action.bodyFlipX(Y,Z)
+            //View.undoQueue(new FlipBodyAxis(this, axis));
+            const command = new FlipBodyAxis(this, axis);
+            command.doIt();
+            __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["undoQueue"](command);
+          });
+      }
+      const axisVec = [[1,0,0], [0,1,0], [0,0,1]];
+      const slice = [__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].bodySliceX, __WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].bodySliceY, __WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].bodySliceZ];
+      for (let axis = 0; axis < 3; ++axis) {
+      __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](slice[axis].name, (ev) => {
+         __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["runDialog"]('#sliceBodyDialog', ev, (data)=> {
+            if (data['amountRange']) {
+               const number = parseInt(data['amountRange'], 10);
+               if ((number != NaN) && (number > 0) && (number < 100)) { // sane input
+                  const command = new __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["GenericEditCommand"](this, this.slice, [axisVec[axis], number], this.undoPlaneCut);
+                  if (command.doIt()) {
+                     const vertexMadsor = __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["currentMode"]();   // assurely it vertexMode
+                     vertexMadsor.andConnectVertex(command);
+                  } else { // should not happened, make some noise
+
+                  }
+               }
+            }
+          });
+       });
+      }
    }
 
    modeName() {
@@ -11239,6 +11305,12 @@ class BodyMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
    undoPlaneCut(snapshots) { // undo of splitEdge.
       this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.collapseSplitOrBevelEdge);
       __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["restoreBodyMode"](snapshots);
+   }
+
+   slice(planeNormal, numberOfPart) {
+      const snapshots = this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.sliceBody, planeNormal, numberOfPart);
+      __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["restoreVertexMode"](this.snapshots);
+      return snapshots;
    }
 
    centroid() {
@@ -11696,6 +11768,16 @@ class VertexMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"]
    }
    undoExtrude(extrudeData) {
       this.doAll(extrudeData, __WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.undoExtrudeVertex);
+   }
+
+   andConnectVertex(prevCmd) {
+      const vertexConnect = new VertexConnectCommand(this);
+      if (vertexConnect.doIt()) {
+         __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueueCombo"]([prevCmd, vertexConnect]);
+      } else { // no connection possible
+         prevCmd.undo();
+         // post on geomoetryStatus;
+      }
    }
 
    connectVertex() {

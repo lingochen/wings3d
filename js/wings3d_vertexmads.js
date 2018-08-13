@@ -96,6 +96,16 @@ class VertexMadsor extends Madsor {
       this.doAll(extrudeData, PreviewCage.prototype.undoExtrudeVertex);
    }
 
+   andConnectVertex(prevCmd) {
+      const vertexConnect = new VertexConnectCommand(this);
+      if (vertexConnect.doIt()) {
+         View.undoQueueCombo([prevCmd, vertexConnect]);
+      } else { // no connection possible
+         prevCmd.undo();
+         // post on geomoetryStatus;
+      }
+   }
+
    connectVertex() {
       return  new VertexConnectCommand(this);
    }

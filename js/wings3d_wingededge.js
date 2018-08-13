@@ -944,6 +944,23 @@ WingedTopology.prototype._freePolygon = function(polygon) {
    }
 };
 
+
+WingedTopology.prototype.getExtent = function(min, max) {
+   min[0] = min[1] = min[2] = Number.MAX_VALUE;
+   max[0] = max[1] = max[2] = Number.MIN_VALUE;
+   for (let vertex of this.vertices) {
+      const pt = vertex.vertex;
+      for (let i = 0; i < 3; ++i) {
+         if (pt[i] > max[i]) {
+            max[i] = pt[i];
+         } else if (pt[i] < min[i]) {
+            min[i] = pt[i];
+         }
+      }
+   }
+};
+
+
 // return winged edge ptr because internal use only.
 WingedTopology.prototype.addEdge = function(begVert, endVert, delOutEdge) {
    // what to do with loop edge?

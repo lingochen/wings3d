@@ -2,7 +2,7 @@
 // bodymadsor. 
 //
 
-import {Madsor, DragSelect, MouseMoveAlongAxis, MoveFreePositionHandler, ToggleModeCommand } from './wings3d_mads';
+import {Madsor, DragSelect, MouseMoveAlongAxis, MoveFreePositionHandler, ToggleModeCommand, GenericEditCommand} from './wings3d_mads';
 import {FaceMadsor} from './wings3d_facemads';   // for switching
 import {EdgeMadsor} from './wings3d_edgemads';
 import {VertexMadsor} from './wings3d_vertexmads';
@@ -76,18 +76,36 @@ class BodyMadsor extends Madsor {
             View.undoQueue(command);
          }
        });
-       const flip = [action.bodyFlipX, action.bodyFlipY, action.bodyFlipZ];
-       // flip for (x, y, z)
-       for (let axis=0; axis < 3; ++axis) {
-          UI.bindMenuItem(flip[axis].name, (ev) => { //action.bodyFlipX(Y,Z)
-                //View.undoQueue(new FlipBodyAxis(this, axis));
-                const command = new FlipBodyAxis(this, axis);
-                command.doIt();
-                View.undoQueue(command);
-             });
-       }
-       //UI.bindMenuItem(action.bodySlice.name, (ev) => {
-       // });
+      const flip = [action.bodyFlipX, action.bodyFlipY, action.bodyFlipZ];
+      // flip for (x, y, z)
+      for (let axis=0; axis < 3; ++axis) {
+         UI.bindMenuItem(flip[axis].name, (ev) => { //action.bodyFlipX(Y,Z)
+            //View.undoQueue(new FlipBodyAxis(this, axis));
+            const command = new FlipBodyAxis(this, axis);
+            command.doIt();
+            View.undoQueue(command);
+          });
+      }
+      const axisVec = [[1,0,0], [0,1,0], [0,0,1]];
+      const slice = [action.bodySliceX, action.bodySliceY, action.bodySliceZ];
+      for (let axis = 0; axis < 3; ++axis) {
+      UI.bindMenuItem(slice[axis].name, (ev) => {
+         UI.runDialog('#sliceBodyDialog', ev, (data)=> {
+            if (data['amountRange']) {
+               const number = parseInt(data['amountRange'], 10);
+               if ((number != NaN) && (number > 0) && (number < 100)) { // sane input
+                  const command = new GenericEditCommand(this, this.slice, [axisVec[axis], number], this.undoPlaneCut);
+                  if (command.doIt()) {
+                     const vertexMadsor = View.currentMode();   // assurely it vertexMode
+                     vertexMadsor.andConnectVertex(command);
+                  } else { // should not happened, make some noise
+
+                  }
+               }
+            }
+          });
+       });
+      }
    }
 
    modeName() {
@@ -185,6 +203,12 @@ class BodyMadsor extends Madsor {
    undoPlaneCut(snapshots) { // undo of splitEdge.
       this.doAll(snapshots, PreviewCage.prototype.collapseSplitOrBevelEdge);
       View.restoreBodyMode(snapshots);
+   }
+
+   slice(planeNormal, numberOfPart) {
+      const snapshots = this.snapshotAll(PreviewCage.prototype.sliceBody, planeNormal, numberOfPart);
+      View.restoreVertexMode(this.snapshots);
+      return snapshots;
    }
 
    centroid() {

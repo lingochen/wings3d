@@ -9,7 +9,7 @@
 */
 "use strict";
 import {gl, ShaderData} from './wings3d_gl'; 
-import {BoundingSphere, LooseOctree} from './wings3d_boundingvolume';
+import {BoundingSphere, LooseOctree, Plane} from './wings3d_boundingvolume';
 import {WingedTopology} from './wings3d_wingededge';
 import * as View from './wings3d_view';
 import * as Wings3D from './wings3d';
@@ -3180,30 +3180,32 @@ PreviewCage.prototype.planeCuttableFace = function(plane) {
 };
 
 // cut the selected by the given plane, and reconnect
-PreviewCage.prototype.planeCutFace = function(plane) {
-   const cutList = [];
-   for (let sphere of this.bvh.root.intersectBound(plane)) {
-      if (this.selectedSet.has(sphere.polygon)) {
-         cutList.push(sphere.polygon);
-      }
-   }
-
-   // sort cutList, guarantee ordering.
-   cutList.sort( (a,b)=> { return a.index - b.index;} );
-
-   // now cut, and select vertex for later connect phase.
+PreviewCage.prototype._planeCutFace = function(cutPlanes) {
    const selectedVertex = new Set;
    const splitEdges = [];
    const pt = vec3.create();
-   for (let polygon of cutList) {
-      for (let hEdge of polygon.hEdges()) {
-         const t = Util.intersectPlaneHEdge(pt, plane, hEdge);
-         if (t == 0) {  // select origin
-            selectedVertex.add( hEdge.origin );
-         } else if ( (t>0) && (t<1)) { // spliEdge, and select
-            let newOut = this.geometry.splitEdge(hEdge, pt);   // pt is the split point.
-            splitEdges.push( newOut.pair );
-            selectedVertex.add( hEdge.origin );
+   for (let plane of cutPlanes) {
+      const cutList = [];
+      for (let sphere of this.bvh.root.intersectBound(plane)) {
+         if (this.selectedSet.has(sphere.polygon)) {
+            cutList.push(sphere.polygon);
+         }
+      }
+
+      // sort cutList, guarantee ordering.
+      cutList.sort( (a,b)=> { return a.index - b.index;} );
+
+      // now cut, and select vertex for later connect phase.
+      for (let polygon of cutList) {
+         for (let hEdge of polygon.hEdges()) {
+            const t = Util.intersectPlaneHEdge(pt, plane, hEdge);
+            if (t == 0) {  // select origin
+               selectedVertex.add( hEdge.origin );
+            } else if ( (t>0) && (t<1)) { // spliEdge, and select
+               let newOut = this.geometry.splitEdge(hEdge, pt);   // pt is the split point.
+               splitEdges.push( newOut.pair );
+               selectedVertex.add( hEdge.origin );
+            }
          }
       }
    }
@@ -3211,14 +3213,40 @@ PreviewCage.prototype.planeCutFace = function(plane) {
    return {selectedFaces: this.selectedSet, vertices: selectedVertex, halfEdges: splitEdges};
 };
 
+PreviewCage.prototype.planeCutFace = function(plane) {
+   return this._planeCutFace([plane]);
+};
+
 PreviewCage.prototype.planeCutBody = function(plane) {
-   const result = this.planeCutFace(plane);
+   const result = this._planeCutFace([plane]);
 
    // adjust result to body
    return {body: result.selectedFaces, vertices: result.vertices, halfEdges: result.halfEdges};
 };
 
 
+PreviewCage.prototype.sliceBody = function(planeNormal, numberOfPart) {
+   // first get tight bounding box.
+   const min = vec3.create();
+   const max = vec3.create();
+   this.geometry.getExtent(min, max);
+   const size = vec3.create();
+   vec3.sub(size, max, min);
+   // find the number of cuts.
+   const cutPlanes = [];
+   const center = vec3.create();
+   const numberOfCuts = numberOfPart-1;
+   for (let i = 1; i <= numberOfCuts; ++i) {
+      vec3.lerp(center, min, max, i/(numberOfCuts+1));
+      cutPlanes.push( new Plane(planeNormal, center) );
+   }
+
+   // iterate through the cut
+   const result = this._planeCutFace(cutPlanes);
+
+   // adjust result to body
+   return {body: result.selectedFaces, vertices: result.vertices, halfEdges: result.halfEdges};
+};
 //----------------------------------------------------------------------------------------------------------
 
 
