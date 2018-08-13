@@ -207,7 +207,7 @@ class BodyMadsor extends Madsor {
 
    slice(planeNormal, numberOfPart) {
       const snapshots = this.snapshotAll(PreviewCage.prototype.sliceBody, planeNormal, numberOfPart);
-      View.restoreVertexMode(this.snapshots);
+      View.restoreVertexMode(snapshots);
       return snapshots;
    }
 
