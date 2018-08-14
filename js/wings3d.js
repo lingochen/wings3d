@@ -279,6 +279,7 @@ const action = {
    bodySliceX: () => {notImplemented(this);},
    bodySliceY: () => {notImplemented(this);},
    bodySliceZ: () => {notImplemented(this);},
+   bodyWeld: () => {notImplemented(this);},
    // edge
    cutMenu: () => {notImplemented(this);},
    cutLine2: () => {notImplemented(this);},

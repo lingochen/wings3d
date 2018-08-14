@@ -364,6 +364,7 @@ const action = {
    bodySliceX: () => {notImplemented(this);},
    bodySliceY: () => {notImplemented(this);},
    bodySliceZ: () => {notImplemented(this);},
+   bodyWeld: () => {notImplemented(this);},
    // edge
    cutMenu: () => {notImplemented(this);},
    cutLine2: () => {notImplemented(this);},
@@ -10757,14 +10758,7 @@ class EdgeMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
       const cutEdge = new CutEdgeCommand(this, 2);
       cutEdge.doIt();
       const vertexMadsor = __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["currentMode"]();   // assurely it vertexMode
-      const vertexConnect = new __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__["VertexConnectCommand"](vertexMadsor);
-      if (vertexConnect.doIt()) {
-         __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["undoQueueCombo"]([cutEdge, vertexConnect]);
-      } else { // no connection possible
-         cutEdge.undo();
-         // post on geomoetryStatus
-         
-      }
+      vertexMadsor.andConnectVertex(cutEdge);
    }
 
    cut(numberOfSegments) {
@@ -11319,6 +11313,18 @@ class BodyMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
       const snapshots = this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.sliceBody, planeNormal, numberOfPart);
       __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["restoreVertexMode"](snapshots);
       return snapshots;
+   }
+
+   weld() {
+      // adds up all selected object's face
+
+      // find weldable pair
+
+      // merge welable pair's cage
+
+      // weld the weldable pair faces.
+
+      //
    }
 
    centroid() {

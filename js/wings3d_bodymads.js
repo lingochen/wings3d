@@ -211,6 +211,18 @@ class BodyMadsor extends Madsor {
       return snapshots;
    }
 
+   weld() {
+      // adds up all selected object's face
+
+      // find weldable pair
+
+      // merge welable pair's cage
+
+      // weld the weldable pair faces.
+
+      //
+   }
+
    centroid() {
       return this.snapshotAll(PreviewCage.prototype.bodyCentroid);
    }
