@@ -211,16 +211,49 @@ class BodyMadsor extends Madsor {
       return snapshots;
    }
 
-   weld() {
+   weld(tolerance = 0.001) {
+      const extent = {min: vec3.fromValues(Number.MAX_VALUE, Number.MAX_VALUE, Number.MAX_VALUE), 
+                      max: vec3.fromValues(Number.MIN_VALUE, Number.MIN_VALUE, Number.MIN_VALUE)};
+      const selection = [];
       // adds up all selected object's face
+      for (let cage of this.selectedCage()) {
+         cage.getBodySelection(selection, extent);
+      }
+      // sort by longest length.
+      let order = Util.getAxisOrder(extent);
+      selection.sort( (a, b) => {
+         for (let i = 0; i < 3; ++i) {
+            let result = a.center[order[i]] - b.center[order[i]];
+            if (result !== 0.0) {
+               return result;
+            }
+         }
+         return (a.polygon.index - b.polygon.index);
+       });
 
       // find weldable pair
+      const merged = new Set;
+      for (let i = 0; i < selection.length(); ++i) {  // walk through the whole list
+         const target = selection[i];
+         if (!merged.has(target)) {
+            for (let j = i+1; j < selection.length; j++) {// walk till the end, or 
+               const compare = selection[j];
+               if (compare.isLive() && !merged.has(compare)) {
+                  if (Math.abs(target.center[order[0]]-compare.center[order[0]]) > tolerance) {  // out of bounds
+                     break;
+                  }
+                   // weld compare to target if possibled
+                  if (PreviewCage.weld(affected, target, compare, tolerance)) {  // weld together
+                     merged.add(compare);
+                     break;
+                  }
+               }
+            }
+         }
+      }
 
-      // merge welable pair's cage
-
-      // weld the weldable pair faces.
-
-      //
+      // return undo result
+      
    }
 
    centroid() {

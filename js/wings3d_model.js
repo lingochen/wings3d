@@ -241,13 +241,13 @@ PreviewCage.prototype.merge = function(mergeSelection) {
    this.geometry.merge(function* (){for (let cage of mergeSelection) {yield cage.geometry;}});
    // copy selection
    this.selectedSet = new Set(function* (){for (let cage of mergeSelection) {yield* cage.selectedSet;}}());
-   // clear out all
-   for (let cage of mergeSelection) {
+   // clear out all ?
+/*   for (let cage of mergeSelection) {
       cage.geometry.faces = new Set;
       cage.geometry.vertices = new Set;
       cage.geometry.edges = new Set;
       cage.selectedSet = new Set;
-   }
+   } */
 };
 
 PreviewCage.prototype.separate = function() {
@@ -3235,8 +3235,8 @@ PreviewCage.prototype.planeCutBody = function(plane) {
 
 PreviewCage.prototype.sliceBody = function(planeNormal, numberOfPart) {
    // first get tight bounding box.
-   const min = vec3.create();
-   const max = vec3.create();
+   const min = vec3.fromValues(Number.MAX_VALUE, Number.MAX_VALUE, Number.MAX_VALUE);
+   const max = vec3.fromValues(Number.MIN_VALUE, Number.MIN_VALUE, Number.MIN_VALUE);
    this.geometry.getExtent(min, max);
    const size = vec3.create();
    vec3.sub(size, max, min);
@@ -3255,6 +3255,66 @@ PreviewCage.prototype.sliceBody = function(planeNormal, numberOfPart) {
    // adjust result to body
    return {body: result.selectedFaces, vertices: result.vertices, halfEdges: result.halfEdges};
 };
+
+
+PreviewCage.prototype.getBodySelection = function(selection, extent) {
+   // first get extent size
+   this.geometry.getExtent(extent.min, extent.max);
+   // now push all faces's sphere.
+   for (let polygon of this.selectedSet) {
+      selection.push( this.bench.boundingSpheres[polygon.index] );
+   }
+};
+
+
+PreviewCage.weld = function(affected, target, compare, tolerance) {
+   // check number of vertex
+   if (target.polygon.numberOfVertex !== compare.polygon.numberOfVertex) {
+      return false;
+   }
+   // check direction
+   if (vec3.dot(target.polyogn.normal, compare.polygon.normal) > 0) {
+      return false;
+   }
+   // check center distance and radisu
+   const toleranceSquare = tolerance * tolerance;
+   if (vec3.sqrDist(target.center, compare.center) > toleranceSquare) {
+      return false;
+   }
+   if (Math.abs(target.radius - compare.radius) > tolerance) {
+      return false;
+   }
+   // check all vertex distance
+   let match = false;
+   for (let hEdge of target.polygon.outEdge) {  // find the closest pair first
+      for (let current2 of compare.polygon.outEdge) {
+         let current = hEdge;
+         match = true;
+         do {  // iterated through the loop
+            if (vec3.sqrDist(current.origin.vertex, current2.orign.vertex) > toleranceSquare) {
+               match = false;
+               break;
+            }
+            current = current.next;
+            current2 = current2.next;
+         } while (current !== hEdge);
+         if (match) {break;}
+      }
+      if (match) {break;}
+   }
+   if (!match) {
+      return false;
+   }
+   // check if same previewCage, if not merged.
+   if (target.octree.bvh !== compare.octree.bvh) {
+
+   }
+
+   // now weld together
+
+   //
+};
+
 //----------------------------------------------------------------------------------------------------------
 
 

@@ -310,7 +310,31 @@ function projectVec3(vertices, planeNormal, planeOrigin) {
 function closestPointToPlane(out, point, plane) { // projection to plane
    const distance = vec3.dot(plane.normal, point) - plane.distance;
    vec3.scaleAndAdd(out, point, plane.normal, -distance);
-}
+};
+
+function getAxisOrder(extent) {
+   let size = vec3.create();
+   vec3.sub(size, extent.max, extent.min);
+   let first, second, third;
+   if (size[0] > size[1]) {
+      if (size[0] > size[2]) {
+         first = 0;
+         if (size[1] > size[2]) {
+            second = 1;
+            third = 2;
+         } else {
+            second = 2;
+            third = 1;
+         }
+      }
+   } else if (size[1] > size[2]) {
+
+   } else {
+
+   }
+
+   return [first, second, third];
+};
 
 
 export {
@@ -318,6 +342,7 @@ export {
    computeAngle,
    getAxisAngle,
    computeEdgeNormal,
+   getAxisOrder,
    intersectTriangle,
    intersectRayAAExtent,
    intersectRaySphere,
