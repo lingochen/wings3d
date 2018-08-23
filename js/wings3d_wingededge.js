@@ -1653,7 +1653,6 @@ WingedTopology.prototype.findFaceGroup = function(selectedPolygon) {
 
 
 WingedTopology.prototype.findContours = function(selectedPolygon) {
-   const self = this;
    const contourEdges = new Set;
    const edgeLoops = [];
    // find all contourEdges to extrude

@@ -3267,7 +3267,58 @@ PreviewCage.prototype.getBodySelection = function(selection, extent) {
 };
 
 
-PreviewCage.weld = function(affected, target, compare, tolerance) {
+// the real workhorse
+// abandon: 2018-08-23. will work on face hole first then rewrite this.
+PreviewCage.weldContours = function(merged) {
+   const loopUsed = new Set;
+   const hEdge2Loop = new Map;
+   const edgeLoops = PreviewCage.findContours(merged);
+   // find inner, outer, then combined.
+   for (let edgeLoop of edgeLoops) {
+      const target = edgeLoop[0].outer;
+      const source = pair.get(target);
+      if (source.sameCage) {// check self loop
+         // won't handle for now.
+         return false;
+      } else if (hEdge2Loop.has(source.hEdge)) { // now check if matching hEdge already saved
+         const result = hEdge2Loop.get(source.hEdge);
+         if (result.loop.length === edgeLoop.length) {   // move hEdge to match and checked.
+            result.loop.push( result.loop.splice(0, result.index) );
+            for (let i = 0; i < edgeLoop.length; ++i) {  // should we check both loops to really see they matched?
+               let target = edgeLoop[i].outer;
+               let source = result.loop[i].outer;
+               if (pair.get(target) !== source) {// no matching bad.
+                  return false;
+               }
+               edgeLoop[i].inner = source;
+            }
+            // ok, done moving to edgeLoop
+            loopUsed.add( edgeLoop );
+            break;
+         } else { // bad match, could be 3+ cage involvement, don't handle it now.
+            return false;
+         }
+      } else { // save all to hEdge2Loop
+         for (let i = 0; i < edgeLoop.length; ++i) {
+            const target = edgeLoop[i];
+            hEdge2Loop.set(target, {index: i, loop: edgeLoop});
+         }
+      }
+   }
+
+   return loopUsed;
+};
+
+PreviewCage.weldBody = function(targetHEdge, sourceHEdge) {
+   // remove sourceHEdge's polygon.
+
+   // remove targetHEdge's polygon
+
+   // reuse liftContours to move face
+
+};
+
+PreviewCage.weldFace = function(target, compare, tolerance) {
    // check number of vertex
    if (target.polygon.numberOfVertex !== compare.polygon.numberOfVertex) {
       return false;
@@ -3285,34 +3336,70 @@ PreviewCage.weld = function(affected, target, compare, tolerance) {
       return false;
    }
    // check all vertex distance
-   let match = false;
    for (let hEdge of target.polygon.outEdge) {  // find the closest pair first
       for (let current2 of compare.polygon.outEdge) {
          let current = hEdge;
-         match = true;
+         let match = [];
          do {  // iterated through the loop
             if (vec3.sqrDist(current.origin.vertex, current2.orign.vertex) > toleranceSquare) {
-               match = false;
+               match = undefined;
                break;
             }
+            match.push( {target: current, source: current2} );
             current = current.next;
             current2 = current2.next;
          } while (current !== hEdge);
-         if (match) {break;}
+         if (match) {
+            return match;
+         }
       }
-      if (match) {break;}
    }
-   if (!match) {
-      return false;
-   }
+
+   return false;
+
+/*   let newCombine;
    // check if same previewCage, if not merged.
    if (target.octree.bvh !== compare.octree.bvh) {
-
+      const combine = View.makeCombineIntoWorld([target, compare]);
+      combine.name = cageSelection[0].name;
+      combine.selectBody();
+      newCombine =  {combine: combine, oldSelection: cageSelection};
+      affected.combine.push(newCombine);
    }
 
    // now weld together
+   affected.restore.push( newCombine.combine.weldFace(targetEdge, sourceEdge) );
 
-   //
+   return true; */
+};
+
+PreviewCage.findOverlapFace = function(selection) {
+   const merged = new Set;
+   const pair = new Map;
+   for (let i = 0; i < selection.length(); ++i) {  // walk through the whole list
+      const target = selection[i];
+      if (!merged.has(target)) {
+         for (let j = i+1; j < selection.length; j++) {// walk till the end, or 
+            const compare = selection[j];
+            if (compare.isLive() && !merged.has(compare)) {
+               if (Math.abs(target.center[order[0]]-compare.center[order[0]]) > tolerance) {  // out of bounds
+                  break;
+               }
+                // weld compare to target if possibled
+               const weld = PreviewCage.weldFace(target, compare, tolerance);  // weldable
+               if (weld) {
+                  const sameCage = (compare.octree.bvh === target.octree.bvh);
+                  merged.add(compare);
+                  merged.add(target);
+                  for (let match of weld) {                     
+                     pair.set(match.target, {hEdge: match.source, sameCage: sameCage});
+                     pair.set(match.source, {hEdge: match.target, sameCage: sameCage});
+                  }
+               }
+            }
+         }
+      }
+   }
 };
 
 //----------------------------------------------------------------------------------------------------------

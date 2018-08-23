@@ -232,25 +232,13 @@ class BodyMadsor extends Madsor {
        });
 
       // find weldable pair
-      const merged = new Set;
-      for (let i = 0; i < selection.length(); ++i) {  // walk through the whole list
-         const target = selection[i];
-         if (!merged.has(target)) {
-            for (let j = i+1; j < selection.length; j++) {// walk till the end, or 
-               const compare = selection[j];
-               if (compare.isLive() && !merged.has(compare)) {
-                  if (Math.abs(target.center[order[0]]-compare.center[order[0]]) > tolerance) {  // out of bounds
-                     break;
-                  }
-                   // weld compare to target if possibled
-                  if (PreviewCage.weld(affected, target, compare, tolerance)) {  // weld together
-                     merged.add(compare);
-                     break;
-                  }
-               }
-            }
-         }
-      }
+      const merged = PreviewCage.findOverlapFace(selection); 
+
+      // now find the contours of potential mergers.
+      const weldContours = PreviewCage.weldContours(merged);
+
+      // now merge Cage then weld contour.
+      
 
       // return undo result
       
