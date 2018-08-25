@@ -128,12 +128,14 @@ class BodyMadsor extends Madsor {
       return this.snapshotAll(PreviewCage.prototype.snapshotTransformBodyGroup);
    }
 
-   combine() {
-      const cageSelection = [];
-      for (let cage of this.selectedCage()) {
-         cageSelection.push( cage );
+   combine(cageSelection) {
+      if (cageSelection === undefined) {
+         cageSelection = [];
+         for (let cage of this.selectedCage()) {
+            cageSelection.push( cage );
+         }
       }
-      // got at least 2 selected cage2.
+      // needs least 2 selected cage2.
       if (cageSelection.length >= 2) {
          // now do merge operation.
          const combine = View.makeCombineIntoWorld(cageSelection);
@@ -233,15 +235,26 @@ class BodyMadsor extends Madsor {
 
       // find weldable pair
       const merged = PreviewCage.findOverlapFace(selection); 
-
       // now find the contours of potential mergers.
-      const weldContours = PreviewCage.weldContours(merged);
+      const weldContours = PreviewCage.findWeldContours(merged);
+      if (weldContours !== false) {
+         // combine cages
+         const combinedCages = [];
+         const combined = new Map;
+         for (let cages of weldContours.combineCages) {
+            const result = this.combine(cages);
+            combined.set(cages, result);
+            combinedCages.push( result );
+         }
+         // make holes of weldable polygons.
+         const holes = PreviewCage.weldHoles(merged);
+         // now weld the contours
+         const mergeCage = PreviewCage.weldBody(combined, weldContours);
+         // return undo result;
 
-      // now merge Cage then weld contour.
-      
-
-      // return undo result
-      
+      }
+      // unable to weld
+      return false;
    }
 
    centroid() {

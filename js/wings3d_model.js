@@ -3267,34 +3267,77 @@ PreviewCage.prototype.getBodySelection = function(selection, extent) {
 };
 
 
+// make holes
+PreviewCage.prototype.makeHolesFromBB = function(selection) {
+   const restore = [];
+   for (let sphere of selection) {
+      const polygon = this.bench.faces[sphere.index];
+      restore.push( this.makeHole(polygon) );
+   }
+   return restore;
+};
+
+
 // the real workhorse
-// abandon: 2018-08-23. will work on face hole first then rewrite this.
-PreviewCage.weldContours = function(merged) {
-   const loopUsed = new Set;
+PreviewCage.findWeldContours = function(overlap) {
+   // combinedCages
+   function combineCage(source, target) {
+      const combinedCages = new Map;
+      const combines = [];
+      let cages;
+      if (source.cage === target.cage) {  // same cage
+         if (combinedCages.has(source.cage)) {
+            cages = combinedCages.get(source.cage);
+         } else {
+            cages = [];
+            combines.push( cages );
+            cages.push(source.cage);
+            combines.set(source.cage, cages);
+            combines.set(target.cage, cages);             
+         }
+      } else {
+         if (combinedCages.has(source.cage)) {
+            cages = combinedCages.get(source.cage);
+            if (!combinedCages.has(target.cage)) {
+               combinedCages.set(target.cage, cages);
+               cages.push( target.cage );
+            }
+         } else if (combinedCages.has(target.cage)) {
+            cages = combinedCages.get(target.cage);
+            combinedCages.set(source.cage, cages);
+            cages.push( source.cages );
+            loopUse.push();
+         } else {
+            cages = [];
+            combines.push( cages );
+            cages.push(source.cage, target.cage);
+            combines.set(source.cage, cages);
+            combines.set(target.cage, cages);
+         }
+      }     
+      return cages;
+   };
+   // find edgeLoops
+   const loopUsed = [];
    const hEdge2Loop = new Map;
-   const edgeLoops = PreviewCage.findContours(merged);
+   const edgeLoops = PreviewCage.findContours(overlap.merged);
    // find inner, outer, then combined.
    for (let edgeLoop of edgeLoops) {
-      const target = edgeLoop[0].outer;
-      const source = pair.get(target);
-      if (source.sameCage) {// check self loop
-         // won't handle for now.
-         return false;
-      } else if (hEdge2Loop.has(source.hEdge)) { // now check if matching hEdge already saved
+      const source = overlap.pair.get(edgeLoop[0].outer);
+      const target = overlap.pair.get(source.hEdge)
+      if (hEdge2Loop.has(source.hEdge)) { // now check if matching hEdge already saved
          const result = hEdge2Loop.get(source.hEdge);
          if (result.loop.length === edgeLoop.length) {   // move hEdge to match and checked.
-            result.loop.push( result.loop.splice(0, result.index) );
-            for (let i = 0; i < edgeLoop.length; ++i) {  // should we check both loops to really see they matched?
+            for (let i = 0, j = result.index; i < edgeLoop.length; ++i, j=++j%edgeLoop.length) {  // should we check both loops to really see they matched?
                let target = edgeLoop[i].outer;
-               let source = result.loop[i].outer;
-               if (pair.get(target) !== source) {// no matching bad.
+               let source = result.loop[j].outer;
+               if (pair.get(target).hEdge !== source) {// no matching bad.
                   return false;
                }
                edgeLoop[i].inner = source;
-            }
-            // ok, done moving to edgeLoop
-            loopUsed.add( edgeLoop );
-            break;
+            } // ok, done
+            // now combined Cage
+            loopUsed.push( {combine: combineCages(source, target), edgeLoop: edgeLoop} );
          } else { // bad match, could be 3+ cage involvement, don't handle it now.
             return false;
          }
@@ -3303,22 +3346,14 @@ PreviewCage.weldContours = function(merged) {
             const target = edgeLoop[i];
             hEdge2Loop.set(target, {index: i, loop: edgeLoop});
          }
-      }
+      } // also won't handle self weld contours.
    }
 
-   return loopUsed;
+   return {combineCages: combines, edgeLoops: loopUsed};
 };
 
-PreviewCage.weldBody = function(targetHEdge, sourceHEdge) {
-   // remove sourceHEdge's polygon.
 
-   // remove targetHEdge's polygon
-
-   // reuse liftContours to move face
-
-};
-
-PreviewCage.weldFace = function(target, compare, tolerance) {
+PreviewCage.weldableFace = function(target, compare, tolerance) {
    // check number of vertex
    if (target.polygon.numberOfVertex !== compare.polygon.numberOfVertex) {
       return false;
@@ -3386,19 +3421,45 @@ PreviewCage.findOverlapFace = function(selection) {
                   break;
                }
                 // weld compare to target if possibled
-               const weld = PreviewCage.weldFace(target, compare, tolerance);  // weldable
+               const weld = PreviewCage.weldableFace(target, compare, tolerance);  // weldable
                if (weld) {
-                  const sameCage = (compare.octree.bvh === target.octree.bvh);
                   merged.add(compare);
                   merged.add(target);
                   for (let match of weld) {                     
-                     pair.set(match.target, {hEdge: match.source, sameCage: sameCage});
-                     pair.set(match.source, {hEdge: match.target, sameCage: sameCage});
+                     pair.set(match.target, {hEdge: match.source, cage: compare.octree.bvh});
+                     pair.set(match.source, {hEdge: match.target, cage: target.octree.bvh});
                   }
                }
             }
          }
       }
+   }
+   return {pair: pair, merged: merged};
+};
+
+// get the merged sphere, and remove the polygon.
+PreviewCage.weldHole = function(merged) {
+   const holesOfCages = new Map;
+   for (let sphere of merged.merged) { // sort holes to cages.
+      let holes = holesOfCages.has(sphere.octree.bvh);
+      if (holes === undefined) {
+         holes = [];
+         holesOfCage.set(sphere.octree.bvh, holes);
+      }
+      holes.push(sphere);
+   }
+   // now remove holes from each cages.
+   const result = [];
+   for (let [cage, holes] of holesOfCages) {
+      result.push( [cage, cage.makeHolesFromBB(holes)] );
+   }
+   return result;
+};
+
+PreviewCage.weldBody = function(combines, weldContours) {
+   // then weld contour.
+   for (let [cage, edgeLoop] of weldContours.edgeLoops) {
+      cage.geometry.weldContour(edgeLoop);
    }
 };
 
