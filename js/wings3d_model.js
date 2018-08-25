@@ -50,7 +50,7 @@ class MeshAllocatorProxy { // we could use Proxy, but ....
 
    clearAffected() { this.preview.bench.clearAffected(); }
 
-   addAffectedEdgeAndFace(...args) { this.preview.bench.addAffecedEdgeAndFace(...args); }
+   addAffectedEdgeAndFace(...args) { this.preview.bench.addAffectedEdgeAndFace(...args); }
    addAffectedWEdge(wEdge) {this.preview.bench.addAffectedWEdge(wEdge);}
    addAffectedFace(polygon) {this.preview.bench.addAffectedFace(polygon);}
    addAffectedVertex(vertex) {this.preview.bench.addAffectedVertex(vertex);}
@@ -3458,8 +3458,10 @@ PreviewCage.weldHole = function(merged) {
 
 PreviewCage.weldBody = function(combines, weldContours) {
    // then weld contour.
-   for (let [cage, edgeLoop] of weldContours.edgeLoops) {
+   for (let [cageArray, edgeLoop] of weldContours.edgeLoops) {
+      const cage = combines.get(cageArray);
       cage.geometry.weldContour(edgeLoop);
+      // todo: weldContour should return undo info
    }
 };
 

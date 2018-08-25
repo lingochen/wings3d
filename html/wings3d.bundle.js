@@ -1975,7 +1975,7 @@ class MeshAllocatorProxy { // we could use Proxy, but ....
 
    clearAffected() { this.preview.bench.clearAffected(); }
 
-   addAffectedEdgeAndFace(...args) { this.preview.bench.addAffecedEdgeAndFace(...args); }
+   addAffectedEdgeAndFace(...args) { this.preview.bench.addAffectedEdgeAndFace(...args); }
    addAffectedWEdge(wEdge) {this.preview.bench.addAffectedWEdge(wEdge);}
    addAffectedFace(polygon) {this.preview.bench.addAffectedFace(polygon);}
    addAffectedVertex(vertex) {this.preview.bench.addAffectedVertex(vertex);}
@@ -5192,7 +5192,93 @@ PreviewCage.prototype.getBodySelection = function(selection, extent) {
 };
 
 
-PreviewCage.weld = function(affected, target, compare, tolerance) {
+// make holes
+PreviewCage.prototype.makeHolesFromBB = function(selection) {
+   const restore = [];
+   for (let sphere of selection) {
+      const polygon = this.bench.faces[sphere.index];
+      restore.push( this.makeHole(polygon) );
+   }
+   return restore;
+};
+
+
+// the real workhorse
+PreviewCage.findWeldContours = function(overlap) {
+   // combinedCages
+   function combineCage(source, target) {
+      const combinedCages = new Map;
+      const combines = [];
+      let cages;
+      if (source.cage === target.cage) {  // same cage
+         if (combinedCages.has(source.cage)) {
+            cages = combinedCages.get(source.cage);
+         } else {
+            cages = [];
+            combines.push( cages );
+            cages.push(source.cage);
+            combines.set(source.cage, cages);
+            combines.set(target.cage, cages);             
+         }
+      } else {
+         if (combinedCages.has(source.cage)) {
+            cages = combinedCages.get(source.cage);
+            if (!combinedCages.has(target.cage)) {
+               combinedCages.set(target.cage, cages);
+               cages.push( target.cage );
+            }
+         } else if (combinedCages.has(target.cage)) {
+            cages = combinedCages.get(target.cage);
+            combinedCages.set(source.cage, cages);
+            cages.push( source.cages );
+            loopUse.push();
+         } else {
+            cages = [];
+            combines.push( cages );
+            cages.push(source.cage, target.cage);
+            combines.set(source.cage, cages);
+            combines.set(target.cage, cages);
+         }
+      }     
+      return cages;
+   };
+   // find edgeLoops
+   const loopUsed = [];
+   const hEdge2Loop = new Map;
+   const edgeLoops = PreviewCage.findContours(overlap.merged);
+   // find inner, outer, then combined.
+   for (let edgeLoop of edgeLoops) {
+      const source = overlap.pair.get(edgeLoop[0].outer);
+      const target = overlap.pair.get(source.hEdge)
+      if (hEdge2Loop.has(source.hEdge)) { // now check if matching hEdge already saved
+         const result = hEdge2Loop.get(source.hEdge);
+         if (result.loop.length === edgeLoop.length) {   // move hEdge to match and checked.
+            for (let i = 0, j = result.index; i < edgeLoop.length; ++i, j=++j%edgeLoop.length) {  // should we check both loops to really see they matched?
+               let target = edgeLoop[i].outer;
+               let source = result.loop[j].outer;
+               if (pair.get(target).hEdge !== source) {// no matching bad.
+                  return false;
+               }
+               edgeLoop[i].inner = source;
+            } // ok, done
+            // now combined Cage
+            loopUsed.push( {combine: combineCages(source, target), edgeLoop: edgeLoop} );
+         } else { // bad match, could be 3+ cage involvement, don't handle it now.
+            return false;
+         }
+      } else { // save all to hEdge2Loop
+         for (let i = 0; i < edgeLoop.length; ++i) {
+            const target = edgeLoop[i];
+            hEdge2Loop.set(target, {index: i, loop: edgeLoop});
+         }
+      } // also won't handle self weld contours.
+   }
+
+   return {combineCages: combines, edgeLoops: loopUsed};
+};
+
+
+PreviewCage.weldableFace = function(target, compare, tolerance) {
    // check number of vertex
    if (target.polygon.numberOfVertex !== compare.polygon.numberOfVertex) {
       return false;
@@ -5210,34 +5296,98 @@ PreviewCage.weld = function(affected, target, compare, tolerance) {
       return false;
    }
    // check all vertex distance
-   let match = false;
    for (let hEdge of target.polygon.outEdge) {  // find the closest pair first
       for (let current2 of compare.polygon.outEdge) {
          let current = hEdge;
-         match = true;
+         let match = [];
          do {  // iterated through the loop
             if (vec3.sqrDist(current.origin.vertex, current2.orign.vertex) > toleranceSquare) {
-               match = false;
+               match = undefined;
                break;
             }
+            match.push( {target: current, source: current2} );
             current = current.next;
             current2 = current2.next;
          } while (current !== hEdge);
-         if (match) {break;}
+         if (match) {
+            return match;
+         }
       }
-      if (match) {break;}
    }
-   if (!match) {
-      return false;
-   }
+
+   return false;
+
+/*   let newCombine;
    // check if same previewCage, if not merged.
    if (target.octree.bvh !== compare.octree.bvh) {
-
+      const combine = View.makeCombineIntoWorld([target, compare]);
+      combine.name = cageSelection[0].name;
+      combine.selectBody();
+      newCombine =  {combine: combine, oldSelection: cageSelection};
+      affected.combine.push(newCombine);
    }
 
    // now weld together
+   affected.restore.push( newCombine.combine.weldFace(targetEdge, sourceEdge) );
 
-   //
+   return true; */
+};
+
+PreviewCage.findOverlapFace = function(selection) {
+   const merged = new Set;
+   const pair = new Map;
+   for (let i = 0; i < selection.length(); ++i) {  // walk through the whole list
+      const target = selection[i];
+      if (!merged.has(target)) {
+         for (let j = i+1; j < selection.length; j++) {// walk till the end, or 
+            const compare = selection[j];
+            if (compare.isLive() && !merged.has(compare)) {
+               if (Math.abs(target.center[order[0]]-compare.center[order[0]]) > tolerance) {  // out of bounds
+                  break;
+               }
+                // weld compare to target if possibled
+               const weld = PreviewCage.weldableFace(target, compare, tolerance);  // weldable
+               if (weld) {
+                  merged.add(compare);
+                  merged.add(target);
+                  for (let match of weld) {                     
+                     pair.set(match.target, {hEdge: match.source, cage: compare.octree.bvh});
+                     pair.set(match.source, {hEdge: match.target, cage: target.octree.bvh});
+                  }
+               }
+            }
+         }
+      }
+   }
+   return {pair: pair, merged: merged};
+};
+
+// get the merged sphere, and remove the polygon.
+PreviewCage.weldHole = function(merged) {
+   const holesOfCages = new Map;
+   for (let sphere of merged.merged) { // sort holes to cages.
+      let holes = holesOfCages.has(sphere.octree.bvh);
+      if (holes === undefined) {
+         holes = [];
+         holesOfCage.set(sphere.octree.bvh, holes);
+      }
+      holes.push(sphere);
+   }
+   // now remove holes from each cages.
+   const result = [];
+   for (let [cage, holes] of holesOfCages) {
+      result.push( [cage, cage.makeHolesFromBB(holes)] );
+   }
+   return result;
+};
+
+PreviewCage.weldBody = function(combines, weldContours) {
+   // then weld contour.
+   for (let [cageArray, edgeLoop] of weldContours.edgeLoops) {
+      const cage = combines.get(cageArray);
+      cage.geometry.weldContour(edgeLoop);
+      // todo: weldContour should return undo info
+   }
 };
 
 //----------------------------------------------------------------------------------------------------------
@@ -7848,7 +7998,6 @@ WingedTopology.prototype.findFaceGroup = function(selectedPolygon) {
 
 
 WingedTopology.prototype.findContours = function(selectedPolygon) {
-   const self = this;
    const contourEdges = new Set;
    const edgeLoops = [];
    // find all contourEdges to extrude
@@ -11253,23 +11402,30 @@ class BodyMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
       const axisVec = [[1,0,0], [0,1,0], [0,0,1]];
       const slice = [__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].bodySliceX, __WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].bodySliceY, __WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].bodySliceZ];
       for (let axis = 0; axis < 3; ++axis) {
-      __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](slice[axis].name, (ev) => {
-         __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["runDialog"]('#sliceBodyDialog', ev, (data)=> {
-            if (data['amountRange']) {
-               const number = parseInt(data['amountRange'], 10);
-               if ((number != NaN) && (number > 0) && (number < 100)) { // sane input
-                  const command = new __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["GenericEditCommand"](this, this.slice, [axisVec[axis], number], this.undoPlaneCut);
-                  if (command.doIt()) {
-                     const vertexMadsor = __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["currentMode"]();   // assurely it vertexMode
-                     vertexMadsor.andConnectVertex(command);
-                  } else { // should not happened, make some noise
+         __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](slice[axis].name, (ev) => {
+            __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["runDialog"]('#sliceBodyDialog', ev, (data)=> {
+               if (data['amountRange']) {
+                  const number = parseInt(data['amountRange'], 10);
+                  if ((number != NaN) && (number > 0) && (number < 100)) { // sane input
+                     const command = new __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["GenericEditCommand"](this, this.slice, [axisVec[axis], number], this.undoPlaneCut);
+                     if (command.doIt()) {
+                        const vertexMadsor = __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["currentMode"]();   // assurely it vertexMode
+                        vertexMadsor.andConnectVertex(command);
+                     } else { // should not happened, make some noise
 
+                     }
                   }
                }
-            }
+             });
           });
-       });
       }
+      // weld
+      __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].bodyWeld.name, (ev)=> {
+         const cmd = Object(__WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["GenericEditCommand"])(this, this.weld);
+         if (cmd.doIt()) {
+            __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["undoQueue"](command);
+         }
+       });
    }
 
    modeName() {
@@ -11292,12 +11448,14 @@ class BodyMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
       return this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.snapshotTransformBodyGroup);
    }
 
-   combine() {
-      const cageSelection = [];
-      for (let cage of this.selectedCage()) {
-         cageSelection.push( cage );
+   combine(cageSelection) {
+      if (cageSelection === undefined) {
+         cageSelection = [];
+         for (let cage of this.selectedCage()) {
+            cageSelection.push( cage );
+         }
       }
-      // got at least 2 selected cage2.
+      // needs least 2 selected cage2.
       if (cageSelection.length >= 2) {
          // now do merge operation.
          const combine = __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["makeCombineIntoWorld"](cageSelection);
@@ -11396,28 +11554,28 @@ class BodyMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
        });
 
       // find weldable pair
-      const merged = new Set;
-      for (let i = 0; i < selection.length(); ++i) {  // walk through the whole list
-         const target = selection[i];
-         if (!merged.has(target)) {
-            for (let j = i+1; j < selection.length; j++) {// walk till the end, or 
-               const compare = selection[j];
-               if (compare.isLive() && !merged.has(compare)) {
-                  if (Math.abs(target.center[order[0]]-compare.center[order[0]]) > tolerance) {  // out of bounds
-                     break;
-                  }
-                   // weld compare to target if possibled
-                  if (__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].weld(affected, target, compare, tolerance)) {  // weld together
-                     merged.add(compare);
-                     break;
-                  }
-               }
-            }
+      const merged = __WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].findOverlapFace(selection); 
+      // now find the contours of potential mergers.
+      const weldContours = __WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].findWeldContours(merged);
+      if (weldContours !== false) {
+         // combine cages
+         const combinedCages = [];
+         const combined = new Map;
+         for (let cages of weldContours.combineCages) {
+            const result = this.combine(cages);
+            combined.set(cages, result);
+            combinedCages.push( result );
          }
-      }
+         // make holes of weldable polygons.
+         const holes = __WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].weldHoles(merged);
+         // now weld the contours
+         const mergeCage = __WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].weldBody(combined, weldContours);
+         // return undo result;
 
-      // return undo result
-      
+         return {holes: holes, weldContours: weldContours, };
+      }
+      // unable to weld
+      return false;
    }
 
    centroid() {

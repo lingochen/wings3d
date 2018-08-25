@@ -89,23 +89,30 @@ class BodyMadsor extends Madsor {
       const axisVec = [[1,0,0], [0,1,0], [0,0,1]];
       const slice = [action.bodySliceX, action.bodySliceY, action.bodySliceZ];
       for (let axis = 0; axis < 3; ++axis) {
-      UI.bindMenuItem(slice[axis].name, (ev) => {
-         UI.runDialog('#sliceBodyDialog', ev, (data)=> {
-            if (data['amountRange']) {
-               const number = parseInt(data['amountRange'], 10);
-               if ((number != NaN) && (number > 0) && (number < 100)) { // sane input
-                  const command = new GenericEditCommand(this, this.slice, [axisVec[axis], number], this.undoPlaneCut);
-                  if (command.doIt()) {
-                     const vertexMadsor = View.currentMode();   // assurely it vertexMode
-                     vertexMadsor.andConnectVertex(command);
-                  } else { // should not happened, make some noise
+         UI.bindMenuItem(slice[axis].name, (ev) => {
+            UI.runDialog('#sliceBodyDialog', ev, (data)=> {
+               if (data['amountRange']) {
+                  const number = parseInt(data['amountRange'], 10);
+                  if ((number != NaN) && (number > 0) && (number < 100)) { // sane input
+                     const command = new GenericEditCommand(this, this.slice, [axisVec[axis], number], this.undoPlaneCut);
+                     if (command.doIt()) {
+                        const vertexMadsor = View.currentMode();   // assurely it vertexMode
+                        vertexMadsor.andConnectVertex(command);
+                     } else { // should not happened, make some noise
 
+                     }
                   }
                }
-            }
+             });
           });
-       });
       }
+      // weld
+      UI.bindMenuItem(action.bodyWeld.name, (ev)=> {
+         const cmd = new GenericEditCommand(this, this.weld);
+         if (cmd.doIt()) {
+            View.undoQueue(command);
+         }
+       });
    }
 
    modeName() {
@@ -252,6 +259,7 @@ class BodyMadsor extends Madsor {
          const mergeCage = PreviewCage.weldBody(combined, weldContours);
          // return undo result;
 
+         return {holes: holes, weldContours: weldContours, };
       }
       // unable to weld
       return false;
