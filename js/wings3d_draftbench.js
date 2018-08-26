@@ -416,7 +416,7 @@ DraftBench.prototype._updatePreviewFace = function(polygon) {
    if ((polygon.index < this.boundingSpheres.length) && polygon.isLive()) { // will be get recompute on resize
       const sphere = this.boundingSpheres[ polygon.index ];
       sphere.setSphere( BoundingSphere.computeSphere(sphere.polygon, sphere.center) ); 
-      // update center.
+      // update center
       const index = this.vertices.length+polygon.index;
       this.preview.shaderData.uploadAttribute('position', index*3*4, sphere.center);
    }

@@ -1020,7 +1020,7 @@ PreviewCage.prototype.snapshotTransformFaceGroup = function() {
    const vertices = new Set;
    const matrixGroup = [];
    // array of edgeLoop. 
-   let faceGroup = this.geometry.findFaceGroup(this.getSelectedSorted());
+   let faceGroup = WingedTopology.findFaceGroup(this.getSelectedSorted());
    // compute center of loop, gather all the vertices, create the scaling matrix
    const center = vec3.create();
    for (let group of faceGroup) {
@@ -1731,7 +1731,7 @@ PreviewCage.prototype.extrudeFace = function(contours) {
    // array of edgeLoop. 
    if (!contours) {
       contours = {};
-      contours.edgeLoops = this.geometry.findContours(this.selectedSet); 
+      contours.edgeLoops = WingedTopology.findContours(this.selectedSet); 
    }
    contours.edgeLoops = this.geometry.liftContours(contours.edgeLoops);
    contours.extrudeEdges = this.geometry.extrudeContours(contours.edgeLoops);
@@ -2107,7 +2107,7 @@ PreviewCage.prototype.dissolveSelectedFace = function() {
       });
    }
    // get the outline edge
-   const contourLoops = this.geometry.findContours(this.selectedSet);
+   const contourLoops = WingedTopology.findContours(this.selectedSet);
    // subtract outline edges from all selected edge.
    for (let loop of contourLoops) {
       for (let edge of loop) {
@@ -2665,7 +2665,7 @@ PreviewCage.prototype.loopCut = function() {
       let newFills = [];
       let separate = this;
       if (i !== (partitionGroup.length-1)) { 
-         let contours = this.geometry.findContours(partition); // detach faceGroups from main
+         let contours = WingedTopology.findContours(partition); // detach faceGroups from main
          for (let edgeLoop of contours) {
             if ((edgeLoop.length > 0) && !fillFaces.has(edgeLoop[0].outer.face)) { // not already separated.
                this.geometry.liftContour(edgeLoop);
@@ -2736,14 +2736,19 @@ PreviewCage.prototype._putOn = function(target) {
    mat4.fromTranslation(transform, target.center);
    mat4.mul(transform, transform, rotAxis);
    vec3.negate(center, center);
-   mat4.fromTranslation(rotAxis, center);    // rotAxis is repurpose for -(center)
-   mat4.mul(transform, transform, rotAxis);
+   const centerTransform = mat4.create();
+   mat4.fromTranslation(centerTransform, center);
+   mat4.mul(transform, transform, centerTransform);
 
    // now transform all vertex
    for (let vertex of this.geometry.vertices) {
       vec3.transformMat4(vertex.vertex, vertex.vertex, transform);
       this.geometry.addAffectedVertex(vertex);
       this.geometry.addAffectedEdgeAndFace(vertex);
+   }
+   // now transform all normal
+   for (let face of this.geometry.faces) {
+      vec3.transformMat4(face.normal, face.normal, rotAxis);
    }
 
    this._updatePreviewAll();
@@ -2777,7 +2782,7 @@ PreviewCage.prototype.putOnFace = function(polygon) {
 
 PreviewCage.prototype.getSelectedFaceContours = function() {
    let contours = {};
-   contours.edgeLoops = this.geometry.findContours(this.selectedSet);
+   contours.edgeLoops = WingedTopology.findContours(this.selectedSet);
 
    contours.edges = new Set;
    // copy to a set, so searching is easier.
@@ -3108,7 +3113,7 @@ PreviewCage.prototype.flattenFace = function(planeNormal) {
    // first snapshot original position.
    const ret = this.snapshotFacePosition();
 
-   const faceGroups = this.geometry.findFaceGroup(this.getSelectedSorted());
+   const faceGroups = WingedTopology.findFaceGroup(this.getSelectedSorted());
    const center = vec3.create();
    const vertices = new Set;
    let normal = planeNormal;
@@ -3281,9 +3286,9 @@ PreviewCage.prototype.makeHolesFromBB = function(selection) {
 // the real workhorse
 PreviewCage.findWeldContours = function(overlap) {
    // combinedCages
+   const combinedCages = new Map;
+   const combines = [];
    function combineCage(source, target) {
-      const combinedCages = new Map;
-      const combines = [];
       let cages;
       if (source.cage === target.cage) {  // same cage
          if (combinedCages.has(source.cage)) {
@@ -3320,7 +3325,7 @@ PreviewCage.findWeldContours = function(overlap) {
    // find edgeLoops
    const loopUsed = [];
    const hEdge2Loop = new Map;
-   const edgeLoops = PreviewCage.findContours(overlap.merged);
+   const edgeLoops = WingedTopology.findContours(overlap.merged);
    // find inner, outer, then combined.
    for (let edgeLoop of edgeLoops) {
       const source = overlap.pair.get(edgeLoop[0].outer);
@@ -3337,7 +3342,7 @@ PreviewCage.findWeldContours = function(overlap) {
                edgeLoop[i].inner = source;
             } // ok, done
             // now combined Cage
-            loopUsed.push( {combine: combineCages(source, target), edgeLoop: edgeLoop} );
+            loopUsed.push( {combine: combineCage(source, target), edgeLoop: edgeLoop} );
          } else { // bad match, could be 3+ cage involvement, don't handle it now.
             return false;
          }
@@ -3359,7 +3364,7 @@ PreviewCage.weldableFace = function(target, compare, tolerance) {
       return false;
    }
    // check direction
-   if (vec3.dot(target.polyogn.normal, compare.polygon.normal) > 0) {
+   if (vec3.dot(target.polygon.normal, compare.polygon.normal) > 0) {
       return false;
    }
    // check center distance and radisu
@@ -3371,8 +3376,8 @@ PreviewCage.weldableFace = function(target, compare, tolerance) {
       return false;
    }
    // check all vertex distance
-   for (let hEdge of target.polygon.outEdge) {  // find the closest pair first
-      for (let current2 of compare.polygon.outEdge) {
+   for (let hEdge of target.polygon.hEdges()) {  // find the closest pair first
+      for (let current2 of compare.polygon.hEdges()) {
          let current = hEdge;
          let match = [];
          do {  // iterated through the loop
@@ -3391,27 +3396,12 @@ PreviewCage.weldableFace = function(target, compare, tolerance) {
    }
 
    return false;
-
-/*   let newCombine;
-   // check if same previewCage, if not merged.
-   if (target.octree.bvh !== compare.octree.bvh) {
-      const combine = View.makeCombineIntoWorld([target, compare]);
-      combine.name = cageSelection[0].name;
-      combine.selectBody();
-      newCombine =  {combine: combine, oldSelection: cageSelection};
-      affected.combine.push(newCombine);
-   }
-
-   // now weld together
-   affected.restore.push( newCombine.combine.weldFace(targetEdge, sourceEdge) );
-
-   return true; */
 };
 
-PreviewCage.findOverlapFace = function(selection) {
+PreviewCage.findOverlapFace = function(order, selection, tolerance) {
    const merged = new Set;
    const pair = new Map;
-   for (let i = 0; i < selection.length(); ++i) {  // walk through the whole list
+   for (let i = 0; i < selection.length; ++i) {  // walk through the whole list
       const target = selection[i];
       if (!merged.has(target)) {
          for (let j = i+1; j < selection.length; j++) {// walk till the end, or 

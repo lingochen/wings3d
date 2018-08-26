@@ -11,6 +11,7 @@ import {PreviewCage} from './wings3d_model';
 import * as ShaderProg from './wings3d_shaderprog';
 import * as View from './wings3d_view';
 import * as UI from './wings3d_ui';
+import * as Util from './wings3d_util';
 import {action} from './wings3d';
 
 
@@ -241,7 +242,7 @@ class BodyMadsor extends Madsor {
        });
 
       // find weldable pair
-      const merged = PreviewCage.findOverlapFace(selection); 
+      const merged = PreviewCage.findOverlapFace(order, selection, tolerance); 
       // now find the contours of potential mergers.
       const weldContours = PreviewCage.findWeldContours(merged);
       if (weldContours !== false) {

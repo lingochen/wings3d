@@ -1622,7 +1622,7 @@ WingedTopology.prototype.findEdgeGroup = function(selectedWingedEdge) {
 //
 // similar to findContours. but return a list of faces.
 //
-WingedTopology.prototype.findFaceGroup = function(selectedPolygon) {
+WingedTopology.findFaceGroup = function(selectedPolygon) {
    const processPolygon = new Set(selectedPolygon);
    let faceGroup = null;
 
@@ -1652,7 +1652,7 @@ WingedTopology.prototype.findFaceGroup = function(selectedPolygon) {
 
 
 
-WingedTopology.prototype.findContours = function(selectedPolygon) {
+WingedTopology.findContours = function(selectedPolygon) {
    const contourEdges = new Set;
    const edgeLoops = [];
    // find all contourEdges to extrude
