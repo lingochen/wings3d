@@ -246,6 +246,8 @@ class BodyMadsor extends Madsor {
       // now find the contours of potential mergers.
       const weldContours = PreviewCage.findWeldContours(merged);
       if (weldContours !== false) {
+         // make holes of weldable polygons.
+         const holes = PreviewCage.weldHole(merged);
          // combine cages
          const combinedCages = [];
          const combined = new Map;
@@ -254,8 +256,6 @@ class BodyMadsor extends Madsor {
             combined.set(cages, result);
             combinedCages.push( result );
          }
-         // make holes of weldable polygons.
-         const holes = PreviewCage.weldHoles(merged);
          // now weld the contours
          const mergeCage = PreviewCage.weldBody(combined, weldContours);
          // return undo result;
