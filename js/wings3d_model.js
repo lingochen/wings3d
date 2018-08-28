@@ -3334,11 +3334,11 @@ PreviewCage.findWeldContours = function(overlap) {
          const result = hEdge2Loop.get(source.hEdge);
          if (result.length === edgeLoop.length) {   // move hEdge to match and checked.
             for (let i = 0; i < edgeLoop.length; ++i) {  // could not just loop both because they are in reverse order.
-               let source = overlap.pair.get(edgeLoop[i].outer);  
-               if (!overlap.pair.has(source.hEdge)) {// no matching not possible, bad
+               let inner = overlap.pair.get(edgeLoop[i].outer);  
+               if (!overlap.pair.has(inner.hEdge)) {// no matching not possible, bad
                   return false;
                }
-               edgeLoop[i].inner = source.hEdge.pair;
+               edgeLoop[i].inner = inner.hEdge.pair;
             } // ok, done
             // now combined Cage
             loopUsed.push( {combine: combineCage(source, target), edgeLoop: edgeLoop} );
@@ -3347,8 +3347,8 @@ PreviewCage.findWeldContours = function(overlap) {
          }
       } else { // save all to hEdge2Loop
          for (let i = 0; i < edgeLoop.length; ++i) {
-            const target = edgeLoop[i].outer;
-            hEdge2Loop.set(target, edgeLoop);
+            const outer = edgeLoop[i].outer;
+            hEdge2Loop.set(outer, edgeLoop);
          }
       } // also won't handle self weld contours.
    }
@@ -3386,7 +3386,7 @@ PreviewCage.weldableFace = function(target, compare, tolerance) {
          let match = [];
          let j = i;
          do {  // iterated through the loop
-            if (vec3.sqrDist(current.origin.vertex, current2.origin.vertex) > toleranceSquare) {
+            if (vec3.sqrDist(current.origin.vertex, current2.destination().vertex) > toleranceSquare) {
                match = undefined;
                break;
             }
