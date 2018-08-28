@@ -3461,6 +3461,7 @@ PreviewCage.weldBody = function(combines, weldContours) {
    for (let {combine, edgeLoop} of weldContours.edgeLoops) {
       const cage = combines.get(combine);
       cage.combine.geometry.weldContour(edgeLoop);
+      cage.combine._updatePreviewAll();
       // todo: weldContour should return undo info
       
    }
