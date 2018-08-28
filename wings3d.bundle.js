@@ -5259,11 +5259,11 @@ PreviewCage.findWeldContours = function(overlap) {
          const result = hEdge2Loop.get(source.hEdge);
          if (result.length === edgeLoop.length) {   // move hEdge to match and checked.
             for (let i = 0; i < edgeLoop.length; ++i) {  // could not just loop both because they are in reverse order.
-               let source = overlap.pair.get(edgeLoop[i].outer);  
-               if (!overlap.pair.has(source.hEdge)) {// no matching not possible, bad
+               let inner = overlap.pair.get(edgeLoop[i].outer);  
+               if (!overlap.pair.has(inner.hEdge)) {// no matching not possible, bad
                   return false;
                }
-               edgeLoop[i].inner = source.hEdge.pair;
+               edgeLoop[i].inner = inner.hEdge.pair;
             } // ok, done
             // now combined Cage
             loopUsed.push( {combine: combineCage(source, target), edgeLoop: edgeLoop} );
@@ -5272,8 +5272,8 @@ PreviewCage.findWeldContours = function(overlap) {
          }
       } else { // save all to hEdge2Loop
          for (let i = 0; i < edgeLoop.length; ++i) {
-            const target = edgeLoop[i].outer;
-            hEdge2Loop.set(target, edgeLoop);
+            const outer = edgeLoop[i].outer;
+            hEdge2Loop.set(outer, edgeLoop);
          }
       } // also won't handle self weld contours.
    }
@@ -5311,7 +5311,7 @@ PreviewCage.weldableFace = function(target, compare, tolerance) {
          let match = [];
          let j = i;
          do {  // iterated through the loop
-            if (vec3.sqrDist(current.origin.vertex, current2.origin.vertex) > toleranceSquare) {
+            if (vec3.sqrDist(current.origin.vertex, current2.destination().vertex) > toleranceSquare) {
                match = undefined;
                break;
             }
@@ -6775,14 +6775,26 @@ Polygon.prototype.eachEdge = function(callbackFn) {
    } while (current !== begin);
 };
 
-Polygon.prototype.hEdges = function* () {
-   const begin = this.halfEdge;
-   let current = begin;
-   do {
-      let next = current.next;
-      yield current;
-      current = next;
-   } while (current !== begin);
+Polygon.prototype.hEdges = function* (modify = false) {
+   if (modify) {
+      const unmodify = [];
+      let current = this.halfEdge; 
+      do {
+         unmodify.push(current);
+         current = current.next;
+      } while (current !== this.halfEdge);
+      for (let current of unmodify) {
+         yield current;
+      }
+   } else {
+      const begin = this.halfEdge;
+      let current = begin;
+      do {
+         let next = current.next;
+         yield current;
+         current = next;
+      } while (current !== begin);
+   }
 }
 
 // adjacent face, along the edge
@@ -8186,18 +8198,21 @@ WingedTopology.prototype._collapseEdge = function(halfEdge) {
 
    // adjust face
    let face = halfEdge.face;
-   if (face.halfEdge === halfEdge) {
-      face.halfEdge = next;
+   if (face) {
+      if (face.halfEdge === halfEdge) {
+         face.halfEdge = next;
+      }
+      face.numberOfVertex--;
+      this.addAffectedFace(face);
    }
-   face.numberOfVertex--;
-   this.addAffectedFace(face);
    face = pair.face;
-   if (face.halfEdge === pair) {
-      face.halfEdge = pairNext;
+   if (face) {
+      if (face.halfEdge === pair) {
+         face.halfEdge = pairNext;
+      }
+      face.numberOfVertex--;
+      this.addAffectedFace(face);
    }
-   face.numberOfVertex--;
-   this.addAffectedFace(face);
-
    // adjust vertex
    if (toVertex.outEdge === pair) {
       toVertex.outEdge = next;
@@ -8326,13 +8341,13 @@ WingedTopology.prototype._removeEdge = function(outEdge, inEdge) {
 // won't work with potentially "dangling" vertices and edges. Any doubt, call dissolveEdge
 WingedTopology.prototype.removeEdge = function(outEdge) {
    let inEdge = outEdge.pair;
-   if (inEdge.face === null) {   // switch side
+   if (inEdge.face === null && outEdge.face !== null) {   // switch side
       inEdge = outEdge;
-      outEdge = outEdge.pair;
-      if (inEdge.face === null) {
+      outEdge = inEdge;
+      /*if (inEdge.face === null) {
          console.log("error, both side of the edges are null faces");
          return null;
-      }
+      }*/
    }
 
    //fix the halfedge relations
@@ -8356,7 +8371,7 @@ WingedTopology.prototype.removeEdge = function(outEdge) {
       this.addAffectedFace(face);
    }
 
-   if (delFace !== null) {    // guaranteed to be non-null, but maybe later use case will change
+   if (delFace !== null) {    // guaranteed to be non-null, but maybe later use case will change, (yes, makeHole needs to be both-null. 2018-08-28)
       this._freePolygon(delFace);
       remove.delFace = delFace;
    }
@@ -8939,13 +8954,12 @@ WingedTopology.prototype.flip = function(pivot, axis) {
 
 WingedTopology.prototype.makeHole = function(polygon) {
    // turn polygon into hole, 
-   let ret = {hEdge: polygon.halfEdge, face: polygon, removeEdges: []};
-   for (let hEdge of polygon.hEdges()) {
+   let ret = {hEdge: polygon.halfEdge, face: polygon, dissolveEdges: []};
+   for (let hEdge of polygon.hEdges(true)) {
       hEdge.face = null;
       const pairEdge = hEdge.pair;
       if (pairEdge.face === null) { 
-         this._removeEdge(hEdge, pairEdge);
-         ret.removeEdges.unshift( {begVert: hEdge.origin, endVert: hEdge.destination(), delOutEdge: hEdge} );
+         ret.dissolveEdges.unshift( this.dissolveEdge(hEdge) );   // in any doubt, use dissolveEdge. I am stupid
       }
    }
    this._freePolygon(polygon);
@@ -8953,8 +8967,8 @@ WingedTopology.prototype.makeHole = function(polygon) {
 };
 
 WingedTopology.prototype.undoHole = function(hole) {
-   for (let remove of hole.removeEdges) {
-      this.addEdge( remove.begVert, remove.endVert, remove.delOutEdge );
+   for (let dissolve of hole.dissolveEdges) {
+      this.restoreDissolveEdge(dissolve);
    }
    return this._createPolygon(hole.hEdge, 4, hole.face);
 };
