@@ -5387,6 +5387,14 @@ PreviewCage.weldBody = function(combines, weldContours) {
       const cage = combines.get(combine);
       cage.combine.geometry.weldContour(edgeLoop);
       cage.combine._updatePreviewAll();
+      // compute snapshot
+      cage.preview = cage.combine;  // smuglling snapshot. should we rename (combine to preview)?
+      if (!cage.snapshot) {
+         cage.snapshot = {vertices: new Set};
+      }
+      for (let edge of edgeLoop) {
+         cage.snapshot.vertices.add(edge.outer.origin);
+      }
       // todo: weldContour should return undo info
       
    }
@@ -8049,7 +8057,6 @@ WingedTopology.prototype.weldContour = function(edgeLoop) {
    let edgePrev = edgeLoop[edgeLoop.length-1]
    for (let i = 0; i < edgeLoop.length; ++i) {
       const edge = edgeLoop[i];
-            this.addAffectedEdgeAndFace(edge.inner.origin);
       if (edgePrev.inner.next !== edge.inner) { // check for contour tht don't have interpose edge
          const end = edge.inner;
          let current = edgePrev.inner.next;
@@ -11803,7 +11810,7 @@ class BodyMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
       }
       // weld
       __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_10__wings3d__["action"].bodyWeld.name, (ev)=> {
-         const cmd = new __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["GenericEditCommand"](this, this.weld);
+         const cmd = new __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["GenericEditCommand"](this, this.weld, undefined, this.undoWeld);
          if (cmd.doIt()) {
             __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["undoQueue"](command);
          }
@@ -11952,12 +11959,17 @@ class BodyMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
          }
          // now weld the contours
          const mergeCage = __WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].weldBody(combined, weldContours);
-         // return undo result;
+         // goto vertexMode
+         __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["restoreVertexMode"](combinedCages);
 
-         return {holes: holes, weldContours: weldContours, };
+         // return undo info
+         return [{holes: holes, weldContours: weldContours, mergeCage: mergeCage}];
       }
       // unable to weld
-      return false;
+      return [];
+   }
+   undoWeld(snapshots) {
+
    }
 
    centroid() {
