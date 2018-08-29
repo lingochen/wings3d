@@ -1702,7 +1702,6 @@ WingedTopology.prototype.weldContour = function(edgeLoop) {
    let edgePrev = edgeLoop[edgeLoop.length-1]
    for (let i = 0; i < edgeLoop.length; ++i) {
       const edge = edgeLoop[i];
-            this.addAffectedEdgeAndFace(edge.inner.origin);
       if (edgePrev.inner.next !== edge.inner) { // check for contour tht don't have interpose edge
          const end = edge.inner;
          let current = edgePrev.inner.next;

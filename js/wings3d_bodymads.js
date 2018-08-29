@@ -109,7 +109,7 @@ class BodyMadsor extends Madsor {
       }
       // weld
       UI.bindMenuItem(action.bodyWeld.name, (ev)=> {
-         const cmd = new GenericEditCommand(this, this.weld);
+         const cmd = new GenericEditCommand(this, this.weld, undefined, this.undoWeld);
          if (cmd.doIt()) {
             View.undoQueue(command);
          }
@@ -258,12 +258,17 @@ class BodyMadsor extends Madsor {
          }
          // now weld the contours
          const mergeCage = PreviewCage.weldBody(combined, weldContours);
-         // return undo result;
+         // goto vertexMode
+         View.restoreVertexMode(combinedCages);
 
-         return {holes: holes, weldContours: weldContours, };
+         // return undo info
+         return [{holes: holes, weldContours: weldContours, mergeCage: mergeCage}];
       }
       // unable to weld
-      return false;
+      return [];
+   }
+   undoWeld(snapshots) {
+
    }
 
    centroid() {

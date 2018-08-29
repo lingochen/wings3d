@@ -3462,6 +3462,14 @@ PreviewCage.weldBody = function(combines, weldContours) {
       const cage = combines.get(combine);
       cage.combine.geometry.weldContour(edgeLoop);
       cage.combine._updatePreviewAll();
+      // compute snapshot
+      cage.preview = cage.combine;  // smuglling snapshot. should we rename (combine to preview)?
+      if (!cage.snapshot) {
+         cage.snapshot = {vertices: new Set};
+      }
+      for (let edge of edgeLoop) {
+         cage.snapshot.vertices.add(edge.outer.origin);
+      }
       // todo: weldContour should return undo info
       
    }
