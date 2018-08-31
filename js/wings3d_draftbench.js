@@ -414,6 +414,7 @@ DraftBench.prototype._updateVertex = function(vertex, affected) {
 DraftBench.prototype._updatePreviewFace = function(polygon) {
    // recompute boundingSphere centroid, and if numberOfVertex changed, needs to recompute index.
    if ((polygon.index < this.boundingSpheres.length) && polygon.isLive()) { // will be get recompute on resize
+      polygon.update();
       const sphere = this.boundingSpheres[ polygon.index ];
       sphere.setSphere( BoundingSphere.computeSphere(sphere.polygon, sphere.center) ); 
       // update center

@@ -8388,6 +8388,7 @@ WingedTopology.prototype.restoreCollapseEdge = function(undo) {
 // fixed the halfEdge relation only.
 WingedTopology.prototype._removeEdge = function(outEdge, inEdge) {
    const outPrev = outEdge.prev();
+   const outNext = outEdge.next;
    const inPrev = inEdge.prev();
    const inNext = inEdge.next;
    
@@ -8401,7 +8402,7 @@ WingedTopology.prototype._removeEdge = function(outEdge, inEdge) {
    if (inEdge.origin.outEdge === inEdge) {
       inEdge.origin.outEdge = inPrev.pair;
    }
-   return {outPrev: outPrev, inPrev: inPrev, inNext: inNext, inEdge: inEdge}; // fixed? outPrev: not needed
+   return {outPrev: outPrev, outNext: outNext, outEdge: outEdge}; // changed to restore outEdge
 }
 // won't work with potentially "dangling" vertices and edges. Any doubt, call dissolveEdge
 WingedTopology.prototype.removeEdge = function(outEdge) {
@@ -8447,7 +8448,7 @@ WingedTopology.prototype.removeEdge = function(outEdge) {
    //return face;   // return the remaining face handle
 };
 WingedTopology.prototype.restoreRemoveEdge = function(undo) {
-   this.insertEdge(undo.inPrev, undo.inNext, undo.inEdge, undo.delFace);
+   this.insertEdge(undo.outPrev, undo.outNext, undo.outEdge, undo.delFace);
 };
 
 
@@ -8465,7 +8466,7 @@ WingedTopology.prototype.dissolveEdge = function(outEdge, collapsibleWings) {
 };
 
 WingedTopology.prototype.restoreDissolveEdge = function(undo) {
-   if (undo.inPrev) {
+   if (undo.outPrev) {
       this.restoreRemoveEdge(undo);
    } else {
       this.restoreCollapseEdge(undo);
@@ -9033,9 +9034,16 @@ WingedTopology.prototype.makeHole = function(polygon) {
 
 WingedTopology.prototype.undoHole = function(hole) {
    for (let dissolve of hole.dissolveEdges) {
+      if (!hole.face.isLive()) {
+         dissolve.delFace = hole.face;
+      }
       this.restoreDissolveEdge(dissolve);
    }
-   return this._createPolygon(hole.hEdge, 4, hole.face);
+   if (!hole.face.isLive()) {
+      return this._createPolygon(hole.hEdge, 4, hole.face);
+   } else {
+      return hole.face;
+   }
 };
 
 
@@ -13158,6 +13166,7 @@ DraftBench.prototype._updateVertex = function(vertex, affected) {
 DraftBench.prototype._updatePreviewFace = function(polygon) {
    // recompute boundingSphere centroid, and if numberOfVertex changed, needs to recompute index.
    if ((polygon.index < this.boundingSpheres.length) && polygon.isLive()) { // will be get recompute on resize
+      polygon.update();
       const sphere = this.boundingSpheres[ polygon.index ];
       sphere.setSphere( __WEBPACK_IMPORTED_MODULE_3__wings3d_boundingvolume__["BoundingSphere"].computeSphere(sphere.polygon, sphere.center) ); 
       // update center
