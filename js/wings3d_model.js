@@ -3277,7 +3277,7 @@ PreviewCage.prototype.makeHolesFromBB = function(selection) {
    const restore = [];
    for (let sphere of selection) {
       this.selectedSet.delete(sphere.polygon);              // remove from selection. also selection off(not done)?
-      restore.push( this.geometry.makeHole(sphere.polygon) );
+      restore.unshift( this.geometry.makeHole(sphere.polygon) );  // restore has to be done in reverse
    }
    return restore;
 };

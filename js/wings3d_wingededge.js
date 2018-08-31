@@ -1188,16 +1188,18 @@ WingedTopology.prototype.insertEdge = function(prevHalf, nextHalf, delOutEdge, d
 
    // inEdge is oldPolygon
    inEdge.face = oldPolygon;
-   if (oldPolygon.halfEdge.face === newPolygon) {
-      //  pointed to one of the halfedges now assigned to newPolygon
-      oldPolygon.halfEdge = inEdge;
+   if (oldPolygon) {
+      if (oldPolygon.halfEdge.face === newPolygon) {
+         //  pointed to one of the halfedges now assigned to newPolygon
+         oldPolygon.halfEdge = inEdge;
+      }
+      size = 0;
+      oldPolygon.eachEdge( function(halfEdge) {
+         ++size;
+      });
+      oldPolygon.numberOfVertex = size;
+      this.addAffectedFace( oldPolygon );
    }
-   size = 0;
-   oldPolygon.eachEdge( function(halfEdge) {
-      ++size;
-   });
-   oldPolygon.numberOfVertex = size;
-   this.addAffectedFace( oldPolygon );
 
    // adjustOutEdge for v0, v1. point to boundary so, ccw work better?
    return outEdge;
@@ -1852,11 +1854,15 @@ WingedTopology.prototype._liftEdge = function(outLeft, inRight, fromVertex, delE
       currentOut = currentOut.pair.next;
    } while (currentOut !== outEdge);
    outEdge.face = inRight.face;
-   outEdge.face.numberOfVertex++;
+   if (outEdge.face) {
+      outEdge.face.numberOfVertex++;
+      this.addAffectedFace(outEdge.face);
+   }
    inEdge.face = outLeft.face;
-   inEdge.face.numberOfVertex++;
-   this.addAffectedFace(outEdge.face);
-   this.addAffectedFace(inEdge.face);
+   if (inEdge.face) {
+      inEdge.face.numberOfVertex++;
+      this.addAffectedFace(inEdge.face);
+   }
 }
 
 
