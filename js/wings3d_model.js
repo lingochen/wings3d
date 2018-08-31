@@ -3452,11 +3452,21 @@ PreviewCage.weldHole = function(merged) {
    const result = [];
    for (let [cage, holes] of holesOfCages) {
       result.push( [cage, cage.makeHolesFromBB(holes)] );
+      cage._updatePreviewAll();
    }
    return result;
 };
+PreviewCage.undoWeldHole = function(weldHoles) {
+   for (let [cage, holes] of weldHoles) {
+      for (let restore of holes) {
+         cage.geometry.undoHole(restore);
+      }
+      cage._updatePreviewAll();
+   }
+};
 
 PreviewCage.weldBody = function(combines, weldContours) {
+   const result = [];
    // then weld contour.
    for (let {combine, edgeLoop} of weldContours.edgeLoops) {
       const cage = combines.get(combine);
@@ -3470,8 +3480,15 @@ PreviewCage.weldBody = function(combines, weldContours) {
       for (let edge of edgeLoop) {
          cage.snapshot.vertices.add(edge.outer.origin);
       }
-      // todo: weldContour should return undo info
-      
+      // weldContour saved restore info
+      result.push( [cage.preview, edgeLoop] );
+   }
+   return result;
+};
+PreviewCage.undoWeldBody = function(weldContours) {
+   for (let [cage, edgeLoop] of weldContours) {
+      cage.geometry.restoreContour(edgeLoop);   // liftContour will restore innerLoop for us
+      cage._updatePreviewAll();
    }
 };
 

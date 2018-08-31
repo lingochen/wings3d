@@ -1720,39 +1720,21 @@ WingedTopology.prototype.weldContour = function(edgeLoop) {
       }
 
       edgePrev = edge;
-      //this.addAffectedFace(edge.inner.face);
+      this.addAffectedFace(edge.outer.face);
    }
 
    // now we can safely release memory
    for (let edge of edgeLoop) {
+      edge.restore = {origin: edge.inner.origin, pt: vec3.clone(edge.inner.origin.vertex), hEdge: edge.inner};
       // remove vertex, and edge.
       this._freeVertex(edge.inner.origin);
       this._freeEdge(edge.inner);
+
    }
 };
 
 
-// lift edges from outerLoop to innerLoop. null the face between inner and outerface
-WingedTopology.prototype.liftContour = function(edgeLoop) {
-   if (edgeLoop.length == 0) {   // should not happened, but. Should we check ( < 4) too?
-      return edgeLoop;
-   }
-
-   // first create innerLoop
-   let firstVertex = this.addVertex(edgeLoop[0].outer.origin.vertex);
-   let fromVertex = firstVertex; 
-   for (let i = 0; i < edgeLoop.length; ++i) {
-      let outerEdge = edgeLoop[i].outer;
-      let toVertex;
-      if (i == (edgeLoop.length-1)) {  // the last one loopback
-         toVertex = firstVertex;
-      } else {
-         toVertex = this.addVertex(outerEdge.destination().vertex);
-      }
-      edgeLoop[i].inner = this.addEdge(fromVertex, toVertex);
-      fromVertex = toVertex;
-   }
-
+WingedTopology.prototype._liftLoop = function(edgeLoop) {
    // lift loop
    let edge0 = edgeLoop[edgeLoop.length-1];
    // lift the face edge from outer to inner.
@@ -1783,8 +1765,58 @@ WingedTopology.prototype.liftContour = function(edgeLoop) {
       if (edge1.inner.face.halfEdge === edge1.outer) {
          edge1.inner.face.halfEdge = edge1.inner;
       }
+      this.addAffectedFace(edge1.inner.face);
    }
    return edgeLoop;
+};
+// lift edges from outerLoop to innerLoop. null the face between inner and outerface
+WingedTopology.prototype.liftContour = function(edgeLoop) {
+   if (edgeLoop.length === 0) {   // should not happened, but. Should we check ( < 4) too?
+      return edgeLoop;
+   }
+
+   let firstVertex = this.addVertex(edgeLoop[0].outer.origin.vertex);
+   let fromVertex = firstVertex; 
+   for (let i = 0; i < edgeLoop.length; ++i) {
+      let outerEdge = edgeLoop[i].outer;
+      let toVertex;
+      if (i == (edgeLoop.length-1)) {  // the last one loopback
+         toVertex = firstVertex;
+      } else {
+         toVertex = this.addVertex(outerEdge.destination().vertex);
+      }
+      edgeLoop[i].inner = this.addEdge(fromVertex, toVertex);
+      fromVertex = toVertex;
+   }
+
+   return this._liftLoop(edgeLoop);
+};
+WingedTopology.prototype.restoreContour = function(edgeLoop) {
+   if (edgeLoop.length === 0) {   // should not happened, but. Should we check ( < 4) too?
+      return edgeLoop;
+   }
+
+   // restore
+   for (let edge of edgeLoop) { // restore vertex
+      this.addVertex(edge.restore.pt, edge.restore.origin);
+   }
+   let prev;
+   for (let i = 0; i < edgeLoop.length; ++i) { // restore edge
+      const edge = edgeLoop[i];
+      const edgeNext = edgeLoop[(i+1)%edgeLoop.length];
+      const current = this._createEdge(edge.restore.origin, edgeNext.restore.origin, edge.restore.hEdge); // destination = next.origin
+      edge.restore.origin.outEdge = current;
+      if (prev) {
+         prev.next = current;
+         current.pair.next = prev.pair;
+      }
+      prev = current;
+   }
+   // connect last to first
+   prev.next = edgeLoop[0].inner;
+   edgeLoop[0].inner.pair.next = prev.pair;
+
+   return this._liftLoop(edgeLoop);
 };
 
 

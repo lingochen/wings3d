@@ -111,7 +111,7 @@ class BodyMadsor extends Madsor {
       UI.bindMenuItem(action.bodyWeld.name, (ev)=> {
          const cmd = new GenericEditCommand(this, this.weld, undefined, this.undoWeld);
          if (cmd.doIt()) {
-            View.undoQueue(command);
+            View.undoQueue(cmd);
          }
        });
    }
@@ -262,13 +262,22 @@ class BodyMadsor extends Madsor {
          View.restoreVertexMode(combinedCages);
 
          // return undo info
-         return [{holes: holes, weldContours: weldContours, mergeCage: mergeCage}];
+         return [{holes: holes, weldContours: mergeCage, combinedCages: combinedCages}];
       }
       // unable to weld
       return [];
    }
    undoWeld(snapshots) {
-
+      const weld = snapshots[0]; // have to enclose in a array.
+      View.restoreBodyMode();
+      // splice with inner
+      PreviewCage.undoWeldBody(weld.weldContours);
+      // undo combine
+      for (let combine of weld.combinedCages) {
+         this.undoCombine(combine);
+      }
+      // restore holes
+      PreviewCage.undoWeldHole(weld.holes);
    }
 
    centroid() {
