@@ -2048,20 +2048,19 @@ WingedTopology.prototype.removeEdge = function(outEdge) {
    const remove = this._removeEdge(outEdge, inEdge);
   
    //deal with the faces
-   const face = outEdge.face;    // the other side is boundary, after removal becomes boundary too.
-   const delFace = inEdge.face;
+   const delFace = outEdge.face;    // the other side is boundary, after removal becomes boundary too.
+   const face = inEdge.face;
 
    if (face !== null) {
-      if (face.halfEdge === outEdge) { //correct the halfedge handle of face if needed
+      if (face.halfEdge === inEdge) { //correct the halfedge handle of face if needed
          face.halfEdge = remove.outPrev;
       }
    // make sure everye connect edge point to the same face.
-      let size = 0;
-      face.eachEdge( function(outEdge) {
-         ++size;
-         outEdge.face = face;
-      });
-      face.numberOfVertex = size;
+      face.numberOfVertex = 0;
+      for (let hEdge of face.hEdges()) {
+         ++face.numberOfVertex;
+         hEdge.face = face;
+      }
       this.addAffectedFace(face);
    }
 
