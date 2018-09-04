@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
    <link rel="stylesheet" href="styles.css" />
    <script src="../js/vendor/FileSaver.min.js" defer></script>
    <script src="../js/vendor/gl-matrix-min.js"> defer></script>
@@ -128,6 +130,10 @@
           <li><a  onmouseover="help('About Wings3d4Web')" id="about">About</a></li>
         </ul>
       </li>
+    <select id="selectLanguage">
+      <option value='en'>English</option>
+      <option value='zh_hant'>正體</option>
+    </select>
     </ul>
   </nav>
   <nav class="button-bar unselectable marginal" id="toolbar">
@@ -213,7 +219,7 @@
   <!-- Hidden context menu -->
   <nav class="menu" style="position:absolute">
     <ul id="create-context-menu" class="popupmenu">
-      <li><a id="createCube">Cube</a></li>
+      <li><a id="createCube" data-i18n="cube">Cube</a></li>
       <hr/>
       <li class="not-implemented"><a id="createPlane">Various Planes</a></li>
       <li class="not-implemented"><a id="createGrid">Grid</a></li>
