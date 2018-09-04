@@ -7,5 +7,6 @@
        "last-updated": "2018-09-04"
    },
    "cube": "立方體",
-   "move": "移動"
+   "move": "移動",
+   "body_status": "物件${this.name}有${this.polygonSize}個面, ${this.edgeSize}個邊, ${this.vertexSize}個頂點"
 }

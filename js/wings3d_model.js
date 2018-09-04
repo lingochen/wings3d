@@ -15,6 +15,7 @@ import * as View from './wings3d_view';
 import * as Wings3D from './wings3d';
 import {EditCommand} from './wings3d_undo';
 import * as Util from './wings3d_util';
+import {i18n} from './wings3d_i18n';
 
 
 class MeshAllocatorProxy { // we could use Proxy, but ....
@@ -449,7 +450,7 @@ PreviewCage.prototype.selectBody = function() {
       this.bench.selectGroup(this.selectedSet, true);
          //faceColor = [1.0, 1.0, 0.0];   // selected and hilite
          //faceColor = [1.0, 0.0, 0.0];   // selected.
-      geometryStatus("Object " + this.name + " has " + this.geometry.faces.size + " polygons");
+      geometryStatus(i18n("body_status", {name: this.name, polygonSize: this.geometry.faces.size, edgeSize: this.geometry.edges.size, vertexSize: this.geometry.vertices.size}));
    }
    return this.hasSelection();
 };

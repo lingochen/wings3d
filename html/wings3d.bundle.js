@@ -600,10 +600,10 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "drawWorld", function() { return drawWorld; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "render", function() { return render; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_render__ = __webpack_require__(19);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_render__ = __webpack_require__(20);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_camera__ = __webpack_require__(16);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_gl__ = __webpack_require__(5);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__plugins_wavefront_obj__ = __webpack_require__(20);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__plugins_wavefront_obj__ = __webpack_require__(21);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_undo__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_facemads__ = __webpack_require__(10);
@@ -1467,7 +1467,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "showContextMenu", function() { return showContextMenu; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "queuePopupMenu", function() { return queuePopupMenu; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "toggleSubmenu", function() { return toggleSubmenu; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_hotkey__ = __webpack_require__(18);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_hotkey__ = __webpack_require__(19);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d__ = __webpack_require__(0);
 /*
    wings3d, ui and ui utility functions. including tutor.
@@ -1979,6 +1979,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_undo__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_util__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_i18n__ = __webpack_require__(17);
 /*
 *  hold onto a WingedEdgeTopology. adds index, texture, etc....
 *  bounding box, picking.
@@ -1990,6 +1991,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 */
 
  
+
 
 
 
@@ -2430,7 +2432,7 @@ PreviewCage.prototype.selectBody = function() {
       this.bench.selectGroup(this.selectedSet, true);
          //faceColor = [1.0, 1.0, 0.0];   // selected and hilite
          //faceColor = [1.0, 0.0, 0.0];   // selected.
-      geometryStatus("Object " + this.name + " has " + this.geometry.faces.size + " polygons");
+      geometryStatus(Object(__WEBPACK_IMPORTED_MODULE_7__wings3d_i18n__["i18n"])("body_status", {name: this.name, polygonSize: this.geometry.faces.size, edgeSize: this.geometry.edges.size, vertexSize: this.geometry.vertices.size}));
    }
    return this.hasSelection();
 };
@@ -14077,6 +14079,141 @@ __WEBPACK_IMPORTED_MODULE_1__wings3d_js__["onReady"](init);
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "i18n", function() { return i18n; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "setCurrentLocale", function() { return setCurrentLocale; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getCurrentLocale", function() { return getCurrentLocale; });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d__ = __webpack_require__(0);
+/*
+ routines for translation. l10n.
+
+ stub for i18n, other stuff, like number, date format.
+*/
+
+
+
+
+const i18nAttrib = "data-i18n";
+let currentCountry = "US";
+let currentLanguage = "en";
+let defaultMessages;
+let currentMessages;
+
+function getTemplate(key) {
+   let template = currentMessages.get(key);
+   if (!template && defaultMessages) {
+      return defaultMessages.get(key);
+   }
+   return template;
+}
+
+function* entries(obj) {
+   for (let key in obj) {
+      yield [key, obj[key]];
+   }
+}
+function resetStaticElements(langObj) {  
+   // first copy to currentMessages.
+   currentMessages = new Map(entries(langObj));
+   
+   // set the resources staticElement
+   //console.log(langJson);
+   let allDom = document.querySelectorAll(`[${i18nAttrib}]`);
+   for (let elem of allDom) {
+      let key = elem.getAttribute(i18nAttrib);
+      let content = getTemplate(key);
+      if (content) {
+         elem.textContent = content;
+      } else {
+         console.log(`Warning: ${key} has no translation`);
+      }
+   }
+}
+
+function loadResource(language, successCallback){
+   Object(__WEBPACK_IMPORTED_MODULE_0__wings3d__["ezFetch"])(`./resources/${language}.json`)
+      .then(data => {
+         resetStaticElements(data);
+         if (successCallback) {
+            successCallback();
+         }
+      })
+      .catch(err => {
+         console.log('Fetch Error :-S', err);
+      });
+} 
+
+function getCurrentLocale() {
+   return {country: currentCountry, language: currentLanguage};
+}
+
+/**
+  * Sets the current language/locale and does any application initialization after loading language.
+  *
+  * @method load
+  * @param {language} The two-letter ISO language code.
+  * @param {country} The two-letter ISO conuntry code.
+  * @param {successCallback} The function to be called when the language/locale has been loaded. 
+  */
+function setCurrentLocale(language, country, successCallback) {
+   currentCountry = country || 'unknown';
+   currentLanguage = language || 'unknown';
+
+   loadResource(currentLanguage, successCallback);
+};
+
+/*
+ * wonderfully simple template engine.
+ * https://stackoverflow.com/questions/30003353/can-es6-template-literals-be-substituted-at-runtime-or-reused
+*/
+const fillTemplate = function(template, templateVars){
+   return new Function(`return \`${template}\`;`).call(templateVars);
+}
+   /**
+     * Replaces each format item in a specified localized string 
+     * e.g. key = 'helloFirstNameLastName'
+            localised value of key = "Hello ${this.firstname} ${this.lastname}!"
+     *      _('helloFirstNameLastName', {firstname: 'John', lastname:'Smith'});
+     *      returns "Hello John Smith!"
+     *
+     * @method _
+     * @param {key} The unique identifier for the resource name (using object notation).
+     * @return {String} Returns the localized value based on the provided key and optional arguments.
+     */
+function i18n(key, templateVars) {
+   let template = getTemplate(key);
+   if (template) {
+      if (templateVars) {
+         return fillTemplate(template, templateVars);
+      }
+      return template;
+   }
+   return `Error: ${key} don't exist`;
+};
+
+
+ 
+
+
+// init
+Object(__WEBPACK_IMPORTED_MODULE_0__wings3d__["onReady"])(()=> {
+   // init
+   setCurrentLocale("en");
+   defaultMessages = currentMessages;
+   // hookup to language select
+   let selectLang = document.querySelector('#selectLanguage');
+   if (selectLang) {
+      selectLang.addEventListener('change', function(ev) {
+         setCurrentLocale(selectLang.value); // change locale
+       });
+   }
+});
+
+/***/ }),
+/* 18 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "tours", function() { return tours; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "targetCage", function() { return targetCage; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "step", function() { return step; });
@@ -14536,7 +14673,7 @@ __WEBPACK_IMPORTED_MODULE_1__wings3d__["onReady"](init);
 
 
 /***/ }),
-/* 18 */
+/* 19 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -14588,7 +14725,7 @@ function setHotkey(id, hotkey, meta='') {
 
 
 /***/ }),
-/* 19 */
+/* 20 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -15154,12 +15291,12 @@ function render(gl, drawWorldFn) {
 
 
 /***/ }),
-/* 20 */
+/* 21 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return WavefrontObjImportExporter; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_importexport__ = __webpack_require__(21);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_importexport__ = __webpack_require__(22);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_view__ = __webpack_require__(1);
 //
 // Wavefront Obj Loader and Writer.
@@ -15282,7 +15419,7 @@ class WavefrontObjImportExporter extends __WEBPACK_IMPORTED_MODULE_0__wings3d_im
 
 
 /***/ }),
-/* 21 */
+/* 22 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -15376,140 +15513,6 @@ class ImportExporter {
 
 
 /***/ }),
-/* 22 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "i18n", function() { return i18n; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "setCurrentLocale", function() { return setCurrentLocale; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getCurrentLocale", function() { return getCurrentLocale; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d__ = __webpack_require__(0);
-/*
- routines for translation. l10n.
-
- stub for i18n, other stuff, like number, date format.
-*/
-
-
-
-
-const i18nAttrib = "data-i18n";
-let currentCountry = "US";
-let currentLanguage = "en";
-let defaultMessages;
-let currentMessages;
-
-function getTemplate(key) {
-   let template = currentMessages.get(key);
-   if (!template && defaultMessages) {
-      return defaultMessages.get(key);
-   }
-   return template;
-}
-
-function* entries(obj) {
-   for (let key in obj) {
-      yield [key, obj[key]];
-   }
-}
-function resetStaticElements(langObj) {  
-   // first copy to currentMessages.
-   currentMessages = new Map(entries(langObj));
-   
-   // set the resources staticElement
-   //console.log(langJson);
-   let allDom = document.querySelectorAll(`[${i18nAttrib}]`);
-   for (let elem of allDom) {
-      let key = elem.getAttribute(i18nAttrib);
-      if (currentMessages.has(key)) {
-         elem.textContent = currentMessages.get(key);
-      } else {
-         console.log(`Warning: ${key} has no translation`);
-      }
-   }
-}
-
-function loadResource(language, successCallback){
-   Object(__WEBPACK_IMPORTED_MODULE_0__wings3d__["ezFetch"])(`./resources/${language}.json`)
-      .then(data => {
-         resetStaticElements(data);
-         if (successCallback) {
-            successCallback();
-         }
-      })
-      .catch(err => {
-         console.log('Fetch Error :-S', err);
-      });
-} 
-
-function getCurrentLocale() {
-   return {country: currentCountry, language: currentLanguage};
-}
-
-/**
-  * Sets the current language/locale and does any application initialization after loading language.
-  *
-  * @method load
-  * @param {language} The two-letter ISO language code.
-  * @param {country} The two-letter ISO conuntry code.
-  * @param {successCallback} The function to be called when the language/locale has been loaded. 
-  */
-function setCurrentLocale(language, country, successCallback) {
-   currentCountry = country || 'unknown';
-   currentLanguage = language || 'unknown';
-
-   loadResource(currentLanguage, successCallback);
-};
-
-/*
- * wonderfully simple template engine.
- * https://stackoverflow.com/questions/30003353/can-es6-template-literals-be-substituted-at-runtime-or-reused
-*/
-const fillTemplate = function(template, templateVars){
-   return new Function(`return \`${template}\`;`).call(templateVars);
-}
-   /**
-     * Replaces each format item in a specified localized string with the text equivalent of a corresponding arguments (after key).
-     * e.g. key = 'helloFirstNameLastName'
-            localised value of key = "Hello %s %s!"
-     *      _('helloFirstNameLastName', 'John', 'Smith');
-     *      returns "Hello John Smith!"
-     *
-     * @method _
-     * @param {key} The unique identifier for the resource name (using object notation).
-     * @return {String} Returns the localized value based on the provided key and optional arguments.
-     */
-function i18n(key, templateVars) {
-   let template = getTemplate(key);
-   if (template) {
-      if (templateVars) {
-         return fillTemplate(temmplate, templateVars);
-      }
-      return template;
-   }
-   return `Error: ${key} don't exist`;
-};
-
-
- 
-
-
-// init
-Object(__WEBPACK_IMPORTED_MODULE_0__wings3d__["onReady"])(()=> {
-   // init
-   setCurrentLocale("en");
-   defaultMessages = currentMessages;
-   // hookup to language select
-   let selectLang = document.querySelector('#selectLanguage');
-   if (selectLang) {
-      selectLang.addEventListener('change', function(ev) {
-         setCurrentLocale(selectLang.value); // change locale
-       });
-   }
-});
-
-/***/ }),
 /* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -15522,13 +15525,13 @@ __webpack_require__(12);
 __webpack_require__(10);
 __webpack_require__(5);
 __webpack_require__(33);
-__webpack_require__(18);
-__webpack_require__(22);
-__webpack_require__(21);
+__webpack_require__(19);
 __webpack_require__(17);
+__webpack_require__(22);
+__webpack_require__(18);
 __webpack_require__(11);
 __webpack_require__(4);
-__webpack_require__(19);
+__webpack_require__(20);
 __webpack_require__(6);
 __webpack_require__(34);
 __webpack_require__(35);
@@ -15559,12 +15562,12 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__css_bubble_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4__css_bubble_css__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_view__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_camera__ = __webpack_require__(16);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_interact__ = __webpack_require__(17);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_interact__ = __webpack_require__(18);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__wings3d_ui__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__wings3d_i18n__ = __webpack_require__(22);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__wings3d_i18n__ = __webpack_require__(17);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__js_plugins_cubeshape_js__ = __webpack_require__(32);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12__js_plugins_wavefront_obj_js__ = __webpack_require__(20);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12__js_plugins_wavefront_obj_js__ = __webpack_require__(21);
 // app.js
 //  for bundling and initialization
 //
@@ -16141,7 +16144,7 @@ document.addEventListener('DOMContentLoaded', function() {
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "tours", function() { return tours; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_interact__ = __webpack_require__(17);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_interact__ = __webpack_require__(18);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_ui__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d__ = __webpack_require__(0);
 /*

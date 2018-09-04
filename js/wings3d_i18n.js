@@ -35,7 +35,7 @@ function resetStaticElements(langObj) {
    let allDom = document.querySelectorAll(`[${i18nAttrib}]`);
    for (let elem of allDom) {
       let key = elem.getAttribute(i18nAttrib);
-      let cotent = getTemplate(key);
+      let content = getTemplate(key);
       if (content) {
          elem.textContent = content;
       } else {
@@ -98,7 +98,7 @@ function i18n(key, templateVars) {
    let template = getTemplate(key);
    if (template) {
       if (templateVars) {
-         return fillTemplate(temmplate, templateVars);
+         return fillTemplate(template, templateVars);
       }
       return template;
    }
