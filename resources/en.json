@@ -7,5 +7,6 @@
        "last-updated": "2018-09-04"
    },
    "cube": "Cube",
-   "move": "Move"
+   "move": "Move",
+   "body_status": "Object ${this.name} has ${this.polygonSize} polygons, ${this.edgeSize} edges, and ${this.vertexSize} vertices"
 }
