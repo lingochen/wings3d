@@ -60,7 +60,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 22);
+/******/ 	return __webpack_require__(__webpack_require__.s = 23);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -82,6 +82,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "bindAction", function() { return bindAction; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "runAction", function() { return runAction; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "setInteraction", function() { return setInteraction; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ezFetch", function() { return ezFetch; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__ = __webpack_require__(5);
 /*
 //  wings3d.js
@@ -503,6 +504,61 @@ const action = {
 function addActionConstant(id) {
    action[id] = () => {notImplemented(this);}
 }
+
+//
+// @Params: pathToResource 
+//
+// code from https://css-tricks.com/using-fetch/
+const ezFetch = (function() {
+   return function(pathToResource) { 
+      return fetch(pathToResource)
+      .then(handleResponse)
+      // to be supplied by user. -->
+      //.then(data => console.log(data))
+      //.catch(error => console.log(error));
+      // <---
+   }
+ 
+ function handleResponse (response) {
+   let contentType = response.headers.get('content-type')
+   if (contentType.includes('application/json') || contentType.includes('application/jason')) { // tcl wub problems?
+     return handleJSONResponse(response)
+   } else if (contentType.includes('text/html')) {
+     return handleTextResponse(response)
+   } else {
+     // Other response types as necessary. I haven't found a need for them yet though.
+     throw new Error(`Sorry, content-type ${contentType} not supported`)
+   }
+ }
+ 
+ function handleJSONResponse (response) {
+   return response.json()
+     .then(json => {
+       if (response.ok) {
+         return json
+       } else {
+         return Promise.reject(Object.assign({}, json, {
+           status: response.status,
+           statusText: response.statusText
+         }))
+       }
+     })
+ }
+ function handleTextResponse (response) {
+   return response.text()
+     .then(text => {
+       if (response.ok) {
+         return json
+       } else {
+         return Promise.reject({
+           status: response.status,
+           statusText: response.statusText,
+           err: text
+         })
+       }
+     })
+ }
+}());
 
 
 
@@ -6368,7 +6424,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "MeshAllocator", function() { return MeshAllocator; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "WingedTopology", function() { return WingedTopology; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_model__ = __webpack_require__(4);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_vm__ = __webpack_require__(29);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_vm__ = __webpack_require__(30);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_vm___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_vm__);
 
 
@@ -15321,9 +15377,143 @@ class ImportExporter {
 
 /***/ }),
 /* 22 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "i18n", function() { return i18n; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "setCurrentLocale", function() { return setCurrentLocale; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getCurrentLocale", function() { return getCurrentLocale; });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d__ = __webpack_require__(0);
+/*
+ routines for translation. l10n.
+
+ stub for i18n, other stuff, like number, date format.
+*/
+
+
+
+
+const i18nAttrib = "data-i18n";
+let currentCountry = "US";
+let currentLanguage = "en";
+let defaultMessages;
+let currentMessages;
+
+function getTemplate(key) {
+   let template = currentMessages.get(key);
+   if (!template && defaultMessages) {
+      return defaultMessages.get(key);
+   }
+   return template;
+}
+
+function* entries(obj) {
+   for (let key in obj) {
+      yield [key, obj[key]];
+   }
+}
+function resetStaticElements(langObj) {  
+   // first copy to currentMessages.
+   currentMessages = new Map(entries(langObj));
+   
+   // set the resources staticElement
+   //console.log(langJson);
+   let allDom = document.querySelectorAll(`[${i18nAttrib}]`);
+   for (let elem of allDom) {
+      let key = elem.getAttribute(i18nAttrib);
+      if (currentMessages.has(key)) {
+         elem.textContent = currentMessages.get(key);
+      } else {
+         console.log(`Warning: ${key} has no translation`);
+      }
+   }
+}
+
+function loadResource(language, successCallback){
+   Object(__WEBPACK_IMPORTED_MODULE_0__wings3d__["ezFetch"])(`./resources/${language}.json`)
+      .then(data => {
+         resetStaticElements(data);
+         if (successCallback) {
+            successCallback();
+         }
+      })
+      .catch(err => {
+         console.log('Fetch Error :-S', err);
+      });
+} 
+
+function getCurrentLocale() {
+   return {country: currentCountry, language: currentLanguage};
+}
+
+/**
+  * Sets the current language/locale and does any application initialization after loading language.
+  *
+  * @method load
+  * @param {language} The two-letter ISO language code.
+  * @param {country} The two-letter ISO conuntry code.
+  * @param {successCallback} The function to be called when the language/locale has been loaded. 
+  */
+function setCurrentLocale(language, country, successCallback) {
+   currentCountry = country || 'unknown';
+   currentLanguage = language || 'unknown';
+
+   loadResource(currentLanguage, successCallback);
+};
+
+/*
+ * wonderfully simple template engine.
+ * https://stackoverflow.com/questions/30003353/can-es6-template-literals-be-substituted-at-runtime-or-reused
+*/
+const fillTemplate = function(template, templateVars){
+   return new Function(`return \`${template}\`;`).call(templateVars);
+}
+   /**
+     * Replaces each format item in a specified localized string with the text equivalent of a corresponding arguments (after key).
+     * e.g. key = 'helloFirstNameLastName'
+            localised value of key = "Hello %s %s!"
+     *      _('helloFirstNameLastName', 'John', 'Smith');
+     *      returns "Hello John Smith!"
+     *
+     * @method _
+     * @param {key} The unique identifier for the resource name (using object notation).
+     * @return {String} Returns the localized value based on the provided key and optional arguments.
+     */
+function i18n(key, templateVars) {
+   let template = getTemplate(key);
+   if (template) {
+      if (templateVars) {
+         return fillTemplate(temmplate, templateVars);
+      }
+      return template;
+   }
+   return `Error: ${key} don't exist`;
+};
+
+
+ 
+
+
+// init
+Object(__WEBPACK_IMPORTED_MODULE_0__wings3d__["onReady"])(()=> {
+   // init
+   setCurrentLocale("en");
+   defaultMessages = currentMessages;
+   // hookup to language select
+   let selectLang = document.querySelector('#selectLanguage');
+   if (selectLang) {
+      selectLang.addEventListener('change', function(ev) {
+         setCurrentLocale(selectLang.value); // change locale
+       });
+   }
+});
+
+/***/ }),
+/* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(23);
+__webpack_require__(24);
 __webpack_require__(13);
 __webpack_require__(8);
 __webpack_require__(16);
@@ -15331,9 +15521,9 @@ __webpack_require__(15);
 __webpack_require__(12);
 __webpack_require__(10);
 __webpack_require__(5);
-__webpack_require__(32);
-__webpack_require__(18);
 __webpack_require__(33);
+__webpack_require__(18);
+__webpack_require__(22);
 __webpack_require__(21);
 __webpack_require__(17);
 __webpack_require__(11);
@@ -15352,28 +15542,29 @@ module.exports = __webpack_require__(0);
 
 
 /***/ }),
-/* 23 */
+/* 24 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__css_default_css__ = __webpack_require__(24);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__css_default_css__ = __webpack_require__(25);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__css_default_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__css_default_css__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__css_menu_css__ = __webpack_require__(25);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__css_menu_css__ = __webpack_require__(26);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__css_menu_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__css_menu_css__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__css_button_css__ = __webpack_require__(26);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__css_button_css__ = __webpack_require__(27);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__css_button_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__css_button_css__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__css_form_css__ = __webpack_require__(27);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__css_form_css__ = __webpack_require__(28);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__css_form_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3__css_form_css__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__css_bubble_css__ = __webpack_require__(28);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__css_bubble_css__ = __webpack_require__(29);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__css_bubble_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4__css_bubble_css__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_view__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_camera__ = __webpack_require__(16);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_interact__ = __webpack_require__(17);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__wings3d_ui__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__js_plugins_cubeshape_js__ = __webpack_require__(31);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__js_plugins_wavefront_obj_js__ = __webpack_require__(20);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__wings3d_i18n__ = __webpack_require__(22);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__js_plugins_cubeshape_js__ = __webpack_require__(32);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12__js_plugins_wavefront_obj_js__ = __webpack_require__(20);
 // app.js
 //  for bundling and initialization
 //
@@ -15392,18 +15583,13 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 
 
+
 // plugins
 
 
 
 
 __WEBPACK_IMPORTED_MODULE_8__wings3d__["start"]('glcanvas');
-
-/***/ }),
-/* 24 */
-/***/ (function(module, exports) {
-
-// removed by extract-text-webpack-plugin
 
 /***/ }),
 /* 25 */
@@ -15431,9 +15617,15 @@ __WEBPACK_IMPORTED_MODULE_8__wings3d__["start"]('glcanvas');
 
 /***/ }),
 /* 29 */
+/***/ (function(module, exports) {
+
+// removed by extract-text-webpack-plugin
+
+/***/ }),
+/* 30 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var indexOf = __webpack_require__(30);
+var indexOf = __webpack_require__(31);
 
 var Object_keys = function (obj) {
     if (Object.keys) return Object.keys(obj)
@@ -15574,7 +15766,7 @@ exports.createContext = Script.createContext = function (context) {
 
 
 /***/ }),
-/* 30 */
+/* 31 */
 /***/ (function(module, exports) {
 
 
@@ -15589,7 +15781,7 @@ module.exports = function(arr, obj){
 };
 
 /***/ }),
-/* 31 */
+/* 32 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -15943,7 +16135,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 /***/ }),
-/* 32 */
+/* 33 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -16074,214 +16266,6 @@ function createGuideTour() {
 __WEBPACK_IMPORTED_MODULE_2__wings3d__["onReady"](createGuideTour);
 
 
-
-/***/ }),
-/* 33 */
-/***/ (function(module, exports) {
-
-/*
- routines for translation.
-*/
-function Translate() { 
-   //initialization
-   this.init =  function(attribute, lng){
-       this.attribute = attribute;
-       this.lng = lng;    
-   }
-   //translate 
-   this.process = function(){
-               _self = this;
-               var xrhFile = new XMLHttpRequest();
-               //load content data 
-               xrhFile.open("GET", "./resources/"+this.lng+".json", false);
-               xrhFile.onreadystatechange = function ()
-               {
-                   if(xrhFile.readyState === 4)
-                   {
-                       if(xrhFile.status === 200 || xrhFile.status == 0)
-                       {
-                           var LngObject = JSON.parse(xrhFile.responseText);
-                           console.log(LngObject["name1"]);
-                           var allDom = document.getElementsByTagName("*");
-                           for(var i =0; i < allDom.length; i++){
-                               var elem = allDom[i];
-                               var key = elem.getAttribute(_self.attribute);
-                                
-                               if(key != null) {
-                                    console.log(key);
-                                    elem.innerHTML = LngObject[key]  ;
-                               }
-                           }
-                    
-                       }
-                   }
-               }
-               xrhFile.send();
-   }    
-}
-
-
-const i18n = (function () {
-   var defaultPackage = 'default',
-       currentCountry, currentLanguage, resources;
-
- function resetStaticElements() {
-   $('[data-res]').each(function() {
-     var $el = $(this);
-     var resKey = $el.attr('data-res');
-     var localizedData = getString(resKey);
-   
-     if (resKey.indexOf('__') == -1) {
-       $el.html(resValue);
-     } else {
-       var attrKey = key.substring(key.indexOf('__') + 2);
-       $el.attr(attrKey, resValue);
-     }
-   });            
- }
-
- function loadResources(localeID) {
-   var resourcePath = 'i18n-resources/strings.' + localeID + '.json?r=' + (new Date().getTime());
-   return $.getJSON(resourcePath).promise();
- }
-
- function setupLocalizedResources(languageResources, newlanguageResources) {
-   for (var property in languageResources) {
-     if (newlanguageResources.hasOwnProperty(property)) {
-       if (!languageResources[property]) {
-         languageResources[property] = newlanguageResources[property];
-       } else {
-         if (typeof languageResources[property] == 'object') {
-           setupLocalizedResources(languageResources[property], newDefaults[property]);
-         }
-       }
-     }
-   }
- }
-
- function printf(input, args) {
-   if (!args) return input;
-
-   var ret = '';
-   var searchRegex = /%(\d+)\$s/g;
-
-   var matches = searchRegex.exec(input);
-   while (matches) {
-     var index = parseInt(matches[1], 10) - 1;
-     input = input.replace('%' + matches[1] + '\$s', (args[index]));
-     matches = searchRegex.exec(input);
-   }
-   var parts = input.split('%s');
-
-   if (parts.length > 1) {
-     for (var i = 0; i < args.length; i++) {
-       if (parts[i].length > 0 && parts[i].lastIndexOf('%') == (parts[i].length - 1)) {
-         parts[i] += 's' + parts.splice(i + 1, 1)[0];
-       }
-       ret += parts[i] + args[i];
-     }
-   }
-
-   return ret + parts[parts.length - 1];
- }
-
- function getString(key) {
-   var keyItems = key.split('.');
-   var obj = resources;
-   for (var i = 0; i < keyItems.length; i++) {
-     obj = obj[keyItems[i]];
-     if (!obj) {
-       break;
-     }
-   }
-   if (typeof obj === 'string') {
-     return obj;
-   } else {
-     return '';
-   }
- }
-
- function getFormattedString(key) {
-   var val = getString(key);
-   if (typeof val === 'string') {
-     if (arguments.length > 1) {
-       var formatArgs = Array.prototype.slice.call(arguments, 1);
-       return printf(val, formatArgs);
-     } else {
-       return val;
-     }
-   } else {
-     return '';
-   }
- }
-  
- function setCurrentLocale(language, country, successCallback) {
-   currentCountry = country || 'unknown';
-   currentLanguage = language || 'unknown';
-
-   // TODO: provide better support for default fallback languages
-   if (currentCounrty === 'unknown' || currentLanguage === 'unknown') {
-       currentCountry = 'US';
-       currentLanguage = 'en';
-   }
-
-   var dfd1 = loadResources(currentLanguage + '-' + currentCountry),
-       dfd2 = loadResources(currentLanguage),
-       dfd3 = loadResources(defaultPackage);
-
-   $.when(dfd1, dfd2, dfd3)
-    .then(function (json1, json2, json3) {
-      resources = {};
-      setupLocalizedResources(resources, json1);
-      setupLocalizedResources(resources, json2);
-      setupLocalizedResources(resources, json3);
-
-      resetStaticElements();
-
-      if (callback) {
-        callback();
-      }
-
-    }, function () {
-      // TODO: implement error handling for loading of resources
-      console.log('Error loading resources...');
-    });
- }
-
- return { 
-   
-   /**
-     * Replaces each format item in a specified localized string with the text equivalent of a corresponding arguments (after key).
-     * e.g. key = 'helloFirstNameLastName'
-            localised value of key = "Hello %s %s!"
-     *      _('helloFirstNameLastName', 'John', 'Smith');
-     *      returns "Hello John Smith!"
-     *
-     * @method _
-     * @param {key} The unique identifier for the resource name (using object notation).
-     * @return {String} Returns the localized value based on the provided key and optional arguments.
-     */
-   _: getFormattedString,
-   
-   /**
-     * Sets the current language/locale and does any application initialization after loading language.
-     *
-     * @method load
-     * @param {language} The two-letter ISO language code.
-     * @param {country} The two-letter ISO conuntry code.
-     * @param {successCallback} The function to be called when the language/locale has been loaded. 
-     */
-   load: setCurrentLocale,
-   
-   getCurrentCountry: function() {
-     return currentCountry;
-   },
-  
-   getCurrentLanguage: function() {
-     return currentLanguage;
-   }
- };
-}());
 
 /***/ }),
 /* 34 */

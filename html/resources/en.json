@@ -1,0 +1,11 @@
+{
+   "@metadata": {
+       "authors": [
+             "lingo"
+        ],
+       "locale": "en",
+       "last-updated": "2018-09-04"
+   },
+   "cube": "Cube",
+   "move": "Move"
+}

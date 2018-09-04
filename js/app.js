@@ -15,6 +15,7 @@ import './wings3d_camera';
 import './wings3d_interact';
 import * as Wings3D from "./wings3d"
 import './wings3d_ui';
+import './wings3d_i18n';
 
 // plugins
 import "../js/plugins/cubeshape.js";
