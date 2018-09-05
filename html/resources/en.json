@@ -6,7 +6,9 @@
        "locale": "en",
        "last-updated": "2018-09-04"
    },
+   "toggleVertexMode_tooltip": "Change to vertex selection mode",
    "cube": "Cube",
+   "cube_tooltip": ["Create a Cube", "", "Open option dialog"],
    "move": "Move",
    "body_status": "Object ${this.name} has ${this.polygonSize} polygons, ${this.edgeSize} edges, and ${this.vertexSize} vertices"
 }

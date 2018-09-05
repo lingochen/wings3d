@@ -8,6 +8,7 @@ import {ezFetch, onReady} from './wings3d';
 
 
 const i18nAttrib = "data-i18n";
+const newLine = "\n";
 let currentCountry = "US";
 let currentLanguage = "en";
 let defaultMessages;
@@ -21,6 +22,11 @@ function getTemplate(key) {
    return template;
 }
 
+function helpTooltip(ev) {
+   const text = this.getAttribute("title");
+   const helpText = text.replace(newLine, "    ");
+   help(helpText);
+}
 function* entries(obj) {
    for (let key in obj) {
       yield [key, obj[key]];
@@ -29,6 +35,9 @@ function* entries(obj) {
 function resetStaticElements(langObj) {  
    // first copy to currentMessages.
    currentMessages = new Map(entries(langObj));
+   if (!defaultMessages) {
+      defaultMessages = currentMessages;
+   }
    
    // set the resources staticElement
    //console.log(langJson);
@@ -40,6 +49,29 @@ function resetStaticElements(langObj) {
          elem.textContent = content;
       } else {
          console.log(`Warning: ${key} has no translation`);
+      }
+      // now prepare tooltips
+      let tooltip = key + "_tooltip";
+      content = getTemplate(tooltip);
+      if (content) {
+         let text = "";
+         if (Array.isArray(content)) {
+            if (content[0]) {
+               text += "left mouse button: " + content[0];
+            }
+            if (content[1]) {
+               text += newLine+"middle mouse button: " + content[1];
+            }
+            if (content[2]) {
+               text += newLine+"right mouse button: " + content[2];
+            }
+         } else { // must be string
+            text = content;
+         }
+         elem.setAttribute("title", text);   // use title tooltip directly
+         // should we register/unregister mouseover event?
+         elem.removeEventListener("mouseover", helpTooltip);
+         elem.addEventListener("mouseover", helpTooltip);
       }
    }
 }
@@ -117,7 +149,6 @@ export {
 onReady(()=> {
    // init
    setCurrentLocale("en");
-   defaultMessages = currentMessages;
    // hookup to language select
    let selectLang = document.querySelector('#selectLanguage');
    if (selectLang) {
