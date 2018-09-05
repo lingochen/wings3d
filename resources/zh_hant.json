@@ -6,7 +6,8 @@
        "locale": "zh_hant",
        "last-updated": "2018-09-04"
    },
+   "toggleVertexMode_tooltip": "Change to vertex selection mode",
    "cube": "立方體",
    "move": "移動",
-   "body_status": "物件${this.name}有${this.polygonSize}個面, ${this.edgeSize}個邊, ${this.vertexSize}個頂點"
+   "body_status": "物件${this.name}有${this.polygonSize}個面, ${this.edgeSize}條線, ${this.vertexSize}個點"
 }
