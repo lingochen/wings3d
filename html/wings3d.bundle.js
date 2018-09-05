@@ -14094,6 +14094,9 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 const i18nAttrib = "data-i18n";
 const newLine = "\n";
+let LMB = "LMB: ";
+let MMB = "MMB: ";
+let RMB = "RMB: ";
 let currentCountry = "US";
 let currentLanguage = "en";
 let defaultMessages;
@@ -14128,27 +14131,28 @@ function resetStaticElements(langObj) {
    //console.log(langJson);
    let allDom = document.querySelectorAll(`[${i18nAttrib}]`);
    for (let elem of allDom) {
+      let warning = true;
       let key = elem.getAttribute(i18nAttrib);
       let content = getTemplate(key);
       if (content) {
          elem.textContent = content;
-      } else {
-         console.log(`Warning: ${key} has no translation`);
-      }
+         warning = false;
+      } 
       // now prepare tooltips
       let tooltip = key + "_tooltip";
       content = getTemplate(tooltip);
       if (content) {
+         warning = false;
          let text = "";
          if (Array.isArray(content)) {
             if (content[0]) {
-               text += "left mouse button: " + content[0];
+               text += LMB + content[0];
             }
             if (content[1]) {
-               text += newLine+"middle mouse button: " + content[1];
+               text += newLine + MMB + content[1];
             }
             if (content[2]) {
-               text += newLine+"right mouse button: " + content[2];
+               text += newLine + RMB + content[2];
             }
          } else { // must be string
             text = content;
@@ -14157,6 +14161,9 @@ function resetStaticElements(langObj) {
          // should we register/unregister mouseover event?
          elem.removeEventListener("mouseover", helpTooltip);
          elem.addEventListener("mouseover", helpTooltip);
+      }
+      if (warning) {
+         console.log(`Warning: ${key} has no translation`);
       }
    }
 }
