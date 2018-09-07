@@ -83,20 +83,33 @@ ul.menubar, ul.popupmenu {
 /* dropdown menu */
 ul.popupmenu {
   visibility : hidden;
-  position: absolute;
+  position: absolute;    /* parent need to be relative */
+  top: 100%;             /* place directly under parent */
   /*margin-top:1px;*/
-  background-color: #bbb;
+  /*background-color: #bbb;*/
   list-style: none;
   z-index: 100;
+}
+ul.popupmenu > li {
+  background-color: #bbb;
+  position: relative;
+}
+ul.popupmenu > hr {
+  margin: 0em;
+  border-width: 2px
+}
+ul.popupmenu ul.popupmenu {
+  width: 100%;
 }
 ul.menubar {
   display: flex;
   flex-direction: row;
 }
-
 ul.menubar > li {
     margin: 0;
     padding: 0;
+  display: flex;
+  position: relative;
 /*    display: inline-block; */
     list-style-type: none;
     transition: all 0s; 
@@ -109,14 +122,23 @@ ul.popupmenu > li > a {
 ul.menubar > li.menuItem > a {
     color: #aaa;
 }
+ul.popupmenu > li {
+  display: flex;
+}
+
 
 ul.menubar > li > a,
 ul.popupmenu > li > a {
   display: block;
+  flex: 1;
+  user-select: none;
   line-height: 1em;
   padding: 0.5em 2em;
   text-decoration: none;
   white-space: nowrap;
+}
+ul.popupmenu > li > img {
+  align-self: center;
 }
 
 ul.menubar > li:hover,
@@ -125,20 +147,15 @@ ul.popupmenu > li:hover {
 }
 
 /* added attribute for showing extra menu available. */
-li.dropdown::before {
-  content: "v"; /* "\2304";*/
-  float: right;
+li.dropdown::after {
+  /* content: "v"; */
+  content: "\2304";
   /*padding: 0.0em 0.5em;*/
 }
-li.dropside::before {
+li.dropside::after {
   content: "\203A";
-  float: right;
   padding: 0.5em 0.5em;
-}
-
-li.collapse,
-a.collapse {
-  display: none;
+  /*align-self: center;*/
 }
 
 /* slider, copy from http://danielstern.ca/range.css */

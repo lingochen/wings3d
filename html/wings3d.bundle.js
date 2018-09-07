@@ -1381,7 +1381,7 @@ function init() {
          button.fn();
        });
    }
-   // bind .dropdown, .dropside click event.
+   // bind .dropdown, click event.
    let buttons = document.querySelectorAll("li.dropdown > a");
    for (let button of buttons) {
       if (button.id) {
@@ -1709,14 +1709,14 @@ function slideBack() {
    let element = grandParent.firstElementChild;
    do {
       //if (element !== dropside) {
-         element.style.display = "block";
+         element.style.visibility = "inherit";
       //}
    } while (element = element.nextElementSibling);
    if (submenu.length > 0) {
       const grandA = grandParent.previousElementSibling;
       if (grandA && grandA.tagName == "A") { 
          //grandA.classList.remove("collapse");
-         grandA.style.display = "block";
+         grandA.style.display = "inherit";
       }
    }
    return true;
@@ -1734,18 +1734,18 @@ function toggleSubmenu(ul) {
          const grandA = grandParent.previousElementSibling;
          if (grandA && grandA.tagName == "A") {
             //grandA.classList.add("collapse");
-            grandA.style.display = "none";
+            grandA.style.visibility = "hidden";
          }
       }
-      // hide all dropside Siblig
+      // hide all dropside Sibling
       let element = grandParent.firstElementChild;
       do {
          if (element !== dropside) {
-            element.style.display = "none";
+            element.style.visibility = "hidden";
          }
       } while (element = element.nextElementSibling);
       submenu.push(ul);
-      ul.style.visibility = "visible";
+      ul.style.visibility = "inherit";
    }
 };
 

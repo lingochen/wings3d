@@ -766,7 +766,7 @@ function init() {
          button.fn();
        });
    }
-   // bind .dropdown, .dropside click event.
+   // bind .dropdown, click event.
    let buttons = document.querySelectorAll("li.dropdown > a");
    for (let button of buttons) {
       if (button.id) {
