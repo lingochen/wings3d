@@ -16160,6 +16160,17 @@ document.addEventListener('DOMContentLoaded', function() {
          __WEBPACK_IMPORTED_MODULE_1__wings3d__["log"](__WEBPACK_IMPORTED_MODULE_1__wings3d__["action"].createCubeDialog);
       })
    }
+   menuItem = document.querySelector("#createCubePref"); // preference optional dialog
+   if (menuItem) {
+      menuItem.addEventListener("click", function(ev) {
+         // get exact position,
+         var position = __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["getPosition"](ev);
+         // run createCube dialog
+         createCubeDialog(position);
+         __WEBPACK_IMPORTED_MODULE_1__wings3d__["log"](__WEBPACK_IMPORTED_MODULE_1__wings3d__["action"].createCubeDialog);
+      })
+   }
+
    //
    createCubeDialog = function(mousePosition) {
       // display dialog, shown at the mouse location.

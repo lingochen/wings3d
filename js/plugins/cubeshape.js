@@ -323,6 +323,17 @@ document.addEventListener('DOMContentLoaded', function() {
          Wings3D.log(Wings3D.action.createCubeDialog);
       })
    }
+   menuItem = document.querySelector("#createCubePref"); // preference optional dialog
+   if (menuItem) {
+      menuItem.addEventListener("click", function(ev) {
+         // get exact position,
+         var position = UI.getPosition(ev);
+         // run createCube dialog
+         createCubeDialog(position);
+         Wings3D.log(Wings3D.action.createCubeDialog);
+      })
+   }
+
    //
    createCubeDialog = function(mousePosition) {
       // display dialog, shown at the mouse location.
