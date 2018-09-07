@@ -79,14 +79,25 @@ ul.popupmenu > li:hover {
 }
 
 /* added attribute for showing extra menu available. */
-li.dropdown::after {
+li.dropdown:after {
   /* content: "v"; */
   content: "\2304";
   /*padding: 0.0em 0.5em;*/
 }
 li.dropside::after {
   content: "\203a";
-  padding: 0.5em 0.5em;
-  /*align-self: center;*/
+  padding: 0 0.5em 0 0;
+  align-self: center;
 }
-
+li.dropside.hideAfter::after {
+  display: none;
+}
+li.dropside::before {
+  content:"\2039";
+  align-self: center;
+  padding: 0 0 0 0.5em;
+  display: none;
+}
+li.dropside.showBefore::before {
+  display: block;
+}

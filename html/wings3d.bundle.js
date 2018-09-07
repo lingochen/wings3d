@@ -1704,6 +1704,7 @@ function slideBack() {
    ul.style.visibility = "hidden";
    // now toggle parent sibling
    const dropside = ul.parentElement;  
+   dropside.classList.remove('hideAfter', 'showBefore');
    // hide all dropside sibling 
    const grandParent = dropside.parentElement;
    let element = grandParent.firstElementChild;
@@ -1727,7 +1728,8 @@ function toggleSubmenu(ul) {
       slideBack();
    } else {
       // now toggle on
-      const dropside = ul.parentElement;  
+      const dropside = ul.parentElement;
+      dropside.classList.add("showBefore", "hideAfter");
       // hide grandParent if needed 
       const grandParent = dropside.parentElement;
       if (submenu.length > 0) {
