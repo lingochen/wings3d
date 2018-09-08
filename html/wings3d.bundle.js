@@ -263,20 +263,55 @@ let interactFn;
 function setInteractaction(interact) {
    interactFn = interact;
 }
-function bindAction(id, fn) {
+const lastMouseDown = [null, null, null];
+function handleContextmenu(ev) {
+   ev.preventDefault();
+   return false;
+}
+function handleMouseDown(ev) {
+   if (ev.button <= 2) {
+      lastMouseDown[ev.button] = ev.currentTarget;
+   } else {
+      console.log("Amazing: mouse button is " + ev.button);
+   }
+   //ev.stopImmediatePropagation();
+};
+function handleMouseUp(ev) {
+   if (ev.button <= 2) {
+      let lastDownEvent = lastMouseDown[ev.button];
+      if (lastDownEvent) {
+         if (lastDownEvent === ev.currentTarget) {
+            // now we do proper clicking
+            runAction(ev.button, ev.currentTarget.id, ev);
+         }
+      }
+   }
+   // reset
+   lastMouseDown[0] = lastMouseDown[1] = lastMouseDown[2] = null;
+   //ev.stopImmediatePropagation();
+};
+function bindAction(menuItem, button, id, fn) {
    if (action.hasOwnProperty(id)) {
-      action[id] = fn;
+      if (!Array.isArray(action[id])) {
+         action[id] = [null, null, null];
+         menuItem.addEventListener("mousedown", handleMouseDown);
+         menuItem.addEventListener("mouseup", handleMouseUp);
+         menuItem.addEventListener("contextmenu", handleContextmenu);  // no ops.
+      }
+      action[id][button] = fn;
    }
 };
-function runAction(id, event) {
+function runAction(button, id, event) {
    if (action.hasOwnProperty(id)) {
-      const fn = action[id];
-      if (interactFn) {
-         if (interactFn(id, event)) {
+      const fn = action[id][button];
+      if (fn) {
+         if (interactFn) {
+            if (interactFn(id, event)) {
+               fn(event);
+            }
+         } else {
             fn(event);
          }
-      } else {
-         fn(event);
       }
    } else {
       console.log("unrecognized action: " + id);
@@ -303,6 +338,9 @@ const action = {
    toggleBodyMode: () => {notImplemented(this);},
    redoEdit: () => {notImplemented(this);},
    undoEdit: () => {notImplemented(this);},
+   // createObject Menu
+   createCube: () => {notImplemented(this);},
+   createCubePref: () =>{notImplemented(this);},
    // selection menu
    selectMenu: () => {notImplemented(this);},
    deselect: () => {notImplemented(this);},
@@ -1461,6 +1499,8 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "positionDom", function() { return positionDom; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "addMenuItem", function() { return addMenuItem; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "bindMenuItem", function() { return bindMenuItem; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "bindMenuItemMMB", function() { return bindMenuItemMMB; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "bindMenuItemRMB", function() { return bindMenuItemRMB; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "setupDialog", function() { return setupDialog; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "runDialog", function() { return runDialog; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "openFile", function() { return openFile; });
@@ -1477,12 +1517,8 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 
 
-function _bindMenuItem(menuItem, id, fn, hotkey, meta) {
-   menuItem.addEventListener('click', function(ev) {
-      // now run functions
-      __WEBPACK_IMPORTED_MODULE_1__wings3d__["runAction"](id, ev);
-   });
-   __WEBPACK_IMPORTED_MODULE_1__wings3d__["bindAction"](id, fn);
+function _bindMenuItem(menuItem, button, id, fn, hotkey, meta) {
+   __WEBPACK_IMPORTED_MODULE_1__wings3d__["bindAction"](menuItem, button, id, fn);
    if (hotkey !== undefined) {
       __WEBPACK_IMPORTED_MODULE_0__wings3d_hotkey__["setHotkey"](id, hotkey, meta);
    }
@@ -1492,25 +1528,42 @@ function _bindMenuItem(menuItem, id, fn, hotkey, meta) {
 function bindMenuItem(id, fn, hotkey, meta) {
    const menuItem = document.querySelector('#' + id);
    if (menuItem) {
-      _bindMenuItem(menuItem, id, fn, hotkey, meta);
+      _bindMenuItem(menuItem, 0, id, fn, hotkey, meta);
    } else {
-      console.log("could not find menuItem " + id);
+      console.log("Click: could not find menuItem " + id);
+   }
+}
+function bindMenuItemMMB(id, fn) {
+   const menuItem = document.querySelector('#' + id);
+   if (menuItem) {
+      _bindMenuItem(menuItem, 1, id, fn);
+   } else {
+      console.log("AuxClick: could not find menuItem " + id);
+   }
+}
+function bindMenuItemRMB(id, fn) {
+   const menuItem = document.querySelector('#' + id);
+   if (menuItem) {
+      _bindMenuItem(menuItem, 2, id, fn);
+   } else {
+      console.log("ContextClick: could not find menuItem " + id);
    }
 }
 
 
+
 function addMenuItem(menuId, id, menuItemText, fn, hotkey, meta) {
-   const menu = document.querySelector(menuId);
+   const menu = document.querySelector('#' + menuId);
    // insert the menuItem 
    const menuItem = document.createElement('li');
    const a = document.createElement('a');
-   //a.setAttribute('onmouseover', '');
+   a.id = id;
    a.textContent = menuItemText;
-   // append to subment
+   // append to submenu
    menuItem.appendChild(a);
    menu.appendChild(menuItem);
    __WEBPACK_IMPORTED_MODULE_1__wings3d__["addActionConstant"](id);
-   _bindMenuItem(menuItem, id, fn, hotkey, meta);
+   _bindMenuItem(a, 0, id, fn, hotkey, meta);
 }
 
 
@@ -1776,25 +1829,31 @@ function toggleMenuOff() {
       currentMenu.style.visibility = "visible";   // toggleMenuOn
    }
 };
+let firstClick = 0;
 function clickListener() {
    function callBack(e) {
+      if (firstClick) {
+         firstClick--;
+      } else {
       //let clickeElIsLink = clickInsideElement( e, popupMenuClass );
       //if ( !clickeElIsLink ) {
-         if ( (e.button == 0) || (e.button == 1) ) {  // somehow, any click should 
+         //if ( (e.button == 0) || (e.button == 1) ) {  // somehow, any click should 
             toggleMenuOff();
             if (!currentMenu) {
                // remove listening event
-               document.removeEventListener("click", callBack);
+               document.removeEventListener("mouseup", callBack);
             }
-         }
+         //}
       }
+    }
 
-   document.addEventListener( "click", callBack, false);
+   document.addEventListener("mouseup", callBack, false);
 };
 function showContextMenu(popupMenu) {
    if (currentMenu) {
       toggleMenuOff();
    } else {
+      firstClick++;
       clickListener();
    }
    currentMenu = popupMenu;
@@ -15489,14 +15548,14 @@ class ImportExporter {
       // plug into import/export menu
       if (importMenuText) {
          // first get import Submenu.
-         __WEBPACK_IMPORTED_MODULE_2__wings3d_ui__["addMenuItem"]('#fileImport', 'import' + importMenuText.split(" ")[0], importMenuText, function(ev) {
+         __WEBPACK_IMPORTED_MODULE_2__wings3d_ui__["addMenuItem"]('fileImport', 'import' + importMenuText.split(" ")[0], importMenuText, function(ev) {
                __WEBPACK_IMPORTED_MODULE_2__wings3d_ui__["openFile"](function(file) { // open file Dialog, and retrive data
                      self.import(file);
                   });      
             });
       }
       if (exportMenuText) {
-         __WEBPACK_IMPORTED_MODULE_2__wings3d_ui__["addMenuItem"]('#fileExport', 'export' + exportMenuText.split(" ")[0], exportMenuText, function(ev) {
+         __WEBPACK_IMPORTED_MODULE_2__wings3d_ui__["addMenuItem"]('fileExport', 'export' + exportMenuText.split(" ")[0], exportMenuText, function(ev) {
             __WEBPACK_IMPORTED_MODULE_2__wings3d_ui__["runDialog"]('#exportFile', ev, function(data) {
                if (data['Filename']) {
                   self.export(data['Filename']);
@@ -16008,7 +16067,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
       _pvt.previewCage = preview;   //View.putIntoWorld(); already.
       __WEBPACK_IMPORTED_MODULE_2__wings3d_view__["updateWorld"]();
-   }; 
+   };
+
+   function submitCage() {
+         // accept previewCage to the world
+         __WEBPACK_IMPORTED_MODULE_2__wings3d_view__["undoQueue"]( new __WEBPACK_IMPORTED_MODULE_4__wings3d_model__["CreatePreviewCageCommand"](_pvt.previewCage) );
+         _pvt.previewCage.name = "Cube" + (_pvt.creationCount+1);
+         __WEBPACK_IMPORTED_MODULE_1__wings3d__["log"]("createCube", _pvt.previewCage);
+         _pvt.previewCage = null;
+         _pvt.creationCount++;
+   };
 
    // insert a hidden form into document
    var form = document.getElementById('createCubeForm');
@@ -16069,12 +16137,7 @@ document.addEventListener('DOMContentLoaded', function() {
       form.addEventListener('submit', function(ev) {
          ev.preventDefault();
          form.style.display = 'none';
-         // accept previewCage to the world
-         __WEBPACK_IMPORTED_MODULE_2__wings3d_view__["undoQueue"]( new __WEBPACK_IMPORTED_MODULE_4__wings3d_model__["CreatePreviewCageCommand"](_pvt.previewCage) );
-         _pvt.previewCage.name = "Cube" + (_pvt.creationCount+1);
-         __WEBPACK_IMPORTED_MODULE_1__wings3d__["log"]("createCube", _pvt.previewCage);
-         _pvt.previewCage = null;
-         _pvt.creationCount++;
+         submitCage();
       });
       var cutHandler = function(ev) {
          _pvt.cubeParams.numberOfCut = Number(ev.target.value);
@@ -16150,26 +16213,36 @@ document.addEventListener('DOMContentLoaded', function() {
    }
 
    // attach to click event.
-   var menuItem = document.querySelector("#createCube");
+   /*var menuItem = document.querySelector("#createCube");
    if (menuItem) {
       menuItem.addEventListener("click", function(ev) {
+         // get exact position,
+         var position = UI.getPosition(ev);
+         // run createCube dialog
+         createCubeDialog(position);
+         Wings3D.log(Wings3D.action.createCubeDialog);
+      })
+   }*/
+   const id = __WEBPACK_IMPORTED_MODULE_1__wings3d__["action"].createCube.name;
+   __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["bindMenuItem"](id, function(ev) {
+         _pvt.updatePreview();
+         submitCage();
+      });
+   __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["bindMenuItemRMB"](id, function(ev) {
          // get exact position,
          var position = __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["getPosition"](ev);
          // run createCube dialog
          createCubeDialog(position);
          __WEBPACK_IMPORTED_MODULE_1__wings3d__["log"](__WEBPACK_IMPORTED_MODULE_1__wings3d__["action"].createCubeDialog);
-      })
-   }
-   menuItem = document.querySelector("#createCubePref"); // preference optional dialog
-   if (menuItem) {
-      menuItem.addEventListener("click", function(ev) {
+      });
+   // preference optional dialog
+   __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_1__wings3d__["action"].createCubePref.name, function(ev) {
          // get exact position,
          var position = __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["getPosition"](ev);
          // run createCube dialog
          createCubeDialog(position);
          __WEBPACK_IMPORTED_MODULE_1__wings3d__["log"](__WEBPACK_IMPORTED_MODULE_1__wings3d__["action"].createCubeDialog);
-      })
-   }
+      });
 
    //
    createCubeDialog = function(mousePosition) {

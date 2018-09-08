@@ -6,12 +6,8 @@ import * as Hotkey from './wings3d_hotkey';
 import * as Wings3D from './wings3d';
 
 
-function _bindMenuItem(menuItem, id, fn, hotkey, meta) {
-   menuItem.addEventListener('click', function(ev) {
-      // now run functions
-      Wings3D.runAction(id, ev);
-   });
-   Wings3D.bindAction(id, fn);
+function _bindMenuItem(menuItem, button, id, fn, hotkey, meta) {
+   Wings3D.bindAction(menuItem, button, id, fn);
    if (hotkey !== undefined) {
       Hotkey.setHotkey(id, hotkey, meta);
    }
@@ -21,25 +17,42 @@ function _bindMenuItem(menuItem, id, fn, hotkey, meta) {
 function bindMenuItem(id, fn, hotkey, meta) {
    const menuItem = document.querySelector('#' + id);
    if (menuItem) {
-      _bindMenuItem(menuItem, id, fn, hotkey, meta);
+      _bindMenuItem(menuItem, 0, id, fn, hotkey, meta);
    } else {
-      console.log("could not find menuItem " + id);
+      console.log("Click: could not find menuItem " + id);
+   }
+}
+function bindMenuItemMMB(id, fn) {
+   const menuItem = document.querySelector('#' + id);
+   if (menuItem) {
+      _bindMenuItem(menuItem, 1, id, fn);
+   } else {
+      console.log("AuxClick: could not find menuItem " + id);
+   }
+}
+function bindMenuItemRMB(id, fn) {
+   const menuItem = document.querySelector('#' + id);
+   if (menuItem) {
+      _bindMenuItem(menuItem, 2, id, fn);
+   } else {
+      console.log("ContextClick: could not find menuItem " + id);
    }
 }
 
 
+
 function addMenuItem(menuId, id, menuItemText, fn, hotkey, meta) {
-   const menu = document.querySelector(menuId);
+   const menu = document.querySelector('#' + menuId);
    // insert the menuItem 
    const menuItem = document.createElement('li');
    const a = document.createElement('a');
-   //a.setAttribute('onmouseover', '');
+   a.id = id;
    a.textContent = menuItemText;
-   // append to subment
+   // append to submenu
    menuItem.appendChild(a);
    menu.appendChild(menuItem);
    Wings3D.addActionConstant(id);
-   _bindMenuItem(menuItem, id, fn, hotkey, meta);
+   _bindMenuItem(a, 0, id, fn, hotkey, meta);
 }
 
 
@@ -305,25 +318,31 @@ function toggleMenuOff() {
       currentMenu.style.visibility = "visible";   // toggleMenuOn
    }
 };
+let firstClick = 0;
 function clickListener() {
    function callBack(e) {
+      if (firstClick) {
+         firstClick--;
+      } else {
       //let clickeElIsLink = clickInsideElement( e, popupMenuClass );
       //if ( !clickeElIsLink ) {
-         if ( (e.button == 0) || (e.button == 1) ) {  // somehow, any click should 
+         //if ( (e.button == 0) || (e.button == 1) ) {  // somehow, any click should 
             toggleMenuOff();
             if (!currentMenu) {
                // remove listening event
-               document.removeEventListener("click", callBack);
+               document.removeEventListener("mouseup", callBack);
             }
-         }
+         //}
       }
+    }
 
-   document.addEventListener( "click", callBack, false);
+   document.addEventListener("mouseup", callBack, false);
 };
 function showContextMenu(popupMenu) {
    if (currentMenu) {
       toggleMenuOff();
    } else {
+      firstClick++;
       clickListener();
    }
    currentMenu = popupMenu;
@@ -349,6 +368,8 @@ export {
    positionDom,
    addMenuItem,
    bindMenuItem,
+   bindMenuItemMMB,
+   bindMenuItemRMB,
    setupDialog,
    runDialog,
    openFile,

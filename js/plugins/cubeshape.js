@@ -171,7 +171,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
       _pvt.previewCage = preview;   //View.putIntoWorld(); already.
       View.updateWorld();
-   }; 
+   };
+
+   function submitCage() {
+         // accept previewCage to the world
+         View.undoQueue( new CreatePreviewCageCommand(_pvt.previewCage) );
+         _pvt.previewCage.name = "Cube" + (_pvt.creationCount+1);
+         Wings3D.log("createCube", _pvt.previewCage);
+         _pvt.previewCage = null;
+         _pvt.creationCount++;
+   };
 
    // insert a hidden form into document
    var form = document.getElementById('createCubeForm');
@@ -232,12 +241,7 @@ document.addEventListener('DOMContentLoaded', function() {
       form.addEventListener('submit', function(ev) {
          ev.preventDefault();
          form.style.display = 'none';
-         // accept previewCage to the world
-         View.undoQueue( new CreatePreviewCageCommand(_pvt.previewCage) );
-         _pvt.previewCage.name = "Cube" + (_pvt.creationCount+1);
-         Wings3D.log("createCube", _pvt.previewCage);
-         _pvt.previewCage = null;
-         _pvt.creationCount++;
+         submitCage();
       });
       var cutHandler = function(ev) {
          _pvt.cubeParams.numberOfCut = Number(ev.target.value);
@@ -313,7 +317,7 @@ document.addEventListener('DOMContentLoaded', function() {
    }
 
    // attach to click event.
-   var menuItem = document.querySelector("#createCube");
+   /*var menuItem = document.querySelector("#createCube");
    if (menuItem) {
       menuItem.addEventListener("click", function(ev) {
          // get exact position,
@@ -322,17 +326,27 @@ document.addEventListener('DOMContentLoaded', function() {
          createCubeDialog(position);
          Wings3D.log(Wings3D.action.createCubeDialog);
       })
-   }
-   menuItem = document.querySelector("#createCubePref"); // preference optional dialog
-   if (menuItem) {
-      menuItem.addEventListener("click", function(ev) {
+   }*/
+   const id = Wings3D.action.createCube.name;
+   UI.bindMenuItem(id, function(ev) {
+         _pvt.updatePreview();
+         submitCage();
+      });
+   UI.bindMenuItemRMB(id, function(ev) {
          // get exact position,
          var position = UI.getPosition(ev);
          // run createCube dialog
          createCubeDialog(position);
          Wings3D.log(Wings3D.action.createCubeDialog);
-      })
-   }
+      });
+   // preference optional dialog
+   UI.bindMenuItem(Wings3D.action.createCubePref.name, function(ev) {
+         // get exact position,
+         var position = UI.getPosition(ev);
+         // run createCube dialog
+         createCubeDialog(position);
+         Wings3D.log(Wings3D.action.createCubeDialog);
+      });
 
    //
    createCubeDialog = function(mousePosition) {

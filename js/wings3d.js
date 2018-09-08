@@ -177,20 +177,55 @@ let interactFn;
 function setInteractaction(interact) {
    interactFn = interact;
 }
-function bindAction(id, fn) {
+const lastMouseDown = [null, null, null];
+function handleContextmenu(ev) {
+   ev.preventDefault();
+   return false;
+}
+function handleMouseDown(ev) {
+   if (ev.button <= 2) {
+      lastMouseDown[ev.button] = ev.currentTarget;
+   } else {
+      console.log("Amazing: mouse button is " + ev.button);
+   }
+   //ev.stopImmediatePropagation();
+};
+function handleMouseUp(ev) {
+   if (ev.button <= 2) {
+      let lastDownEvent = lastMouseDown[ev.button];
+      if (lastDownEvent) {
+         if (lastDownEvent === ev.currentTarget) {
+            // now we do proper clicking
+            runAction(ev.button, ev.currentTarget.id, ev);
+         }
+      }
+   }
+   // reset
+   lastMouseDown[0] = lastMouseDown[1] = lastMouseDown[2] = null;
+   //ev.stopImmediatePropagation();
+};
+function bindAction(menuItem, button, id, fn) {
    if (action.hasOwnProperty(id)) {
-      action[id] = fn;
+      if (!Array.isArray(action[id])) {
+         action[id] = [null, null, null];
+         menuItem.addEventListener("mousedown", handleMouseDown);
+         menuItem.addEventListener("mouseup", handleMouseUp);
+         menuItem.addEventListener("contextmenu", handleContextmenu);  // no ops.
+      }
+      action[id][button] = fn;
    }
 };
-function runAction(id, event) {
+function runAction(button, id, event) {
    if (action.hasOwnProperty(id)) {
-      const fn = action[id];
-      if (interactFn) {
-         if (interactFn(id, event)) {
+      const fn = action[id][button];
+      if (fn) {
+         if (interactFn) {
+            if (interactFn(id, event)) {
+               fn(event);
+            }
+         } else {
             fn(event);
          }
-      } else {
-         fn(event);
       }
    } else {
       console.log("unrecognized action: " + id);
@@ -217,6 +252,9 @@ const action = {
    toggleBodyMode: () => {notImplemented(this);},
    redoEdit: () => {notImplemented(this);},
    undoEdit: () => {notImplemented(this);},
+   // createObject Menu
+   createCube: () => {notImplemented(this);},
+   createCubePref: () =>{notImplemented(this);},
    // selection menu
    selectMenu: () => {notImplemented(this);},
    deselect: () => {notImplemented(this);},
