@@ -180,8 +180,7 @@
       </label>
     </div>
     <div class="button-group set-pref">
-      <input type="button" id="preferenceDialog">
-      <label for="preferencedDialog" class="button not-implemented">
+      <label id="preferenceButton" class="button">
         <img src="../img/bluecube/pref.png" >
         <span>Pref</span>
       </label>
@@ -579,6 +578,173 @@
     </div>
   </div>
   <input id="importFile" style="display:none;" type='file'>
+  <form id="preferenceForm">
+    <div class="tabs">
+      <input name="tabPref" id="generalPref" type="radio" checked>
+      <label class="tabButton" for="generalPref" data-i18n="generalPref">General</label>
+      <div class="tabPanel">
+        <fieldSet class="fieldPref">
+          <legend data-i18n="edgeDisplay">Edge Display</legend>
+          <label for="unselectedWidth" data-i18n="unselectedWidth">Unselected Width</label>
+          <input id="unselectedWidth" type="number">
+          <label for="selectedWidth" data-i18n="selectedWidth">Selected Width</label>
+          <input id="selectedWidth" type="number">
+          <label for="hardEdgeWidth" data-i18n="hardEdgeWidth">Hard Edge Width</label>
+          <input id="hardEdgeWidth" type="number">
+          <label for="sofEdges" data-i18n="softEdges">Soft Edges</label>
+          <input id="softEdges" type="color">
+          <label for="hardEdges" data-i18n="hardEdges">Hard Edges</label>
+          <input id="hardEdges" type="color">
+        </fieldset>
+        <fieldset>
+          <legend data-i18n="highlighting">Highlighting</legend>
+          <label for="unselected" data-i18n="unselected">Unselected</label>
+          <input id="unselected" type="color">
+          <label for="selected" data-i18n="selected">Selected</label>
+          <input id="selected" type="color">
+          <input id="explicitMultiSelect" name="multiSelect" type="radio">
+          <label for="explicitMultiSelect" data-i18n="explicitMultiSelect">Explicit Multi-Select</label>
+          <input id="deselectionMultiSelect" name="multiSelect" type="radio">
+          <label for="deselectionMultiSelect" data-i18n="deselectionMultiSelect">Multi-Select Deselection</label>
+          <input id="conditionalMultiSelect" name="multiSelect" type="radio">
+          <label for="conditionalMultiSelect" data-i18n="conditionalMultiSelect">Conditional Deselection</label>  
+        </fieldset>
+        <fieldset>
+          <legend data-i18n="selection">Selection</legend>
+          <label for="selectionColor" data-i18n="selectionColor">Selection Color</label>
+          <input id="selectionColor" type="number">
+        </fieldset>
+        <fieldset>
+          <legend data-i18n="informationText">Information Text</legend>
+          <label for="infoText" data-i18n="infoText">Text</label>
+          <input id="infoText" type="color">
+          <label for="infoBackground" data-i18n="infoBackground">Background</label>
+          <input id="infoBackground" type="color">
+          <input id="infoVerbose" type="checkbox">
+          <label for="infoVerbose" data-i18n="infoVerbose">Verbose</label>
+        </fieldset>
+        <fieldset>
+          <legend data-i18n="normalDisplay">Normal Display</legend>
+          <label for="normalLength" data-i18n="normalLength">Length</label>
+          <input id="normalLength" type="number">
+          <label for="normalWidth" data-i18n="normalWidth">Width</label>
+          <input id="normalWidth" type="number">
+          <label for="normalColor" data-i18n="normalColor">Color</label>
+          <input id="normalcolor" type="color"> 
+        </fieldset>
+        <fieldset>
+          <legend data-i18n="material">Materials</legend>
+          <label for="materialDefault" data-i18n="materialDefault">Default</label>
+          <input id="materialDefault" type="color">
+        </fieldset>
+        <fieldset>
+          <legend data-i18n="axes">Axes</legend>
+          <input id="axesToGrid" type="checkbox">
+          <label for="axesToGrid" data-i18n="axesToGrid">Constrain Axes to Grid</label>
+          <input id="miniAxis" type="checkbox">
+          <label for="miniAxis" data-i18n="miniAxis">Show Mini Axis</label>
+          <label for="xPlusColor" data-i18n="xPlusColor">+X Color</label>
+          <input id="xPlusColor" type="color">
+          <label for="xMinusColor" data-i18n="xMinusColor">-X Color</label>
+          <input id="xPlusColor" type="color">
+          <label for="yPlusColor" data-i18n="yPlusColor">+Y Color</label>
+          <input id="yPlusColor" type="color">
+          <label for="yMinusColor" data-i18n="yMinusColor">-Y Color</label>
+          <input id="yMinusColor" type="color">
+          <label for="zPlusColor" data-i18n="zPlusColor">+Z Color</label>
+          <input id="zPlusColor" type="color">
+          <label for="zMinusColor" data-i18n="zMinusColor">-Z Color</label>
+          <input id="zMinusColor" type="color">
+        </fieldset>
+        <fieldset>
+          <legend data-i18n="grid">Grid</legend>
+          <label for="gridColor" data-i18n="gridColor">Color</label>
+          <input id="gridColor" type="color">
+          <input id="forceAAGrid" type="checkbox">
+          <label for="forceAAGrid" data-i18n="forceAAGrid">Force Axis-Aligned Grid</label>
+          <input id="forceAAOrtho" type="checkbox">
+          <label for="forceAAOrtho" data-i18n="forceAAOrtho">Force Axis-Aligned Grid</label>
+        </fieldset>
+      </div>
+
+      <input name="tabPref" id="cameraPref" type="radio" checked>
+      <label class="tabButton" for="cameraPref" data-i18n="cameraPref">Camera</label>
+      <div class="tabPanel">
+        <fieldset>
+          <legend data-i18n="mouseButtons">Mouse Buttons</legend>
+          <select id="mouseButton">
+            <option selected value="3">Three</option>
+            <option value="2">Two</option>
+            <option value="1">One</option>
+          </select>
+        </fieldset>
+        <fieldset>
+          <legend data-i18n="cameraMode">Camera Mode</legend>
+          <select id="cameraMode">
+            <option value="0" selected>Wings 3D</option>
+            <option value="1">Mirai</option>
+            <option value="2">Nendo</option>
+          </select>
+        </fieldset>
+        <fieldset>
+          <legend data-i18n="rotationSpeed">Rotation Speed</legend>
+          <input type="range" min="1" max="100" value="1" onchange="this.nextElementSibling.value=this.value" />
+          <input id="rotationSpeed" type="number" min="1" max="100" value="1" step="1" onchange="this.previousElementSibling.value=this.value" />
+        </fieldset>
+        <fieldset>
+          <legend data-i18n="panSpeed">Pan Speed</legend>
+          <input type="range" min="1" max="100" value="1" onchange="this.nextElementSibling.value=this.value" />
+          <input id="panSpeed" type="number" min="1" max="100" value="1" step="1" onchange="this.previousElementSibling.value=this.value" />
+        </fieldset>
+        <fieldset>
+          <legend data-i18n="keyPanSpeed">Arrow Key Pan Speed</legend>
+          <input type="range" min="1" max="100" value="1" onchange="this.nextElementSibling.value=this.value" />
+          <input id="keyPanSpeed" type="number" min="1" max="100" value="1" step="1" onchange="this.previousElementSibling.value=this.value" />
+        </fieldset>
+        <fieldset>
+          <legend data-i18n="scrollWheel">Scroll Wheel</legend>
+          <input id="wheelZoom" type="checkbox">
+          <label for="wheelZoom" data-i18n="wheelZoom">Wheel Zooms</label>
+          <input id="aimZoom" type="checkbox">
+          <label for="aimZoom" data-i18n="aimZoom">Zooming in aims Camera</label>
+          <label><span data-i18n="zoomFactor">Zoom Factor</span><input id="zoomFactor" type="number"><span>%</span></label>
+          <label><span data-i18n="altZoomFactor">Alternate Zoom Factor (Alt+Scroll)</span><input id="altZoomFactor" type="number"><span>%</span></label>
+        </fieldset>
+        <fieldset>
+          <legend data-i18n="unidirectionalCamera">Unidirectional Camera</legend>
+          <input id="wheelPanRotate" name="unidirectionalCamera" type="checkbox">
+          <label for="wheelPanRotate" data-i18n="wheelPanRotate">Wheel Pans & Rotate</label>
+          <input id="infoLineHelpString" name="unidirectionalCamera" type="checkbox">
+          <label for="infoLineHelpString" data-i18n="infoLineHelpString">Show Info Line Help String</label>
+          <fieldset>
+            <legend data-i18n="panSpeed">Pan Speed</legend>
+            <input name="unidirectionalCamera" type="range" min="1" max="100" value="1" onchange="this.nextElementSibling.value=this.value" />
+            <input id="scrollPanSpeed" name="unidirectionalCamera" type="number" min="1" max="100" value="1" step="1" onchange="this.previousElementSibling.value=this.value" />
+          </fieldset>
+          <fieldset>
+            <legend data-i18n="rotationStepDegree">Rotation Step in Degrees</legend>
+            <input name="unidirectionalCamera" type="range" min="1" max="100" value="1" onchange="this.nextElementSibling.value=this.value" />
+            <input id="scrollRotateStepDegree" name="unidirectionalCamera" type="number" min="1" max="100" value="1" step="1" onchange="this.previousElementSibling.value=this.value" />
+          </fieldset>
+        </fieldset>
+      </div>
+
+      <input name="tabPref" id="advancedPref" type="radio" checked>
+      <label class="tabButton" for="advancedPref" data-i18n="advancedPref">Advanced</label>
+      <div class="tabPanel">
+        <fieldset>
+          <legend data-i18n="color">Color</legend>
+          <label for="geometryBackground" data-i18n="geometryBackground">Geometry Background</label>
+          <input id="geometryBackground" type="color">
+
+
+        </fieldset>
+      </div>
+    </div>
+
+    <button type="submit" value="Cancel">Cancel</button>
+    <button type="submit" value="Ok">Ok</button>
+  </form>
 </body>
 
 </html>
