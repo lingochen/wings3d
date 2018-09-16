@@ -338,6 +338,8 @@ const action = {
    toggleBodyMode: () => {notImplemented(this);},
    redoEdit: () => {notImplemented(this);},
    undoEdit: () => {notImplemented(this);},
+   // preference Group
+   preferenceButton: ()=>{notImplemented(this);},
    // createObject Menu
    createCube: () => {notImplemented(this);},
    createCubePref: () =>{notImplemented(this);},
@@ -734,6 +736,10 @@ const nativeTheme = {
        negColor: [[0.8, 0.8, 0.8], [0.8, 0.8, 0.8], [0.8, 0.8, 0.8]]
    };
 let theme = nativeTheme;
+
+function storePref(elements) {
+   console.log("storePref: success");
+};
 
 //--  end of pref and theme --------------------------------------------------------------------------
 
@@ -1419,6 +1425,10 @@ function init() {
          button.fn();
        });
    }
+   // bind pref button
+   __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].preferenceButton.name, (_ev)=>{
+      __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["runDialogCenter"]('#preferenceForm', storePref);
+    });
    // bind .dropdown, click event.
    let buttons = document.querySelectorAll("li.dropdown > a");
    for (let button of buttons) {
@@ -1501,8 +1511,8 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "bindMenuItem", function() { return bindMenuItem; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "bindMenuItemMMB", function() { return bindMenuItemMMB; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "bindMenuItemRMB", function() { return bindMenuItemRMB; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "setupDialog", function() { return setupDialog; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "runDialog", function() { return runDialog; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "runDialogCenter", function() { return runDialogCenter; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "openFile", function() { return openFile; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "showContextMenu", function() { return showContextMenu; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "queuePopupMenu", function() { return queuePopupMenu; });
@@ -1718,6 +1728,55 @@ function runDialog(formID, ev, submitCallback, setup) {
          ev.preventDefault();
          form.style.display = 'none';
          form.removeEventListener('submit', submitted);
+      });
+   }
+};
+
+function runDialogCenter(formID, submitCallback, setup, ev) {
+   const form = document.querySelector(formID);
+   if (form) {
+      // create overlay
+      const overlay = document.createElement("div");
+      overlay.classList.add("overlay");   
+      overlay.appendChild(form);    
+      if(ev) {
+         positionDom(form, getPosition(ev));
+      } else { // automatically centering
+         overlay.classList.add("centerModal");
+      }
+      form.style.display = 'block';
+      form.reset();
+      if (setup) {
+         setup();
+      }
+      /*const submits = document.querySelectorAll(formID + ' [type="submit"]');
+      for (let submit of submits) {
+         if ('ok'.localeCompare(submit.value, 'en', {'sensitivity': 'base'}) == 0) {
+            submit.addEventListener('click', function oked(ev) {
+               _pvt.submitSuccess = true;
+               submit.removeEventListener('click', oked);
+            });
+         } else if ('cancel'.localeCompare(submit.value, 'en', {'sensitivity': 'base'}) == 0) {
+
+         } else {
+            console.log('submit ' + submit.value + ' type not supported');
+         }
+      }*/
+      document.body.appendChild(overlay);
+      
+      // wait for handling event.
+      form.addEventListener('submit', function submitted(ev) {
+         if ('ok'.localeCompare(ev.target.value, 'en', {'sensitivity': 'base'}) == 0) {
+            // get form's input data.
+            const elements = form.elements;
+            submitCallback(elements);     // ask function to extract element's value.
+         }
+         // hide the dialog, prevent default.
+         ev.preventDefault();
+         form.style.display = 'none';
+         form.removeEventListener('submit', submitted);
+         document.body.appendChild(form);
+         document.body.removeChild(overlay);
       });
    }
 };

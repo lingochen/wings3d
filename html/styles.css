@@ -351,6 +351,19 @@ label.button span {
     text-decoration: none;
     text-align: center;
 }
+.overlay {
+  position:fixed;
+  top:0;
+  left:0;
+
+  padding: 0;
+  margin: 0;
+
+  width: 100%;
+  height: 100%;
+  background:rgba(255,255,255,0.5);
+}
+
 .dialog {
   background-color:  #fff;
   border: solid 1px #dfdfdf;
@@ -379,6 +392,61 @@ form {
   box-shadow: 1px 1px 2px #cfcfcf;
   width: 240px;
 }
+
+/* pref tabs */
+.centerModal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* https://github.com/robiveli/tabsy-css */
+.tabs>.tabButton{
+    display: block;
+    margin-top: 1px;
+    background: #5a5243;
+    color: #f5f5f5;
+    text-align: center;
+}
+.tabs>input{
+    display: none;
+}
+.tabs>input:checked+label+.tabPanel{
+    display: block;
+}
+.tabs>.tabPanel{
+    width: 100%;
+    background: #fff;
+    display: none;
+}
+@media screen and (min-width: 768px){
+  .tabs{
+    display: flex;
+    flex-wrap: wrap;
+  }
+  .tabs>.tabButton{
+    align-items: flex-start;
+    cursor:pointer;
+  }
+  .tabs>input:checked+label{
+    background:#fff;
+    color:#5a5243
+  }
+  .tabs>.tabPanel{
+    order: 1;
+  }
+}
+
+fieldset.fieldPref {
+  display:grid;
+  grid-template-columns: max-content max-content;
+  grid-gap:5px;
+}
+fieldset.fieldPref label { 
+  text-align:right; 
+}
+
+
 /*
 interactive Tutor's speech bubble css. like hopscotch js's thick border style. like how shepherd js's bubble arrow is inside the bubble's box, should make position calculation easier.
 Use flex-box ability to move arrow around(up,down,left,right) easier.

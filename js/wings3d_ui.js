@@ -211,6 +211,55 @@ function runDialog(formID, ev, submitCallback, setup) {
    }
 };
 
+function runDialogCenter(formID, submitCallback, setup, ev) {
+   const form = document.querySelector(formID);
+   if (form) {
+      // create overlay
+      const overlay = document.createElement("div");
+      overlay.classList.add("overlay");   
+      overlay.appendChild(form);    
+      if(ev) {
+         positionDom(form, getPosition(ev));
+      } else { // automatically centering
+         overlay.classList.add("centerModal");
+      }
+      form.style.display = 'block';
+      form.reset();
+      if (setup) {
+         setup();
+      }
+      /*const submits = document.querySelectorAll(formID + ' [type="submit"]');
+      for (let submit of submits) {
+         if ('ok'.localeCompare(submit.value, 'en', {'sensitivity': 'base'}) == 0) {
+            submit.addEventListener('click', function oked(ev) {
+               _pvt.submitSuccess = true;
+               submit.removeEventListener('click', oked);
+            });
+         } else if ('cancel'.localeCompare(submit.value, 'en', {'sensitivity': 'base'}) == 0) {
+
+         } else {
+            console.log('submit ' + submit.value + ' type not supported');
+         }
+      }*/
+      document.body.appendChild(overlay);
+      
+      // wait for handling event.
+      form.addEventListener('submit', function submitted(ev) {
+         if ('ok'.localeCompare(ev.target.value, 'en', {'sensitivity': 'base'}) == 0) {
+            // get form's input data.
+            const elements = form.elements;
+            submitCallback(elements);     // ask function to extract element's value.
+         }
+         // hide the dialog, prevent default.
+         ev.preventDefault();
+         form.style.display = 'none';
+         form.removeEventListener('submit', submitted);
+         document.body.appendChild(form);
+         document.body.removeChild(overlay);
+      });
+   }
+};
+
 
 // fileInput helper
 function openFile(fn) {
@@ -370,8 +419,8 @@ export {
    bindMenuItem,
    bindMenuItemMMB,
    bindMenuItemRMB,
-   setupDialog,
    runDialog,
+   runDialogCenter,
    openFile,
    showContextMenu,
    queuePopupMenu,

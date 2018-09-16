@@ -82,6 +82,10 @@ const nativeTheme = {
    };
 let theme = nativeTheme;
 
+function storePref(elements) {
+   console.log("storePref: success");
+};
+
 //--  end of pref and theme --------------------------------------------------------------------------
 
 // 
@@ -766,6 +770,10 @@ function init() {
          button.fn();
        });
    }
+   // bind pref button
+   UI.bindMenuItem(Wings3D.action.preferenceButton.name, (_ev)=>{
+      UI.runDialogCenter('#preferenceForm', storePref);
+    });
    // bind .dropdown, click event.
    let buttons = document.querySelectorAll("li.dropdown > a");
    for (let button of buttons) {

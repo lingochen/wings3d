@@ -252,6 +252,8 @@ const action = {
    toggleBodyMode: () => {notImplemented(this);},
    redoEdit: () => {notImplemented(this);},
    undoEdit: () => {notImplemented(this);},
+   // preference Group
+   preferenceButton: ()=>{notImplemented(this);},
    // createObject Menu
    createCube: () => {notImplemented(this);},
    createCubePref: () =>{notImplemented(this);},
