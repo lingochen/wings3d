@@ -43,11 +43,11 @@ form {
 /* pref tabs */
 .centerModal {
   display: flex;
-  align-items: center;
+/*  align-items: center; */
   justify-content: center;
 }
 
-/* https://github.com/robiveli/tabsy-css */
+/* change to using gride */
 .tabs>.tabButton{
     display: block;
     margin-top: 1px;
@@ -62,35 +62,66 @@ form {
     display: block;
 }
 .tabs>.tabPanel{
-    width: 100%;
     background: #fff;
     display: none;
 }
 @media screen and (min-width: 768px){
+  form#preferenceForm {
+     width: 55rem;
+     height: 50rem;
+     /*margin-top: 5rem;*/
+  }
   .tabs{
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-areas: "pref0 pref1 pref2"
+                         "panel panel panel"
   }
   .tabs>.tabButton{
-    align-items: flex-start;
     cursor:pointer;
   }
   .tabs>input:checked+label{
     background:#fff;
     color:#5a5243
   }
-  .tabs>.tabPanel{
-    order: 1;
+  .tabs>input:checked+label+.tabPanel{
+    grid-area: panel;
+    display: flex;
+    flex-wrap: wrap;
+    padding: 1rem;
+  }
+  label[for$="generalPref"] {
+    grid-area: pref0;
+  }
+  label[for$="cameraPref"] {
+    grid-area: pref1;
+  }
+  label[for$="advancedPref"] {
+    grid-area: pref2;
   }
 }
 
-fieldset.fieldPref {
-  display:grid;
+form fieldset input[type="number"] {
+  width: 5rem;
+}
+
+form .fieldPref {
+  display: grid;
   grid-template-columns: max-content max-content;
   grid-gap:5px;
+  margin: 0.5rem;
 }
-fieldset.fieldPref label { 
+.fieldPref label.right { 
   text-align:right; 
 }
-
-
+form .verticalPref {
+  display: flex;
+  flex-direction: column;
+  padding: 0.5rem;
+}
+form .horizontalPref {
+  display: flex;
+  flex-direction: row;
+  padding: 0.5rem;
+  flex-wrap: nowrap;
+}
