@@ -125,3 +125,10 @@ form .horizontalPref {
   padding: 0.5rem;
   flex-wrap: nowrap;
 }
+#wheelPanRotate:not(:checked) ~ fieldset input,
+#wheelPanRotate:not(:checked) ~ label input {
+  visibility: hidden;
+}
+#wheelPanRotate:not(:checked)+label+br+label {
+  pointer-events: none;
+}

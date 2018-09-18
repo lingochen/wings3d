@@ -1735,6 +1735,7 @@ function runDialog(formID, ev, submitCallback, setup) {
 function runDialogCenter(formID, submitCallback, setup, ev) {
    const form = document.querySelector(formID);
    if (form) {
+      const _pvt = {submitSuccess: false};
       // create overlay
       const overlay = document.createElement("div");
       overlay.classList.add("overlay");   
@@ -1749,7 +1750,8 @@ function runDialogCenter(formID, submitCallback, setup, ev) {
       if (setup) {
          setup();
       }
-      /*const submits = document.querySelectorAll(formID + ' [type="submit"]');
+      // we need this because submit event won't tell which submit buttons we clicked.
+      const submits = form.querySelectorAll('[type=submit]');
       for (let submit of submits) {
          if ('ok'.localeCompare(submit.value, 'en', {'sensitivity': 'base'}) == 0) {
             submit.addEventListener('click', function oked(ev) {
@@ -1761,12 +1763,12 @@ function runDialogCenter(formID, submitCallback, setup, ev) {
          } else {
             console.log('submit ' + submit.value + ' type not supported');
          }
-      }*/
+      }
       document.body.appendChild(overlay);
       
       // wait for handling event.
       form.addEventListener('submit', function submitted(ev) {
-         if ('ok'.localeCompare(ev.target.value, 'en', {'sensitivity': 'base'}) == 0) {
+         if ((_pvt.submitSuccess)) {
             // get form's input data.
             const elements = form.elements;
             submitCallback(elements);     // ask function to extract element's value.
