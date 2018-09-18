@@ -478,6 +478,13 @@ form .horizontalPref {
   padding: 0.5rem;
   flex-wrap: nowrap;
 }
+#wheelPanRotate:not(:checked) ~ fieldset input,
+#wheelPanRotate:not(:checked) ~ label input {
+  visibility: hidden;
+}
+#wheelPanRotate:not(:checked)+label+br+label {
+  pointer-events: none;
+}
 /*
 interactive Tutor's speech bubble css. like hopscotch js's thick border style. like how shepherd js's bubble arrow is inside the bubble's box, should make position calculation easier.
 Use flex-box ability to move arrow around(up,down,left,right) easier.
