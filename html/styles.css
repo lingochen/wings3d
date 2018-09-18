@@ -482,8 +482,20 @@ form .horizontalPref {
 #wheelPanRotate:not(:checked) ~ label input {
   visibility: hidden;
 }
-#wheelPanRotate:not(:checked)+label+br+label {
+#wheelPanRotate:not(:checked)+label+label {
   pointer-events: none;
+}
+label.setValue {
+  display: flex;
+  justify-content: space-between;
+}
+.verticalPref hr {  /* force hr back to horizontal line again */
+  margin-left: 0;
+  margin-right: 0;
+}
+form label:not(.setValue):after {
+  content: "\A";
+  white-space: pre;
 }
 /*
 interactive Tutor's speech bubble css. like hopscotch js's thick border style. like how shepherd js's bubble arrow is inside the bubble's box, should make position calculation easier.

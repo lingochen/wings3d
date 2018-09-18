@@ -726,7 +726,7 @@
         <fieldset>
           <legend data-i18n="unidirectionalCamera">Unidirectional Camera</legend>
           <input id="wheelPanRotate" name="unidirectionalCamera" type="checkbox">
-          <label for="wheelPanRotate" data-i18n="wheelPanRotate">Wheel Pans & Rotate</label> <br>
+          <label for="wheelPanRotate" data-i18n="wheelPanRotate">Wheel Pans & Rotate</label>
           <label for="infoLineHelpString"><input id="infoLineHelpString" name="unidirectionalCamera" type="checkbox"><span data-i18n="infoLineHelpString">Show Info Line Help String</span></label>
           <fieldset>
             <legend data-i18n="panSpeed">Pan Speed</legend>
@@ -742,15 +742,37 @@
         </div>
       </div>
 
-      <input name="tabPref" id="advancedPref" type="radio">
-      <label class="tabButton" for="advancedPref" data-i18n="advancedPref">Advanced</label>
+      <input name="tabPref" id="interfacePref" type="radio">
+      <label class="tabButton" for="interfacePref" data-i18n="interfacePref">User Interface</label>
       <div class="tabPanel">
+        <fieldset class="verticalPref">
+          <legend data-i18n="colors">Colors</legend>
+          <label class="setValue"><span data-i18n="geometryBackground">Geometry Background</span><input id="geometryBackground" type="color"></label>
+          <hr>
+          <label class="setValue"><span data-i18n="menubarBackground">Menubar Background</span><input id="menubarBackground" type="color"></label> 
+          <label class="setValue"><span data-i18n="menubarText">Menubar Text</span><input id="menubarText" type="color"></label>
+          <hr>
+          <label class="setValue"><span data-i18n="menuBackground">Menu Background</span><input id="menuBackground" type="color"></label>
+          <label class="setValue"><span data-i18n="menuText">Menu Text</span><input id="menuText" type="color"></label>
+          <label class="setValue"><span data-i18n="menuHighlight">Menu Highlight</span><input id="menuHighlight" type="color"></label>
+          <label class="setValue"><span data-i18n="menuHighlightText">Menu Highlight Text</span><input id="menuHighlightText" type="color"></label>
+          <hr>
+          <label class="setValue"><span data-i18n="dialogBackground">Dialog Background</span><input id="dialogBackground" type="color"></label>
+          <label class="setValue"><span data-i18n="dialogText">Dialog Text</span><input id="dialogText" type="color"></label>
+          <label class="setValue"><span data-i18n="dialogDisabledText">Dialog (Disabled) Text</span><input id="dialogDisabledText" type="color"></label>
+          <hr>
+          <label class="setValue"><span data-i18n="infoLineBackground">Info Line Background</span><input id="infoLineBackground" type="color"></label>
+          <label class="setValue"><span data-i18n="infoLineText">Info Line Text</span><input id="infoLineText" type="color"></label>
+        </fieldset>
         <fieldset>
-          <legend data-i18n="color">Color</legend>
-          <label for="geometryBackground" data-i18n="geometryBackground">Geometry Background</label>
-          <input id="geometryBackground" type="color">
-
-
+          <legend data-i18n="toolbar">Toolbar</legend>
+          <label><select id="iconSet">
+            <option selected value="blue">Blue Cube</option>
+          </select></label>
+          <label><input id="showToolbar" type="checkbox"><span>Show Toolbar</span></label>
+          <fieldset> 
+            <legend data-i18n="toolbarIcons">Toolbar Icons</legend>
+          </fieldset>
         </fieldset>
       </div>
     </div>
