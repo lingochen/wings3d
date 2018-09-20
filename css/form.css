@@ -67,15 +67,15 @@ form {
 }
 @media screen and (min-width: 768px){
   form#preferenceForm {
-     width: 55rem;
+     width: 50rem;
      height: 50rem;
      /*margin-top: 5rem;*/
   }
   .tabs{
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    grid-template-areas: "pref0 pref1 pref2"
-                         "panel panel panel"
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-areas: "pref0 pref1 pref2 pref3"
+                         "panel panel panel panel"
   }
   .tabs>.tabButton{
     cursor:pointer;
@@ -96,8 +96,11 @@ form {
   label[for$="cameraPref"] {
     grid-area: pref1;
   }
-  label[for$="advancedPref"] {
+  label[for$="interfacePref"] {
     grid-area: pref2;
+  }
+  label[for$="advancedMiscPref"] {
+    grid-area: pref3;
   }
 }
 
@@ -125,12 +128,14 @@ form .horizontalPref {
   padding: 0.5rem;
   flex-wrap: nowrap;
 }
-#wheelPanRotate:not(:checked) ~ fieldset input,
-#wheelPanRotate:not(:checked) ~ label input {
+input[name$="Conditional"]:not(:checked) ~ fieldset input[name$="Conditional"],
+input[name$="Conditional"]:not(:checked) ~ label input[name$="Conditional"] {
   visibility: hidden;
 }
-#wheelPanRotate:not(:checked)+label+label {
+input[name$="Conditional"]:not(:checked)+label+label,
+input[name$="Conditional"]:not(:checked) ~ fieldset[name$="Conditional"] {
   pointer-events: none;
+  opacity: 0.5;
 }
 label.setValue {
   display: flex;

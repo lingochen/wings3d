@@ -668,14 +668,13 @@
             <input id="zMinusColor" type="color">
           </div>
         </fieldset>
-        <fieldset class="fieldPref">
+        <fieldset>
           <legend data-i18n="grid">Grid</legend>
-          <label for="gridColor" data-i18n="gridColor">Color</label>
-          <input id="gridColor" type="color">
-          <input id="forceAAGrid" type="checkbox">
-          <label for="forceAAGrid" data-i18n="forceAAGrid">Force Axis-Aligned Grid</label>
-          <input id="forceAAOrtho" type="checkbox">
-          <label for="forceAAOrtho" data-i18n="forceAAOrtho">Force Axis-Aligned Grid</label>
+          <label for="gridColor"><span data-i18n="gridColor">Color</span><input id="gridColor" type="color"></label>
+          
+          <label for="forceAAGrid"><input id="forceAAGrid" type="checkbox"><span data-i18n="forceAAGrid">Force Axis-Aligned Grid</span></label>
+          
+          <label for="forceAAOrtho"><input id="forceAAOrtho" type="checkbox"><span data-i18n="forceAAOrtho">Force Axis-Aligned Grid</span></label>
         </fieldset>
       </div>
 
@@ -725,18 +724,18 @@
         </fieldset>
         <fieldset>
           <legend data-i18n="unidirectionalCamera">Unidirectional Camera</legend>
-          <input id="wheelPanRotate" name="unidirectionalCamera" type="checkbox">
+          <input id="wheelPanRotate" name="wheelConditional" type="checkbox">
           <label for="wheelPanRotate" data-i18n="wheelPanRotate">Wheel Pans & Rotate</label>
-          <label for="infoLineHelpString"><input id="infoLineHelpString" name="unidirectionalCamera" type="checkbox"><span data-i18n="infoLineHelpString">Show Info Line Help String</span></label>
-          <fieldset>
+          <label for="infoLineHelpString"><input id="infoLineHelpString" name="wheelConditional" type="checkbox"><span data-i18n="infoLineHelpString">Show Info Line Help String</span></label>
+          <fieldset name="dragConditional">
             <legend data-i18n="panSpeed">Pan Speed</legend>
-            <input name="unidirectionalCamera" type="range" min="1" max="100" value="1" onchange="this.nextElementSibling.value=this.value" />
-            <input id="scrollPanSpeed" name="unidirectionalCamera" type="number" min="1" max="100" value="1" step="1" onchange="this.previousElementSibling.value=this.value" />
+            <input name="wheelConditional" type="range" min="1" max="100" value="1" onchange="this.nextElementSibling.value=this.value" />
+            <input id="scrollPanSpeed" name="wheelConditional" type="number" min="1" max="100" value="1" step="1" onchange="this.previousElementSibling.value=this.value" />
           </fieldset>
-          <fieldset>
+          <fieldset name="dragConditional">
             <legend data-i18n="rotationStepDegree">Rotation Step in Degrees</legend>
-            <input name="unidirectionalCamera" type="range" min="1" max="100" value="1" onchange="this.nextElementSibling.value=this.value" />
-            <input id="scrollRotateStepDegree" name="unidirectionalCamera" type="number" min="1" max="100" value="1" step="1" onchange="this.previousElementSibling.value=this.value" />
+            <input name="wheelConditional" type="range" min="1" max="100" value="1" onchange="this.nextElementSibling.value=this.value" />
+            <input id="scrollRotateStepDegree" name="wheelConditional" type="number" min="1" max="100" value="1" step="1" onchange="this.previousElementSibling.value=this.value" />
           </fieldset>
         </fieldset>
         </div>
@@ -765,13 +764,60 @@
           <label class="setValue"><span data-i18n="infoLineText">Info Line Text</span><input id="infoLineText" type="color"></label>
         </fieldset>
         <fieldset>
-          <legend data-i18n="toolbar">Toolbar</legend>
+          <legend data-i18n="interfaceIcon">Interface Icon</legend>
           <label><select id="iconSet">
             <option selected value="blue">Blue Cube</option>
           </select></label>
           <label><input id="showToolbar" type="checkbox"><span>Show Toolbar</span></label>
           <fieldset> 
             <legend data-i18n="toolbarIcons">Toolbar Icons</legend>
+          </fieldset>
+        </fieldset>
+      </div>
+
+      <input name="tabPref" id="advancedMiscPref" type="radio">
+      <label class="tabButton" for="advancedMiscPref" data-i18n="advancedMiscPref">Advanced/Misc</label>
+      <div class="tabPanel">
+        <fieldset>
+          <legend data-i18n="vectorDisplay">Vector Display</legend>
+          <label class="setValue"><span data-i18n="length">Length</span><input id="vectorLength" type="number"></label>
+          <label class="setValue"><span data-i18n="width">Width</span><input id="vectorWidth" type="number"></label>
+          <label class="setValue"><span data-i18n="color">Color</span><input id="vectorColor" type="color"></label>
+        </fieldset>
+        <fieldset>
+          <legend data-i18n="clippingPlaneIndicator">Clipping Plane Indicator</legend>
+          <label class="setValue"><span data-i18n="size">Size</span><input id="clippingPlaneSize" type="number"></label>
+          <label class="setValue"><span data-i18n="color">Color</span><input id="clippingPlaneColor" type="color"></label>
+        </fieldset>
+        <fieldset>
+          <legend data-i18n="dragPreference">Drag Preferences</legend>
+          <input id="customizeDragResponse" name="dragConditional" type="checkbox">
+          <label for="customizeDragResponse" data-i18n="customizeDragResponxe">Customize Drag Response</label>
+          <fieldset name="dragConditional">
+            <legend data-i18n="mouseDraggingSpeed">Mouse Speed for Dragging</legend>
+            <input name="dragConditional" type="range" min="1" max="100" value="1" onchange="this.nextElementSibling.value=this.value" />
+            <input name="dragConditional" id="mouseDraggingSpeed" type="number" min="1" max="100" value="1" step="1" onchange="this.previousElementSibling.value=this.value" />
+          </fieldset>
+          <fieldset name="dragConditional">
+            <legend data-i18n="mouseScalingSpeed">Mouse Speed for Scaling</legend>
+            <input name="dragConditional" type="range" min="1" max="100" value="1" onchange="this.nextElementSibling.value=this.value" />
+            <input name="dragConditional" id="mouseScalingSpeed" type="number" min="1" max="100" value="1" step="1" onchange="this.previousElementSibling.value=this.value" />
+          </fieldset>
+          <fieldset name="dragConditional">
+            <legend data-i18n="mouseRotatingingSpeed">Mouse Speed for Rotating</legend>
+            <input name="dragConditional" type="range" min="1" max="100" value="1" onchange="this.nextElementSibling.value=this.value" />
+            <input name="dragConditional" id="mouseRotatingSpeed" type="number" min="1" max="100" value="1" step="1" onchange="this.previousElementSibling.value=this.value" />
+          </fieldset>
+        </fieldset>
+        <fieldset>
+          <legend data-i18n="misc">Misc</legend>
+          <input id="saveAuto" name="saveConditional" type="checkbox">
+          <label for="saveAuto" data-i18n="saveAuto">Save automatically</label>
+          <label><span data-i18n="every">every<span><input id="saveAutoMinute" name="saveConditional" type="number"><span data-i18n="minutes">minutes</span></label>
+          <fieldset>
+            <legend data-i18n="autoRotate">Auto Rotate</legend>
+            <label class="setValue"><span data-i18n="angle">Angle</span><input id="autoRotateAngle" type="number"></label>
+            <label class="setValue"><span data-i18n="delay">Delay (ms)</span><input id="autoRotateDelay" type="number"></label>
           </fieldset>
         </fieldset>
       </div>
