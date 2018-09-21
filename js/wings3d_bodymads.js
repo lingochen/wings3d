@@ -26,13 +26,14 @@ class BodyMadsor extends Madsor {
          });
 
       UI.bindMenuItem(action.bodyRename.name, function(ev) {
-         UI.runDialog('#renameDialog', ev, function(data) {
+         UI.runDialog('#renameDialog', ev, function(form) {
+               const data = UI.extractDialogValue(form);
                const command = new RenameBodyCommand(self.getSelected(), data);
                View.undoQueue( command );
                command.doIt();   // rename
-            }, function() {
-               const content = document.querySelector('#renameDialog div');
-               let labels = document.querySelectorAll('#renameDialog label');
+            }, function(form) {
+               const content = form.querySelector('div');
+               let labels = form.querySelectorAll('label');
                for (let label of labels) {
                   content.removeChild(label);
                }
@@ -91,9 +92,10 @@ class BodyMadsor extends Madsor {
       const slice = [action.bodySliceX, action.bodySliceY, action.bodySliceZ];
       for (let axis = 0; axis < 3; ++axis) {
          UI.bindMenuItem(slice[axis].name, (ev) => {
-            UI.runDialog('#sliceBodyDialog', ev, (data)=> {
-               if (data['amountRange']) {
-                  const number = parseInt(data['amountRange'], 10);
+            UI.runDialog('#sliceBodyDialog', ev, (form)=> {
+               const data = form.querySelector('input[name="amountRange"');
+               if (data) {
+                  const number = parseInt(data.value, 10);
                   if ((number != NaN) && (number > 0) && (number < 100)) { // sane input
                      const command = new GenericEditCommand(this, this.slice, [axisVec[axis], number], this.undoPlaneCut);
                      if (command.doIt()) {

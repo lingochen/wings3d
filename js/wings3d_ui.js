@@ -145,7 +145,7 @@ function placement(targetId, placement, bubble) {
    * 
    * @param {Object} e The event
    */
-  function positionDom(element, mousePosition) {
+function positionDom(element, mousePosition) {
    var elementWidth = element.offsetWidth + 4;
    var elementHeight = element.offsetHeight + 4;
 
@@ -165,69 +165,38 @@ function placement(targetId, placement, bubble) {
    }
 };
 
-function runDialog(formID, ev, submitCallback, setup) {
-   const _pvt = {submitSuccess: false};
 
-   const form = document.querySelector(formID);
-   if (form) {
-      positionDom(form, getPosition(ev));
-      form.style.display = 'block';
-      form.reset();
-      if (setup) {
-         setup();
+function extractDialogValue(form) {
+   // get form's input data.
+   const obj = {};
+   for (let element of form.elements) {
+      if ((element.name) && (element.value)) {  // should we check the existence of .name? no name elements automatically excludede? needs to find out.
+         obj[element.name] = element.value;
       }
-      const submits = document.querySelectorAll(formID + ' [type="submit"]');
-      for (let submit of submits) {
-         if ('ok'.localeCompare(submit.value, 'en', {'sensitivity': 'base'}) == 0) {
-            submit.addEventListener('click', function oked(ev) {
-               _pvt.submitSuccess = true;
-               submit.removeEventListener('click', oked);
-            });
-         } else if ('cancel'.localeCompare(submit.value, 'en', {'sensitivity': 'base'}) == 0) {
-
-         } else {
-            console.log('submit ' + submit.value + ' type not supported');
-         }
-      }
-      
-      // wait for handling event.
-      form.addEventListener('submit', function submitted(ev) {
-         if (_pvt.submitSuccess) {
-            // get form's input data.
-            const elements = form.elements;
-            const obj = {};
-            for (let element of elements) {
-               if ((element.name) && (element.value)) {  // should we check the existence of .name? no name elements automatically excludede? needs to find out.
-                  obj[element.name] = element.value;
-               }
-            }
-            submitCallback(obj);     // ask function to handle value
-         }
-         // hide the dialog, prevent default.
-         ev.preventDefault();
-         form.style.display = 'none';
-         form.removeEventListener('submit', submitted);
-      });
    }
+   return obj;
+};
+function runDialog(formID, ev, submitCallback, setup) {
+   runDialogCenter(formID, submitCallback, setup, ev);
 };
 
-function runDialogCenter(formID, submitCallback, setup, ev) {
+function runDialogCenter(formID, submitCallback, setup, _ev) {
    const form = document.querySelector(formID);
    if (form) {
       const _pvt = {submitSuccess: false};
       // create overlay
       const overlay = document.createElement("div");
       overlay.classList.add("overlay");   
-      overlay.appendChild(form);    
-      if(ev) {
-         positionDom(form, getPosition(ev));
-      } else { // automatically centering
+      overlay.appendChild(form); 
+      form.style.display = 'block';
+      if (_ev) {
+         overlay.classList.add("realCenterModal");
+      } else {
          overlay.classList.add("centerModal");
       }
-      form.style.display = 'block';
       form.reset();
       if (setup) {
-         setup();
+         setup(form);
       }
       // we need this because submit event won't tell which submit buttons we clicked.
       const submits = form.querySelectorAll('[type=submit]');
@@ -249,8 +218,7 @@ function runDialogCenter(formID, submitCallback, setup, ev) {
       form.addEventListener('submit', function submitted(ev) {
          if ((_pvt.submitSuccess)) {
             // get form's input data.
-            const elements = form.elements;
-            submitCallback(elements);     // ask function to extract element's value.
+            submitCallback(form);     // ask function to extract element's value.
          }
          // hide the dialog, prevent default.
          ev.preventDefault();
@@ -421,6 +389,7 @@ export {
    bindMenuItem,
    bindMenuItemMMB,
    bindMenuItemRMB,
+   extractDialogValue,
    runDialog,
    runDialogCenter,
    openFile,

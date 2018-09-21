@@ -26,9 +26,10 @@ class ImportExporter {
       }
       if (exportMenuText) {
          UI.addMenuItem('fileExport', 'export' + exportMenuText.split(" ")[0], exportMenuText, function(ev) {
-            UI.runDialog('#exportFile', ev, function(data) {
-               if (data['Filename']) {
-                  self.export(data['Filename']);
+            UI.runDialog('#exportFile', ev, function(form) {
+               const data = form.querySelector('input[name="Filename"');
+               if (data) {
+                  self.export(data.value);
                }
              });
          });

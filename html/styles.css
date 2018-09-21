@@ -399,6 +399,12 @@ form {
 /*  align-items: center; */
   justify-content: center;
 }
+.realCenterModal {
+  display: flex;
+  align-items: center; 
+  justify-content: center;
+}
+
 
 /* change to using gride */
 .tabs>.tabButton{
@@ -415,14 +421,13 @@ form {
     display: block;
 }
 .tabs>.tabPanel{
-    background: #fff;
-    display: none;
+  background: #fff;
+  display: none;
+  border-color: silver;
 }
 @media screen and (min-width: 768px){
   form#preferenceForm {
      width: 50rem;
-     height: 50rem;
-     /*margin-top: 5rem;*/
   }
   .tabs{
     display: grid;
@@ -498,9 +503,16 @@ label.setValue {
   margin-left: 0;
   margin-right: 0;
 }
-form label:not(.setValue):after { /* force line break after label */
+form div.tabs label:not(.setValue):after { /* force line break after label */
   content: "\A";
   white-space: pre;
+}
+div.endAlign {
+  display: flex;
+  justify-content: flex-end;
+}
+div.endAlign button {
+  margin: 1em;
 }
 /*
 interactive Tutor's speech bubble css. like hopscotch js's thick border style. like how shepherd js's bubble arrow is inside the bubble's box, should make position calculation easier.
