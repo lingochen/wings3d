@@ -1,0 +1,13 @@
+{
+   "@metadata": {
+       "authors": [
+             "lingo"
+        ],
+       "locale": "zh_hant",
+       "last-updated": "2018-09-22"
+   },
+   "toggleVertexMode_tooltip": "Change to vertex selection mode",
+   "cube": "立方体",
+   "move": "移动",
+   "body_status": "物件${this.name}有${this.polygonSize}个面, ${this.edgeSize}条线, ${this.vertexSize}个点"
+}
