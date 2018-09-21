@@ -1511,6 +1511,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "bindMenuItem", function() { return bindMenuItem; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "bindMenuItemMMB", function() { return bindMenuItemMMB; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "bindMenuItemRMB", function() { return bindMenuItemRMB; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "extractDialogValue", function() { return extractDialogValue; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "runDialog", function() { return runDialog; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "runDialogCenter", function() { return runDialogCenter; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "openFile", function() { return openFile; });
@@ -1666,7 +1667,7 @@ function placement(targetId, placement, bubble) {
    * 
    * @param {Object} e The event
    */
-  function positionDom(element, mousePosition) {
+function positionDom(element, mousePosition) {
    var elementWidth = element.offsetWidth + 4;
    var elementHeight = element.offsetHeight + 4;
 
@@ -1686,69 +1687,38 @@ function placement(targetId, placement, bubble) {
    }
 };
 
-function runDialog(formID, ev, submitCallback, setup) {
-   const _pvt = {submitSuccess: false};
 
-   const form = document.querySelector(formID);
-   if (form) {
-      positionDom(form, getPosition(ev));
-      form.style.display = 'block';
-      form.reset();
-      if (setup) {
-         setup();
+function extractDialogValue(form) {
+   // get form's input data.
+   const obj = {};
+   for (let element of form.elements) {
+      if ((element.name) && (element.value)) {  // should we check the existence of .name? no name elements automatically excludede? needs to find out.
+         obj[element.name] = element.value;
       }
-      const submits = document.querySelectorAll(formID + ' [type="submit"]');
-      for (let submit of submits) {
-         if ('ok'.localeCompare(submit.value, 'en', {'sensitivity': 'base'}) == 0) {
-            submit.addEventListener('click', function oked(ev) {
-               _pvt.submitSuccess = true;
-               submit.removeEventListener('click', oked);
-            });
-         } else if ('cancel'.localeCompare(submit.value, 'en', {'sensitivity': 'base'}) == 0) {
-
-         } else {
-            console.log('submit ' + submit.value + ' type not supported');
-         }
-      }
-      
-      // wait for handling event.
-      form.addEventListener('submit', function submitted(ev) {
-         if (_pvt.submitSuccess) {
-            // get form's input data.
-            const elements = form.elements;
-            const obj = {};
-            for (let element of elements) {
-               if ((element.name) && (element.value)) {  // should we check the existence of .name? no name elements automatically excludede? needs to find out.
-                  obj[element.name] = element.value;
-               }
-            }
-            submitCallback(obj);     // ask function to handle value
-         }
-         // hide the dialog, prevent default.
-         ev.preventDefault();
-         form.style.display = 'none';
-         form.removeEventListener('submit', submitted);
-      });
    }
+   return obj;
+};
+function runDialog(formID, ev, submitCallback, setup) {
+   runDialogCenter(formID, submitCallback, setup, ev);
 };
 
-function runDialogCenter(formID, submitCallback, setup, ev) {
+function runDialogCenter(formID, submitCallback, setup, _ev) {
    const form = document.querySelector(formID);
    if (form) {
       const _pvt = {submitSuccess: false};
       // create overlay
       const overlay = document.createElement("div");
       overlay.classList.add("overlay");   
-      overlay.appendChild(form);    
-      if(ev) {
-         positionDom(form, getPosition(ev));
-      } else { // automatically centering
+      overlay.appendChild(form); 
+      form.style.display = 'block';
+      if (_ev) {
+         overlay.classList.add("realCenterModal");
+      } else {
          overlay.classList.add("centerModal");
       }
-      form.style.display = 'block';
       form.reset();
       if (setup) {
-         setup();
+         setup(form);
       }
       // we need this because submit event won't tell which submit buttons we clicked.
       const submits = form.querySelectorAll('[type=submit]');
@@ -1770,8 +1740,7 @@ function runDialogCenter(formID, submitCallback, setup, ev) {
       form.addEventListener('submit', function submitted(ev) {
          if ((_pvt.submitSuccess)) {
             // get form's input data.
-            const elements = form.elements;
-            submitCallback(elements);     // ask function to extract element's value.
+            submitCallback(form);     // ask function to extract element's value.
          }
          // hide the dialog, prevent default.
          ev.preventDefault();
@@ -11412,9 +11381,10 @@ class EdgeMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
       // cutEdge Dialog, show form when click
       __WEBPACK_IMPORTED_MODULE_6__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].cutAsk.name, function(ev) {
             // position then show form;
-            __WEBPACK_IMPORTED_MODULE_6__wings3d_ui__["runDialog"]("#cutLineDialog", ev, function(data) {
-               if (data['Segments']) {
-                  const number = parseInt(data['Segments'], 10);
+            __WEBPACK_IMPORTED_MODULE_6__wings3d_ui__["runDialog"]("#cutLineDialog", ev, function(form) {
+               const data = form.querySelector('input[name="Segments"');
+               if (data) {
+                  const number = parseInt(data.value, 10);
                   if ((number != NaN) && (number > 0) && (number < 100)) { // sane input
                      self.cutEdge(number);
                   }
@@ -11463,9 +11433,10 @@ class EdgeMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
       }
       // EdgeLoop Nth., show form when click
       __WEBPACK_IMPORTED_MODULE_6__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].edgeLoopN.name, function(ev) {
-         __WEBPACK_IMPORTED_MODULE_6__wings3d_ui__["runDialog"]('#cutLineDialog', ev, function(data) {
-            if (data['Segments']) {
-               const number = parseInt(data['Segments'], 10);
+         __WEBPACK_IMPORTED_MODULE_6__wings3d_ui__["runDialog"]('#cutLineDialog', ev, function(form) {
+            const data = form.querySelector('input=[name="Segments"');
+            if (data) {
+               const number = parseInt(data.value, 10);
                if ((number != NaN) && (number > 0) && (number < 100)) { // sane input
                   const command = new EdgeLoopCommand(self, number);
                   if (command.doIt()) {
@@ -11491,9 +11462,10 @@ class EdgeMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
       }
       // EdgeRing Nth
       __WEBPACK_IMPORTED_MODULE_6__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].edgeRingN.name, function(ev) {
-         __WEBPACK_IMPORTED_MODULE_6__wings3d_ui__["runDialog"]('#cutLineDialog', ev, function(data) {
-            if (data['Segments']) {
-               const number = parseInt(data['Segments'], 10);
+         __WEBPACK_IMPORTED_MODULE_6__wings3d_ui__["runDialog"]('#cutLineDialog', ev, function(form) {
+            const data = form.querySelector('input[name="Segments"');
+            if (data) {
+               const number = parseInt(data.value, 10);
                if ((number != NaN) && (number > 0) && (number < 100)) { // sane input
                   const command = new EdgeRingCommand(self, number);
                   if (command.doIt()) {
@@ -11969,13 +11941,14 @@ class BodyMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
          });
 
       __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_10__wings3d__["action"].bodyRename.name, function(ev) {
-         __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["runDialog"]('#renameDialog', ev, function(data) {
+         __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["runDialog"]('#renameDialog', ev, function(form) {
+               const data = __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["extractDialogValue"](form);
                const command = new RenameBodyCommand(self.getSelected(), data);
                __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["undoQueue"]( command );
                command.doIt();   // rename
-            }, function() {
-               const content = document.querySelector('#renameDialog div');
-               let labels = document.querySelectorAll('#renameDialog label');
+            }, function(form) {
+               const content = form.querySelector('div');
+               let labels = form.querySelectorAll('label');
                for (let label of labels) {
                   content.removeChild(label);
                }
@@ -12034,9 +12007,10 @@ class BodyMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
       const slice = [__WEBPACK_IMPORTED_MODULE_10__wings3d__["action"].bodySliceX, __WEBPACK_IMPORTED_MODULE_10__wings3d__["action"].bodySliceY, __WEBPACK_IMPORTED_MODULE_10__wings3d__["action"].bodySliceZ];
       for (let axis = 0; axis < 3; ++axis) {
          __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](slice[axis].name, (ev) => {
-            __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["runDialog"]('#sliceBodyDialog', ev, (data)=> {
-               if (data['amountRange']) {
-                  const number = parseInt(data['amountRange'], 10);
+            __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["runDialog"]('#sliceBodyDialog', ev, (form)=> {
+               const data = form.querySelector('input[name="amountRange"');
+               if (data) {
+                  const number = parseInt(data.value, 10);
                   if ((number != NaN) && (number > 0) && (number < 100)) { // sane input
                      const command = new __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["GenericEditCommand"](this, this.slice, [axisVec[axis], number], this.undoPlaneCut);
                      if (command.doIt()) {
@@ -15617,9 +15591,10 @@ class ImportExporter {
       }
       if (exportMenuText) {
          __WEBPACK_IMPORTED_MODULE_2__wings3d_ui__["addMenuItem"]('fileExport', 'export' + exportMenuText.split(" ")[0], exportMenuText, function(ev) {
-            __WEBPACK_IMPORTED_MODULE_2__wings3d_ui__["runDialog"]('#exportFile', ev, function(data) {
-               if (data['Filename']) {
-                  self.export(data['Filename']);
+            __WEBPACK_IMPORTED_MODULE_2__wings3d_ui__["runDialog"]('#exportFile', ev, function(form) {
+               const data = form.querySelector('input[name="Filename"');
+               if (data) {
+                  self.export(data.value);
                }
              });
          });
