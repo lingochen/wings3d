@@ -10,5 +10,6 @@
    "cube": "Cube",
    "cube_tooltip": ["Create a Cube", "", "Open option dialog"],
    "move": "Move",
-   "body_status": "Object ${this.name} has ${this.polygonSize} polygons, ${this.edgeSize} edges, and ${this.vertexSize} vertices"
+   "body_status": "Object ${this.name} has ${this.polygonSize} polygons, ${this.edgeSize} edges, and ${this.vertexSize} vertices",
+   "geometryBackground_tooltip": "Background color of the Geometry window"
 }

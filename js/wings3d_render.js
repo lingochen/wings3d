@@ -509,11 +509,16 @@ function needToRedraw() {
    redrawFlag = true;
 };
 
+function hexToRGB(hex) {
+  return {r: parseInt(hex.slice(1, 3), 16),
+          g: parseInt(hex.slice(3, 5), 16),
+          b: parseInt(hex.slice(5, 7), 16)};
+};
 function render(gl, drawWorldFn) {
    if (gl.resizeToDisplaySize() || Camera.view.isModified || redrawFlag) {
       redrawFlag = false; 
-
-      gl.clearColor(0.6, 0.6, 0.8, 1.0);
+      const backColor = hexToRGB(View.theme.background);
+      gl.clearColor(backColor.r/255, backColor.g/255, backColor.b/255, 1.0);
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
       gl.polygonOffset(0.0, 0.0);
       gl.enable(gl.POLYGON_OFFSET_FILL);

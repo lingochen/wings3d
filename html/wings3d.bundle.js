@@ -733,11 +733,23 @@ const nativeTheme = {
        unselectedHlite: [0.0, 0.65, 0.0],
        vertexColor: [0.0, 0.0, 0.0],
        color: [[0.7, 0.0, 0.1], [0.37210077142857145, 0.82, 0.0], [0.0, 0.3, 0.8]],
-       negColor: [[0.8, 0.8, 0.8], [0.8, 0.8, 0.8], [0.8, 0.8, 0.8]]
+       negColor: [[0.8, 0.8, 0.8], [0.8, 0.8, 0.8], [0.8, 0.8, 0.8]],
+       // UserInterface'
+       background: '#CCCCCC',
    };
 let theme = nativeTheme;
 
-function storePref(elements) {
+function loadPref(form) {
+   let data = form.querySelector('input[name=geometryBackground]');
+   if (data) {
+      data.value = theme.background;
+   }
+};
+function storePref(form) {
+   let data = form.querySelector('input[name=geometryBackground]');
+   if (data) {
+      theme.background = data.value;
+   }
    console.log("storePref: success");
 };
 
@@ -1427,7 +1439,7 @@ function init() {
    }
    // bind pref button
    __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].preferenceButton.name, (_ev)=>{
-      __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["runDialogCenter"]('#preferenceForm', storePref);
+      __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["runDialogCenter"]('#preferenceForm', storePref, loadPref);
     });
    // bind .dropdown, click event.
    let buttons = document.querySelectorAll("li.dropdown > a");
@@ -15383,11 +15395,16 @@ function needToRedraw() {
    redrawFlag = true;
 };
 
+function hexToRGB(hex) {
+  return {r: parseInt(hex.slice(1, 3), 16),
+          g: parseInt(hex.slice(3, 5), 16),
+          b: parseInt(hex.slice(5, 7), 16)};
+};
 function render(gl, drawWorldFn) {
    if (gl.resizeToDisplaySize() || __WEBPACK_IMPORTED_MODULE_2__wings3d_camera__["view"].isModified || redrawFlag) {
       redrawFlag = false; 
-
-      gl.clearColor(0.6, 0.6, 0.8, 1.0);
+      const backColor = hexToRGB(__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].background);
+      gl.clearColor(backColor.r/255, backColor.g/255, backColor.b/255, 1.0);
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
       gl.polygonOffset(0.0, 0.0);
       gl.enable(gl.POLYGON_OFFSET_FILL);

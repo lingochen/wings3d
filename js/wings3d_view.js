@@ -78,11 +78,23 @@ const nativeTheme = {
        unselectedHlite: [0.0, 0.65, 0.0],
        vertexColor: [0.0, 0.0, 0.0],
        color: [[0.7, 0.0, 0.1], [0.37210077142857145, 0.82, 0.0], [0.0, 0.3, 0.8]],
-       negColor: [[0.8, 0.8, 0.8], [0.8, 0.8, 0.8], [0.8, 0.8, 0.8]]
+       negColor: [[0.8, 0.8, 0.8], [0.8, 0.8, 0.8], [0.8, 0.8, 0.8]],
+       // UserInterface'
+       background: '#CCCCCC',
    };
 let theme = nativeTheme;
 
-function storePref(elements) {
+function loadPref(form) {
+   let data = form.querySelector('input[name=geometryBackground]');
+   if (data) {
+      data.value = theme.background;
+   }
+};
+function storePref(form) {
+   let data = form.querySelector('input[name=geometryBackground]');
+   if (data) {
+      theme.background = data.value;
+   }
    console.log("storePref: success");
 };
 
@@ -772,7 +784,7 @@ function init() {
    }
    // bind pref button
    UI.bindMenuItem(Wings3D.action.preferenceButton.name, (_ev)=>{
-      UI.runDialogCenter('#preferenceForm', storePref);
+      UI.runDialogCenter('#preferenceForm', storePref, loadPref);
     });
    // bind .dropdown, click event.
    let buttons = document.querySelectorAll("li.dropdown > a");
