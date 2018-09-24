@@ -38,6 +38,7 @@ const prop = {
       showGroundplane: true,
       showCamImagePlane: false,
       showAxes: true,
+      infoVerbose: false,
       constrainAxes: true,
       clipPlane: false,
       orthogonalView: false,
@@ -54,19 +55,13 @@ const prop = {
       allowInfoText: true,
       miniAxis: true
    };
-const nativeTheme = {
+const theme = {
        activeVectorColor: [0.0, 1.0, 0.0],
        clipPlaneColor: [0.8, 0.3, 0.0],
-       consoleColor: [1.0, 1.0, 1.0],
-       consoleTextColor: [0.0, 0.0, 0.0],
        defaultAxis: [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]],
        edgeColor: [0.0, 0.0, 0.0],
        gridColor: [0.3, 0.3, 0.3],
        hardEdgeColor: [1.0, 0.5, 0.0],
-       infoBackgroundColor: [0.38, 0.38, 0.38, 0.5],
-       infoColor: [1.0, 1.0, 1.0],
-       infoLineBg: [0.33131360000000004, 0.4, 0.0],
-       infoLineText: [1.0, 1.0, 1.0],
        maskedVertexColor: [0.5, 1.0, 0.0, 0.8],
        materialDefault: [0.7898538076923077, 0.8133333333333334, 0.6940444444444445],
        normalVectorColor: [0.0, 1.0, 0.0],
@@ -90,9 +85,14 @@ const nativeTheme = {
          menuHighlightText: '#FFFFFF',
          infoLineBackground: '#F2F1F0',
          infoLineText: '#4C4C4C',
+         infoBackground: '#6161617F',
+         infoText: '#FFFFFF',
        }
    };
-let theme = nativeTheme;
+const themeAlpha = {
+   geometryBackground: 'FF',
+   infoBackground: '7F',
+};
 /*const getThemeProp = (path) => (
    path.split('.').reduce((acc, part) => acc && acc[part], theme)
 );*/
@@ -109,22 +109,35 @@ function loadPref(form) {
    traverse(theme, (_obj, key, value)=> {
       const data = form.querySelector(`input[name=${key}]`);
       if (data) {
-         data.value = value;
+         if (value.length === 9) {
+            data.value = value.slice(0, 7);
+         } else {
+            data.value = value;
+         }
       }
     });
+};
+function hexToRGBA(hex) {  // microsft edge don't support #rrggbbaa format yet, so we convert to rgba() 2018/09/24.
+   const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+   const a = parseInt(hex.slice(7, 9), 16) / 255;
+   return `rgba(${r}, ${g}, ${b}, ${a})`;
 };
 function storePref(form) {
    traverse(theme, (obj, key, _value) => {
       const data = form.querySelector(`input[name=${key}]`);
       if (data) {
-         obj[key] = data.value;
+         obj[key] = themeAlpha[key] ? (data.value + themeAlpha[key]) : data.value;
       }
     });
    // now update css variable.
    const root = document.documentElement;
    Object.entries(theme.css).forEach(([key, value]) => {
       // put the css to styleSheet
-      root.style.setProperty(`--${key}`, value);
+      if (value.length === 7) {
+         root.style.setProperty(`--${key}`, value);
+      } else if (value.length === 9) {
+         root.style.setProperty(`--${key}`, hexToRGBA(value));
+      }
     });
 };
 

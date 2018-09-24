@@ -1,6 +1,8 @@
 :root {
   --infoLineBackground: #F2F1F0;
   --infoLineText: #4C4C4C;
+  --infoBackground: rgba(38%, 38%, 38%, 0.5);
+  --infoText: #FFFFFF;
 }
 
 /*
@@ -50,7 +52,8 @@ body {
   position:absolute;
   left:0;
   width: 100%;
-  background: rgba(255,255,255,.5);
+  background-color: var(--infoBackground);
+  color: var(--infoText);
 }
 
 #helpbar {
