@@ -277,8 +277,8 @@ function slideBack() {
    if (submenu.length > 0) {
       const grandA = grandParent.previousElementSibling;
       if (grandA && grandA.tagName == "A") { 
-         //grandA.classList.remove("collapse");
-         grandA.style.display = "inherit";
+         grandA.style.visibility = "inherit";
+         grandA.parentElement.style.visibility = "inherit";
       }
    }
    return true;
@@ -296,8 +296,8 @@ function toggleSubmenu(ul) {
       if (submenu.length > 0) {
          const grandA = grandParent.previousElementSibling;
          if (grandA && grandA.tagName == "A") {
-            //grandA.classList.add("collapse");
             grandA.style.visibility = "hidden";
+            grandA.parentElement.style.visibility = "hidden";
          }
       }
       // hide all dropside Sibling
@@ -308,7 +308,7 @@ function toggleSubmenu(ul) {
          }
       } while (element = element.nextElementSibling);
       submenu.push(ul);
-      ul.style.visibility = "inherit";
+      ul.style.visibility = "visible";
    }
 };
 

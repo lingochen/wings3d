@@ -26,11 +26,11 @@
   </script> 
 </head>
 <body class="page-layout">
-  <nav class="menu marginal">
-    <ul id="menubar" class="menubar">
+  <nav class="menu bar marginal">
+    <ul class="menu bar">
       <li class="dropdown">
         <a id="fileMenu">File</a>
-        <ul class="popupmenu">
+        <ul class="popup menu">
           <li class="not-implemented"><a onmouseover="help('Create a new, empty scene')" onmouseleave="help()">New</a></li>
           <li class="not-implemented"><a onmouseover="help('Open a previously saved scene')" onmouseleave="help()">Open...</a></li>
           <li class="not-implemented"><a onmouseover="help('Merge a previously saved scene into the current scene')" onmouseleave="help()">Merge...</a></li>
@@ -43,8 +43,8 @@
           <hr/>
           <li class="not-implemented"><a onmouseover="help('Revert current scene to the saved contents')" onmouseleave="help()">Revert</a></li>
           <hr/>
-          <li class="dropside"><a id="importMenu">Import</a><ul id="fileImport" class="popupmenu"> </ul></li>
-          <li class="dropside"><a id="exportMenu">Export</a><ul id="fileExport" class="popupmenu"> </ul></li>
+          <li class="dropside"><a id="importMenu">Import</a><ul id="fileImport" class="popup menu"> </ul></li>
+          <li class="dropside"><a id="exportMenu">Export</a><ul id="fileExport" class="popup menu"> </ul></li>
           <li class="not-implemented"><a>Export Selected</a></li>
           <hr/>
           <li class="not-implemented"><a onmouseover="help('Import an image file')" onmouseleave="help()">Import Image...</a></li>
@@ -55,7 +55,7 @@
           <hr/>
           <li class="not-implemented"><a onmouseover="help('Save a preference subset from your current settings')" onmouseleave="help()">Save Preference Subset</a></li>
           <li class="dropside"><a>Load Preference Subset</a>
-            <ul class="popupmenu">
+            <ul class="popup menu">
               <li class="not-implemented"><a onmouseover="help('Load a previously saved preference subset')" onmouseleave="help()">Load...</a></li>
             </ul>
           </li>
@@ -66,7 +66,7 @@
       </li>
       <li class="dropdown">
         <a id="selectMenu">Select</a>
-        <ul class="popupmenu">
+        <ul class="popup menu">
           <li><a onmouseover="help('Deselect selection')" onmouseleave="help()" id="deselect">Deselect space</a></li>
           <hr>
           <li><a onmouseover="help('More selection')" onmouseleave="help()" id="more">More +</a></li>
@@ -78,13 +78,13 @@
           <hr>
           <li class="dropside">
             <a id="edgeLoopMenu">Edge Loop</a>
-            <ul class="popupmenu">
+            <ul class="popup menu">
               <hr>
               <li><a id="edgeLoop1">Edge Loop</a></li>
               <li><a id="edgeRing1">Edge Ring</a></li>
               <li class="dropside">
                  <a id="nthEdgeRingMenu">Every Nth Ring</a>
-                 <ul class="popupmenu">
+                 <ul class="popup menu">
                    <li><a id="edgeRing2">Second</a></li>
                    <li><a id="edgeRing3">Third</a></li>
                    <li><a id="edgeRingN">Nth...</a></li>
@@ -92,7 +92,7 @@
               </li>
               <li class="dropside">
                  <a id="nthEdgeLoopMenu">Every Nth Loop</a>
-                 <ul class="popupmenu">
+                 <ul class="popup menu">
                    <li><a id="edgeLoop2">Second</a></li>
                    <li><a id="edgeLoop3">Third</a></li>
                    <li><a id="edgeLoopN">Nth...</a></li>
@@ -110,10 +110,10 @@
       </li>
       <li class="dropdown">
         <a id="helpMenu">Help</a>
-        <ul class="popupmenu">
+        <ul class="popup menu">
           <li><a onmouseover="help('Start the introduction Tour')" onmouseleave="help()" id="introduction">Introduction</a></li>
           <li class="dropside"><a onmouseover="help('Learn how to use')" onmouseleave="help()">Let practice..</a>
-            <ul class="popupmenu">
+            <ul class="popup menu">
               <li><a id="basicCommands">Basic Commands</a></li>
               <li class="not-implemented"><a>Edge Rings</a></li>
               <li class="not-implemented"><a>Virtual Mirror</a></li>
@@ -121,7 +121,7 @@
             </ul>
           </li>
           <li class="dropside"><a>I want to model...</a>
-            <ul class="popupmenu">
+            <ul class="popup menu">
               <li id="tableTutor"><a>a Table</a></li>
               <li class="not-implemented"><a>a Car</a></li>
             </ul>
@@ -218,16 +218,16 @@
 
   <!-- Hidden context menu -->
   <nav class="menu" style="position:absolute">
-    <ul id="create-context-menu" class="popupmenu">
+    <ul id="create-context-menu" class="popup menu">
       <li><a id="createCube" data-i18n="cube">Cube</a><img id="createCubePref" src="../img/bluecube/small_pref.png"></li>
       <hr/>
       <li class="not-implemented"><a id="createPlane">Various Planes</a></li>
       <li class="not-implemented"><a id="createGrid">Grid</a></li>
     </ul>
-    <ul id="edge-context-menu" class="popupmenu">
+    <ul id="edge-context-menu" class="popup menu">
       <li class="dropside">
-	<a id="edgeMoveMenu">Move</a>
-        <ul class="popupmenu">
+	      <a id="edgeMoveMenu">Move</a>
+        <ul class="popup menu">
           <li><a id="edgeMoveNormal">Normal</a></li>
           <li><a id="edgeMoveFree">Free</a></li>
           <li><a id="edgeMoveX">X</a></li>
@@ -237,7 +237,7 @@
       </li>
       <li class="dropside">
         <a id="edgeRotateMenu">Rotate</a>
-        <ul class ="popupmenu">
+        <ul class ="popup menu">
           <li><a id="edgeRotateFree">Free</a></li>
           <li><a id="edgeRotateX">X</a></li>
           <li><a id="edgeRotateY">Y</a></li>
@@ -247,7 +247,7 @@
       <li><a id="edgeScaleUniform">Scale Uniform</a></li>
       <li class="dropside">
         <a id="edgeScaleAxis">Scale Axis</a>
-        <ul class ="popupmenu">
+        <ul class ="popup menu">
           <li><a id="edgeScaleAxisX">X</a></li>
           <li><a id="edgeScaleAxisY">Y</a></li>
           <li><a id="edgeScaleAxisZ">Z</a></li>
@@ -255,7 +255,7 @@
       </li>
       <li class="dropside">
         <a id="edgeScaleRadial">Scale Radial</a>
-        <ul class ="popupmenu">
+        <ul class ="popup menu">
           <li><a id="edgeScaleRadialX">X</a></li>
           <li><a id="edgeScaleRadialY">Y</a></li>
           <li><a id="edgeScaleRadialZ">Z</a></li>
@@ -265,7 +265,7 @@
       <hr />
       <li class="dropside">
         <a id="edgeExtrudeMenu">Extrude</a>
-        <ul class ="popupmenu">
+        <ul class ="popup menu">
           <li><a id="edgeExtrudeNormal">Normal</a></li>
           <li><a id="edgeExtrudeFree">Free</a></li>
           <li><a id="edgeExtrudeX">X</a></li>
@@ -277,7 +277,7 @@
       <hr />
       <li class="dropside">
         <a id="edgeFlatten">Flatten</a>
-        <ul class ="popupmenu">
+        <ul class ="popup menu">
           <li><a id="edgeFlattenX">X</a></li>
           <li><a id="edgeFlattenY">Y</a></li>
           <li><a id="edgeFlattenZ">Z</a></li>
@@ -286,16 +286,16 @@
       <hr />
       <li class="dropside">
         <a id="cutMenu">Cut</a>
-        <ul class="popupmenu">
+        <ul class="popup menu">
           <li><a id="cutLine2">2 Segments</a></li>
           <li><a id="cutLine3">3 Segments</a></li>
           <li><a id="cutLine4">4 Segments</a></li>
           <li><a id="cutLine5">5 Segments</a></li>
           <hr>
           <li><a id="cutLine10">10 Segments</a></li>
-	  <hr>
+          <hr>
           <li><a id="cutAsk">Enter Number...</a></li>
-	  <hr>
+          <hr>
           <li class="not-implemented"><a id="cutArbitrary">Cut at arbitrary position</a></li>
         </ul>
       </li>
@@ -309,10 +309,10 @@
       <hr>
       <li><a id="edgeCorner">Corner</a></li>
     </ul>
-    <ul id="face-context-menu" class="context-menu popupmenu">
+    <ul id="face-context-menu" class="context-menu popup menu">
       <li class="dropside">
         <a id="faceExtrudeMenu">Extrude</a>
-        <ul class="popupmenu">
+        <ul class="popup menu">
           <li><a id="faceExtrudeNormal">Normal</a></li>
           <li><a id="faceExtrudeFree">Free</a></li>
           <li><a id="faceExtrudeX">X</a></li>
@@ -322,8 +322,8 @@
       </li>
       <hr />
       <li class="dropside">
-	<a id="faceMoveMenu">Move</a>
-        <ul class="popupmenu">
+        <a id="faceMoveMenu">Move</a>
+        <ul class="popup menu">
           <li><a id="faceMoveNormal">Normal</a></li>
           <li><a id="faceMoveFree">Free</a></li>
           <li><a id="faceMoveX">X</a></li>
@@ -333,7 +333,7 @@
       </li>
       <li class="dropside">
         <a id="faceRotateMenu">Rotate</a>
-        <ul class ="popupmenu">
+        <ul class ="popup menu">
           <li><a id="faceRotateFree">Free</a></li>
           <li><a id="faceRotateX">X</a></li>
           <li><a id="faceRotateY">Y</a></li>
@@ -343,7 +343,7 @@
       <li><a id="faceScaleUniform">Scale Uniform</a></li>
       <li class="dropside">
         <a id="faceScaleAxis">Scale Axis</a>
-        <ul class ="popupmenu">
+        <ul class ="popup menu">
           <li><a id="faceScaleAxisX">X</a></li>
           <li><a id="faceScaleAxisY">Y</a></li>
           <li><a id="faceScaleAxisZ">Z</a></li>
@@ -351,7 +351,7 @@
       </li>
       <li class="dropside">
         <a id="faceScaleRadial">Scale Radial</a>
-        <ul class ="popupmenu">
+        <ul class ="popup menu">
           <li><a id="faceScaleRadialX">X</a></li>
           <li><a id="faceScaleRadialY">Y</a></li>
           <li><a id="faceScaleRadialZ">Z</a></li>
@@ -360,7 +360,7 @@
       <hr />
       <li class="dropside">
         <a id="faceFlatten">Flatten</a>
-        <ul class ="popupmenu">
+        <ul class ="popup menu">
           <li><a id="faceFlattenNormal">Normal</a></li>
           <li><a id="faceFlattenX">X</a></li>
           <li><a id="faceFlattenY">Y</a></li>
@@ -383,17 +383,17 @@
       <hr>
       <li class="dropside">
         <a id="facePlaneCut">Plane Cut</a>
-        <ul class ="popupmenu">
+        <ul class ="popup menu">
           <li><a id="facePlaneCutX">X</a></li>
           <li><a id="facePlaneCutY">Y</a></li>
           <li><a id="facePlaneCutZ">Z</a></li>
         </ul>
       </li>
     </ul>
-    <ul id="vertex-context-menu" class="popupmenu">
+    <ul id="vertex-context-menu" class="popup menu">
       <li class="dropside">
-	<a id="vertexMoveMenu">Move</a>
-        <ul class="popupmenu">
+        <a id="vertexMoveMenu">Move</a>
+        <ul class="popup menu">
           <li><a id="vertexMoveNormal">Normal</a></li>
           <li><a id="vertexMoveFree">Free</a></li>
           <li><a id="vertexMoveX">X</a></li>
@@ -403,7 +403,7 @@
       </li>
       <li class="dropside">
         <a id="vertexRotateMenu">Rotate</a>
-        <ul class ="popupmenu">
+        <ul class ="popup menu">
           <li><a id="vertexRotateFree">Free</a></li>
           <li><a id="vertexRotateX">X</a></li>
           <li><a id="vertexRotateY">Y</a></li>
@@ -413,7 +413,7 @@
       <li><a id="vertexScaleUniform">Scale Uniform</a></li>
       <li class="dropside">
         <a id="vertexScaleAxis">Scale Axis</a>
-        <ul class ="popupmenu">
+        <ul class ="popup menu">
           <li><a id="vertexScaleAxisX">X</a></li>
           <li><a id="vertexScaleAxisY">Y</a></li>
           <li><a id="vertexScaleAxisZ">Z</a></li>
@@ -421,7 +421,7 @@
       </li>
       <li class="dropside">
         <a id="vertexScaleRadial">Scale Radial</a>
-        <ul class ="popupmenu">
+        <ul class ="popup menu">
           <li><a id="vertexScaleRadialX">X</a></li>
           <li><a id="vertexScaleRadialY">Y</a></li>
           <li><a id="vertexScaleRadialZ">Z</a></li>
@@ -430,7 +430,7 @@
       <hr />
       <li class="dropside">
         <a id="vertexExtrudeMenu">Extrude</a>
-        <ul class="popupmenu">
+        <ul class="popup menu">
           <li><a id="vertexExtrudeNormal">Normal</a></li>
           <li><a id="vertexExtrudeFree">Free</a></li>
           <li><a id="vertexExtrudeX">X</a></li>
@@ -441,7 +441,7 @@
       <hr>
       <li class="dropside">
         <a id="vertexFlatten">Flatten</a>
-        <ul class ="popupmenu">
+        <ul class ="popup menu">
           <li><a id="vertexFlattenX">X</a></li>
           <li><a id="vertexFlattenY">Y</a></li>
           <li><a id="vertexFlattenZ">Z</a></li>
@@ -456,10 +456,10 @@
       <hr>
 
     </ul>
-    <ul id="body-context-menu" class="popupmenu">
+    <ul id="body-context-menu" class="popup menu">
       <li class="dropside">
-	<a id="bodyMoveMenu">Move</a>
-        <ul class="popupmenu">
+        <a id="bodyMoveMenu">Move</a>
+        <ul class="popup menu">
           <li><a id="bodyMoveFree">Free</a></li>
           <li><a id="bodyMoveX">X</a></li>
           <li><a id="bodyMoveY">Y</a></li>
@@ -468,7 +468,7 @@
       </li>
       <li class="dropside">
         <a id="bodyRotateMenu">Rotate</a>
-        <ul class ="popupmenu">
+        <ul class ="popup menu">
           <li><a id="bodyRotateFree">Free</a></li>
           <li><a id="bodyRotateX">X</a></li>
           <li><a id="bodyRotateY">Y</a></li>
@@ -478,7 +478,7 @@
       <li><a id="bodyScaleUniform">Scale Uniform</a></li>
       <li class="dropside">
         <a id="bodyScaleAxis">Scale Axis</a>
-        <ul class ="popupmenu">
+        <ul class ="popup menu">
           <li><a id="bodyScaleAxisX">X</a></li>
           <li><a id="bodyScaleAxisY">Y</a></li>
           <li><a id="bodyScaleAxisZ">Z</a></li>
@@ -486,7 +486,7 @@
       </li>
       <li class="dropside">
         <a id="bodyScaleRadial">Scale Radial</a>
-        <ul class ="popupmenu">
+        <ul class ="popup menu">
           <li><a id="bodyScaleRadialX">X</a></li>
           <li><a id="bodyScaleRadialY">Y</a></li>
           <li><a id="bodyScaleRadialZ">Z</a></li>
@@ -495,7 +495,7 @@
       <hr>
       <li class="dropside">
         <a id="bodyFlipMenu">Flip...</a>
-        <ul class ="popupmenu">
+        <ul class ="popup menu">
           <li><a id="bodyFlipX">X</a></li>
           <li><a id="bodyFlipY">Y</a></li>
           <li><a id="bodyFlipZ">Z</a></li>
@@ -509,7 +509,7 @@
       <li><a id="bodyWeld">Weld</a></li>
       <li class="dropside">
         <a id="bodyPlaneCut">Plane Cut</a>
-        <ul class ="popupmenu">
+        <ul class ="popup menu">
           <li><a id="bodyPlaneCutX">X</a></li>
           <li><a id="bodyPlaneCutY">Y</a></li>
           <li><a id="bodyPlaneCutZ">Z</a></li>
@@ -517,7 +517,7 @@
       </li>
       <li class="dropside">
         <a id="bodySlice">Slice</a>
-        <ul class ="popupmenu">
+        <ul class ="popup menu">
           <li><a id="bodySliceX">X</a></li>
           <li><a id="bodySliceY">Y</a></li>
           <li><a id="bodySliceZ">Z</a></li>
@@ -526,7 +526,7 @@
       <hr>
       <li class="dropside">
         <a id="bodyDuplicateMoveMenu">Duplicate</a>
-        <ul class="popupmenu">
+        <ul class="popup menu">
           <li><a id="bodyDuplicateMoveFree">Free</a></li>
           <li><a id="bodyDuplicateMoveX">X</a></li>
           <li><a id="bodyDuplicateMoveY">Y</a></li>
@@ -748,20 +748,16 @@
           <legend data-i18n="colors">Colors</legend>
           <label class="setValue"><span data-i18n="geometryBackground">Geometry Background</span><input name="geometryBackground" type="color"></label>
           <hr>
-          <label class="setValue"><span data-i18n="menubarBackground">Menubar Background</span><input id="menubarBackground" type="color"></label> 
-          <label class="setValue"><span data-i18n="menubarText">Menubar Text</span><input id="menubarText" type="color"></label>
+          <label class="setValue"><span data-i18n="menubarBackground">Menubar Background</span><input name="menubarBackground" type="color"></label> 
+          <label class="setValue"><span data-i18n="menubarText">Menubar Text</span><input name="menubarText" type="color"></label>
           <hr>
-          <label class="setValue"><span data-i18n="menuBackground">Menu Background</span><input id="menuBackground" type="color"></label>
-          <label class="setValue"><span data-i18n="menuText">Menu Text</span><input id="menuText" type="color"></label>
-          <label class="setValue"><span data-i18n="menuHighlight">Menu Highlight</span><input id="menuHighlight" type="color"></label>
-          <label class="setValue"><span data-i18n="menuHighlightText">Menu Highlight Text</span><input id="menuHighlightText" type="color"></label>
+          <label class="setValue"><span data-i18n="menuBackground">Menu Background</span><input name="menuBackground" type="color"></label>
+          <label class="setValue"><span data-i18n="menuText">Menu Text</span><input name="menuText" type="color"></label>
+          <label class="setValue"><span data-i18n="menuHighlight">Menu Highlight</span><input name="menuHighlight" type="color"></label>
+          <label class="setValue"><span data-i18n="menuHighlightText">Menu Highlight Text</span><input name="menuHighlightText" type="color"></label>
           <hr>
-          <label class="setValue"><span data-i18n="dialogBackground">Dialog Background</span><input id="dialogBackground" type="color"></label>
-          <label class="setValue"><span data-i18n="dialogText">Dialog Text</span><input id="dialogText" type="color"></label>
-          <label class="setValue"><span data-i18n="dialogDisabledText">Dialog (Disabled) Text</span><input id="dialogDisabledText" type="color"></label>
-          <hr>
-          <label class="setValue"><span data-i18n="infoLineBackground">Info Line Background</span><input id="infoLineBackground" type="color"></label>
-          <label class="setValue"><span data-i18n="infoLineText">Info Line Text</span><input id="infoLineText" type="color"></label>
+          <label class="setValue"><span data-i18n="infoLineBackground">Info Line Background</span><input name="infoLineBackground" type="color"></label>
+          <label class="setValue"><span data-i18n="infoLineText">Info Line Text</span><input name="infoLineText" type="color"></label>
         </fieldset>
         <fieldset>
           <legend data-i18n="interfaceIcon">Interface Icon</legend>

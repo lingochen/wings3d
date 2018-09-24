@@ -1,66 +1,69 @@
-nav.menu {
-    background-color: #333;
-/*    border: 1px solid #333; */
-    color: #fff;
-    display: block;
-    margin: 0;
-    padding: 0;
-/*    overflow: hidden; */
+:root {
+  --menubarBackground: #3C3B37;
+  --menubarText: #FFFFFF;
+  --menuBackground: #3C3B37;
+  --menuText: #FFFFFF;
+  --menuHighlight: #F07746;
+  --menuHighlightText: #FFFFFF; 
 }
-ul.menubar, ul.popupmenu {
-    margin: 0;
-    padding: 0;
-    list-style: none;
+
+nav.menu {
+  display: block;
+  margin: 0;
+  padding: 0;
+/*  overflow: hidden; */
+}
+ul.menu {
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 /* dropdown menu */
-ul.popupmenu {
+ul.popup.menu {
   visibility : hidden;
   position: absolute;    /* parent need to be relative */
   top: 100%;             /* place directly under parent */
-  /*margin-top:1px;*/
-  /*background-color: #bbb;*/
-  list-style: none;
   z-index: 100;
 }
-ul.popupmenu > li {
-  background-color: #bbb;
+ul.popup.menu > li {
+  display: flex;
   position: relative;
 }
-ul.popupmenu > hr {
+ul.popup.menu > hr {
   margin: 0em;
   border-width: 2px
 }
-ul.popupmenu ul.popupmenu {
+ul.popup.menu ul.popup.menu {
   width: 100%;
 }
-ul.menubar {
+ul.menu.bar {
   display: flex;
   flex-direction: row;
 }
-ul.menubar > li {
-    margin: 0;
-    padding: 0;
+ul.menu.bar > li {
+  margin: 0;
+  padding: 0;
   display: flex;
   position: relative;
-/*    display: inline-block; */
-    list-style-type: none;
-    transition: all 0s; 
+  list-style-type: none;
+  transition: all 0s; 
 }
 
 /* menuItem */
-ul.popupmenu > li > a {
-  color: #111;
+nav.menu li {
+  background-color: var(--menuBackground);
 }
-ul.menubar > li.menuItem > a {
-    color: #aaa;
+nav.menu {
+  color: var(--menuText);
 }
-ul.popupmenu > li {
-  display: flex;
+nav.menu.bar li {
+  background-color: var(--menubarBackground);
+}
+nav.menu.bar {
+  color: var(--menubarText);
 }
 
-
-ul.menubar > li > a,
-ul.popupmenu > li > a {
+ul.menu > li > a {
   display: block;
   flex: 1;
   line-height: 1em;
@@ -75,14 +78,16 @@ ul.popupmenu > li > a {
         -ms-user-select: none; /* Internet Explorer/Edge */
             user-select: none; /* Non-prefixed version, currently supported by Chrome and Opera */
 }
-ul.popupmenu > li > img {
+ul.popup.menu > li > img {
   align-self: center;
   padding: 0 0.3em 0 0;
 }
 
-ul.menubar > li:hover,
-ul.popupmenu > li:hover {
-  background-color: #666;
+ul.menu li:hover {
+  background-color: var(--menuHighlight);
+}
+ul.menu li > a:hover {
+  color: var(--menuHighlightText);
 }
 
 /* added attribute for showing extra menu available. */

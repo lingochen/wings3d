@@ -735,22 +735,52 @@ const nativeTheme = {
        color: [[0.7, 0.0, 0.1], [0.37210077142857145, 0.82, 0.0], [0.0, 0.3, 0.8]],
        negColor: [[0.8, 0.8, 0.8], [0.8, 0.8, 0.8], [0.8, 0.8, 0.8]],
        // UserInterface'
-       background: '#CCCCCC',
+       geometryBackground: '#CCCCCC',
+       css: {
+         menubarBackground: '#3C3B37',
+         menubarText: '#FFFFFF',
+         menuBackground: '#3C3B37',
+         menuText: '#FFFFFF',
+         menuHighlight: '#F07746',
+         menuHighlightText: '#FFFFFF',
+         infoLineBackground: '#F2F1F0',
+         infoLineText: '#4C4C4C',
+       }
    };
 let theme = nativeTheme;
-
+/*const getThemeProp = (path) => (
+   path.split('.').reduce((acc, part) => acc && acc[part], theme)
+);*/
+function traverse(obj, loadStore) {
+   Object.entries(obj).forEach(([key, value]) => {
+      if ((typeof value === "object") && !Array.isArray(value)) {
+         traverse(value, loadStore);
+      } else {
+         loadStore(obj, key, value);
+      }
+    });
+}
 function loadPref(form) {
-   let data = form.querySelector('input[name=geometryBackground]');
-   if (data) {
-      data.value = theme.background;
-   }
+   traverse(theme, (_obj, key, value)=> {
+      const data = form.querySelector(`input[name=${key}]`);
+      if (data) {
+         data.value = value;
+      }
+    });
 };
 function storePref(form) {
-   let data = form.querySelector('input[name=geometryBackground]');
-   if (data) {
-      theme.background = data.value;
-   }
-   console.log("storePref: success");
+   traverse(theme, (obj, key, _value) => {
+      const data = form.querySelector(`input[name=${key}]`);
+      if (data) {
+         obj[key] = data.value;
+      }
+    });
+   // now update css variable.
+   const root = document.documentElement;
+   Object.entries(theme.css).forEach(([key, value]) => {
+      // put the css to styleSheet
+      root.style.setProperty(`--${key}`, value);
+    });
 };
 
 //--  end of pref and theme --------------------------------------------------------------------------
@@ -1446,7 +1476,7 @@ function init() {
    for (let button of buttons) {
       if (button.id) {
          let ul = button.nextElementSibling;  // popupMenu
-         if (ul && ul.classList.contains("popupmenu")) {
+         if (ul && ul.classList.contains("popup") && ul.classList.contains("menu")) {
             __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["bindMenuItem"](button.id, function(ev) {
                __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["queuePopupMenu"](ul);  // show popupMenu
              });
@@ -1458,7 +1488,7 @@ function init() {
    for (let button of buttons) {
       if (button.id) {
          let ul = button.nextElementSibling;  // popupMenu
-         if (ul && ul.classList.contains("popupmenu")) {
+         if (ul && ul.classList.contains("popup") && ul.classList.contains("menu")) {
             __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["bindMenuItem"](button.id, function(ev) {
                __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["toggleSubmenu"](ul);  // slide in popup menu, replace the original one
                ev.stopPropagation();
@@ -1811,8 +1841,8 @@ function slideBack() {
    if (submenu.length > 0) {
       const grandA = grandParent.previousElementSibling;
       if (grandA && grandA.tagName == "A") { 
-         //grandA.classList.remove("collapse");
-         grandA.style.display = "inherit";
+         grandA.style.visibility = "inherit";
+         grandA.parentElement.style.visibility = "inherit";
       }
    }
    return true;
@@ -1830,8 +1860,8 @@ function toggleSubmenu(ul) {
       if (submenu.length > 0) {
          const grandA = grandParent.previousElementSibling;
          if (grandA && grandA.tagName == "A") {
-            //grandA.classList.add("collapse");
             grandA.style.visibility = "hidden";
+            grandA.parentElement.style.visibility = "hidden";
          }
       }
       // hide all dropside Sibling
@@ -1842,7 +1872,7 @@ function toggleSubmenu(ul) {
          }
       } while (element = element.nextElementSibling);
       submenu.push(ul);
-      ul.style.visibility = "inherit";
+      ul.style.visibility = "visible";
    }
 };
 
@@ -15403,7 +15433,7 @@ function hexToRGB(hex) {
 function render(gl, drawWorldFn) {
    if (gl.resizeToDisplaySize() || __WEBPACK_IMPORTED_MODULE_2__wings3d_camera__["view"].isModified || redrawFlag) {
       redrawFlag = false; 
-      const backColor = hexToRGB(__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].background);
+      const backColor = hexToRGB(__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].geometryBackground);
       gl.clearColor(backColor.r/255, backColor.g/255, backColor.b/255, 1.0);
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
       gl.polygonOffset(0.0, 0.0);

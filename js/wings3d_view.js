@@ -80,22 +80,52 @@ const nativeTheme = {
        color: [[0.7, 0.0, 0.1], [0.37210077142857145, 0.82, 0.0], [0.0, 0.3, 0.8]],
        negColor: [[0.8, 0.8, 0.8], [0.8, 0.8, 0.8], [0.8, 0.8, 0.8]],
        // UserInterface'
-       background: '#CCCCCC',
+       geometryBackground: '#CCCCCC',
+       css: {
+         menubarBackground: '#3C3B37',
+         menubarText: '#FFFFFF',
+         menuBackground: '#3C3B37',
+         menuText: '#FFFFFF',
+         menuHighlight: '#F07746',
+         menuHighlightText: '#FFFFFF',
+         infoLineBackground: '#F2F1F0',
+         infoLineText: '#4C4C4C',
+       }
    };
 let theme = nativeTheme;
-
+/*const getThemeProp = (path) => (
+   path.split('.').reduce((acc, part) => acc && acc[part], theme)
+);*/
+function traverse(obj, loadStore) {
+   Object.entries(obj).forEach(([key, value]) => {
+      if ((typeof value === "object") && !Array.isArray(value)) {
+         traverse(value, loadStore);
+      } else {
+         loadStore(obj, key, value);
+      }
+    });
+}
 function loadPref(form) {
-   let data = form.querySelector('input[name=geometryBackground]');
-   if (data) {
-      data.value = theme.background;
-   }
+   traverse(theme, (_obj, key, value)=> {
+      const data = form.querySelector(`input[name=${key}]`);
+      if (data) {
+         data.value = value;
+      }
+    });
 };
 function storePref(form) {
-   let data = form.querySelector('input[name=geometryBackground]');
-   if (data) {
-      theme.background = data.value;
-   }
-   console.log("storePref: success");
+   traverse(theme, (obj, key, _value) => {
+      const data = form.querySelector(`input[name=${key}]`);
+      if (data) {
+         obj[key] = data.value;
+      }
+    });
+   // now update css variable.
+   const root = document.documentElement;
+   Object.entries(theme.css).forEach(([key, value]) => {
+      // put the css to styleSheet
+      root.style.setProperty(`--${key}`, value);
+    });
 };
 
 //--  end of pref and theme --------------------------------------------------------------------------
@@ -791,7 +821,7 @@ function init() {
    for (let button of buttons) {
       if (button.id) {
          let ul = button.nextElementSibling;  // popupMenu
-         if (ul && ul.classList.contains("popupmenu")) {
+         if (ul && ul.classList.contains("popup") && ul.classList.contains("menu")) {
             UI.bindMenuItem(button.id, function(ev) {
                UI.queuePopupMenu(ul);  // show popupMenu
              });
@@ -803,7 +833,7 @@ function init() {
    for (let button of buttons) {
       if (button.id) {
          let ul = button.nextElementSibling;  // popupMenu
-         if (ul && ul.classList.contains("popupmenu")) {
+         if (ul && ul.classList.contains("popup") && ul.classList.contains("menu")) {
             UI.bindMenuItem(button.id, function(ev) {
                UI.toggleSubmenu(ul);  // slide in popup menu, replace the original one
                ev.stopPropagation();

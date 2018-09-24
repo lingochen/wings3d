@@ -517,7 +517,7 @@ function hexToRGB(hex) {
 function render(gl, drawWorldFn) {
    if (gl.resizeToDisplaySize() || Camera.view.isModified || redrawFlag) {
       redrawFlag = false; 
-      const backColor = hexToRGB(View.theme.background);
+      const backColor = hexToRGB(View.theme.geometryBackground);
       gl.clearColor(backColor.r/255, backColor.g/255, backColor.b/255, 1.0);
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
       gl.polygonOffset(0.0, 0.0);

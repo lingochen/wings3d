@@ -1,3 +1,8 @@
+:root {
+  --infoLineBackground: #F2F1F0;
+  --infoLineText: #4C4C4C;
+}
+
 /*
 *,
 *:after,
@@ -49,8 +54,9 @@ body {
 }
 
 #helpbar {
-  white-space: pre;
-  background-color:red;
+  white-space: pre;   /* keep bar in place */
+  background-color: var(--infoLineBackground);
+  color: var(--infoLineText);
   height: 1.5rem;
 }
 
