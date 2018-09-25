@@ -13,7 +13,7 @@ function _bindMenuItem(mode, menuItem, button, id, fn, hotkey, meta) {
       // now put it on meta
       const data = meta ? `${meta}+${hotkey}` : hotkey;
       menuItem.classList.add("hotkey");
-      menuItem.setAttribute("data-hotkey", data);
+      menuItem.setAttribute("data-hotkey", data.toUpperCase());
    }
 }
 

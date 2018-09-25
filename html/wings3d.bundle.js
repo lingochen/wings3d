@@ -1601,7 +1601,7 @@ function _bindMenuItem(mode, menuItem, button, id, fn, hotkey, meta) {
       // now put it on meta
       const data = meta ? `${meta}+${hotkey}` : hotkey;
       menuItem.classList.add("hotkey");
-      menuItem.setAttribute("data-hotkey", data);
+      menuItem.setAttribute("data-hotkey", data.toUpperCase());
    }
 }
 
@@ -14274,12 +14274,18 @@ function runHotkeyAction(mode, event) {
    // run the binding function
    let metaSet = keyMap.get(hotkey);
    if (metaSet) {
-      if (metaSet) {
-         for (let value of metaSet) {
-            if ( ((value.meta & meta) === value.meta) && (value.mode === mode)) { // has all the meta
-               Object(__WEBPACK_IMPORTED_MODULE_0__wings3d__["runAction"])(0, value.id, event);
-               break;
-            }
+      // check mode specific first
+      for (let value of metaSet) {
+         if ( ((value.meta & meta) === value.meta) && (value.mode === mode)) { // has all the meta
+            Object(__WEBPACK_IMPORTED_MODULE_0__wings3d__["runAction"])(0, value.id, event);
+            return;
+         }
+      }
+      // check for non-mode, if no mode specific found
+      for (let value of metaSet) {
+         if ( ((value.meta & meta) === value.meta) && (value.mode === null)) { // has all the meta
+            Object(__WEBPACK_IMPORTED_MODULE_0__wings3d__["runAction"])(0, value.id, event);
+            return;
          }
       }
    }

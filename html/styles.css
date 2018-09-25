@@ -144,8 +144,8 @@ ul.menu > li > a {
   display: flex;
   justify-content: space-between;
   flex: 1;
-  line-height: 1em;
-  padding: 0.5em 2em;
+  line-height: 1rem;
+  padding: 0.5rem 1rem;
   text-decoration: none;
   white-space: nowrap;
 

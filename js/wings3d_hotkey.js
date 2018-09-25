@@ -16,12 +16,18 @@ function runHotkeyAction(mode, event) {
    // run the binding function
    let metaSet = keyMap.get(hotkey);
    if (metaSet) {
-      if (metaSet) {
-         for (let value of metaSet) {
-            if ( ((value.meta & meta) === value.meta) && (value.mode === mode)) { // has all the meta
-               runAction(0, value.id, event);
-               break;
-            }
+      // check mode specific first
+      for (let value of metaSet) {
+         if ( ((value.meta & meta) === value.meta) && (value.mode === mode)) { // has all the meta
+            runAction(0, value.id, event);
+            return;
+         }
+      }
+      // check for non-mode, if no mode specific found
+      for (let value of metaSet) {
+         if ( ((value.meta & meta) === value.meta) && (value.mode === null)) { // has all the meta
+            runAction(0, value.id, event);
+            return;
          }
       }
    }
