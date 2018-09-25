@@ -46,14 +46,14 @@ class EdgeMadsor extends Madsor {
             self.cutAndConnect();
          });
       // Dissolve
-      UI.bindMenuItem(action.edgeDissolve.name, function(ev) {
+      UI.bindMenuItemMode(action.edgeDissolve.name, function(ev) {
             const dissolve = self.dissolve();
             if (dissolve.length > 0) {
                View.undoQueue(new DissolveEdgeCommand(self, dissolve));
             } else {
                // should not happened.
             }
-         });
+         }, this, 'Backspace');
       // Collapse
       UI.bindMenuItem(action.edgeCollapse.name, function(ev) {
             const command = new CollapseEdgeCommand(self);

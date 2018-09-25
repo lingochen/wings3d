@@ -653,11 +653,13 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__wings3d_model__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_12__wings3d_draftbench__ = __webpack_require__(15);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_13__wings3d_boundingvolume__ = __webpack_require__(8);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_14__wings3d_hotkey__ = __webpack_require__(17);
 /*
 //     This module implements most of the commands in the View menu. 
 //
 // Original Erlang Version: Bjorn Gustavsson
 */
+
 
 
 
@@ -764,7 +766,7 @@ function loadPref(form) {
    traverse(theme, (_obj, key, value)=> {
       const data = form.querySelector(`input[name=${key}]`);
       if (data) {
-         if (value.length === 9) {
+         if (value.length === 9) {  // no support of #rrggbbaa yet, for colorpicker.
             data.value = value.slice(0, 7);
          } else {
             data.value = value;
@@ -1514,6 +1516,14 @@ function init() {
    //Renderer.init(gl, drawWorld);  // init by itself
    draftBench = new __WEBPACK_IMPORTED_MODULE_12__wings3d_draftbench__["DraftBench"];
 
+   // capture keyevent.
+   document.addEventListener('keydown', function(event) {
+      //event.preventDefault();
+      //event.stopPropagation();
+      //      Don't fire in text-accepting inputs that we didn't directly bind to
+      __WEBPACK_IMPORTED_MODULE_14__wings3d_hotkey__["runHotkeyAction"](currentMode(), event);
+    });
+
    // capture click mouse event.
    __WEBPACK_IMPORTED_MODULE_3__wings3d_gl__["gl"].canvas.addEventListener("mouseenter", canvasHandleMouseEnter, false);
    __WEBPACK_IMPORTED_MODULE_3__wings3d_gl__["gl"].canvas.addEventListener("mousedown", canvasHandleMouseDown, false); 
@@ -1566,6 +1576,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "bindMenuItem", function() { return bindMenuItem; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "bindMenuItemMMB", function() { return bindMenuItemMMB; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "bindMenuItemRMB", function() { return bindMenuItemRMB; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "bindMenuItemMode", function() { return bindMenuItemMode; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "extractDialogValue", function() { return extractDialogValue; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "runDialog", function() { return runDialog; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "runDialogCenter", function() { return runDialogCenter; });
@@ -1573,7 +1584,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "showContextMenu", function() { return showContextMenu; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "queuePopupMenu", function() { return queuePopupMenu; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "toggleSubmenu", function() { return toggleSubmenu; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_hotkey__ = __webpack_require__(19);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_hotkey__ = __webpack_require__(17);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d__ = __webpack_require__(0);
 /*
    wings3d, ui and ui utility functions. including tutor.
@@ -1583,10 +1594,14 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 
 
-function _bindMenuItem(menuItem, button, id, fn, hotkey, meta) {
+function _bindMenuItem(mode, menuItem, button, id, fn, hotkey, meta) {
    __WEBPACK_IMPORTED_MODULE_1__wings3d__["bindAction"](menuItem, button, id, fn);
    if (hotkey !== undefined) {
-      __WEBPACK_IMPORTED_MODULE_0__wings3d_hotkey__["setHotkey"](id, hotkey, meta);
+      __WEBPACK_IMPORTED_MODULE_0__wings3d_hotkey__["setHotkey"](mode, id, hotkey, meta);
+      // now put it on meta
+      const data = meta ? `${meta}+${hotkey}` : hotkey;
+      menuItem.classList.add("hotkey");
+      menuItem.setAttribute("data-hotkey", data);
    }
 }
 
@@ -1594,7 +1609,7 @@ function _bindMenuItem(menuItem, button, id, fn, hotkey, meta) {
 function bindMenuItem(id, fn, hotkey, meta) {
    const menuItem = document.querySelector('#' + id);
    if (menuItem) {
-      _bindMenuItem(menuItem, 0, id, fn, hotkey, meta);
+      _bindMenuItem(null, menuItem, 0, id, fn, hotkey, meta);
    } else {
       console.log("Click: could not find menuItem " + id);
    }
@@ -1602,7 +1617,7 @@ function bindMenuItem(id, fn, hotkey, meta) {
 function bindMenuItemMMB(id, fn) {
    const menuItem = document.querySelector('#' + id);
    if (menuItem) {
-      _bindMenuItem(menuItem, 1, id, fn);
+      _bindMenuItem(null, menuItem, 1, id, fn);
    } else {
       console.log("AuxClick: could not find menuItem " + id);
    }
@@ -1610,9 +1625,17 @@ function bindMenuItemMMB(id, fn) {
 function bindMenuItemRMB(id, fn) {
    const menuItem = document.querySelector('#' + id);
    if (menuItem) {
-      _bindMenuItem(menuItem, 2, id, fn);
+      _bindMenuItem(null, menuItem, 2, id, fn);
    } else {
       console.log("ContextClick: could not find menuItem " + id);
+   }
+}
+function bindMenuItemMode(id, fn, mode, hotkey, meta) {
+   const menuItem = document.querySelector('#' + id);
+   if (menuItem) {
+      _bindMenuItem(mode, menuItem, 0, id, fn, hotkey, meta);
+   } else {
+      console.log("Click: could not find menuItem " + id);
    }
 }
 
@@ -2125,7 +2148,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_undo__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_util__ = __webpack_require__(9);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_i18n__ = __webpack_require__(17);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_i18n__ = __webpack_require__(18);
 /*
 *  hold onto a WingedEdgeTopology. adds index, texture, etc....
 *  bounding box, picking.
@@ -10037,14 +10060,14 @@ class FaceMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
    constructor() {
       super('face');
       var self = this;
-      __WEBPACK_IMPORTED_MODULE_9__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_10__wings3d__["action"].faceDissolve.name, function(ev) {
+      __WEBPACK_IMPORTED_MODULE_9__wings3d_ui__["bindMenuItemMode"](__WEBPACK_IMPORTED_MODULE_10__wings3d__["action"].faceDissolve.name, function(ev) {
             const command = new DissolveFaceCommand(self);
             if (command.doIt()) {
                __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"](command);
             } else {
                geometryStatus('Selected Face not dissolveable');
             }
-         });
+         }, this, 'Backspace');
       __WEBPACK_IMPORTED_MODULE_9__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_10__wings3d__["action"].faceCollapse.name, function(ev) {
             const command = new CollapseFaceCommand(self);
             command.doIt();
@@ -11451,14 +11474,14 @@ class EdgeMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
             self.cutAndConnect();
          });
       // Dissolve
-      __WEBPACK_IMPORTED_MODULE_6__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].edgeDissolve.name, function(ev) {
+      __WEBPACK_IMPORTED_MODULE_6__wings3d_ui__["bindMenuItemMode"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].edgeDissolve.name, function(ev) {
             const dissolve = self.dissolve();
             if (dissolve.length > 0) {
                __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["undoQueue"](new DissolveEdgeCommand(self, dissolve));
             } else {
                // should not happened.
             }
-         });
+         }, this, 'Backspace');
       // Collapse
       __WEBPACK_IMPORTED_MODULE_6__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].edgeCollapse.name, function(ev) {
             const command = new CollapseEdgeCommand(self);
@@ -11989,11 +12012,11 @@ class BodyMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
    constructor() {
       super('body');
       const self = this;
-      __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_10__wings3d__["action"].bodyDelete.name, function(ev) {
+      __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItemMode"](__WEBPACK_IMPORTED_MODULE_10__wings3d__["action"].bodyDelete.name, function(ev) {
             const command = new DeleteBodyCommand(self.getSelected());
             __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["undoQueue"]( command );
             command.doIt(); // delete current selected.
-         });
+         }, this, 'Backspace');
 
       __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_10__wings3d__["action"].bodyRename.name, function(ev) {
          __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["runDialog"]('#renameDialog', ev, function(form) {
@@ -12642,16 +12665,16 @@ class VertexMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"]
                // show no connection possible message.
             }
          });
-      __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].vertexDissolve.name, function(ev) {
+      __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItemMode"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].vertexDissolve.name, function(ev) {
             const dissolve = new VertexDissolveCommand(self);
             dissolve.doIt();
             __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"](dissolve);
-         });
-      __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].vertexCollapse.name, function(ev) {
+         }, this, 'Delete');
+      __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItemMode"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].vertexCollapse.name, function(ev) {
             const dissolve = new VertexCollapseCommand(self);
             dissolve.doIt();
             __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"](dissolve);
-         });
+         }, this, 'Backspace');
       __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].vertexWeld.name, (ev)=> {
          let snapshot = [];
          for (let preview of this.selectedCage()) {
@@ -14230,6 +14253,58 @@ __WEBPACK_IMPORTED_MODULE_1__wings3d_js__["onReady"](init);
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "runHotkeyAction", function() { return runHotkeyAction; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "setHotkey", function() { return setHotkey; });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d__ = __webpack_require__(0);
+//
+// hotkey handling and remapping.
+//
+//
+//
+
+
+
+const keyMap = new Map;
+
+function runHotkeyAction(mode, event) {
+   // extract alt, ctrl, shift key
+   const meta = Object(__WEBPACK_IMPORTED_MODULE_0__wings3d__["createMask"])(event.altKey, event.ctrlKey, event.shiftKey);
+   // extract key
+   const hotkey = event.key.toLowerCase();
+   // run the binding function
+   let metaSet = keyMap.get(hotkey);
+   if (metaSet) {
+      if (metaSet) {
+         for (let value of metaSet) {
+            if ( ((value.meta & meta) === value.meta) && (value.mode === mode)) { // has all the meta
+               Object(__WEBPACK_IMPORTED_MODULE_0__wings3d__["runAction"])(0, value.id, event);
+               break;
+            }
+         }
+      }
+   }
+};
+
+
+function setHotkey(mode, id, hotkey, meta='') {
+      hotkey = hotkey.toLowerCase();
+      meta = meta.toLowerCase();
+      const metaMask = Object(__WEBPACK_IMPORTED_MODULE_0__wings3d__["createMask"])(meta.indexOf('alt') > -1, meta.indexOf('ctrl') > -1, meta.indexOf('shift') > -1);
+      if (!keyMap.has(hotkey)) {
+         keyMap.set(hotkey, []);
+      }
+      keyMap.get(hotkey).unshift({mode: mode, meta: metaMask, id: id});
+};
+
+
+
+
+/***/ }),
+/* 18 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "i18n", function() { return i18n; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "setCurrentLocale", function() { return setCurrentLocale; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getCurrentLocale", function() { return getCurrentLocale; });
@@ -14398,7 +14473,7 @@ Object(__WEBPACK_IMPORTED_MODULE_0__wings3d__["onReady"])(()=> {
 });
 
 /***/ }),
-/* 18 */
+/* 19 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -14858,58 +14933,6 @@ function expect(action, log) {
 
 // register for 
 __WEBPACK_IMPORTED_MODULE_1__wings3d__["onReady"](init);
-
-
-
-/***/ }),
-/* 19 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "setHotkey", function() { return setHotkey; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d__ = __webpack_require__(0);
-//
-// hotkey handling and remapping.
-//
-//
-//
-
-
-
-const keyMap = new Map;
-
-document.addEventListener('keydown', function(event) {
-   //event.preventDefault();
-   //event.stopPropagation();
-   //      Don't fire in text-accepting inputs that we didn't directly bind to
-
-   // extract alt, ctrl, shift key
-   const meta = Object(__WEBPACK_IMPORTED_MODULE_0__wings3d__["createMask"])(event.altKey, event.ctrlKey, event.shiftKey);
-   // extract key
-   const hotkey = event.key.toLowerCase();
-   // run the binding function
-   if (keyMap.has(hotkey)) {
-      const metaSet = keyMap.get(hotkey);
-      for (let value of metaSet) {
-         if ( (value.meta & meta) == value.meta) { // has all the meta
-            Object(__WEBPACK_IMPORTED_MODULE_0__wings3d__["runAction"])(value.id);
-            break;
-         }
-      }
-   }
-});
-
-function setHotkey(id, hotkey, meta='') {
-      hotkey = hotkey.toLowerCase();
-      meta = meta.toLowerCase();
-      const metaMask = Object(__WEBPACK_IMPORTED_MODULE_0__wings3d__["createMask"])(meta.indexOf('alt') > -1, meta.indexOf('ctrl') > -1, meta.indexOf('shift') > -1);
-      if (!keyMap.has(hotkey)) {
-         keyMap.set(hotkey, []);
-      }
-      keyMap.get(hotkey).unshift({id: id, meta: metaMask});
-};
-
 
 
 
@@ -15720,10 +15743,10 @@ __webpack_require__(12);
 __webpack_require__(10);
 __webpack_require__(5);
 __webpack_require__(33);
-__webpack_require__(19);
 __webpack_require__(17);
-__webpack_require__(22);
 __webpack_require__(18);
+__webpack_require__(22);
+__webpack_require__(19);
 __webpack_require__(11);
 __webpack_require__(4);
 __webpack_require__(20);
@@ -15757,10 +15780,10 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__css_bubble_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4__css_bubble_css__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_view__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_camera__ = __webpack_require__(16);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_interact__ = __webpack_require__(18);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_interact__ = __webpack_require__(19);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__wings3d_ui__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__wings3d_i18n__ = __webpack_require__(17);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__wings3d_i18n__ = __webpack_require__(18);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__js_plugins_cubeshape_js__ = __webpack_require__(32);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_12__js_plugins_wavefront_obj_js__ = __webpack_require__(21);
 // app.js
@@ -16364,7 +16387,7 @@ document.addEventListener('DOMContentLoaded', function() {
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "tours", function() { return tours; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_interact__ = __webpack_require__(18);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_interact__ = __webpack_require__(19);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_ui__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d__ = __webpack_require__(0);
 /*

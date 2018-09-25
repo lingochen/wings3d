@@ -21,14 +21,14 @@ class FaceMadsor extends Madsor {
    constructor() {
       super('face');
       var self = this;
-      UI.bindMenuItem(action.faceDissolve.name, function(ev) {
+      UI.bindMenuItemMode(action.faceDissolve.name, function(ev) {
             const command = new DissolveFaceCommand(self);
             if (command.doIt()) {
                View.undoQueue(command);
             } else {
                geometryStatus('Selected Face not dissolveable');
             }
-         });
+         }, this, 'Backspace');
       UI.bindMenuItem(action.faceCollapse.name, function(ev) {
             const command = new CollapseFaceCommand(self);
             command.doIt();

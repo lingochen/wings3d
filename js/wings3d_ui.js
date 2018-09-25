@@ -6,10 +6,14 @@ import * as Hotkey from './wings3d_hotkey';
 import * as Wings3D from './wings3d';
 
 
-function _bindMenuItem(menuItem, button, id, fn, hotkey, meta) {
+function _bindMenuItem(mode, menuItem, button, id, fn, hotkey, meta) {
    Wings3D.bindAction(menuItem, button, id, fn);
    if (hotkey !== undefined) {
-      Hotkey.setHotkey(id, hotkey, meta);
+      Hotkey.setHotkey(mode, id, hotkey, meta);
+      // now put it on meta
+      const data = meta ? `${meta}+${hotkey}` : hotkey;
+      menuItem.classList.add("hotkey");
+      menuItem.setAttribute("data-hotkey", data);
    }
 }
 
@@ -17,7 +21,7 @@ function _bindMenuItem(menuItem, button, id, fn, hotkey, meta) {
 function bindMenuItem(id, fn, hotkey, meta) {
    const menuItem = document.querySelector('#' + id);
    if (menuItem) {
-      _bindMenuItem(menuItem, 0, id, fn, hotkey, meta);
+      _bindMenuItem(null, menuItem, 0, id, fn, hotkey, meta);
    } else {
       console.log("Click: could not find menuItem " + id);
    }
@@ -25,7 +29,7 @@ function bindMenuItem(id, fn, hotkey, meta) {
 function bindMenuItemMMB(id, fn) {
    const menuItem = document.querySelector('#' + id);
    if (menuItem) {
-      _bindMenuItem(menuItem, 1, id, fn);
+      _bindMenuItem(null, menuItem, 1, id, fn);
    } else {
       console.log("AuxClick: could not find menuItem " + id);
    }
@@ -33,9 +37,17 @@ function bindMenuItemMMB(id, fn) {
 function bindMenuItemRMB(id, fn) {
    const menuItem = document.querySelector('#' + id);
    if (menuItem) {
-      _bindMenuItem(menuItem, 2, id, fn);
+      _bindMenuItem(null, menuItem, 2, id, fn);
    } else {
       console.log("ContextClick: could not find menuItem " + id);
+   }
+}
+function bindMenuItemMode(id, fn, mode, hotkey, meta) {
+   const menuItem = document.querySelector('#' + id);
+   if (menuItem) {
+      _bindMenuItem(mode, menuItem, 0, id, fn, hotkey, meta);
+   } else {
+      console.log("Click: could not find menuItem " + id);
    }
 }
 
@@ -389,6 +401,7 @@ export {
    bindMenuItem,
    bindMenuItemMMB,
    bindMenuItemRMB,
+   bindMenuItemMode,
    extractDialogValue,
    runDialog,
    runDialogCenter,

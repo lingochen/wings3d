@@ -29,16 +29,16 @@ class VertexMadsor extends Madsor {
                // show no connection possible message.
             }
          });
-      UI.bindMenuItem(action.vertexDissolve.name, function(ev) {
+      UI.bindMenuItemMode(action.vertexDissolve.name, function(ev) {
             const dissolve = new VertexDissolveCommand(self);
             dissolve.doIt();
             View.undoQueue(dissolve);
-         });
-      UI.bindMenuItem(action.vertexCollapse.name, function(ev) {
+         }, this, 'Delete');
+      UI.bindMenuItemMode(action.vertexCollapse.name, function(ev) {
             const dissolve = new VertexCollapseCommand(self);
             dissolve.doIt();
             View.undoQueue(dissolve);
-         });
+         }, this, 'Backspace');
       UI.bindMenuItem(action.vertexWeld.name, (ev)=> {
          let snapshot = [];
          for (let preview of this.selectedCage()) {

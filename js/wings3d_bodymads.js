@@ -19,11 +19,11 @@ class BodyMadsor extends Madsor {
    constructor() {
       super('body');
       const self = this;
-      UI.bindMenuItem(action.bodyDelete.name, function(ev) {
+      UI.bindMenuItemMode(action.bodyDelete.name, function(ev) {
             const command = new DeleteBodyCommand(self.getSelected());
             View.undoQueue( command );
             command.doIt(); // delete current selected.
-         });
+         }, this, 'Backspace');
 
       UI.bindMenuItem(action.bodyRename.name, function(ev) {
          UI.runDialog('#renameDialog', ev, function(form) {

@@ -64,7 +64,8 @@ nav.menu.bar {
 }
 
 ul.menu > li > a {
-  display: block;
+  display: flex;
+  justify-content: space-between;
   flex: 1;
   line-height: 1em;
   padding: 0.5em 2em;
@@ -88,6 +89,10 @@ ul.menu li:hover {
 }
 ul.menu li > a:hover {
   color: var(--menuHighlightText);
+}
+ul.menu li > a.hotkey:after {
+  content: attr(data-hotkey);
+  padding-left: 1rem;
 }
 
 /* added attribute for showing extra menu available. */

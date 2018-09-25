@@ -18,6 +18,7 @@ import {BodyMadsor} from './wings3d_bodymads';
 import {PreviewCage} from './wings3d_model';
 import {DraftBench, CheckPoint} from './wings3d_draftbench';
 import {Ray} from './wings3d_boundingvolume';
+import * as Hotkey from './wings3d_hotkey';
 
 
 // 
@@ -109,7 +110,7 @@ function loadPref(form) {
    traverse(theme, (_obj, key, value)=> {
       const data = form.querySelector(`input[name=${key}]`);
       if (data) {
-         if (value.length === 9) {
+         if (value.length === 9) {  // no support of #rrggbbaa yet, for colorpicker.
             data.value = value.slice(0, 7);
          } else {
             data.value = value;
@@ -858,6 +859,14 @@ function init() {
 
    //Renderer.init(gl, drawWorld);  // init by itself
    draftBench = new DraftBench;
+
+   // capture keyevent.
+   document.addEventListener('keydown', function(event) {
+      //event.preventDefault();
+      //event.stopPropagation();
+      //      Don't fire in text-accepting inputs that we didn't directly bind to
+      Hotkey.runHotkeyAction(currentMode(), event);
+    });
 
    // capture click mouse event.
    gl.canvas.addEventListener("mouseenter", canvasHandleMouseEnter, false);
