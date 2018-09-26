@@ -717,7 +717,7 @@ const theme = {
        clipPlaneColor: [0.8, 0.3, 0.0],
        defaultAxis: [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]],
        edgeColor: [0.0, 0.0, 0.0],
-       gridColor: [0.3, 0.3, 0.3],
+       gridColor: '#4D4D4D',//[0.3, 0.3, 0.3],
        hardEdgeColor: [1.0, 0.5, 0.0],
        maskedVertexColor: [0.5, 1.0, 0.0, 0.8],
        materialDefault: [0.7898538076923077, 0.8133333333333334, 0.6940444444444445],
@@ -14276,14 +14276,14 @@ function runHotkeyAction(mode, event) {
    if (metaSet) {
       // check mode specific first
       for (let value of metaSet) {
-         if ( ((value.meta & meta) === value.meta) && (value.mode === mode)) { // has all the meta
+         if ( (meta === value.meta) && (value.mode === mode)) { // has all the meta
             Object(__WEBPACK_IMPORTED_MODULE_0__wings3d__["runAction"])(0, value.id, event);
             return;
          }
       }
       // check for non-mode, if no mode specific found
       for (let value of metaSet) {
-         if ( ((value.meta & meta) === value.meta) && (value.mode === null)) { // has all the meta
+         if ( (meta === value.meta) && (value.mode === null)) { // has all the meta
             Object(__WEBPACK_IMPORTED_MODULE_0__wings3d__["runAction"])(0, value.id, event);
             return;
          }
@@ -15419,7 +15419,7 @@ function renderGroundAndAxes(gl, projection, modelView) {
       //(Camera.view.alongAxis =/= none);      
    if (show) {
       var alongAxis = __WEBPACK_IMPORTED_MODULE_2__wings3d_camera__["view"].alongAxis;
-      var color = __WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].gridColor;
+      const color = hexToRGBA(__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].gridColor);
          //case view.AlongAxis of
          // x -> gl:rotatef(90.0, 0.0, 1.0, 0.0);
          // z -> ok;
@@ -15433,7 +15433,7 @@ function renderGroundAndAxes(gl, projection, modelView) {
       gl.useProgram(lineProg.progHandle);
       // bind attribute, vertex, color, matrix
       gl.setBufferAndAttrib(lineProg.groundGridVBO.position, lineProg.attribute.position.loc);
-      gl.uniform4fv(lineProg.uniform.uColor.loc, new Float32Array([color[0], color[1], color[2], 1.0]));
+      gl.uniform4fv(lineProg.uniform.uColor.loc, color);
       gl.uniformMatrix4fv(lineProg.transform.projection, false, projection);
       gl.uniformMatrix4fv(lineProg.transform.worldView, false, modelView);
       // draw line segments
@@ -15467,16 +15467,17 @@ function needToRedraw() {
    redrawFlag = true;
 };
 
-function hexToRGB(hex) {
-  return {r: parseInt(hex.slice(1, 3), 16),
-          g: parseInt(hex.slice(3, 5), 16),
-          b: parseInt(hex.slice(5, 7), 16)};
+function hexToRGBA(hex) {
+  return [parseInt(hex.slice(1, 3), 16)/255,
+          parseInt(hex.slice(3, 5), 16)/255,
+          parseInt(hex.slice(5, 7), 16)/255,
+          1.0];
 };
 function render(gl, drawWorldFn) {
    if (gl.resizeToDisplaySize() || __WEBPACK_IMPORTED_MODULE_2__wings3d_camera__["view"].isModified || redrawFlag) {
       redrawFlag = false; 
-      const backColor = hexToRGB(__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].geometryBackground);
-      gl.clearColor(backColor.r/255, backColor.g/255, backColor.b/255, 1.0);
+      const backColor = hexToRGBA(__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].geometryBackground);
+      gl.clearColor(backColor[0], backColor[1], backColor[2], backColor[3]);
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
       gl.polygonOffset(0.0, 0.0);
       gl.enable(gl.POLYGON_OFFSET_FILL);
