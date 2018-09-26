@@ -61,7 +61,7 @@ const theme = {
        clipPlaneColor: [0.8, 0.3, 0.0],
        defaultAxis: [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]],
        edgeColor: [0.0, 0.0, 0.0],
-       gridColor: [0.3, 0.3, 0.3],
+       gridColor: '#4D4D4D',//[0.3, 0.3, 0.3],
        hardEdgeColor: [1.0, 0.5, 0.0],
        maskedVertexColor: [0.5, 1.0, 0.0, 0.8],
        materialDefault: [0.7898538076923077, 0.8133333333333334, 0.6940444444444445],

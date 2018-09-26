@@ -18,14 +18,14 @@ function runHotkeyAction(mode, event) {
    if (metaSet) {
       // check mode specific first
       for (let value of metaSet) {
-         if ( ((value.meta & meta) === value.meta) && (value.mode === mode)) { // has all the meta
+         if ( (meta === value.meta) && (value.mode === mode)) { // has all the meta
             runAction(0, value.id, event);
             return;
          }
       }
       // check for non-mode, if no mode specific found
       for (let value of metaSet) {
-         if ( ((value.meta & meta) === value.meta) && (value.mode === null)) { // has all the meta
+         if ( (meta === value.meta) && (value.mode === null)) { // has all the meta
             runAction(0, value.id, event);
             return;
          }

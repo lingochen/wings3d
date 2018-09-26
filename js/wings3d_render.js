@@ -461,7 +461,7 @@ function renderGroundAndAxes(gl, projection, modelView) {
       //(Camera.view.alongAxis =/= none);      
    if (show) {
       var alongAxis = Camera.view.alongAxis;
-      var color = View.theme.gridColor;
+      const color = hexToRGBA(View.theme.gridColor);
          //case view.AlongAxis of
          // x -> gl:rotatef(90.0, 0.0, 1.0, 0.0);
          // z -> ok;
@@ -475,7 +475,7 @@ function renderGroundAndAxes(gl, projection, modelView) {
       gl.useProgram(lineProg.progHandle);
       // bind attribute, vertex, color, matrix
       gl.setBufferAndAttrib(lineProg.groundGridVBO.position, lineProg.attribute.position.loc);
-      gl.uniform4fv(lineProg.uniform.uColor.loc, new Float32Array([color[0], color[1], color[2], 1.0]));
+      gl.uniform4fv(lineProg.uniform.uColor.loc, color);
       gl.uniformMatrix4fv(lineProg.transform.projection, false, projection);
       gl.uniformMatrix4fv(lineProg.transform.worldView, false, modelView);
       // draw line segments
@@ -509,16 +509,17 @@ function needToRedraw() {
    redrawFlag = true;
 };
 
-function hexToRGB(hex) {
-  return {r: parseInt(hex.slice(1, 3), 16),
-          g: parseInt(hex.slice(3, 5), 16),
-          b: parseInt(hex.slice(5, 7), 16)};
+function hexToRGBA(hex) {
+  return [parseInt(hex.slice(1, 3), 16)/255,
+          parseInt(hex.slice(3, 5), 16)/255,
+          parseInt(hex.slice(5, 7), 16)/255,
+          1.0];
 };
 function render(gl, drawWorldFn) {
    if (gl.resizeToDisplaySize() || Camera.view.isModified || redrawFlag) {
       redrawFlag = false; 
-      const backColor = hexToRGB(View.theme.geometryBackground);
-      gl.clearColor(backColor.r/255, backColor.g/255, backColor.b/255, 1.0);
+      const backColor = hexToRGBA(View.theme.geometryBackground);
+      gl.clearColor(backColor[0], backColor[1], backColor[2], backColor[3]);
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
       gl.polygonOffset(0.0, 0.0);
       gl.enable(gl.POLYGON_OFFSET_FILL);
