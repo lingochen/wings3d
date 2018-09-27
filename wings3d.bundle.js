@@ -340,6 +340,7 @@ const action = {
    undoEdit: () => {notImplemented(this);},
    // preference Group
    preferenceButton: ()=>{notImplemented(this);},
+   toggleGround: ()=>{notImplemented(this);},
    // createObject Menu
    createCube: () => {notImplemented(this);},
    createCubePref: () =>{notImplemented(this);},
@@ -810,13 +811,14 @@ function storePref(form) {
       }
     });
    // store prop
-      // load prop
-      traverse(prop, (obj, key, _value)=> {
-         const data = form.querySelector(`input[type=checkbox][name=${key}]`);
-         if (data) {
-            obj[key] = data.checked;
-         }
-       });
+   // load prop
+   traverse(prop, (obj, key, _value)=> {
+      const data = form.querySelector(`input[type=checkbox][name=${key}]`);
+      if (data) {
+         obj[key] = data.checked;
+      }
+    });
+    __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
 };
 
 //--  end of pref and theme --------------------------------------------------------------------------
@@ -1503,6 +1505,14 @@ function init() {
          button.fn();
        });
    }
+   // bind showGrid button
+   __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].toggleGround.name, (_ev)=> {
+      const data = document.querySelector('#toggleGroundFor');
+      if (data) {
+         prop.showGroundplane = !data.checked;  // click event is earlier than input.checked event, so the value hasn't toggle yet.
+         __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
+      }
+    });
    // bind pref button
    __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].preferenceButton.name, (_ev)=>{
       __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["runDialogCenter"]('#preferenceForm', storePref, loadPref);
@@ -15435,7 +15445,7 @@ function getAxisColor() {
 function renderGroundAndAxes(gl, projection, modelView) {
    var showAxes = __WEBPACK_IMPORTED_MODULE_1__wings3d_view__["prop"].showAxes;
    // draw groundPlane
-   var show = __WEBPACK_IMPORTED_MODULE_1__wings3d_view__["prop"].showGroundplane; // || 
+   const show = __WEBPACK_IMPORTED_MODULE_1__wings3d_view__["prop"].showGroundplane; // || 
       //(wings_pref:get_value(force_show_along_grid) andalso
       //(Camera.view.alongAxis =/= none);      
    if (show) {
