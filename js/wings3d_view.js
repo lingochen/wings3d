@@ -43,8 +43,6 @@ const prop = {
       constrainAxes: true,
       clipPlane: false,
       orthogonalView: false,
-      numberOfLights: 1,
-      activeShader: 1,
       filterTexture: true,
       frameDisregardsMirror: false,
       useSceneLights: false,
@@ -56,12 +54,16 @@ const prop = {
       allowInfoText: true,
       miniAxis: true
    };
+const propExtend = {
+   numberOfLights: 1,
+   activeShader: 1,
+};
 const theme = {
        activeVectorColor: [0.0, 1.0, 0.0],
        clipPlaneColor: [0.8, 0.3, 0.0],
        defaultAxis: [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]],
        edgeColor: [0.0, 0.0, 0.0],
-       gridColor: '#4D4D4D',//[0.3, 0.3, 0.3],
+       gridColor: '#4D4D4D',
        hardEdgeColor: [1.0, 0.5, 0.0],
        maskedVertexColor: [0.5, 1.0, 0.0, 0.8],
        materialDefault: [0.7898538076923077, 0.8133333333333334, 0.6940444444444445],
@@ -73,11 +75,9 @@ const theme = {
        tweakVectorColor: [1.0, 0.5, 0.0],
        unselectedHlite: [0.0, 0.65, 0.0],
        vertexColor: [0.0, 0.0, 0.0],
-       //color: [[0.7, 0.0, 0.1], [0.37210077142857145, 0.82, 0.0], [0.0, 0.3, 0.8]],
        colorX: '#B3001A',
        colorY: '#5FD100',
        colorZ: '#004DCC',
-       //negColor: [[0.8, 0.8, 0.8], [0.8, 0.8, 0.8], [0.8, 0.8, 0.8]],
        negColorX: '#CCCCCC',
        negColorY: '#CCCCCC',
        negColorZ: '#CCCCCC',
@@ -114,13 +114,20 @@ function traverse(obj, loadStore) {
 }
 function loadPref(form) {
    traverse(theme, (_obj, key, value)=> {
-      const data = form.querySelector(`input[name=${key}]`);
+      const data = form.querySelector(`input[type=color][name=${key}]`);
       if (data) {
          if (value.length === 9) {  // no support of #rrggbbaa yet, for colorpicker.
             data.value = value.slice(0, 7);
          } else {
             data.value = value;
          }
+      }
+    });
+   // load prop
+   traverse(prop, (_obj, key, value)=> {
+      const data = form.querySelector(`input[type=checkbox][name=${key}]`);
+      if (data) {
+         data.checked = value;
       }
     });
 };
@@ -131,7 +138,7 @@ function hexToRGBA(hex) {  // microsft edge don't support #rrggbbaa format yet, 
 };
 function storePref(form) {
    traverse(theme, (obj, key, _value) => {
-      const data = form.querySelector(`input[name=${key}]`);
+      const data = form.querySelector(`input[type=color][name=${key}]`);
       if (data) {
          obj[key] = themeAlpha[key] ? (data.value + themeAlpha[key]) : data.value;
       }
@@ -146,6 +153,14 @@ function storePref(form) {
          root.style.setProperty(`--${key}`, hexToRGBA(value));
       }
     });
+   // store prop
+      // load prop
+      traverse(prop, (obj, key, _value)=> {
+         const data = form.querySelector(`input[type=checkbox][name=${key}]`);
+         if (data) {
+            obj[key] = data.checked;
+         }
+       });
 };
 
 //--  end of pref and theme --------------------------------------------------------------------------
