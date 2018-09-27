@@ -341,6 +341,7 @@ const action = {
    // preference Group
    preferenceButton: ()=>{notImplemented(this);},
    toggleGround: ()=>{notImplemented(this);},
+   toggleAxes: ()=> {notImplemented(this);},
    // createObject Menu
    createCube: () => {notImplemented(this);},
    createCubePref: () =>{notImplemented(this);},
@@ -1510,6 +1511,14 @@ function init() {
       const data = document.querySelector('#toggleGroundFor');
       if (data) {
          prop.showGroundplane = !data.checked;  // click event is earlier than input.checked event, so the value hasn't toggle yet.
+         __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
+      }
+    });
+   // bind showAxes button
+   __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].toggleAxes.name, (_ev)=> {
+      const data = document.querySelector('#toggleAxesFor');
+      if (data) {
+         prop.showAxes = !data.checked;  // click event is earlier than input.checked event, so the value hasn't toggle yet.
          __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
       }
     });
@@ -15443,7 +15452,7 @@ function getAxisColor() {
    return new Float32Array(arry);
 }
 function renderGroundAndAxes(gl, projection, modelView) {
-   var showAxes = __WEBPACK_IMPORTED_MODULE_1__wings3d_view__["prop"].showAxes;
+   const showAxes = __WEBPACK_IMPORTED_MODULE_1__wings3d_view__["prop"].showAxes;
    // draw groundPlane
    const show = __WEBPACK_IMPORTED_MODULE_1__wings3d_view__["prop"].showGroundplane; // || 
       //(wings_pref:get_value(force_show_along_grid) andalso
