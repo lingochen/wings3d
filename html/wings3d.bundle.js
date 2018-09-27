@@ -340,6 +340,7 @@ const action = {
    undoEdit: () => {notImplemented(this);},
    // preference Group
    preferenceButton: ()=>{notImplemented(this);},
+   toggleOrtho: ()=> {notImplemented(this);},
    toggleGround: ()=>{notImplemented(this);},
    toggleAxes: ()=> {notImplemented(this);},
    // createObject Menu
@@ -1385,7 +1386,7 @@ function projection(In) {
    const size = __WEBPACK_IMPORTED_MODULE_3__wings3d_gl__["gl"].getViewport();
    const aspect = (size[2]-size[0]) / (size[3]-size[1]);
    const view = __WEBPACK_IMPORTED_MODULE_2__wings3d_camera__["view"];
-   const ortho = view.orthogonalView;
+   const ortho = prop.orthogonalView;
    if (!ortho && view.alongAxis) {
       ortho = prop.force_ortho_along_axis;
    }
@@ -1519,6 +1520,14 @@ function init() {
       const data = document.querySelector('#toggleAxesFor');
       if (data) {
          prop.showAxes = !data.checked;  // click event is earlier than input.checked event, so the value hasn't toggle yet.
+         __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
+      }
+    });
+   // perspective or ortho projection
+   __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].toggleOrtho.name, (_ev)=> {
+      const data = document.querySelector('#toggleOrthoFor');
+      if (data) {
+         prop.orthogonalView = !data.checked;  // click event is earlier than input.checked event, so the value hasn't toggle yet.
          __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
       }
     });

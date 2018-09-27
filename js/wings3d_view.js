@@ -727,7 +727,7 @@ function projection(In) {
    const size = gl.getViewport();
    const aspect = (size[2]-size[0]) / (size[3]-size[1]);
    const view = Camera.view;
-   const ortho = view.orthogonalView;
+   const ortho = prop.orthogonalView;
    if (!ortho && view.alongAxis) {
       ortho = prop.force_ortho_along_axis;
    }
@@ -861,6 +861,14 @@ function init() {
       const data = document.querySelector('#toggleAxesFor');
       if (data) {
          prop.showAxes = !data.checked;  // click event is earlier than input.checked event, so the value hasn't toggle yet.
+         Renderer.needToRedraw();
+      }
+    });
+   // perspective or ortho projection
+   UI.bindMenuItem(Wings3D.action.toggleOrtho.name, (_ev)=> {
+      const data = document.querySelector('#toggleOrthoFor');
+      if (data) {
+         prop.orthogonalView = !data.checked;  // click event is earlier than input.checked event, so the value hasn't toggle yet.
          Renderer.needToRedraw();
       }
     });

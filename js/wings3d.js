@@ -254,6 +254,7 @@ const action = {
    undoEdit: () => {notImplemented(this);},
    // preference Group
    preferenceButton: ()=>{notImplemented(this);},
+   toggleOrtho: ()=> {notImplemented(this);},
    toggleGround: ()=>{notImplemented(this);},
    toggleAxes: ()=> {notImplemented(this);},
    // createObject Menu
