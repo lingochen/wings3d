@@ -321,7 +321,7 @@ function renderAxisLetter(gl, zFar) {
       zFar = zFar + GROUND_GRID_SIZE;
       //gl:polygonMode(?GL_FRONT_AND_BACK, ?GL_FILL),
       
-      var color = View.theme.color;
+      var color = [hexToRGB(View.theme.colorX), hexToRGB(View.theme.colorY), hexToRGB(View.theme.colorZ)];
       var endx = gl.transformVertex(vec4.fromValues(zFar, 0.0, 0.0, 1.0)), 
           endy = gl.transformVertex(vec4.fromValues(0.0, zFar, 0.0, 1.0)), 
           endz = gl.transformVertex(vec4.fromValues(0.0, 0.0, zFar, 1.0));
@@ -345,7 +345,7 @@ function initMiniAxis(gl, inModelView) {
       [-PB, 0.0,  PA], [0.0, 0.0, 0.1], [PB, 0.0,  PA], [0.0, 0.0, 0.1]   // z arrow
    );
    // ready color
-   var clr = View.theme.color;
+   var clr = [hexToRGB(View.theme.colorX), hexToRGB(View.theme.colorY), hexToRGB(View.theme.colorZ)];
    var color = [], arrow = [];
    for (var i=0; i< 3; ++i) {
       color = color.concat(clr[i], clr[i]);
@@ -445,8 +445,8 @@ function getAxis() {
    return new Float32Array([].concat.apply([],arry));
 }
 function getAxisColor() {
-   var color = View.theme.color,
-       negColor = View.theme.negColor;
+    const color = [hexToRGB(View.theme.colorX), hexToRGB(View.theme.colorY), hexToRGB(View.theme.colorZ)],
+       negColor = [hexToRGB(View.theme.negColorX), hexToRGB(View.theme.negColorY), hexToRGB(View.theme.negColorZ)];
    var arry = [];
    for (var i = 0; i < 3; i++) {
       arry = arry.concat(color[i], color[i], negColor[i], negColor[i]);
@@ -509,6 +509,11 @@ function needToRedraw() {
    redrawFlag = true;
 };
 
+function hexToRGB(hex) {
+   return [parseInt(hex.slice(1, 3), 16)/255,
+           parseInt(hex.slice(3, 5), 16)/255,
+           parseInt(hex.slice(5, 7), 16)/255];
+ };
 function hexToRGBA(hex) {
   return [parseInt(hex.slice(1, 3), 16)/255,
           parseInt(hex.slice(3, 5), 16)/255,

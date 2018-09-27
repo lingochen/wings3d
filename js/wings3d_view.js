@@ -73,8 +73,14 @@ const theme = {
        tweakVectorColor: [1.0, 0.5, 0.0],
        unselectedHlite: [0.0, 0.65, 0.0],
        vertexColor: [0.0, 0.0, 0.0],
-       color: [[0.7, 0.0, 0.1], [0.37210077142857145, 0.82, 0.0], [0.0, 0.3, 0.8]],
-       negColor: [[0.8, 0.8, 0.8], [0.8, 0.8, 0.8], [0.8, 0.8, 0.8]],
+       //color: [[0.7, 0.0, 0.1], [0.37210077142857145, 0.82, 0.0], [0.0, 0.3, 0.8]],
+       colorX: '#B3001A',
+       colorY: '#5FD100',
+       colorZ: '#004DCC',
+       //negColor: [[0.8, 0.8, 0.8], [0.8, 0.8, 0.8], [0.8, 0.8, 0.8]],
+       negColorX: '#CCCCCC',
+       negColorY: '#CCCCCC',
+       negColorZ: '#CCCCCC',
        // UserInterface'
        geometryBackground: '#CCCCCC',
        css: {
