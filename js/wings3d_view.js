@@ -856,6 +856,14 @@ function init() {
          Renderer.needToRedraw();
       }
     });
+   // bind showAxes button
+   UI.bindMenuItem(Wings3D.action.toggleAxes.name, (_ev)=> {
+      const data = document.querySelector('#toggleAxesFor');
+      if (data) {
+         prop.showAxes = !data.checked;  // click event is earlier than input.checked event, so the value hasn't toggle yet.
+         Renderer.needToRedraw();
+      }
+    });
    // bind pref button
    UI.bindMenuItem(Wings3D.action.preferenceButton.name, (_ev)=>{
       UI.runDialogCenter('#preferenceForm', storePref, loadPref);

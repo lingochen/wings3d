@@ -255,6 +255,7 @@ const action = {
    // preference Group
    preferenceButton: ()=>{notImplemented(this);},
    toggleGround: ()=>{notImplemented(this);},
+   toggleAxes: ()=> {notImplemented(this);},
    // createObject Menu
    createCube: () => {notImplemented(this);},
    createCubePref: () =>{notImplemented(this);},
