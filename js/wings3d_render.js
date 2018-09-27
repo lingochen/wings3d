@@ -456,7 +456,7 @@ function getAxisColor() {
 function renderGroundAndAxes(gl, projection, modelView) {
    var showAxes = View.prop.showAxes;
    // draw groundPlane
-   var show = View.prop.showGroundplane; // || 
+   const show = View.prop.showGroundplane; // || 
       //(wings_pref:get_value(force_show_along_grid) andalso
       //(Camera.view.alongAxis =/= none);      
    if (show) {

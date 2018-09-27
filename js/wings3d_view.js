@@ -154,13 +154,14 @@ function storePref(form) {
       }
     });
    // store prop
-      // load prop
-      traverse(prop, (obj, key, _value)=> {
-         const data = form.querySelector(`input[type=checkbox][name=${key}]`);
-         if (data) {
-            obj[key] = data.checked;
-         }
-       });
+   // load prop
+   traverse(prop, (obj, key, _value)=> {
+      const data = form.querySelector(`input[type=checkbox][name=${key}]`);
+      if (data) {
+         obj[key] = data.checked;
+      }
+    });
+    Renderer.needToRedraw();
 };
 
 //--  end of pref and theme --------------------------------------------------------------------------
@@ -847,6 +848,14 @@ function init() {
          button.fn();
        });
    }
+   // bind showGrid button
+   UI.bindMenuItem(Wings3D.action.toggleGround.name, (_ev)=> {
+      const data = document.querySelector('#toggleGroundFor');
+      if (data) {
+         prop.showGroundplane = !data.checked;  // click event is earlier than input.checked event, so the value hasn't toggle yet.
+         Renderer.needToRedraw();
+      }
+    });
    // bind pref button
    UI.bindMenuItem(Wings3D.action.preferenceButton.name, (_ev)=>{
       UI.runDialogCenter('#preferenceForm', storePref, loadPref);

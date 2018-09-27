@@ -254,6 +254,7 @@ const action = {
    undoEdit: () => {notImplemented(this);},
    // preference Group
    preferenceButton: ()=>{notImplemented(this);},
+   toggleGround: ()=>{notImplemented(this);},
    // createObject Menu
    createCube: () => {notImplemented(this);},
    createCubePref: () =>{notImplemented(this);},
