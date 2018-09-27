@@ -729,8 +729,14 @@ const theme = {
        tweakVectorColor: [1.0, 0.5, 0.0],
        unselectedHlite: [0.0, 0.65, 0.0],
        vertexColor: [0.0, 0.0, 0.0],
-       color: [[0.7, 0.0, 0.1], [0.37210077142857145, 0.82, 0.0], [0.0, 0.3, 0.8]],
-       negColor: [[0.8, 0.8, 0.8], [0.8, 0.8, 0.8], [0.8, 0.8, 0.8]],
+       //color: [[0.7, 0.0, 0.1], [0.37210077142857145, 0.82, 0.0], [0.0, 0.3, 0.8]],
+       colorX: '#B3001A',
+       colorY: '#5FD100',
+       colorZ: '#004DCC',
+       //negColor: [[0.8, 0.8, 0.8], [0.8, 0.8, 0.8], [0.8, 0.8, 0.8]],
+       negColorX: '#CCCCCC',
+       negColorY: '#CCCCCC',
+       negColorZ: '#CCCCCC',
        // UserInterface'
        geometryBackground: '#CCCCCC',
        css: {
@@ -15279,7 +15285,7 @@ function renderAxisLetter(gl, zFar) {
       zFar = zFar + __WEBPACK_IMPORTED_MODULE_3__wings3d__["GROUND_GRID_SIZE"];
       //gl:polygonMode(?GL_FRONT_AND_BACK, ?GL_FILL),
       
-      var color = __WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].color;
+      var color = [hexToRGB(__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].colorX), hexToRGB(__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].colorY), hexToRGB(__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].colorZ)];
       var endx = gl.transformVertex(vec4.fromValues(zFar, 0.0, 0.0, 1.0)), 
           endy = gl.transformVertex(vec4.fromValues(0.0, zFar, 0.0, 1.0)), 
           endz = gl.transformVertex(vec4.fromValues(0.0, 0.0, zFar, 1.0));
@@ -15303,7 +15309,7 @@ function initMiniAxis(gl, inModelView) {
       [-PB, 0.0,  PA], [0.0, 0.0, 0.1], [PB, 0.0,  PA], [0.0, 0.0, 0.1]   // z arrow
    );
    // ready color
-   var clr = __WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].color;
+   var clr = [hexToRGB(__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].colorX), hexToRGB(__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].colorY), hexToRGB(__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].colorZ)];
    var color = [], arrow = [];
    for (var i=0; i< 3; ++i) {
       color = color.concat(clr[i], clr[i]);
@@ -15403,8 +15409,8 @@ function getAxis() {
    return new Float32Array([].concat.apply([],arry));
 }
 function getAxisColor() {
-   var color = __WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].color,
-       negColor = __WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].negColor;
+    const color = [hexToRGB(__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].colorX), hexToRGB(__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].colorY), hexToRGB(__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].colorZ)],
+       negColor = [hexToRGB(__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].negColorX), hexToRGB(__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].negColorY), hexToRGB(__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].negColorZ)];
    var arry = [];
    for (var i = 0; i < 3; i++) {
       arry = arry.concat(color[i], color[i], negColor[i], negColor[i]);
@@ -15467,6 +15473,11 @@ function needToRedraw() {
    redrawFlag = true;
 };
 
+function hexToRGB(hex) {
+   return [parseInt(hex.slice(1, 3), 16)/255,
+           parseInt(hex.slice(3, 5), 16)/255,
+           parseInt(hex.slice(5, 7), 16)/255];
+ };
 function hexToRGBA(hex) {
   return [parseInt(hex.slice(1, 3), 16)/255,
           parseInt(hex.slice(3, 5), 16)/255,
