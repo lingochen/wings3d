@@ -14,6 +14,11 @@ import { Plane } from './wings3d_boundingvolume';
 
 class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
    constructor(mode) {
+      this.modeString = mode;
+      if (mode === 'Multi') {
+         return;
+      }
+      mode = mode.toLowerCase();
       const self = this;
       // contextMenu
       this.contextMenu = {menu: document.querySelector("#"+mode+"-context-menu")};
@@ -131,7 +136,11 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
              });
          }
       }
-   } 
+   }
+
+   modeName() {
+      return this.modeString;
+   }
 
    getContextMenu() {
       if (this.hasSelection()) {
@@ -300,6 +309,8 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
    isEdgeSelectable() { return false; }
    isFaceSelectable() { return false; }
 
+   toggleMulti(_hilite) {}
+
    draw(gl, draftBench) {
       this.useShader(gl);
       gl.bindTransform();
@@ -307,6 +318,8 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       //gl.disableShader();
    }
 }
+
+
 
 
 
@@ -729,6 +742,7 @@ class GenericEditCommand extends EditCommand {
 
 export {
    Madsor,
+   MultiMadsor,
    DragSelect,
    GenericEditCommand,
    MovePositionHandler,

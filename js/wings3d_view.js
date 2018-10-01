@@ -15,6 +15,7 @@ import {FaceMadsor} from './wings3d_facemads';
 import {EdgeMadsor} from './wings3d_edgemads';
 import {VertexMadsor} from './wings3d_vertexmads';
 import {BodyMadsor} from './wings3d_bodymads';
+import {MultiMadsor} from './wings3d_multimads';
 import {PreviewCage} from './wings3d_model';
 import {DraftBench, CheckPoint} from './wings3d_draftbench';
 import {Ray} from './wings3d_boundingvolume';
@@ -174,6 +175,7 @@ const mode = {             // private variable, needed to initialize after gl,
    edge: null,//new EdgeMadsor,
    vertex: null,//new VertexMadsor,
    body: null,//new BodyMadsor,
+   multi: null,//new Multimode
    current: null,
 };
 function initMode() {
@@ -181,6 +183,7 @@ function initMode() {
    mode.edge = new EdgeMadsor;
    mode.vertex = new VertexMadsor;
    mode.body = new BodyMadsor;
+   mode.multi = new MultiMadsor;
    mode.current = mode.face;
 };
 
@@ -228,6 +231,15 @@ function toggleBodyMode() {
    }
 };
 
+function toggleMultiMode() {
+   if (mode.current !== mode.multi) {
+      mode.current.toggleFunc(mode.multi);
+      mode.current = mode.multi;
+      toggleMode('Multi');
+      Renderer.needToRedraw();
+   }
+};
+
 function restoreVertexMode(snapshots) {
    if (mode.current !== mode.vertex) {
       mode.current.restoreMode(mode.vertex, snapshots);
@@ -266,6 +278,17 @@ function restoreBodyMode(snapshots) {
       mode.current.restoreMode(mode.body, snapshots);
       mode.current = mode.body;
       toggleMode('Body');
+      Renderer.needToRedraw();
+   } else {
+      // bad state. should always be in other mode. 
+   }
+};
+
+function restoreMultiMode(snapshots) {
+   if (mode.current !== mode.multi) {
+      mode.current.restoreMode(mode.multi, snapshots);
+      mode.current = mode.multi;
+      toggleMode('Multi');
       Renderer.needToRedraw();
    } else {
       // bad state. should always be in other mode. 
@@ -491,7 +514,10 @@ function rayPick(ray) {
 
 let dragMode = null;
 function selectStart() {
-   if (lastPick !== null) {
+   if (lastPick !== null) {   
+      // first check if we needs to autoToggle
+      mode.current.toggleMulti(hilite);
+      // now we can safely dragStart
       dragMode = mode.current.selectStart(lastPick.model, hilite);
       Renderer.needToRedraw();
    }
@@ -839,6 +865,7 @@ function init() {
                      {id: Wings3D.action.toggleEdgeMode, fn: toggleEdgeMode, hotKey: ' '},
                      {id: Wings3D.action.toggleFaceMode, fn: toggleFaceMode, hotKey: ' '},
                      {id: Wings3D.action.toggleBodyMode, fn: toggleBodyMode, hotKey: ' '},
+                     {id: Wings3D.action.toggleMultiMode, fn: toggleMultiMode, hotkey: ' '},
                    ];
    // bindMenu toolbar
    for (let button of toolBar) {
@@ -848,30 +875,19 @@ function init() {
          button.fn();
        });
    }
-   // bind showGrid button
-   UI.bindMenuItem(Wings3D.action.toggleGround.name, (_ev)=> {
-      const data = document.querySelector('#toggleGroundFor');
-      if (data) {
-         prop.showGroundplane = !data.checked;  // click event is earlier than input.checked event, so the value hasn't toggle yet.
-         Renderer.needToRedraw();
-      }
-    });
-   // bind showAxes button
-   UI.bindMenuItem(Wings3D.action.toggleAxes.name, (_ev)=> {
-      const data = document.querySelector('#toggleAxesFor');
-      if (data) {
-         prop.showAxes = !data.checked;  // click event is earlier than input.checked event, so the value hasn't toggle yet.
-         Renderer.needToRedraw();
-      }
-    });
-   // perspective or ortho projection
-   UI.bindMenuItem(Wings3D.action.toggleOrtho.name, (_ev)=> {
-      const data = document.querySelector('#toggleOrthoFor');
-      if (data) {
-         prop.orthogonalView = !data.checked;  // click event is earlier than input.checked event, so the value hasn't toggle yet.
-         Renderer.needToRedraw();
-      }
-    });
+   const propBar = [{id: Wings3D.action.toggleGround, propName: 'showGroundplane', selector: '#toggleGroundFor'},
+                    {id: Wings3D.action.toggleAxes, propName: 'showAxes', selector: '#toggleAxesFor'},
+                    {id: Wings3D.action.toggleOrtho, propName: 'orthogonalView', selector: 'toggleOrthoFor'}];
+   for (let button of propBar) {
+      // bind showGrid/showAxes/persp-ortho button
+      UI.bindMenuItem(button.id.name, (_ev)=> {
+         const data = document.querySelector(button.selector);
+         if (data) {
+            prop[button.propName] = !data.checked;  // click event is earlier than input.checked event, so the value hasn't toggle yet.
+            Renderer.needToRedraw();
+         }
+       });
+   }
    // bind pref button
    UI.bindMenuItem(Wings3D.action.preferenceButton.name, (_ev)=>{
       UI.runDialogCenter('#preferenceForm', storePref, loadPref);
@@ -957,10 +973,12 @@ export {
    toggleFaceMode,
    toggleEdgeMode,
    toggleBodyMode,
+   toggleMultiMode,
    restoreVertexMode,
    restoreFaceMode,
    restoreEdgeMode,
    restoreBodyMode,
+   restoreMultiMode,
    currentMode,
    // world state
    putIntoWorld,

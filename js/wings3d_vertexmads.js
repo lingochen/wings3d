@@ -13,13 +13,12 @@ import * as View from './wings3d_view';
 import * as ShaderProg from './wings3d_shaderprog';
 import * as UI from './wings3d_ui';
 import {action} from './wings3d';
-import {DraftBench} from './wings3d_draftbench';
 
 
 
 class VertexMadsor extends Madsor {
    constructor() {
-      super('vertex');
+      super('Vertex');
       const self = this;
       UI.bindMenuItem(action.vertexConnect.name, (ev) => {
             const vertexConnect = this.connectVertex();
@@ -53,10 +52,6 @@ class VertexMadsor extends Madsor {
             geometryStatus("You can only Weld one vertex");
          }
         });
-   }
-
-   modeName() {
-      return 'Vertex';
    }
 
    // get selected vertex snapshot. for doing, and redo queue. 
@@ -157,7 +152,6 @@ class VertexMadsor extends Madsor {
    }
 
    toggleFunc(toMadsor) {
-      const self = this;
       var redoFn;
       var snapshots;
       if (toMadsor instanceof FaceMadsor) {
@@ -166,9 +160,12 @@ class VertexMadsor extends Madsor {
       } else if (toMadsor instanceof EdgeMadsor) {
          redoFn = View.restoreEdgeMode;
          snapshots = this.snapshotAll(PreviewCage.prototype.changeFromVertexToEdgeSelect);
-      } else {
-         redoFn = View.restoreEdgeMode;
+      } else if (toMadsor instanceof BodyMadsor) {
+         redoFn = view.restoreBodyMode;
          snapshots = this.snapshotAll(PreviewCage.prototype.changeFromVertexToBodySelect);
+      } else {
+         redoFn = View.restoreMultiMode;
+         snapshots = this.snapshotAll(PreviewCage.prototype.changeFromVertexToMultiSelect);
       }
       View.undoQueue( new ToggleModeCommand(redoFn, View.restoreVertexMode, snapshots) );
    }
@@ -179,8 +176,10 @@ class VertexMadsor extends Madsor {
          this.doAll(snapshots, PreviewCage.prototype.restoreFromVertexToFaceSelect);
       } else if (toMadsor instanceof EdgeMadsor) {
          this.doAll(snapshots, PreviewCage.prototype.restoreFromVertexToEdgeSelect);
-      } else {
+      } else if (toMadsor instanceof BodyMadsor) {
          this.doAll(snapshots, PreviewCage.prototype.restoreFromVertexToBodySelect);
+      } else {
+         this.doAll(snapshots, PreviewCage.prototype.restoreFromVertexToMultiSelect);
       }
    }
 

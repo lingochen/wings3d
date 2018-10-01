@@ -349,6 +349,17 @@ PreviewCage.prototype.changeFromBodyToVertexSelect = function() {
    return snapshot;
 };
 
+PreviewCage.prototype.changeFromBodyToMultiSelect = function() {
+   const snapshot = this.snapshotSelectionBody();
+   if (this.hasSelection()) {
+      this._resetBody();
+   }
+
+   return snapshot;
+}
+
+
+
 // hack for calling restoerXXXSelection. double dispatch?
 PreviewCage.prototype.restoreSelection = function(snapshot, madsor) {
    madsor._restoreSelection(this, snapshot);
@@ -406,6 +417,10 @@ PreviewCage.prototype.restoreFromBodyToVertexSelect = function(snapshot) {
    } else {
       this.changeFromBodyToVertexSelect();  // compute vs storage. currently lean toward compute.
    }
+};
+
+PreviewCage.prototype.restoreFromBodyToMultiSelect = function(_snapshot) {
+   this.changeFromBodyToMutliSelect();
 };
 
 PreviewCage.prototype._resetBody = function() {
@@ -657,6 +672,15 @@ PreviewCage.prototype.changeFromVertexToBodySelect = function() {
    return snapshot;
 };
 
+PreviewCage.prototype.changeFromVertexToMultiSelect = function() {
+   const snapshot = this.snapshotSelectionVertex();
+
+   // clear all selection.
+   this._resetSelectVertex();
+
+   return snapshot;
+};
+
 PreviewCage.prototype.restoreFromVertexToFaceSelect = function(snapshot) {
    if (snapshot) {
       // discard old selected,
@@ -684,6 +708,36 @@ PreviewCage.prototype.restoreFromVertexToBodySelect = function(snapshot) {
    } else {
       this.changeFromVertexToBodySelect();
    }
+};
+
+PreviewCage.prototype.restoreFromVertexToMultiSelect = function(_snapshot) {
+   this.changeFromVertexToMultiSelect();
+};
+
+
+PreviewCage.prototype.changeFromMultiToEdgeSelect = function() {
+   return {}; // nothing todo
+};
+PreviewCage.prototype.changeFromMultiToFaceSelect = function() {
+   return {}; // nothing todo
+};
+PreviewCage.prototype.changeFromMultiToVertexSelect = function() {
+   return {}; // nothing todo
+};
+PreviewCage.prototype.changeFromMultiToBodySelect = function() {
+   return {}; // nothing todo
+};
+PreviewCage.prototype.restoreFromMultiToEdgeSelect = function(_snapshot) {
+   // nothing because guarantee nothing selected.
+};
+PreviewCage.prototype.restoreFromMultiToFaceSelect = function(_snapshot) {
+   // nothing because guarantee nothing selected.
+};
+PreviewCage.prototype.restoreFromMultiToVertexSelect = function(_snapshot) {
+   // nothing because guarantee nothing selected.
+};
+PreviewCage.prototype.restoreFromMultiToBodySelect = function(_snapshot) {
+   // nothing because guarantee nothing selected.
 };
 
 
@@ -1219,6 +1273,16 @@ PreviewCage.prototype.changeFromEdgeToBodySelect = function() {
    return snapshot;
 };
 
+PreviewCage.prototype.changeFromEdgeToMultiSelect = function() {
+   const snapshot = this.snapshotSelectionEdge();
+
+   if (this.hasSelection()) {
+      this._resetSelectEdge();
+   }
+
+   return snapshot;
+};
+
 PreviewCage.prototype.restoreFromEdgeToFaceSelect = function(snapshot) {
    if (snapshot) {
       // discard old selected,
@@ -1246,6 +1310,10 @@ PreviewCage.prototype.restoreFromEdgeToBodySelect = function(snapshot) {
    } else {
       this.changeFromEdgeToBodySelect();
    }
+};
+
+PreviewCage.prototype.restoreFromEdgeToMultiSelect = function(_snapshot) {
+   this.changeFromEdgeToMultiSelect();
 };
 
 PreviewCage.prototype.setFaceSelectionOff = function(polygon) {
@@ -1429,6 +1497,16 @@ PreviewCage.prototype.changeFromFaceToBodySelect = function() {
    return snapshot;
 };
 
+PreviewCage.prototype.changeFromFaceToMultiSelect = function() {
+   const snapshot = this.snapshotSelectionFace();
+
+   if (this.hasSelection()) {
+      this._resetSelectFace();
+   }
+
+   return snapshot;
+};
+
 PreviewCage.prototype.restoreFromFaceToEdgeSelect = function(snapshot) {
    if (snapshot) {
       // discard old selected,
@@ -1458,6 +1536,10 @@ PreviewCage.prototype.restoreFromFaceToBodySelect = function(snapshot) {
    } else {
       this.changeFromFaceToBodySelect();
    }
+};
+
+PreviewCage.prototype.restoreFromFaceToMultiSelect = function(_snapshot) {
+   this.changeFromFaceToMultiSelect();
 };
 
 

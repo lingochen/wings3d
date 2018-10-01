@@ -250,6 +250,7 @@ const action = {
    toggleEdgeMode: () => {notImplemented(this);},
    toggleFaceMode: () => {notImplemented(this);},
    toggleBodyMode: () => {notImplemented(this);},
+   toggleMultiMode: () => {notImplemented(this);},
    redoEdit: () => {notImplemented(this);},
    undoEdit: () => {notImplemented(this);},
    // preference Group

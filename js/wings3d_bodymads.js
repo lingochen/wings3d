@@ -6,7 +6,7 @@ import {Madsor, DragSelect, MouseMoveAlongAxis, MoveFreePositionHandler, ToggleM
 import {FaceMadsor} from './wings3d_facemads';   // for switching
 import {EdgeMadsor} from './wings3d_edgemads';
 import {VertexMadsor} from './wings3d_vertexmads';
-import { EditCommand } from './wings3d_undo';
+import {EditCommand } from './wings3d_undo';
 import {PreviewCage} from './wings3d_model';
 import * as ShaderProg from './wings3d_shaderprog';
 import * as View from './wings3d_view';
@@ -17,7 +17,7 @@ import {action} from './wings3d';
 
 class BodyMadsor extends Madsor {
    constructor() {
-      super('body');
+      super('Body');
       const self = this;
       UI.bindMenuItemMode(action.bodyDelete.name, function(ev) {
             const command = new DeleteBodyCommand(self.getSelected());
@@ -116,10 +116,6 @@ class BodyMadsor extends Madsor {
             View.undoQueue(cmd);
          }
        });
-   }
-
-   modeName() {
-      return 'Body';
    }
 
    getSelected() {
@@ -353,7 +349,6 @@ class BodyMadsor extends Madsor {
 //      this.hiliteView = null;
 //      this.hideOldHilite();
 //      this.hiliteView = null;
-      const self = this;
       var redoFn;
       var snapshots;
       if (toMadsor instanceof FaceMadsor) {
@@ -362,9 +357,12 @@ class BodyMadsor extends Madsor {
       } else if (toMadsor instanceof VertexMadsor) {
          redoFn = View.restoreVertexMode;
          snapshots = this.snapshotAll(PreviewCage.prototype.changeFromBodyToVertexSelect);
-      } else {
+      } else if (toMadsor instanceof EdgeMadsor) {
          redoFn = View.restoreEdgeMode;
          snapshots = this.snapshotAll(PreviewCage.prototype.changeFromBodyToEdgeSelect);
+      } else {
+         redoFn = View.restoreMultiMode;
+         snapshots = this.snapshotAll(PreviewCage.prototype.changeFromBodyToMultiSelect);
       }
       View.undoQueue(new ToggleModeCommand(redoFn, View.restoreBodyMode, snapshots));
    }
@@ -374,8 +372,10 @@ class BodyMadsor extends Madsor {
          this.doAll(snapshots, PreviewCage.prototype.restoreFromBodyToFaceSelect);
       } else if (toMadsor instanceof VertexMadsor) {
          this.doAll(snapshots, PreviewCage.prototype.restoreFromBodyToVertexSelect);
-      } else {
+      } else if (toMadsor instanceof EdgeMadsor) {
          this.doAll(snapshots, PreviewCage.prototype.restoreFromBodyToEdgeSelect);
+      } else {
+         this.doAll(snapshots, PreviewCage.prototype.restoreFromBodyToMultiSelect);
       }
    }
 

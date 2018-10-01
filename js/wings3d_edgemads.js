@@ -18,7 +18,7 @@ import {DraftBench} from './wings3d_draftbench';
 // 
 class EdgeMadsor extends Madsor {
    constructor() {
-      super('edge');
+      super('Edge');
       // cut commands
       const self = this;
       for (let numberOfSegments of [action.cutLine2, action.cutLine3, action.cutLine4, action.cutLine5, action.cutLine10]) {
@@ -143,10 +143,6 @@ class EdgeMadsor extends Madsor {
          handler.doIt();
          View.attachHandlerMouseMove(handler);
         });
-   }
-
-   modeName() {
-      return 'Edge';
    }
 
    // get selected Edge's vertex snapshot. for doing, and redo queue. 
@@ -297,7 +293,6 @@ class EdgeMadsor extends Madsor {
    }
 
    toggleFunc(toMadsor) {
-      const self = this;
       var redoFn;
       var snapshots;
       if (toMadsor instanceof FaceMadsor) {
@@ -305,10 +300,13 @@ class EdgeMadsor extends Madsor {
          snapshots = this.snapshotAll(PreviewCage.prototype.changeFromEdgeToFaceSelect);
       } else if (toMadsor instanceof VertexMadsor) {
          redoFn = View.restoreVertexMode;
-         snapshots = this.snapshotAll(PreviewCage.prototype.changeFromEdgeToVertexSelect);      
-      } else {
+         snapshots = this.snapshotAll(PreviewCage.prototype.changeFromEdgeToVertexSelect); 
+      } else if (toMadsor instanceof BodyMadsor) {
          redoFn = View.restoreBodyMode;
          snapshots = this.snapshotAll(PreviewCage.prototype.changeFromEdgeToBodySelect);
+      } else {
+         redoFn = View.restoreMultiMode;
+         snapshots = this.snapshotAll(PreviewCage.prototype.changeFromEdgeToMultiSelect);   
       }
       View.undoQueue(new ToggleModeCommand(redoFn, View.restoreEdgeMode, snapshots));
    }
@@ -318,8 +316,10 @@ class EdgeMadsor extends Madsor {
          this.doAll(snapshots, PreviewCage.prototype.restoreFromEdgeToFaceSelect);
       } else if (toMadsor instanceof VertexMadsor) {
          this.doAll(snapshots, PreviewCage.prototype.restoreFromEdgeToVertexSelect);
+      } else if (toMadsor instanceof BodyMadsor) {
+         this.doAll(snapshots, PreviewCage.prototype.restoreFromEdgeToBodySelect);
       } else {
-         this.doAll(snapshots, PreviewCage.prototype.restoreFromEdgeToBodySelect);      
+         this.doAll(snapshots, PreviewCage.prototype.restoreFromEdgeToMultiSelect);      
       }
    }
 

@@ -10,16 +10,14 @@ import {VertexMadsor} from './wings3d_vertexmads';
 import {MoveableCommand, EditCommand, EditSelectHandler} from './wings3d_undo';
 import {PreviewCage} from './wings3d_model';
 import * as View from './wings3d_view';
-import {gl, ShaderData} from './wings3d_gl';
 import * as ShaderProg from './wings3d_shaderprog';
 import * as UI from './wings3d_ui';
 import {action} from './wings3d';
-import {DraftBench} from './wings3d_draftbench';
 
 
 class FaceMadsor extends Madsor {
    constructor() {
-      super('face');
+      super('Face');
       var self = this;
       UI.bindMenuItemMode(action.faceDissolve.name, function(ev) {
             const command = new DissolveFaceCommand(self);
@@ -106,10 +104,6 @@ class FaceMadsor extends Madsor {
             View.undoQueue(cmd);
          }
        });
-   }
-
-   modeName() {
-      return 'Face';
    }
 
    // get selected Face's vertex snapshot. for doing, and redo queue. 
@@ -251,7 +245,6 @@ class FaceMadsor extends Madsor {
    }
    
    toggleFunc(toMadsor) {
-      const self = this;
       var redoFn;
       var snapshots;
       if (toMadsor instanceof EdgeMadsor) {
@@ -260,9 +253,12 @@ class FaceMadsor extends Madsor {
       } else if (toMadsor instanceof VertexMadsor) {
          redoFn = View.restoreVertexMode;
          snapshots = this.snapshotAll(PreviewCage.prototype.changeFromFaceToVertexSelect);
-      } else {
+      } else if (toMadsor instanceof BodyMadsor) {
          redoFn = View.restoreBodyMode;
          snapshots = this.snapshotAll(PreviewCage.prototype.changeFromFaceToBodySelect);
+      } else {
+         redoFn = View.restoreMultiMode;
+         snapshots = this.snapshotAll(PreviewCage.prototype.changeFromFaceToMultiSelect);
       }
       View.undoQueue(new ToggleModeCommand(redoFn, View.restoreFaceMode, snapshots));
    }
@@ -272,8 +268,10 @@ class FaceMadsor extends Madsor {
          this.doAll(snapshots, PreviewCage.prototype.restoreFromFaceToEdgeSelect);
       } else if (toMadsor instanceof VertexMadsor) {
          this.doAll(snapshots, PreviewCage.prototype.restoreFromFaceToVertexSelect);
+      } else if (toMadsor instanceof BodyMadsor) {
+         this.doaAll(snapshots, PreviewCage.prototype.restoreFromFaceToBodySelect);
       } else {
-         this.doAll(snapshots, PreviewCage.prototype.restoreFromFaceToBodySelect);
+         this.doAll(snapshots, PreviewCage.prototype.restoreFromFaceToMultiSelect);
       }
    }
 
