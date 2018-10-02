@@ -184,7 +184,7 @@ function initMode() {
    mode.vertex = new VertexMadsor;
    mode.body = new BodyMadsor;
    mode.multi = new MultiMadsor;
-   mode.current = mode.face;
+   mode.current = mode.multi;
 };
 
 
@@ -877,7 +877,7 @@ function init() {
    }
    const propBar = [{id: Wings3D.action.toggleGround, propName: 'showGroundplane', selector: '#toggleGroundFor'},
                     {id: Wings3D.action.toggleAxes, propName: 'showAxes', selector: '#toggleAxesFor'},
-                    {id: Wings3D.action.toggleOrtho, propName: 'orthogonalView', selector: 'toggleOrthoFor'}];
+                    {id: Wings3D.action.toggleOrtho, propName: 'orthogonalView', selector: '#toggleOrthoFor'}];
    for (let button of propBar) {
       // bind showGrid/showAxes/persp-ortho button
       UI.bindMenuItem(button.id.name, (_ev)=> {
