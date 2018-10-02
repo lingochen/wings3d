@@ -847,7 +847,7 @@ function initMode() {
    mode.vertex = new __WEBPACK_IMPORTED_MODULE_9__wings3d_vertexmads__["VertexMadsor"];
    mode.body = new __WEBPACK_IMPORTED_MODULE_10__wings3d_bodymads__["BodyMadsor"];
    mode.multi = new __WEBPACK_IMPORTED_MODULE_11__wings3d_multimads__["MultiMadsor"];
-   mode.current = mode.face;
+   mode.current = mode.multi;
 };
 
 
@@ -1540,7 +1540,7 @@ function init() {
    }
    const propBar = [{id: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].toggleGround, propName: 'showGroundplane', selector: '#toggleGroundFor'},
                     {id: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].toggleAxes, propName: 'showAxes', selector: '#toggleAxesFor'},
-                    {id: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].toggleOrtho, propName: 'orthogonalView', selector: 'toggleOrthoFor'}];
+                    {id: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].toggleOrtho, propName: 'orthogonalView', selector: '#toggleOrthoFor'}];
    for (let button of propBar) {
       // bind showGrid/showAxes/persp-ortho button
       __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["bindMenuItem"](button.id.name, (_ev)=> {
