@@ -149,11 +149,11 @@
         <img src="../img/bluecube/save.png" >
         <span>Save</span>
       </label>
-      <label class="button" id="undoEdit">
+      <label class="button" id="undoEdit" data-i18n="undo">
         <img src="../img/bluecube/undo.png" >
         <span>Undo</span>
       </label>
-      <label class="button" id="redoEdit">
+      <label class="button" id="redoEdit" data-i18n="redo">
         <img src="../img/bluecube/redo.png" >
         <span>Redo</span>
       </label>
@@ -165,17 +165,17 @@
         <span >Vertex</span>
       </label>
       <input type="radio" name="toggleMode" id="toggleEdgeModeFor">
-      <label id="toggleEdgeMode" class="button" for="toggleEdgeModeFor">
+      <label id="toggleEdgeMode" class="button" for="toggleEdgeModeFor" data-i18n="toggleEdgeMode">
         <img src="../img/bluecube/edge.png" >
         <span>Edge</span>
       </label>
       <input type="radio" name="toggleMode" id="toggleFaceModeFor">
-      <label id="toggleFaceMode" class="button" for="toggleFaceModeFor">
+      <label id="toggleFaceMode" class="button" for="toggleFaceModeFor" data-i18n="toggleFaceMode">
         <img src="../img/bluecube/face.png" >
         <span>Face</span>
       </label>
       <input type="radio" name="toggleMode" id="toggleBodyModeFor">
-      <label id="toggleBodyMode" class="button" for="toggleBodyModeFor">
+      <label id="toggleBodyMode" class="button" for="toggleBodyModeFor" data-i18n="toggleBodyMode">
         <img src="../img/bluecube/body.png" >
         <span>Body</span>
       </label>
@@ -186,7 +186,7 @@
       </label>
     </div>
     <div class="button-group set-pref">
-      <label id="preferenceButton" class="button">
+      <label id="preferenceButton" class="button" data-i18n="prefDialog">
         <img src="../img/bluecube/pref.png" >
         <span>Pref</span>
       </label>
@@ -196,17 +196,17 @@
         <span>Smooth</span>
       </label>
       <input type="checkbox" id="toggleOrthoFor">
-      <label id="toggleOrtho" for="toggleOrthoFor" class="button">
+      <label id="toggleOrtho" for="toggleOrthoFor" class="button" data-i18n="toggleOrtho">
         <img src="../img/bluecube/perspective.png" >
         <span>Ortho</span>
       </label>
       <input type="checkbox" id="toggleGroundFor" checked>
-      <label id="toggleGround" for="toggleGroundFor" class="button">
+      <label id="toggleGround" for="toggleGroundFor" class="button" data-i18n="toggleGround">
         <img src="../img/bluecube/groundplane.png" >
         <span>Ground</span>
       </label>
       <input type="checkbox" id="toggleAxesFor" checked>
-      <label id="toggleAxes" for="toggleAxesFor" class="button">
+      <label id="toggleAxes" for="toggleAxesFor" class="button" data-i18n="toggleAxes">
         <img src="../img/bluecube/axes.png" >
         <span>Axes</span>
       </label>
@@ -596,7 +596,7 @@
           <input id="selectedSize" type="number">
           <label for="magnetVertexSize" data-i18n="magnetVertexSize">Magnet Mask Vertex Size</label>
           <input id="magnetVertexSize" type="number">
-          <label for="unselectedVertex"><span data-i18n="unseelectedVertex">Unselected Vertices</span><input id="unselectedVertex" type="color"></label> 
+          <label for="unselectedVertex"><span data-i18n="unselectedVertex">Unselected Vertices</span><input id="unselectedVertex" type="color"></label> 
           <label for="magnetMask"><span data-i18n="magnetMask">Magnet Mask</span><input id="magnetMask" type="color"></label>
         </fieldset>
         <fieldSet class="fieldPref">
@@ -614,14 +614,6 @@
           <legend data-i18n="highlighting">Highlighting</legend>
           <label for="unselected"><span data-i18n="unselected">Unselected</span><input id="unselected" type="color"></label>
           <label for="selected"><span data-i18n="selected">Selected</span><input id="selected" type="color"></label>
-          <div class="verticalPref">
-          
-          <label for="explicitMultiSelect"><input id="explicitMultiSelect" name="multiSelect" type="radio"><span data-i18n="explicitMultiSelect">Explicit Multi-Select</span></label>
-          
-          <label for="deselectionMultiSelect"><input id="deselectionMultiSelect" name="multiSelect" type="radio"><span data-i18n="deselectionMultiSelect">Multi-Select Deselection</span></label>
-          
-          <label for="conditionalMultiSelect"><input id="conditionalMultiSelect" name="multiSelect" type="radio"><span data-i18n="conditionalMultiSelect">Conditional Deselection</span></label> 
-          </div>
         </fieldset>
         <fieldset class="fieldPref">
           <legend data-i18n="selection">Selection</legend>
@@ -769,7 +761,7 @@
           </select></label>
           <label><input id="showToolbar" type="checkbox"><span>Show Toolbar</span></label>
           <fieldset> 
-            <legend data-i18n="toolbarIcons">Toolbar Icons</legend>
+            <legend data-i18n="toolbarIcon">Toolbar Icons</legend>
           </fieldset>
         </fieldset>
       </div>
@@ -779,19 +771,19 @@
       <div class="tabPanel">
         <fieldset>
           <legend data-i18n="vectorDisplay">Vector Display</legend>
-          <label class="setValue"><span data-i18n="length">Length</span><input id="vectorLength" type="number"></label>
-          <label class="setValue"><span data-i18n="width">Width</span><input id="vectorWidth" type="number"></label>
-          <label class="setValue"><span data-i18n="color">Color</span><input id="vectorColor" type="color"></label>
+          <label class="setValue"><span data-i18n="vectorLength">Length</span><input id="vectorLength" type="number"></label>
+          <label class="setValue"><span data-i18n="vectorWidth">Width</span><input id="vectorWidth" type="number"></label>
+          <label class="setValue"><span data-i18n="vectorColor">Color</span><input id="vectorColor" type="color"></label>
         </fieldset>
         <fieldset>
           <legend data-i18n="clippingPlaneIndicator">Clipping Plane Indicator</legend>
-          <label class="setValue"><span data-i18n="size">Size</span><input id="clippingPlaneSize" type="number"></label>
-          <label class="setValue"><span data-i18n="color">Color</span><input id="clippingPlaneColor" type="color"></label>
+          <label class="setValue"><span data-i18n="clippingPlaneSize">Size</span><input id="clippingPlaneSize" type="number"></label>
+          <label class="setValue"><span data-i18n="clippingPlaneColor">Color</span><input id="clippingPlaneColor" type="color"></label>
         </fieldset>
         <fieldset>
           <legend data-i18n="dragPreference">Drag Preferences</legend>
           <input id="customizeDragResponse" name="dragConditional" type="checkbox">
-          <label for="customizeDragResponse" data-i18n="customizeDragResponxe">Customize Drag Response</label>
+          <label for="customizeDragResponse" data-i18n="customizeDragResponse">Customize Drag Response</label>
           <fieldset name="dragConditional">
             <legend data-i18n="mouseDraggingSpeed">Mouse Speed for Dragging</legend>
             <input name="dragConditional" type="range" min="1" max="100" value="1" onchange="this.nextElementSibling.value=this.value" />
@@ -803,7 +795,7 @@
             <input name="dragConditional" id="mouseScalingSpeed" type="number" min="1" max="100" value="1" step="1" onchange="this.previousElementSibling.value=this.value" />
           </fieldset>
           <fieldset name="dragConditional">
-            <legend data-i18n="mouseRotatingingSpeed">Mouse Speed for Rotating</legend>
+            <legend data-i18n="mouseRotatingSpeed">Mouse Speed for Rotating</legend>
             <input name="dragConditional" type="range" min="1" max="100" value="1" onchange="this.nextElementSibling.value=this.value" />
             <input name="dragConditional" id="mouseRotatingSpeed" type="number" min="1" max="100" value="1" step="1" onchange="this.previousElementSibling.value=this.value" />
           </fieldset>
