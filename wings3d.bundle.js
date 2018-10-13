@@ -6085,16 +6085,45 @@ function createWebGLContext(canvasID, attrib) {
       gl.bindBuffer(gl.ARRAY_BUFFER, attrib.handle);
       gl.vertexAttribPointer(progLoc, attrib.size, attrib.type, attrib.normalized, attrib.stride, attrib.offset);
       gl.enableVertexAttribArray(progLoc);
-   }
+   };
 
-   gl.bindShaderData = function(data, useIndex=true) {
+   /**
+    * bind index to current drawing.
+    * @param {shaderData} - gpu data.
+    * @param {string} - name of index
+    */
+   gl.bindIndex = function(data, name) {
+      const handle = data.index[name];
+      if (handle) {
+         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, handle);
+      }
+   };
+
+   /**
+    * bind attribute to current program
+    * @param {shaderData} - gpu data
+    * @param {array of strings} - the name of attributes to binds to program.
+    */
+   gl.bindAttribute = function(data, names) {
+      _pvt.currentShader.bindAttribute(gl, data.attribute, names);
+   };
+
+   /**
+    * bind uniform to current program
+    * @param {shaderData} - gpu data.
+    * @param {array of strings} - the name of uniforms to bind to program
+    */
+   gl.bindUniform = function(data, names) {
+      _pvt.currentShader.bindUniform(gl, data.uniform, names);
+   }
+/*   gl.bindShaderData = function(data, useIndex=true) {
       // using current setShader, set shader, set indexbuffer
       _pvt.currentShader.bindAttribute(gl, data.attribute);
       _pvt.currentShader.bindUniform(gl, data.uniform);
       if (useIndex && typeof(data.index)!=="undefined" && data.index !== null) {
          gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, data.index.handle);
       }
-   };
+   }; */
 
    gl.bindTransform = function() {
       // current shader, set current transform
@@ -6146,6 +6175,7 @@ function createWebGLContext(canvasID, attrib) {
 const ShaderData = function() {
    this.attribute = {};
    this.uniform = {};
+   this.index = {};
 };
 
 ShaderData.attribLayout = function(attribSize=3, attribType=gl.FLOAT, normalized=false, stride=0, offset=0) {
@@ -6214,16 +6244,20 @@ ShaderData.prototype.uploadAttribute = function(name, byteOffset, typedArray)  {
    }
 };
 
-//ShaderData.prototype.setAttribute = function(name, value) {
-//};
-// index is used for drawElement, not used for input to shaderProgram
-ShaderData.prototype.setIndex = function(index) {
-   if ((typeof(this.index)!=="undefined") && (this.index !== null)) {
-      gl.deleteBuffer(this.index.handle);
+
+/** 
+ * index is used for drawElement
+ * @param {string} - index name
+ * @param {typedArray} - array of unsigned int
+ */
+ShaderData.prototype.setIndex = function(name, index) {
+   let handle = this.index[name];
+   if (handle) {
+      gl.deleteBuffer(handle);
+      this.index[name] = undefined;
    }
-   if (index !== null) {
-      var handle = gl.createBufferHandle(index, gl.ELEMENT_ARRAY_BUFFER);
-      this.index = {handle: handle};
+   if (index) {
+      this.index[name] = gl.createBufferHandle(index, gl.ELEMENT_ARRAY_BUFFER);
    }
 };
 
@@ -6261,31 +6295,32 @@ ShaderProgram.prototype.disableVertexAttributeArray = function(gl) {
    }
 };
 
-ShaderProgram.prototype.bindAttribute = function(gl, attribute) {
+ShaderProgram.prototype.bindAttribute = function(gl, attribute, names) {
    try {
-   for (var key in this.attribute) {
-      if (attribute.hasOwnProperty(key)) {   // don't need to check this.attribute' inherited property, cannot possibley exist
-         var attrb = attribute[key];
-         gl.bindAttributeToProgram(this.attribute[key].loc, attrb);
-      } else {
-         // don't have property. console.log?
-         console.log("shaderData don't have shader attribute: " + key);
+      for (let key of names) {
+         if (attribute.hasOwnProperty(key)) {   // don't need to check this.attribute' inherited property, cannot possibley exist
+            const attrb = attribute[key];
+            gl.bindAttributeToProgram(this.attribute[key].loc, attrb);
+         } else {
+            // don't have property. console.log?
+            console.log("shaderData don't have shader attribute: " + key);
+         }
       }
-   }
    }
    catch (e) {
       console.log(e);
    }
 };
 
-ShaderProgram.prototype.bindUniform = function(gl, uniform) {
+ShaderProgram.prototype.bindUniform = function(gl, uniform, names) {
    try {
-   for (var key in this.uniform) {
+   for (let key of names) {
       if (uniform.hasOwnProperty(key)) {
          var uni = uniform[key];
          uni.binder(gl, this.uniform[key].loc, uni.value);
       } else {
          // don't have property. console.log?
+         console.log("shaderData don't have shader uniform: " + key);
       }
    }
    }
@@ -14061,7 +14096,7 @@ DraftBench.prototype._computePreviewIndex = function() {
       barycentric++;
    }
    // save it to the buffer 
-   this.preview.shaderData.setIndex(index);
+   this.preview.shaderData.setIndex('face', index);
    this.preview.index = index;
    this.preview.indexLength = length;
 };
@@ -14090,6 +14125,8 @@ DraftBench.prototype._computeFaceHiliteIndex = function(polygon, offset) {
    this.hilite.index[offset+indicesLength++] = barycentric;
 
    this.hilite.indexLength = offset+indicesLength;
+   // copy to gpu
+   this.preview.shaderData.setIndex('faceHilite', this.hilite.index);
 };
 
 DraftBench.prototype._computeGroupHiliteIndex = function(faceGroup) {
@@ -14173,7 +14210,7 @@ DraftBench.prototype._resizePreviewVertex = function() {
       }
    }
    // 
-   this.previewVertex.shaderData.setIndex(index);
+   this.previewVertex.shaderData.setIndex('vertex', index);
    this.previewVertex.indexLength = j;
 };
 
@@ -14286,7 +14323,9 @@ DraftBench.prototype.hiliteBody = function(faceGroup, isHilite) {
 DraftBench.prototype.draw = function(gl) {
    // draw using index
    try {
-      gl.bindShaderData(this.preview.shaderData);
+      gl.bindAttribute(this.preview.shaderData, ['position', 'barycentric', 'selected']);
+      gl.bindUniform(this.preview.shaderData, ['faceColor', 'selectedColor']);
+      gl.bindIndex(this.preview.shaderData, 'face');
       gl.drawElements(gl.TRIANGLES, this.preview.indexLength, gl.UNSIGNED_INT, 0);
    } catch (e) {
       console.log(e);
@@ -14299,12 +14338,12 @@ DraftBench.prototype.drawHilite = function(gl) {
       return;
    }
    // set hilite color and hilite index
-   this.preview.shaderData.setIndex(this.hilite.index);
    this.preview.shaderData.setUniform4fv("faceColor", [0.0, 1.0, 0.0, 0.35]);
-   gl.bindShaderData(this.preview.shaderData);
+   gl.bindAttribute(this.preview.shaderData, ['position', 'barycentric', 'selected']);
+   gl.bindUniform(this.preview.shaderData, ['faceColor', 'selectedColor']);
+   gl.bindIndex(this.preview.shaderData, 'faceHilite');
    gl.drawElements(gl.TRIANGLES, this.hilite.indexLength, gl.UNSIGNED_INT, 0);
-   // restore color and index
-   this.preview.shaderData.setIndex(this.preview.index);
+   // restore color
    this.preview.shaderData.setUniform4fv("faceColor", [0.5, 0.5, 0.5, 1.0]);
 };
 
@@ -14312,8 +14351,9 @@ DraftBench.prototype.drawHilite = function(gl) {
 DraftBench.prototype.drawVertex = function(gl) {
    // drawing using vertex array
    try {
-      gl.bindShaderData(this.previewVertex.shaderData);
-      //gl.drawArrays(gl.POINTS, 0, this.vertices.length);
+      gl.bindAttribute(this.previewVertex.shaderData, ['position', 'color']);
+      gl.bindUniform(this.previewVertex.shaderData, ['selectedColor', 'hiliteColor']);
+      gl.bindIndex(this.previewVertex.shaderData, 'vertex');
       gl.drawElements(gl.POINTS, this.previewVertex.indexLength, gl.UNSIGNED_INT, 0);
    } catch (e) {
       console.log(e);
@@ -14322,7 +14362,8 @@ DraftBench.prototype.drawVertex = function(gl) {
 
 // draw edge, select color
 DraftBench.prototype.drawEdge = function(gl) {
-   gl.bindShaderData(this.previewEdge.shaderData);
+   gl.bindAttribute(this.previewEdge.shaderData, ['position', 'color']);
+   gl.bindUniform(this.previewEdge.shaderData, ['selectedColor', 'hiliteColor']);
    gl.drawArrays(gl.LINES, 0, this.previewEdge.line.length/3);
 };
 
@@ -14368,7 +14409,8 @@ DraftBench.prototype.drawPlane = (function() {
       gl.disable(gl.CULL_FACE);
       gl.useShader(__WEBPACK_IMPORTED_MODULE_1__wings3d_shaderprog__["solidColor"]);
       gl.bindTransform();
-      gl.bindShaderData(this.previewPlane.shaderData);
+      gl.bindAttribute(this.previewPlane.shaderData, ['position']);
+      gl.bindUniform(this.previewPlane.shaderData, ['faceColor']);
       gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
       gl.disableShader();
       gl.enable(gl.CULL_FACE);
