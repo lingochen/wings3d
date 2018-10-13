@@ -252,16 +252,45 @@ function createWebGLContext(canvasID, attrib) {
       gl.bindBuffer(gl.ARRAY_BUFFER, attrib.handle);
       gl.vertexAttribPointer(progLoc, attrib.size, attrib.type, attrib.normalized, attrib.stride, attrib.offset);
       gl.enableVertexAttribArray(progLoc);
-   }
+   };
 
-   gl.bindShaderData = function(data, useIndex=true) {
+   /**
+    * bind index to current drawing.
+    * @param {shaderData} - gpu data.
+    * @param {string} - name of index
+    */
+   gl.bindIndex = function(data, name) {
+      const handle = data.index[name];
+      if (handle) {
+         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, handle);
+      }
+   };
+
+   /**
+    * bind attribute to current program
+    * @param {shaderData} - gpu data
+    * @param {array of strings} - the name of attributes to binds to program.
+    */
+   gl.bindAttribute = function(data, names) {
+      _pvt.currentShader.bindAttribute(gl, data.attribute, names);
+   };
+
+   /**
+    * bind uniform to current program
+    * @param {shaderData} - gpu data.
+    * @param {array of strings} - the name of uniforms to bind to program
+    */
+   gl.bindUniform = function(data, names) {
+      _pvt.currentShader.bindUniform(gl, data.uniform, names);
+   }
+/*   gl.bindShaderData = function(data, useIndex=true) {
       // using current setShader, set shader, set indexbuffer
       _pvt.currentShader.bindAttribute(gl, data.attribute);
       _pvt.currentShader.bindUniform(gl, data.uniform);
       if (useIndex && typeof(data.index)!=="undefined" && data.index !== null) {
          gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, data.index.handle);
       }
-   };
+   }; */
 
    gl.bindTransform = function() {
       // current shader, set current transform
@@ -313,6 +342,7 @@ function createWebGLContext(canvasID, attrib) {
 const ShaderData = function() {
    this.attribute = {};
    this.uniform = {};
+   this.index = {};
 };
 
 ShaderData.attribLayout = function(attribSize=3, attribType=gl.FLOAT, normalized=false, stride=0, offset=0) {
@@ -381,16 +411,20 @@ ShaderData.prototype.uploadAttribute = function(name, byteOffset, typedArray)  {
    }
 };
 
-//ShaderData.prototype.setAttribute = function(name, value) {
-//};
-// index is used for drawElement, not used for input to shaderProgram
-ShaderData.prototype.setIndex = function(index) {
-   if ((typeof(this.index)!=="undefined") && (this.index !== null)) {
-      gl.deleteBuffer(this.index.handle);
+
+/** 
+ * index is used for drawElement
+ * @param {string} - index name
+ * @param {typedArray} - array of unsigned int
+ */
+ShaderData.prototype.setIndex = function(name, index) {
+   let handle = this.index[name];
+   if (handle) {
+      gl.deleteBuffer(handle);
+      this.index[name] = undefined;
    }
-   if (index !== null) {
-      var handle = gl.createBufferHandle(index, gl.ELEMENT_ARRAY_BUFFER);
-      this.index = {handle: handle};
+   if (index) {
+      this.index[name] = gl.createBufferHandle(index, gl.ELEMENT_ARRAY_BUFFER);
    }
 };
 
@@ -428,31 +462,32 @@ ShaderProgram.prototype.disableVertexAttributeArray = function(gl) {
    }
 };
 
-ShaderProgram.prototype.bindAttribute = function(gl, attribute) {
+ShaderProgram.prototype.bindAttribute = function(gl, attribute, names) {
    try {
-   for (var key in this.attribute) {
-      if (attribute.hasOwnProperty(key)) {   // don't need to check this.attribute' inherited property, cannot possibley exist
-         var attrb = attribute[key];
-         gl.bindAttributeToProgram(this.attribute[key].loc, attrb);
-      } else {
-         // don't have property. console.log?
-         console.log("shaderData don't have shader attribute: " + key);
+      for (let key of names) {
+         if (attribute.hasOwnProperty(key)) {   // don't need to check this.attribute' inherited property, cannot possibley exist
+            const attrb = attribute[key];
+            gl.bindAttributeToProgram(this.attribute[key].loc, attrb);
+         } else {
+            // don't have property. console.log?
+            console.log("shaderData don't have shader attribute: " + key);
+         }
       }
-   }
    }
    catch (e) {
       console.log(e);
    }
 };
 
-ShaderProgram.prototype.bindUniform = function(gl, uniform) {
+ShaderProgram.prototype.bindUniform = function(gl, uniform, names) {
    try {
-   for (var key in this.uniform) {
+   for (let key of names) {
       if (uniform.hasOwnProperty(key)) {
          var uni = uniform[key];
          uni.binder(gl, this.uniform[key].loc, uni.value);
       } else {
          // don't have property. console.log?
+         console.log("shaderData don't have shader uniform: " + key);
       }
    }
    }

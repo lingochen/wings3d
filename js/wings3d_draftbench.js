@@ -243,7 +243,7 @@ DraftBench.prototype._computePreviewIndex = function() {
       barycentric++;
    }
    // save it to the buffer 
-   this.preview.shaderData.setIndex(index);
+   this.preview.shaderData.setIndex('face', index);
    this.preview.index = index;
    this.preview.indexLength = length;
 };
@@ -272,6 +272,8 @@ DraftBench.prototype._computeFaceHiliteIndex = function(polygon, offset) {
    this.hilite.index[offset+indicesLength++] = barycentric;
 
    this.hilite.indexLength = offset+indicesLength;
+   // copy to gpu
+   this.preview.shaderData.setIndex('faceHilite', this.hilite.index);
 };
 
 DraftBench.prototype._computeGroupHiliteIndex = function(faceGroup) {
@@ -355,7 +357,7 @@ DraftBench.prototype._resizePreviewVertex = function() {
       }
    }
    // 
-   this.previewVertex.shaderData.setIndex(index);
+   this.previewVertex.shaderData.setIndex('vertex', index);
    this.previewVertex.indexLength = j;
 };
 
@@ -468,7 +470,9 @@ DraftBench.prototype.hiliteBody = function(faceGroup, isHilite) {
 DraftBench.prototype.draw = function(gl) {
    // draw using index
    try {
-      gl.bindShaderData(this.preview.shaderData);
+      gl.bindAttribute(this.preview.shaderData, ['position', 'barycentric', 'selected']);
+      gl.bindUniform(this.preview.shaderData, ['faceColor', 'selectedColor']);
+      gl.bindIndex(this.preview.shaderData, 'face');
       gl.drawElements(gl.TRIANGLES, this.preview.indexLength, gl.UNSIGNED_INT, 0);
    } catch (e) {
       console.log(e);
@@ -481,12 +485,12 @@ DraftBench.prototype.drawHilite = function(gl) {
       return;
    }
    // set hilite color and hilite index
-   this.preview.shaderData.setIndex(this.hilite.index);
    this.preview.shaderData.setUniform4fv("faceColor", [0.0, 1.0, 0.0, 0.35]);
-   gl.bindShaderData(this.preview.shaderData);
+   gl.bindAttribute(this.preview.shaderData, ['position', 'barycentric', 'selected']);
+   gl.bindUniform(this.preview.shaderData, ['faceColor', 'selectedColor']);
+   gl.bindIndex(this.preview.shaderData, 'faceHilite');
    gl.drawElements(gl.TRIANGLES, this.hilite.indexLength, gl.UNSIGNED_INT, 0);
-   // restore color and index
-   this.preview.shaderData.setIndex(this.preview.index);
+   // restore color
    this.preview.shaderData.setUniform4fv("faceColor", [0.5, 0.5, 0.5, 1.0]);
 };
 
@@ -494,8 +498,9 @@ DraftBench.prototype.drawHilite = function(gl) {
 DraftBench.prototype.drawVertex = function(gl) {
    // drawing using vertex array
    try {
-      gl.bindShaderData(this.previewVertex.shaderData);
-      //gl.drawArrays(gl.POINTS, 0, this.vertices.length);
+      gl.bindAttribute(this.previewVertex.shaderData, ['position', 'color']);
+      gl.bindUniform(this.previewVertex.shaderData, ['selectedColor', 'hiliteColor']);
+      gl.bindIndex(this.previewVertex.shaderData, 'vertex');
       gl.drawElements(gl.POINTS, this.previewVertex.indexLength, gl.UNSIGNED_INT, 0);
    } catch (e) {
       console.log(e);
@@ -504,7 +509,8 @@ DraftBench.prototype.drawVertex = function(gl) {
 
 // draw edge, select color
 DraftBench.prototype.drawEdge = function(gl) {
-   gl.bindShaderData(this.previewEdge.shaderData);
+   gl.bindAttribute(this.previewEdge.shaderData, ['position', 'color']);
+   gl.bindUniform(this.previewEdge.shaderData, ['selectedColor', 'hiliteColor']);
    gl.drawArrays(gl.LINES, 0, this.previewEdge.line.length/3);
 };
 
@@ -550,7 +556,8 @@ DraftBench.prototype.drawPlane = (function() {
       gl.disable(gl.CULL_FACE);
       gl.useShader(ShaderProg.solidColor);
       gl.bindTransform();
-      gl.bindShaderData(this.previewPlane.shaderData);
+      gl.bindAttribute(this.previewPlane.shaderData, ['position']);
+      gl.bindUniform(this.previewPlane.shaderData, ['faceColor']);
       gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
       gl.disableShader();
       gl.enable(gl.CULL_FACE);
