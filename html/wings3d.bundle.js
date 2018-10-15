@@ -652,20 +652,22 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__plugins_wavefront_obj__ = __webpack_require__(21);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_undo__ = __webpack_require__(4);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_facemads__ = __webpack_require__(8);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d_edgemads__ = __webpack_require__(10);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__wings3d_vertexmads__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_facemads__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d_edgemads__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__wings3d_vertexmads__ = __webpack_require__(12);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__wings3d_bodymads__ = __webpack_require__(14);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__wings3d_multimads__ = __webpack_require__(23);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_12__wings3d_model__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_13__wings3d_draftbench__ = __webpack_require__(18);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_14__wings3d_boundingvolume__ = __webpack_require__(12);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_14__wings3d_boundingvolume__ = __webpack_require__(13);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_15__wings3d_hotkey__ = __webpack_require__(16);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_16__wings3d_util__ = __webpack_require__(7);
 /*
 //     This module implements most of the commands in the View menu. 
 //
 // Original Erlang Version: Bjorn Gustavsson
 */
+
 
 
 
@@ -795,11 +797,6 @@ function loadPref(form) {
       }
     });
 };
-function hexToRGBA(hex) {  // microsft edge don't support #rrggbbaa format yet, so we convert to rgba() 2018/09/24.
-   const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
-   const a = parseInt(hex.slice(7, 9), 16) / 255;
-   return `rgba(${r}, ${g}, ${b}, ${a})`;
-};
 function storePref(form) {
    traverse(theme, (obj, key, _value) => {
       const data = form.querySelector(`input[type=color][name=${key}]`);
@@ -814,7 +811,7 @@ function storePref(form) {
       if (value.length === 7) {
          root.style.setProperty(`--${key}`, value);
       } else if (value.length === 9) {
-         root.style.setProperty(`--${key}`, hexToRGBA(value));
+         root.style.setProperty(`--${key}`, __WEBPACK_IMPORTED_MODULE_16__wings3d_util__["hexToCssRGBA"](value));
       }
     });
    // store prop
@@ -2059,12 +2056,12 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "PreviewCage", function() { return PreviewCage; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "CreatePreviewCageCommand", function() { return CreatePreviewCageCommand; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__ = __webpack_require__(5);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_boundingvolume__ = __webpack_require__(12);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_wingededge__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_boundingvolume__ = __webpack_require__(13);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_wingededge__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_view__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_undo__ = __webpack_require__(4);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_util__ = __webpack_require__(13);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_util__ = __webpack_require__(7);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_i18n__ = __webpack_require__(17);
 /*
 *  hold onto a WingedEdgeTopology. adds index, texture, etc....
@@ -6774,6 +6771,389 @@ __WEBPACK_IMPORTED_MODULE_1__wings3d__["onReady"](function() {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "closestPointToPlane", function() { return closestPointToPlane; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "computeAngle", function() { return computeAngle; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getAxisAngle", function() { return getAxisAngle; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "computeEdgeNormal", function() { return computeEdgeNormal; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getAxisOrder", function() { return getAxisOrder; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "intersectTriangle", function() { return intersectTriangle; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "intersectRayAAExtent", function() { return intersectRayAAExtent; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "intersectRaySphere", function() { return intersectRaySphere; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "intersectPlaneSphere", function() { return intersectPlaneSphere; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "intersectPlaneAABB", function() { return intersectPlaneAABB; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "intersectPlaneHEdge", function() { return intersectPlaneHEdge; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "projectVec3", function() { return projectVec3; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "rotationFromToVec3", function() { return rotationFromToVec3; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "reflectionMat4", function() { return reflectionMat4; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "hexToRGB", function() { return hexToRGB; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "hexToRGBA", function() { return hexToRGBA; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "hexToCssRGBA", function() { return hexToCssRGBA; });
+
+
+
+const kEPSILON = 0.000001;
+
+// Möller–Trumbore ray-triangle intersection algorithm
+// should I use float64array? 
+function intersectTriangle(ray, triangle) {
+   var edge1 = vec3.create(), edge2 = vec3.create();
+   /* find vectors for two edges sharing vert0 */
+   vec3.sub(edge1, triangle[1], triangle[0]);
+   vec3.sub(edge2, triangle[2], triangle[0]);
+
+   /* begin calculating determinant - also used to calculate U parameter */
+   var pvec = vec3.create();
+   vec3.cross(pvec, ray.direction, edge2);
+
+   /* if determinant is near zero, ray lies in plane of triangle */
+   var det = vec3.dot(edge1, pvec);
+
+   if (det < kEPSILON) { // cull backface, and nearly parallel ray
+      return 0.0;
+   }
+   //if (det > -kEPSILON && det < kEPSILON), nearly parallel
+   //  return 0;
+
+   var inv_det = 1.0 / det;
+
+   /* calculate distance from vert0 to ray origin */
+   var tvec = vec3.create();
+   vec3.sub(tvec, ray.origin, triangle[0]);
+
+   /* calculate U parameter and test bounds */
+   var u = vec3.dot(tvec, pvec) * inv_det;
+   if (u < 0.0 || u > 1.0) {
+     return 0.0;
+   }
+
+   /* prepare to test V parameter */
+   var qvec = vec3.create();
+   vec3.cross(qvec, tvec, edge1);
+
+   /* calculate V parameter and test bounds */
+   var v = vec3.dot(ray.direction, qvec) * inv_det;
+   if (v < 0.0 || u + v > 1.0) {
+     return 0.0;
+   }
+
+   /* calculate t, ray intersects triangle */
+   var t = vec3.dot(edge2, qvec) * inv_det;
+   return t;
+};
+
+// http://psgraphics.blogspot.com/2016/02/new-simple-ray-box-test-from-andrew.html
+function intersectRayAAExtent(ray, aabb) {
+   let tmin = Number.NEGATIVE_INFINITY;
+   let tmax = Number.POSITIVE_INFINITY;
+   for (let axis = 0; axis < 3; ++axis) {
+      //const invD = 1.0 / ray.direction[axis];    // expect to be precalculate.
+      let t0 = (aabb.min[axis] - ray.origin[axis]) * ray.invDir[axis];
+      let t1 = (aabb.max[axis] - ray.origin[axis]) * ray.invDir[axis];
+      if (ray.invDir[axis] < 0.0) { // swap
+         let temp = t0; t0 = t1; t1 = temp;
+      }
+      tmin = t0 > tmin ? t0 : tmin;
+      tmax = t1 < tmax ? t1 : tmax;
+      if (tmax <= tmin) {
+         return false;
+      }
+   }
+   return (tmax > 0);
+};
+
+const intersectRaySphere = (function() {
+	//  Fast Ray Sphere Intersection - eric haine, realtimerendering, similar to graphic gem's Jeff Hultquist
+   const l = vec3.create();
+   return function(ray, sphere) {
+      vec3.sub(l, sphere.center, ray.origin);
+	   const l2 = vec3.dot(l, l);
+	   const projection = vec3.dot(l, ray.direction);
+      if ((projection < 0.0) && (l2 > sphere.radius2)) { // sphere is totally behind the camera, not just sphere's origin
+         return false;
+      }
+      if ((l2 - (projection*projection)) > sphere.radius2) {   // discriminant < 0.0f, no sqrt, no intersection.
+         return false;
+      }
+
+      // don't care about true intersection of the 2, just there is a intersection.
+      return true;
+   };
+})();
+
+
+const intersectPlaneSphere = (function() {
+   const pt = vec3.create();
+   return function(plane, sphere) {
+      closestPointToPlane(pt, sphere.center, plane);
+      return vec3.squaredDistance(pt, sphere.center) < sphere.radius2;
+   }
+})();
+
+// gamephysics cookbook.
+function intersectPlaneAABB(plane, box) {
+   const pLen = box.halfSize[0] * Math.abs(plane.normal[0]) + box.halfSize[1] * Math.abs(plane.normal[1]) + box.halfSize[2] * Math.abs(plane.normal[2]);
+   const distance = vec3.dot(plane.normal, box.center) - plane.distance;
+   return Math.abs(distance) <= pLen;
+};
+
+// return value:
+// -2 for no intersection
+// -1 for co planar on the plane
+// 0-1 for intersection t.
+// 0.5 when no (out) intersection pt provided.
+// algorithm
+// paul burke explain the intersection code pretty clearly.
+// same side check and coplane check are from moller.
+function intersectPlaneHEdge(out, plane, hEdge) {
+   const pt0 = hEdge.origin.vertex;
+   const pt1 = hEdge.destination().vertex;
+
+   let d0 = vec3.dot(plane.normal, pt0) - plane.distance; 
+   let d1 = vec3.dot(plane.normal, pt1) - plane.distance;
+   // coplanarity check
+   if (Math.abs(d0) < kEPSILON) { d0=0.0; }
+   if (Math.abs(d1) < kEPSILON) { d1=0.0; }
+   
+   let t;
+   if ((d0*d1) > 0) {  // check if on the same side
+      return -2;
+   } else if (d0 == 0.0) {
+      if (d1 == 0.0) {  // co planar
+         return -1;
+      }
+      t = 0;            // intersect at begin
+   } else if (d1 == 0.0) {
+      t = 1;            // intersect at end
+   }
+
+   // compute intersection pt (out).
+   if (out) {
+      if (t === undefined) {
+         // t = (plane.normal dot (plane.pt - pt0)) / (plane.normal dot (pt1-pt0))
+         vec3.sub(out, plane.pt, pt0);
+         const tDer = vec3.dot(plane.normal, out);
+         vec3.sub(out, pt1, pt0);
+         t = tDer / vec3.dot(plane.normal, out);
+      }
+      // out = pt0 + t(pt1-pt0)
+      vec3.scaleAndAdd(out, pt0, out, t);
+   }
+
+   return (t !== undefined)? t : 0.5;  // 0.5 for intersection not 0 or 1.
+};
+
+/* from
+ * @article{MollerHughes99,
+  author = "Tomas Möller and John F. Hughes",
+  title = "Efficiently Building a Matrix to Rotate One Vector to Another",
+  journal = "journal of graphics tools",
+  volume = "4",
+  number = "4",
+  pages = "1-4",
+  year = "1999",
+}
+http://jgt.akpeters.com/papers/MollerHughes99/code.html
+*/
+function rotationFromToVec3(mtx, from, to) {
+
+  let e = vec3.dot(from, to);
+  if (Math.abs(e) > (1.0-kEPSILON) ) { // "from" and "to"-vector almost parallel
+      // find closest axis
+      const x = vec3.fromValues(Math.abs(from[0]), Math.abs(from[1]), Math.abs(from[2]));   // vector most nearly orthogonal to "from"
+      if (x[0] < x[1]) {
+         if( x[0] < x[2] ) {
+            x[0] = 1.0; x[1] = x[2] = 0.0;
+         } else {
+            x[2] = 1.0; x[0] = x[1] = 0.0;
+         }
+      } else {
+         if( x[1] < x[2] ) {
+            x[1] = 1.0; x[0] = x[2] = 0.0;
+         } else {
+            x[2] = 1.0; x[0] = x[1] = 0.0;
+         }
+      }
+
+      // compute the matrix
+      let ut = vec3.fromValues(x[0] - from[0], x[1] - from[1], x[2] - from[2]);  // sub(v, x, from);
+      let vt = vec3.fromValues(x[0] - to[0],   x[1] - to[1],   x[2] - to[2]);
+
+      let c1 = 2.0 / vec3.dot(ut, ut);       // coefficients
+      let c2 = 2.0 / vec3.dot(vt, vt);
+      let c3 = c1 * c2  * vec3.dot(ut, vt);
+      for (let i = 0; i < 3; i++) {
+         let k = i*4;      // stride.
+         for (let j = 0; j < 3; j++) {
+            mtx[k+j] =  -c1 * ut[i] * ut[j] - c2 * vt[i] * vt[j] + c3 * vt[i] * ut[j];
+         }
+         mtx[k+i] += 1.0;
+      }
+   } else  {// the most common case, unless "from"="to", or "from"=-"to" 
+      let v = vec3.create();
+      vec3.cross(v, from, to);
+      // ...otherwise use this hand optimized version (9 mults less)
+      //let h = 1.0 / (1.0 + e);      // optimization by Gottfried Chen
+      let h = (1.0 -e)/ vec3.dot(v, v);
+      let hvx = h * v[0];
+      let hvz = h * v[2];
+      let hvxy = hvx * v[1];
+      let hvxz = hvx * v[2];
+      let hvyz = hvz * v[1];
+      mtx[0] = e + hvx * v[0];
+      mtx[1] = hvxy + v[2];
+      mtx[2] = hvxz - v[1];
+
+      mtx[4] = hvxy - v[2];
+      mtx[5] = e + h * v[1] * v[1];
+      mtx[6] = hvyz + v[0];
+
+      mtx[8] = hvxz + v[1];
+      mtx[9] = hvyz - v[0];
+      mtx[10] = e + hvz * v[2];
+   }
+
+   return mtx;
+};
+
+/*
+References
+https://www.opengl.org/discussion_boards/showthread.php/147784-Mirror-Matrices
+https://www.opengl.org/discussion_boards/showthread.php/169605-reflection-matrix-how-to-derive
+"3D Math Primer for Graphics andGame Development" by Fletcher Dunn, Ian Parberry
+*/
+function reflectionMat4(mat, norm, pt) {
+   const d = -vec3.dot(norm, pt);
+
+	mat[0] = -2 * norm[0] * norm[0] + 1;
+	mat[1] = -2 * norm[1] * norm[0];
+	mat[2] = -2 * norm[2] * norm[0];
+	mat[3] = 0;
+ 
+	mat[4] = -2 * norm[0] * norm[1];
+	mat[5] = -2 * norm[1] * norm[1] + 1;
+	mat[6] = -2 * norm[2] * norm[1];
+	mat[7] = 0;
+ 
+	mat[8] =	-2 * norm[0] * norm[2];
+	mat[9] = -2 * norm[1] * norm[2];
+	mat[10] = -2 * norm[2] * norm[2] + 1;
+	mat[11] = 0;
+ 
+	mat[12] = -2 * norm[0] * d;
+	mat[13] = -2 * norm[1] * d;
+	mat[14] = -2 * norm[2] * d;
+   mat[15] = 1;
+   return mat;
+};
+
+
+// angle is between (-PI, PI). equivalent to (-180, 180) degree.
+function computeAngle(crossNorm, v0, v1, v2) {
+   let edge0 = vec3.create(), edge1 = vec3.create();
+   // angle = pi - atan2(v[i] x v[i+1].magnitude, v[i] * v[i+1]);
+   vec3.sub(edge0, v0.vertex, v1.vertex);
+   vec3.sub(edge1, v2.vertex, v1.vertex);
+   vec3.cross(crossNorm, edge0, edge1);
+   let rad = Math.atan2(vec3.length(crossNorm), vec3.dot(edge0, edge1));
+   vec3.normalize(crossNorm, crossNorm);
+   return rad;
+}
+
+function getAxisAngle(axis, vFrom, vTo) {
+   vec3.cross(axis, vFrom, vTo);
+   let rad = Math.atan2(vec3.length(axis), vec3.dot(vFrom, vTo));
+   vec3.normalize(axis, axis);
+   return rad;
+   //return 2*Math.acos( Math.abs( vec3.dot(vFrom, vTo), -1, 1 ) );
+}
+
+
+// the input (left, right) is on the same Vertex.
+function computeEdgeNormal(normal, leftHEdge, rightHEdge) {
+   //let normal = vec3.create();
+   let radian = computeAngle(normal, leftHEdge.destination(), leftHEdge.origin, rightHEdge.destination());
+   radian = Math.abs(radian);
+   if ((radian < kEPSILON) || (radian > (Math.PI-kEPSILON))) {   // nearly parallel, now get face
+      vec3.set(normal, 0, 0, 0);
+      if (leftHEdge.face) {
+         vec3.add(normal, normal, leftHEdge.face.normal);
+      }
+      if (rightHEdge.pair.face) {
+         vec3.add(normal, normal, rightHEdge.pair.face);
+      }
+   }
+   // compute normal
+   vec3.normalize(normal, normal);
+};
+
+function projectVec3(vertices, planeNormal, planeOrigin) {
+   const pt = vec3.create();
+
+   for (let vertex of vertices) {
+      vec3.sub(pt, vertex.vertex, planeOrigin);
+      let d = vec3.dot(pt, planeNormal);
+      vec3.scale(pt, planeNormal, d);
+      vec3.sub(vertex.vertex, vertex.vertex, pt);
+   }
+};
+
+function closestPointToPlane(out, point, plane) { // projection to plane
+   const distance = vec3.dot(plane.normal, point) - plane.distance;
+   vec3.scaleAndAdd(out, point, plane.normal, -distance);
+};
+
+function getAxisOrder(extent) {
+   let size = vec3.create();
+   vec3.sub(size, extent.max, extent.min);
+   let first, second, third;
+   if (size[0] > size[1]) {
+      if (size[0] > size[2]) {
+         first = 0;
+         if (size[1] > size[2]) {
+            second = 1;
+            third = 2;
+         } else {
+            second = 2;
+            third = 1;
+         }
+      }
+   } else if (size[1] > size[2]) {
+
+   } else {
+
+   }
+
+   return [first, second, third];
+};
+
+function hexToRGB(hex) {
+   return [parseInt(hex.slice(1, 3), 16)/255,
+           parseInt(hex.slice(3, 5), 16)/255,
+           parseInt(hex.slice(5, 7), 16)/255];
+ };
+function hexToRGBA(hex) {
+  return [parseInt(hex.slice(1, 3), 16)/255,
+          parseInt(hex.slice(3, 5), 16)/255,
+          parseInt(hex.slice(5, 7), 16)/255,
+          1.0];
+};
+
+function hexToCssRGBA(hex) {  // microsft edge don't support #rrggbbaa format yet, so we convert to rgba() 2018/09/24.
+   const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+   const a = parseInt(hex.slice(7, 9), 16) / 255;
+   return `rgba(${r}, ${g}, ${b}, ${a})`;
+};
+
+
+
+
+
+/***/ }),
+/* 8 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "WingedEdge", function() { return WingedEdge; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "HalfEdge", function() { return HalfEdge; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "Vertex", function() { return Vertex; });
@@ -9463,16 +9843,16 @@ WingedTopology.prototype.undoHole = function(hole) {
 
 
 /***/ }),
-/* 8 */
+/* 9 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "FaceMadsor", function() { return FaceMadsor; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__ = __webpack_require__(9);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_edgemads__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_edgemads__ = __webpack_require__(11);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_bodymads__ = __webpack_require__(14);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__ = __webpack_require__(12);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_model__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_view__ = __webpack_require__(1);
@@ -10094,7 +10474,7 @@ class MirrorFaceCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["Edi
 
 
 /***/ }),
-/* 9 */
+/* 10 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -10117,7 +10497,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_view__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_ui__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_boundingvolume__ = __webpack_require__(12);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_boundingvolume__ = __webpack_require__(13);
 /*
  *
  * MADS (Modify, Add, Delete, Select) operation. 
@@ -10863,16 +11243,16 @@ class GenericEditCommand extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["Ed
 
 
 /***/ }),
-/* 10 */
+/* 11 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "EdgeMadsor", function() { return EdgeMadsor; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__ = __webpack_require__(9);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__ = __webpack_require__(8);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__ = __webpack_require__(9);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_bodymads__ = __webpack_require__(14);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__ = __webpack_require__(12);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_model__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_ui__ = __webpack_require__(2);
@@ -11428,17 +11808,17 @@ class EdgeCornerHandler extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["Mov
 
 
 /***/ }),
-/* 11 */
+/* 12 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "VertexMadsor", function() { return VertexMadsor; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "VertexConnectCommand", function() { return VertexConnectCommand; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__ = __webpack_require__(9);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__ = __webpack_require__(8);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__ = __webpack_require__(9);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_bodymads__ = __webpack_require__(14);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_edgemads__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_edgemads__ = __webpack_require__(11);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_model__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_view__ = __webpack_require__(1);
@@ -11778,7 +12158,7 @@ class VertexWeldCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["Edi
 
 
 /***/ }),
-/* 12 */
+/* 13 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -11787,7 +12167,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "LooseOctree", function() { return LooseOctree; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "Plane", function() { return Plane; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "Ray", function() { return Ray; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_util__ = __webpack_require__(13);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_util__ = __webpack_require__(7);
 /*   require glmatrix
 //
 // LooseOctree and BoundingSphere.
@@ -12158,384 +12538,22 @@ class Ray {
 
 
 /***/ }),
-/* 13 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "closestPointToPlane", function() { return closestPointToPlane; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "computeAngle", function() { return computeAngle; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getAxisAngle", function() { return getAxisAngle; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "computeEdgeNormal", function() { return computeEdgeNormal; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getAxisOrder", function() { return getAxisOrder; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "intersectTriangle", function() { return intersectTriangle; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "intersectRayAAExtent", function() { return intersectRayAAExtent; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "intersectRaySphere", function() { return intersectRaySphere; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "intersectPlaneSphere", function() { return intersectPlaneSphere; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "intersectPlaneAABB", function() { return intersectPlaneAABB; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "intersectPlaneHEdge", function() { return intersectPlaneHEdge; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "projectVec3", function() { return projectVec3; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "rotationFromToVec3", function() { return rotationFromToVec3; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "reflectionMat4", function() { return reflectionMat4; });
-
-
-
-const kEPSILON = 0.000001;
-
-// Möller–Trumbore ray-triangle intersection algorithm
-// should I use float64array? 
-function intersectTriangle(ray, triangle) {
-   var edge1 = vec3.create(), edge2 = vec3.create();
-   /* find vectors for two edges sharing vert0 */
-   vec3.sub(edge1, triangle[1], triangle[0]);
-   vec3.sub(edge2, triangle[2], triangle[0]);
-
-   /* begin calculating determinant - also used to calculate U parameter */
-   var pvec = vec3.create();
-   vec3.cross(pvec, ray.direction, edge2);
-
-   /* if determinant is near zero, ray lies in plane of triangle */
-   var det = vec3.dot(edge1, pvec);
-
-   if (det < kEPSILON) { // cull backface, and nearly parallel ray
-      return 0.0;
-   }
-   //if (det > -kEPSILON && det < kEPSILON), nearly parallel
-   //  return 0;
-
-   var inv_det = 1.0 / det;
-
-   /* calculate distance from vert0 to ray origin */
-   var tvec = vec3.create();
-   vec3.sub(tvec, ray.origin, triangle[0]);
-
-   /* calculate U parameter and test bounds */
-   var u = vec3.dot(tvec, pvec) * inv_det;
-   if (u < 0.0 || u > 1.0) {
-     return 0.0;
-   }
-
-   /* prepare to test V parameter */
-   var qvec = vec3.create();
-   vec3.cross(qvec, tvec, edge1);
-
-   /* calculate V parameter and test bounds */
-   var v = vec3.dot(ray.direction, qvec) * inv_det;
-   if (v < 0.0 || u + v > 1.0) {
-     return 0.0;
-   }
-
-   /* calculate t, ray intersects triangle */
-   var t = vec3.dot(edge2, qvec) * inv_det;
-   return t;
-};
-
-// http://psgraphics.blogspot.com/2016/02/new-simple-ray-box-test-from-andrew.html
-function intersectRayAAExtent(ray, aabb) {
-   let tmin = Number.NEGATIVE_INFINITY;
-   let tmax = Number.POSITIVE_INFINITY;
-   for (let axis = 0; axis < 3; ++axis) {
-      //const invD = 1.0 / ray.direction[axis];    // expect to be precalculate.
-      let t0 = (aabb.min[axis] - ray.origin[axis]) * ray.invDir[axis];
-      let t1 = (aabb.max[axis] - ray.origin[axis]) * ray.invDir[axis];
-      if (ray.invDir[axis] < 0.0) { // swap
-         let temp = t0; t0 = t1; t1 = temp;
-      }
-      tmin = t0 > tmin ? t0 : tmin;
-      tmax = t1 < tmax ? t1 : tmax;
-      if (tmax <= tmin) {
-         return false;
-      }
-   }
-   return (tmax > 0);
-};
-
-const intersectRaySphere = (function() {
-	//  Fast Ray Sphere Intersection - eric haine, realtimerendering, similar to graphic gem's Jeff Hultquist
-   const l = vec3.create();
-   return function(ray, sphere) {
-      vec3.sub(l, sphere.center, ray.origin);
-	   const l2 = vec3.dot(l, l);
-	   const projection = vec3.dot(l, ray.direction);
-      if ((projection < 0.0) && (l2 > sphere.radius2)) { // sphere is totally behind the camera, not just sphere's origin
-         return false;
-      }
-      if ((l2 - (projection*projection)) > sphere.radius2) {   // discriminant < 0.0f, no sqrt, no intersection.
-         return false;
-      }
-
-      // don't care about true intersection of the 2, just there is a intersection.
-      return true;
-   };
-})();
-
-
-const intersectPlaneSphere = (function() {
-   const pt = vec3.create();
-   return function(plane, sphere) {
-      closestPointToPlane(pt, sphere.center, plane);
-      return vec3.squaredDistance(pt, sphere.center) < sphere.radius2;
-   }
-})();
-
-// gamephysics cookbook.
-function intersectPlaneAABB(plane, box) {
-   const pLen = box.halfSize[0] * Math.abs(plane.normal[0]) + box.halfSize[1] * Math.abs(plane.normal[1]) + box.halfSize[2] * Math.abs(plane.normal[2]);
-   const distance = vec3.dot(plane.normal, box.center) - plane.distance;
-   return Math.abs(distance) <= pLen;
-};
-
-// return value:
-// -2 for no intersection
-// -1 for co planar on the plane
-// 0-1 for intersection t.
-// 0.5 when no (out) intersection pt provided.
-// algorithm
-// paul burke explain the intersection code pretty clearly.
-// same side check and coplane check are from moller.
-function intersectPlaneHEdge(out, plane, hEdge) {
-   const pt0 = hEdge.origin.vertex;
-   const pt1 = hEdge.destination().vertex;
-
-   let d0 = vec3.dot(plane.normal, pt0) - plane.distance; 
-   let d1 = vec3.dot(plane.normal, pt1) - plane.distance;
-   // coplanarity check
-   if (Math.abs(d0) < kEPSILON) { d0=0.0; }
-   if (Math.abs(d1) < kEPSILON) { d1=0.0; }
-   
-   let t;
-   if ((d0*d1) > 0) {  // check if on the same side
-      return -2;
-   } else if (d0 == 0.0) {
-      if (d1 == 0.0) {  // co planar
-         return -1;
-      }
-      t = 0;            // intersect at begin
-   } else if (d1 == 0.0) {
-      t = 1;            // intersect at end
-   }
-
-   // compute intersection pt (out).
-   if (out) {
-      if (t === undefined) {
-         // t = (plane.normal dot (plane.pt - pt0)) / (plane.normal dot (pt1-pt0))
-         vec3.sub(out, plane.pt, pt0);
-         const tDer = vec3.dot(plane.normal, out);
-         vec3.sub(out, pt1, pt0);
-         t = tDer / vec3.dot(plane.normal, out);
-      }
-      // out = pt0 + t(pt1-pt0)
-      vec3.scaleAndAdd(out, pt0, out, t);
-   }
-
-   return (t !== undefined)? t : 0.5;  // 0.5 for intersection not 0 or 1.
-};
-
-/* from
- * @article{MollerHughes99,
-  author = "Tomas Möller and John F. Hughes",
-  title = "Efficiently Building a Matrix to Rotate One Vector to Another",
-  journal = "journal of graphics tools",
-  volume = "4",
-  number = "4",
-  pages = "1-4",
-  year = "1999",
-}
-http://jgt.akpeters.com/papers/MollerHughes99/code.html
-*/
-function rotationFromToVec3(mtx, from, to) {
-
-  let e = vec3.dot(from, to);
-  if (Math.abs(e) > (1.0-kEPSILON) ) { // "from" and "to"-vector almost parallel
-      // find closest axis
-      const x = vec3.fromValues(Math.abs(from[0]), Math.abs(from[1]), Math.abs(from[2]));   // vector most nearly orthogonal to "from"
-      if (x[0] < x[1]) {
-         if( x[0] < x[2] ) {
-            x[0] = 1.0; x[1] = x[2] = 0.0;
-         } else {
-            x[2] = 1.0; x[0] = x[1] = 0.0;
-         }
-      } else {
-         if( x[1] < x[2] ) {
-            x[1] = 1.0; x[0] = x[2] = 0.0;
-         } else {
-            x[2] = 1.0; x[0] = x[1] = 0.0;
-         }
-      }
-
-      // compute the matrix
-      let ut = vec3.fromValues(x[0] - from[0], x[1] - from[1], x[2] - from[2]);  // sub(v, x, from);
-      let vt = vec3.fromValues(x[0] - to[0],   x[1] - to[1],   x[2] - to[2]);
-
-      let c1 = 2.0 / vec3.dot(ut, ut);       // coefficients
-      let c2 = 2.0 / vec3.dot(vt, vt);
-      let c3 = c1 * c2  * vec3.dot(ut, vt);
-      for (let i = 0; i < 3; i++) {
-         let k = i*4;      // stride.
-         for (let j = 0; j < 3; j++) {
-            mtx[k+j] =  -c1 * ut[i] * ut[j] - c2 * vt[i] * vt[j] + c3 * vt[i] * ut[j];
-         }
-         mtx[k+i] += 1.0;
-      }
-   } else  {// the most common case, unless "from"="to", or "from"=-"to" 
-      let v = vec3.create();
-      vec3.cross(v, from, to);
-      // ...otherwise use this hand optimized version (9 mults less)
-      //let h = 1.0 / (1.0 + e);      // optimization by Gottfried Chen
-      let h = (1.0 -e)/ vec3.dot(v, v);
-      let hvx = h * v[0];
-      let hvz = h * v[2];
-      let hvxy = hvx * v[1];
-      let hvxz = hvx * v[2];
-      let hvyz = hvz * v[1];
-      mtx[0] = e + hvx * v[0];
-      mtx[1] = hvxy + v[2];
-      mtx[2] = hvxz - v[1];
-
-      mtx[4] = hvxy - v[2];
-      mtx[5] = e + h * v[1] * v[1];
-      mtx[6] = hvyz + v[0];
-
-      mtx[8] = hvxz + v[1];
-      mtx[9] = hvyz - v[0];
-      mtx[10] = e + hvz * v[2];
-   }
-
-   return mtx;
-};
-
-/*
-References
-https://www.opengl.org/discussion_boards/showthread.php/147784-Mirror-Matrices
-https://www.opengl.org/discussion_boards/showthread.php/169605-reflection-matrix-how-to-derive
-"3D Math Primer for Graphics andGame Development" by Fletcher Dunn, Ian Parberry
-*/
-function reflectionMat4(mat, norm, pt) {
-   const d = -vec3.dot(norm, pt);
-
-	mat[0] = -2 * norm[0] * norm[0] + 1;
-	mat[1] = -2 * norm[1] * norm[0];
-	mat[2] = -2 * norm[2] * norm[0];
-	mat[3] = 0;
- 
-	mat[4] = -2 * norm[0] * norm[1];
-	mat[5] = -2 * norm[1] * norm[1] + 1;
-	mat[6] = -2 * norm[2] * norm[1];
-	mat[7] = 0;
- 
-	mat[8] =	-2 * norm[0] * norm[2];
-	mat[9] = -2 * norm[1] * norm[2];
-	mat[10] = -2 * norm[2] * norm[2] + 1;
-	mat[11] = 0;
- 
-	mat[12] = -2 * norm[0] * d;
-	mat[13] = -2 * norm[1] * d;
-	mat[14] = -2 * norm[2] * d;
-   mat[15] = 1;
-   return mat;
-};
-
-
-// angle is between (-PI, PI). equivalent to (-180, 180) degree.
-function computeAngle(crossNorm, v0, v1, v2) {
-   let edge0 = vec3.create(), edge1 = vec3.create();
-   // angle = pi - atan2(v[i] x v[i+1].magnitude, v[i] * v[i+1]);
-   vec3.sub(edge0, v0.vertex, v1.vertex);
-   vec3.sub(edge1, v2.vertex, v1.vertex);
-   vec3.cross(crossNorm, edge0, edge1);
-   let rad = Math.atan2(vec3.length(crossNorm), vec3.dot(edge0, edge1));
-   vec3.normalize(crossNorm, crossNorm);
-   return rad;
-}
-
-function getAxisAngle(axis, vFrom, vTo) {
-   vec3.cross(axis, vFrom, vTo);
-   let rad = Math.atan2(vec3.length(axis), vec3.dot(vFrom, vTo));
-   vec3.normalize(axis, axis);
-   return rad;
-   //return 2*Math.acos( Math.abs( vec3.dot(vFrom, vTo), -1, 1 ) );
-}
-
-
-// the input (left, right) is on the same Vertex.
-function computeEdgeNormal(normal, leftHEdge, rightHEdge) {
-   //let normal = vec3.create();
-   let radian = computeAngle(normal, leftHEdge.destination(), leftHEdge.origin, rightHEdge.destination());
-   radian = Math.abs(radian);
-   if ((radian < kEPSILON) || (radian > (Math.PI-kEPSILON))) {   // nearly parallel, now get face
-      vec3.set(normal, 0, 0, 0);
-      if (leftHEdge.face) {
-         vec3.add(normal, normal, leftHEdge.face.normal);
-      }
-      if (rightHEdge.pair.face) {
-         vec3.add(normal, normal, rightHEdge.pair.face);
-      }
-   }
-   // compute normal
-   vec3.normalize(normal, normal);
-};
-
-function projectVec3(vertices, planeNormal, planeOrigin) {
-   const pt = vec3.create();
-
-   for (let vertex of vertices) {
-      vec3.sub(pt, vertex.vertex, planeOrigin);
-      let d = vec3.dot(pt, planeNormal);
-      vec3.scale(pt, planeNormal, d);
-      vec3.sub(vertex.vertex, vertex.vertex, pt);
-   }
-};
-
-function closestPointToPlane(out, point, plane) { // projection to plane
-   const distance = vec3.dot(plane.normal, point) - plane.distance;
-   vec3.scaleAndAdd(out, point, plane.normal, -distance);
-};
-
-function getAxisOrder(extent) {
-   let size = vec3.create();
-   vec3.sub(size, extent.max, extent.min);
-   let first, second, third;
-   if (size[0] > size[1]) {
-      if (size[0] > size[2]) {
-         first = 0;
-         if (size[1] > size[2]) {
-            second = 1;
-            third = 2;
-         } else {
-            second = 2;
-            third = 1;
-         }
-      }
-   } else if (size[1] > size[2]) {
-
-   } else {
-
-   }
-
-   return [first, second, third];
-};
-
-
-
-
-
-/***/ }),
 /* 14 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "BodyMadsor", function() { return BodyMadsor; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__ = __webpack_require__(9);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__ = __webpack_require__(8);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_edgemads__ = __webpack_require__(10);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_edgemads__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__ = __webpack_require__(12);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_model__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_shaderprog__ = __webpack_require__(6);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_view__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__wings3d_util__ = __webpack_require__(13);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__wings3d_util__ = __webpack_require__(7);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__wings3d__ = __webpack_require__(0);
 //
 // bodymadsor. 
@@ -13847,9 +13865,9 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "CheckPoint", function() { return CheckPoint; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__ = __webpack_require__(5);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_shaderprog__ = __webpack_require__(6);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_util__ = __webpack_require__(13);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_boundingvolume__ = __webpack_require__(12);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_wingededge__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_util__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_boundingvolume__ = __webpack_require__(13);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_wingededge__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_undo__ = __webpack_require__(4);
 //
 // strategy:
@@ -13926,6 +13944,17 @@ const DraftBench = function(defaultSize = 2048) {  // should only be created by 
    }
 };
 
+
+DraftBench.color = {face:[0.5, 0.5, 0.5, 1.0],
+                    edge: [1.0, 1.0, 1.0, 1.0],
+                    edgeHard: [],
+                    edgeMagnet: [],
+                    vertex: [],
+                    vertexMagnet: [],
+                    selected: [1.0, 0.0, 0.0, 1.0],
+                    hiliteSelected: [],
+                    hiliteUnselected: [],
+                  };
 DraftBench.CONST = (function() {
    const constant = {};
 
@@ -13939,6 +13968,7 @@ DraftBench.CONST = (function() {
    constant.BARYCENTRIC[2] = 1.0;
    return constant;
 }());
+
 
 // draftBench inherited from MeshAllocator, so we canintercept freeXXX and allocXXX call easier. It also makes logical sense.
 DraftBench.prototype = Object.create(__WEBPACK_IMPORTED_MODULE_4__wings3d_wingededge__["MeshAllocator"].prototype);
@@ -15157,12 +15187,14 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_camera__ = __webpack_require__(15);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_shaderprog__ = __webpack_require__(6);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_util__ = __webpack_require__(7);
 /*
 //    Render all objects and helpers (such as axes) in the scene.
 //     Used for the Geometry and AutoUV windows.
 //
 //  Original Erlang Version: Bjorn Gustavsson
 */
+
 
 
 
@@ -15480,7 +15512,7 @@ function renderAxisLetter(gl, zFar) {
       zFar = zFar + __WEBPACK_IMPORTED_MODULE_3__wings3d__["GROUND_GRID_SIZE"];
       //gl:polygonMode(?GL_FRONT_AND_BACK, ?GL_FILL),
       
-      var color = [hexToRGB(__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].colorX), hexToRGB(__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].colorY), hexToRGB(__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].colorZ)];
+      var color = [__WEBPACK_IMPORTED_MODULE_5__wings3d_util__["hexToRGB"](__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].colorX), __WEBPACK_IMPORTED_MODULE_5__wings3d_util__["hexToRGB"](__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].colorY), __WEBPACK_IMPORTED_MODULE_5__wings3d_util__["hexToRGB"](__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].colorZ)];
       var endx = gl.transformVertex(vec4.fromValues(zFar, 0.0, 0.0, 1.0)), 
           endy = gl.transformVertex(vec4.fromValues(0.0, zFar, 0.0, 1.0)), 
           endz = gl.transformVertex(vec4.fromValues(0.0, 0.0, zFar, 1.0));
@@ -15504,7 +15536,7 @@ function initMiniAxis(gl, inModelView) {
       [-PB, 0.0,  PA], [0.0, 0.0, 0.1], [PB, 0.0,  PA], [0.0, 0.0, 0.1]   // z arrow
    );
    // ready color
-   var clr = [hexToRGB(__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].colorX), hexToRGB(__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].colorY), hexToRGB(__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].colorZ)];
+   var clr = [__WEBPACK_IMPORTED_MODULE_5__wings3d_util__["hexToRGB"](__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].colorX), __WEBPACK_IMPORTED_MODULE_5__wings3d_util__["hexToRGB"](__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].colorY), __WEBPACK_IMPORTED_MODULE_5__wings3d_util__["hexToRGB"](__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].colorZ)];
    var color = [], arrow = [];
    for (var i=0; i< 3; ++i) {
       color = color.concat(clr[i], clr[i]);
@@ -15604,8 +15636,8 @@ function getAxis() {
    return new Float32Array([].concat.apply([],arry));
 }
 function getAxisColor() {
-    const color = [hexToRGB(__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].colorX), hexToRGB(__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].colorY), hexToRGB(__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].colorZ)],
-       negColor = [hexToRGB(__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].negColorX), hexToRGB(__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].negColorY), hexToRGB(__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].negColorZ)];
+    const color = [__WEBPACK_IMPORTED_MODULE_5__wings3d_util__["hexToRGB"](__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].colorX), __WEBPACK_IMPORTED_MODULE_5__wings3d_util__["hexToRGB"](__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].colorY), __WEBPACK_IMPORTED_MODULE_5__wings3d_util__["hexToRGB"](__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].colorZ)],
+       negColor = [__WEBPACK_IMPORTED_MODULE_5__wings3d_util__["hexToRGB"](__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].negColorX), __WEBPACK_IMPORTED_MODULE_5__wings3d_util__["hexToRGB"](__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].negColorY), __WEBPACK_IMPORTED_MODULE_5__wings3d_util__["hexToRGB"](__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].negColorZ)];
    var arry = [];
    for (var i = 0; i < 3; i++) {
       arry = arry.concat(color[i], color[i], negColor[i], negColor[i]);
@@ -15620,7 +15652,7 @@ function renderGroundAndAxes(gl, projection, modelView) {
       //(Camera.view.alongAxis =/= none);      
    if (show) {
       var alongAxis = __WEBPACK_IMPORTED_MODULE_2__wings3d_camera__["view"].alongAxis;
-      const color = hexToRGBA(__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].gridColor);
+      const color = __WEBPACK_IMPORTED_MODULE_5__wings3d_util__["hexToRGBA"](__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].gridColor);
          //case view.AlongAxis of
          // x -> gl:rotatef(90.0, 0.0, 1.0, 0.0);
          // z -> ok;
@@ -15668,21 +15700,10 @@ function needToRedraw() {
    redrawFlag = true;
 };
 
-function hexToRGB(hex) {
-   return [parseInt(hex.slice(1, 3), 16)/255,
-           parseInt(hex.slice(3, 5), 16)/255,
-           parseInt(hex.slice(5, 7), 16)/255];
- };
-function hexToRGBA(hex) {
-  return [parseInt(hex.slice(1, 3), 16)/255,
-          parseInt(hex.slice(3, 5), 16)/255,
-          parseInt(hex.slice(5, 7), 16)/255,
-          1.0];
-};
 function render(gl, drawWorldFn) {
    if (gl.resizeToDisplaySize() || __WEBPACK_IMPORTED_MODULE_2__wings3d_camera__["view"].isModified || redrawFlag) {
       redrawFlag = false; 
-      const backColor = hexToRGBA(__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].geometryBackground);
+      const backColor = __WEBPACK_IMPORTED_MODULE_5__wings3d_util__["hexToRGBA"](__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].geometryBackground);
       gl.clearColor(backColor[0], backColor[1], backColor[2], backColor[3]);
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
       gl.polygonOffset(0.0, 0.0);
@@ -15856,7 +15877,7 @@ class WavefrontObjImportExporter extends __WEBPACK_IMPORTED_MODULE_0__wings3d_im
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ImportExporter", function() { return ImportExporter; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_model__ = __webpack_require__(3);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_wingededge__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_wingededge__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_ui__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_view__ = __webpack_require__(1);
 //
@@ -15950,10 +15971,10 @@ class ImportExporter {
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "MultiMadsor", function() { return MultiMadsor; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__ = __webpack_require__(9);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__ = __webpack_require__(8);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_edgemads__ = __webpack_require__(10);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_edgemads__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__ = __webpack_require__(12);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_model__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_shaderprog__ = __webpack_require__(6);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_view__ = __webpack_require__(1);
@@ -16045,18 +16066,18 @@ class MultiMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] 
 
 __webpack_require__(25);
 __webpack_require__(14);
-__webpack_require__(12);
+__webpack_require__(13);
 __webpack_require__(15);
 __webpack_require__(18);
-__webpack_require__(10);
-__webpack_require__(8);
+__webpack_require__(11);
+__webpack_require__(9);
 __webpack_require__(5);
 __webpack_require__(34);
 __webpack_require__(16);
 __webpack_require__(17);
 __webpack_require__(22);
 __webpack_require__(19);
-__webpack_require__(9);
+__webpack_require__(10);
 __webpack_require__(3);
 __webpack_require__(23);
 __webpack_require__(20);
@@ -16065,10 +16086,10 @@ __webpack_require__(35);
 __webpack_require__(36);
 __webpack_require__(2);
 __webpack_require__(4);
-__webpack_require__(13);
-__webpack_require__(11);
-__webpack_require__(1);
 __webpack_require__(7);
+__webpack_require__(12);
+__webpack_require__(1);
+__webpack_require__(8);
 module.exports = __webpack_require__(0);
 
 
@@ -16321,7 +16342,7 @@ module.exports = function(arr, obj){
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_view__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_wingededge__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_wingededge__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_model__ = __webpack_require__(3);
 /*
    n cube create. Use Dialog to create the cube.
@@ -17049,7 +17070,7 @@ class SimilarVertex extends SimilarGeometry {
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "triangulatePreview", function() { return triangulatePreview; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_wingededge__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_wingededge__ = __webpack_require__(8);
 //
 // triangulate polygon - our own modified ear-cutting method.
 //

@@ -336,6 +336,24 @@ function getAxisOrder(extent) {
    return [first, second, third];
 };
 
+function hexToRGB(hex) {
+   return [parseInt(hex.slice(1, 3), 16)/255,
+           parseInt(hex.slice(3, 5), 16)/255,
+           parseInt(hex.slice(5, 7), 16)/255];
+ };
+function hexToRGBA(hex) {
+  return [parseInt(hex.slice(1, 3), 16)/255,
+          parseInt(hex.slice(3, 5), 16)/255,
+          parseInt(hex.slice(5, 7), 16)/255,
+          1.0];
+};
+
+function hexToCssRGBA(hex) {  // microsft edge don't support #rrggbbaa format yet, so we convert to rgba() 2018/09/24.
+   const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+   const a = parseInt(hex.slice(7, 9), 16) / 255;
+   return `rgba(${r}, ${g}, ${b}, ${a})`;
+};
+
 
 export {
    closestPointToPlane,
@@ -352,4 +370,7 @@ export {
    projectVec3,
    rotationFromToVec3,
    reflectionMat4,
+   hexToRGB,
+   hexToRGBA,
+   hexToCssRGBA,
 };

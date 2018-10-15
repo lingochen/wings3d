@@ -9,6 +9,7 @@ import * as View from './wings3d_view';
 import * as Camera from './wings3d_camera';
 import {onReady, GROUND_GRID_SIZE} from './wings3d';
 import * as ShaderProg from './wings3d_shaderprog';
+import * as Util from './wings3d_util';
 
 
 
@@ -321,7 +322,7 @@ function renderAxisLetter(gl, zFar) {
       zFar = zFar + GROUND_GRID_SIZE;
       //gl:polygonMode(?GL_FRONT_AND_BACK, ?GL_FILL),
       
-      var color = [hexToRGB(View.theme.colorX), hexToRGB(View.theme.colorY), hexToRGB(View.theme.colorZ)];
+      var color = [Util.hexToRGB(View.theme.colorX), Util.hexToRGB(View.theme.colorY), Util.hexToRGB(View.theme.colorZ)];
       var endx = gl.transformVertex(vec4.fromValues(zFar, 0.0, 0.0, 1.0)), 
           endy = gl.transformVertex(vec4.fromValues(0.0, zFar, 0.0, 1.0)), 
           endz = gl.transformVertex(vec4.fromValues(0.0, 0.0, zFar, 1.0));
@@ -345,7 +346,7 @@ function initMiniAxis(gl, inModelView) {
       [-PB, 0.0,  PA], [0.0, 0.0, 0.1], [PB, 0.0,  PA], [0.0, 0.0, 0.1]   // z arrow
    );
    // ready color
-   var clr = [hexToRGB(View.theme.colorX), hexToRGB(View.theme.colorY), hexToRGB(View.theme.colorZ)];
+   var clr = [Util.hexToRGB(View.theme.colorX), Util.hexToRGB(View.theme.colorY), Util.hexToRGB(View.theme.colorZ)];
    var color = [], arrow = [];
    for (var i=0; i< 3; ++i) {
       color = color.concat(clr[i], clr[i]);
@@ -445,8 +446,8 @@ function getAxis() {
    return new Float32Array([].concat.apply([],arry));
 }
 function getAxisColor() {
-    const color = [hexToRGB(View.theme.colorX), hexToRGB(View.theme.colorY), hexToRGB(View.theme.colorZ)],
-       negColor = [hexToRGB(View.theme.negColorX), hexToRGB(View.theme.negColorY), hexToRGB(View.theme.negColorZ)];
+    const color = [Util.hexToRGB(View.theme.colorX), Util.hexToRGB(View.theme.colorY), Util.hexToRGB(View.theme.colorZ)],
+       negColor = [Util.hexToRGB(View.theme.negColorX), Util.hexToRGB(View.theme.negColorY), Util.hexToRGB(View.theme.negColorZ)];
    var arry = [];
    for (var i = 0; i < 3; i++) {
       arry = arry.concat(color[i], color[i], negColor[i], negColor[i]);
@@ -461,7 +462,7 @@ function renderGroundAndAxes(gl, projection, modelView) {
       //(Camera.view.alongAxis =/= none);      
    if (show) {
       var alongAxis = Camera.view.alongAxis;
-      const color = hexToRGBA(View.theme.gridColor);
+      const color = Util.hexToRGBA(View.theme.gridColor);
          //case view.AlongAxis of
          // x -> gl:rotatef(90.0, 0.0, 1.0, 0.0);
          // z -> ok;
@@ -509,21 +510,10 @@ function needToRedraw() {
    redrawFlag = true;
 };
 
-function hexToRGB(hex) {
-   return [parseInt(hex.slice(1, 3), 16)/255,
-           parseInt(hex.slice(3, 5), 16)/255,
-           parseInt(hex.slice(5, 7), 16)/255];
- };
-function hexToRGBA(hex) {
-  return [parseInt(hex.slice(1, 3), 16)/255,
-          parseInt(hex.slice(3, 5), 16)/255,
-          parseInt(hex.slice(5, 7), 16)/255,
-          1.0];
-};
 function render(gl, drawWorldFn) {
    if (gl.resizeToDisplaySize() || Camera.view.isModified || redrawFlag) {
       redrawFlag = false; 
-      const backColor = hexToRGBA(View.theme.geometryBackground);
+      const backColor = Util.hexToRGBA(View.theme.geometryBackground);
       gl.clearColor(backColor[0], backColor[1], backColor[2], backColor[3]);
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
       gl.polygonOffset(0.0, 0.0);

@@ -20,6 +20,7 @@ import {PreviewCage} from './wings3d_model';
 import {DraftBench, CheckPoint} from './wings3d_draftbench';
 import {Ray} from './wings3d_boundingvolume';
 import * as Hotkey from './wings3d_hotkey';
+import * as Util from './wings3d_util';
 
 
 // 
@@ -132,11 +133,6 @@ function loadPref(form) {
       }
     });
 };
-function hexToRGBA(hex) {  // microsft edge don't support #rrggbbaa format yet, so we convert to rgba() 2018/09/24.
-   const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
-   const a = parseInt(hex.slice(7, 9), 16) / 255;
-   return `rgba(${r}, ${g}, ${b}, ${a})`;
-};
 function storePref(form) {
    traverse(theme, (obj, key, _value) => {
       const data = form.querySelector(`input[type=color][name=${key}]`);
@@ -151,7 +147,7 @@ function storePref(form) {
       if (value.length === 7) {
          root.style.setProperty(`--${key}`, value);
       } else if (value.length === 9) {
-         root.style.setProperty(`--${key}`, hexToRGBA(value));
+         root.style.setProperty(`--${key}`, Util.hexToCssRGBA(value));
       }
     });
    // store prop

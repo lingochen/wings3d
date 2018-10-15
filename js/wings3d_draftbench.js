@@ -73,6 +73,17 @@ const DraftBench = function(defaultSize = 2048) {  // should only be created by 
    }
 };
 
+
+DraftBench.color = {face:[0.5, 0.5, 0.5, 1.0],
+                    edge: [1.0, 1.0, 1.0, 1.0],
+                    edgeHard: [],
+                    edgeMagnet: [],
+                    vertex: [],
+                    vertexMagnet: [],
+                    selected: [1.0, 0.0, 0.0, 1.0],
+                    hiliteSelected: [],
+                    hiliteUnselected: [],
+                  };
 DraftBench.CONST = (function() {
    const constant = {};
 
@@ -86,6 +97,7 @@ DraftBench.CONST = (function() {
    constant.BARYCENTRIC[2] = 1.0;
    return constant;
 }());
+
 
 // draftBench inherited from MeshAllocator, so we canintercept freeXXX and allocXXX call easier. It also makes logical sense.
 DraftBench.prototype = Object.create(MeshAllocator.prototype);
