@@ -22,7 +22,7 @@ import {MeshAllocator} from './wings3d_wingededge';
 import {EditCommand} from './wings3d_undo';
 
 
-const DraftBench = function(defaultSize = 2048) {  // should only be created by View
+const DraftBench = function(theme, defaultSize = 2048) {  // should only be created by View
    MeshAllocator.call(this, defaultSize); // constructor.
   
    this.lastPreviewSize = { vertices: 0, edges: 0, faces: 0};
@@ -31,8 +31,8 @@ const DraftBench = function(defaultSize = 2048) {  // should only be created by 
 
    this.preview = {centroid: {},};
    this.preview.shaderData = gl.createShaderData();
-   this.preview.shaderData.setUniform4fv("faceColor", [0.5, 0.5, 0.5, 1.0]);
-   this.preview.shaderData.setUniform4fv("selectedColor", [1.0, 0.0, 0.0, 1.0]);
+   //this.preview.shaderData.setUniform4fv("faceColor", [0.5, 0.5, 0.5, 1.0]);
+   //this.preview.shaderData.setUniform4fv("selectedColor", [1.0, 0.0, 0.0, 1.0]);
    var layoutVec = ShaderData.attribLayout();
    var layoutFloat = ShaderData.attribLayout(1);
    this.preview.shaderData.createAttribute('position', layoutVec, gl.STATIC_DRAW);
@@ -40,6 +40,7 @@ const DraftBench = function(defaultSize = 2048) {  // should only be created by 
    this.preview.shaderData.createAttribute('selected', layoutFloat, gl.DYNAMIC_DRAW);
    this._resizeBoundingSphere(0);
    this._resizePreview(0, 0);
+   this.setTheme(theme);
 
    // previewEdge
    this.previewEdge = {};
@@ -73,17 +74,20 @@ const DraftBench = function(defaultSize = 2048) {  // should only be created by 
    }
 };
 
-
-DraftBench.color = {face:[0.5, 0.5, 0.5, 1.0],
-                    edge: [1.0, 1.0, 1.0, 1.0],
-                    edgeHard: [],
-                    edgeMagnet: [],
-                    vertex: [],
-                    vertexMagnet: [],
-                    selected: [1.0, 0.0, 0.0, 1.0],
-                    hiliteSelected: [],
-                    hiliteUnselected: [],
+// temp structure
+DraftBench.theme = {edgeColor: [0.0, 0.0, 0.0],
+                    hardEdgeColor: [1.0, 0.5, 0.0],
+                    selectedColor: [0.65, 0.0, 0.0],
+                    selectedHilite: [0.7, 0.7, 0.0],
+                    unselectedHilite: [0.0, 0.65, 0.0],
+                    vertexColor: [0.0, 0.0, 0.0],
+                    maskedVertexColor: [0.5, 1.0, 0.0, 0.8],
+                    faceColor: [0.7898538076923077, 0.8133333333333334, 0.6940444444444445],
+                    sculptMagnetColor: [0.0, 0.0, 1.0, 0.1],
+                    tweakMagnetColor: [0.0, 0.0, 1.0, 0.06],
+                    tweakVectorColor: [1.0, 0.5, 0.0],
                   };
+// temp structure for 
 DraftBench.CONST = (function() {
    const constant = {};
 
@@ -101,6 +105,18 @@ DraftBench.CONST = (function() {
 
 // draftBench inherited from MeshAllocator, so we canintercept freeXXX and allocXXX call easier. It also makes logical sense.
 DraftBench.prototype = Object.create(MeshAllocator.prototype);
+
+
+/**
+ * 
+ */
+DraftBench.prototype.setTheme = function(theme) {
+   Object.entries(theme).forEach(([key, value]) => {
+      // put the hext value to shader
+      this.preview.shaderData.setUniform4fv(key, Util.hexToRGBA(value));
+      DraftBench.theme[key] = Util.hexToRGBA(value);     // to be deleted
+    });
+};
 
 // free webgl buffer.
 DraftBench.prototype.freeBuffer = function() {
@@ -497,13 +513,13 @@ DraftBench.prototype.drawHilite = function(gl) {
       return;
    }
    // set hilite color and hilite index
-   this.preview.shaderData.setUniform4fv("faceColor", [0.0, 1.0, 0.0, 0.35]);
-   gl.bindAttribute(this.preview.shaderData, ['position', 'barycentric', 'selected']);
-   gl.bindUniform(this.preview.shaderData, ['faceColor', 'selectedColor']);
+   this.preview.shaderData.setUniform4fv("faceColor", [0.0, 0.6, 0.0, 0.35]);
+   gl.bindAttribute(this.preview.shaderData, ['position']);
+   gl.bindUniform(this.preview.shaderData, ['faceColor']);
    gl.bindIndex(this.preview.shaderData, 'faceHilite');
    gl.drawElements(gl.TRIANGLES, this.hilite.indexLength, gl.UNSIGNED_INT, 0);
    // restore color
-   this.preview.shaderData.setUniform4fv("faceColor", [0.5, 0.5, 0.5, 1.0]);
+   this.preview.shaderData.setUniform4fv("faceColor", DraftBench.theme.faceColor);
 };
 
 // draw vertex, select color, 

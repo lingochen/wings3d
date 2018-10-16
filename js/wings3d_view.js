@@ -64,19 +64,23 @@ const theme = {
        activeVectorColor: [0.0, 1.0, 0.0],
        clipPlaneColor: [0.8, 0.3, 0.0],
        defaultAxis: [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]],
-       edgeColor: [0.0, 0.0, 0.0],
        gridColor: '#4D4D4D',
-       hardEdgeColor: [1.0, 0.5, 0.0],
-       maskedVertexColor: [0.5, 1.0, 0.0, 0.8],
-       materialDefault: [0.7898538076923077, 0.8133333333333334, 0.6940444444444445],
+       
+       draftBench: {
+         edgeColor: '#000000',
+         hardEdgeColor: '#FF8000',
+         selectedColor: '#A60000',
+         selectedHilite: '#B3B300',
+         unselectedHilite: '#00A600',
+         vertexColor: '#000000',
+         //maskedVertexColor: '#80FF00', // alpha #0.8,
+         faceColor: '#C9CFB1',   // materialDefault
+         sculptMagnetColor: '#0000FF',  // alpha #0.1
+         tweakMagnetColor: '#0000FF',  // alpha #0.06
+         tweakVectorColor: '#FF8000',
+       },
+
        normalVectorColor: [0.0, 1.0, 0.0],
-       sculptMagnetColor: [0.0, 0.0, 1.0, 0.1],
-       selectedColor: [0.65, 0.0, 0.0],
-       selectedHlite: [0.7, 0.7, 0.0],
-       tweakMagnetColor: [0.0, 0.0, 1.0, 0.06],
-       tweakVectorColor: [1.0, 0.5, 0.0],
-       unselectedHlite: [0.0, 0.65, 0.0],
-       vertexColor: [0.0, 0.0, 0.0],
        colorX: '#B3001A',
        colorY: '#5FD100',
        colorZ: '#004DCC',
@@ -150,7 +154,8 @@ function storePref(form) {
          root.style.setProperty(`--${key}`, Util.hexToCssRGBA(value));
       }
     });
-   // store prop
+   // store draftBench
+   draftBench.setTheme(theme.draftBench);
    // load prop
    traverse(prop, (obj, key, _value)=> {
       const data = form.querySelector(`input[type=checkbox][name=${key}]`);
@@ -916,7 +921,7 @@ function init() {
 
 
    //Renderer.init(gl, drawWorld);  // init by itself
-   draftBench = new DraftBench;
+   draftBench = new DraftBench(theme.draftBench);
 
    // capture keyevent.
    document.addEventListener('keydown', function(event) {
