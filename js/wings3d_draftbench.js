@@ -52,12 +52,8 @@ const DraftBench = function(theme, defaultSize = 2048) {  // should only be crea
    this._resizePreviewEdge(0);
 
    // previewVertex
-   this.previewVertex = {};
-   this.previewVertex.shaderData = gl.createShaderData();
-   this.previewVertex.shaderData.setUniform4fv("selectedColor", [1.0, 0.0, 0.0, 1.0]);
-   this.previewVertex.shaderData.setUniform4fv('hiliteColor', [0.0, 1.0, 0.0, 1.0]);
-   this.previewVertex.shaderData.createAttribute('position', layoutVec, gl.STATIC_DRAW);
-   this.previewVertex.shaderData.createAttribute('color', layoutFloat, gl.DYNAMIC_DRAW);
+   this.preview.vertex = {};
+   this.preview.shaderData.createAttribute('color', layoutFloat, gl.DYNAMIC_DRAW);
    this._resizePreviewVertex(0);
    // body state.
    this.previewBody = {hilite: false};
@@ -124,8 +120,6 @@ DraftBench.prototype.freeBuffer = function() {
    this.preview.shaderData =  null;
    this.previewEdge.shaderData.freeAllAttributes();
    this.previewEdge.shaderData = null;
-   this.previewVertex.shaderData.freeAllAttributes();
-   this.previewVertex.shaderData = null;
 };
 
 DraftBench.prototype.updatePreview = function() {
@@ -363,7 +357,7 @@ DraftBench.prototype._resizePreviewVertex = function() {
    const length = this.vertices.length;
    const size = length - oldSize;
    if (size > 0) {
-      const preview = this.previewVertex;
+      const preview = this.preview.vertex;
       const color = new Float32Array(length);
       if (oldSize > 0) {
          color.set(preview.color);
@@ -371,10 +365,8 @@ DraftBench.prototype._resizePreviewVertex = function() {
       color.fill(0.0, oldSize);
       preview.color = color;
       // 
-      preview.shaderData.resizeAttribute('position', length*4*3);
-      preview.shaderData.uploadAttribute('position', 0, this.buf.data.subarray(0, length*3));
-      preview.shaderData.resizeAttribute('color', length*4);
-      preview.shaderData.uploadAttribute('color', 0, preview.color);
+      this.preview.shaderData.resizeAttribute('color', length*4);
+      this.preview.shaderData.uploadAttribute('color', 0, preview.color);
    }
    // rebuild index.
    const index = new Uint32Array(length);
@@ -385,8 +377,8 @@ DraftBench.prototype._resizePreviewVertex = function() {
       }
    }
    // 
-   this.previewVertex.shaderData.setIndex('vertex', index);
-   this.previewVertex.indexLength = j;
+   this.preview.shaderData.setIndex('vertex', index);
+   this.preview.vertex.indexLength = j;
 };
 
 
@@ -423,8 +415,6 @@ DraftBench.prototype._updateVertex = function(vertex, affected) {
    if (vertex.isLive()) {
       // first the simple case, update the vertexPreview,
       const index = vertex.index;
-      this.previewVertex.shaderData.uploadAttribute('position', vertex.vertex.byteOffset, vertex.vertex);
-
       // then update the effectedEdge and effectedFaces.
 //      vertex.eachOutEdge( function(halfEdge) {
 //         if (!affected.edges.has(halfEdge.wingedEdge)) {    // check edge
@@ -526,10 +516,10 @@ DraftBench.prototype.drawHilite = function(gl) {
 DraftBench.prototype.drawVertex = function(gl) {
    // drawing using vertex array
    try {
-      gl.bindAttribute(this.previewVertex.shaderData, ['position', 'color']);
-      gl.bindUniform(this.previewVertex.shaderData, ['selectedColor', 'hiliteColor']);
-      gl.bindIndex(this.previewVertex.shaderData, 'vertex');
-      gl.drawElements(gl.POINTS, this.previewVertex.indexLength, gl.UNSIGNED_INT, 0);
+      gl.bindAttribute(this.preview.shaderData, ['position', 'color']);
+      gl.bindUniform(this.preview.shaderData, ['selectedColor', 'unselectedHilite']);//'hiliteColor']);
+      gl.bindIndex(this.preview.shaderData, 'vertex');
+      gl.drawElements(gl.POINTS, this.preview.vertex.indexLength, gl.UNSIGNED_INT, 0);
    } catch (e) {
       console.log(e);
    }
@@ -620,7 +610,7 @@ DraftBench.prototype.uploadEdgePreview = function() {
 
 DraftBench.prototype.uploadVertexPreview = function() {
    //if (this.locked) {
-      this.previewVertex.shaderData.uploadAttribute('color', 0, this.previewVertex.color);
+      this.preview.shaderData.uploadAttribute('color', 0, this.preview.vertex.color);
       //this.locked = false;
    //}
 };
@@ -638,17 +628,17 @@ DraftBench.prototype.hiliteVertex = function(vertex, show) {
 DraftBench.prototype.setVertexColor = function(vertex, color, groupSelection) {
    // selected color
    const j = vertex.index;  
-   this.previewVertex.color[j] += color;
+   this.preview.vertex.color[j] += color;
    if (!groupSelection) {
-      const point = this.previewVertex.color.subarray(j, j+1);
-      this.previewVertex.shaderData.uploadAttribute('color', j*Float32Array.BYTES_PER_ELEMENT, point);
+      const point = this.preview.vertex.color.subarray(j, j+1);
+      this.preview.shaderData.uploadAttribute('color', j*Float32Array.BYTES_PER_ELEMENT, point);
    }
 };
 
 DraftBench.prototype.resetSelectVertex = function() {
    // zeroout the edge seleciton.
-   this.previewVertex.color.fill(0.0);
-   this.previewVertex.shaderData.uploadAttribute('color', 0, this.previewVertex.color);
+   this.preview.vertex.color.fill(0.0);
+   this.preview.shaderData.uploadAttribute('color', 0, this.preview.vertex.color);
 };
 
 DraftBench.prototype.hiliteEdge = function(hEdge, onOff) {
@@ -701,7 +691,6 @@ DraftBench.prototype.updatePosition = function() {
    // todo: we really should update as little as possible.
    const vertices = this.buf.data.subarray(0, this.buf.len);
    this.preview.shaderData.uploadAttribute('position', 0, vertices);
-   this.previewVertex.shaderData.uploadAttribute('position', 0, vertices);
 };
 
 DraftBench.prototype.setFaceSelectionOff = function(polygon, selectedSet) {

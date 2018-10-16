@@ -86,7 +86,7 @@ let selectedColorPoint = {
    fragment: [
       'precision lowp float;',
       'varying lowp float vColor;',
-      'uniform vec4 hiliteColor;',
+      'uniform vec4 unselectedHilite;',
       'uniform vec4 selectedColor;',
 
       'void main(void) {',
@@ -95,9 +95,9 @@ let selectedColorPoint = {
       '   } else if (vColor == 0.25) {',
       '      gl_FragColor = selectedColor;',
       '   } else if (vColor == 0.5) {',
-      '      gl_FragColor = hiliteColor;',
+      '      gl_FragColor = unselectedHilite;',
       '   } else {',
-      '      gl_FragColor = vec4(hiliteColor.xyz+selectedColor.xyz, 1.0);',     // blended 
+      '      gl_FragColor = vec4(unselectedHilite.xyz+selectedColor.xyz, 1.0);',     // blended 
       '   }',
       '}'].join("\n"),
 };
