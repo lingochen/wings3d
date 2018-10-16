@@ -6300,12 +6300,12 @@ ShaderProgram.prototype.disableVertexAttributeArray = function(gl) {
 ShaderProgram.prototype.bindAttribute = function(gl, attribute, names) {
    try {
       for (let key of names) {
-         if (attribute.hasOwnProperty(key)) {   // don't need to check this.attribute' inherited property, cannot possibley exist
+         if (attribute.hasOwnProperty(key) && this.attribute.hasOwnProperty(key)) {   // don't need to check this.attribute' inherited property, cannot possibley exist
             const attrb = attribute[key];
             gl.bindAttributeToProgram(this.attribute[key].loc, attrb);
          } else {
             // don't have property. console.log?
-            console.log("shaderData don't have shader attribute: " + key);
+            //console.log("shaderData don't have shader attribute: " + key);
          }
       }
    }
@@ -6317,12 +6317,12 @@ ShaderProgram.prototype.bindAttribute = function(gl, attribute, names) {
 ShaderProgram.prototype.bindUniform = function(gl, uniform, names) {
    try {
    for (let key of names) {
-      if (uniform.hasOwnProperty(key)) {
+      if (uniform.hasOwnProperty(key) && this.uniform.hasOwnProperty(key)) {
          var uni = uniform[key];
          uni.binder(gl, this.uniform[key].loc, uni.value);
       } else {
          // don't have property. console.log?
-         console.log("shaderData don't have shader uniform: " + key);
+         //console.log("shaderData don't have shader uniform: " + key);
       }
    }
    }
@@ -6653,6 +6653,7 @@ let solidWireframe = {  // we don't have geometry shader, so we have to manually
    fragment:[
       '#extension GL_OES_standard_derivatives : enable',
       'precision mediump float;',
+      'uniform vec4 faceColor;',
       'varying vec3 vBC;',
 
       'float edgeFactor(){',
@@ -6663,7 +6664,7 @@ let solidWireframe = {  // we don't have geometry shader, so we have to manually
 
       'void main(){',
          // coloring by edge
-         'gl_FragColor.rgb = mix(vec3(0.0), vec3(0.5), edgeFactor());',
+         'gl_FragColor.rgb = mix(vec3(0.0), vec3(faceColor), edgeFactor());',
          'gl_FragColor.a = 1.0;',
       '}'].join("\n"),
 };
