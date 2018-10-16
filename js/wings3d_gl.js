@@ -465,12 +465,12 @@ ShaderProgram.prototype.disableVertexAttributeArray = function(gl) {
 ShaderProgram.prototype.bindAttribute = function(gl, attribute, names) {
    try {
       for (let key of names) {
-         if (attribute.hasOwnProperty(key)) {   // don't need to check this.attribute' inherited property, cannot possibley exist
+         if (attribute.hasOwnProperty(key) && this.attribute.hasOwnProperty(key)) {   // don't need to check this.attribute' inherited property, cannot possibley exist
             const attrb = attribute[key];
             gl.bindAttributeToProgram(this.attribute[key].loc, attrb);
          } else {
             // don't have property. console.log?
-            console.log("shaderData don't have shader attribute: " + key);
+            //console.log("shaderData don't have shader attribute: " + key);
          }
       }
    }
@@ -482,12 +482,12 @@ ShaderProgram.prototype.bindAttribute = function(gl, attribute, names) {
 ShaderProgram.prototype.bindUniform = function(gl, uniform, names) {
    try {
    for (let key of names) {
-      if (uniform.hasOwnProperty(key)) {
+      if (uniform.hasOwnProperty(key) && this.uniform.hasOwnProperty(key)) {
          var uni = uniform[key];
          uni.binder(gl, this.uniform[key].loc, uni.value);
       } else {
          // don't have property. console.log?
-         console.log("shaderData don't have shader uniform: " + key);
+         //console.log("shaderData don't have shader uniform: " + key);
       }
    }
    }

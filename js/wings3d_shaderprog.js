@@ -233,6 +233,7 @@ let solidWireframe = {  // we don't have geometry shader, so we have to manually
    fragment:[
       '#extension GL_OES_standard_derivatives : enable',
       'precision mediump float;',
+      'uniform vec4 faceColor;',
       'varying vec3 vBC;',
 
       'float edgeFactor(){',
@@ -243,7 +244,7 @@ let solidWireframe = {  // we don't have geometry shader, so we have to manually
 
       'void main(){',
          // coloring by edge
-         'gl_FragColor.rgb = mix(vec3(0.0), vec3(0.5), edgeFactor());',
+         'gl_FragColor.rgb = mix(vec3(0.0), vec3(faceColor), edgeFactor());',
          'gl_FragColor.a = 1.0;',
       '}'].join("\n"),
 };
