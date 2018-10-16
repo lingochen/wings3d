@@ -728,19 +728,23 @@ const theme = {
        activeVectorColor: [0.0, 1.0, 0.0],
        clipPlaneColor: [0.8, 0.3, 0.0],
        defaultAxis: [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]],
-       edgeColor: [0.0, 0.0, 0.0],
        gridColor: '#4D4D4D',
-       hardEdgeColor: [1.0, 0.5, 0.0],
-       maskedVertexColor: [0.5, 1.0, 0.0, 0.8],
-       materialDefault: [0.7898538076923077, 0.8133333333333334, 0.6940444444444445],
+       
+       draftBench: {
+         edgeColor: '#000000',
+         hardEdgeColor: '#FF8000',
+         selectedColor: '#A60000',
+         selectedHilite: '#B3B300',
+         unselectedHilite: '#00A600',
+         vertexColor: '#000000',
+         //maskedVertexColor: '#80FF00', // alpha #0.8,
+         faceColor: '#C9CFB1',   // materialDefault
+         sculptMagnetColor: '#0000FF',  // alpha #0.1
+         tweakMagnetColor: '#0000FF',  // alpha #0.06
+         tweakVectorColor: '#FF8000',
+       },
+
        normalVectorColor: [0.0, 1.0, 0.0],
-       sculptMagnetColor: [0.0, 0.0, 1.0, 0.1],
-       selectedColor: [0.65, 0.0, 0.0],
-       selectedHlite: [0.7, 0.7, 0.0],
-       tweakMagnetColor: [0.0, 0.0, 1.0, 0.06],
-       tweakVectorColor: [1.0, 0.5, 0.0],
-       unselectedHlite: [0.0, 0.65, 0.0],
-       vertexColor: [0.0, 0.0, 0.0],
        colorX: '#B3001A',
        colorY: '#5FD100',
        colorZ: '#004DCC',
@@ -814,7 +818,8 @@ function storePref(form) {
          root.style.setProperty(`--${key}`, __WEBPACK_IMPORTED_MODULE_16__wings3d_util__["hexToCssRGBA"](value));
       }
     });
-   // store prop
+   // store draftBench
+   draftBench.setTheme(theme.draftBench);
    // load prop
    traverse(prop, (obj, key, _value)=> {
       const data = form.querySelector(`input[type=checkbox][name=${key}]`);
@@ -1580,7 +1585,7 @@ function init() {
 
 
    //Renderer.init(gl, drawWorld);  // init by itself
-   draftBench = new __WEBPACK_IMPORTED_MODULE_13__wings3d_draftbench__["DraftBench"];
+   draftBench = new __WEBPACK_IMPORTED_MODULE_13__wings3d_draftbench__["DraftBench"](theme.draftBench);
 
    // capture keyevent.
    document.addEventListener('keydown', function(event) {
@@ -13893,7 +13898,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 
 
-const DraftBench = function(defaultSize = 2048) {  // should only be created by View
+const DraftBench = function(theme, defaultSize = 2048) {  // should only be created by View
    __WEBPACK_IMPORTED_MODULE_4__wings3d_wingededge__["MeshAllocator"].call(this, defaultSize); // constructor.
   
    this.lastPreviewSize = { vertices: 0, edges: 0, faces: 0};
@@ -13902,8 +13907,8 @@ const DraftBench = function(defaultSize = 2048) {  // should only be created by 
 
    this.preview = {centroid: {},};
    this.preview.shaderData = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].createShaderData();
-   this.preview.shaderData.setUniform4fv("faceColor", [0.5, 0.5, 0.5, 1.0]);
-   this.preview.shaderData.setUniform4fv("selectedColor", [1.0, 0.0, 0.0, 1.0]);
+   //this.preview.shaderData.setUniform4fv("faceColor", [0.5, 0.5, 0.5, 1.0]);
+   //this.preview.shaderData.setUniform4fv("selectedColor", [1.0, 0.0, 0.0, 1.0]);
    var layoutVec = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["ShaderData"].attribLayout();
    var layoutFloat = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["ShaderData"].attribLayout(1);
    this.preview.shaderData.createAttribute('position', layoutVec, __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].STATIC_DRAW);
@@ -13911,6 +13916,7 @@ const DraftBench = function(defaultSize = 2048) {  // should only be created by 
    this.preview.shaderData.createAttribute('selected', layoutFloat, __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].DYNAMIC_DRAW);
    this._resizeBoundingSphere(0);
    this._resizePreview(0, 0);
+   this.setTheme(theme);
 
    // previewEdge
    this.previewEdge = {};
@@ -13944,17 +13950,20 @@ const DraftBench = function(defaultSize = 2048) {  // should only be created by 
    }
 };
 
-
-DraftBench.color = {face:[0.5, 0.5, 0.5, 1.0],
-                    edge: [1.0, 1.0, 1.0, 1.0],
-                    edgeHard: [],
-                    edgeMagnet: [],
-                    vertex: [],
-                    vertexMagnet: [],
-                    selected: [1.0, 0.0, 0.0, 1.0],
-                    hiliteSelected: [],
-                    hiliteUnselected: [],
+// temp structure
+DraftBench.theme = {edgeColor: [0.0, 0.0, 0.0],
+                    hardEdgeColor: [1.0, 0.5, 0.0],
+                    selectedColor: [0.65, 0.0, 0.0],
+                    selectedHilite: [0.7, 0.7, 0.0],
+                    unselectedHilite: [0.0, 0.65, 0.0],
+                    vertexColor: [0.0, 0.0, 0.0],
+                    maskedVertexColor: [0.5, 1.0, 0.0, 0.8],
+                    faceColor: [0.7898538076923077, 0.8133333333333334, 0.6940444444444445],
+                    sculptMagnetColor: [0.0, 0.0, 1.0, 0.1],
+                    tweakMagnetColor: [0.0, 0.0, 1.0, 0.06],
+                    tweakVectorColor: [1.0, 0.5, 0.0],
                   };
+// temp structure for 
 DraftBench.CONST = (function() {
    const constant = {};
 
@@ -13972,6 +13981,18 @@ DraftBench.CONST = (function() {
 
 // draftBench inherited from MeshAllocator, so we canintercept freeXXX and allocXXX call easier. It also makes logical sense.
 DraftBench.prototype = Object.create(__WEBPACK_IMPORTED_MODULE_4__wings3d_wingededge__["MeshAllocator"].prototype);
+
+
+/**
+ * 
+ */
+DraftBench.prototype.setTheme = function(theme) {
+   Object.entries(theme).forEach(([key, value]) => {
+      // put the hext value to shader
+      this.preview.shaderData.setUniform4fv(key, __WEBPACK_IMPORTED_MODULE_2__wings3d_util__["hexToRGBA"](value));
+      DraftBench.theme[key] = __WEBPACK_IMPORTED_MODULE_2__wings3d_util__["hexToRGBA"](value);     // to be deleted
+    });
+};
 
 // free webgl buffer.
 DraftBench.prototype.freeBuffer = function() {
@@ -14368,13 +14389,13 @@ DraftBench.prototype.drawHilite = function(gl) {
       return;
    }
    // set hilite color and hilite index
-   this.preview.shaderData.setUniform4fv("faceColor", [0.0, 1.0, 0.0, 0.35]);
-   gl.bindAttribute(this.preview.shaderData, ['position', 'barycentric', 'selected']);
-   gl.bindUniform(this.preview.shaderData, ['faceColor', 'selectedColor']);
+   this.preview.shaderData.setUniform4fv("faceColor", [0.0, 0.6, 0.0, 0.35]);
+   gl.bindAttribute(this.preview.shaderData, ['position']);
+   gl.bindUniform(this.preview.shaderData, ['faceColor']);
    gl.bindIndex(this.preview.shaderData, 'faceHilite');
    gl.drawElements(gl.TRIANGLES, this.hilite.indexLength, gl.UNSIGNED_INT, 0);
    // restore color
-   this.preview.shaderData.setUniform4fv("faceColor", [0.5, 0.5, 0.5, 1.0]);
+   this.preview.shaderData.setUniform4fv("faceColor", DraftBench.theme.faceColor);
 };
 
 // draw vertex, select color, 
