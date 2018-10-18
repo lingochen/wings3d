@@ -52,7 +52,7 @@ const DraftBench = function(theme, defaultSize = 2048) {  // should only be crea
    this._resizePreviewEdge(0);
 
    // previewVertex
-   this.preview.vertex = {};
+   this.preview.vertex = {isModified: false, min: Number.MAX_SAFE_INTEGER, max: Number.MIN_SAFE_INTEGER};
    this.preview.shaderData.createAttribute('color', layoutFloat, gl.DYNAMIC_DRAW);
    this._resizePreviewVertex(0);
    // body state.
@@ -516,6 +516,13 @@ DraftBench.prototype.drawHilite = function(gl) {
 DraftBench.prototype.drawVertex = function(gl) {
    // drawing using vertex array
    try {
+      if (this.preview.vertex.isModified) {  // upload min  - max
+         this.preview.vertex.isModified = false;
+         const i = this.preview.vertex.min;
+         const j = this.preview.vertex.max;
+         const points = this.preview.vertex.color.subarray(i, j+1);
+         this.preview.shaderData.uploadAttribute('color', i*Float32Array.BYTES_PER_ELEMENT, points);
+      }
       gl.bindAttribute(this.preview.shaderData, ['position', 'color']);
       gl.bindUniform(this.preview.shaderData, ['selectedColor', 'unselectedHilite']);//'hiliteColor']);
       gl.bindIndex(this.preview.shaderData, 'vertex');
@@ -608,13 +615,6 @@ DraftBench.prototype.uploadEdgePreview = function() {
    this.previewEdge.shaderData.uploadAttribute('color', 0, this.previewEdge.color);
 };
 
-DraftBench.prototype.uploadVertexPreview = function() {
-   //if (this.locked) {
-      this.preview.shaderData.uploadAttribute('color', 0, this.preview.vertex.color);
-      //this.locked = false;
-   //}
-};
-
 
 DraftBench.prototype.hiliteVertex = function(vertex, show) {
    // select polygon set color,
@@ -625,13 +625,19 @@ DraftBench.prototype.hiliteVertex = function(vertex, show) {
    }
 };
 
-DraftBench.prototype.setVertexColor = function(vertex, color, groupSelection) {
+DraftBench.prototype.setVertexColor = function(vertex, color) {
    // selected color
    const j = vertex.index;  
    this.preview.vertex.color[j] += color;
-   if (!groupSelection) {
-      const point = this.preview.vertex.color.subarray(j, j+1);
-      this.preview.shaderData.uploadAttribute('color', j*Float32Array.BYTES_PER_ELEMENT, point);
+   if (this.preview.vertex.isModified) {
+      if (j < this.preview.vertex.min) {
+         this.preview.vertex.min = j;
+      } else if (j > this.preview.vertex.max) {
+         this.preview.vertex.max = j;
+      }
+   } else {
+      this.preview.vertex.isModified = true;
+      this.preview.vertex.min = this.preview.vertex.max = j;
    }
 };
 

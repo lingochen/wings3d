@@ -335,15 +335,11 @@ PreviewCage.prototype.changeFromBodyToVertexSelect = function() {
 
    if (this.hasSelection()) {
       this._resetBody();
-      this.groupSelection = true;
       // select all vertex
       for (let vertex of this.geometry.vertices) {
          this.selectedSet.add(vertex);
          this.setVertexColor(vertex, 0.25);
       }
-      // update previewVertex
-      this.groupSelection = false;
-      this.bench.uploadVertexPreview();
    }
 
    return snapshot;

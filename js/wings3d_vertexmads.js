@@ -161,7 +161,7 @@ class VertexMadsor extends Madsor {
          redoFn = View.restoreEdgeMode;
          snapshots = this.snapshotAll(PreviewCage.prototype.changeFromVertexToEdgeSelect);
       } else if (toMadsor instanceof BodyMadsor) {
-         redoFn = view.restoreBodyMode;
+         redoFn = View.restoreBodyMode;
          snapshots = this.snapshotAll(PreviewCage.prototype.changeFromVertexToBodySelect);
       } else {
          redoFn = View.restoreMultiMode;
