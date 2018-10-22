@@ -795,18 +795,8 @@ function modelView(includeLights = false) {
 
 function drawWorld(gl) {
    if (world.length > 0) {
-      gl.polygonOffset(1.0, 1.0);          // Set the polygon offset
-      gl.enable(gl.POLYGON_OFFSET_FILL);
-      mode.current.previewShader(gl);
-      //world.forEach(function(model, _index, _array){
-         gl.bindTransform();
-         draftBench.draw(gl);
-      //});
-      gl.disableShader();
-      gl.disable(gl.POLYGON_OFFSET_FILL);
-
-      gl.enable(gl.BLEND);
-      gl.blendFunc(gl.SRC_COLOR, gl.DST_COLOR);
+      //gl.enable(gl.BLEND);
+      //gl.blendFunc(gl.SRC_COLOR, gl.DST_COLOR);
       // draw Current Select Mode (vertex, edge, or face)
       //if (hilite.vertex || hilite.edge || hilite.face || hilite.cage) {
          mode.current.draw(gl, draftBench);
@@ -825,8 +815,17 @@ function drawWorld(gl) {
          draftBench.drawPlane(gl, hilite.plane);
       }
       // end of hack ----
+      //gl.disable(gl.BLEND);
 
-      gl.disable(gl.BLEND);
+      //gl.polygonOffset(1.0, 1.0);          // Set the polygon offset
+      //gl.enable(gl.POLYGON_OFFSET_FILL);
+      mode.current.previewShader(gl);
+      //world.forEach(function(model, _index, _array){
+         gl.bindTransform();
+         draftBench.draw(gl);
+      //});
+      gl.disableShader();
+      //gl.disable(gl.POLYGON_OFFSET_FILL);
    }
 }
 

@@ -41,32 +41,18 @@ let colorArray = {
 let selectedColorLine = {
    vertex: [
       'attribute vec3 position;',
-      'attribute float color;',
       'uniform mat4 worldView;',
       'uniform mat4 projection;',
 
-      'varying lowp float vColor;',
-
       'void main(void) {',
       '   gl_Position = projection * worldView * vec4(position, 1.0);',
-      '   vColor = color;',
       '}'].join("\n"),
    fragment: [
       'precision lowp float;',
-      'varying lowp float vColor;',
-      'uniform vec4 hiliteColor;',
-      'uniform vec4 selectedColor;',
+      'uniform vec4 color;',
 
       'void main(void) {',
-      '   if (vColor == 0.0) {',
-      '      discard;',             
-      '   } else if (vColor == 0.25) {',
-      '      gl_FragColor = selectedColor;',
-      '   } else if (vColor == 0.5) {',
-      '      gl_FragColor = hiliteColor;',
-      '   } else {',
-      '      gl_FragColor = vec4(hiliteColor.xyz+selectedColor.xyz, 1.0);',     // blended 
-      '   }',
+      '   gl_FragColor = color;', 
       '}'].join("\n"),
 };
 let selectedColorPoint = {

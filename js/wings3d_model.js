@@ -63,7 +63,6 @@ const PreviewCage = function(bench) {
 
    // selecte(Vertex,Edge,Face)here
    this.selectedSet = new Set;
-   this.groupSelection = false;
    // default no name
    this.name = "";
    // bvh
@@ -316,15 +315,11 @@ PreviewCage.prototype.changeFromBodyToEdgeSelect = function() {
 
    if (this.hasSelection()) {
       this._resetBody();
-      this.groupSelection = true;
       // select all edge
       for (let wingedEdge of this.geometry.edges) {
          this.selectedSet.add(wingedEdge);
-         this.setEdgeColor(wingedEdge, 0.25);
+         this.bench.setEdgeColor(wingedEdge, true);
       }
-      // update previewLine
-      this.groupSelection = false;
-      this.bench.uploadEdgePreview();
    }
 
    return snapshot;
@@ -500,7 +495,7 @@ PreviewCage.prototype.snapshotSelectionBody = function() {
 
 PreviewCage.prototype.setVertexColor = function(vertex, color) {
    // selected color
-   this.bench.setVertexColor(vertex, color, this.groupSelection);
+   this.bench.setVertexColor(vertex, color);
 };
 
 PreviewCage.prototype.dragSelectVertex = function(vertex, onOff) {
@@ -737,24 +732,19 @@ PreviewCage.prototype.restoreFromMultiToBodySelect = function(_snapshot) {
 };
 
 
-PreviewCage.prototype.setEdgeColor = function(wingedEdge, color) {
-   // selected color
-   this.bench.setEdgeColor(wingedEdge, color, this.groupSelection);
-};
-
 PreviewCage.prototype.dragSelectEdge = function(selectEdge, dragOn) {
    var wingedEdge = selectEdge.wingedEdge;
 
    if (this.selectedSet.has(wingedEdge)) { 
       if (dragOn === false) { // turn from on to off
          this.selectedSet.delete(wingedEdge);
-         this.setEdgeColor(wingedEdge, -0.25);
+         this.bench.selectEdge(wingedEdge, false);
          return true;   // new off selection
       }
    } else {
       if (dragOn === true) {   // turn from off to on.
          this.selectedSet.add(wingedEdge);
-         this.setEdgeColor(wingedEdge, 0.25);
+         this.bench.selectEdge(wingedEdge, true);
          return true;
       }
    }
@@ -779,7 +769,7 @@ PreviewCage.prototype.selectEdge = function(selectEdge) {
       geometryStatus("select edge: " + wingedEdge.index);
    }
    // selected color
-   this.setEdgeColor(wingedEdge, color);
+   this.bench.selectEdge(wingedEdge, onOff);
    return onOff;
 };
 
@@ -792,8 +782,6 @@ PreviewCage.prototype.computeSnapshot = function(snapshot) {
       sphere.setSphere( BoundingSphere.computeSphere(polygon, sphere.center) );
    }
    this.bench.updateCentroid();
-   // update edges vertices.
-   this.bench.updateWEdges(snapshot.wingedEdges);
 };
 
 

@@ -43,12 +43,10 @@ const DraftBench = function(theme, defaultSize = 2048) {  // should only be crea
    this.setTheme(theme);
 
    // previewEdge
-   this.previewEdge = {};
-   this.previewEdge.shaderData = gl.createShaderData();
-   this.previewEdge.shaderData.setUniform4fv("selectedColor", [1.0, 0.0, 0.0, 1.0]);
-   this.previewEdge.shaderData.setUniform4fv('hiliteColor', [0.0, 1.0, 0.0, 1.0]);
-   this.previewEdge.shaderData.createAttribute('position', layoutVec, gl.STATIC_DRAW);
-   this.previewEdge.shaderData.createAttribute('color', layoutFloat, gl.DYNAMIC_DRAW);
+   this.preview.edge = {};
+   this.preview.edge.isModified = false;
+   this.preview.edge.indexCount = 0;
+   this.preview.edge.hilite = {indexCount: 0, wEdge: null};
    this._resizePreviewEdge(0);
 
    // previewVertex
@@ -71,12 +69,12 @@ const DraftBench = function(theme, defaultSize = 2048) {  // should only be crea
 };
 
 // temp structure
-DraftBench.theme = {edgeColor: [0.0, 0.0, 0.0],
-                    hardEdgeColor: [1.0, 0.5, 0.0],
-                    selectedColor: [0.65, 0.0, 0.0],
-                    selectedHilite: [0.7, 0.7, 0.0],
-                    unselectedHilite: [0.0, 0.65, 0.0],
-                    vertexColor: [0.0, 0.0, 0.0],
+DraftBench.theme = {edgeColor: [0.0, 0.0, 0.0, 1.0],
+                    hardEdgeColor: [1.0, 0.5, 0.0, 1.0],
+                    selectedColor: [0.65, 0.0, 0.0, 1.0],
+                    selectedHilite: [0.7, 0.7, 0.0, 1.0],
+                    unselectedHilite: [0.0, 0.65, 0.0, 1.0],
+                    vertexColor: [0.0, 0.0, 0.0, 1.0],
                     maskedVertexColor: [0.5, 1.0, 0.0, 0.8],
                     faceColor: [0.7898538076923077, 0.8133333333333334, 0.6940444444444445],
                     sculptMagnetColor: [0.0, 0.0, 1.0, 0.1],
@@ -319,35 +317,13 @@ DraftBench.prototype._resizePreviewEdge = function() {
 
    const size = this.edges.length - oldSize;
    if (size > 0) {
-      if (oldSize > 0) {
-         let line = new Float32Array(this.edges.length*2*3);
-         line.set(this.previewEdge.line);
-         this.previewEdge.line = line;
-         let color = new Float32Array(this.edges.length*2);
-         color.set(this.previewEdge.color);
-         this.previewEdge.color = color;
-      } else { // brand new
-         this.previewEdge.line = new Float32Array(this.edges.length*2*3);
-         this.previewEdge.color = new Float32Array(this.edges.length*2);
+      let color = new Uint8Array(this.edges.length);
+      if (oldSize > 0) {    
+         color.set(this.preview.edge.color);
       }
-      for (let i = oldSize, j=(oldSize*2*3); i < this.edges.length; i++) {
-         let wingedEdge = this.edges[i];
-         for (let halfEdge of wingedEdge) {
-            if (wingedEdge.isLive()) {
-               this.previewEdge.line.set(halfEdge.origin.vertex, j);
-            } else {
-               this.previewEdge.line.fill(0.0, j, j+3);
-            }
-            j += 3;
-         }
-      }
-      //
-      this.previewEdge.color.fill(0.0, oldSize*2);
-      // update GPU
-      this.previewEdge.shaderData.resizeAttribute('position', this.previewEdge.line.length*4);
-      this.previewEdge.shaderData.uploadAttribute('position', 0, this.previewEdge.line);
-      this.previewEdge.shaderData.resizeAttribute('color', this.previewEdge.color.length*4);
-      this.previewEdge.shaderData.uploadAttribute('color', 0, this.previewEdge.color);
+      this.preview.edge.color = color;
+      // fill with nothing
+      this.preview.edge.color.fill(0.0, oldSize);
    }
 };
 
@@ -395,11 +371,6 @@ DraftBench.prototype._updateAffected = function(affected) {
          this._updateVertex(vertex, affected);
       }
    }
-   if (affected.edges.size > 0) {
-      for (let edge of affected.edges) {
-         this._updatePreviewEdge(edge.left, true);
-      }
-   }
    if (affected.faces.size > 0) {
       for (let face of affected.faces) {
          this._updatePreviewFace(face);
@@ -443,28 +414,6 @@ DraftBench.prototype._updatePreviewFace = function(polygon) {
    }
 };
 
-
-DraftBench.prototype._updatePreviewEdge = function(edge, updateShader) {
-   const wingedEdge = edge.wingedEdge;
-   if (wingedEdge.isLive()) {
-      const index = wingedEdge.index * 6; // 2*3
-      this.previewEdge.line.set(edge.origin.vertex, index);
-      this.previewEdge.line.set(edge.pair.origin.vertex, index+3);
-
-      if (updateShader) {
-         this.previewEdge.shaderData.uploadAttribute('position', index*4, this.previewEdge.line.subarray(index, index+6));
-      }
-   } else {    // deleted edge. deselcted, dehilite.
-      const index = wingedEdge.index*2;
-      const color = this.previewEdge.color.subarray(index, index+2);
-      color.fill(0.0);
-      //this.previewEdge.color.fill(0.0, wingedEdge.index, wingedEdge.index+2);
-
-      //if (updateShader) {
-         this.previewEdge.shaderData.uploadAttribute('color', index*4, color);
-      //}
-   }
-};
 
 
 DraftBench.prototype.hiliteFace = function(polygon, isHilite) {
@@ -532,11 +481,51 @@ DraftBench.prototype.drawVertex = function(gl) {
    }
 };
 
-// draw edge, select color
+/** 
+ * draw select, hilite, and (normal) edge
+ * @param {gl} - drawing context
+ */
 DraftBench.prototype.drawEdge = function(gl) {
-   gl.bindAttribute(this.previewEdge.shaderData, ['position', 'color']);
-   gl.bindUniform(this.previewEdge.shaderData, ['selectedColor', 'hiliteColor']);
-   gl.drawArrays(gl.LINES, 0, this.previewEdge.line.length/3);
+   gl.bindAttribute(this.preview.shaderData, ['position']);
+
+   // draw hilite first
+   if (this.preview.edge.hilite.wEdge) {
+      let hiliteColor = DraftBench.theme.unselectedHilite;
+      const wEdge = this.preview.edge.hilite.wEdge;
+      if (this.preview.edge.color[wEdge.index] & 1) { // selected?
+         hiliteColor = DraftBench.theme.selectedHilite;
+      }
+      this.preview.shaderData.setUniform4fv("color", hiliteColor);
+      gl.bindUniform(this.preview.shaderData, ['color']);
+      gl.bindIndex(this.preview.shaderData, 'edgeHilite');
+      gl.drawElements(gl.LINES, 2, gl.UNSIGNED_INT, 0);  // draw 1 line.
+   }
+
+   // draw selected second
+   if (this.preview.edge.isModified) { // rebuild selected index
+      const selected = new Uint32Array( this.preview.edge.indexCount );
+      let j = 0;
+      for (let i = 0; i < this.edges.length; ++i) {
+         const byte = this.preview.edge.color[i];
+         if (byte & 1) {   // selected
+            const wEdge = this.edges[i];
+            selected[j++] = wEdge.left.origin.index;
+            selected[j++] = wEdge.right.origin.index;
+         }
+      }
+      // set the new selected.
+      //this.preview.edge.indexCount === selected.length;
+      if (this.preview.edge.indexCount > 0) {
+         this.preview.shaderData.setIndex('edgeSelected', selected);
+      }
+      this.preview.edge.isModified = false;
+   }
+   if (this.preview.edge.indexCount > 0) {
+      this.preview.shaderData.setUniform4fv('color', DraftBench.theme.selectedColor);
+      gl.bindUniform(this.preview.shaderData, ['color']);
+      gl.bindIndex(this.preview.shaderData, 'edgeSelected');
+      gl.drawElements(gl.LINES, this.preview.edge.indexCount, gl.UNSIGNED_INT, 0);  // draw selected lines
+   }
 };
 
 DraftBench.prototype.drawPlane = (function() {
@@ -607,14 +596,6 @@ DraftBench.prototype.resetBody = function(bodyGroup) {
 };
 
 
-DraftBench.prototype.uploadFacePreview = function() {
-
-};
-
-DraftBench.prototype.uploadEdgePreview = function() {
-   this.previewEdge.shaderData.uploadAttribute('color', 0, this.previewEdge.color);
-};
-
 
 DraftBench.prototype.hiliteVertex = function(vertex, show) {
    // select polygon set color,
@@ -643,6 +624,7 @@ DraftBench.prototype.setVertexColor = function(vertex, color) {
 
 DraftBench.prototype.resetSelectVertex = function() {
    // zeroout the edge seleciton.
+   this.preview.vertex.isModified = false;
    this.preview.vertex.color.fill(0.0);
    this.preview.shaderData.uploadAttribute('color', 0, this.preview.vertex.color);
 };
@@ -650,41 +632,47 @@ DraftBench.prototype.resetSelectVertex = function() {
 DraftBench.prototype.hiliteEdge = function(hEdge, onOff) {
    // select polygon set color,
    if (onOff) {
-      this.setEdgeColor(hEdge.wingedEdge, 0.5);
+      const wEdge = hEdge.wingedEdge;
+      this.preview.edge.hilite.wEdge = wEdge;
+      const index = new Uint32Array( 2 );
+      index[0] = wEdge.left.origin.index;
+      index[1] = wEdge.right.origin.index;
+      this.preview.shaderData.setIndex('edgeHilite', index);   // update index.
+      this.preview.edge.hilite.indexCount = 2;
    } else {
-      this.setEdgeColor(hEdge.wingedEdge, -0.5);
+      this.preview.edge.hilite.wEdge = null;
+      this.preview.edge.hilite.indexCount = 0;
    }
-
 }
 
-DraftBench.prototype.setEdgeColor = function(wingedEdge, color, groupSelection) {
-   // selected color
-   const j = wingedEdge.index * 2;  
-   this.previewEdge.color[j] += color;
-   this.previewEdge.color[j+1] += color;
-   if (!groupSelection) {
-      const line = this.previewEdge.color.subarray(j, j+2);
-      this.previewEdge.shaderData.uploadAttribute('color', j*Float32Array.BYTES_PER_ELEMENT, line);
+/**
+ * toggle selection of wEdge
+ * @param {WingedEdge} wEdge - target wEdge
+ * @param {boolean} onOff - on/off toggle.
+ */
+DraftBench.prototype.selectEdge = function(wEdge, onOff) {
+   if (onOff) {
+      if ((this.preview.edge.color[wEdge.index] & 1) === 0) {
+         this.preview.edge.color[wEdge.index] |= 1;
+         this.preview.edge.indexCount += 2;
+      }
+   } else {
+      if ((this.preview.edge.color[wEdge.index] & 1) === 1) {
+         this.preview.edge.color[wEdge.index] &= ~1;
+         this.preview.edge.indexCount -= 2;
+      }
    }
+   this.preview.edge.isModified = true;
 };
+
 
 DraftBench.prototype.resetSelectEdge = function() {
    // zeroout the edge seleciton.
-   this.previewEdge.color.fill(0.0);
-   this.previewEdge.shaderData.uploadAttribute('color', 0, this.previewEdge.color);
+   this.preview.edge.color.fill(0.0);
+   this.preview.edge.isModified = false;
+   this.preview.edge.indexCount = 0;
 };
 
-DraftBench.prototype.updateWEdges = function(wingedEdges) {
-   // update the edges.vertex
-   for (let wingedEdge of wingedEdges) {
-      let index = wingedEdge.index * 2 * 3;
-      for (let halfEdge of wingedEdge) {
-         this.previewEdge.line.set(halfEdge.origin.vertex, index);
-         index += 3;
-      }
-   }
-   this.previewEdge.shaderData.uploadAttribute('position', 0, this.previewEdge.line);
-}
 
 DraftBench.prototype.updateCentroid = function(snapshot) {
    // done, update shader data, should we update each vertex individually?
