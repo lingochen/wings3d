@@ -370,17 +370,35 @@ DraftBench.prototype._updatePreviewFace = function(polygon) {
 
 DraftBench.prototype.hiliteFace = function(polygon, isHilite) {
    if (isHilite) {   // show
+      this.hilite.color = DraftBench.theme.unselectedHilite;
+      if ((this.preview.selected[polygon.index] & 1) === 1) {
+         this.hilite.color = DraftBench.theme.selectedHilite;
+      }
+      this.preview.selected[polygon.index] |= 2;
       this._computeFaceHiliteIndex(polygon);
    } else { // hide
       this.hilite.indexLength = 0;
+      this.preview.selected[polygon.index] &= ~2;
    }
 };
 
 DraftBench.prototype.hiliteBody = function(faceGroup, isHilite) {
    if (isHilite) { // show
+      let checkColor = true;
+      this.hilite.color = DraftBench.theme.unselectedHilite;
+      for (let polygon of faceGroup) {
+         if (checkColor && ((this.preview.selected[polygon.index] & 1) === 1)) {
+            this.hilite.color = DraftBench.theme.selectedHilite;  // unnecessary assignment
+            checkColor = false;
+         }
+         this.preview.selected[polygon.index] |= 2;
+      }
       this._computeGroupHiliteIndex(faceGroup);
    } else { // hide 
       this.hilite.indexLength = 0;
+      for (let polygon of faceGroup) { // clear flag
+         this.preview.selected[polygon.index] &= ~2;
+      }
    }
 };
 
@@ -458,7 +476,7 @@ DraftBench.prototype.drawHilite = function(gl) {
       return;
    }
    // set hilite color and hilite index
-   this.preview.shaderData.setUniform4fv("faceColor", [0.0, 0.6, 0.0, 0.35]);
+   this.preview.shaderData.setUniform4fv("faceColor", this.hilite.color);
    gl.bindAttribute(this.preview.shaderData, ['position']);
    gl.bindUniform(this.preview.shaderData, ['faceColor']);
    gl.bindIndex(this.preview.shaderData, 'faceHilite');
@@ -695,12 +713,18 @@ DraftBench.prototype.selectFace = function(polygon, toggleOn) {
          this.preview.selectedCount += polygon.numberOfVertex * 3;
          this.preview.selected[polygon.index] |= 1;
          this.preview.isModified = true;
+         if (this.preview.selected[polygon.index] & 2) { // now we are both hilite and selected
+            this.hilite.color = DraftBench.theme.selectedHilite;
+         }
       }
    } else {
       if ((this.preview.selected[polygon.index] & 1) === 1) {
          this.preview.selectedCount -= polygon.numberOfVertex * 3;
          this.preview.selected[polygon.index] &= ~1;
          this.preview.isModified = true;
+         if (this.preview.selected[polygon.index] & 2) { // now we are both hilite and unselected
+            this.hilite.color = DraftBench.theme.unselectedHilite;
+         }
       }
    }
 };
