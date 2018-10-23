@@ -281,7 +281,7 @@ class FaceMadsor extends Madsor {
    }
 
    previewShader(gl) {
-      gl.useShader(ShaderProg.colorSolidWireframe);
+      gl.useShader(ShaderProg.solidWireframe);
    }
 
    useShader(gl) {

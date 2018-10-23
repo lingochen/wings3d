@@ -57,26 +57,6 @@ onReady(function() {
    
    initSimpleASCII(gl);
 
-/* move to shaderprog.js
-   // render shaded object.
-   ShaderProg.cameraLight = gl.createShaderProgram(ShaderProg.cameraLight.vertex, ShaderProg.cameraLight.fragment);
-
-   ShaderProg.solidColor = gl.createShaderProgram(ShaderProg.solidColor.vertex, ShaderProg.solidColor.fragment);
-
-   ShaderProg.simplePoint = gl.createShaderProgram(ShaderProg.simplePoint.vertex, ShaderProg.simplePoint.fragment);
-
-   ShaderProg.colorPoint = gl.createShaderProgram(ShaderProg.colorPoint.vertex, ShaderProg.colorPoint.fragment);
-
-   ShaderProg.solidWireframe = gl.createShaderProgram(ShaderProg.solidWireframe.vertex, ShaderProg.solidWireframe.fragment);
-
-   ShaderProg.colorWireframe = gl.createShaderProgram(ShaderProg.colorWireframe.vertex, ShaderProg.colorWireframe.fragment);
-
-   ShaderProg.colorSolidWireframe = gl.createShaderProgram(ShaderProg.colorSolidWireframe.vertex, ShaderProg.colorSolidWireframe.fragment);
-
-   ShaderProg.selectedColorLine = gl.createShaderProgram(ShaderProg.selectedColorLine.vertex, ShaderProg.selectedColorLine.fragment);
-
-   ShaderProg.selectedColorPoint = gl.createShaderProgram(ShaderProg.selectedColorPoint.vertex, ShaderProg.selectedColorPoint.fragment);*/
-
  //  console.log("Render.init() success");
 });
 

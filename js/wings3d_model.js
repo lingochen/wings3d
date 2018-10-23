@@ -1301,11 +1301,11 @@ PreviewCage.prototype.restoreFromEdgeToMultiSelect = function(_snapshot) {
 };
 
 PreviewCage.prototype.setFaceSelectionOff = function(polygon) {
-   this.bench.setFaceSelectionOff(polygon, this.selectedSet);
+   this.bench.selectFace(polygon, false);
    this.selectedSet.delete(polygon);
 };
 PreviewCage.prototype.setFaceSelectionOn = function(polygon) {
-   this.bench.setFaceSelectionOn(polygon);
+   this.bench.selectFace(polygon, true);
    this.selectedSet.add(polygon);
 };
 

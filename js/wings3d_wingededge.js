@@ -409,6 +409,15 @@ Polygon.prototype.isLive = function() {
    return (this.halfEdge !== null);
 };
 
+Polygon.prototype.buildIndex = function(data, index, center) {
+   for (let edge of this.hEdges()) {
+      data[index++] = edge.origin.index;
+      data[index++] = edge.destination().index;
+      data[index++] = center;
+   }
+   return index;
+}
+
 Polygon.prototype.eachVertex = function(callbackFn) {
    // get every vertex of the face.
    var begin = this.halfEdge;
