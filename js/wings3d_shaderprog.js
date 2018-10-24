@@ -239,59 +239,52 @@ let solidWireframe = {  // we don't have geometry shader, so we have to manually
    fragment:[
       '#extension GL_OES_standard_derivatives : enable',
       'precision mediump float;',
+      'uniform vec4 color;',
       'uniform vec4 faceColor;',
       'varying vec3 vBC;',
 
       'float edgeFactor(){',
          'vec3 d = fwidth(vBC);',
-         'vec3 a3 = smoothstep(vec3(0.0), d*1.5, vBC);',
+         'vec3 a3 = smoothstep(vec3(0.0), d*1.1, vBC);',
          'return min(min(a3.x, a3.y), a3.z);',
       '}',
 
       'void main(){',
          // coloring by edge
-         'gl_FragColor.rgb = mix(vec3(0.0), vec3(faceColor), edgeFactor());',
-         'gl_FragColor.a = 1.0;',
+         'gl_FragColor = mix(color, faceColor, edgeFactor());',
       '}'].join("\n"),
 };
-let colorWireframe = {  // we don't have geometry shader, so we have to manually pass barycentric to do 'single pass wireframe' 
-   vertex: [       // http://codeflow.org/entries/2012/aug/02/easy-wireframe-display-with-barycentric-coordinates/
-      'attribute vec3 position;', 
-      'attribute vec3 barycentric;',
-      'attribute float hilite;',  // (x,y), x is for edge, y is for interior. (y>0 is turnon), (x==1 is turnon).
-      'uniform mat4 projection;', 
-      'uniform mat4 worldView;',
+let edgeSolidWireframe = {  // we don't have geometry shader, so we have to manually pass barycentric to do 'single pass wireframe' 
+      vertex: [       // http://codeflow.org/entries/2012/aug/02/easy-wireframe-display-with-barycentric-coordinates/
+         'attribute vec3 position;', 
+         'attribute vec3 barycentric;',
+         'uniform mat4 projection;', 
+         'uniform mat4 worldView;',
 
-      'varying vec3 vBC;',
-      'varying float vHilite;',
-      'void main(){',
-         'vHilite = hilite;',
-         'vBC = barycentric;',
-         'gl_Position = projection * worldView * vec4(position, 1.0);',
-      '}'].join("\n"),
+         'varying vec3 vBC;',
+         'void main(){',
+            'vBC = barycentric;',
+            'gl_Position = projection * worldView * vec4(position, 1.0);',
+         '}'].join("\n"),
 
-   fragment:[
-      '#extension GL_OES_standard_derivatives : enable',
-      'precision mediump float;',
-      'uniform vec3 hiliteColor;',  // hilite color
-      'varying vec3 vBC;',
-      'varying float vHilite;',
+      fragment:[
+         '#extension GL_OES_standard_derivatives : enable',
+         'precision mediump float;',
+         'uniform vec4 color;',
+         'uniform vec4 faceColor;',
+         'uniform float lineWidth;',
+         'varying vec3 vBC;',
 
-      'float edgeFactor(){',
-         'vec3 d = fwidth(vBC);',
-         'vec3 a3 = smoothstep(vec3(0.0), d*1.5, vBC);',
-         'return min(min(a3.x, a3.y), a3.z);',
-      '}',
-
-      'void main(){',
-         // coloring by edge
-         'vec3 edgeColor = vec3(0.0);',
-         'if (vHilite >= 1.0) {',
-         '  edgeColor = hiliteColor;',
+         'float edgeFactor(){',
+            'vec3 d = fwidth(vBC);',
+            'vec3 a3 = smoothstep(vec3(0.0), d*lineWidth, vBC);',
+            'return min(min(a3.x, a3.y), a3.z);',
          '}',
-         'gl_FragColor.rgb = mix(edgeColor, vec3(0.5), edgeFactor());',
-         'gl_FragColor.a = 1.0;',
-      '}'].join("\n"),
+
+         'void main(){',
+            // coloring by edge
+            'gl_FragColor = mix(color, faceColor, edgeFactor());',
+         '}'].join("\n"),
 };
 let colorSolidWireframe = {  // we don't have geometry shader, so we have to manually pass barycentric to do 'single pass wireframe' 
    vertex: [       // http://codeflow.org/entries/2012/aug/02/easy-wireframe-display-with-barycentric-coordinates/
@@ -346,7 +339,7 @@ Wings3D.onReady(function() {
 
    solidWireframe = gl.createShaderProgram(solidWireframe.vertex, solidWireframe.fragment);
 
-   colorWireframe = gl.createShaderProgram(colorWireframe.vertex, colorWireframe.fragment);
+   edgeSolidWireframe = gl.createShaderProgram(edgeSolidWireframe.vertex, edgeSolidWireframe.fragment);
 
    colorSolidWireframe = gl.createShaderProgram(colorSolidWireframe.vertex, colorSolidWireframe.fragment);
 
@@ -366,6 +359,6 @@ export {
    simplePoint,
    colorPoint,
    solidWireframe,
-   colorWireframe,
+   edgeSolidWireframe,
    colorSolidWireframe,
 };

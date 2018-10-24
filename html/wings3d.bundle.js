@@ -6427,7 +6427,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "simplePoint", function() { return simplePoint; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "colorPoint", function() { return colorPoint; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "solidWireframe", function() { return solidWireframe; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "colorWireframe", function() { return colorWireframe; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "edgeSolidWireframe", function() { return edgeSolidWireframe; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "colorSolidWireframe", function() { return colorSolidWireframe; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__ = __webpack_require__(5);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d__ = __webpack_require__(0);
@@ -6672,59 +6672,52 @@ let solidWireframe = {  // we don't have geometry shader, so we have to manually
    fragment:[
       '#extension GL_OES_standard_derivatives : enable',
       'precision mediump float;',
+      'uniform vec4 color;',
       'uniform vec4 faceColor;',
       'varying vec3 vBC;',
 
       'float edgeFactor(){',
          'vec3 d = fwidth(vBC);',
-         'vec3 a3 = smoothstep(vec3(0.0), d*1.5, vBC);',
+         'vec3 a3 = smoothstep(vec3(0.0), d*1.1, vBC);',
          'return min(min(a3.x, a3.y), a3.z);',
       '}',
 
       'void main(){',
          // coloring by edge
-         'gl_FragColor.rgb = mix(vec3(0.0), vec3(faceColor), edgeFactor());',
-         'gl_FragColor.a = 1.0;',
+         'gl_FragColor = mix(color, faceColor, edgeFactor());',
       '}'].join("\n"),
 };
-let colorWireframe = {  // we don't have geometry shader, so we have to manually pass barycentric to do 'single pass wireframe' 
-   vertex: [       // http://codeflow.org/entries/2012/aug/02/easy-wireframe-display-with-barycentric-coordinates/
-      'attribute vec3 position;', 
-      'attribute vec3 barycentric;',
-      'attribute float hilite;',  // (x,y), x is for edge, y is for interior. (y>0 is turnon), (x==1 is turnon).
-      'uniform mat4 projection;', 
-      'uniform mat4 worldView;',
+let edgeSolidWireframe = {  // we don't have geometry shader, so we have to manually pass barycentric to do 'single pass wireframe' 
+      vertex: [       // http://codeflow.org/entries/2012/aug/02/easy-wireframe-display-with-barycentric-coordinates/
+         'attribute vec3 position;', 
+         'attribute vec3 barycentric;',
+         'uniform mat4 projection;', 
+         'uniform mat4 worldView;',
 
-      'varying vec3 vBC;',
-      'varying float vHilite;',
-      'void main(){',
-         'vHilite = hilite;',
-         'vBC = barycentric;',
-         'gl_Position = projection * worldView * vec4(position, 1.0);',
-      '}'].join("\n"),
+         'varying vec3 vBC;',
+         'void main(){',
+            'vBC = barycentric;',
+            'gl_Position = projection * worldView * vec4(position, 1.0);',
+         '}'].join("\n"),
 
-   fragment:[
-      '#extension GL_OES_standard_derivatives : enable',
-      'precision mediump float;',
-      'uniform vec3 hiliteColor;',  // hilite color
-      'varying vec3 vBC;',
-      'varying float vHilite;',
+      fragment:[
+         '#extension GL_OES_standard_derivatives : enable',
+         'precision mediump float;',
+         'uniform vec4 color;',
+         'uniform vec4 faceColor;',
+         'uniform float lineWidth;',
+         'varying vec3 vBC;',
 
-      'float edgeFactor(){',
-         'vec3 d = fwidth(vBC);',
-         'vec3 a3 = smoothstep(vec3(0.0), d*1.5, vBC);',
-         'return min(min(a3.x, a3.y), a3.z);',
-      '}',
-
-      'void main(){',
-         // coloring by edge
-         'vec3 edgeColor = vec3(0.0);',
-         'if (vHilite >= 1.0) {',
-         '  edgeColor = hiliteColor;',
+         'float edgeFactor(){',
+            'vec3 d = fwidth(vBC);',
+            'vec3 a3 = smoothstep(vec3(0.0), d*lineWidth, vBC);',
+            'return min(min(a3.x, a3.y), a3.z);',
          '}',
-         'gl_FragColor.rgb = mix(edgeColor, vec3(0.5), edgeFactor());',
-         'gl_FragColor.a = 1.0;',
-      '}'].join("\n"),
+
+         'void main(){',
+            // coloring by edge
+            'gl_FragColor = mix(color, faceColor, edgeFactor());',
+         '}'].join("\n"),
 };
 let colorSolidWireframe = {  // we don't have geometry shader, so we have to manually pass barycentric to do 'single pass wireframe' 
    vertex: [       // http://codeflow.org/entries/2012/aug/02/easy-wireframe-display-with-barycentric-coordinates/
@@ -6779,7 +6772,7 @@ __WEBPACK_IMPORTED_MODULE_1__wings3d__["onReady"](function() {
 
    solidWireframe = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].createShaderProgram(solidWireframe.vertex, solidWireframe.fragment);
 
-   colorWireframe = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].createShaderProgram(colorWireframe.vertex, colorWireframe.fragment);
+   edgeSolidWireframe = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].createShaderProgram(edgeSolidWireframe.vertex, edgeSolidWireframe.fragment);
 
    colorSolidWireframe = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].createShaderProgram(colorSolidWireframe.vertex, colorSolidWireframe.fragment);
 
@@ -11650,7 +11643,7 @@ class EdgeMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
    }
 
    previewShader(gl) {
-      gl.useShader(__WEBPACK_IMPORTED_MODULE_8__wings3d_shaderprog__["solidWireframe"]);
+      gl.useShader(__WEBPACK_IMPORTED_MODULE_8__wings3d_shaderprog__["edgeSolidWireframe"]);
    }
 
    useShader(gl) {
@@ -14376,19 +14369,23 @@ DraftBench.prototype.draw = function(gl) {
    let bindPosition = false;
    if (this.preview.selectedCount > 0) {
       gl.bindAttribute(this.preview.shaderData, ['position', 'barycentric']);
+      this.preview.shaderData.setUniform4fv('color', DraftBench.theme.edgeColor);
+      this.preview.shaderData.setUniform1f('lineWidth', DraftBench.pref.edgeWidth);
       bindPosition = true;
       this.preview.shaderData.setUniform4fv('faceColor', DraftBench.theme.selectedColor);
-      gl.bindUniform(this.preview.shaderData, ['faceColor']);
+      gl.bindUniform(this.preview.shaderData, ['color', 'faceColor', 'lineWidth']);
       gl.bindIndex(this.preview.shaderData, 'selectedFace');
       gl.drawElements(gl.TRIANGLES, this.preview.selectedCount, gl.UNSIGNED_INT, 0);
    }
    if (indexLength > 0) {  // draw normal
       if (!bindPosition) {
          gl.bindAttribute(this.preview.shaderData, ['position', 'barycentric']);
+         this.preview.shaderData.setUniform4fv('color', DraftBench.theme.edgeColor);
+         this.preview.shaderData.setUniform1f('lineWidth', DraftBench.pref.edgeWidth);
          bindPosition = true;
       }
       this.preview.shaderData.setUniform4fv('faceColor', DraftBench.theme.faceColor);
-      gl.bindUniform(this.preview.shaderData, ['faceColor']);
+      gl.bindUniform(this.preview.shaderData, ['color', 'faceColor', 'lineWidth']);
       gl.bindIndex(this.preview.shaderData, 'face');
       gl.drawElements(gl.TRIANGLES, indexLength, gl.UNSIGNED_INT, 0);
    }

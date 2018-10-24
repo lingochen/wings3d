@@ -450,19 +450,23 @@ DraftBench.prototype.draw = function(gl) {
    let bindPosition = false;
    if (this.preview.selectedCount > 0) {
       gl.bindAttribute(this.preview.shaderData, ['position', 'barycentric']);
+      this.preview.shaderData.setUniform4fv('color', DraftBench.theme.edgeColor);
+      this.preview.shaderData.setUniform1f('lineWidth', DraftBench.pref.edgeWidth);
       bindPosition = true;
       this.preview.shaderData.setUniform4fv('faceColor', DraftBench.theme.selectedColor);
-      gl.bindUniform(this.preview.shaderData, ['faceColor']);
+      gl.bindUniform(this.preview.shaderData, ['color', 'faceColor', 'lineWidth']);
       gl.bindIndex(this.preview.shaderData, 'selectedFace');
       gl.drawElements(gl.TRIANGLES, this.preview.selectedCount, gl.UNSIGNED_INT, 0);
    }
    if (indexLength > 0) {  // draw normal
       if (!bindPosition) {
          gl.bindAttribute(this.preview.shaderData, ['position', 'barycentric']);
+         this.preview.shaderData.setUniform4fv('color', DraftBench.theme.edgeColor);
+         this.preview.shaderData.setUniform1f('lineWidth', DraftBench.pref.edgeWidth);
          bindPosition = true;
       }
       this.preview.shaderData.setUniform4fv('faceColor', DraftBench.theme.faceColor);
-      gl.bindUniform(this.preview.shaderData, ['faceColor']);
+      gl.bindUniform(this.preview.shaderData, ['color', 'faceColor', 'lineWidth']);
       gl.bindIndex(this.preview.shaderData, 'face');
       gl.drawElements(gl.TRIANGLES, indexLength, gl.UNSIGNED_INT, 0);
    }

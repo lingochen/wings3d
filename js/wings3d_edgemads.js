@@ -333,7 +333,7 @@ class EdgeMadsor extends Madsor {
    }
 
    previewShader(gl) {
-      gl.useShader(ShaderProg.solidWireframe);
+      gl.useShader(ShaderProg.edgeSolidWireframe);
    }
 
    useShader(gl) {
