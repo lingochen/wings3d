@@ -56,11 +56,12 @@ fragment:[
    'precision mediump float;',
    'uniform vec4 faceColor;',
    'uniform vec4 color;',
+   'uniform float lineWidth;',
    'varying vec3 vBC;',
 
    'float edgeFactor(){',
       'vec3 d = fwidth(vBC);',
-      'vec3 a3 = smoothstep(vec3(0.0), d*3.0, vBC);',
+      'vec3 a3 = smoothstep(vec3(0.0), d*lineWidth, vBC);',
       'return min(min(a3.x, a3.y), a3.z);',
    '}',
 

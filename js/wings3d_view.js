@@ -80,6 +80,15 @@ const theme = {
          tweakVectorColor: '#FF8000',
        },
 
+       draftBenchPref: {
+         vertexSize: 4.0,
+         selectedVertexSize: 5.0,
+         maskedVertexSize: 8.0,
+         edgeWidth: 2.0,
+         selectedEdgeWidth: 2.0,
+         hardEdgeWidth: 2.0,
+       },
+
        normalVectorColor: [0.0, 1.0, 0.0],
        colorX: '#B3001A',
        colorY: '#5FD100',
@@ -100,7 +109,7 @@ const theme = {
          infoLineText: '#4C4C4C',
          infoBackground: '#6161617F',
          infoText: '#FFFFFF',
-       }
+       },
    };
 const themeAlpha = {
    geometryBackground: 'FF',
@@ -120,7 +129,7 @@ function traverse(obj, loadStore) {
 }
 function loadPref(form) {
    traverse(theme, (_obj, key, value)=> {
-      const data = form.querySelector(`input[type=color][name=${key}]`);
+      let data = form.querySelector(`input[type=color][name=${key}]`);
       if (data) {
          if (value.length === 9) {  // no support of #rrggbbaa yet, for colorpicker.
             data.value = value.slice(0, 7);
@@ -128,6 +137,10 @@ function loadPref(form) {
             data.value = value;
          }
       }
+      data = form.querySelector(`input[type=number][name=${key}]`);
+      if (data) {
+         data.value = value;
+      }    
     });
    // load prop
    traverse(prop, (_obj, key, value)=> {
@@ -136,12 +149,20 @@ function loadPref(form) {
          data.checked = value;
       }
     });
+   // load pref
+   traverse(prop, (_obj, key, value)=> {
+
+    });
 };
 function storePref(form) {
    traverse(theme, (obj, key, _value) => {
-      const data = form.querySelector(`input[type=color][name=${key}]`);
+      let data = form.querySelector(`input[type=color][name=${key}]`);
       if (data) {
          obj[key] = themeAlpha[key] ? (data.value + themeAlpha[key]) : data.value;
+      }
+      data = form.querySelector(`input[type=number][name=${key}]`);
+      if (data) {
+         obj[key] = data.value;
       }
     });
    // now update css variable.
@@ -155,8 +176,8 @@ function storePref(form) {
       }
     });
    // store draftBench
-   draftBench.setTheme(theme.draftBench);
-   // load prop
+   draftBench.setTheme(theme.draftBench, theme.draftBenchPref);
+   // store prop
    traverse(prop, (obj, key, _value)=> {
       const data = form.querySelector(`input[type=checkbox][name=${key}]`);
       if (data) {
@@ -920,7 +941,7 @@ function init() {
 
 
    //Renderer.init(gl, drawWorld);  // init by itself
-   draftBench = new DraftBench(theme.draftBench);
+   draftBench = new DraftBench(theme.draftBench, theme.draftBenchPref);
 
    // capture keyevent.
    document.addEventListener('keydown', function(event) {

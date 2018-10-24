@@ -428,6 +428,15 @@ ShaderData.prototype.setIndex = function(name, index) {
    }
 };
 
+ShaderData.prototype.setUniform1f = function(name, float) {
+   this.uniform[name] = {value: new Float32Array(1), binder: ShaderData.uniform1fFn};
+   this.uniform[name].value = float;
+};
+
+ShaderData.uniform1fFn = function(gl, loc, value) {
+   gl.uniform1f(loc, value);
+};
+
 ShaderData.prototype.setUniform3fv = function(name, arry3) {   // 3fv === vec3
    this.uniform[name] = {value: new Float32Array(arry3), binder: ShaderData.uniform3fvFn};
 };

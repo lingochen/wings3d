@@ -22,7 +22,7 @@ import {MeshAllocator} from './wings3d_wingededge';
 import {EditCommand} from './wings3d_undo';
 
 
-const DraftBench = function(theme, defaultSize = 2048) {  // should only be created by View
+const DraftBench = function(theme, prop, defaultSize = 2048) {  // should only be created by View
    MeshAllocator.call(this, defaultSize); // constructor.
   
    this.lastPreviewSize = { vertices: 0, edges: 0, faces: 0};
@@ -40,7 +40,7 @@ const DraftBench = function(theme, defaultSize = 2048) {  // should only be crea
    this.preview.shaderData.createAttribute('barycentric', layoutVec, gl.STATIC_DRAW);
    this._resizeBoundingSphere(0);
    this._resizePreview(0, 0);
-   this.setTheme(theme);
+   this.setTheme(theme, prop);
 
    // previewEdge
    this.preview.edge = {};
@@ -81,6 +81,13 @@ DraftBench.theme = {edgeColor: [0.0, 0.0, 0.0, 1.0],
                     tweakMagnetColor: [0.0, 0.0, 1.0, 0.06],
                     tweakVectorColor: [1.0, 0.5, 0.0],
                   };
+DraftBench.pref = {vertexSize: 4.0,
+                   selectedVertexSize: 5.0,
+                   maskedVertexSize: 8.0,
+                   edgeWidth: 2.0,
+                   selectedEdgeWidth: 2.0,
+                   hardEdgeWidth: 2.0,
+                  };
 // temp structure for 
 DraftBench.CONST = (function() {
    const constant = {};
@@ -104,11 +111,15 @@ DraftBench.prototype = Object.create(MeshAllocator.prototype);
 /**
  * 
  */
-DraftBench.prototype.setTheme = function(theme) {
+DraftBench.prototype.setTheme = function(theme, pref) {
    Object.entries(theme).forEach(([key, value]) => {
       // put the hext value to shader
       this.preview.shaderData.setUniform4fv(key, Util.hexToRGBA(value));
       DraftBench.theme[key] = Util.hexToRGBA(value);     // to be deleted
+    });
+   // set pref
+   Object.entries(pref).forEach(([key, value]) => {
+      DraftBench.pref[key] = value;
     });
 };
 
@@ -511,6 +522,7 @@ DraftBench.prototype.drawVertex = function(gl) {
  */
 DraftBench.prototype.drawEdge = function(gl) {
    gl.bindAttribute(this.preview.shaderData, ['position', 'barycentric']);
+   this.preview.shaderData.setUniform1f("lineWidth", DraftBench.pref.selectedEdgeWidth);
 
    // draw hilite first
    if (this.preview.edge.hilite.wEdge) {
@@ -520,7 +532,7 @@ DraftBench.prototype.drawEdge = function(gl) {
          hiliteColor = DraftBench.theme.selectedHilite;
       }
       this.preview.shaderData.setUniform4fv("color", hiliteColor);
-      gl.bindUniform(this.preview.shaderData, ['color', 'faceColor']);
+      gl.bindUniform(this.preview.shaderData, ['color', 'faceColor', 'lineWidth']);
       gl.bindIndex(this.preview.shaderData, 'edgeHilite');
       gl.drawElements(gl.TRIANGLES, this.preview.edge.hilite.indexCount, gl.UNSIGNED_INT, 0);  // draw 1 line.
    }
@@ -544,7 +556,7 @@ DraftBench.prototype.drawEdge = function(gl) {
    }
    if (this.preview.edge.indexCount > 0) {
       this.preview.shaderData.setUniform4fv('color', DraftBench.theme.selectedColor);
-      gl.bindUniform(this.preview.shaderData, ['color', 'faceColor']);
+      gl.bindUniform(this.preview.shaderData, ['color', 'faceColor', 'lineWidth']);
       gl.bindIndex(this.preview.shaderData, 'edgeSelected');
       gl.drawElements(gl.TRIANGLES, this.preview.edge.indexCount, gl.UNSIGNED_INT, 0);  // draw selected lines
    }

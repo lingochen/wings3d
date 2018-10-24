@@ -744,6 +744,15 @@ const theme = {
          tweakVectorColor: '#FF8000',
        },
 
+       draftBenchPref: {
+         vertexSize: 4.0,
+         selectedVertexSize: 5.0,
+         maskedVertexSize: 8.0,
+         edgeWidth: 2.0,
+         selectedEdgeWidth: 2.0,
+         hardEdgeWidth: 2.0,
+       },
+
        normalVectorColor: [0.0, 1.0, 0.0],
        colorX: '#B3001A',
        colorY: '#5FD100',
@@ -764,7 +773,7 @@ const theme = {
          infoLineText: '#4C4C4C',
          infoBackground: '#6161617F',
          infoText: '#FFFFFF',
-       }
+       },
    };
 const themeAlpha = {
    geometryBackground: 'FF',
@@ -784,7 +793,7 @@ function traverse(obj, loadStore) {
 }
 function loadPref(form) {
    traverse(theme, (_obj, key, value)=> {
-      const data = form.querySelector(`input[type=color][name=${key}]`);
+      let data = form.querySelector(`input[type=color][name=${key}]`);
       if (data) {
          if (value.length === 9) {  // no support of #rrggbbaa yet, for colorpicker.
             data.value = value.slice(0, 7);
@@ -792,6 +801,10 @@ function loadPref(form) {
             data.value = value;
          }
       }
+      data = form.querySelector(`input[type=number][name=${key}]`);
+      if (data) {
+         data.value = value;
+      }    
     });
    // load prop
    traverse(prop, (_obj, key, value)=> {
@@ -800,12 +813,20 @@ function loadPref(form) {
          data.checked = value;
       }
     });
+   // load pref
+   traverse(prop, (_obj, key, value)=> {
+
+    });
 };
 function storePref(form) {
    traverse(theme, (obj, key, _value) => {
-      const data = form.querySelector(`input[type=color][name=${key}]`);
+      let data = form.querySelector(`input[type=color][name=${key}]`);
       if (data) {
          obj[key] = themeAlpha[key] ? (data.value + themeAlpha[key]) : data.value;
+      }
+      data = form.querySelector(`input[type=number][name=${key}]`);
+      if (data) {
+         obj[key] = data.value;
       }
     });
    // now update css variable.
@@ -819,8 +840,8 @@ function storePref(form) {
       }
     });
    // store draftBench
-   draftBench.setTheme(theme.draftBench);
-   // load prop
+   draftBench.setTheme(theme.draftBench, theme.draftBenchPref);
+   // store prop
    traverse(prop, (obj, key, _value)=> {
       const data = form.querySelector(`input[type=checkbox][name=${key}]`);
       if (data) {
@@ -1584,7 +1605,7 @@ function init() {
 
 
    //Renderer.init(gl, drawWorld);  // init by itself
-   draftBench = new __WEBPACK_IMPORTED_MODULE_13__wings3d_draftbench__["DraftBench"](theme.draftBench);
+   draftBench = new __WEBPACK_IMPORTED_MODULE_13__wings3d_draftbench__["DraftBench"](theme.draftBench, theme.draftBenchPref);
 
    // capture keyevent.
    document.addEventListener('keydown', function(event) {
@@ -6246,6 +6267,15 @@ ShaderData.prototype.setIndex = function(name, index) {
    }
 };
 
+ShaderData.prototype.setUniform1f = function(name, float) {
+   this.uniform[name] = {value: new Float32Array(1), binder: ShaderData.uniform1fFn};
+   this.uniform[name].value = float;
+};
+
+ShaderData.uniform1fFn = function(gl, loc, value) {
+   gl.uniform1f(loc, value);
+};
+
 ShaderData.prototype.setUniform3fv = function(name, arry3) {   // 3fv === vec3
    this.uniform[name] = {value: new Float32Array(arry3), binder: ShaderData.uniform3fvFn};
 };
@@ -6459,11 +6489,12 @@ fragment:[
    'precision mediump float;',
    'uniform vec4 faceColor;',
    'uniform vec4 color;',
+   'uniform float lineWidth;',
    'varying vec3 vBC;',
 
    'float edgeFactor(){',
       'vec3 d = fwidth(vBC);',
-      'vec3 a3 = smoothstep(vec3(0.0), d*3.0, vBC);',
+      'vec3 a3 = smoothstep(vec3(0.0), d*lineWidth, vBC);',
       'return min(min(a3.x, a3.y), a3.z);',
    '}',
 
@@ -13917,7 +13948,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 
 
-const DraftBench = function(theme, defaultSize = 2048) {  // should only be created by View
+const DraftBench = function(theme, prop, defaultSize = 2048) {  // should only be created by View
    __WEBPACK_IMPORTED_MODULE_4__wings3d_wingededge__["MeshAllocator"].call(this, defaultSize); // constructor.
   
    this.lastPreviewSize = { vertices: 0, edges: 0, faces: 0};
@@ -13935,7 +13966,7 @@ const DraftBench = function(theme, defaultSize = 2048) {  // should only be crea
    this.preview.shaderData.createAttribute('barycentric', layoutVec, __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].STATIC_DRAW);
    this._resizeBoundingSphere(0);
    this._resizePreview(0, 0);
-   this.setTheme(theme);
+   this.setTheme(theme, prop);
 
    // previewEdge
    this.preview.edge = {};
@@ -13976,6 +14007,13 @@ DraftBench.theme = {edgeColor: [0.0, 0.0, 0.0, 1.0],
                     tweakMagnetColor: [0.0, 0.0, 1.0, 0.06],
                     tweakVectorColor: [1.0, 0.5, 0.0],
                   };
+DraftBench.pref = {vertexSize: 4.0,
+                   selectedVertexSize: 5.0,
+                   maskedVertexSize: 8.0,
+                   edgeWidth: 2.0,
+                   selectedEdgeWidth: 2.0,
+                   hardEdgeWidth: 2.0,
+                  };
 // temp structure for 
 DraftBench.CONST = (function() {
    const constant = {};
@@ -13999,11 +14037,15 @@ DraftBench.prototype = Object.create(__WEBPACK_IMPORTED_MODULE_4__wings3d_winged
 /**
  * 
  */
-DraftBench.prototype.setTheme = function(theme) {
+DraftBench.prototype.setTheme = function(theme, pref) {
    Object.entries(theme).forEach(([key, value]) => {
       // put the hext value to shader
       this.preview.shaderData.setUniform4fv(key, __WEBPACK_IMPORTED_MODULE_2__wings3d_util__["hexToRGBA"](value));
       DraftBench.theme[key] = __WEBPACK_IMPORTED_MODULE_2__wings3d_util__["hexToRGBA"](value);     // to be deleted
+    });
+   // set pref
+   Object.entries(pref).forEach(([key, value]) => {
+      DraftBench.pref[key] = value;
     });
 };
 
@@ -14406,6 +14448,7 @@ DraftBench.prototype.drawVertex = function(gl) {
  */
 DraftBench.prototype.drawEdge = function(gl) {
    gl.bindAttribute(this.preview.shaderData, ['position', 'barycentric']);
+   this.preview.shaderData.setUniform1f("lineWidth", DraftBench.pref.selectedEdgeWidth);
 
    // draw hilite first
    if (this.preview.edge.hilite.wEdge) {
@@ -14415,7 +14458,7 @@ DraftBench.prototype.drawEdge = function(gl) {
          hiliteColor = DraftBench.theme.selectedHilite;
       }
       this.preview.shaderData.setUniform4fv("color", hiliteColor);
-      gl.bindUniform(this.preview.shaderData, ['color', 'faceColor']);
+      gl.bindUniform(this.preview.shaderData, ['color', 'faceColor', 'lineWidth']);
       gl.bindIndex(this.preview.shaderData, 'edgeHilite');
       gl.drawElements(gl.TRIANGLES, this.preview.edge.hilite.indexCount, gl.UNSIGNED_INT, 0);  // draw 1 line.
    }
@@ -14439,7 +14482,7 @@ DraftBench.prototype.drawEdge = function(gl) {
    }
    if (this.preview.edge.indexCount > 0) {
       this.preview.shaderData.setUniform4fv('color', DraftBench.theme.selectedColor);
-      gl.bindUniform(this.preview.shaderData, ['color', 'faceColor']);
+      gl.bindUniform(this.preview.shaderData, ['color', 'faceColor', 'lineWidth']);
       gl.bindIndex(this.preview.shaderData, 'edgeSelected');
       gl.drawElements(gl.TRIANGLES, this.preview.edge.indexCount, gl.UNSIGNED_INT, 0);  // draw selected lines
    }
