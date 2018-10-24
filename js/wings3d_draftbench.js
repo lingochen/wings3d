@@ -510,7 +510,7 @@ DraftBench.prototype.drawVertex = function(gl) {
  * @param {gl} - drawing context
  */
 DraftBench.prototype.drawEdge = function(gl) {
-   gl.bindAttribute(this.preview.shaderData, ['position']);
+   gl.bindAttribute(this.preview.shaderData, ['position', 'barycentric']);
 
    // draw hilite first
    if (this.preview.edge.hilite.wEdge) {
@@ -520,9 +520,9 @@ DraftBench.prototype.drawEdge = function(gl) {
          hiliteColor = DraftBench.theme.selectedHilite;
       }
       this.preview.shaderData.setUniform4fv("color", hiliteColor);
-      gl.bindUniform(this.preview.shaderData, ['color']);
+      gl.bindUniform(this.preview.shaderData, ['color', 'faceColor']);
       gl.bindIndex(this.preview.shaderData, 'edgeHilite');
-      gl.drawElements(gl.LINES, 2, gl.UNSIGNED_INT, 0);  // draw 1 line.
+      gl.drawElements(gl.TRIANGLES, this.preview.edge.hilite.indexCount, gl.UNSIGNED_INT, 0);  // draw 1 line.
    }
 
    // draw selected second
@@ -531,10 +531,8 @@ DraftBench.prototype.drawEdge = function(gl) {
       let j = 0;
       for (let i = 0; i < this.edges.length; ++i) {
          const byte = this.preview.edge.color[i];
-         if (byte & 1) {   // selected
-            const wEdge = this.edges[i];
-            selected[j++] = wEdge.left.origin.index;
-            selected[j++] = wEdge.right.origin.index;
+         if (byte & 1) {   // selected, draw both side
+            j = this.edges[i].buildIndex(selected, j, this.vertices.length);
          }
       }
       // set the new selected.
@@ -546,9 +544,9 @@ DraftBench.prototype.drawEdge = function(gl) {
    }
    if (this.preview.edge.indexCount > 0) {
       this.preview.shaderData.setUniform4fv('color', DraftBench.theme.selectedColor);
-      gl.bindUniform(this.preview.shaderData, ['color']);
+      gl.bindUniform(this.preview.shaderData, ['color', 'faceColor']);
       gl.bindIndex(this.preview.shaderData, 'edgeSelected');
-      gl.drawElements(gl.LINES, this.preview.edge.indexCount, gl.UNSIGNED_INT, 0);  // draw selected lines
+      gl.drawElements(gl.TRIANGLES, this.preview.edge.indexCount, gl.UNSIGNED_INT, 0);  // draw selected lines
    }
 };
 
@@ -653,11 +651,10 @@ DraftBench.prototype.hiliteEdge = function(hEdge, onOff) {
    if (onOff) {
       const wEdge = hEdge.wingedEdge;
       this.preview.edge.hilite.wEdge = wEdge;
-      const index = new Uint32Array( 2 );
-      index[0] = wEdge.left.origin.index;
-      index[1] = wEdge.right.origin.index;
+      const index = new Uint32Array( 6 ); // both edge. max 2 triangle.
+      wEdge.buildIndex(index, 0, this.vertices.length);
       this.preview.shaderData.setIndex('edgeHilite', index);   // update index.
-      this.preview.edge.hilite.indexCount = 2;
+      this.preview.edge.hilite.indexCount = 6;
    } else {
       this.preview.edge.hilite.wEdge = null;
       this.preview.edge.hilite.indexCount = 0;
@@ -673,12 +670,12 @@ DraftBench.prototype.selectEdge = function(wEdge, onOff) {
    if (onOff) {
       if ((this.preview.edge.color[wEdge.index] & 1) === 0) {
          this.preview.edge.color[wEdge.index] |= 1;
-         this.preview.edge.indexCount += 2;
+         this.preview.edge.indexCount += 6;
       }
    } else {
       if ((this.preview.edge.color[wEdge.index] & 1) === 1) {
          this.preview.edge.color[wEdge.index] &= ~1;
-         this.preview.edge.indexCount -= 2;
+         this.preview.edge.indexCount -= 6;
       }
    }
    this.preview.edge.isModified = true;

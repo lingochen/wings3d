@@ -38,22 +38,41 @@ let colorArray = {
       '   gl_FragColor = vColor;',
       '}'].join("\n"),
 };
-let selectedColorLine = {
-   vertex: [
-      'attribute vec3 position;',
-      'uniform mat4 worldView;',
-      'uniform mat4 projection;',
+let selectedColorLine =  {  // we don't have geometry shader, so we have to manually pass barycentric to do 'single pass wireframe' 
+vertex: [       // http://codeflow.org/entries/2012/aug/02/easy-wireframe-display-with-barycentric-coordinates/
+   'attribute vec3 position;', 
+   'attribute vec3 barycentric;',
+   'uniform mat4 projection;', 
+   'uniform mat4 worldView;',
 
-      'void main(void) {',
-      '   gl_Position = projection * worldView * vec4(position, 1.0);',
-      '}'].join("\n"),
-   fragment: [
-      'precision lowp float;',
-      'uniform vec4 color;',
+   'varying vec3 vBC;',
+   'void main(){',
+      'vBC = barycentric;',
+      'gl_Position = projection * worldView * vec4(position, 1.0);',
+   '}'].join("\n"),
 
-      'void main(void) {',
-      '   gl_FragColor = color;', 
-      '}'].join("\n"),
+fragment:[
+   '#extension GL_OES_standard_derivatives : enable',
+   'precision mediump float;',
+   'uniform vec4 faceColor;',
+   'uniform vec4 color;',
+   'varying vec3 vBC;',
+
+   'float edgeFactor(){',
+      'vec3 d = fwidth(vBC);',
+      'vec3 a3 = smoothstep(vec3(0.0), d*3.0, vBC);',
+      'return min(min(a3.x, a3.y), a3.z);',
+   '}',
+
+   'void main(){',
+      // coloring by edge
+      'float edge = edgeFactor();',
+      'if (edge < 1.0) {',
+        'gl_FragColor = mix(color, faceColor, edge);',
+      '} else {',
+         'discard;',
+      '}',
+   '}'].join("\n"),
 };
 let selectedColorPoint = {
    vertex: [

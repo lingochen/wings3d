@@ -51,6 +51,27 @@ WingedEdge.prototype[Symbol.iterator] = function* () {
    yield this.right;
 };
 
+/**
+ * buildup drawingLine using triangle
+ * @param {Uint32Array} data - array
+ * @param {number} idx - start index
+ * @param {number} vertexLength - center is after vertexLength.
+ * @return {number} - current index position.
+ */
+WingedEdge.prototype.buildIndex = function(data, idx, vertexLength) {
+   if (this.left.face) {
+      data[idx++] = this.left.origin.index;
+      data[idx++] = this.right.origin.index;
+      data[idx++] = this.left.face.index + vertexLength;
+   }
+   if (this.right.face) {
+      data[idx++] = this.right.origin.index;
+      data[idx++] = this.left.origin.index;
+      data[idx++] = this.right.face.index + vertexLength;
+   }
+   return idx;
+}
+
 WingedEdge.prototype.isLive = function() {
    return (this.left.origin !== null) && (this.right.origin !== null);
 };
