@@ -525,7 +525,7 @@ DraftBench.prototype.drawVertex = function(gl) {
 /**
  * 
  */
-DraftBench.prototype.drawHardEdge = function(gl, isEdge) {
+DraftBench.prototype.drawHardEdge = function(gl, isEdgeMode) {
    // draw hard edge if applicable.
    if (this.preview.edge.hardness.indexCount > 0) {
       if (this.preview.edge.hardness.isModified) {
@@ -542,9 +542,9 @@ DraftBench.prototype.drawHardEdge = function(gl, isEdge) {
       // draw HardEdge
       gl.useShader(ShaderProg.selectedColorLine);
       gl.bindAttribute(this.preview.shaderData, ['position', 'barycentric']);
-      let lineWidth = 1.1;    // default 
-      if (isEdge) {
-         lineWidth = DraftBench.pref.edgeWidth;
+      let lineWidth = 1.1;
+      if (isEdgeMode) {
+         lineWidth = DraftBench.pref.hardEdgeWidth;
       }
       this.preview.shaderData.setUniform1f("lineWidth", lineWidth);
       this.preview.shaderData.setUniform4fv("color", DraftBench.theme.hardEdgeColor);
