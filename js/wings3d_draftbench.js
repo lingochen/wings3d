@@ -47,6 +47,7 @@ const DraftBench = function(theme, prop, defaultSize = 2048) {  // should only b
    this.preview.edge.isModified = false;
    this.preview.edge.indexCount = 0;
    this.preview.edge.hilite = {indexCount: 0, wEdge: null};
+   this.preview.edge.hardness = {isModified: false, indexCount: 0};
    this._resizePreviewEdge(0);
 
    // previewVertex
@@ -421,6 +422,7 @@ DraftBench.prototype.hiliteBody = function(faceGroup, isHilite) {
  * 
  */
 DraftBench.prototype.draw = function(gl) {
+   // draw selected polygon first if application
    const indexLength = this.preview.indexLength - this.preview.selectedCount;
    // first check index modification
    if (this.preview.isModified) {
@@ -519,6 +521,39 @@ DraftBench.prototype.drawVertex = function(gl) {
       console.log(e);
    }
 };
+
+/**
+ * 
+ */
+DraftBench.prototype.drawHardEdge = function(gl, isEdge) {
+   // draw hard edge if applicable.
+   if (this.preview.edge.hardness.indexCount > 0) {
+      if (this.preview.edge.hardness.isModified) {
+         const index = new Uint32Array(this.preview.edge.hardness.indexCount);
+         let j = 0;
+         for (let i = 0; i < this.edges.length; ++i) {
+            if (this.preview.edge.color[i] & 4) {  // yes, hardEdge
+               j = this.edges[i].buildIndex(index, j, this.vertices.length);
+            }
+         }
+         this.preview.shaderData.setIndex('hardEdge', index);
+         this.preview.edge.hardness.isModified = false;
+      }
+      // draw HardEdge
+      gl.useShader(ShaderProg.selectedColorLine);
+      gl.bindAttribute(this.preview.shaderData, ['position', 'barycentric']);
+      let lineWidth = 1.1;    // default 
+      if (isEdge) {
+         lineWidth = DraftBench.pref.edgeWidth;
+      }
+      this.preview.shaderData.setUniform1f("lineWidth", lineWidth);
+      this.preview.shaderData.setUniform4fv("color", DraftBench.theme.hardEdgeColor);
+      this.preview.shaderData.setUniform4fv('faceColor', DraftBench.theme.faceColor);
+      gl.bindUniform(this.preview.shaderData, ['color', 'faceColor', 'lineWidth']);
+      gl.bindIndex(this.preview.shaderData, 'hardEdge');
+      gl.drawElements(gl.TRIANGLES, this.preview.edge.hardness.indexCount, gl.UNSIGNED_INT, 0);  // draw 1 line.
+   }
+}
 
 /** 
  * draw select, hilite, and (normal) edge
@@ -759,6 +794,37 @@ DraftBench.prototype.show = function(faceGroup) {
    for (let polygon of faceGroup) {
       polygon.isVisible = true;
    }
+};
+
+
+/**
+ * set bitmask on 3rd position. off meant soft, on meant hard
+ * @param {WingedEdge} wEdge - target edge
+ * @param {number} operand - 0=soft, 1=hard, 2=invert.
+ */
+DraftBench.prototype.setHardness = function(wEdge, operand) {
+   if (operand === 0)  {   // set soft
+      if (this.preview.edge.color[wEdge.index] & 4) { // make sure it hard
+         this.preview.edge.color[wEdge.index] &= ~4;  // clear hardness bit
+         this.preview.edge.hardness.isModified = true;
+         this.preview.edge.hardness.indexCount -= 6;
+         return true;
+      }
+   } else if (operand === 1) {   // set hard
+      if ((this.preview.edge.color[wEdge.index] & 4) === 0) { // make sure it soft
+         this.preview.edge.color[wEdge.index] |= 4;   // set hardness bit
+         this.preview.edge.hardness.isModified = true;
+         this.preview.edge.hardness.indexCount += 6;
+         return true;
+      }
+   } else { // invert
+      if (this.preview.edge.color[wEdge.index] & 4) { // it hard, turn to soft
+         return this.setHardness(wEdge, 0);
+      } else { // wEdge is soft turn to hard
+         return this.setHardness(wEdge, 1);
+      }
+   }
+   return false;
 };
 
 

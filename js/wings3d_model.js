@@ -3559,6 +3559,43 @@ PreviewCage.undoWeldBody = function(weldContours) {
    }
 };
 
+/**
+ * change selectedEdge's state
+ * @param {number} operand - 0=soft, 1=hard, 2=invert 
+ */
+PreviewCage.prototype.hardnessEdge = function(operand) {
+   let ret = {operand: operand, selection: []};
+
+   for (let wEdge of this.selectedSet) {
+      if (this.bench.setHardness(wEdge, operand)) {   // check set successfully
+         ret.selection.push(wEdge);
+      }
+   }
+   // return ret
+   if (ret.selection.length > 0) {
+      return ret;
+   } else {
+      return null;
+   }
+};
+
+/**
+ * restore selection's edge state
+ * @param {number} operand - 0=soft, 1=hard, 2=invert
+ * @param {array} selection - the edges that needs to restore
+ */
+PreviewCage.prototype.undoHardnessEdge = function(result) {
+   let operand = result.operand;
+   if (operand === 0) { // soft restore to hard
+      operand = 1;
+   } else if (operand === 1) {   // hard restore to soft
+      operand = 0;
+   }
+   for (let wEdge of result.selection) {   // restore edges state
+      this.bench.setHardness(wEdge, operand);
+   }
+};
+
 //----------------------------------------------------------------------------------------------------------
 
 

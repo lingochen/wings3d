@@ -143,6 +143,17 @@ class EdgeMadsor extends Madsor {
          handler.doIt();
          View.attachHandlerMouseMove(handler);
         });
+      // Hardness
+      for (let [hardness, operand] of [[action.edgeSoft, 0], [action.edgeHard, 1], [action.edgeInvert, 2]]) {
+         UI.bindMenuItem(hardness.name, (ev)=> {
+            const cmd = new GenericEditCommand(this, this.hardness, [operand], this.undoHardness);
+            if (cmd.doIt()) {
+               View.undoQueue(cmd);
+            } else { // geometry status. no hardEdge to turn to softEdge.
+
+            }
+          });
+      }
    }
 
    // get selected Edge's vertex snapshot. for doing, and redo queue. 
@@ -257,6 +268,14 @@ class EdgeMadsor extends Madsor {
       this.doAll(snapshots, PreviewCage.prototype.undoCornerEdge);
    }
 
+   hardness(state) {
+      return this.snapshotAll(PreviewCage.prototype.hardnessEdge, state);
+   }
+
+   undoHardness(snapshots, state) {
+      this.doAll(snapshots, PreviewCage.prototype.undoHardness, state);
+   }
+
    slide() {
       return this.snapshotAll(PreviewCage.prototype.slideEdge);
    }
@@ -327,7 +346,7 @@ class EdgeMadsor extends Madsor {
       //if (this.currentEdge) {
          this.useShader(gl);
          gl.bindTransform();
-            draftBench.drawEdge(gl);
+         draftBench.drawEdge(gl);
          gl.disableShader();
       //}
    }

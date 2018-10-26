@@ -370,6 +370,10 @@ const action = {
    edgeScaleRadialX: ()=> {notImplemented(this);},
    edgeScaleRadialY: ()=> {notImplemented(this);},
    edgeScaleRadialZ: ()=> {notImplemented(this);},
+   edgeHardness: ()=> {notImplemented(this);},
+   edgeSoft: ()=> {notImplemented(this);},
+   edgeHard: ()=> {notImplemented(this);},
+   edgeInvert: ()=> {notImplemented(this);},
    // face
    faceExtrudeMenu: () =>{notImplemented(this);},
    faceExtrudeX: () =>{notImplemented(this);},

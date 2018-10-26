@@ -838,6 +838,9 @@ function drawWorld(gl) {
       // end of hack ----
       //gl.disable(gl.BLEND);
 
+      // draw hardEdge if applicable
+      draftBench.drawHardEdge(gl, mode.current === mode.edge);
+
       //gl.polygonOffset(1.0, 1.0);          // Set the polygon offset
       //gl.enable(gl.POLYGON_OFFSET_FILL);
       mode.current.previewShader(gl);
