@@ -6558,29 +6558,43 @@ let selectedColorPoint = {
       'attribute float color;',
       'uniform mat4 worldView;',
       'uniform mat4 projection;',
+      'uniform float vertexSize;',
+      'uniform float selectedVertexSize;',
+      'uniform float maskedVertexSize;',
 
       'varying lowp float vColor;',
 
       'void main(void) {',
       '   gl_Position = projection * worldView * vec4(position, 1.0);',
       '   vColor = color;',
-      '  gl_PointSize = 8.8;',
+      '   if (color == 0.0) {',
+      '      gl_PointSize = vertexSize;',
+      '   } else if (color < 1.0) {',
+      '      gl_PointSize = selectedVertexSize;',
+      '   } else {',
+      '      gl_PointSize = maskedVertexSize;',
+      '   }',
       '}'].join("\n"),
    fragment: [
       'precision lowp float;',
       'varying lowp float vColor;',
+      'uniform vec4 vertexColor;',
       'uniform vec4 unselectedHilite;',
+      'uniform vec4 selectedHilite;',
       'uniform vec4 selectedColor;',
+      'uniform vec4 maskedVertexColor;',
 
       'void main(void) {',
       '   if (vColor == 0.0) {',
-      '      gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);',     // black dotted.             
+      '      gl_FragColor = vertexColor;',     // black dotted.             
       '   } else if (vColor == 0.25) {',
       '      gl_FragColor = selectedColor;',
       '   } else if (vColor == 0.5) {',
       '      gl_FragColor = unselectedHilite;',
+      '   } else if (vColor == 0.75) {',
+      '      gl_FragColor = selectedHilite;',     // blended 
       '   } else {',
-      '      gl_FragColor = vec4(unselectedHilite.xyz+selectedColor.xyz, 1.0);',     // blended 
+      '      gl_FragColor = maskedVertexColor;',
       '   }',
       '}'].join("\n"),
 };
@@ -14104,6 +14118,11 @@ DraftBench.prototype.setTheme = function(theme, pref) {
    Object.entries(pref).forEach(([key, value]) => {
       DraftBench.pref[key] = value;
     });
+   // manual update
+   const manualKeys = ['vertexSize', 'selectedVertexSize', 'maskedVertexSize'];
+   for (let key of manualKeys) {
+      this.preview.shaderData.setUniform1f(key, pref[key]);
+   }
 };
 
 // free webgl buffer.
@@ -14496,7 +14515,8 @@ DraftBench.prototype.drawVertex = function(gl) {
          this.preview.shaderData.uploadAttribute('color', i*Float32Array.BYTES_PER_ELEMENT, points);
       }
       gl.bindAttribute(this.preview.shaderData, ['position', 'color']);
-      gl.bindUniform(this.preview.shaderData, ['selectedColor', 'unselectedHilite']);//'hiliteColor']);
+      gl.bindUniform(this.preview.shaderData, ['vertexSize', 'selectedVertexSize', 'maskedVertexSize',
+                                               'vertexColor', 'selectedColor', 'unselectedHilite', 'selectedHilite', 'maskedVertexColor']);
       gl.bindIndex(this.preview.shaderData, 'vertex');
       gl.drawElements(gl.POINTS, this.preview.vertex.indexLength, gl.UNSIGNED_INT, 0);
    } catch (e) {
