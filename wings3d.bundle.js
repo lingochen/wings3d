@@ -456,6 +456,10 @@ const action = {
    edgeScaleRadialX: ()=> {notImplemented(this);},
    edgeScaleRadialY: ()=> {notImplemented(this);},
    edgeScaleRadialZ: ()=> {notImplemented(this);},
+   edgeHardness: ()=> {notImplemented(this);},
+   edgeSoft: ()=> {notImplemented(this);},
+   edgeHard: ()=> {notImplemented(this);},
+   edgeInvert: ()=> {notImplemented(this);},
    // face
    faceExtrudeMenu: () =>{notImplemented(this);},
    faceExtrudeX: () =>{notImplemented(this);},
@@ -1501,6 +1505,9 @@ function drawWorld(gl) {
       }
       // end of hack ----
       //gl.disable(gl.BLEND);
+
+      // draw hardEdge if applicable
+      draftBench.drawHardEdge(gl, mode.current === mode.edge);
 
       //gl.polygonOffset(1.0, 1.0);          // Set the polygon offset
       //gl.enable(gl.POLYGON_OFFSET_FILL);
@@ -5646,6 +5653,43 @@ PreviewCage.undoWeldBody = function(weldContours) {
    for (let [cage, edgeLoop] of weldContours) {
       cage.geometry.restoreContour(edgeLoop);   // liftContour will restore innerLoop for us
       cage._updatePreviewAll();
+   }
+};
+
+/**
+ * change selectedEdge's state
+ * @param {number} operand - 0=soft, 1=hard, 2=invert 
+ */
+PreviewCage.prototype.hardnessEdge = function(operand) {
+   let ret = {operand: operand, selection: []};
+
+   for (let wEdge of this.selectedSet) {
+      if (this.bench.setHardness(wEdge, operand)) {   // check set successfully
+         ret.selection.push(wEdge);
+      }
+   }
+   // return ret
+   if (ret.selection.length > 0) {
+      return ret;
+   } else {
+      return null;
+   }
+};
+
+/**
+ * restore selection's edge state
+ * @param {number} operand - 0=soft, 1=hard, 2=invert
+ * @param {array} selection - the edges that needs to restore
+ */
+PreviewCage.prototype.undoHardnessEdge = function(result) {
+   let operand = result.operand;
+   if (operand === 0) { // soft restore to hard
+      operand = 1;
+   } else if (operand === 1) {   // hard restore to soft
+      operand = 0;
+   }
+   for (let wEdge of result.selection) {   // restore edges state
+      this.bench.setHardness(wEdge, operand);
    }
 };
 
@@ -11453,6 +11497,17 @@ class EdgeMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
          handler.doIt();
          __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["attachHandlerMouseMove"](handler);
         });
+      // Hardness
+      for (let [hardness, operand] of [[__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].edgeSoft, 0], [__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].edgeHard, 1], [__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].edgeInvert, 2]]) {
+         __WEBPACK_IMPORTED_MODULE_6__wings3d_ui__["bindMenuItem"](hardness.name, (ev)=> {
+            const cmd = new __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["GenericEditCommand"](this, this.hardness, [operand], this.undoHardness);
+            if (cmd.doIt()) {
+               __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["undoQueue"](cmd);
+            } else { // geometry status. no hardEdge to turn to softEdge.
+
+            }
+          });
+      }
    }
 
    // get selected Edge's vertex snapshot. for doing, and redo queue. 
@@ -11567,6 +11622,14 @@ class EdgeMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
       this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.undoCornerEdge);
    }
 
+   hardness(state) {
+      return this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.hardnessEdge, state);
+   }
+
+   undoHardness(snapshots, state) {
+      this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.undoHardness, state);
+   }
+
    slide() {
       return this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.slideEdge);
    }
@@ -11637,7 +11700,7 @@ class EdgeMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
       //if (this.currentEdge) {
          this.useShader(gl);
          gl.bindTransform();
-            draftBench.drawEdge(gl);
+         draftBench.drawEdge(gl);
          gl.disableShader();
       //}
    }
@@ -12063,7 +12126,7 @@ class VertexMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"]
       //if (this.currentEdge) {
          this.useShader(gl);
          gl.bindTransform();
-            draftBench.drawVertex(gl);
+         draftBench.drawVertex(gl);
          gl.disableShader();
       //}
    }
@@ -13966,6 +14029,7 @@ const DraftBench = function(theme, prop, defaultSize = 2048) {  // should only b
    this.preview.edge.isModified = false;
    this.preview.edge.indexCount = 0;
    this.preview.edge.hilite = {indexCount: 0, wEdge: null};
+   this.preview.edge.hardness = {isModified: false, indexCount: 0};
    this._resizePreviewEdge(0);
 
    // previewVertex
@@ -14340,6 +14404,7 @@ DraftBench.prototype.hiliteBody = function(faceGroup, isHilite) {
  * 
  */
 DraftBench.prototype.draw = function(gl) {
+   // draw selected polygon first if application
    const indexLength = this.preview.indexLength - this.preview.selectedCount;
    // first check index modification
    if (this.preview.isModified) {
@@ -14438,6 +14503,39 @@ DraftBench.prototype.drawVertex = function(gl) {
       console.log(e);
    }
 };
+
+/**
+ * 
+ */
+DraftBench.prototype.drawHardEdge = function(gl, isEdge) {
+   // draw hard edge if applicable.
+   if (this.preview.edge.hardness.indexCount > 0) {
+      if (this.preview.edge.hardness.isModified) {
+         const index = new Uint32Array(this.preview.edge.hardness.indexCount);
+         let j = 0;
+         for (let i = 0; i < this.edges.length; ++i) {
+            if (this.preview.edge.color[i] & 4) {  // yes, hardEdge
+               j = this.edges[i].buildIndex(index, j, this.vertices.length);
+            }
+         }
+         this.preview.shaderData.setIndex('hardEdge', index);
+         this.preview.edge.hardness.isModified = false;
+      }
+      // draw HardEdge
+      gl.useShader(__WEBPACK_IMPORTED_MODULE_1__wings3d_shaderprog__["selectedColorLine"]);
+      gl.bindAttribute(this.preview.shaderData, ['position', 'barycentric']);
+      let lineWidth = 1.1;    // default 
+      if (isEdge) {
+         lineWidth = DraftBench.pref.edgeWidth;
+      }
+      this.preview.shaderData.setUniform1f("lineWidth", lineWidth);
+      this.preview.shaderData.setUniform4fv("color", DraftBench.theme.hardEdgeColor);
+      this.preview.shaderData.setUniform4fv('faceColor', DraftBench.theme.faceColor);
+      gl.bindUniform(this.preview.shaderData, ['color', 'faceColor', 'lineWidth']);
+      gl.bindIndex(this.preview.shaderData, 'hardEdge');
+      gl.drawElements(gl.TRIANGLES, this.preview.edge.hardness.indexCount, gl.UNSIGNED_INT, 0);  // draw 1 line.
+   }
+}
 
 /** 
  * draw select, hilite, and (normal) edge
@@ -14678,6 +14776,37 @@ DraftBench.prototype.show = function(faceGroup) {
    for (let polygon of faceGroup) {
       polygon.isVisible = true;
    }
+};
+
+
+/**
+ * set bitmask on 3rd position. off meant soft, on meant hard
+ * @param {WingedEdge} wEdge - target edge
+ * @param {number} operand - 0=soft, 1=hard, 2=invert.
+ */
+DraftBench.prototype.setHardness = function(wEdge, operand) {
+   if (operand === 0)  {   // set soft
+      if (this.preview.edge.color[wEdge.index] & 4) { // make sure it hard
+         this.preview.edge.color[wEdge.index] &= ~4;  // clear hardness bit
+         this.preview.edge.hardness.isModified = true;
+         this.preview.edge.hardness.indexCount -= 6;
+         return true;
+      }
+   } else if (operand === 1) {   // set hard
+      if ((this.preview.edge.color[wEdge.index] & 4) === 0) { // make sure it soft
+         this.preview.edge.color[wEdge.index] |= 4;   // set hardness bit
+         this.preview.edge.hardness.isModified = true;
+         this.preview.edge.hardness.indexCount += 6;
+         return true;
+      }
+   } else { // invert
+      if (this.preview.edge.color[wEdge.index] & 4) { // it hard, turn to soft
+         return this.setHardness(wEdge, 0);
+      } else { // wEdge is soft turn to hard
+         return this.setHardness(wEdge, 1);
+      }
+   }
+   return false;
 };
 
 
