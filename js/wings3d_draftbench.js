@@ -122,6 +122,11 @@ DraftBench.prototype.setTheme = function(theme, pref) {
    Object.entries(pref).forEach(([key, value]) => {
       DraftBench.pref[key] = value;
     });
+   // manual update
+   const manualKeys = ['vertexSize', 'selectedVertexSize', 'maskedVertexSize'];
+   for (let key of manualKeys) {
+      this.preview.shaderData.setUniform1f(key, pref[key]);
+   }
 };
 
 // free webgl buffer.
@@ -514,7 +519,8 @@ DraftBench.prototype.drawVertex = function(gl) {
          this.preview.shaderData.uploadAttribute('color', i*Float32Array.BYTES_PER_ELEMENT, points);
       }
       gl.bindAttribute(this.preview.shaderData, ['position', 'color']);
-      gl.bindUniform(this.preview.shaderData, ['selectedColor', 'unselectedHilite']);//'hiliteColor']);
+      gl.bindUniform(this.preview.shaderData, ['vertexSize', 'selectedVertexSize', 'maskedVertexSize',
+                                               'vertexColor', 'selectedColor', 'unselectedHilite', 'selectedHilite', 'maskedVertexColor']);
       gl.bindIndex(this.preview.shaderData, 'vertex');
       gl.drawElements(gl.POINTS, this.preview.vertex.indexLength, gl.UNSIGNED_INT, 0);
    } catch (e) {

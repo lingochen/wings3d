@@ -600,13 +600,13 @@
         <fieldSet class="fieldPref">
           <legend data-i18n="vertexDisplay">Vertex Display</legend>
           <label for="unselectedSize" data-i18n="unselectedSize">Unselected Size</label>
-          <input id="unselectedSize" type="number">
+          <input id="unselectedSize" name="vertexSize" type="number">
           <label for="selectedSize" data-i18n="selectedSize">Selected Size</label>
-          <input id="selectedSize" type="number">
+          <input id="selectedSize" name="selectedVertexSize" type="number">
           <label for="magnetVertexSize" data-i18n="magnetVertexSize">Magnet Mask Vertex Size</label>
-          <input id="magnetVertexSize" type="number">
-          <label for="unselectedVertex"><span data-i18n="unselectedVertex">Unselected Vertices</span><input id="unselectedVertex" type="color"></label> 
-          <label for="magnetMask"><span data-i18n="magnetMask">Magnet Mask</span><input id="magnetMask" type="color"></label>
+          <input id="magnetVertexSize" name="maskedVertexSize" type="number">
+          <label for="unselectedVertex"><span data-i18n="unselectedVertex">Unselected Vertices</span><input id="unselectedVertex" name="vertexColor" type="color"></label> 
+          <label for="magnetMask"><span data-i18n="magnetMask">Magnet Mask</span><input id="magnetMask" name="maskedVertexColor" type="color"></label>
         </fieldset>
         <fieldSet class="fieldPref">
           <legend data-i18n="edgeDisplay">Edge Display</legend>

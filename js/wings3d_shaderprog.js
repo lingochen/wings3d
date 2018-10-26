@@ -81,29 +81,43 @@ let selectedColorPoint = {
       'attribute float color;',
       'uniform mat4 worldView;',
       'uniform mat4 projection;',
+      'uniform float vertexSize;',
+      'uniform float selectedVertexSize;',
+      'uniform float maskedVertexSize;',
 
       'varying lowp float vColor;',
 
       'void main(void) {',
       '   gl_Position = projection * worldView * vec4(position, 1.0);',
       '   vColor = color;',
-      '  gl_PointSize = 8.8;',
+      '   if (color == 0.0) {',
+      '      gl_PointSize = vertexSize;',
+      '   } else if (color < 1.0) {',
+      '      gl_PointSize = selectedVertexSize;',
+      '   } else {',
+      '      gl_PointSize = maskedVertexSize;',
+      '   }',
       '}'].join("\n"),
    fragment: [
       'precision lowp float;',
       'varying lowp float vColor;',
+      'uniform vec4 vertexColor;',
       'uniform vec4 unselectedHilite;',
+      'uniform vec4 selectedHilite;',
       'uniform vec4 selectedColor;',
+      'uniform vec4 maskedVertexColor;',
 
       'void main(void) {',
       '   if (vColor == 0.0) {',
-      '      gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);',     // black dotted.             
+      '      gl_FragColor = vertexColor;',     // black dotted.             
       '   } else if (vColor == 0.25) {',
       '      gl_FragColor = selectedColor;',
       '   } else if (vColor == 0.5) {',
       '      gl_FragColor = unselectedHilite;',
+      '   } else if (vColor == 0.75) {',
+      '      gl_FragColor = selectedHilite;',     // blended 
       '   } else {',
-      '      gl_FragColor = vec4(unselectedHilite.xyz+selectedColor.xyz, 1.0);',     // blended 
+      '      gl_FragColor = maskedVertexColor;',
       '   }',
       '}'].join("\n"),
 };
