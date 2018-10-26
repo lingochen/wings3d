@@ -14558,24 +14558,22 @@ DraftBench.prototype.drawEdge = function(gl) {
       gl.drawElements(gl.TRIANGLES, this.preview.edge.hilite.indexCount, gl.UNSIGNED_INT, 0);  // draw 1 line.
    }
 
-   // draw selected second
-   if (this.preview.edge.isModified) { // rebuild selected index
-      const selected = new Uint32Array( this.preview.edge.indexCount );
-      let j = 0;
-      for (let i = 0; i < this.edges.length; ++i) {
-         const byte = this.preview.edge.color[i];
-         if (byte & 1) {   // selected, draw both side
-            j = this.edges[i].buildIndex(selected, j, this.vertices.length);
+   // 2nd) draw selected
+   if (this.preview.edge.indexCount > 0) { // draw selected edge
+      if (this.preview.edge.isModified) {
+         const selected = new Uint32Array( this.preview.edge.indexCount );
+         let j = 0;
+         for (let i = 0; i < this.edges.length; ++i) {
+            const byte = this.preview.edge.color[i];
+            if (byte & 1) {   // selected, draw both side
+               j = this.edges[i].buildIndex(selected, j, this.vertices.length);
+            }
          }
-      }
-      // set the new selected.
-      //this.preview.edge.indexCount === selected.length;
-      if (this.preview.edge.indexCount > 0) {
+         // set the new selected.
          this.preview.shaderData.setIndex('edgeSelected', selected);
+         this.preview.edge.isModified = false;
       }
-      this.preview.edge.isModified = false;
-   }
-   if (this.preview.edge.indexCount > 0) {
+      // now draw
       this.preview.shaderData.setUniform4fv('color', DraftBench.theme.selectedColor);
       gl.bindUniform(this.preview.shaderData, ['color', 'faceColor', 'lineWidth']);
       gl.bindIndex(this.preview.shaderData, 'edgeSelected');
