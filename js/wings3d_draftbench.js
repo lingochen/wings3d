@@ -52,7 +52,7 @@ const DraftBench = function(theme, prop, defaultSize = 2048) {  // should only b
 
    // previewVertex
    this.preview.vertex = {isModified: false, min: Number.MAX_SAFE_INTEGER, max: Number.MIN_SAFE_INTEGER};
-   this.preview.shaderData.createAttribute('color', layoutFloat, gl.DYNAMIC_DRAW);
+   this.preview.shaderData.createAttribute('vertexState', layoutFloat, gl.DYNAMIC_DRAW);
    this._resizePreviewVertex(0);
    // body state.
    this.previewBody = {hilite: false};
@@ -323,8 +323,8 @@ DraftBench.prototype._resizePreviewVertex = function() {
       color.fill(0.0, oldSize);
       preview.color = color;
       // 
-      this.preview.shaderData.resizeAttribute('color', length*4);
-      this.preview.shaderData.uploadAttribute('color', 0, preview.color);
+      this.preview.shaderData.resizeAttribute('vertexState', length*4);
+      this.preview.shaderData.uploadAttribute('vertexState', 0, preview.color);
    }
    // rebuild index.
    const index = new Uint32Array(length);
@@ -424,7 +424,6 @@ DraftBench.prototype.hiliteBody = function(faceGroup, isHilite) {
  * polygon drawing routines. draw selected polygon first then draw unselected one. 
  * 
  * @param {gl} - drawing context.
- * 
  */
 DraftBench.prototype.draw = function(gl) {
    // draw selected polygon first if application
@@ -478,33 +477,25 @@ DraftBench.prototype.draw = function(gl) {
       gl.drawElements(gl.TRIANGLES, indexLength, gl.UNSIGNED_INT, 0);
    }
 };
-/*
-// drawing routines -- draw selected polygon first, then draw unselected one, this is offseted
-DraftBench.prototype.draw = function(gl) {
-   // draw using index
-   try {
-      gl.bindAttribute(this.preview.shaderData, ['position', 'barycentric', 'selected']);
-      gl.bindUniform(this.preview.shaderData, ['faceColor', 'selectedColor']);
-      gl.bindIndex(this.preview.shaderData, 'face');
-      gl.drawElements(gl.TRIANGLES, this.preview.indexLength, gl.UNSIGNED_INT, 0);
-   } catch (e) {
-      console.log(e);
-   }
-};*/
+
 
 // draw hilite polygon. not offset
 DraftBench.prototype.drawHilite = function(gl) {
    if (this.hilite.indexLength == 0) {
       return;
    }
-   // set hilite color and hilite index
-   this.preview.shaderData.setUniform4fv("faceColor", this.hilite.color);
-   gl.bindAttribute(this.preview.shaderData, ['position']);
-   gl.bindUniform(this.preview.shaderData, ['faceColor']);
-   gl.bindIndex(this.preview.shaderData, 'faceHilite');
-   gl.drawElements(gl.TRIANGLES, this.hilite.indexLength, gl.UNSIGNED_INT, 0);
-   // restore color
-   this.preview.shaderData.setUniform4fv("faceColor", DraftBench.theme.faceColor);
+   try {
+      // set hilite color and hilite index
+      this.preview.shaderData.setUniform4fv("faceColor", this.hilite.color);
+      gl.bindAttribute(this.preview.shaderData, ['position']);
+      gl.bindUniform(this.preview.shaderData, ['faceColor']);
+      gl.bindIndex(this.preview.shaderData, 'faceHilite');
+      gl.drawElements(gl.TRIANGLES, this.hilite.indexLength, gl.UNSIGNED_INT, 0);
+      // restore color
+      this.preview.shaderData.setUniform4fv("faceColor", DraftBench.theme.faceColor);
+   } catch (e) {
+      console.log(e);
+   }
 };
 
 // draw vertex, select color, 
@@ -516,9 +507,9 @@ DraftBench.prototype.drawVertex = function(gl) {
          const i = this.preview.vertex.min;
          const j = this.preview.vertex.max;
          const points = this.preview.vertex.color.subarray(i, j+1);
-         this.preview.shaderData.uploadAttribute('color', i*Float32Array.BYTES_PER_ELEMENT, points);
+         this.preview.shaderData.uploadAttribute('vertexState', i*Float32Array.BYTES_PER_ELEMENT, points);
       }
-      gl.bindAttribute(this.preview.shaderData, ['position', 'color']);
+      gl.bindAttribute(this.preview.shaderData, ['position', 'vertexState']);
       gl.bindUniform(this.preview.shaderData, ['vertexSize', 'selectedVertexSize', 'maskedVertexSize',
                                                'vertexColor', 'selectedColor', 'unselectedHilite', 'selectedHilite', 'maskedVertexColor']);
       gl.bindIndex(this.preview.shaderData, 'vertex');
@@ -698,7 +689,7 @@ DraftBench.prototype.resetSelectVertex = function() {
    // zeroout the edge seleciton.
    this.preview.vertex.isModified = false;
    this.preview.vertex.color.fill(0.0);
-   this.preview.shaderData.uploadAttribute('color', 0, this.preview.vertex.color);
+   this.preview.shaderData.uploadAttribute('vertexState', 0, this.preview.vertex.color);
 };
 
 DraftBench.prototype.hiliteEdge = function(hEdge, onOff) {

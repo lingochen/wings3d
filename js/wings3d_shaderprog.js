@@ -78,21 +78,21 @@ fragment:[
 let selectedColorPoint = {
    vertex: [
       'attribute vec3 position;',
-      'attribute float color;',
+      'attribute float vertexState;',
       'uniform mat4 worldView;',
       'uniform mat4 projection;',
       'uniform float vertexSize;',
       'uniform float selectedVertexSize;',
       'uniform float maskedVertexSize;',
 
-      'varying lowp float vColor;',
+      'varying lowp float vState;',
 
       'void main(void) {',
       '   gl_Position = projection * worldView * vec4(position, 1.0);',
-      '   vColor = color;',
-      '   if (color == 0.0) {',
+      '   vState = vertexState;',
+      '   if (vertexState == 0.0) {',
       '      gl_PointSize = vertexSize;',
-      '   } else if (color < 1.0) {',
+      '   } else if (vertexState < 1.0) {',
       '      gl_PointSize = selectedVertexSize;',
       '   } else {',
       '      gl_PointSize = maskedVertexSize;',
@@ -100,7 +100,7 @@ let selectedColorPoint = {
       '}'].join("\n"),
    fragment: [
       'precision lowp float;',
-      'varying lowp float vColor;',
+      'varying lowp float vState;',
       'uniform vec4 vertexColor;',
       'uniform vec4 unselectedHilite;',
       'uniform vec4 selectedHilite;',
@@ -108,14 +108,14 @@ let selectedColorPoint = {
       'uniform vec4 maskedVertexColor;',
 
       'void main(void) {',
-      '   if (vColor == 0.0) {',
-      '      gl_FragColor = vertexColor;',     // black dotted.             
-      '   } else if (vColor == 0.25) {',
+      '   if (vState == 0.0) {',
+      '      gl_FragColor = vertexColor;',     // unselected color         
+      '   } else if (vState == 0.25) {',
       '      gl_FragColor = selectedColor;',
-      '   } else if (vColor == 0.5) {',
+      '   } else if (vState == 0.5) {',
       '      gl_FragColor = unselectedHilite;',
-      '   } else if (vColor == 0.75) {',
-      '      gl_FragColor = selectedHilite;',     // blended 
+      '   } else if (vState == 0.75) {',
+      '      gl_FragColor = selectedHilite;',     
       '   } else {',
       '      gl_FragColor = maskedVertexColor;',
       '   }',
