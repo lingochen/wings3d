@@ -44,6 +44,7 @@ var WingedEdge = function(orgVert, toVert) {
    this.right.pair = this.left;
    this.right.next = this.left;
    // this.right.prev = this.left;
+   this.state = 0;
 };
 
 WingedEdge.prototype[Symbol.iterator] = function* () {
