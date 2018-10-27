@@ -7285,6 +7285,7 @@ var WingedEdge = function(orgVert, toVert) {
    this.right.pair = this.left;
    this.right.next = this.left;
    // this.right.prev = this.left;
+   this.state = 0;
 };
 
 WingedEdge.prototype[Symbol.iterator] = function* () {
@@ -14291,18 +14292,6 @@ DraftBench.prototype._computeGroupHiliteIndex = function(faceGroup) {
 
 
 DraftBench.prototype._resizePreviewEdge = function() {
-   let oldSize = this.lastPreviewSize.edges;
-
-   const size = this.edges.length - oldSize;
-   if (size > 0) {
-      let color = new Uint8Array(this.edges.length);
-      if (oldSize > 0) {    
-         color.set(this.preview.edge.color);
-      }
-      this.preview.edge.color = color;
-      // fill with nothing
-      this.preview.edge.color.fill(0.0, oldSize);
-   }
 };
 
 
@@ -14524,9 +14513,9 @@ DraftBench.prototype.drawHardEdge = function(gl, isEdgeMode) {
       if (this.preview.edge.hardness.isModified) {
          const index = new Uint32Array(this.preview.edge.hardness.indexCount);
          let j = 0;
-         for (let i = 0; i < this.edges.length; ++i) {
-            if (this.preview.edge.color[i] & 4) {  // yes, hardEdge
-               j = this.edges[i].buildIndex(index, j, this.vertices.length);
+         for (let wEdge of this.edges) {
+            if (wEdge.state & 4) {  // yes, hardEdge
+               j = wEdge.buildIndex(index, j, this.vertices.length);
             }
          }
          this.preview.shaderData.setIndex('hardEdge', index);
@@ -14560,7 +14549,7 @@ DraftBench.prototype.drawEdge = function(gl) {
    if (this.preview.edge.hilite.wEdge) {
       let hiliteColor = DraftBench.theme.unselectedHilite;
       const wEdge = this.preview.edge.hilite.wEdge;
-      if (this.preview.edge.color[wEdge.index] & 1) { // selected?
+      if (wEdge.state & 1) { // selected?
          hiliteColor = DraftBench.theme.selectedHilite;
       }
       this.preview.shaderData.setUniform4fv("color", hiliteColor);
@@ -14574,10 +14563,9 @@ DraftBench.prototype.drawEdge = function(gl) {
       if (this.preview.edge.isModified) {
          const selected = new Uint32Array( this.preview.edge.indexCount );
          let j = 0;
-         for (let i = 0; i < this.edges.length; ++i) {
-            const byte = this.preview.edge.color[i];
-            if (byte & 1) {   // selected, draw both side
-               j = this.edges[i].buildIndex(selected, j, this.vertices.length);
+         for (let wEdge of this.edges) {
+            if (wEdge.state & 1) {   // selected, draw both side
+               j = wEdge.buildIndex(selected, j, this.vertices.length);
             }
          }
          // set the new selected.
@@ -14710,13 +14698,13 @@ DraftBench.prototype.hiliteEdge = function(hEdge, onOff) {
  */
 DraftBench.prototype.selectEdge = function(wEdge, onOff) {
    if (onOff) {
-      if ((this.preview.edge.color[wEdge.index] & 1) === 0) {
-         this.preview.edge.color[wEdge.index] |= 1;
+      if ((wEdge.state & 1) === 0) {
+         wEdge.state |= 1;
          this.preview.edge.indexCount += 6;
       }
    } else {
-      if ((this.preview.edge.color[wEdge.index] & 1) === 1) {
-         this.preview.edge.color[wEdge.index] &= ~1;
+      if ((wEdge.state & 1) === 1) {
+         wEdge.state &= ~1;
          this.preview.edge.indexCount -= 6;
       }
    }
@@ -14726,7 +14714,9 @@ DraftBench.prototype.selectEdge = function(wEdge, onOff) {
 
 DraftBench.prototype.resetSelectEdge = function() {
    // zeroout the edge seleciton.
-   this.preview.edge.color.fill(0.0);
+   for (let wEdge of this.edges) {
+      wEdge.state = 0;
+   }
    this.preview.edge.isModified = false;
    this.preview.edge.indexCount = 0;
 };
@@ -14795,21 +14785,21 @@ DraftBench.prototype.show = function(faceGroup) {
  */
 DraftBench.prototype.setHardness = function(wEdge, operand) {
    if (operand === 0)  {   // set soft
-      if (this.preview.edge.color[wEdge.index] & 4) { // make sure it hard
-         this.preview.edge.color[wEdge.index] &= ~4;  // clear hardness bit
+      if (wEdge.state & 4) { // make sure it hard
+         wEdge.state &= ~4;  // clear hardness bit
          this.preview.edge.hardness.isModified = true;
          this.preview.edge.hardness.indexCount -= 6;
          return true;
       }
    } else if (operand === 1) {   // set hard
-      if ((this.preview.edge.color[wEdge.index] & 4) === 0) { // make sure it soft
-         this.preview.edge.color[wEdge.index] |= 4;   // set hardness bit
+      if ((wEdge.state & 4) === 0) { // make sure it soft
+         wEdge.state |= 4;   // set hardness bit
          this.preview.edge.hardness.isModified = true;
          this.preview.edge.hardness.indexCount += 6;
          return true;
       }
    } else { // invert
-      if (this.preview.edge.color[wEdge.index] & 4) { // it hard, turn to soft
+      if (wEdge.state & 4) { // it hard, turn to soft
          return this.setHardness(wEdge, 0);
       } else { // wEdge is soft turn to hard
          return this.setHardness(wEdge, 1);
