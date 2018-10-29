@@ -332,6 +332,7 @@ const action = {
    importMenu: () => {notImplemented(this);},
    exportMenu: () => {notImplemented(this);},
    // view action, button bar
+   openSidebar: () => {notImplemented(this);},
    toggleVertexMode: () => {notImplemented(this);},
    toggleEdgeMode: () => {notImplemented(this);},
    toggleFaceMode: () => {notImplemented(this);},
@@ -1551,6 +1552,18 @@ function init() {
       }, select.hotKey, select.meta);
    }
 
+   // toggle sidebar
+   __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].openSidebar.name, (ev) => {
+      const sidebar = document.querySelector('#sidebar');
+      const toggle = document.querySelector('#openSidebarFor');
+      if (sidebar && toggle) {
+         if (toggle.checked) {
+            sidebar.style.display = "none";
+         } else {
+            sidebar.style.display = "flex";
+         }
+      }
+    });
    const toolBar = [ {id: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].undoEdit, fn: undoEdit, hotKey: ' '},
                      {id: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].redoEdit, fn: redoEdit, hotKey: ' '},
                      {id: __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].toggleVertexMode, fn: toggleVertexMode, hotKey: ' '},
