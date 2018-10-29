@@ -139,6 +139,11 @@
   </nav>
   <nav class="button-bar unselectable marginal" id="toolbar">
     <div class="button-group system-group">
+     	<input id="openSidebarFor" type="checkbox">
+      <label id="openSidebar" for="openSidebarFor" class="button">
+        <img src="../img/bluecube/sidebar.png" >
+        <span>Sidebar</span>
+      </label>
       <label id="openFileButton" class="button not-implemented">
      	<input type="button">
         <img src="../img/bluecube/open.png" >
@@ -213,11 +218,16 @@
     </div>
   </nav>
   <div id="viewport" class="content">
-    <div id="statusbar"> Wings3D Geometry </div>
-    <canvas id="glcanvas">
-      Your browser doesn't appear to support the 
-      <code>&lt;canvas&gt;</code> element.
-    </canvas>
+    <div id="sidebar" class="sidebar"> 
+      <label>Selection Groups<input type="checkbox"></label>
+    </div>
+    <div class="workbench">
+      <div id="statusbar"> Wings3D Geometry </div>
+      <canvas id="glcanvas">
+        Your browser doesn't appear to support the 
+        <code>&lt;canvas&gt;</code> element.
+      </canvas>
+    </div>
   </div>
   <footer id="helpbar" class="marginal">This is help bar</footer>
 

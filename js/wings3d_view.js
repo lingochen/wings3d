@@ -883,6 +883,18 @@ function init() {
       }, select.hotKey, select.meta);
    }
 
+   // toggle sidebar
+   UI.bindMenuItem(Wings3D.action.openSidebar.name, (ev) => {
+      const sidebar = document.querySelector('#sidebar');
+      const toggle = document.querySelector('#openSidebarFor');
+      if (sidebar && toggle) {
+         if (toggle.checked) {
+            sidebar.style.display = "none";
+         } else {
+            sidebar.style.display = "flex";
+         }
+      }
+    });
    const toolBar = [ {id: Wings3D.action.undoEdit, fn: undoEdit, hotKey: ' '},
                      {id: Wings3D.action.redoEdit, fn: redoEdit, hotKey: ' '},
                      {id: Wings3D.action.toggleVertexMode, fn: toggleVertexMode, hotKey: ' '},

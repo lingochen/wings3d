@@ -246,6 +246,7 @@ const action = {
    importMenu: () => {notImplemented(this);},
    exportMenu: () => {notImplemented(this);},
    // view action, button bar
+   openSidebar: () => {notImplemented(this);},
    toggleVertexMode: () => {notImplemented(this);},
    toggleEdgeMode: () => {notImplemented(this);},
    toggleFaceMode: () => {notImplemented(this);},
