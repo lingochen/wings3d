@@ -7250,7 +7250,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "MeshAllocator", function() { return MeshAllocator; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "WingedTopology", function() { return WingedTopology; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_model__ = __webpack_require__(3);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_vm__ = __webpack_require__(31);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_vm__ = __webpack_require__(32);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_vm___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_vm__);
 
 
@@ -16257,7 +16257,7 @@ __webpack_require__(18);
 __webpack_require__(11);
 __webpack_require__(9);
 __webpack_require__(5);
-__webpack_require__(34);
+__webpack_require__(35);
 __webpack_require__(16);
 __webpack_require__(17);
 __webpack_require__(22);
@@ -16267,8 +16267,8 @@ __webpack_require__(3);
 __webpack_require__(23);
 __webpack_require__(20);
 __webpack_require__(6);
-__webpack_require__(35);
 __webpack_require__(36);
+__webpack_require__(37);
 __webpack_require__(2);
 __webpack_require__(4);
 __webpack_require__(7);
@@ -16294,19 +16294,22 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__css_form_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3__css_form_css__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__css_bubble_css__ = __webpack_require__(30);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__css_bubble_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4__css_bubble_css__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_view__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_camera__ = __webpack_require__(15);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_interact__ = __webpack_require__(19);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__wings3d_ui__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__wings3d_i18n__ = __webpack_require__(17);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__js_plugins_cubeshape_js__ = __webpack_require__(33);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12__js_plugins_wavefront_obj_js__ = __webpack_require__(21);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__css_sidebar_css__ = __webpack_require__(31);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__css_sidebar_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5__css_sidebar_css__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_view__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_camera__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d_interact__ = __webpack_require__(19);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__wings3d__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__wings3d_ui__ = __webpack_require__(2);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__wings3d_i18n__ = __webpack_require__(17);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12__js_plugins_cubeshape_js__ = __webpack_require__(34);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_13__js_plugins_wavefront_obj_js__ = __webpack_require__(21);
 // app.js
 //  for bundling and initialization
 //
 
 // import css, should bundle it to a different files.
+
 
 
 
@@ -16326,7 +16329,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 
 
-__WEBPACK_IMPORTED_MODULE_8__wings3d__["start"]('glcanvas');
+__WEBPACK_IMPORTED_MODULE_9__wings3d__["start"]('glcanvas');
 
 /***/ }),
 /* 26 */
@@ -16360,9 +16363,15 @@ __WEBPACK_IMPORTED_MODULE_8__wings3d__["start"]('glcanvas');
 
 /***/ }),
 /* 31 */
+/***/ (function(module, exports) {
+
+// removed by extract-text-webpack-plugin
+
+/***/ }),
+/* 32 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var indexOf = __webpack_require__(32);
+var indexOf = __webpack_require__(33);
 
 var Object_keys = function (obj) {
     if (Object.keys) return Object.keys(obj)
@@ -16503,7 +16512,7 @@ exports.createContext = Script.createContext = function (context) {
 
 
 /***/ }),
-/* 32 */
+/* 33 */
 /***/ (function(module, exports) {
 
 
@@ -16518,7 +16527,7 @@ module.exports = function(arr, obj){
 };
 
 /***/ }),
-/* 33 */
+/* 34 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -16897,7 +16906,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 /***/ }),
-/* 34 */
+/* 35 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -17030,7 +17039,7 @@ __WEBPACK_IMPORTED_MODULE_2__wings3d__["onReady"](createGuideTour);
 
 
 /***/ }),
-/* 35 */
+/* 36 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -17249,7 +17258,7 @@ class SimilarVertex extends SimilarGeometry {
 
 
 /***/ }),
-/* 36 */
+/* 37 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";

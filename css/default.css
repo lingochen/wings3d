@@ -40,7 +40,11 @@ body {
 
 .sidebar {
   display: none;
+  flex-direction: column;
+  flex-grow: 1;
   white-space: nowrap;
+  min-width: 18rem;
+  max-width: 18rem;
 }
 
 .workbench {

@@ -8,6 +8,7 @@ import "../css/menu.css";
 import "../css/button.css";
 import "../css/form.css";
 import "../css/bubble.css";
+import "../css/sidebar.css";
 
 // import js
 import './wings3d_view';
