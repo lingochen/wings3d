@@ -40,7 +40,11 @@ body {
 
 .sidebar {
   display: none;
+  flex-direction: column;
+  flex-grow: 1;
   white-space: nowrap;
+  min-width: 18rem;
+  max-width: 18rem;
 }
 
 .workbench {
@@ -758,4 +762,34 @@ span.tutor-progress-indicator {
     width: 0%;
     height: 1em;
     background-color: blue;
+}
+
+.sidebar > div {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.sidebar > input{
+  display: none;
+}
+.sidebar > input:checked+label+.sidebarPanel{
+  display: block;
+}
+.sidebar > label:hover, .sidebar > input:checked+label:hover {
+  border-style: outset;
+}
+.sidebar > label {
+  background-color: gray;
+  border-style: ridge;
+  border-color: silver;
+}
+.sidebar> input:checked+label {
+  background-color: #F07746;
+  border-style: groove;
+}
+.sidebar>.sidebarPanel{
+  background: #fff;
+  display: none;
+  border-color: silver;
 }
