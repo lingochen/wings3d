@@ -1,8 +1,13 @@
 
-.sidebar > div {
+.sidebar > .sidebarPanel {
   flex: 1;
   display: flex;
   justify-content: center;
+}
+.sidebar > .sidebarPanel{
+  background: #fff;
+  display: none;
+  border-color: silver;
 }
 
 .sidebar > input{
@@ -18,13 +23,56 @@
   background-color: gray;
   border-style: ridge;
   border-color: silver;
+  cursor: pointer;
 }
 .sidebar> input:checked+label {
   background-color: #F07746;
   border-style: groove;
 }
-.sidebar>.sidebarPanel{
-  background: #fff;
+
+/* tree view */
+ul.treeview {
+  padding-left: 1em;
+}
+.treeview ul, .treeview li {
+  list-style: none;
+}
+.treeview ul {
+  padding-left: 1em; 
+} 
+
+.treeview input{
   display: none;
-  border-color: silver;
+}
+.treeview input ~ ul {
+  display: none;
+}
+.treeview input:checked ~ ul {
+  display: block;
+}
+.treeview input ~ label {
+  cursor: pointer;
+  font-weight: bold;
+}
+.treeview input ~ label:before {
+  content: '';
+  width: 0;
+  height: 0;
+  position: absolute;
+  margin-left: -0.8em;
+  margin-top: 0.4em;
+  border-width: 4px;
+  border-style: solid;
+  border-top-color: transparent;
+  border-right-color: red;
+  border-bottom-color: red;
+  border-left-color: transparent;
+}
+.treeview input:checked ~ label:before {
+  margin-left: -0.6em;
+  border-width: 5px;
+  border-top-color: transparent;
+  border-right-color: transparent;
+  border-bottom-color: transparent;
+  border-left-color: red;
 }
