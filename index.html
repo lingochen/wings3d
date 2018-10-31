@@ -221,7 +221,27 @@
     <div id="sidebar" class="sidebar"> 
       <input id="outlinerbox" type="checkbox">
       <label for="outlinerbox"><span>Outliner</span></label>
-      <div id="outliner" class="sidebarPanel"><span>test</span></div>
+      <ul id="outliner" class="sidebarPanel treeview">
+        <li>
+          <input type="checkbox" id="lightInput">
+          <label for="lightInput">Lights</label>
+          <ul id="lights">
+          </ul>
+        </li>
+        <li>
+          <input type="checkbox" id="materialInput">
+          <label for="materialInput">Materials</label>
+          <ul id="materials">
+            <li><span>default</span></li>
+          </ul>
+        </li>
+        <li>
+          <input type="checkbox" id="imageInput">
+          <label for="imageInput">Images</label>
+          <ul id="images">
+          </ul>
+        </li>
+      </ul>
       <input id="geometryGraphbox" type="checkbox" checked>
       <label for="geometryGraphbox"><span>Geometry Graph</span></label>
       <div id="geometryGraph" class="sidebarPanel"><span>test2</span></div>
