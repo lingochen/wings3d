@@ -348,6 +348,7 @@ const action = {
    // createObject Menu
    createCube: () => {notImplemented(this);},
    createCubePref: () =>{notImplemented(this);},
+   createMaterial: () => {notImplemented(this);},
    // selection menu
    selectMenu: () => {notImplemented(this);},
    deselect: () => {notImplemented(this);},
@@ -992,8 +993,9 @@ const currentMode = () => mode.current;
 //
 // world objects management
 //
-const world = []; // private var
-let draftBench; // = new DraftBench; wait for GL
+const world = [];    // private var
+let draftBench;      // = new DraftBench; wait for GL
+let geometryGraph;   // tree management of world; 
 function putIntoWorld() {
    let model = new __WEBPACK_IMPORTED_MODULE_12__wings3d_model__["PreviewCage"](draftBench);
    return addToWorld(model);
@@ -1004,6 +1006,8 @@ function addToWorld(model) {
    model.show();
    draftBench.updatePreview();
    __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
+   // update geometryGraph
+   geometryGraph.addObject(model);
    return model;
 }
 
@@ -1014,6 +1018,8 @@ function removeFromWorld(previewCage) {
       previewCage.hide();
       draftBench.updatePreview();
       __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
+      // remove from geometryGraph
+      geometryGraph.removeObject(previewCage);
    }
 };
 function getWorld() {
@@ -1597,6 +1603,12 @@ function init() {
    __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].preferenceButton.name, (_ev)=>{
       __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["runDialogCenter"]('#preferenceForm', storePref, loadPref);
     });
+
+   // bind createMaterial button.
+
+   // bind geometryGraph
+   geometryGraph = __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["getTreeView"]('#objectList');
+
    // bind .dropdown, click event.
    let buttons = document.querySelectorAll("li.dropdown > a");
    for (let button of buttons) {
@@ -1695,6 +1707,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "showContextMenu", function() { return showContextMenu; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "queuePopupMenu", function() { return queuePopupMenu; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "toggleSubmenu", function() { return toggleSubmenu; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getTreeView", function() { return getTreeView; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_hotkey__ = __webpack_require__(16);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d__ = __webpack_require__(0);
 /*
@@ -2087,8 +2100,47 @@ function queuePopupMenu(popupMenu) {
    }
 };
 
+/** 
+ * tree view
+*/
+class TreeView {
+   constructor(treeView) {
+      this.treeView = treeView;
+      this.tree = {};
+   }
 
+   /**
+    * add previewCage to be displayed in TreeView
+    * @param {PreviewCage} model -target 
+    */
+   addObject(model) {
+      const li = document.createElement('LI');
+      const text = document.createTextNode(model.name);
+      model._textNode = text;
+      li.appendChild(text);
+      this.treeView.appendChild(li);
+   }
 
+   /**
+    * remove PreviewCage from TreeView
+    * @param {PreviewCage} model - the previewCage to be removed from 
+    */
+   removeObject(model) {
+      const li = model._textNode.parentNode;
+      li.parentNode.removeChild(li);
+      model._textNode = undefined;
+   }
+
+}
+
+function getTreeView(id) {
+   const treeView = document.querySelector(id); // get <ul>
+   if (treeView) {
+      return new TreeView(treeView);
+   }
+   // console log error
+   return null;
+};
 
 
 
@@ -2167,6 +2219,12 @@ class MeshAllocatorProxy { // we could use Proxy, but ....
    addAffectedVertex(vertex) {this.preview.bench.addAffectedVertex(vertex);}
 }
 
+
+/**
+ * Model constructor.
+ * 
+ * @param {DraftBench} bench - drawing workbench. 
+ */
 const PreviewCage = function(bench) {
    this.geometry = new __WEBPACK_IMPORTED_MODULE_2__wings3d_wingededge__["WingedTopology"](new MeshAllocatorProxy(this));
    this.bench = bench;
@@ -2174,9 +2232,23 @@ const PreviewCage = function(bench) {
    // selecte(Vertex,Edge,Face)here
    this.selectedSet = new Set;
    // default no name
-   this.name = "";
+   let _name = "";
+   Object.defineProperty(this,"name",{
+      get: function() { return _name; },
+      set: function(value) {  
+         if (value === '') {  // cannot assign empty string?
+            return;
+         }
+         _name = value; 
+         if (this._textNode) {   // treeView's representation.
+            if (this._textNode.nodeValue !== value) {
+               this._textNode.nodeValue = value;
+            }
+         }
+       }
+    });
    // bvh
-   this.bvh = {root: null, queue: new Set};       // queue is for lazy evaluation.
+   this.bvh = {root: null, queue: new Set};       // queue is for lazy evaluation.1
 };
 
 
