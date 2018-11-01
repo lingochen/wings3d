@@ -323,8 +323,9 @@ const currentMode = () => mode.current;
 //
 // world objects management
 //
-const world = []; // private var
-let draftBench; // = new DraftBench; wait for GL
+const world = [];    // private var
+let draftBench;      // = new DraftBench; wait for GL
+let geometryGraph;   // tree management of world; 
 function putIntoWorld() {
    let model = new PreviewCage(draftBench);
    return addToWorld(model);
@@ -335,6 +336,8 @@ function addToWorld(model) {
    model.show();
    draftBench.updatePreview();
    Renderer.needToRedraw();
+   // update geometryGraph
+   geometryGraph.addObject(model);
    return model;
 }
 
@@ -345,6 +348,8 @@ function removeFromWorld(previewCage) {
       previewCage.hide();
       draftBench.updatePreview();
       Renderer.needToRedraw();
+      // remove from geometryGraph
+      geometryGraph.removeObject(previewCage);
    }
 };
 function getWorld() {
@@ -928,6 +933,12 @@ function init() {
    UI.bindMenuItem(Wings3D.action.preferenceButton.name, (_ev)=>{
       UI.runDialogCenter('#preferenceForm', storePref, loadPref);
     });
+
+   // bind createMaterial button.
+
+   // bind geometryGraph
+   geometryGraph = UI.getTreeView('#objectList');
+
    // bind .dropdown, click event.
    let buttons = document.querySelectorAll("li.dropdown > a");
    for (let button of buttons) {

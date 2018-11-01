@@ -244,7 +244,14 @@
       </ul>
       <input id="geometryGraphbox" type="checkbox" checked>
       <label for="geometryGraphbox"><span>Geometry Graph</span></label>
-      <div id="geometryGraph" class="sidebarPanel"><span>test2</span></div>
+      <ul id="geometryGraph" class="sidebarPanel treeview">
+        <li>
+          <input type="checkbox" id="objectInput">
+          <label for="objectInput">Objects</label>
+          <ul id="objectList">
+          </ul>       
+        </li>
+      </ul>
       <input id="selectionGroupbox" type="checkbox">
       <label for="selectionGroupbox"><span>Selection Groups</span></label>
       <div id="selectionGroup" class="sidebarPanel"><span>test3</span></div>
@@ -264,6 +271,8 @@
     <ul id="create-context-menu" class="popup menu">
       <li><a id="createCube" data-i18n="cube">Cube</a><img id="createCubePref" src="../img/bluecube/small_pref.png"></li>
       <hr/>
+      <li><a id="createMaterial" data-i18n="materialDot">Material...</a></li>
+      <hr>
       <li class="not-implemented"><a id="createPlane">Various Planes</a></li>
       <li class="not-implemented"><a id="createGrid">Grid</a></li>
     </ul>

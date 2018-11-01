@@ -57,6 +57,12 @@ class MeshAllocatorProxy { // we could use Proxy, but ....
    addAffectedVertex(vertex) {this.preview.bench.addAffectedVertex(vertex);}
 }
 
+
+/**
+ * Model constructor.
+ * 
+ * @param {DraftBench} bench - drawing workbench. 
+ */
 const PreviewCage = function(bench) {
    this.geometry = new WingedTopology(new MeshAllocatorProxy(this));
    this.bench = bench;
@@ -64,9 +70,23 @@ const PreviewCage = function(bench) {
    // selecte(Vertex,Edge,Face)here
    this.selectedSet = new Set;
    // default no name
-   this.name = "";
+   let _name = "";
+   Object.defineProperty(this,"name",{
+      get: function() { return _name; },
+      set: function(value) {  
+         if (value === '') {  // cannot assign empty string?
+            return;
+         }
+         _name = value; 
+         if (this._textNode) {   // treeView's representation.
+            if (this._textNode.nodeValue !== value) {
+               this._textNode.nodeValue = value;
+            }
+         }
+       }
+    });
    // bvh
-   this.bvh = {root: null, queue: new Set};       // queue is for lazy evaluation.
+   this.bvh = {root: null, queue: new Set};       // queue is for lazy evaluation.1
 };
 
 

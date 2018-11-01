@@ -388,8 +388,47 @@ function queuePopupMenu(popupMenu) {
    }
 };
 
+/** 
+ * tree view
+*/
+class TreeView {
+   constructor(treeView) {
+      this.treeView = treeView;
+      this.tree = {};
+   }
 
+   /**
+    * add previewCage to be displayed in TreeView
+    * @param {PreviewCage} model -target 
+    */
+   addObject(model) {
+      const li = document.createElement('LI');
+      const text = document.createTextNode(model.name);
+      model._textNode = text;
+      li.appendChild(text);
+      this.treeView.appendChild(li);
+   }
 
+   /**
+    * remove PreviewCage from TreeView
+    * @param {PreviewCage} model - the previewCage to be removed from 
+    */
+   removeObject(model) {
+      const li = model._textNode.parentNode;
+      li.parentNode.removeChild(li);
+      model._textNode = undefined;
+   }
+
+}
+
+function getTreeView(id) {
+   const treeView = document.querySelector(id); // get <ul>
+   if (treeView) {
+      return new TreeView(treeView);
+   }
+   // console log error
+   return null;
+};
 
 export {
    styleSheet,
@@ -409,4 +448,5 @@ export {
    showContextMenu,
    queuePopupMenu,
    toggleSubmenu,
+   getTreeView,
 }
