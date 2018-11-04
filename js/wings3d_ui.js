@@ -402,10 +402,25 @@ class TreeView {
     * @param {PreviewCage} model -target 
     */
    addObject(model) {
-      const li = document.createElement('LI');
-      const text = document.createTextNode(model.name);
+      const li = document.createElement('li');
+      li.classList.add('objectName');
+      // select whole object
+      const whole = document.createRange().createContextualFragment('<label><input type="checkbox"><span class="smallIcon" style="background-image: url(\'../img/bluecube/small_whole.png\');"></span></label>');
+      li.appendChild(whole);
+      // span text
+      const text = document.createElement('span');
+      text.textContent = model.name;
       model._textNode = text;
       li.appendChild(text);
+      // eye label
+      const eyeLabel = document.createRange().createContextualFragment('<label><input type="checkbox"><span class="smallIcon" style="background-image: url(\'../img/bluecube/small_show.png\');"></span></label>');
+      li.appendChild(eyeLabel);
+      // lock/unlock
+      const lockLabel = document.createRange().createContextualFragment('<label><input type="checkbox"><span class="smallIcon" style="background-image: url(\'../img/bluecube/small_lock.png\');"></span></label>');
+      li.appendChild(lockLabel);
+      // wireframe
+      const wireframe = document.createRange().createContextualFragment('<label><input type="checkbox"><span class="smallIcon" style="background-image: url(\'../img/bluecube/small_wire.png\');"></span></label>');
+      li.appendChild(wireframe);
       this.treeView.appendChild(li);
    }
 

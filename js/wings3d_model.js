@@ -79,8 +79,8 @@ const PreviewCage = function(bench) {
          }
          _name = value; 
          if (this._textNode) {   // treeView's representation.
-            if (this._textNode.nodeValue !== value) {
-               this._textNode.nodeValue = value;
+            if (this._textNode.textContent !== value) {
+               this._textNode.textContent = value;
             }
          }
        }

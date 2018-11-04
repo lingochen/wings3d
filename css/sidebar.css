@@ -76,3 +76,24 @@ ul.treeview {
   border-bottom-color: transparent;
   border-left-color: red;
 }
+
+.objectName {
+  display: flex;
+}
+
+.objectName > span {
+  flex-grow: 2;
+}
+
+.smallIcon {
+  display: inline-block;
+  background-repeat: no-repeat;
+  height: 16px;
+  width: 16px;
+}
+input+.smallIcon {
+  background-position: 0px 0px;
+}
+input:checked+.smallIcon {
+  background-position: -16px 0px;
+}
