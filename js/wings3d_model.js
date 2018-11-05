@@ -334,7 +334,7 @@ PreviewCage.prototype.changeFromBodyToEdgeSelect = function() {
    const snapshot = this.snapshotSelectionBody();
 
    if (this.hasSelection()) {
-      this._resetBody();
+      this._resetSelectBody();
       // select all edge
       for (let wingedEdge of this.geometry.edges) {
          this.selectedSet.add(wingedEdge);
@@ -349,7 +349,7 @@ PreviewCage.prototype.changeFromBodyToVertexSelect = function() {
    const snapshot = this.snapshotSelectionBody();
 
    if (this.hasSelection()) {
-      this._resetBody();
+      this._resetSelectBody();
       // select all vertex
       for (let vertex of this.geometry.vertices) {
          this.selectedSet.add(vertex);
@@ -363,7 +363,7 @@ PreviewCage.prototype.changeFromBodyToVertexSelect = function() {
 PreviewCage.prototype.changeFromBodyToMultiSelect = function() {
    const snapshot = this.snapshotSelectionBody();
    if (this.hasSelection()) {
-      this._resetBody();
+      this._resetSelectBody();
    }
 
    return snapshot;
@@ -402,7 +402,7 @@ PreviewCage.prototype.restoreBodySelection = function(snapshot) {
 
 PreviewCage.prototype.restoreFromBodyToFaceSelect = function(snapshot) {
    if (snapshot) {
-      this._resetBody();
+      this._resetSelectBody();
       this.restoreFaceSelection(snapshot);
    } else {
       this.changeFromBodyToFaceSelect();
@@ -412,7 +412,7 @@ PreviewCage.prototype.restoreFromBodyToFaceSelect = function(snapshot) {
 PreviewCage.prototype.restoreFromBodyToEdgeSelect = function(snapshot) {
    if (snapshot) {
       // discard old selected,
-      this._resetBody();
+      this._resetSelectBody();
       this.restoreEdgeSelection(snapshot);
    } else {
       this.changeFromBodyToEdgeSelect();  // choose compute over storage, use the same code as going forward.
@@ -422,7 +422,7 @@ PreviewCage.prototype.restoreFromBodyToEdgeSelect = function(snapshot) {
 PreviewCage.prototype.restoreFromBodyToVertexSelect = function(snapshot) {
    if (snapshot) {
       // discard old selected,
-      this._resetBody();
+      this._resetSelectBody();
       // and selected using the snapshots.
       this.restoreVertexSelection(snapshot);
    } else {
@@ -434,7 +434,7 @@ PreviewCage.prototype.restoreFromBodyToMultiSelect = function(_snapshot) {
    this.changeFromBodyToMutliSelect();
 };
 
-PreviewCage.prototype._resetBody = function() {
+PreviewCage.prototype._resetSelectBody = function() {
    const oldSet = this.selectedSet;
    this.selectedSet = new Set();
    this.bench.resetBody(oldSet);

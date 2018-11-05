@@ -338,7 +338,7 @@ class BodyMadsor extends Madsor {
    }
 
    _resetSelection(cage) {
-      cage._resetBody();
+      cage._resetSelectBody();
    }
 
    _restoreSelection(cage, snapshot) {
