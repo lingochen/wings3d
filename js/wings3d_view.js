@@ -944,12 +944,11 @@ function init() {
    // bind geometryGraph
    geometryGraph = TreeView.getTreeView('#objectList');
    Wings3D.bindAction(null, 0, Wings3D.action.selectObject.name, (ev) => {
-      //currentMode().selectObject(currentObjects, ev.target);
       const cmd = new GenericEditCommand(currentMode(), currentMode().selectObject, [currentObjects, ev.target], 
                                                         currentMode().undoSelectObject, [ev.target]);
+      ev.target.checked = !ev.target.checked;   // doIt() will flipped it again.
       cmd.doIt();
       undoQueue(cmd);
-      //Renderer.needToRedraw();
     });
 
    // bind .dropdown, click event.

@@ -323,6 +323,7 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
    }
 
    selectObject(objects, input) {
+      input.checked = !input.checked;  // non-obvious solution. how can we redo the checked flag in a more obvious way?
       if (input.checked) {
          return this.snapshotTarget(objects, PreviewCage.prototype['_select' + this.modeName() + 'All']);
       } else {
