@@ -1621,12 +1621,11 @@ function init() {
    // bind geometryGraph
    geometryGraph = __WEBPACK_IMPORTED_MODULE_17__wings3d_uitree__["getTreeView"]('#objectList');
    __WEBPACK_IMPORTED_MODULE_5__wings3d__["bindAction"](null, 0, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].selectObject.name, (ev) => {
-      //currentMode().selectObject(currentObjects, ev.target);
       const cmd = new __WEBPACK_IMPORTED_MODULE_18__wings3d_mads__["GenericEditCommand"](currentMode(), currentMode().selectObject, [currentObjects, ev.target], 
                                                         currentMode().undoSelectObject, [ev.target]);
+      ev.target.checked = !ev.target.checked;   // doIt() will flipped it again.
       cmd.doIt();
       undoQueue(cmd);
-      //Renderer.needToRedraw();
     });
 
    // bind .dropdown, click event.
@@ -7637,6 +7636,7 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
    }
 
    selectObject(objects, input) {
+      input.checked = !input.checked;  // non-obvious solution. how can we redo the checked flag in a more obvious way?
       if (input.checked) {
          return this.snapshotTarget(objects, __WEBPACK_IMPORTED_MODULE_2__wings3d_model__["PreviewCage"].prototype['_select' + this.modeName() + 'All']);
       } else {
