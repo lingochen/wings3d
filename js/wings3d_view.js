@@ -21,6 +21,7 @@ import {DraftBench, CheckPoint} from './wings3d_draftbench';
 import {Ray} from './wings3d_boundingvolume';
 import * as Hotkey from './wings3d_hotkey';
 import * as Util from './wings3d_util';
+import * as TreeView from './wings3d_uitree';
 
 
 // 
@@ -326,6 +327,7 @@ const currentMode = () => mode.current;
 const world = [];    // private var
 let draftBench;      // = new DraftBench; wait for GL
 let geometryGraph;   // tree management of world; 
+let currentObjects;
 function putIntoWorld() {
    let model = new PreviewCage(draftBench);
    return addToWorld(model);
@@ -367,6 +369,9 @@ function makeCombineIntoWorld(cageSelection) {
    combine.merge(cageSelection);
    addToWorld(combine);
    return combine;
+}
+function setObject(objects) { // objects is array
+   currentObjects = objects;
 }
 //-- End of World objects management ----------------dra---------
 
@@ -937,7 +942,11 @@ function init() {
    // bind createMaterial button.
 
    // bind geometryGraph
-   geometryGraph = UI.getTreeView('#objectList');
+   geometryGraph = TreeView.getTreeView('#objectList');
+   Wings3D.bindAction(null, 0, Wings3D.action.selectObject.name, (ev) => {
+      currentMode().selectObject(currentObjects, ev.target.checked);
+      Renderer.needToRedraw();
+    });
 
    // bind .dropdown, click event.
    let buttons = document.querySelectorAll("li.dropdown > a");
@@ -1034,6 +1043,7 @@ export {
    getWorld,
    updateWorld,
    makeCombineIntoWorld,
+   setObject,
    // mouse handler
    //rayPick,
    attachHandlerMouseMove,

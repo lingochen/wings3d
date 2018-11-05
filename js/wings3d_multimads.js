@@ -22,6 +22,11 @@ class MultiMadsor extends Madsor {
    isEdgeSelectable() { return true; }
    isVertexSelectable() { return true; }
 
+   selectObject(objects, toggle) {
+      View.toggleFaceMode();
+      View.currentMode().selectObject(objects, toggle);
+   }
+
 
    toggleMulti(hilite) {
       if (hilite.face) {

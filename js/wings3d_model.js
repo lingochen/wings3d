@@ -519,7 +519,6 @@ PreviewCage.prototype.setVertexColor = function(vertex, color) {
 };
 
 PreviewCage.prototype.dragSelectVertex = function(vertex, onOff) {
-   var color;
    if (this.selectedSet.has(vertex)) {
       if (onOff === false) {
          this.selectedSet.delete(vertex);

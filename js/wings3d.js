@@ -174,7 +174,7 @@ export function start_halt() {
    };*/
 
 let interactFn;
-function setInteractaction(interact) {
+function setInteraction(interact) {
    interactFn = interact;
 }
 const lastMouseDown = [null, null, null];
@@ -208,9 +208,11 @@ function bindAction(menuItem, button, id, fn) {
    if (action.hasOwnProperty(id)) {
       if (!Array.isArray(action[id])) {
          action[id] = [null, null, null];
-         menuItem.addEventListener("mousedown", handleMouseDown);
-         menuItem.addEventListener("mouseup", handleMouseUp);
-         menuItem.addEventListener("contextmenu", handleContextmenu);  // no ops.
+         if (menuItem) {
+            menuItem.addEventListener("mousedown", handleMouseDown);
+            menuItem.addEventListener("mouseup", handleMouseUp);
+            menuItem.addEventListener("contextmenu", handleContextmenu);  // no ops.
+         }
       }
       action[id][button] = fn;
    }
@@ -263,6 +265,8 @@ const action = {
    createCube: () => {notImplemented(this);},
    createCubePref: () =>{notImplemented(this);},
    createMaterial: () => {notImplemented(this);},
+   // outliner/geometory
+   selectObject: () => {notImplemented(this);},
    // selection menu
    selectMenu: () => {notImplemented(this);},
    deselect: () => {notImplemented(this);},

@@ -163,6 +163,23 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       return snapshots;
    }
 
+   /**
+    * should we make it static?
+    * @param {*} targets 
+    * @param {*} func 
+    * @param  {...any} args 
+    */
+   snapshotTarget(targets, func, ...args) {
+      const snapshots = [];
+      for (let preview of targets) {
+         const snapshot = func.call(preview, ...args);
+         if (snapshot) {
+            snapshots.push( {preview: preview, snapshot: snapshot} );
+         }
+      }
+      return snapshots;
+   }
+
    doAll(snapshots, func, ...args) {
       if (snapshots) {
          for (let obj of snapshots) {
@@ -304,6 +321,15 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       this.resetSelection();
       this.restoreSelection(snapshots);
    }
+
+   selectObject(objects, toggle) {
+      if (toggle) {
+         return this.snapshotTarget(objects, PreviewCage.prototype['_select' + this.modeName() + 'All']);
+      } else {
+         return this.snapshotTarget(objects, PreviewCage.prototype['_resetSelect' + this.modeName()])
+      }
+   }
+
 
    isVertexSelectable() { return false; }
    isEdgeSelectable() { return false; }
