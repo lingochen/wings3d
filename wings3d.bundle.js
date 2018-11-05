@@ -60,7 +60,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 24);
+/******/ 	return __webpack_require__(__webpack_require__.s = 25);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -260,7 +260,7 @@ function start_halt() {
    };*/
 
 let interactFn;
-function setInteractaction(interact) {
+function setInteraction(interact) {
    interactFn = interact;
 }
 const lastMouseDown = [null, null, null];
@@ -294,9 +294,11 @@ function bindAction(menuItem, button, id, fn) {
    if (action.hasOwnProperty(id)) {
       if (!Array.isArray(action[id])) {
          action[id] = [null, null, null];
-         menuItem.addEventListener("mousedown", handleMouseDown);
-         menuItem.addEventListener("mouseup", handleMouseUp);
-         menuItem.addEventListener("contextmenu", handleContextmenu);  // no ops.
+         if (menuItem) {
+            menuItem.addEventListener("mousedown", handleMouseDown);
+            menuItem.addEventListener("mouseup", handleMouseUp);
+            menuItem.addEventListener("contextmenu", handleContextmenu);  // no ops.
+         }
       }
       action[id][button] = fn;
    }
@@ -349,6 +351,8 @@ const action = {
    createCube: () => {notImplemented(this);},
    createCubePref: () =>{notImplemented(this);},
    createMaterial: () => {notImplemented(this);},
+   // outliner/geometory
+   selectObject: () => {notImplemented(this);},
    // selection menu
    selectMenu: () => {notImplemented(this);},
    deselect: () => {notImplemented(this);},
@@ -639,6 +643,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getWorld", function() { return getWorld; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "updateWorld", function() { return updateWorld; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "makeCombineIntoWorld", function() { return makeCombineIntoWorld; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "setObject", function() { return setObject; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "attachHandlerMouseMove", function() { return attachHandlerMouseMove; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "attachHandlerMouseSelect", function() { return attachHandlerMouseSelect; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "doCommand", function() { return doCommand; });
@@ -668,11 +673,13 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_14__wings3d_boundingvolume__ = __webpack_require__(13);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_15__wings3d_hotkey__ = __webpack_require__(16);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_16__wings3d_util__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_17__wings3d_uitree__ = __webpack_require__(24);
 /*
 //     This module implements most of the commands in the View menu. 
 //
 // Original Erlang Version: Bjorn Gustavsson
 */
+
 
 
 
@@ -996,6 +1003,7 @@ const currentMode = () => mode.current;
 const world = [];    // private var
 let draftBench;      // = new DraftBench; wait for GL
 let geometryGraph;   // tree management of world; 
+let currentObjects;
 function putIntoWorld() {
    let model = new __WEBPACK_IMPORTED_MODULE_12__wings3d_model__["PreviewCage"](draftBench);
    return addToWorld(model);
@@ -1037,6 +1045,9 @@ function makeCombineIntoWorld(cageSelection) {
    combine.merge(cageSelection);
    addToWorld(combine);
    return combine;
+}
+function setObject(objects) { // objects is array
+   currentObjects = objects;
 }
 //-- End of World objects management ----------------dra---------
 
@@ -1607,7 +1618,11 @@ function init() {
    // bind createMaterial button.
 
    // bind geometryGraph
-   geometryGraph = __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["getTreeView"]('#objectList');
+   geometryGraph = __WEBPACK_IMPORTED_MODULE_17__wings3d_uitree__["getTreeView"]('#objectList');
+   __WEBPACK_IMPORTED_MODULE_5__wings3d__["bindAction"](null, 0, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].selectObject.name, (ev) => {
+      currentMode().selectObject(currentObjects, ev.target.checked);
+      __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
+    });
 
    // bind .dropdown, click event.
    let buttons = document.querySelectorAll("li.dropdown > a");
@@ -1707,7 +1722,6 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "showContextMenu", function() { return showContextMenu; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "queuePopupMenu", function() { return queuePopupMenu; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "toggleSubmenu", function() { return toggleSubmenu; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getTreeView", function() { return getTreeView; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_hotkey__ = __webpack_require__(16);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d__ = __webpack_require__(0);
 /*
@@ -2100,63 +2114,7 @@ function queuePopupMenu(popupMenu) {
    }
 };
 
-/** 
- * tree view
-*/
-class TreeView {
-   constructor(treeView) {
-      this.treeView = treeView;
-      this.tree = {};
-   }
 
-   /**
-    * add previewCage to be displayed in TreeView
-    * @param {PreviewCage} model -target 
-    */
-   addObject(model) {
-      const li = document.createElement('li');
-      li.classList.add('objectName');
-      // select whole object
-      const whole = document.createRange().createContextualFragment('<label><input type="checkbox"><span class="smallIcon" style="background-image: url(\'../img/bluecube/small_whole.png\');"></span></label>');
-      li.appendChild(whole);
-      // span text
-      const text = document.createElement('span');
-      text.textContent = model.name;
-
-      model._textNode = text;
-      li.appendChild(text);
-      // eye label
-      const eyeLabel = document.createRange().createContextualFragment('<label><input type="checkbox"><span class="smallIcon" style="background-image: url(\'../img/bluecube/small_show.png\');"></span></label>');
-      li.appendChild(eyeLabel);
-      // lock/unlock
-      const lockLabel = document.createRange().createContextualFragment('<label><input type="checkbox"><span class="smallIcon" style="background-image: url(\'../img/bluecube/small_lock.png\');"></span></label>');
-      li.appendChild(lockLabel);
-      // wireframe
-      const wireframe = document.createRange().createContextualFragment('<label><input type="checkbox"><span class="smallIcon" style="background-image: url(\'../img/bluecube/small_wire.png\');"></span></label>');
-      li.appendChild(wireframe);
-      this.treeView.appendChild(li);
-   }
-
-   /**
-    * remove PreviewCage from TreeView
-    * @param {PreviewCage} model - the previewCage to be removed from 
-    */
-   removeObject(model) {
-      const li = model._textNode.parentNode;
-      li.parentNode.removeChild(li);
-      model._textNode = undefined;
-   }
-
-}
-
-function getTreeView(id) {
-   const treeView = document.querySelector(id); // get <ul>
-   if (treeView) {
-      return new TreeView(treeView);
-   }
-   // console log error
-   return null;
-};
 
 
 
@@ -2697,7 +2655,6 @@ PreviewCage.prototype.setVertexColor = function(vertex, color) {
 };
 
 PreviewCage.prototype.dragSelectVertex = function(vertex, onOff) {
-   var color;
    if (this.selectedSet.has(vertex)) {
       if (onOff === false) {
          this.selectedSet.delete(vertex);
@@ -7338,7 +7295,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "MeshAllocator", function() { return MeshAllocator; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "WingedTopology", function() { return WingedTopology; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_model__ = __webpack_require__(3);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_vm__ = __webpack_require__(32);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_vm__ = __webpack_require__(33);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_vm___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_vm__);
 
 
@@ -10871,6 +10828,23 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       return snapshots;
    }
 
+   /**
+    * should we make it static?
+    * @param {*} targets 
+    * @param {*} func 
+    * @param  {...any} args 
+    */
+   snapshotTarget(targets, func, ...args) {
+      const snapshots = [];
+      for (let preview of targets) {
+         const snapshot = func.call(preview, ...args);
+         if (snapshot) {
+            snapshots.push( {preview: preview, snapshot: snapshot} );
+         }
+      }
+      return snapshots;
+   }
+
    doAll(snapshots, func, ...args) {
       if (snapshots) {
          for (let obj of snapshots) {
@@ -11012,6 +10986,15 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       this.resetSelection();
       this.restoreSelection(snapshots);
    }
+
+   selectObject(objects, toggle) {
+      if (toggle) {
+         return this.snapshotTarget(objects, __WEBPACK_IMPORTED_MODULE_2__wings3d_model__["PreviewCage"].prototype['_select' + this.modeName() + 'All']);
+      } else {
+         return this.snapshotTarget(objects, __WEBPACK_IMPORTED_MODULE_2__wings3d_model__["PreviewCage"].prototype['_resetSelect' + this.modeName()])
+      }
+   }
+
 
    isVertexSelectable() { return false; }
    isEdgeSelectable() { return false; }
@@ -16275,6 +16258,11 @@ class MultiMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] 
    isEdgeSelectable() { return true; }
    isVertexSelectable() { return true; }
 
+   selectObject(objects, toggle) {
+      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["toggleFaceMode"]();
+      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["currentMode"]().selectObject(objects, toggle);
+   }
+
 
    toggleMulti(hilite) {
       if (hilite.face) {
@@ -16335,9 +16323,89 @@ class MultiMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] 
 
 /***/ }),
 /* 24 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getTreeView", function() { return getTreeView; });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_view__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d__ = __webpack_require__(0);
+/**
+
+*/
+
+
+
+
+/** 
+ * tree view
+*/
+class TreeView {
+   constructor(treeView) {
+      this.treeView = treeView;
+      this.tree = {};
+   }
+
+   /**
+    * add previewCage to be displayed in TreeView
+    * @param {PreviewCage} model -target 
+    */
+   addObject(model) {
+      const li = document.createElement('li');
+      li.classList.add('objectName');
+      // select whole object
+      const whole = document.createRange().createContextualFragment('<label><input type="checkbox"><span class="smallIcon" style="background-image: url(\'../img/bluecube/small_whole.png\');"></span></label>');
+      let input = whole.querySelector('input');
+      input.addEventListener('change', (ev)=> {  // whole is fragment. we want label.
+         __WEBPACK_IMPORTED_MODULE_0__wings3d_view__["setObject"]([model]);
+         __WEBPACK_IMPORTED_MODULE_1__wings3d__["runAction"](0, "selectObject", ev);
+       });
+       li.appendChild(whole);
+      // span text
+      const text = document.createElement('span');
+      text.textContent = model.name;
+      model._textNode = text;
+      li.appendChild(text);
+      // eye label
+      const eyeLabel = document.createRange().createContextualFragment('<label><input type="checkbox"><span class="smallIcon" style="background-image: url(\'../img/bluecube/small_show.png\');"></span></label>');
+      li.appendChild(eyeLabel);
+      // lock/unlock
+      const lockLabel = document.createRange().createContextualFragment('<label><input type="checkbox"><span class="smallIcon" style="background-image: url(\'../img/bluecube/small_lock.png\');"></span></label>');
+      li.appendChild(lockLabel);
+      // wireframe
+      const wireframe = document.createRange().createContextualFragment('<label><input type="checkbox"><span class="smallIcon" style="background-image: url(\'../img/bluecube/small_wire.png\');"></span></label>');
+      li.appendChild(wireframe);
+      this.treeView.appendChild(li);
+   }
+
+   /**
+    * remove PreviewCage from TreeView
+    * @param {PreviewCage} model - the previewCage to be removed from 
+    */
+   removeObject(model) {
+      const li = model._textNode.parentNode;
+      li.parentNode.removeChild(li);
+      model._textNode = undefined;
+   }
+
+}
+
+function getTreeView(id) {
+   const treeView = document.querySelector(id); // get <ul>
+   if (treeView) {
+      return new TreeView(treeView);
+   }
+   // console log error
+   return null;
+};
+
+
+
+/***/ }),
+/* 25 */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(25);
+__webpack_require__(26);
 __webpack_require__(14);
 __webpack_require__(13);
 __webpack_require__(15);
@@ -16345,7 +16413,7 @@ __webpack_require__(18);
 __webpack_require__(11);
 __webpack_require__(9);
 __webpack_require__(5);
-__webpack_require__(35);
+__webpack_require__(36);
 __webpack_require__(16);
 __webpack_require__(17);
 __webpack_require__(22);
@@ -16355,9 +16423,10 @@ __webpack_require__(3);
 __webpack_require__(23);
 __webpack_require__(20);
 __webpack_require__(6);
-__webpack_require__(36);
 __webpack_require__(37);
+__webpack_require__(38);
 __webpack_require__(2);
+__webpack_require__(24);
 __webpack_require__(4);
 __webpack_require__(7);
 __webpack_require__(12);
@@ -16367,22 +16436,22 @@ module.exports = __webpack_require__(0);
 
 
 /***/ }),
-/* 25 */
+/* 26 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__css_default_css__ = __webpack_require__(26);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__css_default_css__ = __webpack_require__(27);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__css_default_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__css_default_css__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__css_menu_css__ = __webpack_require__(27);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__css_menu_css__ = __webpack_require__(28);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__css_menu_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__css_menu_css__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__css_button_css__ = __webpack_require__(28);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__css_button_css__ = __webpack_require__(29);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__css_button_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__css_button_css__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__css_form_css__ = __webpack_require__(29);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__css_form_css__ = __webpack_require__(30);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__css_form_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3__css_form_css__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__css_bubble_css__ = __webpack_require__(30);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__css_bubble_css__ = __webpack_require__(31);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__css_bubble_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4__css_bubble_css__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__css_sidebar_css__ = __webpack_require__(31);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__css_sidebar_css__ = __webpack_require__(32);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__css_sidebar_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5__css_sidebar_css__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_view__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_camera__ = __webpack_require__(15);
@@ -16390,7 +16459,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__wings3d__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__wings3d_ui__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__wings3d_i18n__ = __webpack_require__(17);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12__js_plugins_cubeshape_js__ = __webpack_require__(34);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12__js_plugins_cubeshape_js__ = __webpack_require__(35);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_13__js_plugins_wavefront_obj_js__ = __webpack_require__(21);
 // app.js
 //  for bundling and initialization
@@ -16418,12 +16487,6 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 
 __WEBPACK_IMPORTED_MODULE_9__wings3d__["start"]('glcanvas');
-
-/***/ }),
-/* 26 */
-/***/ (function(module, exports) {
-
-// removed by extract-text-webpack-plugin
 
 /***/ }),
 /* 27 */
@@ -16457,9 +16520,15 @@ __WEBPACK_IMPORTED_MODULE_9__wings3d__["start"]('glcanvas');
 
 /***/ }),
 /* 32 */
+/***/ (function(module, exports) {
+
+// removed by extract-text-webpack-plugin
+
+/***/ }),
+/* 33 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var indexOf = __webpack_require__(33);
+var indexOf = __webpack_require__(34);
 
 var Object_keys = function (obj) {
     if (Object.keys) return Object.keys(obj)
@@ -16600,7 +16669,7 @@ exports.createContext = Script.createContext = function (context) {
 
 
 /***/ }),
-/* 33 */
+/* 34 */
 /***/ (function(module, exports) {
 
 
@@ -16615,7 +16684,7 @@ module.exports = function(arr, obj){
 };
 
 /***/ }),
-/* 34 */
+/* 35 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -16994,7 +17063,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 /***/ }),
-/* 35 */
+/* 36 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -17127,7 +17196,7 @@ __WEBPACK_IMPORTED_MODULE_2__wings3d__["onReady"](createGuideTour);
 
 
 /***/ }),
-/* 36 */
+/* 37 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -17346,7 +17415,7 @@ class SimilarVertex extends SimilarGeometry {
 
 
 /***/ }),
-/* 37 */
+/* 38 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
