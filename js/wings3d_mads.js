@@ -322,12 +322,20 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       this.restoreSelection(snapshots);
    }
 
-   selectObject(objects, toggle) {
-      if (toggle) {
+   selectObject(objects, input) {
+      if (input.checked) {
          return this.snapshotTarget(objects, PreviewCage.prototype['_select' + this.modeName() + 'All']);
       } else {
-         return this.snapshotTarget(objects, PreviewCage.prototype['_resetSelect' + this.modeName()])
+         return this.snapshotTarget(objects, PreviewCage.prototype['_resetSelect' + this.modeName()]);
       }
+   }
+
+   undoSelectObject(selection, input) {
+      if (input.checked) {
+         this.doAll(selection, PreviewCage.prototype['_resetSelect' + this.modeName()]); // unselected All then
+      }
+      input.checked = !input.checked;
+      this.doAll(selection, PreviewCage.prototype.restoreSelection, this); // restore
    }
 
 
@@ -739,12 +747,13 @@ class PlaneCutHandler extends EditSelectHandler {
 
 
 class GenericEditCommand extends EditCommand {
-   constructor(madsor, doCmd, doParams, undoCmd) {
+   constructor(madsor, doCmd, doParams, undoCmd, undoParams) {
       super();
       this.madsor = madsor;
       this.doCmd = doCmd;
       this.doParams = doParams;
       this.undoCmd = undoCmd; 
+      this.undoParams = undoParams;
    }
 
    doIt(_currentMadsor) {
@@ -754,7 +763,7 @@ class GenericEditCommand extends EditCommand {
 
    undo(_currentMadsor) {
       if (this.undoCmd) {
-         this.undoCmd.call(this.madsor, this.snapshots);
+         this.undoCmd.call(this.madsor, this.snapshots, ...(this.undoParams? this.undoParams : []) );
       } else {
          this.madsor.restoreSelectionPosition(this.snapshots);
       }

@@ -22,6 +22,7 @@ import {Ray} from './wings3d_boundingvolume';
 import * as Hotkey from './wings3d_hotkey';
 import * as Util from './wings3d_util';
 import * as TreeView from './wings3d_uitree';
+import { GenericEditCommand } from './wings3d_mads';
 
 
 // 
@@ -888,7 +889,6 @@ function init() {
          const command = new EditCommandSimple(select.fn);
          if(command.doIt(mode.current)) {
             undoQueue( command );
-            Renderer.needToRedraw();
          }
       }, select.hotKey, select.meta);
    }
@@ -944,8 +944,12 @@ function init() {
    // bind geometryGraph
    geometryGraph = TreeView.getTreeView('#objectList');
    Wings3D.bindAction(null, 0, Wings3D.action.selectObject.name, (ev) => {
-      currentMode().selectObject(currentObjects, ev.target.checked);
-      Renderer.needToRedraw();
+      //currentMode().selectObject(currentObjects, ev.target);
+      const cmd = new GenericEditCommand(currentMode(), currentMode().selectObject, [currentObjects, ev.target], 
+                                                        currentMode().undoSelectObject, [ev.target]);
+      cmd.doIt();
+      undoQueue(cmd);
+      //Renderer.needToRedraw();
     });
 
    // bind .dropdown, click event.

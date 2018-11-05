@@ -435,14 +435,14 @@ PreviewCage.prototype.restoreFromBodyToMultiSelect = function(_snapshot) {
 };
 
 PreviewCage.prototype._resetSelectBody = function() {
-   const oldSet = this.selectedSet;
+   const oldSet = this.snapshotSelectionBody();
    this.selectedSet = new Set();
-   this.bench.resetBody(oldSet);
+   this.bench.resetBody(oldSet.body);
    return oldSet;
 };
 
 PreviewCage.prototype._selectBodyLess = function() {
-   const snapshot = new Set(this.selectedSet);
+   const snapshot = this.snapshotSelectionBody();
    if (this.hasSelection()) {
       this.selectBody();
    }
@@ -450,7 +450,7 @@ PreviewCage.prototype._selectBodyLess = function() {
 }
 
 PreviewCage.prototype._selectBodyAll = function() {
-   const snapshot = new Set(this.selectedSet);
+   const snapshot = this.snapshotSelectionBody();
    if (!this.hasSelection()) {
       this.selectBody();
    }
@@ -458,7 +458,7 @@ PreviewCage.prototype._selectBodyAll = function() {
 }
 
 PreviewCage.prototype._selectBodyInvert = function() {
-   const snapshot = new Set(this.selectedSet);
+   const snapshot = this.snapshotSelectionBody();
    this.selectBody();
    return snapshot;
 }
@@ -556,11 +556,11 @@ PreviewCage.prototype.selectVertex = function(vertex) {
 
 
 PreviewCage.prototype._resetSelectVertex = function() {
-   var oldSelected = this.selectedSet;
+   var snapshot = this.snapshotSelectionVertex();
    this.selectedSet = new Set;
    // zeroout the edge seleciton.
    this.bench.resetSelectVertex();
-   return oldSelected;
+   return snapshot;
 };
 
 PreviewCage.prototype._selectVertexMore = function() {
@@ -640,7 +640,7 @@ PreviewCage.prototype.changeFromVertexToFaceSelect = function() {
    var self = this;
    var oldSelected = this._resetSelectVertex();
    //
-   for (let vertex of oldSelected) { 
+   for (let vertex of oldSelected.vertices) { 
       // select all face that is connected to the vertex.
       vertex.eachOutEdge(function(edge) {
          if (!self.selectedSet.has(edge.face)) {
@@ -658,7 +658,7 @@ PreviewCage.prototype.changeFromVertexToEdgeSelect = function() {
    var self = this;
    var oldSelected = this._resetSelectVertex();
    //
-   for (let vertex of oldSelected) { 
+   for (let vertex of oldSelected.vertices) { 
       // select all edge that is connected to the vertex.
       vertex.eachOutEdge(function(edge) {
          if (!self.selectedSet.has(edge.wingedEdge)) {
@@ -1143,10 +1143,10 @@ PreviewCage.prototype.snapshotTransformVertexGroup = function() {
 
 
 PreviewCage.prototype._resetSelectEdge = function() {
-   const oldSelected = this.selectedSet;
+   const snapshot = this.snapshotSelectionEdge();
    this.selectedSet = new Set;
    this.bench.resetSelectEdge();
-   return oldSelected;
+   return snapshot;
 };
 
 PreviewCage.prototype._selectEdgeMore = function() {
@@ -1238,7 +1238,7 @@ PreviewCage.prototype.changeFromEdgeToFaceSelect = function() {
    const snapshot = this.snapshotSelectionEdge();
 
    const oldSelected = this._resetSelectEdge();
-   for (let wingedEdge of oldSelected) {
+   for (let wingedEdge of oldSelected.wingedEdges) {
       // for each WingedEdge, select both it face.
       for (let halfEdge of wingedEdge) {
          if (!this.selectedSet.has(halfEdge.face)) {
@@ -1254,7 +1254,7 @@ PreviewCage.prototype.changeFromEdgeToVertexSelect = function() {
    const snapshot = this.snapshotSelectionEdge();
 
    const oldSelected = this._resetSelectEdge();
-   for (let wingedEdge of oldSelected) {
+   for (let wingedEdge of oldSelected.wingedEdges) {
       // for each WingedEdge, select both it face.
       for (let halfEdge of wingedEdge) {
          if (!this.selectedSet.has(halfEdge.origin)) {
@@ -1365,10 +1365,10 @@ PreviewCage.prototype.selectFace = function(polygon) {
 
 
 PreviewCage.prototype._resetSelectFace = function() {
-   const oldSelectedFaces = this.selectedSet;
+   const snapshot = this.snapshotSelectionFace();
    this.selectedSet = new Set;
-   this.bench.resetSelectFace();
-   return oldSelectedFaces;
+   this.bench.selectGroup(snapshot.selectedFaces, false);   // turn off selected Face
+   return snapshot;
 }
 
 PreviewCage.prototype._selectFaceMore = function() {
@@ -1460,7 +1460,7 @@ PreviewCage.prototype.changeFromFaceToEdgeSelect = function() {
 
    var self = this;
    var oldSelected = this._resetSelectFace();
-   for (let polygon of oldSelected) {
+   for (let polygon of oldSelected.selectedFaces) {
       // for eachFace, selected all it edge.
       polygon.eachEdge(function(edge) {
          if (!self.selectedSet.has(edge.wingedEdge)) {
@@ -1826,7 +1826,7 @@ PreviewCage.prototype.extrudeFace = function(contours) {
    this._updatePreviewAll(oldSize, this.geometry.affected);
    // reselect face
    const oldSelected = this._resetSelectFace();
-   for (let polygon of oldSelected) {
+   for (let polygon of oldSelected.selectedFaces) {
       this.selectFace(polygon);
    }
 
@@ -1849,7 +1849,7 @@ PreviewCage.prototype.collapseExtrudeEdge = function(undo) {
    this._updatePreviewAll(oldSize,  this.geometry.affected);
    // reselect face
    const oldSelected = this._resetSelectFace();
-   for (let polygon of oldSelected) {
+   for (let polygon of oldSelected.selectedFaces) {
       this.selectFace(polygon);
    }
 
@@ -2337,7 +2337,7 @@ PreviewCage.prototype.bevelFace = function() {
    this._updatePreviewAll(oldSize, this.geometry.affected);
    // reselect faces again. because polygon's edges were changed.
    const oldSelected = this._resetSelectFace();
-   for (let polygon of oldSelected) {
+   for (let polygon of oldSelected.selectedFaces) {
       this.selectFace(polygon);
    }
 
@@ -2522,7 +2522,7 @@ PreviewCage.prototype.insetFace = function() {
    this._updatePreviewAll(oldSize, this.geometry.affected);
    // reselect face, or it won't show up. a limitation.
    const oldSelected = this._resetSelectFace();
-   for (let polygon of oldSelected) {
+   for (let polygon of oldSelected.selectedFaces) {
       this.selectFace(polygon);
    }
 
@@ -2908,7 +2908,7 @@ PreviewCage.prototype.liftFace = function(contours, hingeHEdge) {
    this._updatePreviewAll();
    // reselect face
    const oldSelected = this._resetSelectFace();
-   for (let polygon of oldSelected) {
+   for (let polygon of oldSelected.selectedFaces) {
       this.selectFace(polygon);
    }
 
