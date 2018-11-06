@@ -66,6 +66,7 @@ class MeshAllocatorProxy { // we could use Proxy, but ....
 const PreviewCage = function(bench) {
    this.geometry = new WingedTopology(new MeshAllocatorProxy(this));
    this.bench = bench;
+   this.guiStatus = {};
 
    // selecte(Vertex,Edge,Face)here
    this.selectedSet = new Set;
@@ -78,9 +79,9 @@ const PreviewCage = function(bench) {
             return;
          }
          _name = value; 
-         if (this._textNode) {   // treeView's representation.
-            if (this._textNode.textContent !== value) {
-               this._textNode.textContent = value;
+         if (this.guiStatus.textNode) {   // treeView's representation.
+            if (this.guiStatus.textNode.textContent !== value) {
+               this.guiStatus.textNode.textContent = value;
             }
          }
        }
@@ -97,6 +98,21 @@ PreviewCage.prototype.freeBuffer = function() {
       this.bvh.root = null;
    }
    this.geometry.free();
+};
+
+/**
+ * update gui status.
+ */
+PreviewCage.prototype.updateStatus = function() {
+   if (this.selectedSet.size === 0) {
+      if (this.guiStatus.select.checked) {
+         this.guiStatus.select.checked = false;
+      }
+   } else {
+      if (!this.guiStatus.select.checked) {
+         this.guiStatus.select.checked = true;
+      }
+   }
 };
 
 //-- bvh -----

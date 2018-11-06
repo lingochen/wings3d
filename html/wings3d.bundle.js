@@ -1508,6 +1508,11 @@ function modelView(includeLights = false) {
 
 function drawWorld(gl) {
    if (world.length > 0) {
+      // update selectStatus
+      for (let model of world) {
+         model.updateStatus();
+      }
+
       //gl.enable(gl.BLEND);
       //gl.blendFunc(gl.SRC_COLOR, gl.DST_COLOR);
       // draw Current Select Mode (vertex, edge, or face)
@@ -1627,7 +1632,7 @@ function init() {
    // selectObject
    __WEBPACK_IMPORTED_MODULE_5__wings3d__["bindAction"](null, 0, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].toggleSelectObject.name, (ev) => {
       if (isMultiMode()) {
-         toggleFaceMode();
+         toggleFaceMode(); // todo: see if we can capture the toggling cmd.
       }
       const toggle = new __WEBPACK_IMPORTED_MODULE_18__wings3d_mads__["ToggleCheckbox"](ev.target);
       const cmd = new __WEBPACK_IMPORTED_MODULE_18__wings3d_mads__["GenericEditCommand"](currentMode(), currentMode().selectObject, [currentObjects, ev.target], 
@@ -2222,6 +2227,7 @@ class MeshAllocatorProxy { // we could use Proxy, but ....
 const PreviewCage = function(bench) {
    this.geometry = new __WEBPACK_IMPORTED_MODULE_2__wings3d_wingededge__["WingedTopology"](new MeshAllocatorProxy(this));
    this.bench = bench;
+   this.guiStatus = {};
 
    // selecte(Vertex,Edge,Face)here
    this.selectedSet = new Set;
@@ -2234,9 +2240,9 @@ const PreviewCage = function(bench) {
             return;
          }
          _name = value; 
-         if (this._textNode) {   // treeView's representation.
-            if (this._textNode.textContent !== value) {
-               this._textNode.textContent = value;
+         if (this.guiStatus.textNode) {   // treeView's representation.
+            if (this.guiStatus.textNode.textContent !== value) {
+               this.guiStatus.textNode.textContent = value;
             }
          }
        }
@@ -2253,6 +2259,21 @@ PreviewCage.prototype.freeBuffer = function() {
       this.bvh.root = null;
    }
    this.geometry.free();
+};
+
+/**
+ * update gui status.
+ */
+PreviewCage.prototype.updateStatus = function() {
+   if (this.selectedSet.size === 0) {
+      if (this.guiStatus.select.checked) {
+         this.guiStatus.select.checked = false;
+      }
+   } else {
+      if (!this.guiStatus.select.checked) {
+         this.guiStatus.select.checked = true;
+      }
+   }
 };
 
 //-- bvh -----
@@ -16389,30 +16410,35 @@ class TreeView {
     * @param {PreviewCage} model -target 
     */
    addObject(model) {
-      const li = document.createElement('li');
-      li.classList.add('objectName');
-      // select whole object
-      const whole = document.createRange().createContextualFragment('<label><input type="checkbox"><span class="smallIcon" style="background-image: url(\'../img/bluecube/small_whole.png\');"></span></label>');
-      let input = whole.querySelector('input');
-      input.addEventListener('change', (ev)=> {  // whole is fragment. we want label.
-         __WEBPACK_IMPORTED_MODULE_0__wings3d_view__["setObject"]([model]);
-         __WEBPACK_IMPORTED_MODULE_1__wings3d__["runAction"](0, "toggleSelectObject", ev);
-       });
-       li.appendChild(whole);
-      // span text
-      const text = document.createElement('span');
-      text.textContent = model.name;
-      model._textNode = text;
-      li.appendChild(text);
-      // eye label
-      const eyeLabel = document.createRange().createContextualFragment('<label><input type="checkbox"><span class="smallIcon" style="background-image: url(\'../img/bluecube/small_show.png\');"></span></label>');
-      li.appendChild(eyeLabel);
-      // lock/unlock
-      const lockLabel = document.createRange().createContextualFragment('<label><input type="checkbox"><span class="smallIcon" style="background-image: url(\'../img/bluecube/small_lock.png\');"></span></label>');
-      li.appendChild(lockLabel);
-      // wireframe
-      const wireframe = document.createRange().createContextualFragment('<label><input type="checkbox"><span class="smallIcon" style="background-image: url(\'../img/bluecube/small_wire.png\');"></span></label>');
-      li.appendChild(wireframe);
+      let li = model.guiStatus.li;
+      if (!li) {
+         li = document.createElement('li');
+         model.guiStatus.li = li;
+         li.classList.add('objectName');
+         // select whole object
+         const whole = document.createRange().createContextualFragment('<label><input type="checkbox"><span class="smallIcon" style="background-image: url(\'../img/bluecube/small_whole.png\');"></span></label>');
+         let input = whole.querySelector('input');
+         input.addEventListener('change', (ev)=> {  // whole is fragment. we want label.
+            __WEBPACK_IMPORTED_MODULE_0__wings3d_view__["setObject"]([model]);
+            __WEBPACK_IMPORTED_MODULE_1__wings3d__["runAction"](0, "toggleSelectObject", ev);
+          });
+         model.guiStatus.select = input;
+         li.appendChild(whole);
+         // span text
+         const text = document.createElement('span');
+         text.textContent = model.name;
+         model.guiStatus.textNode = text;
+         li.appendChild(text);
+         // eye label
+         const eyeLabel = document.createRange().createContextualFragment('<label><input type="checkbox"><span class="smallIcon" style="background-image: url(\'../img/bluecube/small_show.png\');"></span></label>');
+         li.appendChild(eyeLabel);
+         // lock/unlock
+         const lockLabel = document.createRange().createContextualFragment('<label><input type="checkbox"><span class="smallIcon" style="background-image: url(\'../img/bluecube/small_lock.png\');"></span></label>');
+         li.appendChild(lockLabel);
+         // wireframe
+         const wireframe = document.createRange().createContextualFragment('<label><input type="checkbox"><span class="smallIcon" style="background-image: url(\'../img/bluecube/small_wire.png\');"></span></label>');
+         li.appendChild(wireframe);
+      }
       this.treeView.appendChild(li);
    }
 
@@ -16421,9 +16447,9 @@ class TreeView {
     * @param {PreviewCage} model - the previewCage to be removed from 
     */
    removeObject(model) {
-      const li = model._textNode.parentNode;
+      const li = model.guiStatus.li;
       li.parentNode.removeChild(li);
-      model._textNode = undefined;
+      //model._textNode = undefined;
    }
 
 }

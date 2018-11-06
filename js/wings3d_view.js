@@ -830,6 +830,11 @@ function modelView(includeLights = false) {
 
 function drawWorld(gl) {
    if (world.length > 0) {
+      // update selectStatus
+      for (let model of world) {
+         model.updateStatus();
+      }
+
       //gl.enable(gl.BLEND);
       //gl.blendFunc(gl.SRC_COLOR, gl.DST_COLOR);
       // draw Current Select Mode (vertex, edge, or face)
