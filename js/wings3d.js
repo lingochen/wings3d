@@ -266,7 +266,8 @@ const action = {
    createCubePref: () =>{notImplemented(this);},
    createMaterial: () => {notImplemented(this);},
    // outliner/geometory
-   selectObject: () => {notImplemented(this);},
+   toggleSelectObject: () => {notImplemented(this);},
+   toggleObjectVisibility: () =>{notImplemented(this);},
    // selection menu
    selectMenu: () => {notImplemented(this);},
    deselect: () => {notImplemented(this);},

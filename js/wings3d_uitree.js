@@ -26,7 +26,7 @@ class TreeView {
       let input = whole.querySelector('input');
       input.addEventListener('change', (ev)=> {  // whole is fragment. we want label.
          View.setObject([model]);
-         Wings3D.runAction(0, "selectObject", ev);
+         Wings3D.runAction(0, "toggleSelectObject", ev);
        });
        li.appendChild(whole);
       // span text

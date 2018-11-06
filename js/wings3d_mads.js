@@ -323,7 +323,6 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
    }
 
    selectObject(objects, input) {
-      input.checked = !input.checked;  // non-obvious solution. how can we redo the checked flag in a more obvious way?
       if (input.checked) {
          return this.snapshotTarget(objects, PreviewCage.prototype['_select' + this.modeName() + 'All']);
       } else {
@@ -335,10 +334,8 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       if (input.checked) {
          this.doAll(selection, PreviewCage.prototype['_resetSelect' + this.modeName()]); // unselected All then
       }
-      input.checked = !input.checked;
       this.doAll(selection, PreviewCage.prototype.restoreSelection, this); // restore
    }
-
 
    isVertexSelectable() { return false; }
    isEdgeSelectable() { return false; }
@@ -377,6 +374,22 @@ class DragSelect {
          this.select.set(cage, array);
       }
       this.madsor.dragSelect(cage, hilite, array, this.onOff);
+   }
+}
+
+
+class ToggleCheckbox extends EditCommand {
+   constructor(input) {
+      super();
+      this.input = input;
+   }
+
+   doIt() {
+      this.input.checked = !this.input.checked;
+   }
+
+   undo() {
+      this.input.checked = !this.input.checked;
    }
 }
 
@@ -788,5 +801,6 @@ export {
    MoveAlongNormal,
    MoveFreePositionHandler,
    MouseRotateAlongAxis,
+   ToggleCheckbox,
    ToggleModeCommand,
 }

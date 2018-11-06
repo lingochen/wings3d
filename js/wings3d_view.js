@@ -22,7 +22,7 @@ import {Ray} from './wings3d_boundingvolume';
 import * as Hotkey from './wings3d_hotkey';
 import * as Util from './wings3d_util';
 import * as TreeView from './wings3d_uitree';
-import { GenericEditCommand } from './wings3d_mads';
+import { GenericEditCommand, ToggleCheckbox } from './wings3d_mads';
 
 
 // 
@@ -218,6 +218,9 @@ function toggleMode(mode) {
       button.click();         // https://stackoverflow.com/questions/8206565/check-uncheck-checkbox-with-javascript
    }
 }
+function isMultiMode() {
+   return mode.current === mode.multi;
+};
 function toggleVertexMode() {
    // change current mode to 
    if (mode.current !== mode.vertex) {
@@ -943,12 +946,24 @@ function init() {
 
    // bind geometryGraph
    geometryGraph = TreeView.getTreeView('#objectList');
-   Wings3D.bindAction(null, 0, Wings3D.action.selectObject.name, (ev) => {
+   // selectObject
+   Wings3D.bindAction(null, 0, Wings3D.action.toggleSelectObject.name, (ev) => {
+      if (isMultiMode()) {
+         toggleFaceMode(); // todo: see if we can capture the toggling cmd.
+      }
+      const toggle = new ToggleCheckbox(ev.target);
       const cmd = new GenericEditCommand(currentMode(), currentMode().selectObject, [currentObjects, ev.target], 
                                                         currentMode().undoSelectObject, [ev.target]);
-      ev.target.checked = !ev.target.checked;   // doIt() will flipped it again.
       cmd.doIt();
-      undoQueue(cmd);
+      undoQueueCombo([toggle, cmd]);
+    });
+   // hide/show Object
+   Wings3D.bindAction(null, 0, Wings3D.action.toggleObjectVisibility.name, (ev) => {
+      const toggle = new ToggleCheckbox(ev.target);
+      const cmd = new GenericEditCommand(currentMode(), currentMode().selectObject, [currentObjects, ev.target], 
+                                                        currentMode().undoSelectObject, [ev.target]);
+      cmd.doIt();
+      undoQueueCombo([toggle, cmd]);
     });
 
    // bind .dropdown, click event.

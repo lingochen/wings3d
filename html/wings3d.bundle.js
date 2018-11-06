@@ -352,7 +352,8 @@ const action = {
    createCubePref: () =>{notImplemented(this);},
    createMaterial: () => {notImplemented(this);},
    // outliner/geometory
-   selectObject: () => {notImplemented(this);},
+   toggleSelectObject: () => {notImplemented(this);},
+   toggleObjectVisibility: () =>{notImplemented(this);},
    // selection menu
    selectMenu: () => {notImplemented(this);},
    deselect: () => {notImplemented(this);},
@@ -895,6 +896,9 @@ function toggleMode(mode) {
       button.click();         // https://stackoverflow.com/questions/8206565/check-uncheck-checkbox-with-javascript
    }
 }
+function isMultiMode() {
+   return mode.current === mode.multi;
+};
 function toggleVertexMode() {
    // change current mode to 
    if (mode.current !== mode.vertex) {
@@ -1620,12 +1624,24 @@ function init() {
 
    // bind geometryGraph
    geometryGraph = __WEBPACK_IMPORTED_MODULE_17__wings3d_uitree__["getTreeView"]('#objectList');
-   __WEBPACK_IMPORTED_MODULE_5__wings3d__["bindAction"](null, 0, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].selectObject.name, (ev) => {
+   // selectObject
+   __WEBPACK_IMPORTED_MODULE_5__wings3d__["bindAction"](null, 0, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].toggleSelectObject.name, (ev) => {
+      if (isMultiMode()) {
+         toggleFaceMode();
+      }
+      const toggle = new __WEBPACK_IMPORTED_MODULE_18__wings3d_mads__["ToggleCheckbox"](ev.target);
       const cmd = new __WEBPACK_IMPORTED_MODULE_18__wings3d_mads__["GenericEditCommand"](currentMode(), currentMode().selectObject, [currentObjects, ev.target], 
                                                         currentMode().undoSelectObject, [ev.target]);
-      ev.target.checked = !ev.target.checked;   // doIt() will flipped it again.
       cmd.doIt();
-      undoQueue(cmd);
+      undoQueueCombo([toggle, cmd]);
+    });
+   // hide/show Object
+   __WEBPACK_IMPORTED_MODULE_5__wings3d__["bindAction"](null, 0, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].toggleObjectVisibility.name, (ev) => {
+      const toggle = new __WEBPACK_IMPORTED_MODULE_18__wings3d_mads__["ToggleCheckbox"](ev.target);
+      const cmd = new __WEBPACK_IMPORTED_MODULE_18__wings3d_mads__["GenericEditCommand"](currentMode(), currentMode().selectObject, [currentObjects, ev.target], 
+                                                        currentMode().undoSelectObject, [ev.target]);
+      cmd.doIt();
+      undoQueueCombo([toggle, cmd]);
     });
 
    // bind .dropdown, click event.
@@ -7303,6 +7319,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "MoveAlongNormal", function() { return MoveAlongNormal; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "MoveFreePositionHandler", function() { return MoveFreePositionHandler; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "MouseRotateAlongAxis", function() { return MouseRotateAlongAxis; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ToggleCheckbox", function() { return ToggleCheckbox; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ToggleModeCommand", function() { return ToggleModeCommand; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__ = __webpack_require__(5);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__ = __webpack_require__(4);
@@ -7636,7 +7653,6 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
    }
 
    selectObject(objects, input) {
-      input.checked = !input.checked;  // non-obvious solution. how can we redo the checked flag in a more obvious way?
       if (input.checked) {
          return this.snapshotTarget(objects, __WEBPACK_IMPORTED_MODULE_2__wings3d_model__["PreviewCage"].prototype['_select' + this.modeName() + 'All']);
       } else {
@@ -7648,10 +7664,8 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       if (input.checked) {
          this.doAll(selection, __WEBPACK_IMPORTED_MODULE_2__wings3d_model__["PreviewCage"].prototype['_resetSelect' + this.modeName()]); // unselected All then
       }
-      input.checked = !input.checked;
       this.doAll(selection, __WEBPACK_IMPORTED_MODULE_2__wings3d_model__["PreviewCage"].prototype.restoreSelection, this); // restore
    }
-
 
    isVertexSelectable() { return false; }
    isEdgeSelectable() { return false; }
@@ -7690,6 +7704,22 @@ class DragSelect {
          this.select.set(cage, array);
       }
       this.madsor.dragSelect(cage, hilite, array, this.onOff);
+   }
+}
+
+
+class ToggleCheckbox extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["EditCommand"] {
+   constructor(input) {
+      super();
+      this.input = input;
+   }
+
+   doIt() {
+      this.input.checked = !this.input.checked;
+   }
+
+   undo() {
+      this.input.checked = !this.input.checked;
    }
 }
 
@@ -16272,17 +16302,6 @@ class MultiMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] 
    isEdgeSelectable() { return true; }
    isVertexSelectable() { return true; }
 
-   selectObject(objects, input) {
-      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["toggleFaceMode"]();
-      return __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["currentMode"]().selectObject(objects, input);
-   }
-
-   undoSelectObject(objects, input) {
-      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["currentMode"]().undoSelectObject(objects, input);  // currentMode is  Face
-      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoEdit"]();  // restore to current MultiMode
-   }
-
-
    toggleMulti(hilite) {
       if (hilite.face) {
          __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["toggleFaceMode"]();
@@ -16377,7 +16396,7 @@ class TreeView {
       let input = whole.querySelector('input');
       input.addEventListener('change', (ev)=> {  // whole is fragment. we want label.
          __WEBPACK_IMPORTED_MODULE_0__wings3d_view__["setObject"]([model]);
-         __WEBPACK_IMPORTED_MODULE_1__wings3d__["runAction"](0, "selectObject", ev);
+         __WEBPACK_IMPORTED_MODULE_1__wings3d__["runAction"](0, "toggleSelectObject", ev);
        });
        li.appendChild(whole);
       // span text
