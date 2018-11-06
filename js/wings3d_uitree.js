@@ -5,6 +5,15 @@
 import * as View from './wings3d_view';
 import * as Wings3D from './wings3d';
 
+//---- utility function
+function editable(_ev) {
+   this.contentEditable = true;
+   this.focus();
+};
+function unEditable(_ev) {
+   this.contentEditable = false;
+}
+
 /** 
  * tree view
 */
@@ -37,9 +46,17 @@ class TreeView {
          const text = document.createElement('span');
          text.textContent = model.name;
          model.guiStatus.textNode = text;
+         text.addEventListener('dblclick', editable);
+         text.addEventListener('blur', unEditable);
          li.appendChild(text);
          // eye label
          const eyeLabel = document.createRange().createContextualFragment('<label><input type="checkbox"><span class="smallIcon" style="background-image: url(\'../img/bluecube/small_show.png\');"></span></label>');
+         input = eyeLabel.querySelector('input');
+         input.addEventListener('change', (ev)=> {  // whole is fragment. we want label.
+            View.setObject([model]);
+            Wings3D.runAction(0, "toggleSelectObject", ev);
+          });
+         model.guiStatus.visibility = input;
          li.appendChild(eyeLabel);
          // lock/unlock
          const lockLabel = document.createRange().createContextualFragment('<label><input type="checkbox"><span class="smallIcon" style="background-image: url(\'../img/bluecube/small_lock.png\');"></span></label>');
