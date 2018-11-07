@@ -105,7 +105,7 @@ PreviewCage.prototype.freeBuffer = function() {
  * update gui status.
  */
 PreviewCage.prototype.updateStatus = function() {
-   if (this.selectedSet.size === 0) {
+   if (!this.isVisible() || (this.selectedSet.size === 0)) {
       if (this.guiStatus.select.checked) {
          this.guiStatus.select.checked = false;
       }
@@ -319,12 +319,26 @@ PreviewCage.prototype.detachFace = function(detachFaces, number) {
 
 
 
-PreviewCage.prototype.hide = function() {
-   this.bench.hide(this.geometry.faces);
-};
-
-PreviewCage.prototype.show = function() {
-   this.bench.show(this.geometry.faces);
+PreviewCage.prototype.setVisible = function(on) {
+   if (on) {
+      if (!this.status.visible) {
+         this.status.visible = true;
+         this.bench.modifyPreview();
+         for (let polygon of this.geometry.faces) {
+            polygon.visible = true;
+         }
+         return this;
+      }
+   } else {
+      if (this.status.visible) {
+         this.status.visible = false;
+         this.bench.modifyPreview();
+         for (let polygon of this.geometry.faces) {
+            polygon.visible = false;
+         }
+         return this;
+      }
+   }
 };
 
 

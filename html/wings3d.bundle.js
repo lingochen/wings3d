@@ -1018,7 +1018,7 @@ function putIntoWorld() {
 
 function addToWorld(model) {
    world.push( model );
-   model.show();
+   model.setVisible(true);
    draftBench.updatePreview();
    __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
    // update geometryGraph
@@ -1030,7 +1030,7 @@ function removeFromWorld(previewCage) {
    var index = world.indexOf(previewCage);
    if (index >= 0) {
       world.splice(index, 1);
-      previewCage.hide();
+      previewCage.setVisible(false);
       draftBench.updatePreview();
       __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
       // remove from geometryGraph
@@ -1646,8 +1646,8 @@ function init() {
    // hide/show Object
    __WEBPACK_IMPORTED_MODULE_5__wings3d__["bindAction"](null, 0, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].toggleObjectVisibility.name, (ev) => {
       const toggle = new __WEBPACK_IMPORTED_MODULE_18__wings3d_mads__["ToggleCheckbox"](ev.target);
-      const cmd = new __WEBPACK_IMPORTED_MODULE_18__wings3d_mads__["GenericEditCommand"](currentMode(), currentMode().selectObject, [currentObjects, ev.target], 
-                                                        currentMode().undoSelectObject, [ev.target]);
+      const cmd = new __WEBPACK_IMPORTED_MODULE_18__wings3d_mads__["GenericEditCommand"](currentMode(), currentMode().toggleObjectVisibility, [currentObjects, ev.target], 
+                                                        currentMode().undoObjectVisibility, [ev.target]);
       cmd.doIt();
       undoQueueCombo([toggle, cmd]);
     });
@@ -2277,7 +2277,7 @@ PreviewCage.prototype.freeBuffer = function() {
  * update gui status.
  */
 PreviewCage.prototype.updateStatus = function() {
-   if (this.selectedSet.size === 0) {
+   if (!this.isVisible() || (this.selectedSet.size === 0)) {
       if (this.guiStatus.select.checked) {
          this.guiStatus.select.checked = false;
       }
@@ -2491,12 +2491,26 @@ PreviewCage.prototype.detachFace = function(detachFaces, number) {
 
 
 
-PreviewCage.prototype.hide = function() {
-   this.bench.hide(this.geometry.faces);
-};
-
-PreviewCage.prototype.show = function() {
-   this.bench.show(this.geometry.faces);
+PreviewCage.prototype.setVisible = function(on) {
+   if (on) {
+      if (!this.status.visible) {
+         this.status.visible = true;
+         this.bench.modifyPreview();
+         for (let polygon of this.geometry.faces) {
+            polygon.visible = true;
+         }
+         return this;
+      }
+   } else {
+      if (this.status.visible) {
+         this.status.visible = false;
+         this.bench.modifyPreview();
+         for (let polygon of this.geometry.faces) {
+            polygon.visible = false;
+         }
+         return this;
+      }
+   }
 };
 
 
@@ -7736,6 +7750,14 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       this.doAll(selection, __WEBPACK_IMPORTED_MODULE_2__wings3d_model__["PreviewCage"].prototype.toggleLock, !input.checked);   // restore
    }
 
+   toggleObjectVisibility(objects, input) {
+      return this.snapshotTarget(objects, __WEBPACK_IMPORTED_MODULE_2__wings3d_model__["PreviewCage"].prototype.setVisible, !input.checked); // checked is invisible
+   }
+
+   undoToggleObjectLock(selection, input) {
+      return this.doAll(selection, __WEBPACK_IMPORTED_MODULE_2__wings3d_model__["PreviewCage"].prototype.setVisible, input.checked);
+   }
+
    isVertexSelectable() { return false; }
    isEdgeSelectable() { return false; }
    isFaceSelectable() { return false; }
@@ -8267,12 +8289,12 @@ WingedEdge.prototype[Symbol.iterator] = function* () {
  * @return {number} - current index position.
  */
 WingedEdge.prototype.buildIndex = function(data, idx, vertexLength) {
-   if (this.left.face) {
+   if (this.left.face && this.left.face.isVisible()) {
       data[idx++] = this.left.origin.index;
       data[idx++] = this.right.origin.index;
       data[idx++] = this.left.face.index + vertexLength;
    }
-   if (this.right.face) {
+   if (this.right.face && this.right.face.isVisible()) {
       data[idx++] = this.right.origin.index;
       data[idx++] = this.left.origin.index;
       data[idx++] = this.right.face.index + vertexLength;
@@ -8630,13 +8652,17 @@ var Polygon = function(startEdge, size) {
    this.numberOfVertex = size;       // how many vertex in the polygon
    this.update(); //this.computeNormal();
    this.index = -1;
-   this.isVisible = true;
+   this.visible = true;
 };
 
-// not on free list. not deleted.
+// not on free list. not deleted and visible
 Polygon.prototype.isLive = function() {
    return (this.halfEdge !== null);
 };
+
+Polygon.prototype.isVisible = function() {
+   return this.visible && (this.halfEdge !== null);
+}
 
 Polygon.prototype.buildIndex = function(data, index, center) {
    for (let edge of this.hEdges()) {
@@ -8786,7 +8812,7 @@ Polygon.prototype.getCentroid = function(centroid) {
 
 /*let PolygonHole = function() {
    const ret = new Polygon();
-   ret.isVisible = false;
+   ret.visible = false;
 
 };*/
 
@@ -8896,7 +8922,7 @@ MeshAllocator.prototype.allocPolygon = function(halfEdge, numberOfVertex, delPol
       polygon.halfEdge = halfEdge;
       polygon.numberOfVertex = numberOfVertex;
       polygon.update();
-      polygon.isVisible = true;  // make sure it visible.
+      polygon.visible = true;  // make sure it visible.
       this.affected.faces.add( polygon );
    } else {
       polygon = new Polygon(halfEdge, numberOfVertex);
@@ -14242,7 +14268,6 @@ const DraftBench = function(theme, prop, defaultSize = 2048) {  // should only b
    this.preview.edge.indexCount = 0;
    this.preview.edge.hilite = {indexCount: 0, wEdge: null};
    this.preview.edge.hardness = {isModified: false, indexCount: 0};
-   this._resizePreviewEdge(0);
 
    // previewVertex
    this.preview.vertex = {isModified: false, min: Number.MAX_SAFE_INTEGER, max: Number.MIN_SAFE_INTEGER};
@@ -14334,7 +14359,6 @@ DraftBench.prototype.freeBuffer = function() {
 DraftBench.prototype.updatePreview = function() {
    this._resizeBoundingSphere();
    this._resizePreview();
-   this._resizePreviewEdge();
    this._resizePreviewVertex();
    this._updatePreviewSize();
    this._updateAffected(this.affected);
@@ -14488,10 +14512,6 @@ DraftBench.prototype._computeGroupHiliteIndex = function(faceGroup) {
 };
 
 
-DraftBench.prototype._resizePreviewEdge = function() {
-};
-
-
 DraftBench.prototype._resizePreviewVertex = function() {
    const oldSize = this.lastPreviewSize.vertices;
    const length = this.vertices.length;
@@ -14618,7 +14638,7 @@ DraftBench.prototype.draw = function(gl) {
       let j = 0;
       for (let i = 0; i < this.faces.length; ++i) {
          const polygon = this.faces[i];
-         if (polygon.isLive()) {
+         if (polygon.isVisible()) {
             const center = i + this.vertices.length;
             if (this.preview.selected[i] & 1) {
                k = polygon.buildIndex(selection, k, center);
@@ -14933,6 +14953,13 @@ DraftBench.prototype.updatePosition = function() {
 };
 
 
+DraftBench.prototype.modifyPreview = function() {
+   //if (this.preview.indexLength && (this.preview.indexLength >= 0)) {   // catch initial false condition?
+      this.preview.isModified = true;
+   //}
+}
+
+
 DraftBench.prototype.selectFace = function(polygon, toggleOn) {
    if (toggleOn) {
       if ((this.preview.selected[polygon.index] & 1) === 0) {
@@ -14959,19 +14986,6 @@ DraftBench.prototype.resetSelectFace = function() {
    this.preview.selected.fill(0);            // reset all polygon to non-selected 
    this.preview.selectedCount = 0;
    this.preview.isModified = true;
-};
-
-
-DraftBench.prototype.hide = function(faceGroup) {
-   for (let polygon of faceGroup) {
-      polygon.isVisible = false;
-   }
-};
-
-DraftBench.prototype.show = function(faceGroup) {
-   for (let polygon of faceGroup) {
-      polygon.isVisible = true;
-   }
 };
 
 
@@ -15050,7 +15064,7 @@ class CheckPoint extends __WEBPACK_IMPORTED_MODULE_5__wings3d_undo__["EditComman
       // use index because draftBench could have more faces(all dead) than our Saved one due to expansion.
       for (let i = 0; i < this.faces.length; ++i) {   // check polygon first, most like to have problems
          const polygon = this.draftBench.faces[i];
-         if (polygon.isLive) {
+         if (polygon.isLive()) {
             if (polygon.halfEdge.index != this.faces[i]) {
                geometryStatus("CheckPoint failed. non matching polygon halfEdge");
                return;
@@ -16476,7 +16490,7 @@ class TreeView {
          const whole = document.createRange().createContextualFragment('<label><input type="checkbox"><span class="smallIcon" style="background-image: url(\'../img/bluecube/small_whole.png\');"></span></label>');
          let input = whole.querySelector('input');
          input.addEventListener('change', (ev)=> {  // whole is fragment. we want label.
-            if (model.isLock()) {   // not actually changeable
+            if (model.isLock() || !model.isVisible()) {   // not actually changeable
                ev.target.checked = !ev.target.checked;
                return;
             }
@@ -16496,8 +16510,12 @@ class TreeView {
          const eyeLabel = document.createRange().createContextualFragment('<label><input type="checkbox"><span class="smallIcon" style="background-image: url(\'../img/bluecube/small_show.png\');"></span></label>');
          input = eyeLabel.querySelector('input');
          input.addEventListener('change', (ev)=> {  // whole is fragment. we want label.
+            if (model.isLock()) {   // non modifiable object
+               ev.target.checked = !ev.target.checked;
+               return;
+            }
             __WEBPACK_IMPORTED_MODULE_0__wings3d_view__["setObject"]([model]);
-            __WEBPACK_IMPORTED_MODULE_1__wings3d__["runAction"](0, "toggleObjectVisibility", ev);
+            __WEBPACK_IMPORTED_MODULE_1__wings3d__["runAction"](0, "toggleObjectVisibility", ev);   
           });
          model.guiStatus.visibility = input;
          li.appendChild(eyeLabel);

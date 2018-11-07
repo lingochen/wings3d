@@ -339,7 +339,7 @@ function putIntoWorld() {
 
 function addToWorld(model) {
    world.push( model );
-   model.show();
+   model.setVisible(true);
    draftBench.updatePreview();
    Renderer.needToRedraw();
    // update geometryGraph
@@ -351,7 +351,7 @@ function removeFromWorld(previewCage) {
    var index = world.indexOf(previewCage);
    if (index >= 0) {
       world.splice(index, 1);
-      previewCage.hide();
+      previewCage.setVisible(false);
       draftBench.updatePreview();
       Renderer.needToRedraw();
       // remove from geometryGraph
@@ -967,8 +967,8 @@ function init() {
    // hide/show Object
    Wings3D.bindAction(null, 0, Wings3D.action.toggleObjectVisibility.name, (ev) => {
       const toggle = new ToggleCheckbox(ev.target);
-      const cmd = new GenericEditCommand(currentMode(), currentMode().selectObject, [currentObjects, ev.target], 
-                                                        currentMode().undoSelectObject, [ev.target]);
+      const cmd = new GenericEditCommand(currentMode(), currentMode().toggleObjectVisibility, [currentObjects, ev.target], 
+                                                        currentMode().undoObjectVisibility, [ev.target]);
       cmd.doIt();
       undoQueueCombo([toggle, cmd]);
     });

@@ -48,7 +48,6 @@ const DraftBench = function(theme, prop, defaultSize = 2048) {  // should only b
    this.preview.edge.indexCount = 0;
    this.preview.edge.hilite = {indexCount: 0, wEdge: null};
    this.preview.edge.hardness = {isModified: false, indexCount: 0};
-   this._resizePreviewEdge(0);
 
    // previewVertex
    this.preview.vertex = {isModified: false, min: Number.MAX_SAFE_INTEGER, max: Number.MIN_SAFE_INTEGER};
@@ -140,7 +139,6 @@ DraftBench.prototype.freeBuffer = function() {
 DraftBench.prototype.updatePreview = function() {
    this._resizeBoundingSphere();
    this._resizePreview();
-   this._resizePreviewEdge();
    this._resizePreviewVertex();
    this._updatePreviewSize();
    this._updateAffected(this.affected);
@@ -294,10 +292,6 @@ DraftBench.prototype._computeGroupHiliteIndex = function(faceGroup) {
 };
 
 
-DraftBench.prototype._resizePreviewEdge = function() {
-};
-
-
 DraftBench.prototype._resizePreviewVertex = function() {
    const oldSize = this.lastPreviewSize.vertices;
    const length = this.vertices.length;
@@ -424,7 +418,7 @@ DraftBench.prototype.draw = function(gl) {
       let j = 0;
       for (let i = 0; i < this.faces.length; ++i) {
          const polygon = this.faces[i];
-         if (polygon.isLive()) {
+         if (polygon.isVisible()) {
             const center = i + this.vertices.length;
             if (this.preview.selected[i] & 1) {
                k = polygon.buildIndex(selection, k, center);
@@ -739,6 +733,13 @@ DraftBench.prototype.updatePosition = function() {
 };
 
 
+DraftBench.prototype.modifyPreview = function() {
+   //if (this.preview.indexLength && (this.preview.indexLength >= 0)) {   // catch initial false condition?
+      this.preview.isModified = true;
+   //}
+}
+
+
 DraftBench.prototype.selectFace = function(polygon, toggleOn) {
    if (toggleOn) {
       if ((this.preview.selected[polygon.index] & 1) === 0) {
@@ -765,19 +766,6 @@ DraftBench.prototype.resetSelectFace = function() {
    this.preview.selected.fill(0);            // reset all polygon to non-selected 
    this.preview.selectedCount = 0;
    this.preview.isModified = true;
-};
-
-
-DraftBench.prototype.hide = function(faceGroup) {
-   for (let polygon of faceGroup) {
-      polygon.isVisible = false;
-   }
-};
-
-DraftBench.prototype.show = function(faceGroup) {
-   for (let polygon of faceGroup) {
-      polygon.isVisible = true;
-   }
 };
 
 
@@ -856,7 +844,7 @@ class CheckPoint extends EditCommand { // do we really needs to inherited form E
       // use index because draftBench could have more faces(all dead) than our Saved one due to expansion.
       for (let i = 0; i < this.faces.length; ++i) {   // check polygon first, most like to have problems
          const polygon = this.draftBench.faces[i];
-         if (polygon.isLive) {
+         if (polygon.isLive()) {
             if (polygon.halfEdge.index != this.faces[i]) {
                geometryStatus("CheckPoint failed. non matching polygon halfEdge");
                return;

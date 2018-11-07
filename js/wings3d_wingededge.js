@@ -60,12 +60,12 @@ WingedEdge.prototype[Symbol.iterator] = function* () {
  * @return {number} - current index position.
  */
 WingedEdge.prototype.buildIndex = function(data, idx, vertexLength) {
-   if (this.left.face) {
+   if (this.left.face && this.left.face.isVisible()) {
       data[idx++] = this.left.origin.index;
       data[idx++] = this.right.origin.index;
       data[idx++] = this.left.face.index + vertexLength;
    }
-   if (this.right.face) {
+   if (this.right.face && this.right.face.isVisible()) {
       data[idx++] = this.right.origin.index;
       data[idx++] = this.left.origin.index;
       data[idx++] = this.right.face.index + vertexLength;
@@ -423,13 +423,17 @@ var Polygon = function(startEdge, size) {
    this.numberOfVertex = size;       // how many vertex in the polygon
    this.update(); //this.computeNormal();
    this.index = -1;
-   this.isVisible = true;
+   this.visible = true;
 };
 
-// not on free list. not deleted.
+// not on free list. not deleted and visible
 Polygon.prototype.isLive = function() {
    return (this.halfEdge !== null);
 };
+
+Polygon.prototype.isVisible = function() {
+   return this.visible && (this.halfEdge !== null);
+}
 
 Polygon.prototype.buildIndex = function(data, index, center) {
    for (let edge of this.hEdges()) {
@@ -579,7 +583,7 @@ Polygon.prototype.getCentroid = function(centroid) {
 
 /*let PolygonHole = function() {
    const ret = new Polygon();
-   ret.isVisible = false;
+   ret.visible = false;
 
 };*/
 
@@ -689,7 +693,7 @@ MeshAllocator.prototype.allocPolygon = function(halfEdge, numberOfVertex, delPol
       polygon.halfEdge = halfEdge;
       polygon.numberOfVertex = numberOfVertex;
       polygon.update();
-      polygon.isVisible = true;  // make sure it visible.
+      polygon.visible = true;  // make sure it visible.
       this.affected.faces.add( polygon );
    } else {
       polygon = new Polygon(halfEdge, numberOfVertex);

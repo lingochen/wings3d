@@ -37,7 +37,7 @@ class TreeView {
          const whole = document.createRange().createContextualFragment('<label><input type="checkbox"><span class="smallIcon" style="background-image: url(\'../img/bluecube/small_whole.png\');"></span></label>');
          let input = whole.querySelector('input');
          input.addEventListener('change', (ev)=> {  // whole is fragment. we want label.
-            if (model.isLock()) {   // not actually changeable
+            if (model.isLock() || !model.isVisible()) {   // not actually changeable
                ev.target.checked = !ev.target.checked;
                return;
             }
@@ -57,8 +57,12 @@ class TreeView {
          const eyeLabel = document.createRange().createContextualFragment('<label><input type="checkbox"><span class="smallIcon" style="background-image: url(\'../img/bluecube/small_show.png\');"></span></label>');
          input = eyeLabel.querySelector('input');
          input.addEventListener('change', (ev)=> {  // whole is fragment. we want label.
+            if (model.isLock()) {   // non modifiable object
+               ev.target.checked = !ev.target.checked;
+               return;
+            }
             View.setObject([model]);
-            Wings3D.runAction(0, "toggleObjectVisibility", ev);
+            Wings3D.runAction(0, "toggleObjectVisibility", ev);   
           });
          model.guiStatus.visibility = input;
          li.appendChild(eyeLabel);

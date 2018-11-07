@@ -346,6 +346,14 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       this.doAll(selection, PreviewCage.prototype.toggleLock, !input.checked);   // restore
    }
 
+   toggleObjectVisibility(objects, input) {
+      return this.snapshotTarget(objects, PreviewCage.prototype.setVisible, !input.checked); // checked is invisible
+   }
+
+   undoToggleObjectLock(selection, input) {
+      return this.doAll(selection, PreviewCage.prototype.setVisible, input.checked);
+   }
+
    isVertexSelectable() { return false; }
    isEdgeSelectable() { return false; }
    isFaceSelectable() { return false; }
