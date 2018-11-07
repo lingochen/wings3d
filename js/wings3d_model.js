@@ -67,6 +67,7 @@ const PreviewCage = function(bench) {
    this.geometry = new WingedTopology(new MeshAllocatorProxy(this));
    this.bench = bench;
    this.guiStatus = {};
+   this.status = {locked: false, visible: true};
 
    // selecte(Vertex,Edge,Face)here
    this.selectedSet = new Set;
@@ -325,6 +326,33 @@ PreviewCage.prototype.hide = function() {
 PreviewCage.prototype.show = function() {
    this.bench.show(this.geometry.faces);
 };
+
+
+/**
+ * lock/unlock Preview to further operation.
+ * @param {bool} toggle - lock/ unlock
+ */
+PreviewCage.prototype.toggleLock = function(toggle) {
+   if (toggle) {
+      if (!this.status.locked) {
+         this.status.locked = true;
+         return this;
+      }
+   } else {
+      if (this.status.locked) {
+         this.status.locked = false;
+      }
+   }
+   return null;
+};
+
+PreviewCage.prototype.isLock = function() {
+   return this.status.locked;
+}
+
+PreviewCage.prototype.isVisible = function() {
+   return this.status.visible;
+}
 
 
 PreviewCage.prototype._getGeometrySize = function() {

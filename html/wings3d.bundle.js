@@ -352,8 +352,9 @@ const action = {
    createCubePref: () =>{notImplemented(this);},
    createMaterial: () => {notImplemented(this);},
    // outliner/geometory
-   toggleSelectObject: () => {notImplemented(this);},
+   toggleObjectSelect: () => {notImplemented(this);},
    toggleObjectVisibility: () =>{notImplemented(this);},
+   toggleObjectLock: ()=>{notImplemented(this);},
    // selection menu
    selectMenu: () => {notImplemented(this);},
    deselect: () => {notImplemented(this);},
@@ -1197,10 +1198,12 @@ let lastPick = null;
 function rayPick(ray) {
    let pick = null;
    for (let model of world) {
-      const newPick = model.rayPick(ray);
-      if (newPick !== null) {
-         if ((pick === null) || (pick.t > newPick.t)) {
-            pick = newPick;
+      if (!model.isLock() && model.isVisible()) {
+         const newPick = model.rayPick(ray);
+         if (newPick !== null) {
+            if ((pick === null) || (pick.t > newPick.t)) {
+               pick = newPick;
+            }
          }
       }
    }
@@ -1630,7 +1633,7 @@ function init() {
    // bind geometryGraph
    geometryGraph = __WEBPACK_IMPORTED_MODULE_17__wings3d_uitree__["getTreeView"]('#objectList');
    // selectObject
-   __WEBPACK_IMPORTED_MODULE_5__wings3d__["bindAction"](null, 0, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].toggleSelectObject.name, (ev) => {
+   __WEBPACK_IMPORTED_MODULE_5__wings3d__["bindAction"](null, 0, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].toggleObjectSelect.name, (ev) => {
       if (isMultiMode()) {
          toggleFaceMode(); // todo: see if we can capture the toggling cmd.
       }
@@ -1645,6 +1648,14 @@ function init() {
       const toggle = new __WEBPACK_IMPORTED_MODULE_18__wings3d_mads__["ToggleCheckbox"](ev.target);
       const cmd = new __WEBPACK_IMPORTED_MODULE_18__wings3d_mads__["GenericEditCommand"](currentMode(), currentMode().selectObject, [currentObjects, ev.target], 
                                                         currentMode().undoSelectObject, [ev.target]);
+      cmd.doIt();
+      undoQueueCombo([toggle, cmd]);
+    });
+   // lock/unlock Object
+   __WEBPACK_IMPORTED_MODULE_5__wings3d__["bindAction"](null, 0, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].toggleObjectLock.name, (ev) => {
+      const toggle = new __WEBPACK_IMPORTED_MODULE_18__wings3d_mads__["ToggleCheckbox"](ev.target);
+      const cmd = new __WEBPACK_IMPORTED_MODULE_18__wings3d_mads__["GenericEditCommand"](currentMode(), currentMode().toggleObjectLock, [currentObjects, ev.target], 
+                                                        currentMode().undoToggleObjectLock, [ev.target]);
       cmd.doIt();
       undoQueueCombo([toggle, cmd]);
     });
@@ -2228,6 +2239,7 @@ const PreviewCage = function(bench) {
    this.geometry = new __WEBPACK_IMPORTED_MODULE_2__wings3d_wingededge__["WingedTopology"](new MeshAllocatorProxy(this));
    this.bench = bench;
    this.guiStatus = {};
+   this.status = {locked: false, visible: true};
 
    // selecte(Vertex,Edge,Face)here
    this.selectedSet = new Set;
@@ -2486,6 +2498,33 @@ PreviewCage.prototype.hide = function() {
 PreviewCage.prototype.show = function() {
    this.bench.show(this.geometry.faces);
 };
+
+
+/**
+ * lock/unlock Preview to further operation.
+ * @param {bool} toggle - lock/ unlock
+ */
+PreviewCage.prototype.toggleLock = function(toggle) {
+   if (toggle) {
+      if (!this.status.locked) {
+         this.status.locked = true;
+         return this;
+      }
+   } else {
+      if (this.status.locked) {
+         this.status.locked = false;
+      }
+   }
+   return null;
+};
+
+PreviewCage.prototype.isLock = function() {
+   return this.status.locked;
+}
+
+PreviewCage.prototype.isVisible = function() {
+   return this.status.visible;
+}
 
 
 PreviewCage.prototype._getGeometrySize = function() {
@@ -7503,7 +7542,8 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
 
    snapshotAll(func, ...args) {
       const snapshots = [];
-      for (let preview of __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["getWorld"]()) {
+      //for (let preview of View.getWorld()) {
+      for (let preview of this.selectableCage()) {
          if (preview.hasSelection()) {
             const snapshot = func.call(preview, ...args);
             if (snapshot) {
@@ -7585,7 +7625,7 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
    }
 
    hasSelection() {
-      for (let cage of __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["getWorld"]()) {
+      for (let cage of this.selectableCage()) {
          if (cage.hasSelection()) {
             return true;
          }
@@ -7686,6 +7726,14 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
          this.doAll(selection, __WEBPACK_IMPORTED_MODULE_2__wings3d_model__["PreviewCage"].prototype['_resetSelect' + this.modeName()]); // unselected All then
       }
       this.doAll(selection, __WEBPACK_IMPORTED_MODULE_2__wings3d_model__["PreviewCage"].prototype.restoreSelection, this); // restore
+   }
+
+   toggleObjectLock(objects, input) {
+      return this.snapshotTarget(objects, __WEBPACK_IMPORTED_MODULE_2__wings3d_model__["PreviewCage"].prototype.toggleLock, input.checked);
+   }
+
+   undoToggleObjectLock(selection, input) {
+      this.doAll(selection, __WEBPACK_IMPORTED_MODULE_2__wings3d_model__["PreviewCage"].prototype.toggleLock, !input.checked);   // restore
    }
 
    isVertexSelectable() { return false; }
@@ -16428,8 +16476,12 @@ class TreeView {
          const whole = document.createRange().createContextualFragment('<label><input type="checkbox"><span class="smallIcon" style="background-image: url(\'../img/bluecube/small_whole.png\');"></span></label>');
          let input = whole.querySelector('input');
          input.addEventListener('change', (ev)=> {  // whole is fragment. we want label.
+            if (model.isLock()) {   // not actually changeable
+               ev.target.checked = !ev.target.checked;
+               return;
+            }
             __WEBPACK_IMPORTED_MODULE_0__wings3d_view__["setObject"]([model]);
-            __WEBPACK_IMPORTED_MODULE_1__wings3d__["runAction"](0, "toggleSelectObject", ev);
+            __WEBPACK_IMPORTED_MODULE_1__wings3d__["runAction"](0, "toggleObjectSelect", ev);
           });
          model.guiStatus.select = input;
          li.appendChild(whole);
@@ -16445,13 +16497,19 @@ class TreeView {
          input = eyeLabel.querySelector('input');
          input.addEventListener('change', (ev)=> {  // whole is fragment. we want label.
             __WEBPACK_IMPORTED_MODULE_0__wings3d_view__["setObject"]([model]);
-            __WEBPACK_IMPORTED_MODULE_1__wings3d__["runAction"](0, "toggleSelectObject", ev);
+            __WEBPACK_IMPORTED_MODULE_1__wings3d__["runAction"](0, "toggleObjectVisibility", ev);
           });
          model.guiStatus.visibility = input;
          li.appendChild(eyeLabel);
          // lock/unlock
-         const lockLabel = document.createRange().createContextualFragment('<label><input type="checkbox"><span class="smallIcon" style="background-image: url(\'../img/bluecube/small_lock.png\');"></span></label>');
+         const lockLabel = document.createRange().createContextualFragment('<label><input type="checkbox"><span class="smallIcon" style="background-image: url(\'../img/bluecube/small_unlock.png\');"></span></label>');
+         input = lockLabel.querySelector('input');
+         input.addEventListener('change', (ev)=> {  // whole is fragment. we want label.
+            __WEBPACK_IMPORTED_MODULE_0__wings3d_view__["setObject"]([model]);
+            __WEBPACK_IMPORTED_MODULE_1__wings3d__["runAction"](0, "toggleObjectLock", ev);
+          });
          li.appendChild(lockLabel);
+         model.guiStatus.locked = input;
          // wireframe
          const wireframe = document.createRange().createContextualFragment('<label><input type="checkbox"><span class="smallIcon" style="background-image: url(\'../img/bluecube/small_wire.png\');"></span></label>');
          li.appendChild(wireframe);

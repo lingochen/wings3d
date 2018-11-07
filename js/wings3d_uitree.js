@@ -37,8 +37,12 @@ class TreeView {
          const whole = document.createRange().createContextualFragment('<label><input type="checkbox"><span class="smallIcon" style="background-image: url(\'../img/bluecube/small_whole.png\');"></span></label>');
          let input = whole.querySelector('input');
          input.addEventListener('change', (ev)=> {  // whole is fragment. we want label.
+            if (model.isLock()) {   // not actually changeable
+               ev.target.checked = !ev.target.checked;
+               return;
+            }
             View.setObject([model]);
-            Wings3D.runAction(0, "toggleSelectObject", ev);
+            Wings3D.runAction(0, "toggleObjectSelect", ev);
           });
          model.guiStatus.select = input;
          li.appendChild(whole);
@@ -54,13 +58,19 @@ class TreeView {
          input = eyeLabel.querySelector('input');
          input.addEventListener('change', (ev)=> {  // whole is fragment. we want label.
             View.setObject([model]);
-            Wings3D.runAction(0, "toggleSelectObject", ev);
+            Wings3D.runAction(0, "toggleObjectVisibility", ev);
           });
          model.guiStatus.visibility = input;
          li.appendChild(eyeLabel);
          // lock/unlock
-         const lockLabel = document.createRange().createContextualFragment('<label><input type="checkbox"><span class="smallIcon" style="background-image: url(\'../img/bluecube/small_lock.png\');"></span></label>');
+         const lockLabel = document.createRange().createContextualFragment('<label><input type="checkbox"><span class="smallIcon" style="background-image: url(\'../img/bluecube/small_unlock.png\');"></span></label>');
+         input = lockLabel.querySelector('input');
+         input.addEventListener('change', (ev)=> {  // whole is fragment. we want label.
+            View.setObject([model]);
+            Wings3D.runAction(0, "toggleObjectLock", ev);
+          });
          li.appendChild(lockLabel);
+         model.guiStatus.locked = input;
          // wireframe
          const wireframe = document.createRange().createContextualFragment('<label><input type="checkbox"><span class="smallIcon" style="background-image: url(\'../img/bluecube/small_wire.png\');"></span></label>');
          li.appendChild(wireframe);

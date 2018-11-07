@@ -519,10 +519,12 @@ let lastPick = null;
 function rayPick(ray) {
    let pick = null;
    for (let model of world) {
-      const newPick = model.rayPick(ray);
-      if (newPick !== null) {
-         if ((pick === null) || (pick.t > newPick.t)) {
-            pick = newPick;
+      if (!model.isLock() && model.isVisible()) {
+         const newPick = model.rayPick(ray);
+         if (newPick !== null) {
+            if ((pick === null) || (pick.t > newPick.t)) {
+               pick = newPick;
+            }
          }
       }
    }
@@ -952,7 +954,7 @@ function init() {
    // bind geometryGraph
    geometryGraph = TreeView.getTreeView('#objectList');
    // selectObject
-   Wings3D.bindAction(null, 0, Wings3D.action.toggleSelectObject.name, (ev) => {
+   Wings3D.bindAction(null, 0, Wings3D.action.toggleObjectSelect.name, (ev) => {
       if (isMultiMode()) {
          toggleFaceMode(); // todo: see if we can capture the toggling cmd.
       }
@@ -967,6 +969,14 @@ function init() {
       const toggle = new ToggleCheckbox(ev.target);
       const cmd = new GenericEditCommand(currentMode(), currentMode().selectObject, [currentObjects, ev.target], 
                                                         currentMode().undoSelectObject, [ev.target]);
+      cmd.doIt();
+      undoQueueCombo([toggle, cmd]);
+    });
+   // lock/unlock Object
+   Wings3D.bindAction(null, 0, Wings3D.action.toggleObjectLock.name, (ev) => {
+      const toggle = new ToggleCheckbox(ev.target);
+      const cmd = new GenericEditCommand(currentMode(), currentMode().toggleObjectLock, [currentObjects, ev.target], 
+                                                        currentMode().undoToggleObjectLock, [ev.target]);
       cmd.doIt();
       undoQueueCombo([toggle, cmd]);
     });
