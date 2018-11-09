@@ -183,22 +183,14 @@ class VertexMadsor extends Madsor {
       }
    }
 
-   draw(gl, draftBench) {
+   drawExtra(gl, draftBench) {
       // draw hilite
       //if (this.currentEdge) {
-         this.useShader(gl);
+         gl.useShader(ShaderProg.selectedColorPoint);
          gl.bindTransform();
          draftBench.drawVertex(gl);
          gl.disableShader();
       //}
-   }
-
-   previewShader(gl) {
-      gl.useShader(ShaderProg.solidWireframe);
-   }
-
-   useShader(gl) {
-      gl.useShader(ShaderProg.selectedColorPoint);
    }
 } 
 

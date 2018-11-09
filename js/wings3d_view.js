@@ -841,25 +841,26 @@ function drawWorld(gl) {
       //gl.blendFunc(gl.SRC_COLOR, gl.DST_COLOR);
       // draw Current Select Mode (vertex, edge, or face)
       //if (hilite.vertex || hilite.edge || hilite.face || hilite.cage) {
-         mode.current.draw(gl, draftBench);
+         mode.current.drawExtra(gl, draftBench);
       //}
-      // hack -- draw other hilite selection if any
+      // hack -- draw other hilite selection if any, really should move to multimode
       if (hilite.vertex && (mode.current !== mode.vertex)) {
-         mode.vertex.draw(gl, draftBench);
+         mode.vertex.drawExtra(gl, draftBench);
       }
       if (hilite.edge && (mode.current !== mode.edge)) {
-         mode.edge.draw(gl, draftBench);
+         mode.edge.drawExtra(gl, draftBench);
       }
       if (hilite.face && (mode.current !== mode.face)) {
-         mode.face.draw(gl, draftBench);
+         mode.face.drawExtra(gl, draftBench);
       }
+      // hack - draw plane
       if (hilite.plane) {
          draftBench.drawPlane(gl, hilite.plane);
       }
       // end of hack ----
       //gl.disable(gl.BLEND);
 
-      // draw hardEdge if applicable
+      // draw all other edge (extra, hardEdge, wireframeEdge) if applicable
       draftBench.drawHardEdge(gl, mode.current === mode.edge);
 
       //gl.polygonOffset(1.0, 1.0);          // Set the polygon offset

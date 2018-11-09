@@ -63,16 +63,8 @@ class MultiMadsor extends Madsor {
       }
    }
 
-   drawObject(gl, draftBench) {
+   drawExtra(_gl, _draftBench) {
       // no hilite
-   } 
-
-   previewShader(gl) {
-      gl.useShader(ShaderProg.solidWireframe);
-   }
-
-   useShader(gl) {
-      gl.useShader(ShaderProg.solidColor);
    }
 };
 

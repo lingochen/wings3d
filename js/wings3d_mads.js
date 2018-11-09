@@ -3,9 +3,9 @@
  * MADS (Modify, Add, Delete, Select) operation. 
  *
 **/
-import {gl} from './wings3d_gl';
 import {EditCommand, EditSelectHandler, MouseMoveHandler, MoveableCommand} from './wings3d_undo';
 import {PreviewCage} from './wings3d_model';
+import * as ShaderProg from './wings3d_shaderprog';
 import * as View from './wings3d_view';
 import * as UI from './wings3d_ui';
 import {action} from './wings3d';
@@ -360,11 +360,18 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
 
    toggleMulti(_hilite) {}
 
-   draw(gl, draftBench) {
-      this.useShader(gl);
+   // default draw FaceHlite, needs to override by vertex/edge/multi mode.
+   drawExtra(gl, draftBench) {
+      gl.useShader(ShaderProg.solidColor);
       gl.bindTransform();
-      this.drawObject(gl, draftBench);
+      // draw hilite
+      draftBench.drawHilite(gl);
       //gl.disableShader();
+   }
+
+   // override by edge only
+   previewShader(gl) {
+      gl.useShader(ShaderProg.solidWireframe);
    }
 }
 

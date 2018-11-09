@@ -8,7 +8,6 @@ import {EdgeMadsor} from './wings3d_edgemads';
 import {VertexMadsor} from './wings3d_vertexmads';
 import {EditCommand } from './wings3d_undo';
 import {PreviewCage} from './wings3d_model';
-import * as ShaderProg from './wings3d_shaderprog';
 import * as View from './wings3d_view';
 import * as UI from './wings3d_ui';
 import * as Util from './wings3d_util';
@@ -377,19 +376,6 @@ class BodyMadsor extends Madsor {
       } else {
          this.doAll(snapshots, PreviewCage.prototype.restoreFromBodyToMultiSelect);
       }
-   }
-
-   drawObject(gl, draftBench) {
-      // draw hilite
-      draftBench.drawHilite(gl);
-   } 
-
-   previewShader(gl) {
-      gl.useShader(ShaderProg.solidWireframe);
-   }
-
-   useShader(gl) {
-      gl.useShader(ShaderProg.solidColor);
    }
 }
 

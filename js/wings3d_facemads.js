@@ -10,7 +10,6 @@ import {VertexMadsor} from './wings3d_vertexmads';
 import {MoveableCommand, EditCommand, EditSelectHandler} from './wings3d_undo';
 import {PreviewCage} from './wings3d_model';
 import * as View from './wings3d_view';
-import * as ShaderProg from './wings3d_shaderprog';
 import * as UI from './wings3d_ui';
 import {action} from './wings3d';
 
@@ -273,19 +272,6 @@ class FaceMadsor extends Madsor {
       } else {
          this.doAll(snapshots, PreviewCage.prototype.restoreFromFaceToMultiSelect);
       }
-   }
-
-   drawObject(gl, draftBench) {
-      // draw hilite
-      draftBench.drawHilite(gl);
-   }
-
-   previewShader(gl) {
-      gl.useShader(ShaderProg.solidWireframe);
-   }
-
-   useShader(gl) {
-      gl.useShader(ShaderProg.solidColor);
    }
 }
 
