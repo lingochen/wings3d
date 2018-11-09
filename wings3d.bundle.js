@@ -659,19 +659,19 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "drawWorld", function() { return drawWorld; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "render", function() { return render; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_render__ = __webpack_require__(20);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_render__ = __webpack_require__(19);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_camera__ = __webpack_require__(15);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_gl__ = __webpack_require__(5);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__plugins_wavefront_obj__ = __webpack_require__(21);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__plugins_wavefront_obj__ = __webpack_require__(20);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_undo__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_facemads__ = __webpack_require__(10);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d_edgemads__ = __webpack_require__(11);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__wings3d_vertexmads__ = __webpack_require__(12);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__wings3d_bodymads__ = __webpack_require__(14);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__wings3d_multimads__ = __webpack_require__(23);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__wings3d_multimads__ = __webpack_require__(22);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_12__wings3d_model__ = __webpack_require__(3);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_13__wings3d_draftbench__ = __webpack_require__(18);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_13__wings3d_draftbench__ = __webpack_require__(23);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_14__wings3d_boundingvolume__ = __webpack_require__(13);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_15__wings3d_hotkey__ = __webpack_require__(16);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_16__wings3d_util__ = __webpack_require__(7);
@@ -1520,25 +1520,26 @@ function drawWorld(gl) {
       //gl.blendFunc(gl.SRC_COLOR, gl.DST_COLOR);
       // draw Current Select Mode (vertex, edge, or face)
       //if (hilite.vertex || hilite.edge || hilite.face || hilite.cage) {
-         mode.current.draw(gl, draftBench);
+         mode.current.drawExtra(gl, draftBench);
       //}
-      // hack -- draw other hilite selection if any
+      // hack -- draw other hilite selection if any, really should move to multimode
       if (hilite.vertex && (mode.current !== mode.vertex)) {
-         mode.vertex.draw(gl, draftBench);
+         mode.vertex.drawExtra(gl, draftBench);
       }
       if (hilite.edge && (mode.current !== mode.edge)) {
-         mode.edge.draw(gl, draftBench);
+         mode.edge.drawExtra(gl, draftBench);
       }
       if (hilite.face && (mode.current !== mode.face)) {
-         mode.face.draw(gl, draftBench);
+         mode.face.drawExtra(gl, draftBench);
       }
+      // hack - draw plane
       if (hilite.plane) {
          draftBench.drawPlane(gl, hilite.plane);
       }
       // end of hack ----
       //gl.disable(gl.BLEND);
 
-      // draw hardEdge if applicable
+      // draw all other edge (extra, hardEdge, wireframeEdge) if applicable
       draftBench.drawHardEdge(gl, mode.current === mode.edge);
 
       //gl.polygonOffset(1.0, 1.0);          // Set the polygon offset
@@ -7395,9 +7396,9 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "MouseRotateAlongAxis", function() { return MouseRotateAlongAxis; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ToggleCheckbox", function() { return ToggleCheckbox; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ToggleModeCommand", function() { return ToggleModeCommand; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__ = __webpack_require__(5);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__ = __webpack_require__(4);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_model__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_undo__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_model__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_shaderprog__ = __webpack_require__(6);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_view__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_ui__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d__ = __webpack_require__(0);
@@ -7648,30 +7649,30 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
    }
 
    restoreMoveSelection(snapshots) {
-      this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_2__wings3d_model__["PreviewCage"].prototype.restoreMoveSelection);
+      this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_1__wings3d_model__["PreviewCage"].prototype.restoreMoveSelection);
    }
 
    // move vertices
    moveSelection(snapshots, movement) {
-      this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_2__wings3d_model__["PreviewCage"].prototype.moveSelection, movement);
+      this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_1__wings3d_model__["PreviewCage"].prototype.moveSelection, movement);
    }
 
    restoreSelectionPosition(snapshots) {
-      this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_2__wings3d_model__["PreviewCage"].prototype.restoreMoveSelection);
+      this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_1__wings3d_model__["PreviewCage"].prototype.restoreMoveSelection);
    }
 
    // scale vertices along axis
    scaleSelection(snapshots, scale, axis) {
-      this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_2__wings3d_model__["PreviewCage"].prototype.scaleSelection, scale, axis);
+      this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_1__wings3d_model__["PreviewCage"].prototype.scaleSelection, scale, axis);
    }
 
    // rotate vertices
    rotateSelection(snapshots, quatRotate, center) {
-      this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_2__wings3d_model__["PreviewCage"].prototype.rotateSelection, quatRotate, center);
+      this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_1__wings3d_model__["PreviewCage"].prototype.rotateSelection, quatRotate, center);
    }
 
    snapshotSelection() {
-      return this.snapshotAll(__WEBPACK_IMPORTED_MODULE_2__wings3d_model__["PreviewCage"].prototype['snapshotSelection' + this.modeName()]);
+      return this.snapshotAll(__WEBPACK_IMPORTED_MODULE_1__wings3d_model__["PreviewCage"].prototype['snapshotSelection' + this.modeName()]);
    }
 
    _doSelection(doName, forceAll=false) {
@@ -7719,7 +7720,7 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
    }
 
    restoreSelection(selection) {
-      this.doAll(selection, __WEBPACK_IMPORTED_MODULE_2__wings3d_model__["PreviewCage"].prototype.restoreSelection, this); 
+      this.doAll(selection, __WEBPACK_IMPORTED_MODULE_1__wings3d_model__["PreviewCage"].prototype.restoreSelection, this); 
    }
 
    undoDoSelection(snapshots) {
@@ -7729,33 +7730,33 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
 
    selectObject(objects, input) {
       if (input.checked) {
-         return this.snapshotTarget(objects, __WEBPACK_IMPORTED_MODULE_2__wings3d_model__["PreviewCage"].prototype['_select' + this.modeName() + 'All']);
+         return this.snapshotTarget(objects, __WEBPACK_IMPORTED_MODULE_1__wings3d_model__["PreviewCage"].prototype['_select' + this.modeName() + 'All']);
       } else {
-         return this.snapshotTarget(objects, __WEBPACK_IMPORTED_MODULE_2__wings3d_model__["PreviewCage"].prototype['_resetSelect' + this.modeName()]);
+         return this.snapshotTarget(objects, __WEBPACK_IMPORTED_MODULE_1__wings3d_model__["PreviewCage"].prototype['_resetSelect' + this.modeName()]);
       }
    }
 
    undoSelectObject(selection, input) {
       if (input.checked) {
-         this.doAll(selection, __WEBPACK_IMPORTED_MODULE_2__wings3d_model__["PreviewCage"].prototype['_resetSelect' + this.modeName()]); // unselected All then
+         this.doAll(selection, __WEBPACK_IMPORTED_MODULE_1__wings3d_model__["PreviewCage"].prototype['_resetSelect' + this.modeName()]); // unselected All then
       }
-      this.doAll(selection, __WEBPACK_IMPORTED_MODULE_2__wings3d_model__["PreviewCage"].prototype.restoreSelection, this); // restore
+      this.doAll(selection, __WEBPACK_IMPORTED_MODULE_1__wings3d_model__["PreviewCage"].prototype.restoreSelection, this); // restore
    }
 
    toggleObjectLock(objects, input) {
-      return this.snapshotTarget(objects, __WEBPACK_IMPORTED_MODULE_2__wings3d_model__["PreviewCage"].prototype.toggleLock, input.checked);
+      return this.snapshotTarget(objects, __WEBPACK_IMPORTED_MODULE_1__wings3d_model__["PreviewCage"].prototype.toggleLock, input.checked);
    }
 
    undoToggleObjectLock(selection, input) {
-      this.doAll(selection, __WEBPACK_IMPORTED_MODULE_2__wings3d_model__["PreviewCage"].prototype.toggleLock, !input.checked);   // restore
+      this.doAll(selection, __WEBPACK_IMPORTED_MODULE_1__wings3d_model__["PreviewCage"].prototype.toggleLock, !input.checked);   // restore
    }
 
    toggleObjectVisibility(objects, input) {
-      return this.snapshotTarget(objects, __WEBPACK_IMPORTED_MODULE_2__wings3d_model__["PreviewCage"].prototype.setVisible, !input.checked); // checked is invisible
+      return this.snapshotTarget(objects, __WEBPACK_IMPORTED_MODULE_1__wings3d_model__["PreviewCage"].prototype.setVisible, !input.checked); // checked is invisible
    }
 
    undoToggleObjectLock(selection, input) {
-      return this.doAll(selection, __WEBPACK_IMPORTED_MODULE_2__wings3d_model__["PreviewCage"].prototype.setVisible, input.checked);
+      return this.doAll(selection, __WEBPACK_IMPORTED_MODULE_1__wings3d_model__["PreviewCage"].prototype.setVisible, input.checked);
    }
 
    isVertexSelectable() { return false; }
@@ -7764,11 +7765,18 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
 
    toggleMulti(_hilite) {}
 
-   draw(gl, draftBench) {
-      this.useShader(gl);
+   // default draw FaceHlite, needs to override by vertex/edge/multi mode.
+   drawExtra(gl, draftBench) {
+      gl.useShader(__WEBPACK_IMPORTED_MODULE_2__wings3d_shaderprog__["solidColor"]);
       gl.bindTransform();
-      this.drawObject(gl, draftBench);
+      // draw hilite
+      draftBench.drawHilite(gl);
       //gl.disableShader();
+   }
+
+   // override by edge only
+   previewShader(gl) {
+      gl.useShader(__WEBPACK_IMPORTED_MODULE_2__wings3d_shaderprog__["solidWireframe"]);
    }
 }
 
@@ -7799,7 +7807,7 @@ class DragSelect {
 }
 
 
-class ToggleCheckbox extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["EditCommand"] {
+class ToggleCheckbox extends __WEBPACK_IMPORTED_MODULE_0__wings3d_undo__["EditCommand"] {
    constructor(input) {
       super();
       this.input = input;
@@ -7815,7 +7823,7 @@ class ToggleCheckbox extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["EditCo
 }
 
 
-class ToggleModeCommand extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["EditCommand"] {
+class ToggleModeCommand extends __WEBPACK_IMPORTED_MODULE_0__wings3d_undo__["EditCommand"] {
    constructor(doFn, undoFn, snapshots) {
       super();
       this.snapshots = snapshots;
@@ -7835,7 +7843,7 @@ class ToggleModeCommand extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["Edi
 
 
 
-class MovePositionHandler extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["MouseMoveHandler"] {
+class MovePositionHandler extends __WEBPACK_IMPORTED_MODULE_0__wings3d_undo__["MouseMoveHandler"] {
    constructor(madsor, snapshots, movement) {
       super();
       this.madsor = madsor;
@@ -7946,14 +7954,14 @@ class MoveBidirectionHandler extends MoveVertexHandler {
             this.madsor.moveSelection(this.snapshots, -this.movement);
             move += this.movement;
             this.movement = 0;
-            this.madsor.doAll(this.snapshots, __WEBPACK_IMPORTED_MODULE_2__wings3d_model__["PreviewCage"].prototype.positiveDirection);
+            this.madsor.doAll(this.snapshots, __WEBPACK_IMPORTED_MODULE_1__wings3d_model__["PreviewCage"].prototype.positiveDirection);
          }
       } else {
          if ((this.movement >= 0) && ((this.movement+move) < 0)) {
             this.madsor.moveSelection(this.snapshots, -this.movement);
             move += this.movement;
             this.movement = 0;
-            this.madsor.doAll(this.snapshots, __WEBPACK_IMPORTED_MODULE_2__wings3d_model__["PreviewCage"].prototype.negativeDirection);
+            this.madsor.doAll(this.snapshots, __WEBPACK_IMPORTED_MODULE_1__wings3d_model__["PreviewCage"].prototype.negativeDirection);
          }
       }
       this.movement += move;
@@ -8024,7 +8032,7 @@ class ScaleHandler extends MovePositionHandler {
 
 
 // movement handler.
-class MouseRotateAlongAxis extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["EditCommand"] {
+class MouseRotateAlongAxis extends __WEBPACK_IMPORTED_MODULE_0__wings3d_undo__["EditCommand"] {
    constructor(madsor, axis, center) {   // axis directly
       super();
       this.madsor = madsor;
@@ -8091,7 +8099,7 @@ class BevelHandler extends MovePositionHandler {
 }
 
 // extrude
-class ExtrudeHandler extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["MoveableCommand"] {
+class ExtrudeHandler extends __WEBPACK_IMPORTED_MODULE_0__wings3d_undo__["MoveableCommand"] {
    constructor(madsor) {
       super();
       this.madsor = madsor;
@@ -8132,7 +8140,7 @@ class ExtrudeNormalHandler extends ExtrudeHandler {
 }
 // end of extrude
 
-class PlaneCutHandler extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["EditSelectHandler"] {
+class PlaneCutHandler extends __WEBPACK_IMPORTED_MODULE_0__wings3d_undo__["EditSelectHandler"] {
    constructor(madsor, planeNorm) {
       super(true, true, true, planeNorm);
       this.madsor = madsor;
@@ -8181,7 +8189,7 @@ class PlaneCutHandler extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["EditS
 }
 
 
-class GenericEditCommand extends __WEBPACK_IMPORTED_MODULE_1__wings3d_undo__["EditCommand"] {
+class GenericEditCommand extends __WEBPACK_IMPORTED_MODULE_0__wings3d_undo__["EditCommand"] {
    constructor(madsor, doCmd, doParams, undoCmd, undoParams) {
       super();
       this.madsor = madsor;
@@ -10955,9 +10963,8 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_model__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_view__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_shaderprog__ = __webpack_require__(6);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__wings3d__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_ui__ = __webpack_require__(2);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d__ = __webpack_require__(0);
 /**
 //    This module contains most face command and face utility functions.
 //
@@ -10974,12 +10981,11 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 
 
-
 class FaceMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
    constructor() {
       super('Face');
       var self = this;
-      __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItemMode"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].faceDissolve.name, function(ev) {
+      __WEBPACK_IMPORTED_MODULE_7__wings3d_ui__["bindMenuItemMode"](__WEBPACK_IMPORTED_MODULE_8__wings3d__["action"].faceDissolve.name, function(ev) {
             const command = new DissolveFaceCommand(self);
             if (command.doIt()) {
                __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"](command);
@@ -10987,12 +10993,12 @@ class FaceMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
                geometryStatus('Selected Face not dissolveable');
             }
          }, this, 'Backspace');
-      __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].faceCollapse.name, function(ev) {
+      __WEBPACK_IMPORTED_MODULE_7__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_8__wings3d__["action"].faceCollapse.name, function(ev) {
             const command = new CollapseFaceCommand(self);
             command.doIt();
             __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"](command);
          });
-      __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].faceBridge.name, (ev) => {
+      __WEBPACK_IMPORTED_MODULE_7__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_8__wings3d__["action"].faceBridge.name, (ev) => {
          let bridgeFaces = this.getBridgeFaces();
          if (bridgeFaces.length === 2) {
             const dest = bridgeFaces[0];
@@ -11017,20 +11023,20 @@ class FaceMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
             }
          }
        });
-      __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].faceInset.name, (ev) => {
+      __WEBPACK_IMPORTED_MODULE_7__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_8__wings3d__["action"].faceInset.name, (ev) => {
          if (this.hasSelection()) {
             __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["attachHandlerMouseMove"](new InsetFaceHandler(this));
          } else {
             geometryStatus('No selected face');
          }
        });
-      __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].faceBump.name, (ev) => {
+      __WEBPACK_IMPORTED_MODULE_7__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_8__wings3d__["action"].faceBump.name, (ev) => {
          __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["attachHandlerMouseMove"](new BumpFaceHandler(this));
        });
-      __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].faceIntrude.name, (ev) => {
+      __WEBPACK_IMPORTED_MODULE_7__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_8__wings3d__["action"].faceIntrude.name, (ev) => {
          __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["attachHandlerMouseMove"](new IntrudeFaceHandler(this));
        });
-      __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].faceLift.name, (ev) => {
+      __WEBPACK_IMPORTED_MODULE_7__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_8__wings3d__["action"].faceLift.name, (ev) => {
          const snapshots = this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.snapshotTransformFaceGroup);
          if (snapshots.length === 1) {
             const snapshot = snapshots[0];
@@ -11039,7 +11045,7 @@ class FaceMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
             // helpBar("Lift works only in one Cage");
          }
         });
-      __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].facePutOn.name, (ev)=> {
+      __WEBPACK_IMPORTED_MODULE_7__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_8__wings3d__["action"].facePutOn.name, (ev)=> {
          let snapshot = [];
          for (let preview of this.selectedCage()) {
             if (preview.selectionSize() == 1) {
@@ -11053,12 +11059,12 @@ class FaceMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
             geometryStatus("You can only PutOn one face");
          }
         });
-      __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].faceMirror.name, (ev) => {
+      __WEBPACK_IMPORTED_MODULE_7__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_8__wings3d__["action"].faceMirror.name, (ev) => {
          const command = new MirrorFaceCommand(this);
          command.doIt();
          __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"](command);
        });
-      __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].faceFlattenNormal.name, (_ev) => {
+      __WEBPACK_IMPORTED_MODULE_7__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_8__wings3d__["action"].faceFlattenNormal.name, (_ev) => {
          const cmd = new __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["GenericEditCommand"](this, this.flatten);
          if (cmd.doIt()) {
             __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"](cmd);
@@ -11233,19 +11239,6 @@ class FaceMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
       } else {
          this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.restoreFromFaceToMultiSelect);
       }
-   }
-
-   drawObject(gl, draftBench) {
-      // draw hilite
-      draftBench.drawHilite(gl);
-   }
-
-   previewShader(gl) {
-      gl.useShader(__WEBPACK_IMPORTED_MODULE_7__wings3d_shaderprog__["solidWireframe"]);
-   }
-
-   useShader(gl) {
-      gl.useShader(__WEBPACK_IMPORTED_MODULE_7__wings3d_shaderprog__["solidColor"]);
    }
 }
 
@@ -11589,7 +11582,6 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_view__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d_shaderprog__ = __webpack_require__(6);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__wings3d__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__wings3d_draftbench__ = __webpack_require__(18);
 /**
 //    This module contains most edge command and edge utility functions.
 //
@@ -11597,7 +11589,6 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 **/
 
    // for switching
-
 
 
 
@@ -11934,9 +11925,10 @@ class EdgeMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
       }
    }
 
-   draw(gl, draftBench) {
+   drawExtra(gl, draftBench) {
       //if (this.currentEdge) {
-         this.useShader(gl);
+         //gl.useShader(ShaderProg.solidColor);
+         gl.useShader(__WEBPACK_IMPORTED_MODULE_8__wings3d_shaderprog__["selectedColorLine"]);
          gl.bindTransform();
          draftBench.drawEdge(gl);
          gl.disableShader();
@@ -11945,11 +11937,6 @@ class EdgeMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
 
    previewShader(gl) {
       gl.useShader(__WEBPACK_IMPORTED_MODULE_8__wings3d_shaderprog__["edgeSolidWireframe"]);
-   }
-
-   useShader(gl) {
-      //gl.useShader(ShaderProg.solidColor);
-      gl.useShader(__WEBPACK_IMPORTED_MODULE_8__wings3d_shaderprog__["selectedColorLine"]);
    }
 }
 
@@ -12359,22 +12346,14 @@ class VertexMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"]
       }
    }
 
-   draw(gl, draftBench) {
+   drawExtra(gl, draftBench) {
       // draw hilite
       //if (this.currentEdge) {
-         this.useShader(gl);
+         gl.useShader(__WEBPACK_IMPORTED_MODULE_7__wings3d_shaderprog__["selectedColorPoint"]);
          gl.bindTransform();
          draftBench.drawVertex(gl);
          gl.disableShader();
       //}
-   }
-
-   previewShader(gl) {
-      gl.useShader(__WEBPACK_IMPORTED_MODULE_7__wings3d_shaderprog__["solidWireframe"]);
-   }
-
-   useShader(gl) {
-      gl.useShader(__WEBPACK_IMPORTED_MODULE_7__wings3d_shaderprog__["selectedColorPoint"]);
    }
 } 
 
@@ -12899,11 +12878,10 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__ = __webpack_require__(12);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_model__ = __webpack_require__(3);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_shaderprog__ = __webpack_require__(6);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_view__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__wings3d_util__ = __webpack_require__(7);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__wings3d__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_view__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_ui__ = __webpack_require__(2);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d_util__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__wings3d__ = __webpack_require__(0);
 //
 // bodymadsor. 
 //
@@ -12920,22 +12898,21 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 
 
-
 class BodyMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
    constructor() {
       super('Body');
       const self = this;
-      __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItemMode"](__WEBPACK_IMPORTED_MODULE_10__wings3d__["action"].bodyDelete.name, function(ev) {
+      __WEBPACK_IMPORTED_MODULE_7__wings3d_ui__["bindMenuItemMode"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].bodyDelete.name, function(ev) {
             const command = new DeleteBodyCommand(self.getSelected());
-            __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["undoQueue"]( command );
+            __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"]( command );
             command.doIt(); // delete current selected.
          }, this, 'Backspace');
 
-      __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_10__wings3d__["action"].bodyRename.name, function(ev) {
-         __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["runDialog"]('#renameDialog', ev, function(form) {
-               const data = __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["extractDialogValue"](form);
+      __WEBPACK_IMPORTED_MODULE_7__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].bodyRename.name, function(ev) {
+         __WEBPACK_IMPORTED_MODULE_7__wings3d_ui__["runDialog"]('#renameDialog', ev, function(form) {
+               const data = __WEBPACK_IMPORTED_MODULE_7__wings3d_ui__["extractDialogValue"](form);
                const command = new RenameBodyCommand(self.getSelected(), data);
-               __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["undoQueue"]( command );
+               __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"]( command );
                command.doIt();   // rename
             }, function(form) {
                const content = form.querySelector('div');
@@ -12957,55 +12934,55 @@ class BodyMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
                }
             });
        });
-      const duplicateMove = [__WEBPACK_IMPORTED_MODULE_10__wings3d__["action"].bodyDuplicateMoveX, __WEBPACK_IMPORTED_MODULE_10__wings3d__["action"].bodyDuplicateMoveY, __WEBPACK_IMPORTED_MODULE_10__wings3d__["action"].bodyDuplicateMoveZ];
+      const duplicateMove = [__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].bodyDuplicateMoveX, __WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].bodyDuplicateMoveY, __WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].bodyDuplicateMoveZ];
       // movement for (x, y, z)
       for (let axis=0; axis < 3; ++axis) {
-         __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](duplicateMove[axis].name, function(ev) { //action.bodyDulipcateMoveX(Y,Z)
-               __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["attachHandlerMouseMove"](new DuplicateMouseMoveAlongAxis(self, axis, self.getSelected()));
+         __WEBPACK_IMPORTED_MODULE_7__wings3d_ui__["bindMenuItem"](duplicateMove[axis].name, function(ev) { //action.bodyDulipcateMoveX(Y,Z)
+               __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["attachHandlerMouseMove"](new DuplicateMouseMoveAlongAxis(self, axis, self.getSelected()));
             });
       }
-      __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_10__wings3d__["action"].bodyDuplicateMoveFree.name, function(ev) {
-            __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["attachHandlerMouseMove"](new DuplicateMoveFreePositionHandler(self, self.getSelected()));
+      __WEBPACK_IMPORTED_MODULE_7__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].bodyDuplicateMoveFree.name, function(ev) {
+            __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["attachHandlerMouseMove"](new DuplicateMoveFreePositionHandler(self, self.getSelected()));
          });
-      __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_10__wings3d__["action"].bodyInvert.name, (ev)=> {
+      __WEBPACK_IMPORTED_MODULE_7__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].bodyInvert.name, (ev)=> {
          const command = new InvertBodyCommand(this);
          command.doIt();
-         __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["undoQueue"](command);
+         __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"](command);
         });
-      __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_10__wings3d__["action"].bodyCombine.name, (ev)=> {
+      __WEBPACK_IMPORTED_MODULE_7__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].bodyCombine.name, (ev)=> {
          const command = new CombineBodyCommand(this);
          if (command.doIt()) {   // do we really have 2 + objects?
-            __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["undoQueue"](command);
+            __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"](command);
          }
        });
-      __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_10__wings3d__["action"].bodySeparate.name, (ev)=> {
+      __WEBPACK_IMPORTED_MODULE_7__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].bodySeparate.name, (ev)=> {
          const command = new SeparateBodyCommand(this);
          if (command.doIt()) {   // check if separable.
-            __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["undoQueue"](command);
+            __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"](command);
          }
        });
-      const flip = [__WEBPACK_IMPORTED_MODULE_10__wings3d__["action"].bodyFlipX, __WEBPACK_IMPORTED_MODULE_10__wings3d__["action"].bodyFlipY, __WEBPACK_IMPORTED_MODULE_10__wings3d__["action"].bodyFlipZ];
+      const flip = [__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].bodyFlipX, __WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].bodyFlipY, __WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].bodyFlipZ];
       // flip for (x, y, z)
       for (let axis=0; axis < 3; ++axis) {
-         __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](flip[axis].name, (ev) => { //action.bodyFlipX(Y,Z)
+         __WEBPACK_IMPORTED_MODULE_7__wings3d_ui__["bindMenuItem"](flip[axis].name, (ev) => { //action.bodyFlipX(Y,Z)
             //View.undoQueue(new FlipBodyAxis(this, axis));
             const command = new FlipBodyAxis(this, axis);
             command.doIt();
-            __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["undoQueue"](command);
+            __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"](command);
           });
       }
       const axisVec = [[1,0,0], [0,1,0], [0,0,1]];
-      const slice = [__WEBPACK_IMPORTED_MODULE_10__wings3d__["action"].bodySliceX, __WEBPACK_IMPORTED_MODULE_10__wings3d__["action"].bodySliceY, __WEBPACK_IMPORTED_MODULE_10__wings3d__["action"].bodySliceZ];
+      const slice = [__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].bodySliceX, __WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].bodySliceY, __WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].bodySliceZ];
       for (let axis = 0; axis < 3; ++axis) {
-         __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](slice[axis].name, (ev) => {
-            __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["runDialog"]('#sliceBodyDialog', ev, (form)=> {
+         __WEBPACK_IMPORTED_MODULE_7__wings3d_ui__["bindMenuItem"](slice[axis].name, (ev) => {
+            __WEBPACK_IMPORTED_MODULE_7__wings3d_ui__["runDialog"]('#sliceBodyDialog', ev, (form)=> {
                const data = form.querySelector('input[name="amountRange"');
                if (data) {
                   const number = parseInt(data.value, 10);
                   if ((number != NaN) && (number > 0) && (number < 100)) { // sane input
                      const command = new __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["GenericEditCommand"](this, this.slice, [axisVec[axis], number], this.undoPlaneCut);
                      if (command.doIt()) {
-                        const vertexMadsor = __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["currentMode"]();   // assurely it vertexMode
+                        const vertexMadsor = __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["currentMode"]();   // assurely it vertexMode
                         vertexMadsor.andConnectVertex(command);
                      } else { // should not happened, make some noise
 
@@ -13016,10 +12993,10 @@ class BodyMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
           });
       }
       // weld
-      __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_10__wings3d__["action"].bodyWeld.name, (ev)=> {
+      __WEBPACK_IMPORTED_MODULE_7__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].bodyWeld.name, (ev)=> {
          const cmd = new __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["GenericEditCommand"](this, this.weld, undefined, this.undoWeld);
          if (cmd.doIt()) {
-            __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["undoQueue"](cmd);
+            __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"](cmd);
          }
        });
    }
@@ -13050,7 +13027,7 @@ class BodyMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
       // needs least 2 selected cage2.
       if (cageSelection.length >= 2) {
          // now do merge operation.
-         const combine = __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["makeCombineIntoWorld"](cageSelection);
+         const combine = __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["makeCombineIntoWorld"](cageSelection);
          combine.name = cageSelection[0].name;
          combine.selectBody();
          return {combine: combine, oldSelection: cageSelection};
@@ -13059,9 +13036,9 @@ class BodyMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
    }
    undoCombine(combine) {
       if (combine) {
-         __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["removeFromWorld"](combine.combine);
+         __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["removeFromWorld"](combine.combine);
          for (let cage of combine.oldSelection) {
-            __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["addToWorld"](cage);  // restore oldCage
+            __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["addToWorld"](cage);  // restore oldCage
          }
       }
    }
@@ -13076,10 +13053,10 @@ class BodyMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
       }
       for (let separate of selection) {
          // remove original
-         __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["removeFromWorld"](separate.preview);
+         __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["removeFromWorld"](separate.preview);
          // add the separates one.
          for (let preview of separate.snapshot) {
-            __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["addToWorld"](preview);     // has to addToWorld after separate all selection, or we will mess up the iteration.
+            __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["addToWorld"](preview);     // has to addToWorld after separate all selection, or we will mess up the iteration.
          }
       }
       return selection;
@@ -13087,10 +13064,10 @@ class BodyMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
    undoSeparate(separateSelection) {
       for (let separate of separateSelection) {
          for (let preview of separate.snapshot) {
-            __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["removeFromWorld"](preview);
+            __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["removeFromWorld"](preview);
          }
          // addback the original one
-         __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["addToWorld"](separate.preview);
+         __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["addToWorld"](separate.preview);
       }
    }
 
@@ -13099,13 +13076,13 @@ class BodyMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
          cage.invertBody();
       }
       // invert the draftBench's preview and update
-      __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["updateWorld"]();
+      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["updateWorld"]();
       this.hiliteView = null; // invalidate hilite
    }
 
    flipAxis(snapShotPivot, axis) {
       this.doAll(snapShotPivot, __WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.flipBodyAxis, axis);
-      __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["updateWorld"]();
+      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["updateWorld"]();
    }
 
    planeCuttable(plane) {
@@ -13116,12 +13093,12 @@ class BodyMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
    }
    undoPlaneCut(snapshots) { // undo of splitEdge.
       this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.collapseSplitOrBevelEdge);
-      __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["restoreBodyMode"](snapshots);
+      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreBodyMode"](snapshots);
    }
 
    slice(planeNormal, numberOfPart) {
       const snapshots = this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.sliceBody, planeNormal, numberOfPart);
-      __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["restoreVertexMode"](snapshots);
+      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreVertexMode"](snapshots);
       return snapshots;
    }
 
@@ -13134,7 +13111,7 @@ class BodyMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
          cage.getBodySelection(selection, extent);
       }
       // sort by longest length.
-      let order = __WEBPACK_IMPORTED_MODULE_9__wings3d_util__["getAxisOrder"](extent);
+      let order = __WEBPACK_IMPORTED_MODULE_8__wings3d_util__["getAxisOrder"](extent);
       selection.sort( (a, b) => {
          for (let i = 0; i < 3; ++i) {
             let result = a.center[order[i]] - b.center[order[i]];
@@ -13163,7 +13140,7 @@ class BodyMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
          // now weld the contours
          const mergeCage = __WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].weldBody(combined, weldContours);
          // goto vertexMode
-         __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["restoreVertexMode"](combinedCages);
+         __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreVertexMode"](combinedCages);
 
          // return undo info
          return [{holes: holes, weldContours: mergeCage, combinedCages: combinedCages}];
@@ -13173,7 +13150,7 @@ class BodyMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
    }
    undoWeld(snapshots) {
       const weld = snapshots[0]; // have to enclose in a array.
-      __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["restoreBodyMode"]();
+      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreBodyMode"]();
       // splice with inner
       __WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].undoWeldBody(weld.weldContours);
       // undo combine
@@ -13258,19 +13235,19 @@ class BodyMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
       var redoFn;
       var snapshots;
       if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__["FaceMadsor"]) {
-         redoFn = __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["restoreFaceMode"];
+         redoFn = __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreFaceMode"];
          snapshots = this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.changeFromBodyToFaceSelect);
       } else if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__["VertexMadsor"]) {
-         redoFn = __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["restoreVertexMode"];
+         redoFn = __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreVertexMode"];
          snapshots = this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.changeFromBodyToVertexSelect);
       } else if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_2__wings3d_edgemads__["EdgeMadsor"]) {
-         redoFn = __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["restoreEdgeMode"];
+         redoFn = __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreEdgeMode"];
          snapshots = this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.changeFromBodyToEdgeSelect);
       } else {
-         redoFn = __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["restoreMultiMode"];
+         redoFn = __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreMultiMode"];
          snapshots = this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.changeFromBodyToMultiSelect);
       }
-      __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["undoQueue"](new __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["ToggleModeCommand"](redoFn, __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["restoreBodyMode"], snapshots));
+      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"](new __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["ToggleModeCommand"](redoFn, __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreBodyMode"], snapshots));
    }
 
    restoreMode(toMadsor, snapshots) {
@@ -13283,19 +13260,6 @@ class BodyMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
       } else {
          this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.restoreFromBodyToMultiSelect);
       }
-   }
-
-   drawObject(gl, draftBench) {
-      // draw hilite
-      draftBench.drawHilite(gl);
-   } 
-
-   previewShader(gl) {
-      gl.useShader(__WEBPACK_IMPORTED_MODULE_6__wings3d_shaderprog__["solidWireframe"]);
-   }
-
-   useShader(gl) {
-      gl.useShader(__WEBPACK_IMPORTED_MODULE_6__wings3d_shaderprog__["solidColor"]);
    }
 }
 
@@ -13338,13 +13302,13 @@ class DeleteBodyCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["Edi
 
    doIt() {
       for (let previewCage of this.previewCages) {
-         __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["removeFromWorld"](previewCage);
+         __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["removeFromWorld"](previewCage);
       }
    }
 
    undo() {
       for (let previewCage of this.previewCages) {
-         __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["addToWorld"](previewCage);
+         __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["addToWorld"](previewCage);
       }
    }
 }
@@ -13397,7 +13361,7 @@ class DuplicateBodyCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["
 
    doIt() {
       for (let cage of this.duplicateCages) {
-         __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["addToWorld"](cage);
+         __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["addToWorld"](cage);
          cage.selectBody();
       }
       this._toggleOriginalSelected();
@@ -13406,7 +13370,7 @@ class DuplicateBodyCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["
    undo() {
       for (let cage of this.duplicateCages) {
          cage.selectBody();                  // deselection before out
-         __WEBPACK_IMPORTED_MODULE_7__wings3d_view__["removeFromWorld"](cage);
+         __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["removeFromWorld"](cage);
       }
       this._toggleOriginalSelected();        // reselected the original
    }
@@ -14206,6 +14170,1328 @@ Object(__WEBPACK_IMPORTED_MODULE_0__wings3d__["onReady"])(()=> {
 
 /***/ }),
 /* 18 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "tours", function() { return tours; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "targetCage", function() { return targetCage; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "step", function() { return step; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "expectStep", function() { return expectStep; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "faceSelectStep", function() { return faceSelectStep; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "addStep", function() { return addStep; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "addExpectStep", function() { return addExpectStep; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "addFaceSelectStep", function() { return addFaceSelectStep; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "add", function() { return add; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "addMultiStep", function() { return addMultiStep; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "addZoomStep", function() { return addZoomStep; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "zoomStep", function() { return zoomStep; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "cancel", function() { return cancel; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "complete", function() { return complete; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "startTour", function() { return startTour; });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__ = __webpack_require__(2);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d__ = __webpack_require__(0);
+//
+// interact. tutoring.
+//
+
+
+
+
+
+class TutorStep {
+   constructor(title, text, targetID, placement) {
+     this.targetID = targetID;
+     this.placement = placement;
+     this.title = title;
+     this.content = text;
+     this.options = {};
+     this.options.showNext = true;
+   }
+
+   // do functions along recursively up the parent
+   static walkupDoms(target, ancestorTarget, fn) {
+      if (target) {
+         const parent = target.parentNode;
+         for (let element = parent.firstElementChild; element; element = element.nextElementSibling) {
+            if (element !==target) {
+               fn(element);
+            }           
+         }
+         if (parent !== ancestorTarget) {
+            this.walkupDoms(parent, ancestorTarget, fn);
+         }
+
+      } else { // select all parent's childern, except canvas
+         for (let element = ancestorTarget.firstElementChild; element; element = element.nextElementSibling) {
+            if (element.id !== "canvas") {
+               fn(element);
+            }
+         }
+      }
+   }
+
+   cancel() {
+      this.done();
+   }
+
+   done() {
+      // unblur all other id
+      let target;
+      if (this.targetID !== '') {
+         target = document.getElementById(this.targetID);
+      }
+      TutorStep.walkupDoms(target, document.body, function(element) {element.classList.remove('unfocus');});
+   }
+
+   expect(action, value) {}
+
+   option(name) {
+      return this.options[name];
+   }
+
+   show() {
+      // place on  the world.
+      popUp.title.textContent = this.title;
+      popUp.content.innerHTML = this.content;
+      popUp.bubble.classList.remove("left", "right", "top", "bottom");
+      popUp.bubble.classList.add(__WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["getArrow"](this.placement));
+      // now place it
+      const placement = __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["placement"](this.targetID, this.placement, popUp.bubble);
+      popUp.bubble.style.top = placement.top.toString() + "px";
+      popUp.bubble.style.left = placement.left.toString() + "px"; 
+      // blur all not ide.
+      let target;
+      if (this.targetID !== '') {
+         target = document.getElementById(this.targetID);
+      }
+      TutorStep.walkupDoms(target, document.body, function(node) {node.classList.add('unfocus')});
+   }
+}
+
+
+class MultiStep extends TutorStep {
+   constructor(title, text, targetID, placement, steps) {
+      super(title, text, targetID, placement);
+      this.steps = steps;
+      this.endStep = steps[steps.length-1].step;
+   }
+
+   cancel() {
+      super.cancel();
+      // remember to clean up.
+      setMultiStep(null);
+   }
+
+   done() {
+      const realStep = getRealCurrentStep();
+      if (realStep  === this) {
+         super.done();
+      } else { // let substep handle it.
+         realStep.done();
+         if (realStep === this.endStep) {
+            // should we insert an repeat again? congratulation? or something?
+            setMultiStep(null);
+            popUp.progressBar.style.display = 'none';
+            popUp.progressDone.style.width = '0%';
+            popUp.progressIndicator.style.width = '0%';
+         }
+      }
+   }
+
+   // let substep handle it.
+   expect(action, value) {
+      const realStep = getRealCurrentStep();
+      if (realStep !== this) {
+         realStep.expect(action, value);
+      }
+   }
+
+   show() {
+      const realStep = getRealCurrentStep();
+      if (realStep === this) {
+         super.show();
+         setMultiStep(this);
+         this.begin = getCurrentStation() + 1;
+         this.end = this.begin + this.steps.length;
+         const percent = (1 / this.steps.length) * 100;
+         popUp.progressIndicator.style.width = percent + '%';
+         popUp.progressBar.style.display = 'flex';
+      } else { // run the real things
+         realStep.show();
+         // update the x/y progress bar.
+         const x = getCurrentStation() - this.begin;
+         const percent = (x / this.steps.length)*100;
+         popUp.progressDone.style.width = percent + '%';   // set the progress bar's percentage.
+      }
+   }
+}
+
+
+class ExpectStep extends TutorStep {
+   constructor(expect, title, text, targetID, placement) {
+      super(title, text, targetID, placement);
+      this.expectAction = expect;
+      this.options.showNext = false;
+   }
+
+   action(value) {
+      goNext();
+   }
+
+   expect(action, value) {
+      if (this.expectAction === action) { // yes, great, now we can goto next step
+         this.action(value);
+      } else {
+         // show error, and try to rewind?
+         
+      }
+   }
+}
+
+
+class ExpectZoomStep extends ExpectStep {
+   constructor(title, text, targetID, placement) {
+      super(__WEBPACK_IMPORTED_MODULE_1__wings3d__["action"].cameraZoom, title, text, targetID, placement);
+   }
+
+   action(value) {
+      // now zoom step is done, we can show next button.
+      nextButton(true);
+   }
+}
+
+
+class SelectStep extends TutorStep {
+   constructor(tour, selections, title, text, placement) {
+      super(tour, title, text, "", placement);
+      if (Number.isInteger(selections)) {
+         this.count = selections;
+         this.countDown = selections;
+      } else {
+         this.selections = selections;
+         this.countDown = new Set(selections);
+      } 
+   }
+
+   expect(action, value) {
+      if (action === this.modeSelect) {
+         // now check inside the array. if the array is empty. check number.
+         if (this.count !== undefined) {
+            if(--this.countDown === 0) {
+               goNext();
+            } else {
+               this.showSelectionCount();
+            }
+         } else {
+            if (this.countDown.has(value)) {
+               this.countDown.delete(value);
+               this.showSelectionCount();
+            }
+         }
+      }
+   }
+
+   done() {
+      popUp.select.textContent = "";    
+   }
+
+   show() {
+      super.show();
+      this.showSelectionCount();
+   }
+
+   showSelectionCount() {
+      if (this.count !== undefined) {
+         popUp.select.textContent = "selection " + (this.count - this.countDown).toString() + " of " + (this.count).toString();
+      } else {
+            // popUp.select.textContent = (this.selections.size - this.countDown.size).toString() + " of " + (this.selections.size).toString();
+      }
+   }
+}
+
+class FaceSelectStep extends SelectStep {
+   constructor(tour, selections, title, text, placement) {
+      super(tour, selections, title, text, placement);
+      this.modeSelect = "faceSelectOn";
+   }
+}
+
+class EdgeSelectStep extends SelectStep {
+}
+
+
+
+//
+// export variable
+//
+const tours = {};
+let targetCage = null;
+
+//
+// internal accounting.
+//
+const rail = {stops: new Map, routes: [], currentStation: -1};
+let multiStep = null;   // current multistep if any
+let popUp = {};
+// init() popup.bubble.
+function init(idName) {
+   // default 
+   popUp.bubble = document.getElementById('tutorGuide');
+   if (popUp.bubble) {
+      popUp.close = extractElement("close");
+      if (popUp.close) { // get close
+         popUp.close.addEventListener('click', function(e) {
+            cancel();
+         });
+      }
+      popUp.next = extractElement("next");
+      if (popUp.next) {
+         popUp.next.addEventListener('click', function(ev){
+            if (popUp.next.textContent === "Done") {
+               complete();
+            } else {
+               goNext();
+            }
+         });
+      }
+      //
+      popUp.title = extractElement("tutor-title");
+      popUp.content = extractElement("tutor-content");
+      popUp.select = extractElement("tutor-selection");
+      popUp.progressBar = extractElement("tutor-progress");
+      popUp.progressDone = extractElement("tutor-progress-done");
+      popUp.progressIndicator = extractElement('tutor-progress-indicator');
+   }
+}
+
+function nextButton(shown) {
+   if (popUp.next) {
+      if (shown) {
+         popUp.next.style.display = 'inline-block';
+      } else {
+         popUp.next.style.display = 'none';
+      }
+   }
+}
+
+function setMultiStep(obj) {
+   multiStep = obj;
+};
+
+function getCurrentStep() {
+   if (multiStep) {  // let multiStep handle it
+      return multiStep;
+   } else {
+      return rail.routes[rail.currentStation];
+   }
+};
+
+function getRealCurrentStep() {
+   return rail.routes[rail.currentStation];
+};
+
+function getCurrentStation() {
+   return rail.currentStation;
+}
+
+function extractElement(className) {
+   const nodeList = popUp.bubble.getElementsByClassName(className);
+   if (nodeList.length > 0) {
+      return nodeList[0];
+   }
+   return undefined;
+};
+      
+function noDuplicate(nameId) {      
+   if (rail.stops.has(nameId)) {
+      console.log("bad step: already has ", nameId);
+      return false;
+   }
+   return true;
+};
+
+function add(nameStep) {  // rename from _addStep, also return success or failure.
+   if (noDuplicate(nameStep.nameId)) {
+      rail.stops.set(nameStep.nameId, rail.routes.length);
+      rail.routes.push(nameStep.step);
+      return true;
+   } else {
+      return false;
+   }
+};
+    
+//
+function step(nameId, title, text, targetID, placement, stepOptions) {
+   return {nameId: nameId, step: new TutorStep(title, text, targetID, placement)};
+};
+function addStep(nameId, title, text, targetID, placement, stepOtions) {
+   add(step(nameId, title, text, targetID, placement, stepOtions));
+};
+
+function expectStep(expect, nameId, title, text, targetID, placement, stepOptions) {
+   return {nameId: nameId, step: new ExpectStep(expect, title, text, targetID, placement)};
+};
+function addExpectStep(expect, nameId, title, text, targetID, placement, stepOptions) {
+   add(expectStep(expect, nameId, title, text, targetID, placement, stepOptions));
+};
+
+function faceSelectStep(selection, nameId, title, text, placement, stepOptions) {
+   return {nameId: nameId, step: new FaceSelectStep(selection, title, text, placement)};
+};
+function addFaceSelectStep(selection, nameId, title, text, placement, stepOptions) {
+   add(faceSelectStep(selection, nameId, title, text, placement, stepOptions));
+};
+
+function zoomStep(nameId, title, text, targetID, placement, stepOptions) {
+   return {nameId: nameId, step: new ExpectZoomStep(title, text, targetID, placement, stepOptions)};
+}
+
+function addZoomStep(nameId, title, text, targetID, placement, stepOptions) {
+   add(zoomStep(nameId, title, text, targetID, placement, stepOptions));
+}
+
+// add MultiStep.
+function addMultiStep(nameId, title, text, target, placement, steps) {
+   //
+   const multiStep = new MultiStep(title, text, target, placement, steps);
+   add({nameId: nameId, step: multiStep}); // begin;
+   for (let step of steps) {
+      add(step);
+   }
+}
+
+
+let _play = function(stepNumber) {
+   if ((stepNumber < 0) || (stepNumber >= rail.routes.length)) {
+      console.log("bad step number in tutor guide");
+   } else {
+      if (stepNumber === (rail.routes.length-1)) {
+         // change the NextButton to DoneButton
+         popUp.next.textContent = "Done";
+      }
+      if ((rail.currentStation >= 0) && (rail.currentStation < rail.routes.length)) {
+         const prevStep = getCurrentStep();//rail.routes[rail.currentStation];
+         prevStep.done();
+      }
+      rail.currentStation = stepNumber;
+      const step = getCurrentStep();//rail.routes[stepNumber];
+      // apply data
+      nextButton(step.option('showNext'));
+      step.show();
+   }
+};
+    
+function startTour(stepArray) {
+   __WEBPACK_IMPORTED_MODULE_1__wings3d__["interposeLog"](expect, true);
+   //myObj.hasOwnProperty('key')
+   if (stepArray) {
+
+   }
+   // onto the world
+   popUp.bubble.classList.remove("hide");
+   // display firstStep
+   _play(0);
+};
+    
+function complete() {
+   // remove all unfocus class
+   if (rail.currentStation > -1) {
+      rail.routes[rail.currentStation].done();
+   }
+   // restore to original condition
+   popUp.bubble.classList.add("hide");
+   popUp.next.textContent = "Next";
+   rail.stops.clear();
+   rail.routes.length = 0;
+   rail.currentStation = -1;
+   __WEBPACK_IMPORTED_MODULE_1__wings3d__["interposeLog"](expect, false);   // remove interceptLog
+};
+    
+function cancel() {
+   complete();
+};
+function goNext() { _play(rail.currentStation+1); };
+    
+function goBack() { _play(rail.currentStation-1); };
+    
+function goTo(id) {};
+
+function expect(action, log) {
+   if (rail.currentStation >= 0) {
+      const step = getCurrentStep();
+      step.expect(action, log);
+      if (action === "createCube") {   // 
+         targetCage = value;
+      }
+   }
+};
+
+// register for 
+__WEBPACK_IMPORTED_MODULE_1__wings3d__["onReady"](init);
+
+
+
+/***/ }),
+/* 19 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "renderText", function() { return renderText; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "needToRedraw", function() { return needToRedraw; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "render", function() { return render; });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_view__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_camera__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_shaderprog__ = __webpack_require__(6);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_util__ = __webpack_require__(7);
+/*
+//    Render all objects and helpers (such as axes) in the scene.
+//     Used for the Geometry and AutoUV windows.
+//
+//  Original Erlang Version: Bjorn Gustavsson
+*/
+
+
+
+
+
+
+
+
+
+// my.shader = initShaders();
+// wings_pref:set_default(multisample, true), <- why set default here? shouldn't bunch of defaults set together?
+// initPolygonStipple(); no webgl support. shader replacement? ignore for now
+let lineProg;        // to be replaced
+let groundAxisProg;  // to be replaced
+let textProg;        // to be replaced
+
+Object(__WEBPACK_IMPORTED_MODULE_3__wings3d__["onReady"])(function() {
+   redrawFlag = true;
+   __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].enable(__WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].DEPTH_TEST);
+   __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].enable(__WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].CULL_FACE);   // enable cull face (2018-05-30) back face culling is default
+   // initialized glsl program, update data
+   // program source ShaderProg
+   // drawGrid, using LineProgram
+   // compile and link program
+   lineProg = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].createShaderProgram(__WEBPACK_IMPORTED_MODULE_4__wings3d_shaderprog__["uColorArray"].vertexShader, __WEBPACK_IMPORTED_MODULE_4__wings3d_shaderprog__["uColorArray"].fragShader);
+
+   // compile and link program.
+   groundAxisProg = {handle: __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].compileGLSL(__WEBPACK_IMPORTED_MODULE_4__wings3d_shaderprog__["colorArray"].vertexShader, __WEBPACK_IMPORTED_MODULE_4__wings3d_shaderprog__["colorArray"].fragShader)};
+
+   // get attribute handle.
+   groundAxisProg.vertexPosition = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].getAttribLocation(groundAxisProg.handle, "aVertexPosition");
+   groundAxisProg.vertexColor = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].getAttribLocation(groundAxisProg.handle, "aVertexColor");
+   groundAxisProg.uPMatrix = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].getUniformLocation(groundAxisProg.handle, "uPMatrix");
+   groundAxisProg.uMVMatrix = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].getUniformLocation(groundAxisProg.handle, "uMVMatrix");
+
+   // compute grid and axis, and write to vbo.
+   var mat = __WEBPACK_IMPORTED_MODULE_1__wings3d_view__["loadMatrices"](true);
+   var yon = computeGroundAndAxes(__WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"], mat.projection, mat.modelView);    
+   initMiniAxis(__WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"], mat.modelView);
+
+   // init simpleText.
+   // compile and link program.
+   textProg = {handle: __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].compileGLSL(__WEBPACK_IMPORTED_MODULE_4__wings3d_shaderprog__["textArray"].vertexShader, __WEBPACK_IMPORTED_MODULE_4__wings3d_shaderprog__["textArray"].fragShader)};
+
+   // get attribute handle.
+   textProg.vertexPosition = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].getAttribLocation(textProg.handle, "aVertexPosition");
+   textProg.texCoord = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].getAttribLocation(textProg.handle, "aTexCoord");
+   textProg.uMVMatrix = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].getUniformLocation(textProg.handle, "uMVMatrix");
+   textProg.uPMatrix = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].getUniformLocation(textProg.handle, "uPMatrix");
+   textProg.uTexture = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].getUniformLocation(textProg.handle, "u_texture");
+   
+   initSimpleASCII(__WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"]);
+
+ //  console.log("Render.init() success");
+});
+
+
+
+function makeVerticesForString(s) {
+   var len = s.length;
+   var numVertices = len * 6;
+   var positions = textProg.bitmapTextVBO.verticesData;
+   var texcoords = textProg.bitmapTextVBO.texCoordData;
+   var numElements = positions.length / 2;
+   if (numVertices > numElements) {
+      // reallocated
+      positions = new Float32Array(numVertices * 2);
+      texcoords = new Float32Array(numVertices * 2);
+   }
+
+   var offset = 0;
+   var x = 0;
+   var maxX = textProg.bitmapTextVBO.fontInfo.textureWidth;
+   var maxY = textProg.bitmapTextVBO.fontInfo.textureHeight;
+   for (var ii = 0; ii < len; ++ii) {
+      var letter = s[ii];
+      var glyphInfo = textProg.bitmapTextVBO.fontInfo.glyphInfos[letter];
+      if (glyphInfo) {
+         var x2 = x + glyphInfo.width;
+         var u1 = glyphInfo.x / maxX;
+         var v1 = (glyphInfo.y + textProg.bitmapTextVBO.fontInfo.letterHeight - 1) / maxY;
+         var u2 = (glyphInfo.x + glyphInfo.width - 1) / maxX;
+         var v2 = glyphInfo.y / maxY;
+
+         // 6 vertices per letter, instead triangle strip, we use triangle, single call to webgl, faster that way.
+         positions[offset + 0] = x;
+         positions[offset + 1] = 0;
+         texcoords[offset + 0] = u1;
+         texcoords[offset + 1] = v1;
+
+         positions[offset + 2] = x2;
+         positions[offset + 3] = 0;
+         texcoords[offset + 2] = u2;
+         texcoords[offset + 3] = v1;
+
+         positions[offset + 4] = x;
+         positions[offset + 5] = textProg.bitmapTextVBO.fontInfo.letterHeight;
+         texcoords[offset + 4] = u1;
+         texcoords[offset + 5] = v2;
+
+         positions[offset + 6] = x;
+         positions[offset + 7] = textProg.bitmapTextVBO.fontInfo.letterHeight;
+         texcoords[offset + 6] = u1;
+         texcoords[offset + 7] = v2;
+
+         positions[offset + 8] = x2;
+         positions[offset + 9] = 0;
+         texcoords[offset + 8] = u2;
+         texcoords[offset + 9] = v1;
+
+         positions[offset + 10] = x2;
+         positions[offset + 11] = textProg.bitmapTextVBO.fontInfo.letterHeight;
+         texcoords[offset + 10] = u2;
+         texcoords[offset + 11] = v2;
+
+         x += glyphInfo.width + textProg.bitmapTextVBO.fontInfo.spacing;
+         offset += 12;
+      } else {
+         // we don't have this character so just advance
+         x += textProg.bitmapTextVBO.fontInfo.spaceWidth;
+      }
+   }
+
+   // return ArrayBufferViews for the portion of the TypedArrays
+   // that were actually used.
+   textProg.bitmapTextVBO.verticesData = positions;
+   textProg.bitmapTextVBO.texCoordData = texcoords;
+   textProg.bitmapTextVBO.numElements = offset / 2;
+}
+// 
+function renderText(gl, x, y, color, s) {
+   gl.useProgram(textProg.handle);
+   gl.setBufferAndAttrib(textProg.bitmapTextVBO.position, textProg.vertexPosition, 2);
+   gl.setBufferAndAttrib(textProg.bitmapTextVBO.texCoord, textProg.texCoord, 2);
+
+   makeVerticesForString(s);
+
+   // update the buffers
+   gl.bindBuffer(gl.ARRAY_BUFFER, textProg.bitmapTextVBO.position);
+   gl.bufferData(gl.ARRAY_BUFFER, textProg.bitmapTextVBO.verticesData, gl.DYNAMIC_DRAW);
+   gl.bindBuffer(gl.ARRAY_BUFFER, textProg.bitmapTextVBO.texCoord);
+   gl.bufferData(gl.ARRAY_BUFFER, textProg.bitmapTextVBO.texCoordData, gl.DYNAMIC_DRAW);
+
+   // setup modelView
+   textProg.bitmapTextVBO.modelView[12] = x;
+   textProg.bitmapTextVBO.modelView[13] = y;
+   textProg.bitmapTextVBO.modelView[14] = 0.0;
+   // set uniforms
+   gl.uniformMatrix4fv(textProg.uPMatrix, false, textProg.bitmapTextVBO.projection);
+   gl.uniformMatrix4fv(textProg.uMVMatrix, false, textProg.bitmapTextVBO.modelView);
+   gl.activeTexture(gl.TEXTURE0);
+   gl.bindTexture(gl.TEXTURE_2D, textProg.bitmapTextVBO.uTexture);
+   gl.uniform1i(textProg.uTexture, 0);
+
+   // Draw the text.
+   gl.drawArrays(gl.TRIANGLES, 0, textProg.bitmapTextVBO.numElements);
+};
+
+function initSimpleASCII(gl) {
+   var fontInfo = {
+      letterHeight: 8,
+      spaceWidth: 8,
+      spacing: -1,
+      textureWidth: 64,
+      textureHeight: 40,
+      glyphInfos: {
+         'a': { x:  0, y:  0, width: 8, }, 'b': { x:  8, y:  0, width: 8, }, 
+         'c': { x: 16, y:  0, width: 8, }, 'd': { x: 24, y:  0, width: 8, },
+         'e': { x: 32, y:  0, width: 8, }, 'f': { x: 40, y:  0, width: 8, },
+         'g': { x: 48, y:  0, width: 8, }, 'h': { x: 56, y:  0, width: 8, },
+         'i': { x:  0, y:  8, width: 8, }, 'j': { x:  8, y:  8, width: 8, },
+         'k': { x: 16, y:  8, width: 8, }, 'l': { x: 24, y:  8, width: 8, },
+         'm': { x: 32, y:  8, width: 8, }, 'n': { x: 40, y:  8, width: 8, },
+         'o': { x: 48, y:  8, width: 8, }, 'p': { x: 56, y:  8, width: 8, },
+         'q': { x:  0, y: 16, width: 8, }, 'r': { x:  8, y: 16, width: 8, },
+         's': { x: 16, y: 16, width: 8, }, 't': { x: 24, y: 16, width: 8, },
+         'u': { x: 32, y: 16, width: 8, }, 'v': { x: 40, y: 16, width: 8, },
+         'w': { x: 48, y: 16, width: 8, }, 'x': { x: 56, y: 16, width: 8, },
+         'y': { x:  0, y: 24, width: 8, }, 'z': { x:  8, y: 24, width: 8, },
+         '0': { x: 16, y: 24, width: 8, }, '1': { x: 24, y: 24, width: 8, },
+         '2': { x: 32, y: 24, width: 8, }, '3': { x: 40, y: 24, width: 8, },
+         '4': { x: 48, y: 24, width: 8, }, '5': { x: 56, y: 24, width: 8, },
+         '6': { x:  0, y: 32, width: 8, }, '7': { x:  8, y: 32, width: 8, },
+         '8': { x: 16, y: 32, width: 8, }, '9': { x: 24, y: 32, width: 8, },
+         '-': { x: 32, y: 32, width: 8, }, '*': { x: 40, y: 32, width: 8, },
+         '!': { x: 48, y: 32, width: 8, }, '?': { x: 56, y: 32, width: 8, },
+      },
+   };
+
+   // ready VBO and Image.
+   var vertices = new Float32Array(8*6*2);
+   var texCoord = new Float32Array(8*6*2);
+  // Create a texture.
+   var glyphTex = gl.createTexture();
+   gl.bindTexture(gl.TEXTURE_2D, glyphTex);
+   // Fill the texture with a 1x1 blue pixel.
+   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 255, 255]));
+   // Asynchronously load an image
+   var image = new Image();
+   image.src = "../img/8x8-font.png";
+   image.onload = function() {   // image loaded, copy it to the texture.
+      gl.bindTexture(gl.TEXTURE_2D, glyphTex);
+      gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+   };   
+   textProg.bitmapTextVBO = {
+      verticesData: vertices,
+      texCoordData: texCoord,
+      numElements: 0,
+      position: gl.createBufferHandle(vertices),
+      texCoord: gl.createBufferHandle(texCoord),
+      modelView: mat4.create(),
+      projection: mat4.create(),
+      uTexture: glyphTex,
+      fontInfo: fontInfo
+   };
+}
+
+// it seems erlang version use 2d(w) line - line intersection (wikipedia). 
+// we changed it to blinn's homogenous clipping. we are only interest in clip to end-out region. 
+function clipLine(pt0, pt1) {
+   var tIn = 0.0, tOut = 1.0, tHit;
+   // bc, boundary code.
+   var bc = {pt0: [pt0[3]+pt0[0], pt0[3]-pt0[0], pt0[3]+pt0[1], pt0[3]-pt0[1], pt0[3]+pt0[2], pt0[3]-pt0[2]],
+             pt1: [pt1[3]+pt1[0], pt1[3]-pt1[0], pt1[3]+pt1[1], pt1[3]-pt1[1], pt1[3]+pt1[2], pt1[3]-pt1[2]]};
+   var outCode = {pt0: 0, pt1: 0};
+   for (var i = 0; i < 6; ++i) {
+      var tmp = (bc.pt0[i] < 0) << i;
+      outCode.pt0 |= tmp;
+      outCode.pt1 |= (bc.pt1[i] < 0) << i;
+   }
+
+   if ((outCode.pt0 & outCode.pt1) != 0) { // trivial reject, both point outside the same plane
+      return false;
+   }
+   if ((outCode.pt0 | outCode.pt1) == 0) { // trivial accept
+      return true;
+   }
+   // now, do 3D line clipping
+   for (i=0; i < 6; i++) {  // clip against 6 planes
+      if (bc.pt1[i] < 0) {  // C is outside wall i (exit so tOut)
+         tHit = bc.pt0[i]/(bc.pt0[i] - bc.pt1[i]);      // calculate tHit
+         tOut = Math.min(tOut, tHit);
+      } else if(bc.pt0[i] < 0) { // A is outside wall I (enters so tIn)
+         tHit = bc.pt0[i]/(bc.pt0[i] - bc.pt1[i]);      // calculate tHit
+         tIn = Math.max(tIn, tHit);
+      }
+      if (tIn > tOut) {
+         return false; // CI is empty: early out
+      }
+   }
+
+   var tmp = vec4.create();  // stores homogeneous coordinates
+   if (outCode.pt0 != 0) { // A is outside: tIn has changed. Calculate A_chop
+      for (i = 0; i < 4; ++i) { // compute x, y, z, w component
+         tmp[i] = pt0[i] + tIn * (pt1[i] - pt0[i]);
+      }
+   }
+   if (outCode.pt1 != 0) { // C is outside: tOut has changed. Calculate C_chop
+      for (i = 0; i < 4; ++i) { // compute x, y, z, w component
+         pt1[i] = pt0[i] + tOut * (pt1[i] - pt0[i]);
+      }
+   }
+   pt0 = tmp;
+   return true; // some of the edges lie inside CVV
+};
+
+function renderASCII(gl, origin, end, c, color, viewport) {
+   if (clipLine(origin, end)) {
+      // line inside view volume
+      //console.log(end[0], end[1], end[2], end[3]);
+      var x = Math.trunc((0.5*end[0]/end[3]+0.5)*(viewport[2]-20) + 10);
+      var y = viewport[3] - Math.trunc((0.5*end[1]/end[3]+0.5)*(viewport[3]-16) + 7);
+      //console.log("x:", x, "y:", y);
+      renderText(gl, x, y, color, c);
+   }
+};
+
+function renderAxisLetter(gl, zFar) {
+   if (__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["prop"].showAxes){
+      var viewPort = gl.getViewport();
+      var start = vec4.fromValues(0.0, 0.0, 0.0, 1.0);
+      var origin = gl.transformVertex(start);
+
+      //gl:matrixMode(?GL_PROJECTION),
+      //gl:loadIdentity(),
+      //{_,_,W,H} = ViewPort,
+      //glu:ortho2D(0.0, W, H, 0.0, -1, 1);
+      mat4.ortho(textProg.bitmapTextVBO.projection, 0.0, viewPort[2], viewPort[3], 0.0, -1.0,  1.0);
+      //gl:matrixMode(?GL_MODELVIEW),
+      //gl:loadIdentity(),
+      zFar = zFar + __WEBPACK_IMPORTED_MODULE_3__wings3d__["GROUND_GRID_SIZE"];
+      //gl:polygonMode(?GL_FRONT_AND_BACK, ?GL_FILL),
+      
+      var color = [__WEBPACK_IMPORTED_MODULE_5__wings3d_util__["hexToRGB"](__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].colorX), __WEBPACK_IMPORTED_MODULE_5__wings3d_util__["hexToRGB"](__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].colorY), __WEBPACK_IMPORTED_MODULE_5__wings3d_util__["hexToRGB"](__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].colorZ)];
+      var endx = gl.transformVertex(vec4.fromValues(zFar, 0.0, 0.0, 1.0)), 
+          endy = gl.transformVertex(vec4.fromValues(0.0, zFar, 0.0, 1.0)), 
+          endz = gl.transformVertex(vec4.fromValues(0.0, 0.0, zFar, 1.0));
+      renderASCII(gl, origin, endx, 'x', color[0], viewPort);
+      renderASCII(gl, origin, endy, 'y', color[1], viewPort);
+      renderASCII(gl, origin, endz, 'z', color[2], viewPort);
+   }
+};
+
+// ignore along_axis for now. fixed it later when we get to set the preference.
+function initMiniAxis(gl, inModelView) {
+   //#view{along_axis=Along} = wings_view:current(),
+   // mini axis and arrow
+   var PA = 0.08, PB = 0.01;
+   var arry = [].concat(
+      [0.0, 0.0, 0.0], [0.1, 0.0, 0.0], // x
+      [0.0, 0.0, 0.0], [0.0, 0.1, 0.0], // y
+      [0.0, 0.0, 0.0], [0.0, 0.0, 0.1], // z
+      [ PA, 0.0, -PB], [0.1, 0.0, 0.0], [PA, 0.0,  PB], [0.1, 0.0, 0.0], // x arrow
+      [-PB,  PA, 0.0], [0.0, 0.1, 0.0], [PB,  PA, 0.0], [0.0, 0.1, 0.0], // y arrow
+      [-PB, 0.0,  PA], [0.0, 0.0, 0.1], [PB, 0.0,  PA], [0.0, 0.0, 0.1]   // z arrow
+   );
+   // ready color
+   var clr = [__WEBPACK_IMPORTED_MODULE_5__wings3d_util__["hexToRGB"](__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].colorX), __WEBPACK_IMPORTED_MODULE_5__wings3d_util__["hexToRGB"](__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].colorY), __WEBPACK_IMPORTED_MODULE_5__wings3d_util__["hexToRGB"](__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].colorZ)];
+   var color = [], arrow = [];
+   for (var i=0; i< 3; ++i) {
+      color = color.concat(clr[i], clr[i]);
+      arrow = arrow.concat(clr[i], clr[i], clr[i], clr[i]);
+   }
+   color = color.concat(arrow);
+   // bindVBO
+   groundAxisProg.miniAxisVBO = {
+       position: gl.createBufferHandle(new Float32Array(arry)),
+       color: gl.createBufferHandle(new Float32Array(color)),
+       length: 3*2 + 3*4
+   };
+   // compute ortho projection, and modelView.
+   var ratio = gl.canvas.clientWidth / gl.canvas.clientHeight;
+   var modelView = mat4.clone(inModelView);
+   modelView[12] = 0.11-ratio;
+   modelView[13] = -1.0+0.11;
+   modelView[14] = 0.0;
+   groundAxisProg.miniAxisVBO.modelView = modelView;
+   groundAxisProg.miniAxisVBO.projection = mat4.create();
+   mat4.ortho(groundAxisProg.miniAxisVBO.projection, -ratio, ratio, -1.0, 1.0, 0.00001,  10000000.0);
+}
+function renderMiniAxis(gl, inModelView) {
+   if (__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["prop"].miniAxis) {
+      var ratio = gl.canvas.clientWidth / gl.canvas.clientHeight;
+      // set current rotation.
+      var modelView = groundAxisProg.miniAxisVBO.modelView;
+      mat4.copy(modelView, inModelView);
+      modelView[12] = 0.11-ratio;
+      modelView[13] = -1.0+0.11;
+      modelView[14] = 0.0;
+      // save attribute
+      var length = groundAxisProg.miniAxisVBO.length;
+
+      // render mini axis, use groundAxisProg
+      gl.useProgram(groundAxisProg.handle);
+      // bind attribute, vertex, color, matrix
+      gl.uniformMatrix4fv(groundAxisProg.uPMatrix, false, groundAxisProg.miniAxisVBO.projection);
+      gl.uniformMatrix4fv(groundAxisProg.uMVMatrix, false, groundAxisProg.miniAxisVBO.modelView);
+      gl.setBufferAndAttrib(groundAxisProg.miniAxisVBO.position, groundAxisProg.vertexPosition);
+      gl.setBufferAndAttrib(groundAxisProg.miniAxisVBO.color, groundAxisProg.vertexColor);
+      // draw line segments
+      gl.drawArrays(gl.LINES, 0, length);
+      // pop attribute
+   }
+}
+// recompute groundplanegrid, given the size of grid. size is mutiple of GROUND_GRID_SIZE. default
+// GROUND_GRID_SIZE=1, so size=10, grid is 10x10.
+function computeGroundGrid(size, gridSize) {
+   var data = [];
+   for (var xz= size; xz > 0; xz-=gridSize) {
+      data = data.concat([xz, 0.0, size], [xz, 0.0, -size],
+                         [-xz, 0.0, size], [-xz, 0.0, -size],
+                         [size, 0.0, xz], [-size, 0.0, xz],
+                         [size, 0.0, -xz], [-size, 0.0, -xz]  
+                        );
+   }
+   // final x, z, axis lines.
+   return data.concat([0.0, 0.0, size], [0.0, 0.0, -size],
+                      [size, 0.0, 0.0], [-size, 0.0, 0.0]);
+}
+function calcGridSize(projection, modelView) {
+   var width = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].canvas.clientWidth;
+   var height = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].canvas.clientHeight;
+   var w1 = Math.max(width, height);// /2.0;
+   var coord = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].unProject(w1, 0.0, 0.0, modelView, projection, [0, 0, width, height]);
+   var ret = __WEBPACK_IMPORTED_MODULE_3__wings3d__["GROUND_GRID_SIZE"] * 
+           Math.max(Math.round(Math.max(Math.max(Math.abs(coord[0]), Math.abs(coord[1])), Math.abs(coord[2]))), 10.0);
+   // hacked an value that just cover the screen space.
+   ret *= width/height * 0.7;
+   return Math.round(ret);
+}
+function computeGroundAndAxes(gl, projection, modelView) {
+   var gridSize = calcGridSize(projection, modelView);
+   //console.log("gridsize " + gridSize.toString());
+   var data = computeGroundGrid(gridSize, __WEBPACK_IMPORTED_MODULE_3__wings3d__["GROUND_GRID_SIZE"]);
+   // bindVBO.
+   lineProg.groundGridVBO = {
+      position: gl.createBufferHandle(new Float32Array(data)),
+      length: data.length/3
+   };
+
+   // compute Axes, bindVBO.
+   groundAxisProg.axisVBO = {
+      position: gl.createBufferHandle(getAxis()),
+      color: gl.createBufferHandle(getAxisColor()),
+      length: 3*2*2
+   };
+
+   return gridSize;
+}
+function getAxis() {
+   var yon = __WEBPACK_IMPORTED_MODULE_2__wings3d_camera__["view"].zFar;
+   var arry = [[yon, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [-yon, 0.0, 0.0], 
+               [0.0, yon, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, -yon, 0.0],
+               [0.0, 0.0, yon], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, -yon]];
+   return new Float32Array([].concat.apply([],arry));
+}
+function getAxisColor() {
+    const color = [__WEBPACK_IMPORTED_MODULE_5__wings3d_util__["hexToRGB"](__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].colorX), __WEBPACK_IMPORTED_MODULE_5__wings3d_util__["hexToRGB"](__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].colorY), __WEBPACK_IMPORTED_MODULE_5__wings3d_util__["hexToRGB"](__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].colorZ)],
+       negColor = [__WEBPACK_IMPORTED_MODULE_5__wings3d_util__["hexToRGB"](__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].negColorX), __WEBPACK_IMPORTED_MODULE_5__wings3d_util__["hexToRGB"](__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].negColorY), __WEBPACK_IMPORTED_MODULE_5__wings3d_util__["hexToRGB"](__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].negColorZ)];
+   var arry = [];
+   for (var i = 0; i < 3; i++) {
+      arry = arry.concat(color[i], color[i], negColor[i], negColor[i]);
+   }
+   return new Float32Array(arry);
+}
+function renderGroundAndAxes(gl, projection, modelView) {
+   const showAxes = __WEBPACK_IMPORTED_MODULE_1__wings3d_view__["prop"].showAxes;
+   // draw groundPlane
+   const show = __WEBPACK_IMPORTED_MODULE_1__wings3d_view__["prop"].showGroundplane; // || 
+      //(wings_pref:get_value(force_show_along_grid) andalso
+      //(Camera.view.alongAxis =/= none);      
+   if (show) {
+      var alongAxis = __WEBPACK_IMPORTED_MODULE_2__wings3d_camera__["view"].alongAxis;
+      const color = __WEBPACK_IMPORTED_MODULE_5__wings3d_util__["hexToRGBA"](__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].gridColor);
+         //case view.AlongAxis of
+         // x -> gl:rotatef(90.0, 0.0, 1.0, 0.0);
+         // z -> ok;
+         // _ -> gl:rotatef(90.0, 1.0, 0.0, 0.0)
+      var length = lineProg.groundGridVBO.length;
+      if (showAxes) {
+         length -= 4;            // skip the axes line
+      }
+      // data
+      // use line segment program
+      gl.useProgram(lineProg.progHandle);
+      // bind attribute, vertex, color, matrix
+      gl.setBufferAndAttrib(lineProg.groundGridVBO.position, lineProg.attribute.position.loc);
+      gl.uniform4fv(lineProg.uniform.uColor.loc, color);
+      gl.uniformMatrix4fv(lineProg.transform.projection, false, projection);
+      gl.uniformMatrix4fv(lineProg.transform.worldView, false, modelView);
+      // draw line segments
+      gl.drawArrays(gl.LINES, 0, length);
+   }
+
+   var yon;
+   //if (View.prop.constrainAxes) {
+   //   yon = gridSize;
+   //} else {
+      yon = __WEBPACK_IMPORTED_MODULE_2__wings3d_camera__["view"].zFar;
+   //}
+   if (showAxes) {
+      // use line segment program
+      gl.useProgram(groundAxisProg.handle);
+      // bind attribute, vertex, color, matrix
+      gl.uniformMatrix4fv(groundAxisProg.uPMatrix, false, projection);
+      gl.uniformMatrix4fv(groundAxisProg.uMVMatrix, false, modelView);
+      gl.setBufferAndAttrib(groundAxisProg.axisVBO.position, groundAxisProg.vertexPosition);
+      gl.setBufferAndAttrib(groundAxisProg.axisVBO.color, groundAxisProg.vertexColor);
+      // draw line segment
+      gl.drawArrays(gl.LINES, 0, groundAxisProg.axisVBO.length);
+   }
+
+   return yon;
+};
+
+let redrawFlag = false;
+
+function needToRedraw() {
+   redrawFlag = true;
+};
+
+function render(gl, drawWorldFn) {
+   if (gl.resizeToDisplaySize() || __WEBPACK_IMPORTED_MODULE_2__wings3d_camera__["view"].isModified || redrawFlag) {
+      redrawFlag = false; 
+      const backColor = __WEBPACK_IMPORTED_MODULE_5__wings3d_util__["hexToRGBA"](__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].geometryBackground);
+      gl.clearColor(backColor[0], backColor[1], backColor[2], backColor[3]);
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+      gl.polygonOffset(0.0, 0.0);
+      gl.enable(gl.POLYGON_OFFSET_FILL);
+      //?CHECK_ERROR(),
+      // no support for pushAttrib()
+      //gl.pushAttrib(?GL_CURRENT_BIT bor ?GL_ENABLE_BIT bor
+      //                        ?GL_TEXTURE_BIT bor ?GL_POLYGON_BIT bor
+      //		                   ?GL_LINE_BIT bor ?GL_COLOR_BUFFER_BIT bor
+      //		                   ?GL_LIGHTING_BIT).enable(?GL_DEPTH_TEST).enable(?GL_CULL_FACE);
+      // no support for dynamic anti aliasing. only setup in creatingContext
+      var mat = __WEBPACK_IMPORTED_MODULE_1__wings3d_view__["loadMatrices"](true);
+      if (__WEBPACK_IMPORTED_MODULE_2__wings3d_camera__["view"].isModified) {
+         __WEBPACK_IMPORTED_MODULE_2__wings3d_camera__["view"].isModified = false;
+         computeGroundAndAxes(gl, mat.projection, mat.modelView);
+      }
+      var yon = renderGroundAndAxes(gl, mat.projection, mat.modelView);
+      renderMiniAxis(gl, mat.modelView);
+      //show_saved_bb(St),
+      //show_bb_center(St),
+      //user_clipping_planes(on),
+      drawWorldFn(gl); // and scenelights.
+      //user_clipping_planes(off),
+      renderAxisLetter(gl, yon);
+      //show_camera_image_plane(),
+      //wings_develop:gl_error_check("Rendering scene")
+   }
+};
+
+
+
+
+
+
+
+
+
+/***/ }),
+/* 20 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return WavefrontObjImportExporter; });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_importexport__ = __webpack_require__(21);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_view__ = __webpack_require__(1);
+//
+// Wavefront Obj Loader and Writer.
+//
+//
+
+
+
+
+class WavefrontObjImportExporter extends __WEBPACK_IMPORTED_MODULE_0__wings3d_importexport__["ImportExporter"] {
+   constructor() {
+      super('Wavefront (.obj)...', 'Wavefront (.obj)...');
+   }
+
+   extension() {
+      return "obj";
+   }
+
+   _export(world) {      
+      let text = "#wings3d-web wavefront export\n";
+      const fn = function(vertex) {
+         text += " " + (vertex.index+1);
+      };
+      for (const [index, cage] of world.entries()) {
+         const mesh = cage.geometry;
+         text += "o " + index.toString() + "\n";
+         // now append the "v x y z\n"
+         text += "\n#vertex total " + mesh.vertices.size + "\n";
+         for (let vertex of mesh.vertices) {
+            const vert = vertex.vertex;
+            text += "v " + vert[0] + " " + vert[1] + " " + vert[2] + "\n";
+         }
+         // "f index+1 index+1 index+1"
+         text += "\n#face list total " + mesh.faces.size + "\n";
+         for (let polygon of mesh.faces) {
+            text += "f";
+            polygon.eachVertex(fn);
+            text += "\n";
+         }
+      }
+      const blob = new Blob([text], {type: "text/plain;charset=utf-8"});
+
+      return blob;
+   }
+
+   _import(objText) {
+      // break the objText to lines we needs.
+      const linesMatch = objText.match(/^([vfogs])(?:\s+(.+))$/gm);   //objText.match(/^v((?:\s+)[\d|\.|\+|\-|e|E]+){3}$/gm);
+
+      if (linesMatch) {
+         for (let line of linesMatch) {
+            line = line.trim();            // how can we remove end of space in regex?
+            let split = line.split(/\s+/);
+            let tag = split.shift();
+            if (typeof this[tag] === 'function') {
+               this[tag](split);
+            } else {
+               console.log("unexpected tag: " + tag); // should not happened
+            }
+         }
+         // done reading, return the object.
+         return this.objs;
+      }
+   }
+
+   o(objName) {
+      this.objView = __WEBPACK_IMPORTED_MODULE_1__wings3d_view__["putIntoWorld"]();
+      this.obj = this.objView.geometry;
+      this.objs.push( this.objView );
+
+      this.obj.clearAffected();
+      // assignedName
+      this.objView.name = objName;
+   }
+
+   g(groupNames) {
+      if (!this.objView) {
+         this.objView = __WEBPACK_IMPORTED_MODULE_1__wings3d_view__["putIntoWorld"]();
+         this.obj = this.objView.geometry;
+         this.objs.push( this.objView );
+      }
+      // to be implemented later
+
+   }
+
+   s(groupNumber) {
+      // to be implemented later
+   }
+
+   v(vertex) {
+      // should we do error check?
+      const vert = this.obj.addVertex(vertex);
+      this.realVertices.push(vert.index);
+      this.vertexCount++;
+   }
+
+   f(index) {
+      const faceIndex = [];
+      for (let i of index) {
+         let split = i.split('/');
+         let idx = split[0] - 1;          // convert 1-based index to 0-based index.
+         if ( (idx >= 0) && (idx < this.obj.vertices.size)) {
+            faceIndex.push( this.realVertices[idx] );
+         } else {
+            console.log("face index out of bound: " + idx);
+         }
+      }
+      let polygonIndex = this.obj.addPolygon(faceIndex);
+      if (polygonIndex === null) {
+         this.non_manifold.push( this.polygonCount );    // addup failure.
+      }
+      //if (!this.obj.sanityCheck()) {
+      //   console.log("polygon # " + this.polygonCount + " not sane");
+      //}
+      this.polygonCount++;
+   }
+}
+
+
+
+
+/***/ }),
+/* 21 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ImportExporter", function() { return ImportExporter; });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_model__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_wingededge__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_ui__ = __webpack_require__(2);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_view__ = __webpack_require__(1);
+//
+// file handling. 
+// 1) handling local file upload. and simple file download.
+// todo
+// 2) dropbox, yandex.
+// 3) google drive, microsoft onedrive, baidupan to come later.
+//
+
+
+
+
+
+
+
+class ImportExporter {
+   constructor(importMenuText, exportMenuText) {
+      const self = this;
+      // plug into import/export menu
+      if (importMenuText) {
+         // first get import Submenu.
+         __WEBPACK_IMPORTED_MODULE_2__wings3d_ui__["addMenuItem"]('fileImport', 'import' + importMenuText.split(" ")[0], importMenuText, function(ev) {
+               __WEBPACK_IMPORTED_MODULE_2__wings3d_ui__["openFile"](function(file) { // open file Dialog, and retrive data
+                     self.import(file);
+                  });      
+            });
+      }
+      if (exportMenuText) {
+         __WEBPACK_IMPORTED_MODULE_2__wings3d_ui__["addMenuItem"]('fileExport', 'export' + exportMenuText.split(" ")[0], exportMenuText, function(ev) {
+            __WEBPACK_IMPORTED_MODULE_2__wings3d_ui__["runDialog"]('#exportFile', ev, function(form) {
+               const data = form.querySelector('input[name="Filename"');
+               if (data) {
+                  self.export(data.value);
+               }
+             });
+         });
+      }
+      // init at beginning.
+      this._reset();
+   }
+
+
+   export(filename) {
+      const blob = this._export(__WEBPACK_IMPORTED_MODULE_3__wings3d_view__["getWorld"]());
+      saveAs(blob, filename + '.' + this.extension());
+   }
+
+   import(file) {
+      const self = this;
+      let reader = new FileReader();
+
+      reader.onload = function(ev) {
+         const text = reader.result;
+         const world = self._import(text);
+         const cages = [];
+         for (let cage of world) {
+            cages.push( new __WEBPACK_IMPORTED_MODULE_0__wings3d_model__["CreatePreviewCageCommand"](cage) );
+         }
+         if (cages.length > 1) {
+            // combo
+            __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["undoQueueCombo"]( cages );
+         } else if (cages.length > 0) {
+            __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["undoQueue"](cages[0]);
+         }
+         // after we finalised _reset too.
+         self._reset();
+         __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["updateWorld"]();
+      }
+
+      reader.readAsText(file);
+   }
+
+   _reset() {
+      this.objs = [];
+      this.obj = null;
+      this.objView = null;
+      this.realVertices = []; // convert index
+      this.polygonCount = 0;
+      this.vertexCount = 0;
+      this.non_manifold = [];
+   }
+};
+
+
+
+/***/ }),
+/* 22 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "MultiMadsor", function() { return MultiMadsor; });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__ = __webpack_require__(8);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_edgemads__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__ = __webpack_require__(12);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_model__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_shaderprog__ = __webpack_require__(6);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_view__ = __webpack_require__(1);
+/*
+ *
+ * MADS (Modify, Add, Delete, Select) operation. only toggling function
+ *
+**/
+
+
+
+
+
+
+
+
+
+
+class MultiMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
+   constructor() {
+      super('Multi');
+   }
+
+   isFaceSelectable() { return true; }
+   isEdgeSelectable() { return true; }
+   isVertexSelectable() { return true; }
+
+   toggleMulti(hilite) {
+      if (hilite.face) {
+         __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["toggleFaceMode"]();
+      } else if (hilite.vertex) {
+         __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["toggleVertexMode"]();
+      } else {    // if (hilite.edge) {   
+         __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["toggleEdgeMode"]();
+      } // not body possible.
+   }
+
+   toggleFunc(toMadsor) {
+      let redoFn;
+      let snapshots;
+      if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__["FaceMadsor"]) {
+         redoFn = __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreFaceMode"];
+         snapshots = this.snapshotAll(__WEBPACK_IMPORTED_MODULE_4__wings3d_model__["PreviewCage"].prototype.changeFromMultiToFaceSelect);
+      } else if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__["VertexMadsor"]) {
+         redoFn = __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreVertexMode"];
+         snapshots = this.snapshotAll(__WEBPACK_IMPORTED_MODULE_4__wings3d_model__["PreviewCage"].prototype.changeFromMultiToVertexSelect);
+      } else if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_2__wings3d_edgemads__["EdgeMadsor"]) {
+         redoFn = __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreEdgeMode"];
+         snapshots = this.snapshotAll(__WEBPACK_IMPORTED_MODULE_4__wings3d_model__["PreviewCage"].prototype.changeFromMultiToEdgeSelect);
+      } else { // bodyMadsor
+         redoFn = __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreEdgeMode"];
+         snapshots = this.snapshotAll(__WEBPACK_IMPORTED_MODULE_4__wings3d_model__["PreviewCage"].prototype.changeFromMultiToBodySelect);
+      }
+      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"](new __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["ToggleModeCommand"](redoFn, __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreMultiMode"], snapshots));
+   }
+
+   restoreMode(toMadsor, snapshots) {
+      if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__["FaceMadsor"]) {
+         this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_4__wings3d_model__["PreviewCage"].prototype.restoreFromMultiToFaceSelect);
+      } else if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__["VertexMadsor"]) {
+         this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_4__wings3d_model__["PreviewCage"].prototype.restoreFromMultiToVertexSelect);
+      } else if (toMadsor instanceof EdgeVertex) {
+         this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_4__wings3d_model__["PreviewCage"].prototype.restoreFromMultiToEdgeSelect);
+      } else {
+         this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_4__wings3d_model__["PreviewCage"].prototype.restoreFromMultiToBodySelect);      
+      }
+   }
+
+   drawExtra(_gl, _draftBench) {
+      // no hilite
+   }
+};
+
+
+
+
+/***/ }),
+/* 23 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -15113,1336 +16399,6 @@ class CheckPoint extends __WEBPACK_IMPORTED_MODULE_5__wings3d_undo__["EditComman
 
 
 /***/ }),
-/* 19 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "tours", function() { return tours; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "targetCage", function() { return targetCage; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "step", function() { return step; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "expectStep", function() { return expectStep; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "faceSelectStep", function() { return faceSelectStep; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "addStep", function() { return addStep; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "addExpectStep", function() { return addExpectStep; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "addFaceSelectStep", function() { return addFaceSelectStep; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "add", function() { return add; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "addMultiStep", function() { return addMultiStep; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "addZoomStep", function() { return addZoomStep; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "zoomStep", function() { return zoomStep; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "cancel", function() { return cancel; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "complete", function() { return complete; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "startTour", function() { return startTour; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d__ = __webpack_require__(0);
-//
-// interact. tutoring.
-//
-
-
-
-
-
-class TutorStep {
-   constructor(title, text, targetID, placement) {
-     this.targetID = targetID;
-     this.placement = placement;
-     this.title = title;
-     this.content = text;
-     this.options = {};
-     this.options.showNext = true;
-   }
-
-   // do functions along recursively up the parent
-   static walkupDoms(target, ancestorTarget, fn) {
-      if (target) {
-         const parent = target.parentNode;
-         for (let element = parent.firstElementChild; element; element = element.nextElementSibling) {
-            if (element !==target) {
-               fn(element);
-            }           
-         }
-         if (parent !== ancestorTarget) {
-            this.walkupDoms(parent, ancestorTarget, fn);
-         }
-
-      } else { // select all parent's childern, except canvas
-         for (let element = ancestorTarget.firstElementChild; element; element = element.nextElementSibling) {
-            if (element.id !== "canvas") {
-               fn(element);
-            }
-         }
-      }
-   }
-
-   cancel() {
-      this.done();
-   }
-
-   done() {
-      // unblur all other id
-      let target;
-      if (this.targetID !== '') {
-         target = document.getElementById(this.targetID);
-      }
-      TutorStep.walkupDoms(target, document.body, function(element) {element.classList.remove('unfocus');});
-   }
-
-   expect(action, value) {}
-
-   option(name) {
-      return this.options[name];
-   }
-
-   show() {
-      // place on  the world.
-      popUp.title.textContent = this.title;
-      popUp.content.innerHTML = this.content;
-      popUp.bubble.classList.remove("left", "right", "top", "bottom");
-      popUp.bubble.classList.add(__WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["getArrow"](this.placement));
-      // now place it
-      const placement = __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["placement"](this.targetID, this.placement, popUp.bubble);
-      popUp.bubble.style.top = placement.top.toString() + "px";
-      popUp.bubble.style.left = placement.left.toString() + "px"; 
-      // blur all not ide.
-      let target;
-      if (this.targetID !== '') {
-         target = document.getElementById(this.targetID);
-      }
-      TutorStep.walkupDoms(target, document.body, function(node) {node.classList.add('unfocus')});
-   }
-}
-
-
-class MultiStep extends TutorStep {
-   constructor(title, text, targetID, placement, steps) {
-      super(title, text, targetID, placement);
-      this.steps = steps;
-      this.endStep = steps[steps.length-1].step;
-   }
-
-   cancel() {
-      super.cancel();
-      // remember to clean up.
-      setMultiStep(null);
-   }
-
-   done() {
-      const realStep = getRealCurrentStep();
-      if (realStep  === this) {
-         super.done();
-      } else { // let substep handle it.
-         realStep.done();
-         if (realStep === this.endStep) {
-            // should we insert an repeat again? congratulation? or something?
-            setMultiStep(null);
-            popUp.progressBar.style.display = 'none';
-            popUp.progressDone.style.width = '0%';
-            popUp.progressIndicator.style.width = '0%';
-         }
-      }
-   }
-
-   // let substep handle it.
-   expect(action, value) {
-      const realStep = getRealCurrentStep();
-      if (realStep !== this) {
-         realStep.expect(action, value);
-      }
-   }
-
-   show() {
-      const realStep = getRealCurrentStep();
-      if (realStep === this) {
-         super.show();
-         setMultiStep(this);
-         this.begin = getCurrentStation() + 1;
-         this.end = this.begin + this.steps.length;
-         const percent = (1 / this.steps.length) * 100;
-         popUp.progressIndicator.style.width = percent + '%';
-         popUp.progressBar.style.display = 'flex';
-      } else { // run the real things
-         realStep.show();
-         // update the x/y progress bar.
-         const x = getCurrentStation() - this.begin;
-         const percent = (x / this.steps.length)*100;
-         popUp.progressDone.style.width = percent + '%';   // set the progress bar's percentage.
-      }
-   }
-}
-
-
-class ExpectStep extends TutorStep {
-   constructor(expect, title, text, targetID, placement) {
-      super(title, text, targetID, placement);
-      this.expectAction = expect;
-      this.options.showNext = false;
-   }
-
-   action(value) {
-      goNext();
-   }
-
-   expect(action, value) {
-      if (this.expectAction === action) { // yes, great, now we can goto next step
-         this.action(value);
-      } else {
-         // show error, and try to rewind?
-         
-      }
-   }
-}
-
-
-class ExpectZoomStep extends ExpectStep {
-   constructor(title, text, targetID, placement) {
-      super(__WEBPACK_IMPORTED_MODULE_1__wings3d__["action"].cameraZoom, title, text, targetID, placement);
-   }
-
-   action(value) {
-      // now zoom step is done, we can show next button.
-      nextButton(true);
-   }
-}
-
-
-class SelectStep extends TutorStep {
-   constructor(tour, selections, title, text, placement) {
-      super(tour, title, text, "", placement);
-      if (Number.isInteger(selections)) {
-         this.count = selections;
-         this.countDown = selections;
-      } else {
-         this.selections = selections;
-         this.countDown = new Set(selections);
-      } 
-   }
-
-   expect(action, value) {
-      if (action === this.modeSelect) {
-         // now check inside the array. if the array is empty. check number.
-         if (this.count !== undefined) {
-            if(--this.countDown === 0) {
-               goNext();
-            } else {
-               this.showSelectionCount();
-            }
-         } else {
-            if (this.countDown.has(value)) {
-               this.countDown.delete(value);
-               this.showSelectionCount();
-            }
-         }
-      }
-   }
-
-   done() {
-      popUp.select.textContent = "";    
-   }
-
-   show() {
-      super.show();
-      this.showSelectionCount();
-   }
-
-   showSelectionCount() {
-      if (this.count !== undefined) {
-         popUp.select.textContent = "selection " + (this.count - this.countDown).toString() + " of " + (this.count).toString();
-      } else {
-            // popUp.select.textContent = (this.selections.size - this.countDown.size).toString() + " of " + (this.selections.size).toString();
-      }
-   }
-}
-
-class FaceSelectStep extends SelectStep {
-   constructor(tour, selections, title, text, placement) {
-      super(tour, selections, title, text, placement);
-      this.modeSelect = "faceSelectOn";
-   }
-}
-
-class EdgeSelectStep extends SelectStep {
-}
-
-
-
-//
-// export variable
-//
-const tours = {};
-let targetCage = null;
-
-//
-// internal accounting.
-//
-const rail = {stops: new Map, routes: [], currentStation: -1};
-let multiStep = null;   // current multistep if any
-let popUp = {};
-// init() popup.bubble.
-function init(idName) {
-   // default 
-   popUp.bubble = document.getElementById('tutorGuide');
-   if (popUp.bubble) {
-      popUp.close = extractElement("close");
-      if (popUp.close) { // get close
-         popUp.close.addEventListener('click', function(e) {
-            cancel();
-         });
-      }
-      popUp.next = extractElement("next");
-      if (popUp.next) {
-         popUp.next.addEventListener('click', function(ev){
-            if (popUp.next.textContent === "Done") {
-               complete();
-            } else {
-               goNext();
-            }
-         });
-      }
-      //
-      popUp.title = extractElement("tutor-title");
-      popUp.content = extractElement("tutor-content");
-      popUp.select = extractElement("tutor-selection");
-      popUp.progressBar = extractElement("tutor-progress");
-      popUp.progressDone = extractElement("tutor-progress-done");
-      popUp.progressIndicator = extractElement('tutor-progress-indicator');
-   }
-}
-
-function nextButton(shown) {
-   if (popUp.next) {
-      if (shown) {
-         popUp.next.style.display = 'inline-block';
-      } else {
-         popUp.next.style.display = 'none';
-      }
-   }
-}
-
-function setMultiStep(obj) {
-   multiStep = obj;
-};
-
-function getCurrentStep() {
-   if (multiStep) {  // let multiStep handle it
-      return multiStep;
-   } else {
-      return rail.routes[rail.currentStation];
-   }
-};
-
-function getRealCurrentStep() {
-   return rail.routes[rail.currentStation];
-};
-
-function getCurrentStation() {
-   return rail.currentStation;
-}
-
-function extractElement(className) {
-   const nodeList = popUp.bubble.getElementsByClassName(className);
-   if (nodeList.length > 0) {
-      return nodeList[0];
-   }
-   return undefined;
-};
-      
-function noDuplicate(nameId) {      
-   if (rail.stops.has(nameId)) {
-      console.log("bad step: already has ", nameId);
-      return false;
-   }
-   return true;
-};
-
-function add(nameStep) {  // rename from _addStep, also return success or failure.
-   if (noDuplicate(nameStep.nameId)) {
-      rail.stops.set(nameStep.nameId, rail.routes.length);
-      rail.routes.push(nameStep.step);
-      return true;
-   } else {
-      return false;
-   }
-};
-    
-//
-function step(nameId, title, text, targetID, placement, stepOptions) {
-   return {nameId: nameId, step: new TutorStep(title, text, targetID, placement)};
-};
-function addStep(nameId, title, text, targetID, placement, stepOtions) {
-   add(step(nameId, title, text, targetID, placement, stepOtions));
-};
-
-function expectStep(expect, nameId, title, text, targetID, placement, stepOptions) {
-   return {nameId: nameId, step: new ExpectStep(expect, title, text, targetID, placement)};
-};
-function addExpectStep(expect, nameId, title, text, targetID, placement, stepOptions) {
-   add(expectStep(expect, nameId, title, text, targetID, placement, stepOptions));
-};
-
-function faceSelectStep(selection, nameId, title, text, placement, stepOptions) {
-   return {nameId: nameId, step: new FaceSelectStep(selection, title, text, placement)};
-};
-function addFaceSelectStep(selection, nameId, title, text, placement, stepOptions) {
-   add(faceSelectStep(selection, nameId, title, text, placement, stepOptions));
-};
-
-function zoomStep(nameId, title, text, targetID, placement, stepOptions) {
-   return {nameId: nameId, step: new ExpectZoomStep(title, text, targetID, placement, stepOptions)};
-}
-
-function addZoomStep(nameId, title, text, targetID, placement, stepOptions) {
-   add(zoomStep(nameId, title, text, targetID, placement, stepOptions));
-}
-
-// add MultiStep.
-function addMultiStep(nameId, title, text, target, placement, steps) {
-   //
-   const multiStep = new MultiStep(title, text, target, placement, steps);
-   add({nameId: nameId, step: multiStep}); // begin;
-   for (let step of steps) {
-      add(step);
-   }
-}
-
-
-let _play = function(stepNumber) {
-   if ((stepNumber < 0) || (stepNumber >= rail.routes.length)) {
-      console.log("bad step number in tutor guide");
-   } else {
-      if (stepNumber === (rail.routes.length-1)) {
-         // change the NextButton to DoneButton
-         popUp.next.textContent = "Done";
-      }
-      if ((rail.currentStation >= 0) && (rail.currentStation < rail.routes.length)) {
-         const prevStep = getCurrentStep();//rail.routes[rail.currentStation];
-         prevStep.done();
-      }
-      rail.currentStation = stepNumber;
-      const step = getCurrentStep();//rail.routes[stepNumber];
-      // apply data
-      nextButton(step.option('showNext'));
-      step.show();
-   }
-};
-    
-function startTour(stepArray) {
-   __WEBPACK_IMPORTED_MODULE_1__wings3d__["interposeLog"](expect, true);
-   //myObj.hasOwnProperty('key')
-   if (stepArray) {
-
-   }
-   // onto the world
-   popUp.bubble.classList.remove("hide");
-   // display firstStep
-   _play(0);
-};
-    
-function complete() {
-   // remove all unfocus class
-   if (rail.currentStation > -1) {
-      rail.routes[rail.currentStation].done();
-   }
-   // restore to original condition
-   popUp.bubble.classList.add("hide");
-   popUp.next.textContent = "Next";
-   rail.stops.clear();
-   rail.routes.length = 0;
-   rail.currentStation = -1;
-   __WEBPACK_IMPORTED_MODULE_1__wings3d__["interposeLog"](expect, false);   // remove interceptLog
-};
-    
-function cancel() {
-   complete();
-};
-function goNext() { _play(rail.currentStation+1); };
-    
-function goBack() { _play(rail.currentStation-1); };
-    
-function goTo(id) {};
-
-function expect(action, log) {
-   if (rail.currentStation >= 0) {
-      const step = getCurrentStep();
-      step.expect(action, log);
-      if (action === "createCube") {   // 
-         targetCage = value;
-      }
-   }
-};
-
-// register for 
-__WEBPACK_IMPORTED_MODULE_1__wings3d__["onReady"](init);
-
-
-
-/***/ }),
-/* 20 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "renderText", function() { return renderText; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "needToRedraw", function() { return needToRedraw; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "render", function() { return render; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__ = __webpack_require__(5);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_view__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_camera__ = __webpack_require__(15);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_shaderprog__ = __webpack_require__(6);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_util__ = __webpack_require__(7);
-/*
-//    Render all objects and helpers (such as axes) in the scene.
-//     Used for the Geometry and AutoUV windows.
-//
-//  Original Erlang Version: Bjorn Gustavsson
-*/
-
-
-
-
-
-
-
-
-
-// my.shader = initShaders();
-// wings_pref:set_default(multisample, true), <- why set default here? shouldn't bunch of defaults set together?
-// initPolygonStipple(); no webgl support. shader replacement? ignore for now
-let lineProg;        // to be replaced
-let groundAxisProg;  // to be replaced
-let textProg;        // to be replaced
-
-Object(__WEBPACK_IMPORTED_MODULE_3__wings3d__["onReady"])(function() {
-   redrawFlag = true;
-   __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].enable(__WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].DEPTH_TEST);
-   __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].enable(__WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].CULL_FACE);   // enable cull face (2018-05-30) back face culling is default
-   // initialized glsl program, update data
-   // program source ShaderProg
-   // drawGrid, using LineProgram
-   // compile and link program
-   lineProg = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].createShaderProgram(__WEBPACK_IMPORTED_MODULE_4__wings3d_shaderprog__["uColorArray"].vertexShader, __WEBPACK_IMPORTED_MODULE_4__wings3d_shaderprog__["uColorArray"].fragShader);
-
-   // compile and link program.
-   groundAxisProg = {handle: __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].compileGLSL(__WEBPACK_IMPORTED_MODULE_4__wings3d_shaderprog__["colorArray"].vertexShader, __WEBPACK_IMPORTED_MODULE_4__wings3d_shaderprog__["colorArray"].fragShader)};
-
-   // get attribute handle.
-   groundAxisProg.vertexPosition = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].getAttribLocation(groundAxisProg.handle, "aVertexPosition");
-   groundAxisProg.vertexColor = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].getAttribLocation(groundAxisProg.handle, "aVertexColor");
-   groundAxisProg.uPMatrix = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].getUniformLocation(groundAxisProg.handle, "uPMatrix");
-   groundAxisProg.uMVMatrix = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].getUniformLocation(groundAxisProg.handle, "uMVMatrix");
-
-   // compute grid and axis, and write to vbo.
-   var mat = __WEBPACK_IMPORTED_MODULE_1__wings3d_view__["loadMatrices"](true);
-   var yon = computeGroundAndAxes(__WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"], mat.projection, mat.modelView);    
-   initMiniAxis(__WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"], mat.modelView);
-
-   // init simpleText.
-   // compile and link program.
-   textProg = {handle: __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].compileGLSL(__WEBPACK_IMPORTED_MODULE_4__wings3d_shaderprog__["textArray"].vertexShader, __WEBPACK_IMPORTED_MODULE_4__wings3d_shaderprog__["textArray"].fragShader)};
-
-   // get attribute handle.
-   textProg.vertexPosition = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].getAttribLocation(textProg.handle, "aVertexPosition");
-   textProg.texCoord = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].getAttribLocation(textProg.handle, "aTexCoord");
-   textProg.uMVMatrix = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].getUniformLocation(textProg.handle, "uMVMatrix");
-   textProg.uPMatrix = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].getUniformLocation(textProg.handle, "uPMatrix");
-   textProg.uTexture = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].getUniformLocation(textProg.handle, "u_texture");
-   
-   initSimpleASCII(__WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"]);
-
- //  console.log("Render.init() success");
-});
-
-
-
-function makeVerticesForString(s) {
-   var len = s.length;
-   var numVertices = len * 6;
-   var positions = textProg.bitmapTextVBO.verticesData;
-   var texcoords = textProg.bitmapTextVBO.texCoordData;
-   var numElements = positions.length / 2;
-   if (numVertices > numElements) {
-      // reallocated
-      positions = new Float32Array(numVertices * 2);
-      texcoords = new Float32Array(numVertices * 2);
-   }
-
-   var offset = 0;
-   var x = 0;
-   var maxX = textProg.bitmapTextVBO.fontInfo.textureWidth;
-   var maxY = textProg.bitmapTextVBO.fontInfo.textureHeight;
-   for (var ii = 0; ii < len; ++ii) {
-      var letter = s[ii];
-      var glyphInfo = textProg.bitmapTextVBO.fontInfo.glyphInfos[letter];
-      if (glyphInfo) {
-         var x2 = x + glyphInfo.width;
-         var u1 = glyphInfo.x / maxX;
-         var v1 = (glyphInfo.y + textProg.bitmapTextVBO.fontInfo.letterHeight - 1) / maxY;
-         var u2 = (glyphInfo.x + glyphInfo.width - 1) / maxX;
-         var v2 = glyphInfo.y / maxY;
-
-         // 6 vertices per letter, instead triangle strip, we use triangle, single call to webgl, faster that way.
-         positions[offset + 0] = x;
-         positions[offset + 1] = 0;
-         texcoords[offset + 0] = u1;
-         texcoords[offset + 1] = v1;
-
-         positions[offset + 2] = x2;
-         positions[offset + 3] = 0;
-         texcoords[offset + 2] = u2;
-         texcoords[offset + 3] = v1;
-
-         positions[offset + 4] = x;
-         positions[offset + 5] = textProg.bitmapTextVBO.fontInfo.letterHeight;
-         texcoords[offset + 4] = u1;
-         texcoords[offset + 5] = v2;
-
-         positions[offset + 6] = x;
-         positions[offset + 7] = textProg.bitmapTextVBO.fontInfo.letterHeight;
-         texcoords[offset + 6] = u1;
-         texcoords[offset + 7] = v2;
-
-         positions[offset + 8] = x2;
-         positions[offset + 9] = 0;
-         texcoords[offset + 8] = u2;
-         texcoords[offset + 9] = v1;
-
-         positions[offset + 10] = x2;
-         positions[offset + 11] = textProg.bitmapTextVBO.fontInfo.letterHeight;
-         texcoords[offset + 10] = u2;
-         texcoords[offset + 11] = v2;
-
-         x += glyphInfo.width + textProg.bitmapTextVBO.fontInfo.spacing;
-         offset += 12;
-      } else {
-         // we don't have this character so just advance
-         x += textProg.bitmapTextVBO.fontInfo.spaceWidth;
-      }
-   }
-
-   // return ArrayBufferViews for the portion of the TypedArrays
-   // that were actually used.
-   textProg.bitmapTextVBO.verticesData = positions;
-   textProg.bitmapTextVBO.texCoordData = texcoords;
-   textProg.bitmapTextVBO.numElements = offset / 2;
-}
-// 
-function renderText(gl, x, y, color, s) {
-   gl.useProgram(textProg.handle);
-   gl.setBufferAndAttrib(textProg.bitmapTextVBO.position, textProg.vertexPosition, 2);
-   gl.setBufferAndAttrib(textProg.bitmapTextVBO.texCoord, textProg.texCoord, 2);
-
-   makeVerticesForString(s);
-
-   // update the buffers
-   gl.bindBuffer(gl.ARRAY_BUFFER, textProg.bitmapTextVBO.position);
-   gl.bufferData(gl.ARRAY_BUFFER, textProg.bitmapTextVBO.verticesData, gl.DYNAMIC_DRAW);
-   gl.bindBuffer(gl.ARRAY_BUFFER, textProg.bitmapTextVBO.texCoord);
-   gl.bufferData(gl.ARRAY_BUFFER, textProg.bitmapTextVBO.texCoordData, gl.DYNAMIC_DRAW);
-
-   // setup modelView
-   textProg.bitmapTextVBO.modelView[12] = x;
-   textProg.bitmapTextVBO.modelView[13] = y;
-   textProg.bitmapTextVBO.modelView[14] = 0.0;
-   // set uniforms
-   gl.uniformMatrix4fv(textProg.uPMatrix, false, textProg.bitmapTextVBO.projection);
-   gl.uniformMatrix4fv(textProg.uMVMatrix, false, textProg.bitmapTextVBO.modelView);
-   gl.activeTexture(gl.TEXTURE0);
-   gl.bindTexture(gl.TEXTURE_2D, textProg.bitmapTextVBO.uTexture);
-   gl.uniform1i(textProg.uTexture, 0);
-
-   // Draw the text.
-   gl.drawArrays(gl.TRIANGLES, 0, textProg.bitmapTextVBO.numElements);
-};
-
-function initSimpleASCII(gl) {
-   var fontInfo = {
-      letterHeight: 8,
-      spaceWidth: 8,
-      spacing: -1,
-      textureWidth: 64,
-      textureHeight: 40,
-      glyphInfos: {
-         'a': { x:  0, y:  0, width: 8, }, 'b': { x:  8, y:  0, width: 8, }, 
-         'c': { x: 16, y:  0, width: 8, }, 'd': { x: 24, y:  0, width: 8, },
-         'e': { x: 32, y:  0, width: 8, }, 'f': { x: 40, y:  0, width: 8, },
-         'g': { x: 48, y:  0, width: 8, }, 'h': { x: 56, y:  0, width: 8, },
-         'i': { x:  0, y:  8, width: 8, }, 'j': { x:  8, y:  8, width: 8, },
-         'k': { x: 16, y:  8, width: 8, }, 'l': { x: 24, y:  8, width: 8, },
-         'm': { x: 32, y:  8, width: 8, }, 'n': { x: 40, y:  8, width: 8, },
-         'o': { x: 48, y:  8, width: 8, }, 'p': { x: 56, y:  8, width: 8, },
-         'q': { x:  0, y: 16, width: 8, }, 'r': { x:  8, y: 16, width: 8, },
-         's': { x: 16, y: 16, width: 8, }, 't': { x: 24, y: 16, width: 8, },
-         'u': { x: 32, y: 16, width: 8, }, 'v': { x: 40, y: 16, width: 8, },
-         'w': { x: 48, y: 16, width: 8, }, 'x': { x: 56, y: 16, width: 8, },
-         'y': { x:  0, y: 24, width: 8, }, 'z': { x:  8, y: 24, width: 8, },
-         '0': { x: 16, y: 24, width: 8, }, '1': { x: 24, y: 24, width: 8, },
-         '2': { x: 32, y: 24, width: 8, }, '3': { x: 40, y: 24, width: 8, },
-         '4': { x: 48, y: 24, width: 8, }, '5': { x: 56, y: 24, width: 8, },
-         '6': { x:  0, y: 32, width: 8, }, '7': { x:  8, y: 32, width: 8, },
-         '8': { x: 16, y: 32, width: 8, }, '9': { x: 24, y: 32, width: 8, },
-         '-': { x: 32, y: 32, width: 8, }, '*': { x: 40, y: 32, width: 8, },
-         '!': { x: 48, y: 32, width: 8, }, '?': { x: 56, y: 32, width: 8, },
-      },
-   };
-
-   // ready VBO and Image.
-   var vertices = new Float32Array(8*6*2);
-   var texCoord = new Float32Array(8*6*2);
-  // Create a texture.
-   var glyphTex = gl.createTexture();
-   gl.bindTexture(gl.TEXTURE_2D, glyphTex);
-   // Fill the texture with a 1x1 blue pixel.
-   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 255, 255]));
-   // Asynchronously load an image
-   var image = new Image();
-   image.src = "../img/8x8-font.png";
-   image.onload = function() {   // image loaded, copy it to the texture.
-      gl.bindTexture(gl.TEXTURE_2D, glyphTex);
-      gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-   };   
-   textProg.bitmapTextVBO = {
-      verticesData: vertices,
-      texCoordData: texCoord,
-      numElements: 0,
-      position: gl.createBufferHandle(vertices),
-      texCoord: gl.createBufferHandle(texCoord),
-      modelView: mat4.create(),
-      projection: mat4.create(),
-      uTexture: glyphTex,
-      fontInfo: fontInfo
-   };
-}
-
-// it seems erlang version use 2d(w) line - line intersection (wikipedia). 
-// we changed it to blinn's homogenous clipping. we are only interest in clip to end-out region. 
-function clipLine(pt0, pt1) {
-   var tIn = 0.0, tOut = 1.0, tHit;
-   // bc, boundary code.
-   var bc = {pt0: [pt0[3]+pt0[0], pt0[3]-pt0[0], pt0[3]+pt0[1], pt0[3]-pt0[1], pt0[3]+pt0[2], pt0[3]-pt0[2]],
-             pt1: [pt1[3]+pt1[0], pt1[3]-pt1[0], pt1[3]+pt1[1], pt1[3]-pt1[1], pt1[3]+pt1[2], pt1[3]-pt1[2]]};
-   var outCode = {pt0: 0, pt1: 0};
-   for (var i = 0; i < 6; ++i) {
-      var tmp = (bc.pt0[i] < 0) << i;
-      outCode.pt0 |= tmp;
-      outCode.pt1 |= (bc.pt1[i] < 0) << i;
-   }
-
-   if ((outCode.pt0 & outCode.pt1) != 0) { // trivial reject, both point outside the same plane
-      return false;
-   }
-   if ((outCode.pt0 | outCode.pt1) == 0) { // trivial accept
-      return true;
-   }
-   // now, do 3D line clipping
-   for (i=0; i < 6; i++) {  // clip against 6 planes
-      if (bc.pt1[i] < 0) {  // C is outside wall i (exit so tOut)
-         tHit = bc.pt0[i]/(bc.pt0[i] - bc.pt1[i]);      // calculate tHit
-         tOut = Math.min(tOut, tHit);
-      } else if(bc.pt0[i] < 0) { // A is outside wall I (enters so tIn)
-         tHit = bc.pt0[i]/(bc.pt0[i] - bc.pt1[i]);      // calculate tHit
-         tIn = Math.max(tIn, tHit);
-      }
-      if (tIn > tOut) {
-         return false; // CI is empty: early out
-      }
-   }
-
-   var tmp = vec4.create();  // stores homogeneous coordinates
-   if (outCode.pt0 != 0) { // A is outside: tIn has changed. Calculate A_chop
-      for (i = 0; i < 4; ++i) { // compute x, y, z, w component
-         tmp[i] = pt0[i] + tIn * (pt1[i] - pt0[i]);
-      }
-   }
-   if (outCode.pt1 != 0) { // C is outside: tOut has changed. Calculate C_chop
-      for (i = 0; i < 4; ++i) { // compute x, y, z, w component
-         pt1[i] = pt0[i] + tOut * (pt1[i] - pt0[i]);
-      }
-   }
-   pt0 = tmp;
-   return true; // some of the edges lie inside CVV
-};
-
-function renderASCII(gl, origin, end, c, color, viewport) {
-   if (clipLine(origin, end)) {
-      // line inside view volume
-      //console.log(end[0], end[1], end[2], end[3]);
-      var x = Math.trunc((0.5*end[0]/end[3]+0.5)*(viewport[2]-20) + 10);
-      var y = viewport[3] - Math.trunc((0.5*end[1]/end[3]+0.5)*(viewport[3]-16) + 7);
-      //console.log("x:", x, "y:", y);
-      renderText(gl, x, y, color, c);
-   }
-};
-
-function renderAxisLetter(gl, zFar) {
-   if (__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["prop"].showAxes){
-      var viewPort = gl.getViewport();
-      var start = vec4.fromValues(0.0, 0.0, 0.0, 1.0);
-      var origin = gl.transformVertex(start);
-
-      //gl:matrixMode(?GL_PROJECTION),
-      //gl:loadIdentity(),
-      //{_,_,W,H} = ViewPort,
-      //glu:ortho2D(0.0, W, H, 0.0, -1, 1);
-      mat4.ortho(textProg.bitmapTextVBO.projection, 0.0, viewPort[2], viewPort[3], 0.0, -1.0,  1.0);
-      //gl:matrixMode(?GL_MODELVIEW),
-      //gl:loadIdentity(),
-      zFar = zFar + __WEBPACK_IMPORTED_MODULE_3__wings3d__["GROUND_GRID_SIZE"];
-      //gl:polygonMode(?GL_FRONT_AND_BACK, ?GL_FILL),
-      
-      var color = [__WEBPACK_IMPORTED_MODULE_5__wings3d_util__["hexToRGB"](__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].colorX), __WEBPACK_IMPORTED_MODULE_5__wings3d_util__["hexToRGB"](__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].colorY), __WEBPACK_IMPORTED_MODULE_5__wings3d_util__["hexToRGB"](__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].colorZ)];
-      var endx = gl.transformVertex(vec4.fromValues(zFar, 0.0, 0.0, 1.0)), 
-          endy = gl.transformVertex(vec4.fromValues(0.0, zFar, 0.0, 1.0)), 
-          endz = gl.transformVertex(vec4.fromValues(0.0, 0.0, zFar, 1.0));
-      renderASCII(gl, origin, endx, 'x', color[0], viewPort);
-      renderASCII(gl, origin, endy, 'y', color[1], viewPort);
-      renderASCII(gl, origin, endz, 'z', color[2], viewPort);
-   }
-};
-
-// ignore along_axis for now. fixed it later when we get to set the preference.
-function initMiniAxis(gl, inModelView) {
-   //#view{along_axis=Along} = wings_view:current(),
-   // mini axis and arrow
-   var PA = 0.08, PB = 0.01;
-   var arry = [].concat(
-      [0.0, 0.0, 0.0], [0.1, 0.0, 0.0], // x
-      [0.0, 0.0, 0.0], [0.0, 0.1, 0.0], // y
-      [0.0, 0.0, 0.0], [0.0, 0.0, 0.1], // z
-      [ PA, 0.0, -PB], [0.1, 0.0, 0.0], [PA, 0.0,  PB], [0.1, 0.0, 0.0], // x arrow
-      [-PB,  PA, 0.0], [0.0, 0.1, 0.0], [PB,  PA, 0.0], [0.0, 0.1, 0.0], // y arrow
-      [-PB, 0.0,  PA], [0.0, 0.0, 0.1], [PB, 0.0,  PA], [0.0, 0.0, 0.1]   // z arrow
-   );
-   // ready color
-   var clr = [__WEBPACK_IMPORTED_MODULE_5__wings3d_util__["hexToRGB"](__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].colorX), __WEBPACK_IMPORTED_MODULE_5__wings3d_util__["hexToRGB"](__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].colorY), __WEBPACK_IMPORTED_MODULE_5__wings3d_util__["hexToRGB"](__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].colorZ)];
-   var color = [], arrow = [];
-   for (var i=0; i< 3; ++i) {
-      color = color.concat(clr[i], clr[i]);
-      arrow = arrow.concat(clr[i], clr[i], clr[i], clr[i]);
-   }
-   color = color.concat(arrow);
-   // bindVBO
-   groundAxisProg.miniAxisVBO = {
-       position: gl.createBufferHandle(new Float32Array(arry)),
-       color: gl.createBufferHandle(new Float32Array(color)),
-       length: 3*2 + 3*4
-   };
-   // compute ortho projection, and modelView.
-   var ratio = gl.canvas.clientWidth / gl.canvas.clientHeight;
-   var modelView = mat4.clone(inModelView);
-   modelView[12] = 0.11-ratio;
-   modelView[13] = -1.0+0.11;
-   modelView[14] = 0.0;
-   groundAxisProg.miniAxisVBO.modelView = modelView;
-   groundAxisProg.miniAxisVBO.projection = mat4.create();
-   mat4.ortho(groundAxisProg.miniAxisVBO.projection, -ratio, ratio, -1.0, 1.0, 0.00001,  10000000.0);
-}
-function renderMiniAxis(gl, inModelView) {
-   if (__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["prop"].miniAxis) {
-      var ratio = gl.canvas.clientWidth / gl.canvas.clientHeight;
-      // set current rotation.
-      var modelView = groundAxisProg.miniAxisVBO.modelView;
-      mat4.copy(modelView, inModelView);
-      modelView[12] = 0.11-ratio;
-      modelView[13] = -1.0+0.11;
-      modelView[14] = 0.0;
-      // save attribute
-      var length = groundAxisProg.miniAxisVBO.length;
-
-      // render mini axis, use groundAxisProg
-      gl.useProgram(groundAxisProg.handle);
-      // bind attribute, vertex, color, matrix
-      gl.uniformMatrix4fv(groundAxisProg.uPMatrix, false, groundAxisProg.miniAxisVBO.projection);
-      gl.uniformMatrix4fv(groundAxisProg.uMVMatrix, false, groundAxisProg.miniAxisVBO.modelView);
-      gl.setBufferAndAttrib(groundAxisProg.miniAxisVBO.position, groundAxisProg.vertexPosition);
-      gl.setBufferAndAttrib(groundAxisProg.miniAxisVBO.color, groundAxisProg.vertexColor);
-      // draw line segments
-      gl.drawArrays(gl.LINES, 0, length);
-      // pop attribute
-   }
-}
-// recompute groundplanegrid, given the size of grid. size is mutiple of GROUND_GRID_SIZE. default
-// GROUND_GRID_SIZE=1, so size=10, grid is 10x10.
-function computeGroundGrid(size, gridSize) {
-   var data = [];
-   for (var xz= size; xz > 0; xz-=gridSize) {
-      data = data.concat([xz, 0.0, size], [xz, 0.0, -size],
-                         [-xz, 0.0, size], [-xz, 0.0, -size],
-                         [size, 0.0, xz], [-size, 0.0, xz],
-                         [size, 0.0, -xz], [-size, 0.0, -xz]  
-                        );
-   }
-   // final x, z, axis lines.
-   return data.concat([0.0, 0.0, size], [0.0, 0.0, -size],
-                      [size, 0.0, 0.0], [-size, 0.0, 0.0]);
-}
-function calcGridSize(projection, modelView) {
-   var width = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].canvas.clientWidth;
-   var height = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].canvas.clientHeight;
-   var w1 = Math.max(width, height);// /2.0;
-   var coord = __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__["gl"].unProject(w1, 0.0, 0.0, modelView, projection, [0, 0, width, height]);
-   var ret = __WEBPACK_IMPORTED_MODULE_3__wings3d__["GROUND_GRID_SIZE"] * 
-           Math.max(Math.round(Math.max(Math.max(Math.abs(coord[0]), Math.abs(coord[1])), Math.abs(coord[2]))), 10.0);
-   // hacked an value that just cover the screen space.
-   ret *= width/height * 0.7;
-   return Math.round(ret);
-}
-function computeGroundAndAxes(gl, projection, modelView) {
-   var gridSize = calcGridSize(projection, modelView);
-   //console.log("gridsize " + gridSize.toString());
-   var data = computeGroundGrid(gridSize, __WEBPACK_IMPORTED_MODULE_3__wings3d__["GROUND_GRID_SIZE"]);
-   // bindVBO.
-   lineProg.groundGridVBO = {
-      position: gl.createBufferHandle(new Float32Array(data)),
-      length: data.length/3
-   };
-
-   // compute Axes, bindVBO.
-   groundAxisProg.axisVBO = {
-      position: gl.createBufferHandle(getAxis()),
-      color: gl.createBufferHandle(getAxisColor()),
-      length: 3*2*2
-   };
-
-   return gridSize;
-}
-function getAxis() {
-   var yon = __WEBPACK_IMPORTED_MODULE_2__wings3d_camera__["view"].zFar;
-   var arry = [[yon, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [-yon, 0.0, 0.0], 
-               [0.0, yon, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, -yon, 0.0],
-               [0.0, 0.0, yon], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, -yon]];
-   return new Float32Array([].concat.apply([],arry));
-}
-function getAxisColor() {
-    const color = [__WEBPACK_IMPORTED_MODULE_5__wings3d_util__["hexToRGB"](__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].colorX), __WEBPACK_IMPORTED_MODULE_5__wings3d_util__["hexToRGB"](__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].colorY), __WEBPACK_IMPORTED_MODULE_5__wings3d_util__["hexToRGB"](__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].colorZ)],
-       negColor = [__WEBPACK_IMPORTED_MODULE_5__wings3d_util__["hexToRGB"](__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].negColorX), __WEBPACK_IMPORTED_MODULE_5__wings3d_util__["hexToRGB"](__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].negColorY), __WEBPACK_IMPORTED_MODULE_5__wings3d_util__["hexToRGB"](__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].negColorZ)];
-   var arry = [];
-   for (var i = 0; i < 3; i++) {
-      arry = arry.concat(color[i], color[i], negColor[i], negColor[i]);
-   }
-   return new Float32Array(arry);
-}
-function renderGroundAndAxes(gl, projection, modelView) {
-   const showAxes = __WEBPACK_IMPORTED_MODULE_1__wings3d_view__["prop"].showAxes;
-   // draw groundPlane
-   const show = __WEBPACK_IMPORTED_MODULE_1__wings3d_view__["prop"].showGroundplane; // || 
-      //(wings_pref:get_value(force_show_along_grid) andalso
-      //(Camera.view.alongAxis =/= none);      
-   if (show) {
-      var alongAxis = __WEBPACK_IMPORTED_MODULE_2__wings3d_camera__["view"].alongAxis;
-      const color = __WEBPACK_IMPORTED_MODULE_5__wings3d_util__["hexToRGBA"](__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].gridColor);
-         //case view.AlongAxis of
-         // x -> gl:rotatef(90.0, 0.0, 1.0, 0.0);
-         // z -> ok;
-         // _ -> gl:rotatef(90.0, 1.0, 0.0, 0.0)
-      var length = lineProg.groundGridVBO.length;
-      if (showAxes) {
-         length -= 4;            // skip the axes line
-      }
-      // data
-      // use line segment program
-      gl.useProgram(lineProg.progHandle);
-      // bind attribute, vertex, color, matrix
-      gl.setBufferAndAttrib(lineProg.groundGridVBO.position, lineProg.attribute.position.loc);
-      gl.uniform4fv(lineProg.uniform.uColor.loc, color);
-      gl.uniformMatrix4fv(lineProg.transform.projection, false, projection);
-      gl.uniformMatrix4fv(lineProg.transform.worldView, false, modelView);
-      // draw line segments
-      gl.drawArrays(gl.LINES, 0, length);
-   }
-
-   var yon;
-   //if (View.prop.constrainAxes) {
-   //   yon = gridSize;
-   //} else {
-      yon = __WEBPACK_IMPORTED_MODULE_2__wings3d_camera__["view"].zFar;
-   //}
-   if (showAxes) {
-      // use line segment program
-      gl.useProgram(groundAxisProg.handle);
-      // bind attribute, vertex, color, matrix
-      gl.uniformMatrix4fv(groundAxisProg.uPMatrix, false, projection);
-      gl.uniformMatrix4fv(groundAxisProg.uMVMatrix, false, modelView);
-      gl.setBufferAndAttrib(groundAxisProg.axisVBO.position, groundAxisProg.vertexPosition);
-      gl.setBufferAndAttrib(groundAxisProg.axisVBO.color, groundAxisProg.vertexColor);
-      // draw line segment
-      gl.drawArrays(gl.LINES, 0, groundAxisProg.axisVBO.length);
-   }
-
-   return yon;
-};
-
-let redrawFlag = false;
-
-function needToRedraw() {
-   redrawFlag = true;
-};
-
-function render(gl, drawWorldFn) {
-   if (gl.resizeToDisplaySize() || __WEBPACK_IMPORTED_MODULE_2__wings3d_camera__["view"].isModified || redrawFlag) {
-      redrawFlag = false; 
-      const backColor = __WEBPACK_IMPORTED_MODULE_5__wings3d_util__["hexToRGBA"](__WEBPACK_IMPORTED_MODULE_1__wings3d_view__["theme"].geometryBackground);
-      gl.clearColor(backColor[0], backColor[1], backColor[2], backColor[3]);
-      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-      gl.polygonOffset(0.0, 0.0);
-      gl.enable(gl.POLYGON_OFFSET_FILL);
-      //?CHECK_ERROR(),
-      // no support for pushAttrib()
-      //gl.pushAttrib(?GL_CURRENT_BIT bor ?GL_ENABLE_BIT bor
-      //                        ?GL_TEXTURE_BIT bor ?GL_POLYGON_BIT bor
-      //		                   ?GL_LINE_BIT bor ?GL_COLOR_BUFFER_BIT bor
-      //		                   ?GL_LIGHTING_BIT).enable(?GL_DEPTH_TEST).enable(?GL_CULL_FACE);
-      // no support for dynamic anti aliasing. only setup in creatingContext
-      var mat = __WEBPACK_IMPORTED_MODULE_1__wings3d_view__["loadMatrices"](true);
-      if (__WEBPACK_IMPORTED_MODULE_2__wings3d_camera__["view"].isModified) {
-         __WEBPACK_IMPORTED_MODULE_2__wings3d_camera__["view"].isModified = false;
-         computeGroundAndAxes(gl, mat.projection, mat.modelView);
-      }
-      var yon = renderGroundAndAxes(gl, mat.projection, mat.modelView);
-      renderMiniAxis(gl, mat.modelView);
-      //show_saved_bb(St),
-      //show_bb_center(St),
-      //user_clipping_planes(on),
-      drawWorldFn(gl); // and scenelights.
-      //user_clipping_planes(off),
-      renderAxisLetter(gl, yon);
-      //show_camera_image_plane(),
-      //wings_develop:gl_error_check("Rendering scene")
-   }
-};
-
-
-
-
-
-
-
-
-
-/***/ }),
-/* 21 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return WavefrontObjImportExporter; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_importexport__ = __webpack_require__(22);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_view__ = __webpack_require__(1);
-//
-// Wavefront Obj Loader and Writer.
-//
-//
-
-
-
-
-class WavefrontObjImportExporter extends __WEBPACK_IMPORTED_MODULE_0__wings3d_importexport__["ImportExporter"] {
-   constructor() {
-      super('Wavefront (.obj)...', 'Wavefront (.obj)...');
-   }
-
-   extension() {
-      return "obj";
-   }
-
-   _export(world) {      
-      let text = "#wings3d-web wavefront export\n";
-      const fn = function(vertex) {
-         text += " " + (vertex.index+1);
-      };
-      for (const [index, cage] of world.entries()) {
-         const mesh = cage.geometry;
-         text += "o " + index.toString() + "\n";
-         // now append the "v x y z\n"
-         text += "\n#vertex total " + mesh.vertices.size + "\n";
-         for (let vertex of mesh.vertices) {
-            const vert = vertex.vertex;
-            text += "v " + vert[0] + " " + vert[1] + " " + vert[2] + "\n";
-         }
-         // "f index+1 index+1 index+1"
-         text += "\n#face list total " + mesh.faces.size + "\n";
-         for (let polygon of mesh.faces) {
-            text += "f";
-            polygon.eachVertex(fn);
-            text += "\n";
-         }
-      }
-      const blob = new Blob([text], {type: "text/plain;charset=utf-8"});
-
-      return blob;
-   }
-
-   _import(objText) {
-      // break the objText to lines we needs.
-      const linesMatch = objText.match(/^([vfogs])(?:\s+(.+))$/gm);   //objText.match(/^v((?:\s+)[\d|\.|\+|\-|e|E]+){3}$/gm);
-
-      if (linesMatch) {
-         for (let line of linesMatch) {
-            line = line.trim();            // how can we remove end of space in regex?
-            let split = line.split(/\s+/);
-            let tag = split.shift();
-            if (typeof this[tag] === 'function') {
-               this[tag](split);
-            } else {
-               console.log("unexpected tag: " + tag); // should not happened
-            }
-         }
-         // done reading, return the object.
-         return this.objs;
-      }
-   }
-
-   o(objName) {
-      this.objView = __WEBPACK_IMPORTED_MODULE_1__wings3d_view__["putIntoWorld"]();
-      this.obj = this.objView.geometry;
-      this.objs.push( this.objView );
-
-      this.obj.clearAffected();
-      // assignedName
-      this.objView.name = objName;
-   }
-
-   g(groupNames) {
-      if (!this.objView) {
-         this.objView = __WEBPACK_IMPORTED_MODULE_1__wings3d_view__["putIntoWorld"]();
-         this.obj = this.objView.geometry;
-         this.objs.push( this.objView );
-      }
-      // to be implemented later
-
-   }
-
-   s(groupNumber) {
-      // to be implemented later
-   }
-
-   v(vertex) {
-      // should we do error check?
-      const vert = this.obj.addVertex(vertex);
-      this.realVertices.push(vert.index);
-      this.vertexCount++;
-   }
-
-   f(index) {
-      const faceIndex = [];
-      for (let i of index) {
-         let split = i.split('/');
-         let idx = split[0] - 1;          // convert 1-based index to 0-based index.
-         if ( (idx >= 0) && (idx < this.obj.vertices.size)) {
-            faceIndex.push( this.realVertices[idx] );
-         } else {
-            console.log("face index out of bound: " + idx);
-         }
-      }
-      let polygonIndex = this.obj.addPolygon(faceIndex);
-      if (polygonIndex === null) {
-         this.non_manifold.push( this.polygonCount );    // addup failure.
-      }
-      //if (!this.obj.sanityCheck()) {
-      //   console.log("polygon # " + this.polygonCount + " not sane");
-      //}
-      this.polygonCount++;
-   }
-}
-
-
-
-
-/***/ }),
-/* 22 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ImportExporter", function() { return ImportExporter; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_model__ = __webpack_require__(3);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_wingededge__ = __webpack_require__(9);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_ui__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_view__ = __webpack_require__(1);
-//
-// file handling. 
-// 1) handling local file upload. and simple file download.
-// todo
-// 2) dropbox, yandex.
-// 3) google drive, microsoft onedrive, baidupan to come later.
-//
-
-
-
-
-
-
-
-class ImportExporter {
-   constructor(importMenuText, exportMenuText) {
-      const self = this;
-      // plug into import/export menu
-      if (importMenuText) {
-         // first get import Submenu.
-         __WEBPACK_IMPORTED_MODULE_2__wings3d_ui__["addMenuItem"]('fileImport', 'import' + importMenuText.split(" ")[0], importMenuText, function(ev) {
-               __WEBPACK_IMPORTED_MODULE_2__wings3d_ui__["openFile"](function(file) { // open file Dialog, and retrive data
-                     self.import(file);
-                  });      
-            });
-      }
-      if (exportMenuText) {
-         __WEBPACK_IMPORTED_MODULE_2__wings3d_ui__["addMenuItem"]('fileExport', 'export' + exportMenuText.split(" ")[0], exportMenuText, function(ev) {
-            __WEBPACK_IMPORTED_MODULE_2__wings3d_ui__["runDialog"]('#exportFile', ev, function(form) {
-               const data = form.querySelector('input[name="Filename"');
-               if (data) {
-                  self.export(data.value);
-               }
-             });
-         });
-      }
-      // init at beginning.
-      this._reset();
-   }
-
-
-   export(filename) {
-      const blob = this._export(__WEBPACK_IMPORTED_MODULE_3__wings3d_view__["getWorld"]());
-      saveAs(blob, filename + '.' + this.extension());
-   }
-
-   import(file) {
-      const self = this;
-      let reader = new FileReader();
-
-      reader.onload = function(ev) {
-         const text = reader.result;
-         const world = self._import(text);
-         const cages = [];
-         for (let cage of world) {
-            cages.push( new __WEBPACK_IMPORTED_MODULE_0__wings3d_model__["CreatePreviewCageCommand"](cage) );
-         }
-         if (cages.length > 1) {
-            // combo
-            __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["undoQueueCombo"]( cages );
-         } else if (cages.length > 0) {
-            __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["undoQueue"](cages[0]);
-         }
-         // after we finalised _reset too.
-         self._reset();
-         __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["updateWorld"]();
-      }
-
-      reader.readAsText(file);
-   }
-
-   _reset() {
-      this.objs = [];
-      this.obj = null;
-      this.objView = null;
-      this.realVertices = []; // convert index
-      this.polygonCount = 0;
-      this.vertexCount = 0;
-      this.non_manifold = [];
-   }
-};
-
-
-
-/***/ }),
-/* 23 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "MultiMadsor", function() { return MultiMadsor; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__ = __webpack_require__(8);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__ = __webpack_require__(10);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_edgemads__ = __webpack_require__(11);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__ = __webpack_require__(12);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_model__ = __webpack_require__(3);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_shaderprog__ = __webpack_require__(6);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_view__ = __webpack_require__(1);
-/*
- *
- * MADS (Modify, Add, Delete, Select) operation. only toggling function
- *
-**/
-
-
-
-
-
-
-
-
-
-
-class MultiMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
-   constructor() {
-      super('Multi');
-   }
-
-   isFaceSelectable() { return true; }
-   isEdgeSelectable() { return true; }
-   isVertexSelectable() { return true; }
-
-   toggleMulti(hilite) {
-      if (hilite.face) {
-         __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["toggleFaceMode"]();
-      } else if (hilite.vertex) {
-         __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["toggleVertexMode"]();
-      } else {    // if (hilite.edge) {   
-         __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["toggleEdgeMode"]();
-      } // not body possible.
-   }
-
-   toggleFunc(toMadsor) {
-      let redoFn;
-      let snapshots;
-      if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__["FaceMadsor"]) {
-         redoFn = __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreFaceMode"];
-         snapshots = this.snapshotAll(__WEBPACK_IMPORTED_MODULE_4__wings3d_model__["PreviewCage"].prototype.changeFromMultiToFaceSelect);
-      } else if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__["VertexMadsor"]) {
-         redoFn = __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreVertexMode"];
-         snapshots = this.snapshotAll(__WEBPACK_IMPORTED_MODULE_4__wings3d_model__["PreviewCage"].prototype.changeFromMultiToVertexSelect);
-      } else if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_2__wings3d_edgemads__["EdgeMadsor"]) {
-         redoFn = __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreEdgeMode"];
-         snapshots = this.snapshotAll(__WEBPACK_IMPORTED_MODULE_4__wings3d_model__["PreviewCage"].prototype.changeFromMultiToEdgeSelect);
-      } else { // bodyMadsor
-         redoFn = __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreEdgeMode"];
-         snapshots = this.snapshotAll(__WEBPACK_IMPORTED_MODULE_4__wings3d_model__["PreviewCage"].prototype.changeFromMultiToBodySelect);
-      }
-      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"](new __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["ToggleModeCommand"](redoFn, __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreMultiMode"], snapshots));
-   }
-
-   restoreMode(toMadsor, snapshots) {
-      if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__["FaceMadsor"]) {
-         this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_4__wings3d_model__["PreviewCage"].prototype.restoreFromMultiToFaceSelect);
-      } else if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__["VertexMadsor"]) {
-         this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_4__wings3d_model__["PreviewCage"].prototype.restoreFromMultiToVertexSelect);
-      } else if (toMadsor instanceof EdgeVertex) {
-         this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_4__wings3d_model__["PreviewCage"].prototype.restoreFromMultiToEdgeSelect);
-      } else {
-         this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_4__wings3d_model__["PreviewCage"].prototype.restoreFromMultiToBodySelect);      
-      }
-   }
-
-   drawObject(gl, draftBench) {
-      // no hilite
-   } 
-
-   previewShader(gl) {
-      gl.useShader(__WEBPACK_IMPORTED_MODULE_5__wings3d_shaderprog__["solidWireframe"]);
-   }
-
-   useShader(gl) {
-      gl.useShader(__WEBPACK_IMPORTED_MODULE_5__wings3d_shaderprog__["solidColor"]);
-   }
-};
-
-
-
-
-/***/ }),
 /* 24 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -16566,19 +16522,19 @@ __webpack_require__(26);
 __webpack_require__(14);
 __webpack_require__(13);
 __webpack_require__(15);
-__webpack_require__(18);
+__webpack_require__(23);
 __webpack_require__(11);
 __webpack_require__(10);
 __webpack_require__(5);
 __webpack_require__(36);
 __webpack_require__(16);
 __webpack_require__(17);
-__webpack_require__(22);
-__webpack_require__(19);
+__webpack_require__(21);
+__webpack_require__(18);
 __webpack_require__(8);
 __webpack_require__(3);
-__webpack_require__(23);
-__webpack_require__(20);
+__webpack_require__(22);
+__webpack_require__(19);
 __webpack_require__(6);
 __webpack_require__(37);
 __webpack_require__(38);
@@ -16612,12 +16568,12 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__css_sidebar_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5__css_sidebar_css__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_view__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_camera__ = __webpack_require__(15);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d_interact__ = __webpack_require__(19);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d_interact__ = __webpack_require__(18);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__wings3d__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__wings3d_ui__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__wings3d_i18n__ = __webpack_require__(17);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_12__js_plugins_cubeshape_js__ = __webpack_require__(35);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_13__js_plugins_wavefront_obj_js__ = __webpack_require__(21);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_13__js_plugins_wavefront_obj_js__ = __webpack_require__(20);
 // app.js
 //  for bundling and initialization
 //
@@ -17226,7 +17182,7 @@ document.addEventListener('DOMContentLoaded', function() {
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "tours", function() { return tours; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_interact__ = __webpack_require__(19);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_interact__ = __webpack_require__(18);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_ui__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d__ = __webpack_require__(0);
 /*
