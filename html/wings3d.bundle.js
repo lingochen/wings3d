@@ -3708,7 +3708,7 @@ PreviewCage.prototype.changeFromFaceToVertexSelect = function() {
 
    var self = this
    var oldSelected = this._resetSelectFace();
-   for (let polygon of oldSelected) {
+   for (let polygon of oldSelected.selectedFaces) {
       // for eachFace, selected all it vertex.
       polygon.eachVertex(function(vertex) {
          if (!self.selectedSet.has(vertex)) {
