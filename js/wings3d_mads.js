@@ -156,7 +156,7 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       for (let preview of this.selectableCage()) {
          if (preview.hasSelection()) {
             const snapshot = func.call(preview, ...args);
-            if (snapshot) {
+            if (snapshot || (snapshot === false)) {
                snapshots.push( {preview: preview, snapshot: snapshot} );
             }
          }
@@ -174,7 +174,7 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       const snapshots = [];
       for (let preview of targets) {
          const snapshot = func.call(preview, ...args);
-         if (snapshot) {
+         if (snapshot || (snapshot === false)) {
             snapshots.push( {preview: preview, snapshot: snapshot} );
          }
       }
@@ -352,15 +352,15 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
    }
 
    undoToggleObjectLock(selection, input) {
-      this.doAll(selection, PreviewCage.prototype.undoToggleLock, !input.checked);   // restore
+      this.doAll(selection, PreviewCage.prototype.toggleLock);   // restore
    }
 
    toggleObjectVisibility(objects, input) {
       return this.snapshotTarget(objects, PreviewCage.prototype.setVisible, !input.checked); // checked is invisible
    }
 
-   undoObjectVisibility(selection, input) {
-      return this.doAll(selection, PreviewCage.prototype.undoSetVisible, input.checked);
+   undoObjectVisibility(selection) {
+      return this.doAll(selection, PreviewCage.prototype.setVisible);
    }
 
    isVertexSelectable() { return false; }

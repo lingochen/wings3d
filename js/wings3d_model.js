@@ -321,30 +321,25 @@ PreviewCage.prototype.detachFace = function(detachFaces, number) {
 };
 
 
-
-PreviewCage.prototype.undoSetVisible = function(_cage, on) {
-   this.setVisible(on);
-};
 PreviewCage.prototype.setVisible = function(on) {
    if (on) {
       if (!this.status.visible) {
          this.status.visible = true;
          this.bench.alterPreview();
-         return this;
+         return (!on);
       }
    } else {
       if (this.status.visible) {
          this.status.visible = false;
          this.bench.alterPreview();
-         return this;
+         return (!on);
       }
    }
+   return null;
 };
 
 
-PreviewCage.prototype.undoToggleLock = function(_cage, toggle) {
-   this.toggleLock(toggle);
-}
+
 /**
  * lock/unlock Preview to further operation.
  * @param {bool} toggle - lock/ unlock
@@ -353,11 +348,12 @@ PreviewCage.prototype.toggleLock = function(toggle) {
    if (toggle) {
       if (!this.status.locked) {
          this.status.locked = true;
-         return this;
+         return !toggle;
       }
    } else {
       if (this.status.locked) {
          this.status.locked = false;
+         return !toggle;
       }
    }
    return null;

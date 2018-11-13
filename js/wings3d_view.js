@@ -969,7 +969,7 @@ function init() {
    Wings3D.bindAction(null, 0, Wings3D.action.toggleObjectVisibility.name, (ev) => {
       const toggle = new ToggleCheckbox(ev.target);
       const cmd = new GenericEditCommand(currentMode(), currentMode().toggleObjectVisibility, [currentObjects, ev.target], 
-                                                        currentMode().undoObjectVisibility, [ev.target]);
+                                                        currentMode().undoObjectVisibility);
       cmd.doIt();
       undoQueueCombo([toggle, cmd]);
     });
@@ -977,7 +977,7 @@ function init() {
    Wings3D.bindAction(null, 0, Wings3D.action.toggleObjectLock.name, (ev) => {
       const toggle = new ToggleCheckbox(ev.target);
       const cmd = new GenericEditCommand(currentMode(), currentMode().toggleObjectLock, [currentObjects, ev.target], 
-                                                        currentMode().undoToggleObjectLock, [ev.target]);
+                                                        currentMode().undoToggleObjectLock);
       cmd.doIt();
       undoQueueCombo([toggle, cmd]);
     });
