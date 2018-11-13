@@ -38,7 +38,10 @@ class MeshAllocatorProxy { // we could use Proxy, but ....
 
    freeAll(polygons, wEdges, vertices) { this.preview.bench.freeAll(polygons, wEdges, vertices); }
 
-   freeVertex(vertex) { this.preview.bench.freeVertex(vertex); }
+   freeVertex(vertex) { 
+      this.preview.bench.alterVertex(); 
+      this.preview.bench.freeVertex(vertex); 
+   }
 
    freeHEdge(hEdge) { this.preview.bench.freeHEdge(hEdge); }
 
@@ -319,29 +322,29 @@ PreviewCage.prototype.detachFace = function(detachFaces, number) {
 
 
 
+PreviewCage.prototype.undoSetVisible = function(_cage, on) {
+   this.setVisible(on);
+};
 PreviewCage.prototype.setVisible = function(on) {
    if (on) {
       if (!this.status.visible) {
          this.status.visible = true;
-         this.bench.modifyPreview();
-         for (let polygon of this.geometry.faces) {
-            polygon.visible = true;
-         }
+         this.bench.alterPreview();
          return this;
       }
    } else {
       if (this.status.visible) {
          this.status.visible = false;
-         this.bench.modifyPreview();
-         for (let polygon of this.geometry.faces) {
-            polygon.visible = false;
-         }
+         this.bench.alterPreview();
          return this;
       }
    }
 };
 
 
+PreviewCage.prototype.undoToggleLock = function(_cage, toggle) {
+   this.toggleLock(toggle);
+}
 /**
  * lock/unlock Preview to further operation.
  * @param {bool} toggle - lock/ unlock

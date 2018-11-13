@@ -188,7 +188,7 @@ class VertexMadsor extends Madsor {
       //if (this.currentEdge) {
          gl.useShader(ShaderProg.selectedColorPoint);
          gl.bindTransform();
-         draftBench.drawVertex(gl);
+         draftBench.drawVertex(gl, this);
          gl.disableShader();
       //}
    }

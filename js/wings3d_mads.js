@@ -220,7 +220,7 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
 
    * selectedCage() {
       for (let cage of View.getWorld()) {
-         if (cage.hasSelection()) {
+         if (!cage.isLock() && cage.isVisible() && cage.hasSelection()) {
             yield cage;
          }
       }
@@ -228,7 +228,16 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
 
    * notSelectedCage() {
       for (let cage of View.getWorld()) {
-         if (!cage.hasSelection()) {
+         if (!cage.isLock() && cage.isVisible() && !cage.hasSelection()) {
+            yield cage;
+         }
+      }
+   }
+
+   // visible but may be lock/unlock
+   * visibleCage() {
+      for (let cage of View.getWorld()) {
+         if (cage.isVisible()) {
             yield cage;
          }
       }
@@ -236,7 +245,7 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
 
    hasSelection() {
       for (let cage of this.selectableCage()) {
-         if (cage.hasSelection()) {
+         if (!cage.isLock() && cage.hasSelection()) {
             return true;
          }
       }
@@ -343,15 +352,15 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
    }
 
    undoToggleObjectLock(selection, input) {
-      this.doAll(selection, PreviewCage.prototype.toggleLock, !input.checked);   // restore
+      this.doAll(selection, PreviewCage.prototype.undoToggleLock, !input.checked);   // restore
    }
 
    toggleObjectVisibility(objects, input) {
       return this.snapshotTarget(objects, PreviewCage.prototype.setVisible, !input.checked); // checked is invisible
    }
 
-   undoToggleObjectLock(selection, input) {
-      return this.doAll(selection, PreviewCage.prototype.setVisible, input.checked);
+   undoObjectVisibility(selection, input) {
+      return this.doAll(selection, PreviewCage.prototype.undoSetVisible, input.checked);
    }
 
    isVertexSelectable() { return false; }

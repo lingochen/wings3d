@@ -861,14 +861,14 @@ function drawWorld(gl) {
       //gl.disable(gl.BLEND);
 
       // draw all other edge (extra, hardEdge, wireframeEdge) if applicable
-      draftBench.drawHardEdge(gl, mode.current === mode.edge);
+      draftBench.drawHardEdgeEtc(gl, mode.current === mode.edge, mode.current);
 
       //gl.polygonOffset(1.0, 1.0);          // Set the polygon offset
       //gl.enable(gl.POLYGON_OFFSET_FILL);
       mode.current.previewShader(gl);
       //world.forEach(function(model, _index, _array){
          gl.bindTransform();
-         draftBench.draw(gl);
+         draftBench.draw(gl, mode.current);
       //});
       gl.disableShader();
       //gl.disable(gl.POLYGON_OFFSET_FILL);

@@ -108,7 +108,9 @@ let selectedColorPoint = {
       'uniform vec4 maskedVertexColor;',
 
       'void main(void) {',
-      '   if (vState == 0.0) {',
+      '   if (vState < 0.0) {',
+      '      discard;',
+      '   } else if (vState == 0.0) {',
       '      gl_FragColor = vertexColor;',     // unselected color         
       '   } else if (vState == 0.25) {',
       '      gl_FragColor = selectedColor;',
