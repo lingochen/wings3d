@@ -1648,7 +1648,7 @@ function init() {
    __WEBPACK_IMPORTED_MODULE_5__wings3d__["bindAction"](null, 0, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].toggleObjectVisibility.name, (ev) => {
       const toggle = new __WEBPACK_IMPORTED_MODULE_18__wings3d_mads__["ToggleCheckbox"](ev.target);
       const cmd = new __WEBPACK_IMPORTED_MODULE_18__wings3d_mads__["GenericEditCommand"](currentMode(), currentMode().toggleObjectVisibility, [currentObjects, ev.target], 
-                                                        currentMode().undoObjectVisibility, [ev.target]);
+                                                        currentMode().undoObjectVisibility);
       cmd.doIt();
       undoQueueCombo([toggle, cmd]);
     });
@@ -1656,7 +1656,7 @@ function init() {
    __WEBPACK_IMPORTED_MODULE_5__wings3d__["bindAction"](null, 0, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].toggleObjectLock.name, (ev) => {
       const toggle = new __WEBPACK_IMPORTED_MODULE_18__wings3d_mads__["ToggleCheckbox"](ev.target);
       const cmd = new __WEBPACK_IMPORTED_MODULE_18__wings3d_mads__["GenericEditCommand"](currentMode(), currentMode().toggleObjectLock, [currentObjects, ev.target], 
-                                                        currentMode().undoToggleObjectLock, [ev.target]);
+                                                        currentMode().undoToggleObjectLock);
       cmd.doIt();
       undoQueueCombo([toggle, cmd]);
     });
@@ -2494,30 +2494,25 @@ PreviewCage.prototype.detachFace = function(detachFaces, number) {
 };
 
 
-
-PreviewCage.prototype.undoSetVisible = function(_cage, on) {
-   this.setVisible(on);
-};
 PreviewCage.prototype.setVisible = function(on) {
    if (on) {
       if (!this.status.visible) {
          this.status.visible = true;
          this.bench.alterPreview();
-         return this;
+         return (!on);
       }
    } else {
       if (this.status.visible) {
          this.status.visible = false;
          this.bench.alterPreview();
-         return this;
+         return (!on);
       }
    }
+   return null;
 };
 
 
-PreviewCage.prototype.undoToggleLock = function(_cage, toggle) {
-   this.toggleLock(toggle);
-}
+
 /**
  * lock/unlock Preview to further operation.
  * @param {bool} toggle - lock/ unlock
@@ -2526,11 +2521,12 @@ PreviewCage.prototype.toggleLock = function(toggle) {
    if (toggle) {
       if (!this.status.locked) {
          this.status.locked = true;
-         return this;
+         return !toggle;
       }
    } else {
       if (this.status.locked) {
          this.status.locked = false;
+         return !toggle;
       }
    }
    return null;
@@ -7566,7 +7562,7 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       for (let preview of this.selectableCage()) {
          if (preview.hasSelection()) {
             const snapshot = func.call(preview, ...args);
-            if (snapshot) {
+            if (snapshot || (snapshot === false)) {
                snapshots.push( {preview: preview, snapshot: snapshot} );
             }
          }
@@ -7584,7 +7580,7 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       const snapshots = [];
       for (let preview of targets) {
          const snapshot = func.call(preview, ...args);
-         if (snapshot) {
+         if (snapshot || (snapshot === false)) {
             snapshots.push( {preview: preview, snapshot: snapshot} );
          }
       }
@@ -7762,15 +7758,15 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
    }
 
    undoToggleObjectLock(selection, input) {
-      this.doAll(selection, __WEBPACK_IMPORTED_MODULE_1__wings3d_model__["PreviewCage"].prototype.undoToggleLock, !input.checked);   // restore
+      this.doAll(selection, __WEBPACK_IMPORTED_MODULE_1__wings3d_model__["PreviewCage"].prototype.toggleLock);   // restore
    }
 
    toggleObjectVisibility(objects, input) {
       return this.snapshotTarget(objects, __WEBPACK_IMPORTED_MODULE_1__wings3d_model__["PreviewCage"].prototype.setVisible, !input.checked); // checked is invisible
    }
 
-   undoObjectVisibility(selection, input) {
-      return this.doAll(selection, __WEBPACK_IMPORTED_MODULE_1__wings3d_model__["PreviewCage"].prototype.undoSetVisible, input.checked);
+   undoObjectVisibility(selection) {
+      return this.doAll(selection, __WEBPACK_IMPORTED_MODULE_1__wings3d_model__["PreviewCage"].prototype.setVisible);
    }
 
    isVertexSelectable() { return false; }
