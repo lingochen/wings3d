@@ -56,6 +56,7 @@ const DraftBench = function(theme, prop, defaultSize = 2048) {  // should only b
    this.preview.edge.indexCount = 0;
    this.preview.edge.hilite = {indexCount: 0, wEdge: null};
    this.preview.edge.hardness = {isAltered: false, indexCount: 0};
+   this.preview.edge.wireOnly = {isAltered: false, indexCount: 0};
 
    // previewVertex
    this.preview.vertex = {isModified: false, isAltered: false, min: Number.MAX_SAFE_INTEGER, max: Number.MIN_SAFE_INTEGER};
@@ -157,8 +158,8 @@ DraftBench.prototype.alterVertex = function() {
 DraftBench.prototype.alterPreview = function() {
    this.preview.isAltered = true;
    this.preview.edge.isAltered = true;
+   this.preview.edge.wireOnly.isAltered = true;
    this.preview.vertex.isAltered = true;
-   
 }
 
 DraftBench.prototype.updatePreview = function() {
@@ -434,7 +435,7 @@ DraftBench.prototype.draw = function(gl, madsor) {
       let k = 0;
       const index = new Uint32Array(this.preview.indexLength-this.preview.selectedCount);
       let j = 0;
-      for (let cage of madsor.visibleCage()) {
+      for (let cage of madsor.visibleWireCage(false)) {  // wire only cage was drawn before.
          for (let polygon of cage.geometry.faces) {
             if (polygon.isVisible()) {
                const i = polygon.index;
@@ -544,6 +545,7 @@ DraftBench.prototype.drawVertex = function(gl, madsor) {
  * 
  */
 DraftBench.prototype.drawHardEdgeEtc = function(gl, isEdgeMode, madsor) {
+   let isBinded = false;
    // draw hard edge if applicable.
    if (this.preview.edge.hardness.indexCount > 0) {
       if (this.preview.edge.hardness.isAltered) {
@@ -560,8 +562,11 @@ DraftBench.prototype.drawHardEdgeEtc = function(gl, isEdgeMode, madsor) {
          this.preview.edge.hardness.realIndexCount = j;
          this.preview.edge.hardness.isAltered = false;
       }
+      if (this.preview.edge.hardness.realIndexCount > 0) {
+      isBinded = true;
       // draw HardEdge
       gl.useShader(ShaderProg.selectedColorLine);
+      gl.bindTransform();
       gl.bindAttribute(this.preview.shaderData, ['position', 'barycentric']);
       let lineWidth = 1.1;
       if (isEdgeMode) {
@@ -573,9 +578,46 @@ DraftBench.prototype.drawHardEdgeEtc = function(gl, isEdgeMode, madsor) {
       gl.bindUniform(this.preview.shaderData, ['color', 'faceColor', 'lineWidth']);
       gl.bindIndex(this.preview.shaderData, 'hardEdge');
       gl.drawElements(gl.TRIANGLES, this.preview.edge.hardness.realIndexCount, gl.UNSIGNED_INT, 0);  // draw 1 line.
+      }
    }
-   // draw wireframe edge if applicable.
-
+   // recompute wireMode edge index if applicable
+   if (this.preview.edge.wireOnly.isAltered) {
+      let indexCount = 0 ;
+      for (let cage of madsor.visibleWireCage(true)) { // looking for wireMode cage only
+         indexCount += cage.geometry.edges.size;
+      }
+      this.preview.edge.wireOnly.indexCount = indexCount * 6;  // draw 2 triangle for each edge.
+      if (indexCount > 0) {
+         // now compute the wireOnly polygon
+         const index = new Uint32Array(this.preview.edge.wireOnly.indexCount);
+         let j = 0;
+         for (let cage of madsor.visibleWireCage(true)) {
+            for (let wEdge of cage.geometry.edges) {
+               if (wEdge.state === 0) {  // we only draw normal edge
+                  j = wEdge.buildIndex(index, j, this.vertices.length);
+               }
+            }
+         }
+         // wireOnly Edge
+         this.preview.shaderData.setIndex('wireEdge', index);
+         this.preview.edge.wireOnly.indexCount = j;
+      }
+      this.preview.edge.wireOnly.isAltered = false;
+   }
+   // draw wireMode edge if applicable
+   if (this.preview.edge.wireOnly.indexCount > 0) {
+      if (!isBinded) {  // bind program and data
+         gl.useShader(ShaderProg.selectedColorLine);
+         gl.bindTransform();
+         gl.bindAttribute(this.preview.shaderData, ['position', 'barycentric']);
+         this.preview.shaderData.setUniform4fv('faceColor', DraftBench.theme.faceColor);
+      }
+      this.preview.shaderData.setUniform4fv("color", DraftBench.theme.edgeColor);
+      this.preview.shaderData.setUniform1f("lineWidth", 1.1); //DraftBench.pref.edgeWidth);
+      gl.bindUniform(this.preview.shaderData, ['color', 'faceColor', 'lineWidth']);
+      gl.bindIndex(this.preview.shaderData, 'wireEdge');
+      gl.drawElements(gl.TRIANGLES, this.preview.edge.wireOnly.indexCount, gl.UNSIGNED_INT, 0);  // draw 1 line.
+   }
 }
 
 /** 

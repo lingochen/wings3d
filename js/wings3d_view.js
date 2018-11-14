@@ -981,6 +981,14 @@ function init() {
       cmd.doIt();
       undoQueueCombo([toggle, cmd]);
     });
+   // toggle wire only mode.
+   Wings3D.bindAction(null, 0, Wings3D.action.toggleWireMode.name, (ev)=>{
+      const toggle = new ToggleCheckbox(ev.target);
+      const cmd = new GenericEditCommand(currentMode(), currentMode().toggleObjectWireMode, [currentObjects, ev.target.checked], 
+                                                        currentMode().undoToggleObjectWireMode);
+      cmd.doIt();
+      undoQueueCombo([toggle, cmd]);
+    });
 
    // bind .dropdown, click event.
    let buttons = document.querySelectorAll("li.dropdown > a");

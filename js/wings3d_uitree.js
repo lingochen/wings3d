@@ -77,6 +77,11 @@ class TreeView {
          model.guiStatus.locked = input;
          // wireframe
          const wireframe = document.createRange().createContextualFragment('<label><input type="checkbox"><span class="smallIcon" style="background-image: url(\'../img/bluecube/small_wire.png\');"></span></label>');
+         input = wireframe.querySelector('input');
+         input.addEventListener('change', (ev)=> {  // whole is fragment. we want label.
+            View.setObject([model]);
+            Wings3D.runAction(0, "toggleWireMode", ev);
+          });
          li.appendChild(wireframe);
       }
       this.treeView.appendChild(li);

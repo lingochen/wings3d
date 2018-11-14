@@ -269,6 +269,7 @@ const action = {
    toggleObjectSelect: () => {notImplemented(this);},
    toggleObjectVisibility: () =>{notImplemented(this);},
    toggleObjectLock: ()=>{notImplemented(this);},
+   toggleWireMode: ()=>{notImplemented(this);},
    // selection menu
    selectMenu: () => {notImplemented(this);},
    deselect: () => {notImplemented(this);},

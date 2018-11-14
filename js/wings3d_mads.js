@@ -243,6 +243,14 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       }
    }
 
+   * visibleWireCage(wireMode) {
+      for (let cage of View.getWorld()) {
+         if (cage.isVisible() && (cage.isWireMode() === wireMode)) {
+            yield cage;
+         }
+      }
+   }
+
    hasSelection() {
       for (let cage of this.selectableCage()) {
          if (!cage.isLock() && cage.hasSelection()) {
@@ -351,7 +359,7 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       return this.snapshotTarget(objects, PreviewCage.prototype.toggleLock, input.checked);
    }
 
-   undoToggleObjectLock(selection, input) {
+   undoToggleObjectLock(selection) {
       this.doAll(selection, PreviewCage.prototype.toggleLock);   // restore
    }
 
@@ -361,6 +369,14 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
 
    undoObjectVisibility(selection) {
       return this.doAll(selection, PreviewCage.prototype.setVisible);
+   }
+
+   toggleObjectWireMode(objects, checked) {
+      return this.snapshotTarget(objects, PreviewCage.prototype.toggleWireMode, checked);
+   }
+
+   undoToggleObjectWireMode(selection) {
+      return this.doAll(selection, PreviewCage.prototype.toggleWireMode);
    }
 
    isVertexSelectable() { return false; }

@@ -70,7 +70,7 @@ const PreviewCage = function(bench) {
    this.geometry = new WingedTopology(new MeshAllocatorProxy(this));
    this.bench = bench;
    this.guiStatus = {};
-   this.status = {locked: false, visible: true};
+   this.status = {locked: false, visible: true, wireMode: false};
 
    // selecte(Vertex,Edge,Face)here
    this.selectedSet = new Set;
@@ -339,7 +339,6 @@ PreviewCage.prototype.setVisible = function(on) {
 };
 
 
-
 /**
  * lock/unlock Preview to further operation.
  * @param {bool} toggle - lock/ unlock
@@ -359,12 +358,38 @@ PreviewCage.prototype.toggleLock = function(toggle) {
    return null;
 };
 
+
+/**
+ * 
+ */
+PreviewCage.prototype.toggleWireMode = function(on) {
+   if (on) {
+      if (!this.status.wireMode) {
+         this.status.wireMode = true;
+         this.bench.alterPreview();
+         return (!on);
+      }
+   } else {
+      if (this.status.wireMode) {
+         this.status.wireMode = false;
+         this.bench.alterPreview();
+         return (!on);
+      }
+   }
+   return null;
+};
+
+
 PreviewCage.prototype.isLock = function() {
    return this.status.locked;
 }
 
 PreviewCage.prototype.isVisible = function() {
    return this.status.visible;
+}
+
+PreviewCage.prototype.isWireMode = function() {
+   return this.status.wireMode;
 }
 
 
