@@ -101,10 +101,7 @@ DraftBench.pref = {vertexSize: 4.0,
 DraftBench.CONST = (function() {
    const constant = {};
 
-   constant.SELECTON  = new Float32Array(1);
-   constant.SELECTON[0] = 1.0;
-   constant.SELECTOFF = new Float32Array(1);
-   constant.SELECTOFF[0] = 0.0;
+   constant.EDGEWIDTH = 1.1;
    constant.BARYCENTRIC = new Float32Array(3);
    constant.BARYCENTRIC[0] = 1.0;
    constant.BARYCENTRIC[1] = 0.0;
@@ -568,7 +565,7 @@ DraftBench.prototype.drawHardEdgeEtc = function(gl, isEdgeMode, madsor) {
       gl.useShader(ShaderProg.selectedColorLine);
       gl.bindTransform();
       gl.bindAttribute(this.preview.shaderData, ['position', 'barycentric']);
-      let lineWidth = 1.1;
+      let lineWidth = DraftBench.CONST.EDGEWIDTH;
       if (isEdgeMode) {
          lineWidth = DraftBench.pref.hardEdgeWidth;
       }
@@ -613,7 +610,7 @@ DraftBench.prototype.drawHardEdgeEtc = function(gl, isEdgeMode, madsor) {
          this.preview.shaderData.setUniform4fv('faceColor', DraftBench.theme.faceColor);
       }
       this.preview.shaderData.setUniform4fv("color", DraftBench.theme.edgeColor);
-      this.preview.shaderData.setUniform1f("lineWidth", 1.1); //DraftBench.pref.edgeWidth);
+      this.preview.shaderData.setUniform1f("lineWidth", DraftBench.CONST.EDGEWIDTH);
       gl.bindUniform(this.preview.shaderData, ['color', 'faceColor', 'lineWidth']);
       gl.bindIndex(this.preview.shaderData, 'wireEdge');
       gl.drawElements(gl.TRIANGLES, this.preview.edge.wireOnly.indexCount, gl.UNSIGNED_INT, 0);  // draw 1 line.
