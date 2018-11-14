@@ -355,6 +355,7 @@ const action = {
    toggleObjectSelect: () => {notImplemented(this);},
    toggleObjectVisibility: () =>{notImplemented(this);},
    toggleObjectLock: ()=>{notImplemented(this);},
+   toggleWireMode: ()=>{notImplemented(this);},
    // selection menu
    selectMenu: () => {notImplemented(this);},
    deselect: () => {notImplemented(this);},
@@ -1660,6 +1661,14 @@ function init() {
       cmd.doIt();
       undoQueueCombo([toggle, cmd]);
     });
+   // toggle wire only mode.
+   __WEBPACK_IMPORTED_MODULE_5__wings3d__["bindAction"](null, 0, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].toggleWireMode.name, (ev)=>{
+      const toggle = new __WEBPACK_IMPORTED_MODULE_18__wings3d_mads__["ToggleCheckbox"](ev.target);
+      const cmd = new __WEBPACK_IMPORTED_MODULE_18__wings3d_mads__["GenericEditCommand"](currentMode(), currentMode().toggleObjectWireMode, [currentObjects, ev.target.checked], 
+                                                        currentMode().undoToggleObjectWireMode);
+      cmd.doIt();
+      undoQueueCombo([toggle, cmd]);
+    });
 
    // bind .dropdown, click event.
    let buttons = document.querySelectorAll("li.dropdown > a");
@@ -2243,7 +2252,7 @@ const PreviewCage = function(bench) {
    this.geometry = new __WEBPACK_IMPORTED_MODULE_2__wings3d_wingededge__["WingedTopology"](new MeshAllocatorProxy(this));
    this.bench = bench;
    this.guiStatus = {};
-   this.status = {locked: false, visible: true};
+   this.status = {locked: false, visible: true, wireMode: false};
 
    // selecte(Vertex,Edge,Face)here
    this.selectedSet = new Set;
@@ -2512,7 +2521,6 @@ PreviewCage.prototype.setVisible = function(on) {
 };
 
 
-
 /**
  * lock/unlock Preview to further operation.
  * @param {bool} toggle - lock/ unlock
@@ -2532,12 +2540,38 @@ PreviewCage.prototype.toggleLock = function(toggle) {
    return null;
 };
 
+
+/**
+ * 
+ */
+PreviewCage.prototype.toggleWireMode = function(on) {
+   if (on) {
+      if (!this.status.wireMode) {
+         this.status.wireMode = true;
+         this.bench.alterPreview();
+         return (!on);
+      }
+   } else {
+      if (this.status.wireMode) {
+         this.status.wireMode = false;
+         this.bench.alterPreview();
+         return (!on);
+      }
+   }
+   return null;
+};
+
+
 PreviewCage.prototype.isLock = function() {
    return this.status.locked;
 }
 
 PreviewCage.prototype.isVisible = function() {
    return this.status.visible;
+}
+
+PreviewCage.prototype.isWireMode = function() {
+   return this.status.wireMode;
 }
 
 
@@ -7649,6 +7683,14 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       }
    }
 
+   * visibleWireCage(wireMode) {
+      for (let cage of __WEBPACK_IMPORTED_MODULE_3__wings3d_view__["getWorld"]()) {
+         if (cage.isVisible() && (cage.isWireMode() === wireMode)) {
+            yield cage;
+         }
+      }
+   }
+
    hasSelection() {
       for (let cage of this.selectableCage()) {
          if (!cage.isLock() && cage.hasSelection()) {
@@ -7757,7 +7799,7 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       return this.snapshotTarget(objects, __WEBPACK_IMPORTED_MODULE_1__wings3d_model__["PreviewCage"].prototype.toggleLock, input.checked);
    }
 
-   undoToggleObjectLock(selection, input) {
+   undoToggleObjectLock(selection) {
       this.doAll(selection, __WEBPACK_IMPORTED_MODULE_1__wings3d_model__["PreviewCage"].prototype.toggleLock);   // restore
    }
 
@@ -7767,6 +7809,14 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
 
    undoObjectVisibility(selection) {
       return this.doAll(selection, __WEBPACK_IMPORTED_MODULE_1__wings3d_model__["PreviewCage"].prototype.setVisible);
+   }
+
+   toggleObjectWireMode(objects, checked) {
+      return this.snapshotTarget(objects, __WEBPACK_IMPORTED_MODULE_1__wings3d_model__["PreviewCage"].prototype.toggleWireMode, checked);
+   }
+
+   undoToggleObjectWireMode(selection) {
+      return this.doAll(selection, __WEBPACK_IMPORTED_MODULE_1__wings3d_model__["PreviewCage"].prototype.toggleWireMode);
    }
 
    isVertexSelectable() { return false; }
@@ -15572,6 +15622,7 @@ const DraftBench = function(theme, prop, defaultSize = 2048) {  // should only b
    this.preview.edge.indexCount = 0;
    this.preview.edge.hilite = {indexCount: 0, wEdge: null};
    this.preview.edge.hardness = {isAltered: false, indexCount: 0};
+   this.preview.edge.wireOnly = {isAltered: false, indexCount: 0};
 
    // previewVertex
    this.preview.vertex = {isModified: false, isAltered: false, min: Number.MAX_SAFE_INTEGER, max: Number.MIN_SAFE_INTEGER};
@@ -15673,8 +15724,8 @@ DraftBench.prototype.alterVertex = function() {
 DraftBench.prototype.alterPreview = function() {
    this.preview.isAltered = true;
    this.preview.edge.isAltered = true;
+   this.preview.edge.wireOnly.isAltered = true;
    this.preview.vertex.isAltered = true;
-   
 }
 
 DraftBench.prototype.updatePreview = function() {
@@ -15950,7 +16001,7 @@ DraftBench.prototype.draw = function(gl, madsor) {
       let k = 0;
       const index = new Uint32Array(this.preview.indexLength-this.preview.selectedCount);
       let j = 0;
-      for (let cage of madsor.visibleCage()) {
+      for (let cage of madsor.visibleWireCage(false)) {  // wire only cage was drawn before.
          for (let polygon of cage.geometry.faces) {
             if (polygon.isVisible()) {
                const i = polygon.index;
@@ -16060,6 +16111,7 @@ DraftBench.prototype.drawVertex = function(gl, madsor) {
  * 
  */
 DraftBench.prototype.drawHardEdgeEtc = function(gl, isEdgeMode, madsor) {
+   let isBinded = false;
    // draw hard edge if applicable.
    if (this.preview.edge.hardness.indexCount > 0) {
       if (this.preview.edge.hardness.isAltered) {
@@ -16076,8 +16128,11 @@ DraftBench.prototype.drawHardEdgeEtc = function(gl, isEdgeMode, madsor) {
          this.preview.edge.hardness.realIndexCount = j;
          this.preview.edge.hardness.isAltered = false;
       }
+      if (this.preview.edge.hardness.realIndexCount > 0) {
+      isBinded = true;
       // draw HardEdge
       gl.useShader(__WEBPACK_IMPORTED_MODULE_1__wings3d_shaderprog__["selectedColorLine"]);
+      gl.bindTransform();
       gl.bindAttribute(this.preview.shaderData, ['position', 'barycentric']);
       let lineWidth = 1.1;
       if (isEdgeMode) {
@@ -16089,9 +16144,46 @@ DraftBench.prototype.drawHardEdgeEtc = function(gl, isEdgeMode, madsor) {
       gl.bindUniform(this.preview.shaderData, ['color', 'faceColor', 'lineWidth']);
       gl.bindIndex(this.preview.shaderData, 'hardEdge');
       gl.drawElements(gl.TRIANGLES, this.preview.edge.hardness.realIndexCount, gl.UNSIGNED_INT, 0);  // draw 1 line.
+      }
    }
-   // draw wireframe edge if applicable.
-
+   // recompute wireMode edge index if applicable
+   if (this.preview.edge.wireOnly.isAltered) {
+      let indexCount = 0 ;
+      for (let cage of madsor.visibleWireCage(true)) { // looking for wireMode cage only
+         indexCount += cage.geometry.edges.size;
+      }
+      this.preview.edge.wireOnly.indexCount = indexCount * 6;  // draw 2 triangle for each edge.
+      if (indexCount > 0) {
+         // now compute the wireOnly polygon
+         const index = new Uint32Array(this.preview.edge.wireOnly.indexCount);
+         let j = 0;
+         for (let cage of madsor.visibleWireCage(true)) {
+            for (let wEdge of cage.geometry.edges) {
+               if (wEdge.state === 0) {  // we only draw normal edge
+                  j = wEdge.buildIndex(index, j, this.vertices.length);
+               }
+            }
+         }
+         // wireOnly Edge
+         this.preview.shaderData.setIndex('wireEdge', index);
+         this.preview.edge.wireOnly.indexCount = j;
+      }
+      this.preview.edge.wireOnly.isAltered = false;
+   }
+   // draw wireMode edge if applicable
+   if (this.preview.edge.wireOnly.indexCount > 0) {
+      if (!isBinded) {  // bind program and data
+         gl.useShader(__WEBPACK_IMPORTED_MODULE_1__wings3d_shaderprog__["selectedColorLine"]);
+         gl.bindTransform();
+         gl.bindAttribute(this.preview.shaderData, ['position', 'barycentric']);
+         this.preview.shaderData.setUniform4fv('faceColor', DraftBench.theme.faceColor);
+      }
+      this.preview.shaderData.setUniform4fv("color", DraftBench.theme.edgeColor);
+      this.preview.shaderData.setUniform1f("lineWidth", 1.1); //DraftBench.pref.edgeWidth);
+      gl.bindUniform(this.preview.shaderData, ['color', 'faceColor', 'lineWidth']);
+      gl.bindIndex(this.preview.shaderData, 'wireEdge');
+      gl.drawElements(gl.TRIANGLES, this.preview.edge.wireOnly.indexCount, gl.UNSIGNED_INT, 0);  // draw 1 line.
+   }
 }
 
 /** 
@@ -16546,6 +16638,11 @@ class TreeView {
          model.guiStatus.locked = input;
          // wireframe
          const wireframe = document.createRange().createContextualFragment('<label><input type="checkbox"><span class="smallIcon" style="background-image: url(\'../img/bluecube/small_wire.png\');"></span></label>');
+         input = wireframe.querySelector('input');
+         input.addEventListener('change', (ev)=> {  // whole is fragment. we want label.
+            __WEBPACK_IMPORTED_MODULE_0__wings3d_view__["setObject"]([model]);
+            __WEBPACK_IMPORTED_MODULE_1__wings3d__["runAction"](0, "toggleWireMode", ev);
+          });
          li.appendChild(wireframe);
       }
       this.treeView.appendChild(li);
