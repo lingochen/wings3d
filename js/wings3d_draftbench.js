@@ -4,7 +4,7 @@
 //
 //    update as little as possible on cpu side. 
 //
-// todo:
+// todo: done.
 //    first pass: draw line (select, unselected) first (using triangles). 
 //
 //    second pass: draw polygon (selected, unseleced) using slightly optimized index.

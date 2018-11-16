@@ -4,6 +4,7 @@
 
 import * as View from './wings3d_view';
 import * as Wings3D from './wings3d';
+import * as UI from './wings3d_ui';
 
 //---- utility function
 function editable(_ev) {
@@ -12,7 +13,7 @@ function editable(_ev) {
 };
 function unEditable(_ev) {
    this.contentEditable = false;
-}
+};
 
 /** 
  * tree view
@@ -21,6 +22,25 @@ class TreeView {
    constructor(treeView) {
       this.treeView = treeView;
       this.tree = {};
+   }
+
+   /**
+    * 
+    * @param {string} name - folderName <- todo: later to be replace by TransformGroup. 
+    */
+   createFolder(name) {
+      const li = document.createElement('li');
+
+      return li;
+   }
+
+   /**
+    * 
+    * @param {folderObj} parent - 
+    * @param {folderObj} folder - 
+    */
+   addFolder(parent, folder) {   //
+
    }
 
    /**
@@ -52,6 +72,15 @@ class TreeView {
          model.guiStatus.textNode = text;
          text.addEventListener('dblclick', editable);
          text.addEventListener('blur', unEditable);
+         text.addEventListener('contextmenu', function(ev) {
+            ev.preventDefault();
+            let contextMenu = document.querySelector('#geometryGraphText');
+            if (contextMenu) {
+               UI.positionDom(contextMenu, UI.getPosition(ev));
+               UI.showContextMenu(contextMenu);
+               View.setObject([model]);
+            }
+          }, false);
          li.appendChild(text);
          // eye label
          const eyeLabel = document.createRange().createContextualFragment('<label><input type="checkbox"><span class="smallIcon" style="background-image: url(\'../img/bluecube/small_show.png\');"></span></label>');

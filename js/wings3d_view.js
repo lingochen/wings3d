@@ -14,7 +14,7 @@ import {EditCommandSimple, EditCommandCombo} from './wings3d_undo';
 import {FaceMadsor} from './wings3d_facemads';
 import {EdgeMadsor} from './wings3d_edgemads';
 import {VertexMadsor} from './wings3d_vertexmads';
-import {BodyMadsor} from './wings3d_bodymads';
+import {BodyMadsor, DeleteBodyCommand} from './wings3d_bodymads';
 import {MultiMadsor} from './wings3d_multimads';
 import {PreviewCage} from './wings3d_model';
 import {DraftBench, CheckPoint} from './wings3d_draftbench';
@@ -989,6 +989,16 @@ function init() {
       cmd.doIt();
       undoQueueCombo([toggle, cmd]);
     });
+   // objectDelete, gui
+   UI.bindMenuItem(Wings3D.action.objectDelete.name, (_ev)=>{
+      const command = new DeleteBodyCommand(currentObjects);
+      undoQueue( command );
+      command.doIt(); // delete current selected.
+    });
+
+   // objectDuplicate, gui
+   
+   // objectRename, gui
 
    // bind .dropdown, click event.
    let buttons = document.querySelectorAll("li.dropdown > a");

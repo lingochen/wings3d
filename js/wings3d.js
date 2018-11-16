@@ -270,6 +270,9 @@ const action = {
    toggleObjectVisibility: () =>{notImplemented(this);},
    toggleObjectLock: ()=>{notImplemented(this);},
    toggleWireMode: ()=>{notImplemented(this);},
+   objectRename: ()=>{notImplemented(this);},
+   objectDelete: ()=>{notImplemented(this);},
+   objectDuplicate: ()=>{notImplemented(this);},
    // selection menu
    selectMenu: () => {notImplemented(this);},
    deselect: () => {notImplemented(this);},

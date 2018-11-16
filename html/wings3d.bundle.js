@@ -356,6 +356,9 @@ const action = {
    toggleObjectVisibility: () =>{notImplemented(this);},
    toggleObjectLock: ()=>{notImplemented(this);},
    toggleWireMode: ()=>{notImplemented(this);},
+   objectRename: ()=>{notImplemented(this);},
+   objectDelete: ()=>{notImplemented(this);},
+   objectDuplicate: ()=>{notImplemented(this);},
    // selection menu
    selectMenu: () => {notImplemented(this);},
    deselect: () => {notImplemented(this);},
@@ -1669,6 +1672,16 @@ function init() {
       cmd.doIt();
       undoQueueCombo([toggle, cmd]);
     });
+   // objectDelete, gui
+   __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].objectDelete.name, (_ev)=>{
+      const command = new __WEBPACK_IMPORTED_MODULE_10__wings3d_bodymads__["DeleteBodyCommand"](currentObjects);
+      undoQueue( command );
+      command.doIt(); // delete current selected.
+    });
+
+   // objectDuplicate, gui
+   
+   // objectRename, gui
 
    // bind .dropdown, click event.
    let buttons = document.querySelectorAll("li.dropdown > a");
@@ -12932,6 +12945,7 @@ class Ray {
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "BodyMadsor", function() { return BodyMadsor; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "DeleteBodyCommand", function() { return DeleteBodyCommand; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__ = __webpack_require__(10);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_edgemads__ = __webpack_require__(11);
@@ -15570,7 +15584,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 //
 //    update as little as possible on cpu side. 
 //
-// todo:
+// todo: done.
 //    first pass: draw line (select, unselected) first (using triangles). 
 //
 //    second pass: draw polygon (selected, unseleced) using slightly optimized index.
@@ -16556,9 +16570,11 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getTreeView", function() { return getTreeView; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_view__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_ui__ = __webpack_require__(2);
 /**
 
 */
+
 
 
 
@@ -16570,7 +16586,7 @@ function editable(_ev) {
 };
 function unEditable(_ev) {
    this.contentEditable = false;
-}
+};
 
 /** 
  * tree view
@@ -16579,6 +16595,25 @@ class TreeView {
    constructor(treeView) {
       this.treeView = treeView;
       this.tree = {};
+   }
+
+   /**
+    * 
+    * @param {string} name - folderName <- todo: later to be replace by TransformGroup. 
+    */
+   createFolder(name) {
+      const li = document.createElement('li');
+
+      return li;
+   }
+
+   /**
+    * 
+    * @param {folderObj} parent - 
+    * @param {folderObj} folder - 
+    */
+   addFolder(parent, folder) {   //
+
    }
 
    /**
@@ -16610,6 +16645,15 @@ class TreeView {
          model.guiStatus.textNode = text;
          text.addEventListener('dblclick', editable);
          text.addEventListener('blur', unEditable);
+         text.addEventListener('contextmenu', function(ev) {
+            ev.preventDefault();
+            let contextMenu = document.querySelector('#geometryGraphText');
+            if (contextMenu) {
+               __WEBPACK_IMPORTED_MODULE_2__wings3d_ui__["positionDom"](contextMenu, __WEBPACK_IMPORTED_MODULE_2__wings3d_ui__["getPosition"](ev));
+               __WEBPACK_IMPORTED_MODULE_2__wings3d_ui__["showContextMenu"](contextMenu);
+               __WEBPACK_IMPORTED_MODULE_0__wings3d_view__["setObject"]([model]);
+            }
+          }, false);
          li.appendChild(text);
          // eye label
          const eyeLabel = document.createRange().createContextualFragment('<label><input type="checkbox"><span class="smallIcon" style="background-image: url(\'../img/bluecube/small_show.png\');"></span></label>');
