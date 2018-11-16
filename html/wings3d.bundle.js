@@ -1678,9 +1678,12 @@ function init() {
       undoQueue( command );
       command.doIt(); // delete current selected.
     });
-
    // objectDuplicate, gui
-   
+   __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].objectDuplicate.name, (_ev)=>{
+      const command = new __WEBPACK_IMPORTED_MODULE_10__wings3d_bodymads__["DuplicateBodyCommand"](currentObjects);
+      undoQueue( command );
+      command.doIt(); // delete current selected.
+    });
    // objectRename, gui
 
    // bind .dropdown, click event.
@@ -12946,6 +12949,7 @@ class Ray {
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "BodyMadsor", function() { return BodyMadsor; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "DeleteBodyCommand", function() { return DeleteBodyCommand; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "DuplicateBodyCommand", function() { return DuplicateBodyCommand; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__ = __webpack_require__(10);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_edgemads__ = __webpack_require__(11);

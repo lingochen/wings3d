@@ -609,4 +609,5 @@ class FlipBodyAxis extends EditCommand {
 export {
    BodyMadsor,
    DeleteBodyCommand,
+   DuplicateBodyCommand,
 }

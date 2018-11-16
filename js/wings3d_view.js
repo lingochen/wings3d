@@ -14,7 +14,7 @@ import {EditCommandSimple, EditCommandCombo} from './wings3d_undo';
 import {FaceMadsor} from './wings3d_facemads';
 import {EdgeMadsor} from './wings3d_edgemads';
 import {VertexMadsor} from './wings3d_vertexmads';
-import {BodyMadsor, DeleteBodyCommand} from './wings3d_bodymads';
+import {BodyMadsor, DeleteBodyCommand, DuplicateBodyCommand} from './wings3d_bodymads';
 import {MultiMadsor} from './wings3d_multimads';
 import {PreviewCage} from './wings3d_model';
 import {DraftBench, CheckPoint} from './wings3d_draftbench';
@@ -995,9 +995,12 @@ function init() {
       undoQueue( command );
       command.doIt(); // delete current selected.
     });
-
    // objectDuplicate, gui
-   
+   UI.bindMenuItem(Wings3D.action.objectDuplicate.name, (_ev)=>{
+      const command = new DuplicateBodyCommand(currentObjects);
+      undoQueue( command );
+      command.doIt(); // delete current selected.
+    });
    // objectRename, gui
 
    // bind .dropdown, click event.
