@@ -43,7 +43,7 @@ class BodyMadsor extends Madsor {
                   label.textContent = cage.name;
                   const input = document.createElement('input');
                   input.type = "text";
-                  input.name = cage.name;
+                  input.name = cage.uuid;
                   input.placeholder = cage.name;
                   label.appendChild(input);
                   content.appendChild(label);
@@ -439,19 +439,19 @@ class RenameBodyCommand extends EditCommand {
 
    doIt() {
       for (let cage of this.previewCages) {
-         if (this.newName.hasOwnProperty(cage.name)) {
-            if (!this.oldName.has(cage.name)) {
-               this.oldName.set(cage.name, cage);
+         if (this.newName.hasOwnProperty(cage.uuid)) {
+            if (!this.oldName.has(cage)) {
+               this.oldName.set(cage, cage.name);
             }
-            cage.name = this.newName[cage.name];
+            cage.name = this.newName[cage.uuid];
             geometryStatus("Object new name is " + cage.name);
          }
       }
    }
 
    undo() {
-      for (let [name, cage] of this.oldName) {
-         cage.name = name;
+      for (let [cage, oldName] of this.oldName) {
+         cage.name = oldName;
          geometryStatus("Object restore name to " + cage.name);
       }  
    }

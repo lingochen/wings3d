@@ -68,7 +68,7 @@ class TreeView {
                // rename if different
                if (this.textContent !== model.name) {
                   const data = {};
-                  data[model.name] = this.textContent;
+                  data[model.uuid] = this.textContent;
                   const command = new RenameBodyCommand([model], data);
                   View.undoQueue( command );
                   command.doIt();   // rename
