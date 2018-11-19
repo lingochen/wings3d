@@ -671,12 +671,12 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_undo__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_facemads__ = __webpack_require__(10);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d_edgemads__ = __webpack_require__(11);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__wings3d_vertexmads__ = __webpack_require__(12);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__wings3d_bodymads__ = __webpack_require__(14);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__wings3d_vertexmads__ = __webpack_require__(13);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__wings3d_bodymads__ = __webpack_require__(12);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__wings3d_multimads__ = __webpack_require__(22);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_12__wings3d_model__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_13__wings3d_draftbench__ = __webpack_require__(23);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_14__wings3d_boundingvolume__ = __webpack_require__(13);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_14__wings3d_boundingvolume__ = __webpack_require__(14);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_15__wings3d_hotkey__ = __webpack_require__(16);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_16__wings3d_util__ = __webpack_require__(7);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_17__wings3d_uitree__ = __webpack_require__(24);
@@ -2189,7 +2189,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "PreviewCage", function() { return PreviewCage; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "CreatePreviewCageCommand", function() { return CreatePreviewCageCommand; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__ = __webpack_require__(5);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_boundingvolume__ = __webpack_require__(13);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_boundingvolume__ = __webpack_require__(14);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_wingededge__ = __webpack_require__(9);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_view__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d__ = __webpack_require__(0);
@@ -7453,7 +7453,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_view__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_ui__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_boundingvolume__ = __webpack_require__(13);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_boundingvolume__ = __webpack_require__(14);
 /*
  *
  * MADS (Modify, Add, Delete, Select) operation. 
@@ -11034,8 +11034,8 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "FaceMadsor", function() { return FaceMadsor; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_edgemads__ = __webpack_require__(11);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_bodymads__ = __webpack_require__(14);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__ = __webpack_require__(12);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_bodymads__ = __webpack_require__(12);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__ = __webpack_require__(13);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_model__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_view__ = __webpack_require__(1);
@@ -11650,8 +11650,8 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "EdgeMadsor", function() { return EdgeMadsor; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__ = __webpack_require__(10);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_bodymads__ = __webpack_require__(14);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__ = __webpack_require__(12);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_bodymads__ = __webpack_require__(12);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__ = __webpack_require__(13);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_model__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_ui__ = __webpack_require__(2);
@@ -12225,735 +12225,14 @@ class EdgeCornerHandler extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["Mov
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "VertexMadsor", function() { return VertexMadsor; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "VertexConnectCommand", function() { return VertexConnectCommand; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__ = __webpack_require__(8);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__ = __webpack_require__(10);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_bodymads__ = __webpack_require__(14);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_edgemads__ = __webpack_require__(11);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__ = __webpack_require__(4);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_model__ = __webpack_require__(3);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_view__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_shaderprog__ = __webpack_require__(6);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__wings3d__ = __webpack_require__(0);
-/**
-//    This module handle most vertex edit command.
-//
-//    
-**/
-
-   // for switching
-
-
-
-
-
-
-
-
-
-
-
-class VertexMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
-   constructor() {
-      super('Vertex');
-      const self = this;
-      __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].vertexConnect.name, (ev) => {
-            const vertexConnect = this.connectVertex();
-            if (vertexConnect.doIt()) {
-               __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"](vertexConnect);   // saved for undo
-            } else {
-               // show no connection possible message.
-            }
-         });
-      __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItemMode"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].vertexDissolve.name, function(ev) {
-            const dissolve = new VertexDissolveCommand(self);
-            dissolve.doIt();
-            __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"](dissolve);
-         }, this, 'Delete');
-      __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItemMode"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].vertexCollapse.name, function(ev) {
-            const dissolve = new VertexCollapseCommand(self);
-            dissolve.doIt();
-            __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"](dissolve);
-         }, this, 'Backspace');
-      __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].vertexWeld.name, (ev)=> {
-         let snapshot = [];
-         for (let preview of this.selectedCage()) {
-            if (preview.selectionSize() == 1) {
-               snapshot.push( preview );
-            }
-          }
-         if (snapshot.length == 1) {
-            const weld = new VertexWeldCommand(this, snapshot[0]);
-            __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["attachHandlerMouseSelect"](weld);
-         } else {
-            geometryStatus("You can only Weld one vertex");
-         }
-        });
-   }
-
-   // get selected vertex snapshot. for doing, and redo queue. 
-   snapshotPosition() {
-      return this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.snapshotVertexPosition);
-   }
-
-   snapshotPositionAndNormal() {
-      return this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.snapshotVertexPositionAndNormal);
-   }
-
-   snapshotTransformGroup() {
-      return this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.snapshotTransformVertexGroup);
-   }
-
-   bevel() {
-      let snapshots = this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.bevelVertex);
-      // change to facemode.
-      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreFaceMode"](snapshots);
-      return snapshots;
-   
-   }
-
-   undoBevel(snapshots, selection) {
-      this.restoreSelectionPosition(snapshots);
-      // collapse extrudeEdge
-      this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.collapseSplitOrBevelEdge);
-      // restore Vertex Selection
-      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreVertexMode"](selection); 
-   }
-
-   // extrude Vertex
-   extrude() {
-      return this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.extrudeVertex);
-   }
-   undoExtrude(extrudeData) {
-      this.doAll(extrudeData, __WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.undoExtrudeVertex);
-   }
-
-   andConnectVertex(prevCmd) {
-      const vertexConnect = new VertexConnectCommand(this);
-      if (vertexConnect.doIt()) {
-         __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueueCombo"]([prevCmd, vertexConnect]);
-      } else { // no connection possible
-         prevCmd.undo();
-         // post on geomoetryStatus;
-      }
-   }
-
-   connectVertex() {
-      return  new VertexConnectCommand(this);
-   }
-
-   connect() {
-      return this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.connectVertex);
-   };
-
-   dissolveConnect(snapshots) {
-      this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.dissolveConnect);
-   }
-
-   dissolve() {
-      return this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.dissolveSelectedVertex);
-   }
-
-   undoDissolve(dissolveArray) {
-      this.doAll(dissolveArray, __WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.undoDissolveVertex);
-   }
-
-   flatten(axis) {
-      return this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.flattenVertex, axis);
-   }
-
-   dragSelect(cage, hilite, selectArray, onOff) {
-      if (hilite.vertex !== null) {
-        if (cage.dragSelectVertex(hilite.vertex, onOff)) {
-            selectArray.push(hilite.vertex);
-        }
-      }
-   }
-
-   selectStart(cage, hilite) {
-      if (hilite.vertex !== null) {
-         var onOff = cage.selectVertex(hilite.vertex);
-         return new DragVertexSelect(this, cage, hilite.vertex, onOff);
-      }
-      return null;
-   }
-
-   isVertexSelectable() { return true; }
-
-   _resetSelection(cage) {
-      cage._resetSelectVertex();
-   }
-
-   _restoreSelection(cage, snapshot) {
-      cage.restoreVertexSelection(snapshot);
-   }
-
-   toggleFunc(toMadsor) {
-      var redoFn;
-      var snapshots;
-      if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__["FaceMadsor"]) {
-         redoFn = __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreFaceMode"];
-         snapshots = this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.changeFromVertexToFaceSelect);
-      } else if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_3__wings3d_edgemads__["EdgeMadsor"]) {
-         redoFn = __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreEdgeMode"];
-         snapshots = this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.changeFromVertexToEdgeSelect);
-      } else if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_2__wings3d_bodymads__["BodyMadsor"]) {
-         redoFn = __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreBodyMode"];
-         snapshots = this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.changeFromVertexToBodySelect);
-      } else {
-         redoFn = __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreMultiMode"];
-         snapshots = this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.changeFromVertexToMultiSelect);
-      }
-      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"]( new __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["ToggleModeCommand"](redoFn, __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreVertexMode"], snapshots) );
-   }
-
-
-   restoreMode(toMadsor, snapshots) {
-      if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__["FaceMadsor"]) {
-         this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.restoreFromVertexToFaceSelect);
-      } else if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_3__wings3d_edgemads__["EdgeMadsor"]) {
-         this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.restoreFromVertexToEdgeSelect);
-      } else if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_2__wings3d_bodymads__["BodyMadsor"]) {
-         this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.restoreFromVertexToBodySelect);
-      } else {
-         this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.restoreFromVertexToMultiSelect);
-      }
-   }
-
-   drawExtra(gl, draftBench) {
-      // draw hilite
-      //if (this.currentEdge) {
-         gl.useShader(__WEBPACK_IMPORTED_MODULE_7__wings3d_shaderprog__["selectedColorPoint"]);
-         gl.bindTransform();
-         draftBench.drawVertex(gl, this);
-         gl.disableShader();
-      //}
-   }
-} 
-
-class DragVertexSelect extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["DragSelect"] {
-   constructor(madsor, cage, vertex, onOff) {
-      super(madsor, cage, vertex, onOff);
-   }
-
-   finish() {
-      return new VertexSelectCommand(this.select);
-   }
-}
-
-class VertexSelectCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
-   constructor(select) {
-      super();
-      this.select = select;
-   }
-
-   doIt() {
-      for (var [cage, vertices] of this.select) {
-         for (var i = 0; i < vertices.length; ++i) {
-            cage.selectVertex(vertices[i]);
-         }
-      }
-   }
-
-   undo() {
-      this.doIt();   // selectVertex, flip/flop, so
-   }  
-}
-
-
-class VertexConnectCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
-   constructor(madsor) {
-      super();
-      this.madsor = madsor;
-   }
-
-   doIt() {
-      // reconnect
-      this.cageArray = this.madsor.connect();
-      if (this.cageArray.length > 0) { // goes to edgeMode.
-         __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreEdgeMode"](this.cageArray);    // abusing the api?
-         return true;
-      }
-      return false;
-   }
-
-   undo() {
-      // restore to vertexMode.
-      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreVertexMode"]();
-      // dissolve the connect edges.
-      this.madsor.dissolveConnect(this.cageArray);
-   }  
-}
-
-class VertexDissolveCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
-   constructor(madsor) {
-      super();
-      this.madsor = madsor;
-   }
-
-   doIt() {
-      // dissolve, guaranteed dissolveCount > 0
-      this.dissolve = this.madsor.dissolve();
-   }
-
-   undo() {
-      this.madsor.undoDissolve(this.dissolve);
-   }
-}
-
-class VertexCollapseCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
-   constructor(madsor) {
-      super();
-      this.madsor = madsor;
-   }
-
-   doIt() {
-      // collapse, is just like dissolve, but switch to facemode
-      this.dissolve = this.madsor.dissolve();
-      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreFaceMode"](this.dissolve);
-   }
-
-   undo() {
-      this.madsor.resetSelection();
-      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreVertexMode"]();
-      this.madsor.undoDissolve(this.dissolve);
-   }
-}
-
-
-class VertexWeldCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditSelectHandler"] {
-   constructor(madsor, preview) {
-      super(true, false, false);
-      this.madsor = madsor;
-      this.preview = preview;
-   }
-
-   hilite(hilite, currentCage) {  // no needs for currentCage
-      if ((currentCage === this.preview) && hilite.vertex) {
-         return  this.preview.weldableVertex(hilite.vertex) !== false;
-      }
-      return false;
-   }
-
-   select(hilite) { // return true for accepting, false for continue doing things.
-      const vertex = hilite.vertex;
-      if (vertex) {
-         this.collapseHEdge = this.preview.weldableVertex(vertex);
-         if (this.collapseHEdge != false) {
-            return this.doIt();
-         }
-      }
-      return false;
-   }
-
-   doIt() {
-      this.restore = this.preview.weldVertex(this.collapseHEdge);
-      return true;
-   }
-
-   undo() {
-      this.preview.undoWeldVertex(this.restore);
-   }
-}
-
-
-
-
-/***/ }),
-/* 13 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "BoundingSphere", function() { return BoundingSphere; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "LooseOctree", function() { return LooseOctree; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "Plane", function() { return Plane; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "Ray", function() { return Ray; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_util__ = __webpack_require__(7);
-/*   require glmatrix
-//
-// LooseOctree and BoundingSphere.
-*/
-
-
-
-
-
-
-const BoundingSphere = function(polygon, center, radius) {
-   this.center = center;
-   this.radius = radius;
-   if (radius) {
-      this.radius2 = radius*radius;
-   }
-   this.polygon = polygon;
-   this.octree = null;
-};
-
-BoundingSphere.prototype.isLive = function() {
-   return (this.polygon.isVisible && this.polygon.isLive());
-};
-
-BoundingSphere.prototype.isIntersect = function(ray) {
-   return __WEBPACK_IMPORTED_MODULE_0__wings3d_util__["intersectRaySphere"](ray, this);
-};
-
-BoundingSphere.prototype.setSphere = function(sphere) {
-   this.center = sphere.center;
-   this.radius = sphere.radius;
-   this.radius2 = sphere.radius*sphere.radius;
-   if (this.octree) {
-      this.octree._move(this);
-   }
-};
-
-BoundingSphere.prototype.getBVHRoot = function() {
-   return this.octree.bvh.bvh.root;
-};
-
-BoundingSphere.computeSphere = function(polygon, center) {  // vec3
-   // get all the polygon's vertex. compute barycentric.
-   center.fill(0.0);
-   var ret = {center: center, radius: 0.0};
-   polygon.eachVertex( function(vertex) {
-      vec3.add(ret.center, ret.center, vertex.vertex);
-   });
-   vec3.scale(ret.center, ret.center, 1.0/polygon.numberOfVertex);
-   // get the furthest distance. that the radius.
-   polygon.eachVertex( function(vertex) {
-      var distance = vec3.distance(ret.center, vertex.vertex);
-      if (distance > ret.radius) {
-         ret.radius = distance;
-      }
-   });
-   return ret;
-};
-
-
-// simple minded bounding sphere builder.
-BoundingSphere.create = function(polygon, center) {
-   var sphere = BoundingSphere.computeSphere(polygon, center);
-   return new BoundingSphere(polygon, sphere.center, sphere.radius);
-}
-BoundingSphere.allocate = function(polygon) {
-   return new BoundingSphere(polygon);
-}
-
-
-// loose octree for ease of implementation, and adequate performance. AABB tree, OBB tree can wait if needed.
-// http://www.tulrich.com/geekstuff/partitioning.html by Thatcher Ulrich
-class LooseOctree {  // this is really node
-   constructor(bvh, bound, level) {
-      this.bvh = bvh;
-      this.level = level;
-      this.node = [];
-      if (bound) {
-         this.bound = {center: vec3.clone(bound.center), halfSize: vec3.clone(bound.halfSize)};
-      }
-      //
-   }
-
-   *[Symbol.iterator]() {
-      yield this;
-      if (this.leaf) {
-         for (let i = 0; i < 8; ++i) {
-            const node = this.leaf[i];
-            if (node) {
-               yield* node;
-            }
-         }
-      }
-   }
-
-   getHalfSize() {
-      return this.bound.halfSize;
-   }
-
-   getBound(bound) {
-      vec3.copy(bound.center, this.bound.center);
-      vec3.copy(bound.halfSize, this.bound.halfSize);
-   }
-
-   getLooseBound(bound) {
-      vec3.copy(bound.center, this.bound.center);
-      vec3.scale(bound.halfSize, this.bound.halfSize, LooseOctree.kLOOSENESS);
-   }
-
-   getExtent(extent, looseNess = 1.0) {
-      for (let axis=0; axis < 3; ++axis) {
-         const length = this.bound.halfSize[axis]*looseNess;   
-         extent.min[axis] = this.bound.center[axis]-length;
-         extent.max[axis] = this.bound.center[axis]+length;
-      } 
-   }
-
-   getLooseExtent(extent) {
-      this.getExtent(extent, LooseOctree.kLOOSENESS); // looseOctree's extent is 2x bigger.
-   }
-
-   static getOctant(sphere, bound) {
-      let index = 0;
-      const octant = [1, 2, 4];        // octant mapping
-      for (let axis = 0; axis < 3; ++axis) {
-         bound.halfSize[axis] /= 2;
-         if (sphere.radius > bound.halfSize[axis]) {  // does not fit in the children's bound
-            return -1;
-         } else if (sphere.center[axis] < bound.center[axis]) {
-            index += octant[axis];     // |= octant[axis] faster?
-            bound.center[axis] -= bound.halfSize[axis];
-         } else {
-            bound.center[axis] += bound.halfSize[axis];
-         }
-      }
-      return index;
-   }
-
-   check(duplicateSet) {
-      if (this.node) {
-         for (let sphere of this.node) {
-            if (duplicateSet.has(sphere)) {
-               console.log("octree problems");
-            } else {
-               duplicateSet.add(sphere);
-            }
-         }
-      } else {
-         for (let i = 0; i < 8; ++i) {
-            const octreeNode = this.leaf[i];
-            if (octreeNode) {
-               octreeNode.check(duplicateSet);
-            }
-         }
-         for (let i = 8; i < this.leaf.length; ++i) {
-            const sphere = this.leaf[i];
-            if (duplicateSet.has(sphere)) {
-               console.log("octree problems");
-            } else {
-               duplicateSet.add(sphere);
-            }
-         }
-      }
-   }
-
-   free() {
-      if (this.node) {
-         for (let sphere of this.node) {
-            sphere.octree = null;
-         }
-      } else {
-         for (let i = 0; i < 8; ++i) {
-            const octreeNode = this.leaf[i];
-            if (octreeNode) {
-               octreeNode.free();
-            }
-         }
-         for (let i = 8; i < this.leaf.length; ++i) {
-            const sphere = this.leaf[i];
-            sphere.octree = null;
-         }
-      }
-   }
-
-   // only expand when this.node.length > kTHRESHOLD. and this.leaf will double as this.node.
-   insert(sphere, bound) {
-      if (this.node) { // keep pushing.
-         this.node.push(sphere);
-         sphere.octree = this;
-         if (this.node.length >= LooseOctree.kTHRESHOLD) {  // now expand to children node if possible
-            this.leaf = [null, null, null, null, null, null, null, null];  // now setup leaf octant
-            let newBound = {center: vec3.create(), halfSize: vec3.create()};
-            let ret;
-            const node = this.node;
-            delete this.node;
-            for (let sphere of node) {  // redistribute to children or self.
-               vec3.copy(newBound.center, bound.center);
-               vec3.copy(newBound.halfSize, bound.halfSize);
-               ret = this.insert(sphere, newBound);
-            }
-            return ret;
-         }
-      } else {// not leaf node.
-         let index = LooseOctree.getOctant(sphere, bound);
-         if (index >= 0) {  // descent to children
-            let child = this.leaf[index];
-            if (child === null) {
-               child = new LooseOctree(this.bvh, bound, this.level+1);
-               this.leaf[index] = child;
-            }
-            return child.insert(sphere, bound);  
-         }
-         // larger than child size, so insert here.
-         this.leaf.push(sphere);
-         sphere.octree = this;
-      }
-      return this;
-   }
-
-   _move(sphere) {   // sphere size or center changed, check for moving to different node.
-      if (!this.isInside(sphere)) {
-         this._remove(sphere);
-         this.bvh.moveSphere(sphere);
-      }
-   }
-
-   _remove(sphere) {
-      if (sphere.octree === this) {
-         if (this.node) {
-            this.node.splice(this.node.indexOf(sphere), 1);
-         } else {
-            this.leaf.splice(this.leaf.indexOf(sphere), 1);
-         }
-         sphere.octree = null;
-      } else {
-         console.log("LooseOctree _remove error");
-      }
-   }
-
-   isInside(sphere) {
-      for (let axis = 0; axis < 3; ++axis) {
-         let length = this.bound.halfSize[axis];
-         if ( (length < sphere.radius) || 
-              (this.bound.center[axis]+length) < sphere.center[axis] ||
-              (this.bound.center[axis]-length) > sphere.center[axis]) {
-            return false;
-         }
-      }
-      return true;
-   }
-
-
-   * intersectExtent(shape) {   // act as generator
-      const extent = {min: vec3.create(), max: vec3.create()};
-      this.getLooseExtent(extent);
-      if (shape.intersectAAExtent(extent)) {
-         yield* this._extentIntersect(shape, extent);
-      }
-   }
-   //
-   // Revelles' algorithm, "An efficient parametric algorithm for octree traversal". <= todo
-   * _extentIntersect(shape, extent) {
-      if (this.node) {
-         for (let sphere of this.node) {
-            if (shape.intersectSphere(sphere)) {
-               yield sphere;
-            }
-         }
-      } else {
-         for (let i = 8; i < this.leaf.length; ++i) {
-            const sphere = this.leaf[i];
-            if (shape.intersectSphere(sphere)) {
-               yield sphere;
-            }
-         }
-         // check children, this is the hard part of Revelle's algorithm.
-         for (let i = 0; i < 8; ++i) {
-            const child = this.leaf[i];
-            if (child) {
-               child.getLooseExtent(extent);
-               if (shape.intersectAAExtent(extent)) {
-                  yield* child._extentIntersect(shape, extent);
-               }
-            }
-         }
-      }
-   }
-
-   // bound = {center, halfSize};
-   * intersectBound(shape) {
-      const bound = {center: vec3.create(), halfSize: vec3.create()};
-      this.getLooseBound(bound);
-      if (shape.intersectAABB(bound)) {
-         yield* this._boundIntersect(shape, bound);
-      }
-   }
-   * _boundIntersect(shape, bound) {
-      if (this.node) {
-         for (let sphere of this.node) {
-            if (shape.intersectSphere(sphere)) {
-               yield sphere;
-            }
-         }
-      } else {
-         for (let i = 8; i < this.leaf.length; ++i) {
-            const sphere = this.leaf[i];
-            if (shape.intersectSphere(sphere)) {
-               yield sphere;
-            }
-         }
-         // check children, this is the hard part of Revelle's algorithm.
-         for (let i = 0; i < 8; ++i) {
-            const child = this.leaf[i];
-            if (child) {
-               child.getLooseBound(bound);
-               if (shape.intersectAABB(bound)) {
-                  yield* child._boundIntersect(shape, bound);
-               }
-            }
-         }
-      }
-   }
-}
-LooseOctree.kTHRESHOLD = 88;    // read somewhere, 8-15 is a good number for octree node. expand to child only when node.length >= kTHRESHOLD
-LooseOctree.kLOOSENESS = 1.5;    // cannot change. because isInside depend on this property.
-
-
-
-class Plane {
-   constructor(normal, pt) {
-      this.normal = vec3.clone(normal);
-      vec3.normalize(this.normal, this.normal);    // make sure.
-      this.pt = vec3.clone(pt);
-      this.distance = vec3.dot(this.normal, this.pt); // dot(n, pt) = k form.
-   }
-
-   closestPoint(out, point) { // projection to plane
-      __WEBPACK_IMPORTED_MODULE_0__wings3d_util__["closestPointToPlane"](out, point, this);
-   }
-
-   intersectAABB(box) {
-      return __WEBPACK_IMPORTED_MODULE_0__wings3d_util__["intersectPlaneAABB"](this, box);
-   }
-
-   intersectSphere(sphere) {
-      return __WEBPACK_IMPORTED_MODULE_0__wings3d_util__["intersectPlaneSphere"](this, sphere);
-   }
-}
-
-
-class Ray {
-   constructor(origin, dir) {
-      this.origin = origin;
-      this.direction = dir;
-      this.invDir = vec3.fromValues(1/dir[0], 1/dir[1], 1/dir[2]);   //1/0 still work for our purpose.
-   }
-
-   intersectSphere(sphere) {
-      return __WEBPACK_IMPORTED_MODULE_0__wings3d_util__["intersectRaySphere"](this, sphere);
-   }
-
-   intersectAAExtent(extent) {
-      return __WEBPACK_IMPORTED_MODULE_0__wings3d_util__["intersectRayAAExtent"](this, extent);
-   }
-}
-
-
-
-
-/***/ }),
-/* 14 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "BodyMadsor", function() { return BodyMadsor; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "DeleteBodyCommand", function() { return DeleteBodyCommand; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "DuplicateBodyCommand", function() { return DuplicateBodyCommand; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "RenameBodyCommand", function() { return RenameBodyCommand; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__ = __webpack_require__(10);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_edgemads__ = __webpack_require__(11);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__ = __webpack_require__(12);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__ = __webpack_require__(13);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_model__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_view__ = __webpack_require__(1);
@@ -13564,6 +12843,728 @@ class FlipBodyAxis extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditComm
 
    undo() {
       this.madsor.flipAxis(this.pivot, this.axis);
+   }
+}
+
+
+
+
+/***/ }),
+/* 13 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "VertexMadsor", function() { return VertexMadsor; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "VertexConnectCommand", function() { return VertexConnectCommand; });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__ = __webpack_require__(8);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_bodymads__ = __webpack_require__(12);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_edgemads__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_model__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_view__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__wings3d_shaderprog__ = __webpack_require__(6);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__ = __webpack_require__(2);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__wings3d__ = __webpack_require__(0);
+/**
+//    This module handle most vertex edit command.
+//
+//    
+**/
+
+   // for switching
+
+
+
+
+
+
+
+
+
+
+
+class VertexMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
+   constructor() {
+      super('Vertex');
+      const self = this;
+      __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].vertexConnect.name, (ev) => {
+            const vertexConnect = this.connectVertex();
+            if (vertexConnect.doIt()) {
+               __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"](vertexConnect);   // saved for undo
+            } else {
+               // show no connection possible message.
+            }
+         });
+      __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItemMode"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].vertexDissolve.name, function(ev) {
+            const dissolve = new VertexDissolveCommand(self);
+            dissolve.doIt();
+            __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"](dissolve);
+         }, this, 'Delete');
+      __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItemMode"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].vertexCollapse.name, function(ev) {
+            const dissolve = new VertexCollapseCommand(self);
+            dissolve.doIt();
+            __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"](dissolve);
+         }, this, 'Backspace');
+      __WEBPACK_IMPORTED_MODULE_8__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_9__wings3d__["action"].vertexWeld.name, (ev)=> {
+         let snapshot = [];
+         for (let preview of this.selectedCage()) {
+            if (preview.selectionSize() == 1) {
+               snapshot.push( preview );
+            }
+          }
+         if (snapshot.length == 1) {
+            const weld = new VertexWeldCommand(this, snapshot[0]);
+            __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["attachHandlerMouseSelect"](weld);
+         } else {
+            geometryStatus("You can only Weld one vertex");
+         }
+        });
+   }
+
+   // get selected vertex snapshot. for doing, and redo queue. 
+   snapshotPosition() {
+      return this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.snapshotVertexPosition);
+   }
+
+   snapshotPositionAndNormal() {
+      return this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.snapshotVertexPositionAndNormal);
+   }
+
+   snapshotTransformGroup() {
+      return this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.snapshotTransformVertexGroup);
+   }
+
+   bevel() {
+      let snapshots = this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.bevelVertex);
+      // change to facemode.
+      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreFaceMode"](snapshots);
+      return snapshots;
+   
+   }
+
+   undoBevel(snapshots, selection) {
+      this.restoreSelectionPosition(snapshots);
+      // collapse extrudeEdge
+      this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.collapseSplitOrBevelEdge);
+      // restore Vertex Selection
+      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreVertexMode"](selection); 
+   }
+
+   // extrude Vertex
+   extrude() {
+      return this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.extrudeVertex);
+   }
+   undoExtrude(extrudeData) {
+      this.doAll(extrudeData, __WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.undoExtrudeVertex);
+   }
+
+   andConnectVertex(prevCmd) {
+      const vertexConnect = new VertexConnectCommand(this);
+      if (vertexConnect.doIt()) {
+         __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueueCombo"]([prevCmd, vertexConnect]);
+      } else { // no connection possible
+         prevCmd.undo();
+         // post on geomoetryStatus;
+      }
+   }
+
+   connectVertex() {
+      return  new VertexConnectCommand(this);
+   }
+
+   connect() {
+      return this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.connectVertex);
+   };
+
+   dissolveConnect(snapshots) {
+      this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.dissolveConnect);
+   }
+
+   dissolve() {
+      return this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.dissolveSelectedVertex);
+   }
+
+   undoDissolve(dissolveArray) {
+      this.doAll(dissolveArray, __WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.undoDissolveVertex);
+   }
+
+   flatten(axis) {
+      return this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.flattenVertex, axis);
+   }
+
+   dragSelect(cage, hilite, selectArray, onOff) {
+      if (hilite.vertex !== null) {
+        if (cage.dragSelectVertex(hilite.vertex, onOff)) {
+            selectArray.push(hilite.vertex);
+        }
+      }
+   }
+
+   selectStart(cage, hilite) {
+      if (hilite.vertex !== null) {
+         var onOff = cage.selectVertex(hilite.vertex);
+         return new DragVertexSelect(this, cage, hilite.vertex, onOff);
+      }
+      return null;
+   }
+
+   isVertexSelectable() { return true; }
+
+   _resetSelection(cage) {
+      cage._resetSelectVertex();
+   }
+
+   _restoreSelection(cage, snapshot) {
+      cage.restoreVertexSelection(snapshot);
+   }
+
+   toggleFunc(toMadsor) {
+      var redoFn;
+      var snapshots;
+      if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__["FaceMadsor"]) {
+         redoFn = __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreFaceMode"];
+         snapshots = this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.changeFromVertexToFaceSelect);
+      } else if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_3__wings3d_edgemads__["EdgeMadsor"]) {
+         redoFn = __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreEdgeMode"];
+         snapshots = this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.changeFromVertexToEdgeSelect);
+      } else if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_2__wings3d_bodymads__["BodyMadsor"]) {
+         redoFn = __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreBodyMode"];
+         snapshots = this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.changeFromVertexToBodySelect);
+      } else {
+         redoFn = __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreMultiMode"];
+         snapshots = this.snapshotAll(__WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.changeFromVertexToMultiSelect);
+      }
+      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["undoQueue"]( new __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["ToggleModeCommand"](redoFn, __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreVertexMode"], snapshots) );
+   }
+
+
+   restoreMode(toMadsor, snapshots) {
+      if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__["FaceMadsor"]) {
+         this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.restoreFromVertexToFaceSelect);
+      } else if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_3__wings3d_edgemads__["EdgeMadsor"]) {
+         this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.restoreFromVertexToEdgeSelect);
+      } else if (toMadsor instanceof __WEBPACK_IMPORTED_MODULE_2__wings3d_bodymads__["BodyMadsor"]) {
+         this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.restoreFromVertexToBodySelect);
+      } else {
+         this.doAll(snapshots, __WEBPACK_IMPORTED_MODULE_5__wings3d_model__["PreviewCage"].prototype.restoreFromVertexToMultiSelect);
+      }
+   }
+
+   drawExtra(gl, draftBench) {
+      // draw hilite
+      //if (this.currentEdge) {
+         gl.useShader(__WEBPACK_IMPORTED_MODULE_7__wings3d_shaderprog__["selectedColorPoint"]);
+         gl.bindTransform();
+         draftBench.drawVertex(gl, this);
+         gl.disableShader();
+      //}
+   }
+} 
+
+class DragVertexSelect extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["DragSelect"] {
+   constructor(madsor, cage, vertex, onOff) {
+      super(madsor, cage, vertex, onOff);
+   }
+
+   finish() {
+      return new VertexSelectCommand(this.select);
+   }
+}
+
+class VertexSelectCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
+   constructor(select) {
+      super();
+      this.select = select;
+   }
+
+   doIt() {
+      for (var [cage, vertices] of this.select) {
+         for (var i = 0; i < vertices.length; ++i) {
+            cage.selectVertex(vertices[i]);
+         }
+      }
+   }
+
+   undo() {
+      this.doIt();   // selectVertex, flip/flop, so
+   }  
+}
+
+
+class VertexConnectCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
+   constructor(madsor) {
+      super();
+      this.madsor = madsor;
+   }
+
+   doIt() {
+      // reconnect
+      this.cageArray = this.madsor.connect();
+      if (this.cageArray.length > 0) { // goes to edgeMode.
+         __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreEdgeMode"](this.cageArray);    // abusing the api?
+         return true;
+      }
+      return false;
+   }
+
+   undo() {
+      // restore to vertexMode.
+      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreVertexMode"]();
+      // dissolve the connect edges.
+      this.madsor.dissolveConnect(this.cageArray);
+   }  
+}
+
+class VertexDissolveCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
+   constructor(madsor) {
+      super();
+      this.madsor = madsor;
+   }
+
+   doIt() {
+      // dissolve, guaranteed dissolveCount > 0
+      this.dissolve = this.madsor.dissolve();
+   }
+
+   undo() {
+      this.madsor.undoDissolve(this.dissolve);
+   }
+}
+
+class VertexCollapseCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditCommand"] {
+   constructor(madsor) {
+      super();
+      this.madsor = madsor;
+   }
+
+   doIt() {
+      // collapse, is just like dissolve, but switch to facemode
+      this.dissolve = this.madsor.dissolve();
+      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreFaceMode"](this.dissolve);
+   }
+
+   undo() {
+      this.madsor.resetSelection();
+      __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["restoreVertexMode"]();
+      this.madsor.undoDissolve(this.dissolve);
+   }
+}
+
+
+class VertexWeldCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["EditSelectHandler"] {
+   constructor(madsor, preview) {
+      super(true, false, false);
+      this.madsor = madsor;
+      this.preview = preview;
+   }
+
+   hilite(hilite, currentCage) {  // no needs for currentCage
+      if ((currentCage === this.preview) && hilite.vertex) {
+         return  this.preview.weldableVertex(hilite.vertex) !== false;
+      }
+      return false;
+   }
+
+   select(hilite) { // return true for accepting, false for continue doing things.
+      const vertex = hilite.vertex;
+      if (vertex) {
+         this.collapseHEdge = this.preview.weldableVertex(vertex);
+         if (this.collapseHEdge != false) {
+            return this.doIt();
+         }
+      }
+      return false;
+   }
+
+   doIt() {
+      this.restore = this.preview.weldVertex(this.collapseHEdge);
+      return true;
+   }
+
+   undo() {
+      this.preview.undoWeldVertex(this.restore);
+   }
+}
+
+
+
+
+/***/ }),
+/* 14 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "BoundingSphere", function() { return BoundingSphere; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "LooseOctree", function() { return LooseOctree; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "Plane", function() { return Plane; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "Ray", function() { return Ray; });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_util__ = __webpack_require__(7);
+/*   require glmatrix
+//
+// LooseOctree and BoundingSphere.
+*/
+
+
+
+
+
+
+const BoundingSphere = function(polygon, center, radius) {
+   this.center = center;
+   this.radius = radius;
+   if (radius) {
+      this.radius2 = radius*radius;
+   }
+   this.polygon = polygon;
+   this.octree = null;
+};
+
+BoundingSphere.prototype.isLive = function() {
+   return (this.polygon.isVisible && this.polygon.isLive());
+};
+
+BoundingSphere.prototype.isIntersect = function(ray) {
+   return __WEBPACK_IMPORTED_MODULE_0__wings3d_util__["intersectRaySphere"](ray, this);
+};
+
+BoundingSphere.prototype.setSphere = function(sphere) {
+   this.center = sphere.center;
+   this.radius = sphere.radius;
+   this.radius2 = sphere.radius*sphere.radius;
+   if (this.octree) {
+      this.octree._move(this);
+   }
+};
+
+BoundingSphere.prototype.getBVHRoot = function() {
+   return this.octree.bvh.bvh.root;
+};
+
+BoundingSphere.computeSphere = function(polygon, center) {  // vec3
+   // get all the polygon's vertex. compute barycentric.
+   center.fill(0.0);
+   var ret = {center: center, radius: 0.0};
+   polygon.eachVertex( function(vertex) {
+      vec3.add(ret.center, ret.center, vertex.vertex);
+   });
+   vec3.scale(ret.center, ret.center, 1.0/polygon.numberOfVertex);
+   // get the furthest distance. that the radius.
+   polygon.eachVertex( function(vertex) {
+      var distance = vec3.distance(ret.center, vertex.vertex);
+      if (distance > ret.radius) {
+         ret.radius = distance;
+      }
+   });
+   return ret;
+};
+
+
+// simple minded bounding sphere builder.
+BoundingSphere.create = function(polygon, center) {
+   var sphere = BoundingSphere.computeSphere(polygon, center);
+   return new BoundingSphere(polygon, sphere.center, sphere.radius);
+}
+BoundingSphere.allocate = function(polygon) {
+   return new BoundingSphere(polygon);
+}
+
+
+// loose octree for ease of implementation, and adequate performance. AABB tree, OBB tree can wait if needed.
+// http://www.tulrich.com/geekstuff/partitioning.html by Thatcher Ulrich
+class LooseOctree {  // this is really node
+   constructor(bvh, bound, level) {
+      this.bvh = bvh;
+      this.level = level;
+      this.node = [];
+      if (bound) {
+         this.bound = {center: vec3.clone(bound.center), halfSize: vec3.clone(bound.halfSize)};
+      }
+      //
+   }
+
+   *[Symbol.iterator]() {
+      yield this;
+      if (this.leaf) {
+         for (let i = 0; i < 8; ++i) {
+            const node = this.leaf[i];
+            if (node) {
+               yield* node;
+            }
+         }
+      }
+   }
+
+   getHalfSize() {
+      return this.bound.halfSize;
+   }
+
+   getBound(bound) {
+      vec3.copy(bound.center, this.bound.center);
+      vec3.copy(bound.halfSize, this.bound.halfSize);
+   }
+
+   getLooseBound(bound) {
+      vec3.copy(bound.center, this.bound.center);
+      vec3.scale(bound.halfSize, this.bound.halfSize, LooseOctree.kLOOSENESS);
+   }
+
+   getExtent(extent, looseNess = 1.0) {
+      for (let axis=0; axis < 3; ++axis) {
+         const length = this.bound.halfSize[axis]*looseNess;   
+         extent.min[axis] = this.bound.center[axis]-length;
+         extent.max[axis] = this.bound.center[axis]+length;
+      } 
+   }
+
+   getLooseExtent(extent) {
+      this.getExtent(extent, LooseOctree.kLOOSENESS); // looseOctree's extent is 2x bigger.
+   }
+
+   static getOctant(sphere, bound) {
+      let index = 0;
+      const octant = [1, 2, 4];        // octant mapping
+      for (let axis = 0; axis < 3; ++axis) {
+         bound.halfSize[axis] /= 2;
+         if (sphere.radius > bound.halfSize[axis]) {  // does not fit in the children's bound
+            return -1;
+         } else if (sphere.center[axis] < bound.center[axis]) {
+            index += octant[axis];     // |= octant[axis] faster?
+            bound.center[axis] -= bound.halfSize[axis];
+         } else {
+            bound.center[axis] += bound.halfSize[axis];
+         }
+      }
+      return index;
+   }
+
+   check(duplicateSet) {
+      if (this.node) {
+         for (let sphere of this.node) {
+            if (duplicateSet.has(sphere)) {
+               console.log("octree problems");
+            } else {
+               duplicateSet.add(sphere);
+            }
+         }
+      } else {
+         for (let i = 0; i < 8; ++i) {
+            const octreeNode = this.leaf[i];
+            if (octreeNode) {
+               octreeNode.check(duplicateSet);
+            }
+         }
+         for (let i = 8; i < this.leaf.length; ++i) {
+            const sphere = this.leaf[i];
+            if (duplicateSet.has(sphere)) {
+               console.log("octree problems");
+            } else {
+               duplicateSet.add(sphere);
+            }
+         }
+      }
+   }
+
+   free() {
+      if (this.node) {
+         for (let sphere of this.node) {
+            sphere.octree = null;
+         }
+      } else {
+         for (let i = 0; i < 8; ++i) {
+            const octreeNode = this.leaf[i];
+            if (octreeNode) {
+               octreeNode.free();
+            }
+         }
+         for (let i = 8; i < this.leaf.length; ++i) {
+            const sphere = this.leaf[i];
+            sphere.octree = null;
+         }
+      }
+   }
+
+   // only expand when this.node.length > kTHRESHOLD. and this.leaf will double as this.node.
+   insert(sphere, bound) {
+      if (this.node) { // keep pushing.
+         this.node.push(sphere);
+         sphere.octree = this;
+         if (this.node.length >= LooseOctree.kTHRESHOLD) {  // now expand to children node if possible
+            this.leaf = [null, null, null, null, null, null, null, null];  // now setup leaf octant
+            let newBound = {center: vec3.create(), halfSize: vec3.create()};
+            let ret;
+            const node = this.node;
+            delete this.node;
+            for (let sphere of node) {  // redistribute to children or self.
+               vec3.copy(newBound.center, bound.center);
+               vec3.copy(newBound.halfSize, bound.halfSize);
+               ret = this.insert(sphere, newBound);
+            }
+            return ret;
+         }
+      } else {// not leaf node.
+         let index = LooseOctree.getOctant(sphere, bound);
+         if (index >= 0) {  // descent to children
+            let child = this.leaf[index];
+            if (child === null) {
+               child = new LooseOctree(this.bvh, bound, this.level+1);
+               this.leaf[index] = child;
+            }
+            return child.insert(sphere, bound);  
+         }
+         // larger than child size, so insert here.
+         this.leaf.push(sphere);
+         sphere.octree = this;
+      }
+      return this;
+   }
+
+   _move(sphere) {   // sphere size or center changed, check for moving to different node.
+      if (!this.isInside(sphere)) {
+         this._remove(sphere);
+         this.bvh.moveSphere(sphere);
+      }
+   }
+
+   _remove(sphere) {
+      if (sphere.octree === this) {
+         if (this.node) {
+            this.node.splice(this.node.indexOf(sphere), 1);
+         } else {
+            this.leaf.splice(this.leaf.indexOf(sphere), 1);
+         }
+         sphere.octree = null;
+      } else {
+         console.log("LooseOctree _remove error");
+      }
+   }
+
+   isInside(sphere) {
+      for (let axis = 0; axis < 3; ++axis) {
+         let length = this.bound.halfSize[axis];
+         if ( (length < sphere.radius) || 
+              (this.bound.center[axis]+length) < sphere.center[axis] ||
+              (this.bound.center[axis]-length) > sphere.center[axis]) {
+            return false;
+         }
+      }
+      return true;
+   }
+
+
+   * intersectExtent(shape) {   // act as generator
+      const extent = {min: vec3.create(), max: vec3.create()};
+      this.getLooseExtent(extent);
+      if (shape.intersectAAExtent(extent)) {
+         yield* this._extentIntersect(shape, extent);
+      }
+   }
+   //
+   // Revelles' algorithm, "An efficient parametric algorithm for octree traversal". <= todo
+   * _extentIntersect(shape, extent) {
+      if (this.node) {
+         for (let sphere of this.node) {
+            if (shape.intersectSphere(sphere)) {
+               yield sphere;
+            }
+         }
+      } else {
+         for (let i = 8; i < this.leaf.length; ++i) {
+            const sphere = this.leaf[i];
+            if (shape.intersectSphere(sphere)) {
+               yield sphere;
+            }
+         }
+         // check children, this is the hard part of Revelle's algorithm.
+         for (let i = 0; i < 8; ++i) {
+            const child = this.leaf[i];
+            if (child) {
+               child.getLooseExtent(extent);
+               if (shape.intersectAAExtent(extent)) {
+                  yield* child._extentIntersect(shape, extent);
+               }
+            }
+         }
+      }
+   }
+
+   // bound = {center, halfSize};
+   * intersectBound(shape) {
+      const bound = {center: vec3.create(), halfSize: vec3.create()};
+      this.getLooseBound(bound);
+      if (shape.intersectAABB(bound)) {
+         yield* this._boundIntersect(shape, bound);
+      }
+   }
+   * _boundIntersect(shape, bound) {
+      if (this.node) {
+         for (let sphere of this.node) {
+            if (shape.intersectSphere(sphere)) {
+               yield sphere;
+            }
+         }
+      } else {
+         for (let i = 8; i < this.leaf.length; ++i) {
+            const sphere = this.leaf[i];
+            if (shape.intersectSphere(sphere)) {
+               yield sphere;
+            }
+         }
+         // check children, this is the hard part of Revelle's algorithm.
+         for (let i = 0; i < 8; ++i) {
+            const child = this.leaf[i];
+            if (child) {
+               child.getLooseBound(bound);
+               if (shape.intersectAABB(bound)) {
+                  yield* child._boundIntersect(shape, bound);
+               }
+            }
+         }
+      }
+   }
+}
+LooseOctree.kTHRESHOLD = 88;    // read somewhere, 8-15 is a good number for octree node. expand to child only when node.length >= kTHRESHOLD
+LooseOctree.kLOOSENESS = 1.5;    // cannot change. because isInside depend on this property.
+
+
+
+class Plane {
+   constructor(normal, pt) {
+      this.normal = vec3.clone(normal);
+      vec3.normalize(this.normal, this.normal);    // make sure.
+      this.pt = vec3.clone(pt);
+      this.distance = vec3.dot(this.normal, this.pt); // dot(n, pt) = k form.
+   }
+
+   closestPoint(out, point) { // projection to plane
+      __WEBPACK_IMPORTED_MODULE_0__wings3d_util__["closestPointToPlane"](out, point, this);
+   }
+
+   intersectAABB(box) {
+      return __WEBPACK_IMPORTED_MODULE_0__wings3d_util__["intersectPlaneAABB"](this, box);
+   }
+
+   intersectSphere(sphere) {
+      return __WEBPACK_IMPORTED_MODULE_0__wings3d_util__["intersectPlaneSphere"](this, sphere);
+   }
+}
+
+
+class Ray {
+   constructor(origin, dir) {
+      this.origin = origin;
+      this.direction = dir;
+      this.invDir = vec3.fromValues(1/dir[0], 1/dir[1], 1/dir[2]);   //1/0 still work for our purpose.
+   }
+
+   intersectSphere(sphere) {
+      return __WEBPACK_IMPORTED_MODULE_0__wings3d_util__["intersectRaySphere"](this, sphere);
+   }
+
+   intersectAAExtent(extent) {
+      return __WEBPACK_IMPORTED_MODULE_0__wings3d_util__["intersectRayAAExtent"](this, extent);
    }
 }
 
@@ -15491,7 +15492,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_facemads__ = __webpack_require__(10);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_edgemads__ = __webpack_require__(11);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__ = __webpack_require__(12);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_vertexmads__ = __webpack_require__(13);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_model__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_shaderprog__ = __webpack_require__(6);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__wings3d_view__ = __webpack_require__(1);
@@ -15579,7 +15580,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__ = __webpack_require__(5);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_shaderprog__ = __webpack_require__(6);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_util__ = __webpack_require__(7);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_boundingvolume__ = __webpack_require__(13);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_boundingvolume__ = __webpack_require__(14);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__wings3d_wingededge__ = __webpack_require__(9);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__wings3d_undo__ = __webpack_require__(4);
 //
@@ -16575,6 +16576,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_view__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_ui__ = __webpack_require__(2);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_bodymads__ = __webpack_require__(12);
 /**
 
 */
@@ -16583,14 +16585,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 
 
-//---- utility function
-function editable(_ev) {
-   this.contentEditable = true;
-   this.focus();
-};
-function unEditable(_ev) {
-   this.contentEditable = false;
-};
+
 
 /** 
  * tree view
@@ -16647,8 +16642,31 @@ class TreeView {
          const text = document.createElement('span');
          text.textContent = model.name;
          model.guiStatus.textNode = text;
-         text.addEventListener('dblclick', editable);
-         text.addEventListener('blur', unEditable);
+         const entry = function(ev) {
+            if (ev.keyCode == 13) {
+               // rename if different
+               if (this.textContent !== model.name) {
+                  const data = {};
+                  data[model.name] = this.textContent;
+                  const command = new __WEBPACK_IMPORTED_MODULE_3__wings3d_bodymads__["RenameBodyCommand"]([model], data);
+                  __WEBPACK_IMPORTED_MODULE_0__wings3d_view__["undoQueue"]( command );
+                  command.doIt();   // rename
+               }
+               this.contentEditable = false;
+               this.removeEventListener('keydown', entry);  // remove keyListening event
+            }
+         };
+         text.addEventListener('dblclick', function(ev){
+            this.contentEditable = true;
+            this.focus();
+            this.addEventListener('keydown', entry);
+          });
+         text.addEventListener('blur', function(ev) {
+            // restore 
+            this.textContent = model.name;   // restore name
+            this.contentEditable = false;
+            this.removeEventListener('keydown', entry);
+          });
          text.addEventListener('contextmenu', function(ev) {
             ev.preventDefault();
             let contextMenu = document.querySelector('#geometryGraphText');
@@ -16721,8 +16739,8 @@ function getTreeView(id) {
 /***/ (function(module, exports, __webpack_require__) {
 
 __webpack_require__(26);
+__webpack_require__(12);
 __webpack_require__(14);
-__webpack_require__(13);
 __webpack_require__(15);
 __webpack_require__(23);
 __webpack_require__(11);
@@ -16744,7 +16762,7 @@ __webpack_require__(2);
 __webpack_require__(24);
 __webpack_require__(4);
 __webpack_require__(7);
-__webpack_require__(12);
+__webpack_require__(13);
 __webpack_require__(1);
 __webpack_require__(9);
 module.exports = __webpack_require__(0);
