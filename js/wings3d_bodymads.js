@@ -610,4 +610,5 @@ export {
    BodyMadsor,
    DeleteBodyCommand,
    DuplicateBodyCommand,
+   RenameBodyCommand,
 }

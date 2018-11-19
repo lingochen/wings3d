@@ -5,15 +5,8 @@
 import * as View from './wings3d_view';
 import * as Wings3D from './wings3d';
 import * as UI from './wings3d_ui';
+import {RenameBodyCommand} from './wings3d_bodymads';
 
-//---- utility function
-function editable(_ev) {
-   this.contentEditable = true;
-   this.focus();
-};
-function unEditable(_ev) {
-   this.contentEditable = false;
-};
 
 /** 
  * tree view
@@ -70,8 +63,31 @@ class TreeView {
          const text = document.createElement('span');
          text.textContent = model.name;
          model.guiStatus.textNode = text;
-         text.addEventListener('dblclick', editable);
-         text.addEventListener('blur', unEditable);
+         const entry = function(ev) {
+            if (ev.keyCode == 13) {
+               // rename if different
+               if (this.textContent !== model.name) {
+                  const data = {};
+                  data[model.name] = this.textContent;
+                  const command = new RenameBodyCommand([model], data);
+                  View.undoQueue( command );
+                  command.doIt();   // rename
+               }
+               this.contentEditable = false;
+               this.removeEventListener('keydown', entry);  // remove keyListening event
+            }
+         };
+         text.addEventListener('dblclick', function(ev){
+            this.contentEditable = true;
+            this.focus();
+            this.addEventListener('keydown', entry);
+          });
+         text.addEventListener('blur', function(ev) {
+            // restore 
+            this.textContent = model.name;   // restore name
+            this.contentEditable = false;
+            this.removeEventListener('keydown', entry);
+          });
          text.addEventListener('contextmenu', function(ev) {
             ev.preventDefault();
             let contextMenu = document.querySelector('#geometryGraphText');
