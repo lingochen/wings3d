@@ -2265,6 +2265,7 @@ class MeshAllocatorProxy { // we could use Proxy, but ....
  * @param {DraftBench} bench - drawing workbench. 
  */
 const PreviewCage = function(bench) {
+   this.uuid = PreviewCage.get_uuidv4();
    this.geometry = new __WEBPACK_IMPORTED_MODULE_2__wings3d_wingededge__["WingedTopology"](new MeshAllocatorProxy(this));
    this.bench = bench;
    this.guiStatus = {};
@@ -2292,6 +2293,16 @@ const PreviewCage = function(bench) {
    this.bvh = {root: null, queue: new Set};       // queue is for lazy evaluation.1
 };
 
+
+/**
+ * https://stackoverflow.com/questions/105034/create-guid-uuid-in-javascript
+ * generate unique id using crypto functions to avoid collision.
+ */
+PreviewCage.get_uuidv4 = function() {
+   return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
+     (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+   )
+ };
 
 // act as destructor
 PreviewCage.prototype.freeBuffer = function() {
@@ -12284,7 +12295,7 @@ class BodyMadsor extends __WEBPACK_IMPORTED_MODULE_0__wings3d_mads__["Madsor"] {
                   label.textContent = cage.name;
                   const input = document.createElement('input');
                   input.type = "text";
-                  input.name = cage.name;
+                  input.name = cage.uuid;
                   input.placeholder = cage.name;
                   label.appendChild(input);
                   content.appendChild(label);
@@ -12680,19 +12691,19 @@ class RenameBodyCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["Edi
 
    doIt() {
       for (let cage of this.previewCages) {
-         if (this.newName.hasOwnProperty(cage.name)) {
-            if (!this.oldName.has(cage.name)) {
-               this.oldName.set(cage.name, cage);
+         if (this.newName.hasOwnProperty(cage.uuid)) {
+            if (!this.oldName.has(cage)) {
+               this.oldName.set(cage, cage.name);
             }
-            cage.name = this.newName[cage.name];
+            cage.name = this.newName[cage.uuid];
             geometryStatus("Object new name is " + cage.name);
          }
       }
    }
 
    undo() {
-      for (let [name, cage] of this.oldName) {
-         cage.name = name;
+      for (let [cage, oldName] of this.oldName) {
+         cage.name = oldName;
          geometryStatus("Object restore name to " + cage.name);
       }  
    }
@@ -16647,7 +16658,7 @@ class TreeView {
                // rename if different
                if (this.textContent !== model.name) {
                   const data = {};
-                  data[model.name] = this.textContent;
+                  data[model.uuid] = this.textContent;
                   const command = new __WEBPACK_IMPORTED_MODULE_3__wings3d_bodymads__["RenameBodyCommand"]([model], data);
                   __WEBPACK_IMPORTED_MODULE_0__wings3d_view__["undoQueue"]( command );
                   command.doIt();   // rename
