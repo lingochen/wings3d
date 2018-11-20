@@ -19,21 +19,58 @@ class TreeView {
 
    /**
     * 
-    * @param {string} name - folderName <- todo: later to be replace by TransformGroup. 
+    * @param {PreviewCage or PreviewGroup} model - . 
     */
-   createFolder(name) {
-      const li = document.createElement('li');
+   static createTextNode(model) {
+      const text = document.createElement('span');
+      text.textContent = model.name;
+      model.guiStatus.textNode = text;
+      const entry = function(ev) {
+         if (ev.keyCode == 13) {
+            // rename if different
+            if (this.textContent !== model.name) {
+               const data = {};
+               data[model.uuid] = this.textContent;
+               const command = new RenameBodyCommand([model], data);
+               View.undoQueue( command );
+               command.doIt();   // rename
+            }
+            this.contentEditable = false;
+            this.removeEventListener('keydown', entry);  // remove keyListening event
+         }
+      };
+      text.addEventListener('dblclick', function(ev){
+         this.contentEditable = true;
+         this.focus();
+         this.addEventListener('keydown', entry);
+       });
+      text.addEventListener('blur', function(ev) {
+         // restore 
+         this.textContent = model.name;   // restore name
+         this.contentEditable = false;
+         this.removeEventListener('keydown', entry);
+       });
 
-      return li;
+      return text;
    }
 
    /**
     * 
-    * @param {folderObj} parent - 
-    * @param {folderObj} folder - 
+    * @param {PreviewCage} sibling - insert after sibling 
+    * @param {PreviewGroup} folder -  todo: later to be replace by TransformGroup
     */
-   addFolder(parent, folder) {   //
-
+   addGroup(parent, group) {
+      let li = group.guiStatus.li;
+      if (!li) {
+         li = document.createElement('li');
+         group.guiStatus.li = li;
+         // span text
+         const text = TreeView.createTextNode(group);
+         text.textContent = group.name;
+         group.guiStatus.textNode = text;
+         li.appendChild(text);
+      }
+      parent.appendChild(li);
    }
 
    /**
@@ -60,34 +97,7 @@ class TreeView {
          model.guiStatus.select = input;
          li.appendChild(whole);
          // span text
-         const text = document.createElement('span');
-         text.textContent = model.name;
-         model.guiStatus.textNode = text;
-         const entry = function(ev) {
-            if (ev.keyCode == 13) {
-               // rename if different
-               if (this.textContent !== model.name) {
-                  const data = {};
-                  data[model.uuid] = this.textContent;
-                  const command = new RenameBodyCommand([model], data);
-                  View.undoQueue( command );
-                  command.doIt();   // rename
-               }
-               this.contentEditable = false;
-               this.removeEventListener('keydown', entry);  // remove keyListening event
-            }
-         };
-         text.addEventListener('dblclick', function(ev){
-            this.contentEditable = true;
-            this.focus();
-            this.addEventListener('keydown', entry);
-          });
-         text.addEventListener('blur', function(ev) {
-            // restore 
-            this.textContent = model.name;   // restore name
-            this.contentEditable = false;
-            this.removeEventListener('keydown', entry);
-          });
+         const text = TreeView.createTextNode(model);
          text.addEventListener('contextmenu', function(ev) {
             ev.preventDefault();
             let contextMenu = document.querySelector('#geometryGraphText');

@@ -4,8 +4,9 @@
 * 
 *  previewCage. Internal representation rewrote many times.
 *  Finally decided to trade space for ease of implementation and 
-#  no worst case non linear runtimes.
+*  no worst case non linear runtimes.
 * 
+*  Add PreviewGroup. simple grouping without transform.
 */
 "use strict";
 import {gl, ShaderData} from './wings3d_gl'; 
@@ -16,6 +17,38 @@ import * as Wings3D from './wings3d';
 import {EditCommand} from './wings3d_undo';
 import * as Util from './wings3d_util';
 import {i18n} from './wings3d_i18n';
+
+
+/**
+ * PreviewGroup constructor.
+ * 
+ */
+const PreviewGroup = function() {
+   this.uuid = PreviewCage.get_uuidv4();
+   this.group = [];
+   this.guiStatus = {};
+   this.status = {locked: false, visible: true, wireMode: false};
+
+   // default to no name
+   let _name = "";
+   Object.defineProperty(this,"name",{
+      get: function() { return _name; },
+      set: function(value) {  
+         if (value === '') {  // cannot assign empty string?
+            return;
+         }
+         _name = value; 
+         if (this.guiStatus.textNode) {   // treeView's representation.
+            if (this.guiStatus.textNode.textContent !== value) {
+               this.guiStatus.textNode.textContent = value;
+            }
+         }
+       }
+    });
+   // how about bvh?
+
+};
+
 
 
 class MeshAllocatorProxy { // we could use Proxy, but ....
@@ -3735,4 +3768,5 @@ class CreatePreviewCageCommand extends EditCommand {
 export {
    PreviewCage,
    CreatePreviewCageCommand,
+   PreviewGroup,
 }

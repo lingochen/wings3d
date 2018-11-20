@@ -16,7 +16,7 @@ import {EdgeMadsor} from './wings3d_edgemads';
 import {VertexMadsor} from './wings3d_vertexmads';
 import {BodyMadsor, DeleteBodyCommand, DuplicateBodyCommand} from './wings3d_bodymads';
 import {MultiMadsor} from './wings3d_multimads';
-import {PreviewCage} from './wings3d_model';
+import {PreviewCage, PreviewGroup} from './wings3d_model';
 import {DraftBench, CheckPoint} from './wings3d_draftbench';
 import {Ray} from './wings3d_boundingvolume';
 import * as Hotkey from './wings3d_hotkey';
@@ -1001,7 +1001,16 @@ function init() {
       undoQueue( command );
       command.doIt(); // delete current selected.
     });
-   // objectRename, gui
+   // createGroup. replacement for folder.
+    UI.bindMenuItem(Wings3D.action.createGroup.name, (_ev)=>{
+      // createGroup
+      const group = new PreviewGroup;
+      group.name = "new_folder";
+      const object = currentObjects[0];
+      geometryGraph.addGroup(object.guiStatus.li.parentNode, group);
+     });
+
+
 
    // bind .dropdown, click event.
    let buttons = document.querySelectorAll("li.dropdown > a");

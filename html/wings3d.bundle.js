@@ -359,6 +359,7 @@ const action = {
    objectRename: ()=>{notImplemented(this);},
    objectDelete: ()=>{notImplemented(this);},
    objectDuplicate: ()=>{notImplemented(this);},
+   createGroup: ()=>{notImplemented(this);},
    // selection menu
    selectMenu: () => {notImplemented(this);},
    deselect: () => {notImplemented(this);},
@@ -1684,7 +1685,16 @@ function init() {
       undoQueue( command );
       command.doIt(); // delete current selected.
     });
-   // objectRename, gui
+   // createGroup. replacement for folder.
+    __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].createGroup.name, (_ev)=>{
+      // createGroup
+      const group = new __WEBPACK_IMPORTED_MODULE_12__wings3d_model__["PreviewGroup"];
+      group.name = "empty_folder";
+      const object = currentObjects[0];
+      geometryGraph.addGroup(object.guiStatus.li.parentNode, group);
+     });
+
+
 
    // bind .dropdown, click event.
    let buttons = document.querySelectorAll("li.dropdown > a");
@@ -2188,6 +2198,7 @@ function queuePopupMenu(popupMenu) {
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "PreviewCage", function() { return PreviewCage; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "CreatePreviewCageCommand", function() { return CreatePreviewCageCommand; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "PreviewGroup", function() { return PreviewGroup; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wings3d_gl__ = __webpack_require__(5);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wings3d_boundingvolume__ = __webpack_require__(14);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_wingededge__ = __webpack_require__(9);
@@ -2202,8 +2213,9 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 * 
 *  previewCage. Internal representation rewrote many times.
 *  Finally decided to trade space for ease of implementation and 
-#  no worst case non linear runtimes.
+*  no worst case non linear runtimes.
 * 
+*  Add PreviewGroup. simple grouping without transform.
 */
 
  
@@ -2213,6 +2225,38 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 
 
+
+
+
+/**
+ * PreviewGroup constructor.
+ * 
+ */
+const PreviewGroup = function() {
+   this.uuid = PreviewCage.get_uuidv4();
+   this.group = [];
+   this.guiStatus = {};
+   this.status = {locked: false, visible: true, wireMode: false};
+
+   // default to no name
+   let _name = "";
+   Object.defineProperty(this,"name",{
+      get: function() { return _name; },
+      set: function(value) {  
+         if (value === '') {  // cannot assign empty string?
+            return;
+         }
+         _name = value; 
+         if (this.guiStatus.textNode) {   // treeView's representation.
+            if (this.guiStatus.textNode.textContent !== value) {
+               this.guiStatus.textNode.textContent = value;
+            }
+         }
+       }
+    });
+   // how about bvh?
+
+};
 
 
 
@@ -16609,21 +16653,58 @@ class TreeView {
 
    /**
     * 
-    * @param {string} name - folderName <- todo: later to be replace by TransformGroup. 
+    * @param {PreviewCage or PreviewGroup} model - . 
     */
-   createFolder(name) {
-      const li = document.createElement('li');
+   static createTextNode(model) {
+      const text = document.createElement('span');
+      text.textContent = model.name;
+      model.guiStatus.textNode = text;
+      const entry = function(ev) {
+         if (ev.keyCode == 13) {
+            // rename if different
+            if (this.textContent !== model.name) {
+               const data = {};
+               data[model.uuid] = this.textContent;
+               const command = new __WEBPACK_IMPORTED_MODULE_3__wings3d_bodymads__["RenameBodyCommand"]([model], data);
+               __WEBPACK_IMPORTED_MODULE_0__wings3d_view__["undoQueue"]( command );
+               command.doIt();   // rename
+            }
+            this.contentEditable = false;
+            this.removeEventListener('keydown', entry);  // remove keyListening event
+         }
+      };
+      text.addEventListener('dblclick', function(ev){
+         this.contentEditable = true;
+         this.focus();
+         this.addEventListener('keydown', entry);
+       });
+      text.addEventListener('blur', function(ev) {
+         // restore 
+         this.textContent = model.name;   // restore name
+         this.contentEditable = false;
+         this.removeEventListener('keydown', entry);
+       });
 
-      return li;
+      return text;
    }
 
    /**
     * 
-    * @param {folderObj} parent - 
-    * @param {folderObj} folder - 
+    * @param {PreviewCage} sibling - insert after sibling 
+    * @param {PreviewGroup} folder -  todo: later to be replace by TransformGroup
     */
-   addFolder(parent, folder) {   //
-
+   addGroup(parent, group) {
+      let li = group.guiStatus.li;
+      if (!li) {
+         li = document.createElement('li');
+         group.guiStatus.li = li;
+         // span text
+         const text = TreeView.createTextNode(group);
+         text.textContent = group.name;
+         group.guiStatus.textNode = text;
+         li.appendChild(text);
+      }
+      parent.appendChild(li);
    }
 
    /**
@@ -16650,34 +16731,7 @@ class TreeView {
          model.guiStatus.select = input;
          li.appendChild(whole);
          // span text
-         const text = document.createElement('span');
-         text.textContent = model.name;
-         model.guiStatus.textNode = text;
-         const entry = function(ev) {
-            if (ev.keyCode == 13) {
-               // rename if different
-               if (this.textContent !== model.name) {
-                  const data = {};
-                  data[model.uuid] = this.textContent;
-                  const command = new __WEBPACK_IMPORTED_MODULE_3__wings3d_bodymads__["RenameBodyCommand"]([model], data);
-                  __WEBPACK_IMPORTED_MODULE_0__wings3d_view__["undoQueue"]( command );
-                  command.doIt();   // rename
-               }
-               this.contentEditable = false;
-               this.removeEventListener('keydown', entry);  // remove keyListening event
-            }
-         };
-         text.addEventListener('dblclick', function(ev){
-            this.contentEditable = true;
-            this.focus();
-            this.addEventListener('keydown', entry);
-          });
-         text.addEventListener('blur', function(ev) {
-            // restore 
-            this.textContent = model.name;   // restore name
-            this.contentEditable = false;
-            this.removeEventListener('keydown', entry);
-          });
+         const text = TreeView.createTextNode(model);
          text.addEventListener('contextmenu', function(ev) {
             ev.preventDefault();
             let contextMenu = document.querySelector('#geometryGraphText');

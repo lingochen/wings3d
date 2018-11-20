@@ -273,6 +273,7 @@ const action = {
    objectRename: ()=>{notImplemented(this);},
    objectDelete: ()=>{notImplemented(this);},
    objectDuplicate: ()=>{notImplemented(this);},
+   createGroup: ()=>{notImplemented(this);},
    // selection menu
    selectMenu: () => {notImplemented(this);},
    deselect: () => {notImplemented(this);},
