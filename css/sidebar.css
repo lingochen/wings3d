@@ -97,3 +97,16 @@ input[type='checkbox']+.smallIcon {
 input:checked+.smallIcon {
   background-position: -16px 0px;
 }
+
+li.dropZone {
+  border-style: dashed;
+  border-color: #333;
+  background: #ccc;
+}
+
+.dropZone * { /* avoid dragleave event when .dropZone have children */
+  pointer-events: none;
+}
+
+
+

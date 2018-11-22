@@ -1689,7 +1689,7 @@ function init() {
     __WEBPACK_IMPORTED_MODULE_0__wings3d_ui__["bindMenuItem"](__WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].createGroup.name, (_ev)=>{
       // createGroup
       const group = new __WEBPACK_IMPORTED_MODULE_12__wings3d_model__["PreviewGroup"];
-      group.name = "empty_folder";
+      group.name = "new_folder";
       const object = currentObjects[0];
       geometryGraph.addGroup(object.guiStatus.li.parentNode, group);
      });
@@ -16649,6 +16649,7 @@ class TreeView {
    constructor(treeView) {
       this.treeView = treeView;
       this.tree = {};
+      this.dragSource = null;
    }
 
    /**
@@ -16694,6 +16695,7 @@ class TreeView {
     * @param {PreviewGroup} folder -  todo: later to be replace by TransformGroup
     */
    addGroup(parent, group) {
+      const self = this;
       let li = group.guiStatus.li;
       if (!li) {
          li = document.createElement('li');
@@ -16703,6 +16705,35 @@ class TreeView {
          text.textContent = group.name;
          group.guiStatus.textNode = text;
          li.appendChild(text);
+         // children
+         const ul = document.createElement('ul');
+         li.appendChild(ul);
+         // drop target, dragEnter, dragLeave
+         li.addEventListener('drop', function(ev){
+            ev.preventDefault();
+            ev.stopPropagation();
+            this.classList.remove('dropZone');
+            // check if belong to same treeView
+            if (self.treeView.id == ev.dataTransfer.getData("text")) {
+               // now move to UL.
+               ul.appendChild(self.dragSource);
+               this.dragSource = null;
+            }
+          });
+         li.addEventListener('dragover', function(ev){
+            ev.preventDefault();
+          });
+         li.addEventListener('dragenter', function(ev){
+            ev.preventDefault();
+            ev.stopPropagation();
+            this.classList.add('dropZone');
+          });
+         li.addEventListener('dragleave', function(ev){
+            ev.preventDefault();
+            ev.stopPropagation();
+            this.classList.remove('dropZone');
+          });
+
       }
       parent.appendChild(li);
    }
@@ -16712,11 +16743,19 @@ class TreeView {
     * @param {PreviewCage} model -target 
     */
    addObject(model) {
+      const self = this;
       let li = model.guiStatus.li;
       if (!li) {
          li = document.createElement('li');
          model.guiStatus.li = li;
          li.classList.add('objectName');
+         li.draggable = true;
+         li.addEventListener('dragstart', function(ev){
+            //ev.preventDefault();
+            ev.stopPropagation()
+            ev.dataTransfer.setData('text', self.treeView.id);
+            self.dragSource = this;
+          });
          // select whole object
          const whole = document.createRange().createContextualFragment('<label><input type="checkbox"><span class="smallIcon" style="background-image: url(\'../img/bluecube/small_whole.png\');"></span></label>');
          let input = whole.querySelector('input');
