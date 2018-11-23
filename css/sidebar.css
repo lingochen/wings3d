@@ -108,5 +108,11 @@ li.dropZone {
   pointer-events: none;
 }
 
+.resultCount:before {
+  content: "(";
+}
+.resultCount:after {
+  content: ")";
+}
 
 

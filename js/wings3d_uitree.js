@@ -15,7 +15,9 @@ function dragOver(ev) {
 function dragLeave(ev){
    ev.preventDefault();
    ev.stopPropagation();
-   this.classList.remove('dropZone');
+   if (ev.target === this) {  // won't handle child's bubbling phase
+      this.classList.remove('dropZone');
+   }
 };
 function dragEnter(ev){
    ev.preventDefault();
@@ -82,7 +84,7 @@ class TreeView {
          group.guiStatus.li = li;
          // input before label
          const id = group.uuid;
-         const whole = document.createRange().createContextualFragment(`<input type="checkbox" id="${id}"><label for="${id}" class="folder"><span></span></label>`);
+         const whole = document.createRange().createContextualFragment(`<input type="checkbox" id="${id}"><label for="${id}" class="folder"></label><span></span><span class="resultCount">?</span>`);
          // span text
          TreeView.addRenameListener(whole.querySelector('span'), group);
          // children
