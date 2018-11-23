@@ -1,4 +1,5 @@
 /**
+ * treeView gui
 
 */
 
@@ -7,6 +8,20 @@ import * as Wings3D from './wings3d';
 import * as UI from './wings3d_ui';
 import {RenameBodyCommand} from './wings3d_bodymads';
 
+// utility - handling event
+function dragOver(ev) {
+   ev.preventDefault();
+};
+function dragLeave(ev){
+   ev.preventDefault();
+   ev.stopPropagation();
+   this.classList.remove('dropZone');
+};
+function dragEnter(ev){
+   ev.preventDefault();
+   ev.stopPropagation();
+   this.classList.add('dropZone');
+};
 
 /** 
  * tree view
@@ -15,15 +30,14 @@ class TreeView {
    constructor(treeView) {
       this.treeView = treeView;
       this.tree = {};
-      this.dragSource = null;
+      this.drag = {cage: null, li:null};
    }
 
    /**
     * 
     * @param {PreviewCage or PreviewGroup} model - . 
     */
-   static createTextNode(model) {
-      const text = document.createElement('span');
+   static addRenameListener(text, model) {
       text.textContent = model.name;
       model.guiStatus.textNode = text;
       const entry = function(ev) {
@@ -66,39 +80,29 @@ class TreeView {
       if (!li) {
          li = document.createElement('li');
          group.guiStatus.li = li;
+         // input before label
+         const id = group.uuid;
+         const whole = document.createRange().createContextualFragment(`<input type="checkbox" id="${id}"><label for="${id}" class="folder"><span></span></label>`);
          // span text
-         const text = TreeView.createTextNode(group);
-         text.textContent = group.name;
-         group.guiStatus.textNode = text;
-         li.appendChild(text);
+         TreeView.addRenameListener(whole.querySelector('span'), group);
          // children
+         li.appendChild(whole);
          const ul = document.createElement('ul');
          li.appendChild(ul);
          // drop target, dragEnter, dragLeave
          li.addEventListener('drop', function(ev){
-            ev.preventDefault();
-            ev.stopPropagation();
-            this.classList.remove('dropZone');
+            dragLeave.call(this, ev);
             // check if belong to same treeView
-            if (self.treeView.id == ev.dataTransfer.getData("text")) {
+            if (self.treeView.id === ev.dataTransfer.getData("text")) {
                // now move to UL.
-               ul.appendChild(self.dragSource);
-               this.dragSource = null;
+               ul.appendChild(self.drag.li);
+               group.insert(self.drag.cage);
+               self.drag.li = self.drag.cage = null;
             }
           });
-         li.addEventListener('dragover', function(ev){
-            ev.preventDefault();
-          });
-         li.addEventListener('dragenter', function(ev){
-            ev.preventDefault();
-            ev.stopPropagation();
-            this.classList.add('dropZone');
-          });
-         li.addEventListener('dragleave', function(ev){
-            ev.preventDefault();
-            ev.stopPropagation();
-            this.classList.remove('dropZone');
-          });
+         li.addEventListener('dragover', dragOver);
+         li.addEventListener('dragenter',dragEnter);
+         li.addEventListener('dragleave', dragLeave);
 
       }
       parent.appendChild(li);
@@ -120,7 +124,8 @@ class TreeView {
             //ev.preventDefault();
             ev.stopPropagation()
             ev.dataTransfer.setData('text', self.treeView.id);
-            self.dragSource = this;
+            self.drag.li = this;
+            self.drag.cage = model;
           });
          // select whole object
          const whole = document.createRange().createContextualFragment('<label><input type="checkbox"><span class="smallIcon" style="background-image: url(\'../img/bluecube/small_whole.png\');"></span></label>');
@@ -136,7 +141,7 @@ class TreeView {
          model.guiStatus.select = input;
          li.appendChild(whole);
          // span text
-         const text = TreeView.createTextNode(model);
+         const text = TreeView.addRenameListener(document.createElement('span'), model);
          text.addEventListener('contextmenu', function(ev) {
             ev.preventDefault();
             let contextMenu = document.querySelector('#geometryGraphText');

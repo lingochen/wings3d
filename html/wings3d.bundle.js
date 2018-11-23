@@ -2233,8 +2233,9 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
  * 
  */
 const PreviewGroup = function() {
-   this.uuid = PreviewCage.get_uuidv4();
    this.group = [];
+   this.parent = null;
+   this.uuid = PreviewCage.get_uuidv4();
    this.guiStatus = {};
    this.status = {locked: false, visible: true, wireMode: false};
 
@@ -2258,6 +2259,27 @@ const PreviewGroup = function() {
 
 };
 
+PreviewGroup.prototype.insert = function(obj) {
+   if (obj.parent) {
+      obj.parent.remove(obj);
+   }
+   this.group.push( obj );
+   obj.parent = this;
+};
+
+
+PreviewGroup.prototype.remove = function(obj) {
+   if (obj.parent === this) {
+      const index = this.group.indexOf(obj);
+      if (index >= 0) {
+         this.group.splice(index, 1);
+         obj.parent = null;
+         return obj;
+      }
+   }
+   // console log
+   console.log('remove() integrity error');
+};
 
 
 class MeshAllocatorProxy { // we could use Proxy, but ....
@@ -2309,6 +2331,7 @@ class MeshAllocatorProxy { // we could use Proxy, but ....
  * @param {DraftBench} bench - drawing workbench. 
  */
 const PreviewCage = function(bench) {
+   this.parent = null;
    this.uuid = PreviewCage.get_uuidv4();
    this.geometry = new __WEBPACK_IMPORTED_MODULE_2__wings3d_wingededge__["WingedTopology"](new MeshAllocatorProxy(this));
    this.bench = bench;
@@ -2346,6 +2369,13 @@ PreviewCage.get_uuidv4 = function() {
    return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
      (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
    )
+ };
+
+
+ PreviewCage.prototype.removeFromParent = function() {
+   if (this.parent) {
+      this.parent.remove(this);
+   }
  };
 
 // act as destructor
@@ -16633,6 +16663,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wings3d_ui__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__wings3d_bodymads__ = __webpack_require__(12);
 /**
+ * treeView gui
 
 */
 
@@ -16641,6 +16672,20 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 
 
+// utility - handling event
+function dragOver(ev) {
+   ev.preventDefault();
+};
+function dragLeave(ev){
+   ev.preventDefault();
+   ev.stopPropagation();
+   this.classList.remove('dropZone');
+};
+function dragEnter(ev){
+   ev.preventDefault();
+   ev.stopPropagation();
+   this.classList.add('dropZone');
+};
 
 /** 
  * tree view
@@ -16649,15 +16694,14 @@ class TreeView {
    constructor(treeView) {
       this.treeView = treeView;
       this.tree = {};
-      this.dragSource = null;
+      this.drag = {cage: null, li:null};
    }
 
    /**
     * 
     * @param {PreviewCage or PreviewGroup} model - . 
     */
-   static createTextNode(model) {
-      const text = document.createElement('span');
+   static addRenameListener(text, model) {
       text.textContent = model.name;
       model.guiStatus.textNode = text;
       const entry = function(ev) {
@@ -16700,39 +16744,29 @@ class TreeView {
       if (!li) {
          li = document.createElement('li');
          group.guiStatus.li = li;
+         // input before label
+         const id = group.uuid;
+         const whole = document.createRange().createContextualFragment(`<input type="checkbox" id="${id}"><label for="${id}" class="folder"><span></span></label>`);
          // span text
-         const text = TreeView.createTextNode(group);
-         text.textContent = group.name;
-         group.guiStatus.textNode = text;
-         li.appendChild(text);
+         TreeView.addRenameListener(whole.querySelector('span'), group);
          // children
+         li.appendChild(whole);
          const ul = document.createElement('ul');
          li.appendChild(ul);
          // drop target, dragEnter, dragLeave
          li.addEventListener('drop', function(ev){
-            ev.preventDefault();
-            ev.stopPropagation();
-            this.classList.remove('dropZone');
+            dragLeave.call(this, ev);
             // check if belong to same treeView
-            if (self.treeView.id == ev.dataTransfer.getData("text")) {
+            if (self.treeView.id === ev.dataTransfer.getData("text")) {
                // now move to UL.
-               ul.appendChild(self.dragSource);
-               this.dragSource = null;
+               ul.appendChild(self.drag.li);
+               group.insert(self.drag.cage);
+               self.drag.li = self.drag.cage = null;
             }
           });
-         li.addEventListener('dragover', function(ev){
-            ev.preventDefault();
-          });
-         li.addEventListener('dragenter', function(ev){
-            ev.preventDefault();
-            ev.stopPropagation();
-            this.classList.add('dropZone');
-          });
-         li.addEventListener('dragleave', function(ev){
-            ev.preventDefault();
-            ev.stopPropagation();
-            this.classList.remove('dropZone');
-          });
+         li.addEventListener('dragover', dragOver);
+         li.addEventListener('dragenter',dragEnter);
+         li.addEventListener('dragleave', dragLeave);
 
       }
       parent.appendChild(li);
@@ -16754,7 +16788,8 @@ class TreeView {
             //ev.preventDefault();
             ev.stopPropagation()
             ev.dataTransfer.setData('text', self.treeView.id);
-            self.dragSource = this;
+            self.drag.li = this;
+            self.drag.cage = model;
           });
          // select whole object
          const whole = document.createRange().createContextualFragment('<label><input type="checkbox"><span class="smallIcon" style="background-image: url(\'../img/bluecube/small_whole.png\');"></span></label>');
@@ -16770,7 +16805,7 @@ class TreeView {
          model.guiStatus.select = input;
          li.appendChild(whole);
          // span text
-         const text = TreeView.createTextNode(model);
+         const text = TreeView.addRenameListener(document.createElement('span'), model);
          text.addEventListener('contextmenu', function(ev) {
             ev.preventDefault();
             let contextMenu = document.querySelector('#geometryGraphText');

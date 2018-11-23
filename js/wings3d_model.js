@@ -24,8 +24,9 @@ import {i18n} from './wings3d_i18n';
  * 
  */
 const PreviewGroup = function() {
-   this.uuid = PreviewCage.get_uuidv4();
    this.group = [];
+   this.parent = null;
+   this.uuid = PreviewCage.get_uuidv4();
    this.guiStatus = {};
    this.status = {locked: false, visible: true, wireMode: false};
 
@@ -49,6 +50,27 @@ const PreviewGroup = function() {
 
 };
 
+PreviewGroup.prototype.insert = function(obj) {
+   if (obj.parent) {
+      obj.parent.remove(obj);
+   }
+   this.group.push( obj );
+   obj.parent = this;
+};
+
+
+PreviewGroup.prototype.remove = function(obj) {
+   if (obj.parent === this) {
+      const index = this.group.indexOf(obj);
+      if (index >= 0) {
+         this.group.splice(index, 1);
+         obj.parent = null;
+         return obj;
+      }
+   }
+   // console log
+   console.log('remove() integrity error');
+};
 
 
 class MeshAllocatorProxy { // we could use Proxy, but ....
@@ -100,6 +122,7 @@ class MeshAllocatorProxy { // we could use Proxy, but ....
  * @param {DraftBench} bench - drawing workbench. 
  */
 const PreviewCage = function(bench) {
+   this.parent = null;
    this.uuid = PreviewCage.get_uuidv4();
    this.geometry = new WingedTopology(new MeshAllocatorProxy(this));
    this.bench = bench;
@@ -137,6 +160,13 @@ PreviewCage.get_uuidv4 = function() {
    return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
      (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
    )
+ };
+
+
+ PreviewCage.prototype.removeFromParent = function() {
+   if (this.parent) {
+      this.parent.remove(this);
+   }
  };
 
 // act as destructor
