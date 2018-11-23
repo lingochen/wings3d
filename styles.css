@@ -819,7 +819,7 @@ ul.treeview {
   cursor: pointer;
   font-weight: bold;
 }
-.treeview input[type='checkbox'] ~ label:before {
+.treeview input[type='checkbox'] ~ .folder:before {
   content: '';
   width: 0;
   height: 0;
@@ -833,7 +833,7 @@ ul.treeview {
   border-bottom-color: red;
   border-left-color: transparent;
 }
-.treeview input:checked ~ label:before {
+.treeview input:checked ~ .folder:before {
   margin-left: -0.6em;
   border-width: 5px;
   border-top-color: transparent;
