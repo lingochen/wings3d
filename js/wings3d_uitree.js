@@ -84,15 +84,14 @@ class TreeView {
          group.guiStatus.li = li;
          // input before label
          const id = group.uuid;
-         const whole = document.createRange().createContextualFragment(`<input type="checkbox" id="${id}"><label for="${id}" class="folder"></label><span></span><span class="resultCount">?</span>`);
+         const whole = document.createRange().createContextualFragment(`<input type="checkbox" id="${id}"><label for="${id}" class="folder"></label><p><span></span><span class="resultCount">?</span></p><ul></ul>`);
          // span text
          TreeView.addRenameListener(whole.querySelector('span'), group);
-         // children
+         const ul = whole.querySelector('ul');
+         const dropZone = whole.querySelector('p');
          li.appendChild(whole);
-         const ul = document.createElement('ul');
-         li.appendChild(ul);
          // drop target, dragEnter, dragLeave
-         li.addEventListener('drop', function(ev){
+         dropZone.addEventListener('drop', function(ev){
             dragLeave.call(this, ev);
             // check if belong to same treeView
             if (self.treeView.id === ev.dataTransfer.getData("text")) {
@@ -102,9 +101,9 @@ class TreeView {
                self.drag.li = self.drag.cage = null;
             }
           });
-         li.addEventListener('dragover', dragOver);
-         li.addEventListener('dragenter',dragEnter);
-         li.addEventListener('dragleave', dragLeave);
+         dropZone.addEventListener('dragover', dragOver);
+         dropZone.addEventListener('dragenter',dragEnter);
+         dropZone.addEventListener('dragleave', dragLeave);
 
       }
       parent.appendChild(li);

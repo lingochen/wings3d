@@ -863,7 +863,11 @@ input:checked+.smallIcon {
   background-position: -16px 0px;
 }
 
-li.dropZone {
+li > p {
+  margin: 0px;
+}
+
+.dropZone {
   border-style: dashed;
   border-color: #333;
   background: #ccc;
