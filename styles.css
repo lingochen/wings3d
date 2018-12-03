@@ -834,6 +834,7 @@ ul.treeview {
   border-left-color: transparent;
 }
 .treeview input:checked ~ .folder:before {
+  content: '';
   margin-left: -0.6em;
   border-width: 5px;
   border-top-color: transparent;
