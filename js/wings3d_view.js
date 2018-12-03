@@ -339,11 +339,10 @@ function putIntoWorld() {
 
 function addToWorld(model) {
    world.push( model );
+   geometryGraph.addObject(model);
    model.setVisible(true);
    draftBench.updatePreview();
    Renderer.needToRedraw();
-   // update geometryGraph
-   geometryGraph.addObject(model);
    return model;
 }
 
@@ -953,7 +952,7 @@ function init() {
    // bind createMaterial button.
 
    // bind geometryGraph
-   geometryGraph = TreeView.getTreeView('#objectList');
+   geometryGraph = TreeView.getTreeView('#objectListLabel','#objectList');
    // selectObject
    Wings3D.bindAction(null, 0, Wings3D.action.toggleObjectSelect.name, (ev) => {
       if (isMultiMode()) {

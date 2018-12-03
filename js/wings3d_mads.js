@@ -203,15 +203,15 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
    }
 
    * eachCage() {
-      for (let cage of View.getWorld()) {
+      const world = View.getWorld();
+      for (let cage of world) {
          yield cage;
       }
    }
 
    * selectableCage() {
       const world = View.getWorld();
-      for (let i = 0; i < world.length; ++i) {
-         let cage = world[i];
+      for (let cage of world) {
          if (!cage.isLock() && cage.isVisible()) {
             yield cage;
          }
@@ -219,7 +219,8 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
    }
 
    * selectedCage() {
-      for (let cage of View.getWorld()) {
+      const world = View.getWorld();
+      for (let cage of world) {
          if (!cage.isLock() && cage.isVisible() && cage.hasSelection()) {
             yield cage;
          }
@@ -227,7 +228,8 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
    }
 
    * notSelectedCage() {
-      for (let cage of View.getWorld()) {
+      const world = View.getWorld();
+      for (let cage of world) {
          if (!cage.isLock() && cage.isVisible() && !cage.hasSelection()) {
             yield cage;
          }
@@ -236,7 +238,8 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
 
    // visible but may be lock/unlock
    * visibleCage() {
-      for (let cage of View.getWorld()) {
+      const world = View.getWorld();
+      for (let cage of world) {
          if (cage.isVisible()) {
             yield cage;
          }
@@ -244,7 +247,8 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
    }
 
    * visibleWireCage(wireMode) {
-      for (let cage of View.getWorld()) {
+      const world = View.getWorld();
+      for (let cage of world) {
          if (cage.isVisible() && (cage.isWireMode() === wireMode)) {
             yield cage;
          }

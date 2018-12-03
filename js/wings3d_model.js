@@ -9,7 +9,6 @@
 *  Add PreviewGroup. simple grouping without transform.
 */
 "use strict";
-import {gl, ShaderData} from './wings3d_gl'; 
 import {BoundingSphere, LooseOctree, Plane} from './wings3d_boundingvolume';
 import {WingedTopology} from './wings3d_wingededge';
 import * as View from './wings3d_view';
@@ -43,19 +42,24 @@ const PreviewGroup = function() {
             if (this.guiStatus.textNode.textContent !== value) {
                this.guiStatus.textNode.textContent = value;
             }
-         }
+         } 
        }
     });
    // how about bvh?
 
 };
 
+
+// prototype method.
 PreviewGroup.prototype.insert = function(obj) {
    if (obj.parent) {
       obj.parent.remove(obj);
    }
    this.group.push( obj );
    obj.parent = this;
+   this.guiStatus.count.textContent = this.numberOfCage();
+   // 
+   
 };
 
 
@@ -65,11 +69,29 @@ PreviewGroup.prototype.remove = function(obj) {
       if (index >= 0) {
          this.group.splice(index, 1);
          obj.parent = null;
+         this.guiStatus.count.textContent = this.numberOfCage();
          return obj;
       }
    }
    // console log
    console.log('remove() integrity error');
+};
+
+function countCage(acc, preview) {
+   return acc+preview.numberOfCage();
+};
+PreviewGroup.prototype.numberOfCage = function() {
+   return this.group.reduce(countCage, 0);
+};
+
+
+PreviewGroup.prototype.getCage = function* () {
+   for (let cage of this.group) {
+      const ret = cage.getCage();
+      if (ret) {
+         yield ret;
+      }
+   }
 };
 
 
@@ -162,6 +184,13 @@ PreviewCage.get_uuidv4 = function() {
    )
  };
 
+ PreviewCage.prototype.numberOfCage = function() {
+    return 1;
+ }
+
+ PreviewCage.prototype.getCage = function* () {
+    yield this;
+ }
 
  PreviewCage.prototype.removeFromParent = function() {
    if (this.parent) {

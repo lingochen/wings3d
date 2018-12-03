@@ -29,10 +29,27 @@ function dragEnter(ev){
  * tree view
 */
 class TreeView {
-   constructor(treeView) {
+   constructor(label, treeView) {
+      this.label = label;
       this.treeView = treeView;
       this.tree = {};
       this.drag = {cage: null, li:null};
+      // add drop zone
+      const self = this;
+               // drop target, dragEnter, dragLeave
+               label.addEventListener('drop', function(ev){
+                  dragLeave.call(this, ev);
+                  // check if belong to same treeView
+                  if (self.treeView.id === ev.dataTransfer.getData("text")) {
+                     // now move to UL.
+                     self.treeView.insertBefore(self.drag.li, self.treeView.firstChild);
+                     //group.insert(self.drag.cage);
+                     self.drag.li = self.drag.cage = null;
+                  }
+                });
+               label.addEventListener('dragover', dragOver);
+               label.addEventListener('dragenter',dragEnter);
+               label.addEventListener('dragleave', dragLeave); 
    }
 
    /**
@@ -84,11 +101,12 @@ class TreeView {
          group.guiStatus.li = li;
          // input before label
          const id = group.uuid;
-         const whole = document.createRange().createContextualFragment(`<input type="checkbox" id="${id}"><label for="${id}" class="folder"></label><p><span></span><span class="resultCount">?</span></p><ul></ul>`);
+         const whole = document.createRange().createContextualFragment(`<input type="checkbox" id="${id}"><label for="${id}" class="folder"></label><p><span></span><span class="resultCount">0</span></p><ul></ul>`);
          // span text
          TreeView.addRenameListener(whole.querySelector('span'), group);
          const ul = whole.querySelector('ul');
          const dropZone = whole.querySelector('p');
+         group.guiStatus.count = whole.querySelector('.resultCount');
          li.appendChild(whole);
          // drop target, dragEnter, dragLeave
          dropZone.addEventListener('drop', function(ev){
@@ -96,7 +114,7 @@ class TreeView {
             // check if belong to same treeView
             if (self.treeView.id === ev.dataTransfer.getData("text")) {
                // now move to UL.
-               ul.appendChild(self.drag.li);
+               ul.insertBefore(self.drag.li, ul.firstChild);
                group.insert(self.drag.cage);
                self.drag.li = self.drag.cage = null;
             }
@@ -194,15 +212,17 @@ class TreeView {
    removeObject(model) {
       const li = model.guiStatus.li;
       li.parentNode.removeChild(li);
+      model.removeFromParent();
       //model._textNode = undefined;
    }
 
 }
 
-function getTreeView(id) {
+function getTreeView(labelId, id) {
+   const label = document.querySelector(labelId);  // get <label>
    const treeView = document.querySelector(id); // get <ul>
-   if (treeView) {
-      return new TreeView(treeView);
+   if (label && treeView) {
+      return new TreeView(label, treeView);
    }
    // console log error
    return null;
