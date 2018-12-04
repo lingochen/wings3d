@@ -57,9 +57,7 @@ PreviewGroup.prototype.insert = function(obj) {
    }
    this.group.push( obj );
    obj.parent = this;
-   this.guiStatus.count.textContent = this.numberOfCage();
-   // 
-   
+   //this.guiStatus.count.textContent = this.numberOfCage();
 };
 
 
@@ -69,27 +67,30 @@ PreviewGroup.prototype.remove = function(obj) {
       if (index >= 0) {
          this.group.splice(index, 1);
          obj.parent = null;
-         this.guiStatus.count.textContent = this.numberOfCage();
+         //this.guiStatus.count.textContent = this.numberOfCage();
          return obj;
       }
    }
    // console log
    console.log('remove() integrity error');
+   return null;
 };
 
 function countCage(acc, preview) {
    return acc+preview.numberOfCage();
 };
 PreviewGroup.prototype.numberOfCage = function() {
-   return this.group.reduce(countCage, 0);
+   let count = this.group.reduce(countCage, 0);
+   if (this.guiStatus.count) {
+      this.guiStatus.count.textContent = count;
+   }
+   return count;
 };
-
 
 PreviewGroup.prototype.getCage = function* () {
    for (let cage of this.group) {
-      const ret = cage.getCage();
-      if (ret) {
-         yield ret;
+      for (let subCage of cage.getCage()) {
+         yield subCage;
       }
    }
 };
@@ -194,8 +195,9 @@ PreviewCage.get_uuidv4 = function() {
 
  PreviewCage.prototype.removeFromParent = function() {
    if (this.parent) {
-      this.parent.remove(this);
+      return this.parent.remove(this);
    }
+   return false;
  };
 
 // act as destructor

@@ -328,7 +328,7 @@ const currentMode = () => mode.current;
 //
 // world objects management
 //
-const world = [];    // private var
+const world = new PreviewGroup;    // private var
 let draftBench;      // = new DraftBench; wait for GL
 let geometryGraph;   // tree management of world; 
 let currentObjects;
@@ -336,29 +336,35 @@ function putIntoWorld() {
    let model = new PreviewCage(draftBench);
    return addToWorld(model);
 };
+function moveCage(newParent, model) {  // drag & drop
+   model.removeFromParent();
+   newParent.insert(model);
+   world.numberOfCage();   // update Count Status
+};
 
-function addToWorld(model) {
-   world.push( model );
+function addToWorld(model, parent = world) { // default parent is world
+   parent.insert( model );
    geometryGraph.addObject(model);
    model.setVisible(true);
    draftBench.updatePreview();
    Renderer.needToRedraw();
+   world.numberOfCage();   // update CountStatus
    return model;
 }
 
 function removeFromWorld(previewCage) {
-   var index = world.indexOf(previewCage);
-   if (index >= 0) {
-      world.splice(index, 1);
+   const deleted = previewCage.removeFromParent();
+   if (deleted) {
       previewCage.setVisible(false);
       draftBench.updatePreview();
       Renderer.needToRedraw();
       // remove from geometryGraph
       geometryGraph.removeObject(previewCage);
+      world.numberOfCage();   // update CountStatus.
    }
 };
 function getWorld() {
-   return world;
+   return world.getCage();
 }
 function updateWorld() {
    draftBench.updatePreview();
@@ -369,7 +375,7 @@ function makeCombineIntoWorld(cageSelection) {
    for (let cage of cageSelection) {
       removeFromWorld(cage);
    }
-   combine.merge(cageSelection);
+   combine.merge(cageSelection); // new cage + merged polygons.
    addToWorld(combine);
    return combine;
 }
@@ -517,7 +523,7 @@ let lastPick = null;
 
 function rayPick(ray) {
    let pick = null;
-   for (let model of world) {
+   for (let model of world.getCage()) {
       if (!model.isLock() && model.isVisible()) {
          const newPick = model.rayPick(ray);
          if (newPick !== null) {
@@ -830,10 +836,15 @@ function modelView(includeLights = false) {
 };
 
 function drawWorld(gl) {
-   if (world.length > 0) {
+   //if (world.length > 0) {
       // update selectStatus
-      for (let model of world) {
+      let count = 0;
+      for (let model of world.getCage()) {
          model.updateStatus();
+         ++count;
+      }
+      if (count === 0) {
+         return;
       }
 
       //gl.enable(gl.BLEND);
@@ -871,7 +882,7 @@ function drawWorld(gl) {
       //});
       gl.disableShader();
       //gl.disable(gl.POLYGON_OFFSET_FILL);
-   }
+   //}
 }
 
 function render(gl) {
@@ -952,7 +963,7 @@ function init() {
    // bind createMaterial button.
 
    // bind geometryGraph
-   geometryGraph = TreeView.getTreeView('#objectListLabel','#objectList');
+   geometryGraph = TreeView.getTreeView('#objectListLabel','#objectList', world);
    // selectObject
    Wings3D.bindAction(null, 0, Wings3D.action.toggleObjectSelect.name, (ev) => {
       if (isMultiMode()) {
@@ -1101,6 +1112,7 @@ export {
    currentMode,
    // world state
    putIntoWorld,
+   moveCage,
    addToWorld,
    removeFromWorld,
    getWorld,

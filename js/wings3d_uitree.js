@@ -29,27 +29,31 @@ function dragEnter(ev){
  * tree view
 */
 class TreeView {
-   constructor(label, treeView) {
+   constructor(label, treeView, world) {
       this.label = label;
       this.treeView = treeView;
-      this.tree = {};
+      this.world = world;
       this.drag = {cage: null, li:null};
       // add drop zone
       const self = this;
-               // drop target, dragEnter, dragLeave
-               label.addEventListener('drop', function(ev){
-                  dragLeave.call(this, ev);
-                  // check if belong to same treeView
-                  if (self.treeView.id === ev.dataTransfer.getData("text")) {
-                     // now move to UL.
-                     self.treeView.insertBefore(self.drag.li, self.treeView.firstChild);
-                     //group.insert(self.drag.cage);
-                     self.drag.li = self.drag.cage = null;
-                  }
-                });
-               label.addEventListener('dragover', dragOver);
-               label.addEventListener('dragenter',dragEnter);
-               label.addEventListener('dragleave', dragLeave); 
+      // get the resultCount
+      if (world) {
+         world.guiStatus.count = label.querySelector('.resultCount');
+      }
+      // drop target, dragEnter, dragLeave
+      label.addEventListener('drop', function(ev){
+      dragLeave.call(this, ev);
+         // check if belong to same treeView
+         if (self.treeView.id === ev.dataTransfer.getData("text")) {
+            // now move to UL.
+            self.treeView.insertBefore(self.drag.li, self.treeView.firstChild);
+            //group.insert(self.drag.cage);
+            self.drag.li = self.drag.cage = null;
+         }
+       });
+      label.addEventListener('dragover', dragOver);
+      label.addEventListener('dragenter',dragEnter);
+      label.addEventListener('dragleave', dragLeave); 
    }
 
    /**
@@ -88,6 +92,7 @@ class TreeView {
       return text;
    }
 
+
    /**
     * 
     * @param {PreviewCage} sibling - insert after sibling 
@@ -115,7 +120,9 @@ class TreeView {
             if (self.treeView.id === ev.dataTransfer.getData("text")) {
                // now move to UL.
                ul.insertBefore(self.drag.li, ul.firstChild);
-               group.insert(self.drag.cage);
+               
+               View.moveCage(group, self.drag.cage);
+
                self.drag.li = self.drag.cage = null;
             }
           });
@@ -218,11 +225,11 @@ class TreeView {
 
 }
 
-function getTreeView(labelId, id) {
+function getTreeView(labelId, id, world) {
    const label = document.querySelector(labelId);  // get <label>
    const treeView = document.querySelector(id); // get <ul>
    if (label && treeView) {
-      return new TreeView(label, treeView);
+      return new TreeView(label, treeView, world);
    }
    // console log error
    return null;
