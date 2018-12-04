@@ -645,6 +645,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "restoreMultiMode", function() { return restoreMultiMode; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "currentMode", function() { return currentMode; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "putIntoWorld", function() { return putIntoWorld; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "moveCage", function() { return moveCage; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "addToWorld", function() { return addToWorld; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "removeFromWorld", function() { return removeFromWorld; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getWorld", function() { return getWorld; });
@@ -1012,7 +1013,7 @@ const currentMode = () => mode.current;
 //
 // world objects management
 //
-const world = [];    // private var
+const world = new __WEBPACK_IMPORTED_MODULE_12__wings3d_model__["PreviewGroup"];    // private var
 let draftBench;      // = new DraftBench; wait for GL
 let geometryGraph;   // tree management of world; 
 let currentObjects;
@@ -1020,29 +1021,35 @@ function putIntoWorld() {
    let model = new __WEBPACK_IMPORTED_MODULE_12__wings3d_model__["PreviewCage"](draftBench);
    return addToWorld(model);
 };
+function moveCage(newParent, model) {  // drag & drop
+   model.removeFromParent();
+   newParent.insert(model);
+   world.numberOfCage();   // update Count Status
+};
 
-function addToWorld(model) {
-   world.push( model );
+function addToWorld(model, parent = world) { // default parent is world
+   parent.insert( model );
    geometryGraph.addObject(model);
    model.setVisible(true);
    draftBench.updatePreview();
    __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
+   world.numberOfCage();   // update CountStatus
    return model;
 }
 
 function removeFromWorld(previewCage) {
-   var index = world.indexOf(previewCage);
-   if (index >= 0) {
-      world.splice(index, 1);
+   const deleted = previewCage.removeFromParent();
+   if (deleted) {
       previewCage.setVisible(false);
       draftBench.updatePreview();
       __WEBPACK_IMPORTED_MODULE_1__wings3d_render__["needToRedraw"]();
       // remove from geometryGraph
       geometryGraph.removeObject(previewCage);
+      world.numberOfCage();   // update CountStatus.
    }
 };
 function getWorld() {
-   return world;
+   return world.getCage();
 }
 function updateWorld() {
    draftBench.updatePreview();
@@ -1053,7 +1060,7 @@ function makeCombineIntoWorld(cageSelection) {
    for (let cage of cageSelection) {
       removeFromWorld(cage);
    }
-   combine.merge(cageSelection);
+   combine.merge(cageSelection); // new cage + merged polygons.
    addToWorld(combine);
    return combine;
 }
@@ -1201,7 +1208,7 @@ let lastPick = null;
 
 function rayPick(ray) {
    let pick = null;
-   for (let model of world) {
+   for (let model of world.getCage()) {
       if (!model.isLock() && model.isVisible()) {
          const newPick = model.rayPick(ray);
          if (newPick !== null) {
@@ -1514,10 +1521,15 @@ function modelView(includeLights = false) {
 };
 
 function drawWorld(gl) {
-   if (world.length > 0) {
+   //if (world.length > 0) {
       // update selectStatus
-      for (let model of world) {
+      let count = 0;
+      for (let model of world.getCage()) {
          model.updateStatus();
+         ++count;
+      }
+      if (count === 0) {
+         return;
       }
 
       //gl.enable(gl.BLEND);
@@ -1555,7 +1567,7 @@ function drawWorld(gl) {
       //});
       gl.disableShader();
       //gl.disable(gl.POLYGON_OFFSET_FILL);
-   }
+   //}
 }
 
 function render(gl) {
@@ -1636,7 +1648,7 @@ function init() {
    // bind createMaterial button.
 
    // bind geometryGraph
-   geometryGraph = __WEBPACK_IMPORTED_MODULE_17__wings3d_uitree__["getTreeView"]('#objectListLabel','#objectList');
+   geometryGraph = __WEBPACK_IMPORTED_MODULE_17__wings3d_uitree__["getTreeView"]('#objectListLabel','#objectList', world);
    // selectObject
    __WEBPACK_IMPORTED_MODULE_5__wings3d__["bindAction"](null, 0, __WEBPACK_IMPORTED_MODULE_5__wings3d__["action"].toggleObjectSelect.name, (ev) => {
       if (isMultiMode()) {
@@ -2264,9 +2276,7 @@ PreviewGroup.prototype.insert = function(obj) {
    }
    this.group.push( obj );
    obj.parent = this;
-   this.guiStatus.count.textContent = this.numberOfCage();
-   // 
-   
+   //this.guiStatus.count.textContent = this.numberOfCage();
 };
 
 
@@ -2276,27 +2286,30 @@ PreviewGroup.prototype.remove = function(obj) {
       if (index >= 0) {
          this.group.splice(index, 1);
          obj.parent = null;
-         this.guiStatus.count.textContent = this.numberOfCage();
+         //this.guiStatus.count.textContent = this.numberOfCage();
          return obj;
       }
    }
    // console log
    console.log('remove() integrity error');
+   return null;
 };
 
 function countCage(acc, preview) {
    return acc+preview.numberOfCage();
 };
 PreviewGroup.prototype.numberOfCage = function() {
-   return this.group.reduce(countCage, 0);
+   let count = this.group.reduce(countCage, 0);
+   if (this.guiStatus.count) {
+      this.guiStatus.count.textContent = count;
+   }
+   return count;
 };
-
 
 PreviewGroup.prototype.getCage = function* () {
    for (let cage of this.group) {
-      const ret = cage.getCage();
-      if (ret) {
-         yield ret;
+      for (let subCage of cage.getCage()) {
+         yield subCage;
       }
    }
 };
@@ -2401,8 +2414,9 @@ PreviewCage.get_uuidv4 = function() {
 
  PreviewCage.prototype.removeFromParent = function() {
    if (this.parent) {
-      this.parent.remove(this);
+      return this.parent.remove(this);
    }
+   return false;
  };
 
 // act as destructor
@@ -16724,27 +16738,31 @@ function dragEnter(ev){
  * tree view
 */
 class TreeView {
-   constructor(label, treeView) {
+   constructor(label, treeView, world) {
       this.label = label;
       this.treeView = treeView;
-      this.tree = {};
+      this.world = world;
       this.drag = {cage: null, li:null};
       // add drop zone
       const self = this;
-               // drop target, dragEnter, dragLeave
-               label.addEventListener('drop', function(ev){
-                  dragLeave.call(this, ev);
-                  // check if belong to same treeView
-                  if (self.treeView.id === ev.dataTransfer.getData("text")) {
-                     // now move to UL.
-                     self.treeView.insertBefore(self.drag.li, self.treeView.firstChild);
-                     //group.insert(self.drag.cage);
-                     self.drag.li = self.drag.cage = null;
-                  }
-                });
-               label.addEventListener('dragover', dragOver);
-               label.addEventListener('dragenter',dragEnter);
-               label.addEventListener('dragleave', dragLeave); 
+      // get the resultCount
+      if (world) {
+         world.guiStatus.count = label.querySelector('.resultCount');
+      }
+      // drop target, dragEnter, dragLeave
+      label.addEventListener('drop', function(ev){
+      dragLeave.call(this, ev);
+         // check if belong to same treeView
+         if (self.treeView.id === ev.dataTransfer.getData("text")) {
+            // now move to UL.
+            self.treeView.insertBefore(self.drag.li, self.treeView.firstChild);
+            //group.insert(self.drag.cage);
+            self.drag.li = self.drag.cage = null;
+         }
+       });
+      label.addEventListener('dragover', dragOver);
+      label.addEventListener('dragenter',dragEnter);
+      label.addEventListener('dragleave', dragLeave); 
    }
 
    /**
@@ -16783,6 +16801,7 @@ class TreeView {
       return text;
    }
 
+
    /**
     * 
     * @param {PreviewCage} sibling - insert after sibling 
@@ -16810,7 +16829,9 @@ class TreeView {
             if (self.treeView.id === ev.dataTransfer.getData("text")) {
                // now move to UL.
                ul.insertBefore(self.drag.li, ul.firstChild);
-               group.insert(self.drag.cage);
+               
+               __WEBPACK_IMPORTED_MODULE_0__wings3d_view__["moveCage"](group, self.drag.cage);
+
                self.drag.li = self.drag.cage = null;
             }
           });
@@ -16913,11 +16934,11 @@ class TreeView {
 
 }
 
-function getTreeView(labelId, id) {
+function getTreeView(labelId, id, world) {
    const label = document.querySelector(labelId);  // get <label>
    const treeView = document.querySelector(id); // get <ul>
    if (label && treeView) {
-      return new TreeView(label, treeView);
+      return new TreeView(label, treeView, world);
    }
    // console log error
    return null;
