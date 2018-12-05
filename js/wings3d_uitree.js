@@ -47,7 +47,7 @@ class TreeView {
          if (self.treeView.id === ev.dataTransfer.getData("text")) {
             // now move to UL.
             self.treeView.insertBefore(self.drag.li, self.treeView.firstChild);
-            //group.insert(self.drag.cage);
+            View.moveCage(world, self.drag.cage);
             self.drag.li = self.drag.cage = null;
          }
        });
@@ -161,7 +161,7 @@ class TreeView {
                ev.target.checked = !ev.target.checked;
                return;
             }
-            View.setObject([model]);
+            View.setObject(model.parent, [model]);
             Wings3D.runAction(0, "toggleObjectSelect", ev);
           });
          model.guiStatus.select = input;
@@ -174,7 +174,7 @@ class TreeView {
             if (contextMenu) {
                UI.positionDom(contextMenu, UI.getPosition(ev));
                UI.showContextMenu(contextMenu);
-               View.setObject([model]);
+               View.setObject(model.parent, [model]);
             }
           }, false);
          li.appendChild(text);
@@ -186,7 +186,7 @@ class TreeView {
                ev.target.checked = !ev.target.checked;
                return;
             }
-            View.setObject([model]);
+            View.setObject(model.parent, [model]);
             Wings3D.runAction(0, "toggleObjectVisibility", ev);   
           });
          model.guiStatus.visibility = input;
@@ -195,7 +195,7 @@ class TreeView {
          const lockLabel = document.createRange().createContextualFragment('<label><input type="checkbox"><span class="smallIcon" style="background-image: url(\'../img/bluecube/small_unlock.png\');"></span></label>');
          input = lockLabel.querySelector('input');
          input.addEventListener('change', (ev)=> {  // whole is fragment. we want label.
-            View.setObject([model]);
+            View.setObject(mode.parent, [model]);
             Wings3D.runAction(0, "toggleObjectLock", ev);
           });
          li.appendChild(lockLabel);
@@ -204,7 +204,7 @@ class TreeView {
          const wireframe = document.createRange().createContextualFragment('<label><input type="checkbox"><span class="smallIcon" style="background-image: url(\'../img/bluecube/small_wire.png\');"></span></label>');
          input = wireframe.querySelector('input');
          input.addEventListener('change', (ev)=> {  // whole is fragment. we want label.
-            View.setObject([model]);
+            View.setObject(model.parent, [model]);
             Wings3D.runAction(0, "toggleWireMode", ev);
           });
          li.appendChild(wireframe);

@@ -332,6 +332,7 @@ const world = new PreviewGroup;    // private var
 let draftBench;      // = new DraftBench; wait for GL
 let geometryGraph;   // tree management of world; 
 let currentObjects;
+let currentParent;
 function putIntoWorld() {
    let model = new PreviewCage(draftBench);
    return addToWorld(model);
@@ -362,6 +363,7 @@ function removeFromWorld(previewCage) {
       geometryGraph.removeObject(previewCage);
       world.numberOfCage();   // update CountStatus.
    }
+   return deleted;
 };
 function getWorld() {
    return world.getCage();
@@ -379,8 +381,9 @@ function makeCombineIntoWorld(cageSelection) {
    addToWorld(combine);
    return combine;
 }
-function setObject(objects) { // objects is array
+function setObject(parent, objects) { // objects is array
    currentObjects = objects;
+   currentParent = parent;
 }
 //-- End of World objects management ----------------dra---------
 
@@ -1017,6 +1020,11 @@ function init() {
       const group = new PreviewGroup;
       group.name = "new_folder";
       const object = currentObjects[0];
+      let parent = currentParent;
+      if (!parent) {
+         parent = world;
+      }
+      parent.insert( group ); // later: change to addToWorld()
       geometryGraph.addGroup(object.guiStatus.li.parentNode, group);
      });
 

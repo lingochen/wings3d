@@ -417,14 +417,16 @@ class DeleteBodyCommand extends EditCommand {
    }
 
    doIt() {
+      this.undo = [];
       for (let previewCage of this.previewCages) {
+         this.undo.push( [previewCage, previewCage.parent] );
          View.removeFromWorld(previewCage);
       }
    }
 
    undo() {
-      for (let previewCage of this.previewCages) {
-         View.addToWorld(previewCage);
+      for (let [previewCage, parent] of this.undo) {
+         View.addToWorld(previewCage, parent);
       }
    }
 }

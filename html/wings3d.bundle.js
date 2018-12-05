@@ -1017,6 +1017,7 @@ const world = new __WEBPACK_IMPORTED_MODULE_12__wings3d_model__["PreviewGroup"];
 let draftBench;      // = new DraftBench; wait for GL
 let geometryGraph;   // tree management of world; 
 let currentObjects;
+let currentParent;
 function putIntoWorld() {
    let model = new __WEBPACK_IMPORTED_MODULE_12__wings3d_model__["PreviewCage"](draftBench);
    return addToWorld(model);
@@ -1047,6 +1048,7 @@ function removeFromWorld(previewCage) {
       geometryGraph.removeObject(previewCage);
       world.numberOfCage();   // update CountStatus.
    }
+   return deleted;
 };
 function getWorld() {
    return world.getCage();
@@ -1064,8 +1066,9 @@ function makeCombineIntoWorld(cageSelection) {
    addToWorld(combine);
    return combine;
 }
-function setObject(objects) { // objects is array
+function setObject(parent, objects) { // objects is array
    currentObjects = objects;
+   currentParent = parent;
 }
 //-- End of World objects management ----------------dra---------
 
@@ -1702,6 +1705,11 @@ function init() {
       const group = new __WEBPACK_IMPORTED_MODULE_12__wings3d_model__["PreviewGroup"];
       group.name = "new_folder";
       const object = currentObjects[0];
+      let parent = currentParent;
+      if (!parent) {
+         parent = world;
+      }
+      parent.insert( group ); // later: change to addToWorld()
       geometryGraph.addGroup(object.guiStatus.li.parentNode, group);
      });
 
@@ -12788,14 +12796,16 @@ class DeleteBodyCommand extends __WEBPACK_IMPORTED_MODULE_4__wings3d_undo__["Edi
    }
 
    doIt() {
+      this.undo = [];
       for (let previewCage of this.previewCages) {
+         this.undo.push( [previewCage, previewCage.parent] );
          __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["removeFromWorld"](previewCage);
       }
    }
 
    undo() {
-      for (let previewCage of this.previewCages) {
-         __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["addToWorld"](previewCage);
+      for (let [previewCage, parent] of this.undo) {
+         __WEBPACK_IMPORTED_MODULE_6__wings3d_view__["addToWorld"](previewCage, parent);
       }
    }
 }
@@ -16756,7 +16766,7 @@ class TreeView {
          if (self.treeView.id === ev.dataTransfer.getData("text")) {
             // now move to UL.
             self.treeView.insertBefore(self.drag.li, self.treeView.firstChild);
-            //group.insert(self.drag.cage);
+            __WEBPACK_IMPORTED_MODULE_0__wings3d_view__["moveCage"](world, self.drag.cage);
             self.drag.li = self.drag.cage = null;
          }
        });
@@ -16870,7 +16880,7 @@ class TreeView {
                ev.target.checked = !ev.target.checked;
                return;
             }
-            __WEBPACK_IMPORTED_MODULE_0__wings3d_view__["setObject"]([model]);
+            __WEBPACK_IMPORTED_MODULE_0__wings3d_view__["setObject"](model.parent, [model]);
             __WEBPACK_IMPORTED_MODULE_1__wings3d__["runAction"](0, "toggleObjectSelect", ev);
           });
          model.guiStatus.select = input;
@@ -16883,7 +16893,7 @@ class TreeView {
             if (contextMenu) {
                __WEBPACK_IMPORTED_MODULE_2__wings3d_ui__["positionDom"](contextMenu, __WEBPACK_IMPORTED_MODULE_2__wings3d_ui__["getPosition"](ev));
                __WEBPACK_IMPORTED_MODULE_2__wings3d_ui__["showContextMenu"](contextMenu);
-               __WEBPACK_IMPORTED_MODULE_0__wings3d_view__["setObject"]([model]);
+               __WEBPACK_IMPORTED_MODULE_0__wings3d_view__["setObject"](model.parent, [model]);
             }
           }, false);
          li.appendChild(text);
@@ -16895,7 +16905,7 @@ class TreeView {
                ev.target.checked = !ev.target.checked;
                return;
             }
-            __WEBPACK_IMPORTED_MODULE_0__wings3d_view__["setObject"]([model]);
+            __WEBPACK_IMPORTED_MODULE_0__wings3d_view__["setObject"](model.parent, [model]);
             __WEBPACK_IMPORTED_MODULE_1__wings3d__["runAction"](0, "toggleObjectVisibility", ev);   
           });
          model.guiStatus.visibility = input;
@@ -16904,7 +16914,7 @@ class TreeView {
          const lockLabel = document.createRange().createContextualFragment('<label><input type="checkbox"><span class="smallIcon" style="background-image: url(\'../img/bluecube/small_unlock.png\');"></span></label>');
          input = lockLabel.querySelector('input');
          input.addEventListener('change', (ev)=> {  // whole is fragment. we want label.
-            __WEBPACK_IMPORTED_MODULE_0__wings3d_view__["setObject"]([model]);
+            __WEBPACK_IMPORTED_MODULE_0__wings3d_view__["setObject"](mode.parent, [model]);
             __WEBPACK_IMPORTED_MODULE_1__wings3d__["runAction"](0, "toggleObjectLock", ev);
           });
          li.appendChild(lockLabel);
@@ -16913,7 +16923,7 @@ class TreeView {
          const wireframe = document.createRange().createContextualFragment('<label><input type="checkbox"><span class="smallIcon" style="background-image: url(\'../img/bluecube/small_wire.png\');"></span></label>');
          input = wireframe.querySelector('input');
          input.addEventListener('change', (ev)=> {  // whole is fragment. we want label.
-            __WEBPACK_IMPORTED_MODULE_0__wings3d_view__["setObject"]([model]);
+            __WEBPACK_IMPORTED_MODULE_0__wings3d_view__["setObject"](model.parent, [model]);
             __WEBPACK_IMPORTED_MODULE_1__wings3d__["runAction"](0, "toggleWireMode", ev);
           });
          li.appendChild(wireframe);
