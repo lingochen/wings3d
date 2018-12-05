@@ -274,6 +274,7 @@ const action = {
    objectDelete: ()=>{notImplemented(this);},
    objectDuplicate: ()=>{notImplemented(this);},
    createGroup: ()=>{notImplemented(this);},
+   createGroupWorld: ()=>{notImplemented(this);},
    // selection menu
    selectMenu: () => {notImplemented(this);},
    deselect: () => {notImplemented(this);},

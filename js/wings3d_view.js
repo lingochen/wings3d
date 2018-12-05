@@ -1015,19 +1015,26 @@ function init() {
       command.doIt(); // delete current selected.
     });
    // createGroup. replacement for folder.
-    UI.bindMenuItem(Wings3D.action.createGroup.name, (_ev)=>{
+   UI.bindMenuItem(Wings3D.action.createGroup.name, (_ev)=>{
       // createGroup
       const group = new PreviewGroup;
       group.name = "new_folder";
-      const object = currentObjects[0];
       let parent = currentParent;
       if (!parent) {
          parent = world;
       }
       parent.insert( group ); // later: change to addToWorld()
-      geometryGraph.addGroup(object.guiStatus.li.parentNode, group);
+      geometryGraph.addGroup(parent.guiStatus.ul, group);
      });
-
+   // CreateGroup-World
+   UI.bindMenuItem(Wings3D.action.createGroupWorld.name, (_ev)=>{
+      // createGroup
+      const group = new PreviewGroup;
+      group.name = "new_folder";
+      let parent = world;
+      parent.insert( group ); // later: change to addToWorld()
+      geometryGraph.addGroup(parent.guiStatus.ul, group);
+     });
 
 
    // bind .dropdown, click event.

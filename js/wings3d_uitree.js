@@ -55,6 +55,16 @@ class TreeView {
       label.addEventListener('dragover', dragOver);
       label.addEventListener('dragenter',dragEnter);
       label.addEventListener('dragleave', dragLeave); 
+      // context menu
+      label.addEventListener('contextmenu', function(ev) {
+         ev.preventDefault();
+         let contextMenu = document.querySelector('#geometryGraphWorld');
+         if (contextMenu) {
+            UI.positionDom(contextMenu, UI.getPosition(ev));
+            UI.showContextMenu(contextMenu);
+            View.setObject(world, [world]);
+         }
+       }, false);
    }
 
    /**
@@ -131,7 +141,6 @@ class TreeView {
          dropZone.addEventListener('dragover', dragOver);
          dropZone.addEventListener('dragenter',dragEnter);
          dropZone.addEventListener('dragleave', dragLeave);
-
       }
       parentUL.appendChild(li);
    }
