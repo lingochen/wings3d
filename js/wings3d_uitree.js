@@ -40,6 +40,7 @@ class TreeView {
       if (world) {
          world.guiStatus.count = label.querySelector('.resultCount');
       }
+      world.guiStatus.ul = treeView;
       // drop target, dragEnter, dragLeave
       label.addEventListener('drop', function(ev){
       dragLeave.call(this, ev);
@@ -98,7 +99,7 @@ class TreeView {
     * @param {PreviewCage} sibling - insert after sibling 
     * @param {PreviewGroup} folder -  todo: later to be replace by TransformGroup
     */
-   addGroup(parent, group) {
+   addGroup(parentUL, group) {
       const self = this;
       let li = group.guiStatus.li;
       if (!li) {
@@ -110,6 +111,7 @@ class TreeView {
          // span text
          TreeView.addRenameListener(whole.querySelector('span'), group);
          const ul = whole.querySelector('ul');
+         group.guiStatus.ul = ul;
          const dropZone = whole.querySelector('p');
          group.guiStatus.count = whole.querySelector('.resultCount');
          li.appendChild(whole);
@@ -131,14 +133,14 @@ class TreeView {
          dropZone.addEventListener('dragleave', dragLeave);
 
       }
-      parent.appendChild(li);
+      parentUL.appendChild(li);
    }
 
    /**
     * add previewCage to be displayed in TreeView
     * @param {PreviewCage} model -target 
     */
-   addObject(model) {
+   addObject(model, parentUL = this.treeView) {
       const self = this;
       let li = model.guiStatus.li;
       if (!li) {
@@ -209,7 +211,7 @@ class TreeView {
           });
          li.appendChild(wireframe);
       }
-      this.treeView.appendChild(li);
+      parentUL.appendChild(li);
    }
 
    /**

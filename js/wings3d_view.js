@@ -345,7 +345,7 @@ function moveCage(newParent, model) {  // drag & drop
 
 function addToWorld(model, parent = world) { // default parent is world
    parent.insert( model );
-   geometryGraph.addObject(model);
+   geometryGraph.addObject(model, parent.guiStatus.ul);
    model.setVisible(true);
    draftBench.updatePreview();
    Renderer.needToRedraw();
