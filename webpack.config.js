@@ -9,6 +9,7 @@ const MinifyPlugin = require("babel-minify-webpack-plugin");
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
 
 const config = {
+  mode: 'development',
   entry: {
     wings3d: glob.sync("./js/*.js"),
   },

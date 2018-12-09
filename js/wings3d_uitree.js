@@ -6,7 +6,7 @@
 import * as View from './wings3d_view';
 import * as Wings3D from './wings3d';
 import * as UI from './wings3d_ui';
-import {RenameBodyCommand} from './wings3d_bodymads';
+import {RenameBodyCommand, BodyMadsor} from './wings3d_bodymads';
 
 // utility - handling event
 function dragOver(ev) {
@@ -246,6 +246,51 @@ function getTreeView(labelId, id, world) {
    return null;
 };
 
+/**
+ * for material, image, lights
+ */
+class ListView {
+   constructor(label, listView) {
+      this.view = listView;
+      this.list = [];
+      // context menu
+      let contextMenu = document.querySelector('#importImageMenu');
+      if (contextMenu) {
+         label.addEventListener('contextmenu', function(ev) {
+            ev.preventDefault();
+            UI.positionDom(contextMenu, UI.getPosition(ev));
+            UI.showContextMenu(contextMenu);
+          }, false);
+      }
+   }
+
+   loadImage(file) {
+      const self = this;
+      let reader = new FileReader();
+
+      const img = document.createElement("img");
+      reader.onload = function(ev) {
+         img.src = reader.result;
+         //document.body.appendChild(img);
+         alert(img.src);
+      }
+
+      reader.readAsDataURL(file);
+   }
+
+}
+
+function getListView(labelId, id) {
+   const listView = document.querySelector(id); // get <ul>
+   const label = document.querySelector(labelId);
+   if (label && listView) {
+      return new ListView(label, listView);
+   }
+   // console log error
+   return null;
+};
+
 export {
-   getTreeView
+   getTreeView,
+   getListView,
 }

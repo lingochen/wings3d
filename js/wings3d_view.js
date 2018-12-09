@@ -331,6 +331,7 @@ const currentMode = () => mode.current;
 const world = new PreviewGroup;    // private var
 let draftBench;      // = new DraftBench; wait for GL
 let geometryGraph;   // tree management of world; 
+let imageList;       // list management of image List.
 let currentObjects;
 let currentParent;
 function putIntoWorld() {
@@ -1035,6 +1036,14 @@ function init() {
       parent.insert( group ); // later: change to addToWorld()
       geometryGraph.addGroup(parent.guiStatus.ul, group);
      });
+
+   // Image List.
+   imageList = TreeView.getListView('#imageListLabel','#imageList');
+   UI.bindMenuItem(Wings3D.action.importImageFileGUI.name, function(ev) {
+      UI.openFile(function(file) { // open file Dialog, and retrive data
+            imageList.loadImage(file);
+         });      
+   });
 
 
    // bind .dropdown, click event.
