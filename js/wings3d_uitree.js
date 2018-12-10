@@ -264,15 +264,33 @@ class ListView {
       }
    }
 
-   loadImage(file) {
-      const self = this;
+   loadImage(file) { // show file name.
+      //const self = this;
       let reader = new FileReader();
 
       const img = document.createElement("img");
-      reader.onload = function(ev) {
+      reader.onload = (ev) => {
          img.src = reader.result;
          //document.body.appendChild(img);
          alert(img.src);
+         let li = document.createElement('li');
+         let pict = document.createRange().createContextualFragment('<span class="smallIcon" style="background-image: url(\'../img/bluecube/small_image.png\');"></span>');
+         pict.firstElementChild.addEventListener('click', function(ev) {
+
+          });
+         li.appendChild(pict);
+         let whole = document.createRange().createContextualFragment(`<span>${file.name}</span>`);
+         whole.firstElementChild.addEventListener('contextmenu', function(ev) {
+            ev.preventDefault();
+            let contextMenu = document.querySelector('#importImageTextMenu');
+            if (contextMenu) {
+               UI.positionDom(contextMenu, UI.getPosition(ev));
+               UI.showContextMenu(contextMenu);
+               View.setObject(null, [img]);
+            }
+          }, false);
+         li.appendChild(whole);
+         this.view.appendChild(li);
       }
 
       reader.readAsDataURL(file);

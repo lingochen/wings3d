@@ -17,6 +17,7 @@ const config = {
     path: path.resolve(__dirname, 'html'),
     filename: '[name].bundle.js', // The filename template
   },
+  devtool: false,
   module: {
     rules: [
       { test: /\.js$/,
