@@ -401,6 +401,8 @@ function queuePopupMenu(popupMenu) {
 
 // moveable popup box,
 function showPopup(dom, name) {
+   let isDown = false;
+   let offset = [0, 0];
    // create div to wrap dom, 
    let div = document.createElement('div');
    div.classList.add('popup');
@@ -413,6 +415,21 @@ function showPopup(dom, name) {
    div.appendChild(span);
    // create label to drag move
    let h3 = document.createElement('h3');
+   h3.addEventListener('mousedown', (ev)=>{
+      isDown = true;
+      offset = [div.offsetLeft - ev.clientX, div.offsetTop - ev.clientY];
+    });
+   document.addEventListener('mouseup', (ev)=>{
+      isDown = false;
+    });
+   document.addEventListener('mousemove', (ev)=>{
+      ev.preventDefault();
+      if (isDown) {
+          const mousePosition = {x : ev.clientX, y : ev.clientY};
+          div.style.left = (mousePosition.x + offset[0]) + 'px';
+          div.style.top  = (mousePosition.y + offset[1]) + 'px';
+      }
+    });
    h3.textContent = name;
    div.appendChild(h3);
    // now insert dom
