@@ -12628,7 +12628,7 @@ function triangulatePreview(polygon) {
 /*!**************************!*\
   !*** ./js/wings3d_ui.js ***!
   \**************************/
-/*! exports provided: styleSheet, getArrow, placement, getPosition, positionDom, addMenuItem, bindMenuItem, bindMenuItemMMB, bindMenuItemRMB, bindMenuItemMode, extractDialogValue, runDialog, runDialogCenter, openFile, showContextMenu, queuePopupMenu, toggleSubmenu */
+/*! exports provided: styleSheet, getArrow, placement, getPosition, positionDom, addMenuItem, bindMenuItem, bindMenuItemMMB, bindMenuItemRMB, bindMenuItemMode, extractDialogValue, runDialog, runDialogCenter, openFile, showContextMenu, showPopup, queuePopupMenu, toggleSubmenu */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -12648,6 +12648,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "runDialogCenter", function() { return runDialogCenter; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "openFile", function() { return openFile; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "showContextMenu", function() { return showContextMenu; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "showPopup", function() { return showPopup; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "queuePopupMenu", function() { return queuePopupMenu; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "toggleSubmenu", function() { return toggleSubmenu; });
 /* harmony import */ var _wings3d_hotkey__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./wings3d_hotkey */ "./js/wings3d_hotkey.js");
@@ -12737,6 +12738,16 @@ function getArrow(placement) {
          return "left";
       }
       return "";
+};
+
+function placeCenter(div) {
+   let width = window.innerWidth;
+   let height = window.innerHeight;
+
+   let rect = div.getBoundingClientRect();
+
+   div.style.left =  Math.round( (width-rect.width)/2 ) + 'px';
+   div.style.top =  Math.round( (height-rect.height)/2 ) + 'px';
 };
 
 // placement.
@@ -13044,7 +13055,32 @@ function queuePopupMenu(popupMenu) {
 
 
 // moveable popup box,
+function showPopup(dom, name) {
+   // create div to wrap dom, 
+   let div = document.createElement('div');
+   div.classList.add('popup');
+   // create 'x' to close.
+   let span = document.createRange().createContextualFragment('<span class="close">&times;</span>');
+   span.firstElementChild.addEventListener('click', function(_ev){
+      // hide the element?
+      div.style.display = 'none';
+    });
+   div.appendChild(span);
+   // create label to drag move
+   let h3 = document.createElement('h3');
+   h3.textContent = name;
+   div.appendChild(h3);
+   // now insert dom
+   let wrap = document.createElement('div');
+   wrap.classList.add('wrap');
+   wrap.appendChild(dom);
+   div.appendChild(wrap);
+   document.body.appendChild(div);
 
+   // float div on the middle of screen
+   placeCenter(div);
+   return div;
+};
 
 
 
@@ -13337,29 +13373,34 @@ class ListView {
       //const self = this;
       let reader = new FileReader();
 
-      const img = document.createElement("img");
-      reader.onload = (ev) => {
+      reader.onload = (_ev) => {
+         const dat = {img: null, li: null, name: null, popup: null};
+         const img = dat.img = document.createElement("img");
          img.src = reader.result;
-         //document.body.appendChild(img);
-         alert(img.src);
-         let li = document.createElement('li');
+         let li = dat.li = document.createElement('li');
          let pict = document.createRange().createContextualFragment('<span class="smallIcon" style="background-image: url(\'../img/bluecube/small_image.png\');"></span>');
-         pict.addEventListener('click', function(ev) {
-
+         pict.firstElementChild.addEventListener('click', (_ev) => {
+            if (!dat.popup) {
+               dat.popup = _wings3d_ui__WEBPACK_IMPORTED_MODULE_2__["showPopup"](img, file.name);
+            } else {
+               dat.popup.style.display = 'block';
+            }
           });
          li.appendChild(pict);
          let whole = document.createRange().createContextualFragment(`<span>${file.name}</span>`);
+         dat.name = whole.firstElementChild;
          whole.firstElementChild.addEventListener('contextmenu', function(ev) {
             ev.preventDefault();
             let contextMenu = document.querySelector('#importImageTextMenu');
             if (contextMenu) {
                _wings3d_ui__WEBPACK_IMPORTED_MODULE_2__["positionDom"](contextMenu, _wings3d_ui__WEBPACK_IMPORTED_MODULE_2__["getPosition"](ev));
                _wings3d_ui__WEBPACK_IMPORTED_MODULE_2__["showContextMenu"](contextMenu);
-               _wings3d_view__WEBPACK_IMPORTED_MODULE_0__["setObject"](null, [img]);
+               _wings3d_view__WEBPACK_IMPORTED_MODULE_0__["setObject"](null, [dat]);
             }
           }, false);
          li.appendChild(whole);
          this.view.appendChild(li);
+         this.list.push( dat );
       }
 
       reader.readAsDataURL(file);

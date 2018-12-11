@@ -85,6 +85,16 @@ function getArrow(placement) {
       return "";
 };
 
+function placeCenter(div) {
+   let width = window.innerWidth;
+   let height = window.innerHeight;
+
+   let rect = div.getBoundingClientRect();
+
+   div.style.left =  Math.round( (width-rect.width)/2 ) + 'px';
+   div.style.top =  Math.round( (height-rect.height)/2 ) + 'px';
+};
+
 // placement.
 function placement(targetId, placement, bubble) {
       // get the size of bubble.
@@ -390,7 +400,32 @@ function queuePopupMenu(popupMenu) {
 
 
 // moveable popup box,
+function showPopup(dom, name) {
+   // create div to wrap dom, 
+   let div = document.createElement('div');
+   div.classList.add('popup');
+   // create 'x' to close.
+   let span = document.createRange().createContextualFragment('<span class="close">&times;</span>');
+   span.firstElementChild.addEventListener('click', function(_ev){
+      // hide the element?
+      div.style.display = 'none';
+    });
+   div.appendChild(span);
+   // create label to drag move
+   let h3 = document.createElement('h3');
+   h3.textContent = name;
+   div.appendChild(h3);
+   // now insert dom
+   let wrap = document.createElement('div');
+   wrap.classList.add('wrap');
+   wrap.appendChild(dom);
+   div.appendChild(wrap);
+   document.body.appendChild(div);
 
+   // float div on the middle of screen
+   placeCenter(div);
+   return div;
+};
 
 
 
@@ -410,6 +445,7 @@ export {
    runDialogCenter,
    openFile,
    showContextMenu,
+   showPopup,
    queuePopupMenu,
    toggleSubmenu,
 }

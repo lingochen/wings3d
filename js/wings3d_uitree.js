@@ -268,29 +268,34 @@ class ListView {
       //const self = this;
       let reader = new FileReader();
 
-      const img = document.createElement("img");
-      reader.onload = (ev) => {
+      reader.onload = (_ev) => {
+         const dat = {img: null, li: null, name: null, popup: null};
+         const img = dat.img = document.createElement("img");
          img.src = reader.result;
-         //document.body.appendChild(img);
-         alert(img.src);
-         let li = document.createElement('li');
+         let li = dat.li = document.createElement('li');
          let pict = document.createRange().createContextualFragment('<span class="smallIcon" style="background-image: url(\'../img/bluecube/small_image.png\');"></span>');
-         pict.firstElementChild.addEventListener('click', function(ev) {
-
+         pict.firstElementChild.addEventListener('click', (_ev) => {
+            if (!dat.popup) {
+               dat.popup = UI.showPopup(img, file.name);
+            } else {
+               dat.popup.style.display = 'block';
+            }
           });
          li.appendChild(pict);
          let whole = document.createRange().createContextualFragment(`<span>${file.name}</span>`);
+         dat.name = whole.firstElementChild;
          whole.firstElementChild.addEventListener('contextmenu', function(ev) {
             ev.preventDefault();
             let contextMenu = document.querySelector('#importImageTextMenu');
             if (contextMenu) {
                UI.positionDom(contextMenu, UI.getPosition(ev));
                UI.showContextMenu(contextMenu);
-               View.setObject(null, [img]);
+               View.setObject(null, [dat]);
             }
           }, false);
          li.appendChild(whole);
          this.view.appendChild(li);
+         this.list.push( dat );
       }
 
       reader.readAsDataURL(file);
