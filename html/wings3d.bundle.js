@@ -1031,6 +1031,7 @@ const action = {
    createGroup: ()=>{notImplemented(undefined);},
    createGroupWorld: ()=>{notImplemented(undefined);},
    importImageFileGUI: ()=>{notImplemented(undefined);},
+   showImage: ()=>{notImplemented(undefined);},
    // selection menu
    selectMenu: () => {notImplemented(undefined);},
    deselect: () => {notImplemented(undefined);},
@@ -12918,6 +12919,8 @@ function openFile(fn) {
          for (let file of fileList) {
             fn(file);
          }
+         // reset value
+         fileInput.value = "";
       });
    }
 };
@@ -13085,14 +13088,14 @@ function showPopup(dom, name) {
    // create 'x' to close.
    let span = document.createRange().createContextualFragment('<span class="close">&times;</span>');
    span.firstElementChild.addEventListener('click', function(_ev){
-      div.style.display = 'none';
+      document.body.removeChild(div);     // div.style.display = 'none';
     });
    div.appendChild(span);
    // create label to drag move
    let h3 = document.createElement('h3');
    h3.addEventListener('mousedown', (ev)=>{dragMove.mouseDown(ev, div);});
    document.addEventListener('mouseup', dragMove.mouseUp);        // same function
-   document.addEventListener('mousemove', dragMove.mouseMove);    // won't get add up.
+   document.addEventListener('mousemove', dragMove.mouseMove);    // won't get addEvent again and again.
    h3.textContent = name;
    div.appendChild(h3);
    // now insert dom
@@ -13100,10 +13103,11 @@ function showPopup(dom, name) {
    wrap.classList.add('wrap');
    wrap.appendChild(dom);
    div.appendChild(wrap);
-   document.body.appendChild(div);
 
    // float div on the middle of screen
-   placeCenter(div);
+   document.body.appendChild(div);  
+   placeCenter(div);                   // must be on screen to get the correct center.
+   document.body.removeChild(div);
    return div;
 };
 
@@ -13402,14 +13406,13 @@ class ListView {
          const dat = {img: null, li: null, name: null, popup: null};
          const img = dat.img = document.createElement("img");
          img.src = reader.result;
+         img.onload = function () {
+            dat.popup = _wings3d_ui__WEBPACK_IMPORTED_MODULE_2__["showPopup"](this, file.name);
+          }
          let li = dat.li = document.createElement('li');
          let pict = document.createRange().createContextualFragment('<span class="smallIcon" style="background-image: url(\'../img/bluecube/small_image.png\');"></span>');
          pict.firstElementChild.addEventListener('click', (_ev) => {
-            if (!dat.popup) {
-               dat.popup = _wings3d_ui__WEBPACK_IMPORTED_MODULE_2__["showPopup"](img, file.name);
-            } else {
-               dat.popup.style.display = 'block';
-            }
+            document.body.appendChild(dat.popup);
           });
          li.appendChild(pict);
          let whole = document.createRange().createContextualFragment(`<span>${file.name}</span>`);
@@ -13425,10 +13428,15 @@ class ListView {
           }, false);
          li.appendChild(whole);
          this.view.appendChild(li);
+         //dat.popup = UI.showPopup(img, file.name);
          this.list.push( dat );
-      }
+      };
 
       reader.readAsDataURL(file);
+   }
+
+   showImage(image) {
+      document.body.appendChild(image.popup);
    }
 
 }
@@ -15438,7 +15446,7 @@ function init() {
       let parent = world;
       parent.insert( group ); // later: change to addToWorld()
       geometryGraph.addGroup(parent.guiStatus.ul, group);
-     });
+    });
 
    // Image List.
    imageList = _wings3d_uitree__WEBPACK_IMPORTED_MODULE_17__["getListView"]('#imageListLabel','#imageList');
@@ -15446,7 +15454,10 @@ function init() {
       _wings3d_ui__WEBPACK_IMPORTED_MODULE_0__["openFile"](function(file) { // open file Dialog, and retrive data
             imageList.loadImage(file);
          });      
-   });
+    });
+   _wings3d_ui__WEBPACK_IMPORTED_MODULE_0__["bindMenuItem"](_wings3d__WEBPACK_IMPORTED_MODULE_5__["action"].showImage.name, function(_ev){
+      imageList.showImage(currentObjects[0]);
+    });
 
 
    // bind .dropdown, click event.

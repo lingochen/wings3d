@@ -1035,7 +1035,7 @@ function init() {
       let parent = world;
       parent.insert( group ); // later: change to addToWorld()
       geometryGraph.addGroup(parent.guiStatus.ul, group);
-     });
+    });
 
    // Image List.
    imageList = TreeView.getListView('#imageListLabel','#imageList');
@@ -1043,7 +1043,10 @@ function init() {
       UI.openFile(function(file) { // open file Dialog, and retrive data
             imageList.loadImage(file);
          });      
-   });
+    });
+   UI.bindMenuItem(Wings3D.action.showImage.name, function(_ev){
+      imageList.showImage(currentObjects[0]);
+    });
 
 
    // bind .dropdown, click event.

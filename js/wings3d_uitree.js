@@ -272,14 +272,13 @@ class ListView {
          const dat = {img: null, li: null, name: null, popup: null};
          const img = dat.img = document.createElement("img");
          img.src = reader.result;
+         img.onload = function () {
+            dat.popup = UI.showPopup(this, file.name);
+          }
          let li = dat.li = document.createElement('li');
          let pict = document.createRange().createContextualFragment('<span class="smallIcon" style="background-image: url(\'../img/bluecube/small_image.png\');"></span>');
          pict.firstElementChild.addEventListener('click', (_ev) => {
-            if (!dat.popup) {
-               dat.popup = UI.showPopup(img, file.name);
-            } else {
-               dat.popup.style.display = 'block';
-            }
+            document.body.appendChild(dat.popup);
           });
          li.appendChild(pict);
          let whole = document.createRange().createContextualFragment(`<span>${file.name}</span>`);
@@ -295,10 +294,15 @@ class ListView {
           }, false);
          li.appendChild(whole);
          this.view.appendChild(li);
+         //dat.popup = UI.showPopup(img, file.name);
          this.list.push( dat );
-      }
+      };
 
       reader.readAsDataURL(file);
+   }
+
+   showImage(image) {
+      document.body.appendChild(image.popup);
    }
 
 }

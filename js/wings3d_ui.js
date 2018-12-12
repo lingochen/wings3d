@@ -263,6 +263,8 @@ function openFile(fn) {
          for (let file of fileList) {
             fn(file);
          }
+         // reset value
+         fileInput.value = "";
       });
    }
 };
@@ -430,7 +432,7 @@ function showPopup(dom, name) {
    // create 'x' to close.
    let span = document.createRange().createContextualFragment('<span class="close">&times;</span>');
    span.firstElementChild.addEventListener('click', function(_ev){
-      div.style.display = 'none';
+      document.body.removeChild(div);     // div.style.display = 'none';
     });
    div.appendChild(span);
    // create label to drag move
@@ -445,10 +447,11 @@ function showPopup(dom, name) {
    wrap.classList.add('wrap');
    wrap.appendChild(dom);
    div.appendChild(wrap);
-   document.body.appendChild(div);
 
    // float div on the middle of screen
-   placeCenter(div);
+   document.body.appendChild(div);  
+   placeCenter(div);                   // must be on screen to get the correct center.
+   document.body.removeChild(div);
    return div;
 };
 
