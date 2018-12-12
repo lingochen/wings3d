@@ -398,38 +398,46 @@ function queuePopupMenu(popupMenu) {
    }
 };
 
-
-// moveable popup box,
-function showPopup(dom, name) {
+const dragMove = (function() {
    let isDown = false;
    let offset = [0, 0];
-   // create div to wrap dom, 
-   let div = document.createElement('div');
-   div.classList.add('popup');
-   // create 'x' to close.
-   let span = document.createRange().createContextualFragment('<span class="close">&times;</span>');
-   span.firstElementChild.addEventListener('click', function(_ev){
-      // hide the element?
-      div.style.display = 'none';
-    });
-   div.appendChild(span);
-   // create label to drag move
-   let h3 = document.createElement('h3');
-   h3.addEventListener('mousedown', (ev)=>{
+   let  div = null;;
+   const ret = {};
+   ret.mouseDown = function(ev, newDiv) {
       isDown = true;
+      div = newDiv;
       offset = [div.offsetLeft - ev.clientX, div.offsetTop - ev.clientY];
-    });
-   document.addEventListener('mouseup', (ev)=>{
+   };
+   ret.mouseUp = function(_ev) {
       isDown = false;
-    });
-   document.addEventListener('mousemove', (ev)=>{
+      div = null;
+   }
+   ret.mouseMove = function(ev) {
       ev.preventDefault();
       if (isDown) {
           const mousePosition = {x : ev.clientX, y : ev.clientY};
           div.style.left = (mousePosition.x + offset[0]) + 'px';
           div.style.top  = (mousePosition.y + offset[1]) + 'px';
       }
+   }
+   return ret;
+}());
+// moveable popup box,
+function showPopup(dom, name) {
+   // create div to wrap dom, 
+   let div = document.createElement('div');
+   div.classList.add('popup');
+   // create 'x' to close.
+   let span = document.createRange().createContextualFragment('<span class="close">&times;</span>');
+   span.firstElementChild.addEventListener('click', function(_ev){
+      div.style.display = 'none';
     });
+   div.appendChild(span);
+   // create label to drag move
+   let h3 = document.createElement('h3');
+   h3.addEventListener('mousedown', (ev)=>{dragMove.mouseDown(ev, div);});
+   document.addEventListener('mouseup', dragMove.mouseUp);        // same function
+   document.addEventListener('mousemove', dragMove.mouseMove);    // won't get addEvent again and again.
    h3.textContent = name;
    div.appendChild(h3);
    // now insert dom
