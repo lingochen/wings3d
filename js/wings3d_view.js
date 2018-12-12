@@ -1045,7 +1045,10 @@ function init() {
          });      
     });
    UI.bindMenuItem(Wings3D.action.showImage.name, function(_ev){
-      imageList.showImage(currentObjects[0]);
+      imageList.showImage(currentObjects);
+    });
+   UI.bindMenuItem(Wings3D.action.deleteImage.name, function(_ev){
+      imageList.deleteImage(currentObjects);
     });
 
 

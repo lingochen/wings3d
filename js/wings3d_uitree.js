@@ -301,8 +301,18 @@ class ListView {
       reader.readAsDataURL(file);
    }
 
-   showImage(image) {
-      document.body.appendChild(image.popup);
+   showImage(images) {
+      document.body.appendChild(images[0].popup);
+   }
+
+   deleteImage(images) {
+      const image = images[0];
+      // remove image from body
+      image.popup.remove();
+      // remove li
+      this.view.removeChild(image.li);
+      // remove from list
+      this.list.splice(this.list.indexOf(image), 1);
    }
 
 }

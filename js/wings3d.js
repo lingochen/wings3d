@@ -277,6 +277,7 @@ const action = {
    createGroupWorld: ()=>{notImplemented(this);},
    importImageFileGUI: ()=>{notImplemented(this);},
    showImage: ()=>{notImplemented(this);},
+   deleteImage: ()=>{notImplemented(this);},
    // selection menu
    selectMenu: () => {notImplemented(this);},
    deselect: () => {notImplemented(this);},
