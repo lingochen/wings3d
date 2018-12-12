@@ -1032,6 +1032,7 @@ const action = {
    createGroupWorld: ()=>{notImplemented(undefined);},
    importImageFileGUI: ()=>{notImplemented(undefined);},
    showImage: ()=>{notImplemented(undefined);},
+   deleteImage: ()=>{notImplemented(undefined);},
    // selection menu
    selectMenu: () => {notImplemented(undefined);},
    deselect: () => {notImplemented(undefined);},
@@ -13435,8 +13436,18 @@ class ListView {
       reader.readAsDataURL(file);
    }
 
-   showImage(image) {
-      document.body.appendChild(image.popup);
+   showImage(images) {
+      document.body.appendChild(images[0].popup);
+   }
+
+   deleteImage(images) {
+      const image = images[0];
+      // remove image from body
+      image.popup.remove();
+      // remove li
+      this.view.removeChild(image.li);
+      // remove from list
+      this.list.splice(this.list.indexOf(image), 1);
    }
 
 }
@@ -15456,7 +15467,10 @@ function init() {
          });      
     });
    _wings3d_ui__WEBPACK_IMPORTED_MODULE_0__["bindMenuItem"](_wings3d__WEBPACK_IMPORTED_MODULE_5__["action"].showImage.name, function(_ev){
-      imageList.showImage(currentObjects[0]);
+      imageList.showImage(currentObjects);
+    });
+   _wings3d_ui__WEBPACK_IMPORTED_MODULE_0__["bindMenuItem"](_wings3d__WEBPACK_IMPORTED_MODULE_5__["action"].deleteImage.name, function(_ev){
+      imageList.deleteImage(currentObjects);
     });
 
 
