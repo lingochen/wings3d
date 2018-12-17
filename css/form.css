@@ -17,7 +17,7 @@ div.popup {
   border: solid 1px #dfdfdf;
 }
 
-div.popup > h3 {
+div.popup > h3, form > h3 {
   text-align: center;
   margin: 0.1em;
 }
@@ -32,7 +32,8 @@ div.wrap {
   background-color:  #fff;
   border: solid 1px #dfdfdf;
   box-shadow: 1px 1px 2px #cfcfcf;
-  width: 340px;
+  min-width: 340px;
+  max-width: 100vw;
 }
 
 .dialog input[type=number] {
@@ -40,7 +41,7 @@ div.wrap {
 }
 
 .dialog span {
-    display: inline-block;
+   display: inline-block;
 }
 
 /* all form dialog start in hiding */
@@ -130,6 +131,17 @@ form fieldset input[type="number"] {
   width: 5rem;
 }
 
+.fieldTable {
+  display: table;
+}
+.fieldTable > label {
+  display: table-row;
+  white-space: nowrap; 
+}
+.fieldTable > label > * {
+  display: table-cell;
+}
+
 form .fieldPref {
   display: grid;
   grid-template-columns: max-content max-content;
@@ -177,4 +189,14 @@ div.endAlign {
 }
 div.endAlign button {
   margin: 1em;
+}
+
+#materialWrap {
+  display: grid;
+  grid-gap: 10px;
+  grid-template-columns: 100px auto; 
+}
+
+#materialCanvas {
+  background-color: blue;
 }

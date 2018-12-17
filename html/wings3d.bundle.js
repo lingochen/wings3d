@@ -1033,6 +1033,7 @@ const action = {
    importImageFileGUI: ()=>{notImplemented(undefined);},
    showImage: ()=>{notImplemented(undefined);},
    deleteImage: ()=>{notImplemented(undefined);},
+   createMaterial: ()=>{notImplemented(undefined);},
    // selection menu
    selectMenu: () => {notImplemented(undefined);},
    deselect: () => {notImplemented(undefined);},
@@ -13122,13 +13123,14 @@ function showPopup(dom, name) {
 /*!******************************!*\
   !*** ./js/wings3d_uitree.js ***!
   \******************************/
-/*! exports provided: getTreeView, getListView */
+/*! exports provided: getTreeView, getImageList, getMaterialList */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getTreeView", function() { return getTreeView; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getListView", function() { return getListView; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getImageList", function() { return getImageList; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getMaterialList", function() { return getMaterialList; });
 /* harmony import */ var _wings3d_view__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./wings3d_view */ "./js/wings3d_view.js");
 /* harmony import */ var _wings3d__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./wings3d */ "./js/wings3d.js");
 /* harmony import */ var _wings3d_ui__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./wings3d_ui */ "./js/wings3d_ui.js");
@@ -13384,7 +13386,7 @@ function getTreeView(labelId, id, world) {
 /**
  * for material, image, lights
  */
-class ListView {
+class ImageList {
    constructor(label, listView) {
       this.view = listView;
       this.list = [];
@@ -13452,11 +13454,37 @@ class ListView {
 
 }
 
-function getListView(labelId, id) {
+function getImageList(labelId, id) {
    const listView = document.querySelector(id); // get <ul>
    const label = document.querySelector(labelId);
    if (label && listView) {
-      return new ListView(label, listView);
+      return new ImageList(label, listView);
+   }
+   // console log error
+   return null;
+};
+
+class MaterialList {
+   constructor(label, listView) {
+      this.view = listView;
+      this.list = [];
+      // context menu
+      let contextMenu = document.querySelector('#createMaterialMenu');
+      if (contextMenu) {
+         label.addEventListener('contextmenu', function(ev) {
+            ev.preventDefault();
+            _wings3d_ui__WEBPACK_IMPORTED_MODULE_2__["positionDom"](contextMenu, _wings3d_ui__WEBPACK_IMPORTED_MODULE_2__["getPosition"](ev));
+            _wings3d_ui__WEBPACK_IMPORTED_MODULE_2__["showContextMenu"](contextMenu);
+          }, false);
+      }
+   }
+}
+
+function getMaterialList(labelId, id) {
+   const listView = document.querySelector(id); // get <ul>
+   const label = document.querySelector(labelId);
+   if (label && listView) {
+      return new MaterialList(label, listView);
    }
    // console log error
    return null;
@@ -14754,6 +14782,8 @@ const world = new _wings3d_model__WEBPACK_IMPORTED_MODULE_12__["PreviewGroup"]; 
 let draftBench;      // = new DraftBench; wait for GL
 let geometryGraph;   // tree management of world; 
 let imageList;       // list management of image List.
+let materialList;    // list management of material list.
+let lightList;       // list management of light list.
 let currentObjects;
 let currentParent;
 function putIntoWorld() {
@@ -15460,7 +15490,7 @@ function init() {
     });
 
    // Image List.
-   imageList = _wings3d_uitree__WEBPACK_IMPORTED_MODULE_17__["getListView"]('#imageListLabel','#imageList');
+   imageList = _wings3d_uitree__WEBPACK_IMPORTED_MODULE_17__["getImageList"]('#imageListLabel','#imageList');
    _wings3d_ui__WEBPACK_IMPORTED_MODULE_0__["bindMenuItem"](_wings3d__WEBPACK_IMPORTED_MODULE_5__["action"].importImageFileGUI.name, function(ev) {
       _wings3d_ui__WEBPACK_IMPORTED_MODULE_0__["openFile"](function(file) { // open file Dialog, and retrive data
             imageList.loadImage(file);
@@ -15473,6 +15503,12 @@ function init() {
       imageList.deleteImage(currentObjects);
     });
 
+   // material List.
+   materialList = _wings3d_uitree__WEBPACK_IMPORTED_MODULE_17__["getMaterialList"]('#materialListLabel', '#materialList');
+   _wings3d_ui__WEBPACK_IMPORTED_MODULE_0__["bindMenuItem"](_wings3d__WEBPACK_IMPORTED_MODULE_5__["action"].createMaterial.name, function(ev){
+      _wings3d_ui__WEBPACK_IMPORTED_MODULE_0__["runDialog"]('#materialSetting', true);
+    });
+    
 
    // bind .dropdown, click event.
    let buttons = document.querySelectorAll("li.dropdown > a");

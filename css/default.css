@@ -22,6 +22,11 @@ body {
     overflow:hidden;
 }
 
+canvas {
+  display: inline-block;
+  vertical-align: baseline;
+}
+
 .unfocus:not(.exclude) {
   opacity: 0.5;
 }

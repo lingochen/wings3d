@@ -249,7 +249,7 @@ function getTreeView(labelId, id, world) {
 /**
  * for material, image, lights
  */
-class ListView {
+class ImageList {
    constructor(label, listView) {
       this.view = listView;
       this.list = [];
@@ -317,11 +317,37 @@ class ListView {
 
 }
 
-function getListView(labelId, id) {
+function getImageList(labelId, id) {
    const listView = document.querySelector(id); // get <ul>
    const label = document.querySelector(labelId);
    if (label && listView) {
-      return new ListView(label, listView);
+      return new ImageList(label, listView);
+   }
+   // console log error
+   return null;
+};
+
+class MaterialList {
+   constructor(label, listView) {
+      this.view = listView;
+      this.list = [];
+      // context menu
+      let contextMenu = document.querySelector('#createMaterialMenu');
+      if (contextMenu) {
+         label.addEventListener('contextmenu', function(ev) {
+            ev.preventDefault();
+            UI.positionDom(contextMenu, UI.getPosition(ev));
+            UI.showContextMenu(contextMenu);
+          }, false);
+      }
+   }
+}
+
+function getMaterialList(labelId, id) {
+   const listView = document.querySelector(id); // get <ul>
+   const label = document.querySelector(labelId);
+   if (label && listView) {
+      return new MaterialList(label, listView);
    }
    // console log error
    return null;
@@ -329,5 +355,6 @@ function getListView(labelId, id) {
 
 export {
    getTreeView,
-   getListView,
+   getImageList,
+   getMaterialList,
 }

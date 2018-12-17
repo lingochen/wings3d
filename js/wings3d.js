@@ -278,6 +278,7 @@ const action = {
    importImageFileGUI: ()=>{notImplemented(this);},
    showImage: ()=>{notImplemented(this);},
    deleteImage: ()=>{notImplemented(this);},
+   createMaterial: ()=>{notImplemented(this);},
    // selection menu
    selectMenu: () => {notImplemented(this);},
    deselect: () => {notImplemented(this);},

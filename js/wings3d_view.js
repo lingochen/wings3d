@@ -332,6 +332,8 @@ const world = new PreviewGroup;    // private var
 let draftBench;      // = new DraftBench; wait for GL
 let geometryGraph;   // tree management of world; 
 let imageList;       // list management of image List.
+let materialList;    // list management of material list.
+let lightList;       // list management of light list.
 let currentObjects;
 let currentParent;
 function putIntoWorld() {
@@ -1038,7 +1040,7 @@ function init() {
     });
 
    // Image List.
-   imageList = TreeView.getListView('#imageListLabel','#imageList');
+   imageList = TreeView.getImageList('#imageListLabel','#imageList');
    UI.bindMenuItem(Wings3D.action.importImageFileGUI.name, function(ev) {
       UI.openFile(function(file) { // open file Dialog, and retrive data
             imageList.loadImage(file);
@@ -1051,6 +1053,12 @@ function init() {
       imageList.deleteImage(currentObjects);
     });
 
+   // material List.
+   materialList = TreeView.getMaterialList('#materialListLabel', '#materialList');
+   UI.bindMenuItem(Wings3D.action.createMaterial.name, function(ev){
+      UI.runDialog('#materialSetting', true);
+    });
+    
 
    // bind .dropdown, click event.
    let buttons = document.querySelectorAll("li.dropdown > a");
