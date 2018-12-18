@@ -1,3 +1,7 @@
+:root {
+  --diffuse-max: #ffffff;
+}
+
 .overlay {
   position:fixed;
   top:0;
@@ -132,14 +136,10 @@ form fieldset input[type="number"] {
 }
 
 .fieldTable {
-  display: table;
-}
-.fieldTable > label {
-  display: table-row;
-  white-space: nowrap; 
-}
-.fieldTable > label > * {
-  display: table-cell;
+  display: grid;
+  grid-template-columns: max-content max-content max-content;
+  grid-gap:5px;
+  margin: 0.5rem;
 }
 
 form .fieldPref {
@@ -199,4 +199,7 @@ div.endAlign button {
 
 #materialCanvas {
   background-color: blue;
+}
+#diffuseSlider {
+  background: linear-gradient(to right, #000000, var(--diffuse-max));
 }

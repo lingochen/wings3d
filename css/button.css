@@ -1,88 +1,36 @@
 /* slider, copy from http://danielstern.ca/range.css */
-input[type=range].slider {
+.slider {
   -webkit-appearance: none;
-  width: 100%;
-  margin: 0.7px 0;
+  height: 15px;
+  border-radius: 5px;
+  background: #d3d3d3;
+  width: 90%;
+  /*margin-left: 5%; */
 }
-input[type=range].slider:focus {
+.slider::-moz-focus-outer {
+  border: 0;
+}
+.slider:focus {
   outline: none;
 }
-input[type=range].slider::-webkit-slider-runnable-track {
-  width: 100%;
-  height: 25.6px;
-  cursor: pointer;
-  box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
-  background: #484d4d;
-  border-radius: 0px;
-  border: 0px solid #010101;
+.slider::-moz-range-track {
+  background: none;
 }
-input[type=range].slider::-webkit-slider-thumb {
-  box-shadow: 0px 0px 1px #670000, 0px 0px 0px #810000;
-  border: 0px solid #ff1e00;
-  height: 27px;
-  width: 18px;
-  border-radius: 0px;
-  background: rgba(255, 67, 95, 0.93);
-  cursor: pointer;
+.slider::-webkit-slider-thumb {
   -webkit-appearance: none;
-  margin-top: -0.7px;
-}
-input[type=range].slider:focus::-webkit-slider-runnable-track {
-  background: #545a5a;
-}
-input[type=range].slider::-moz-range-track {
-  width: 100%;
-  height: 25.6px;
-  cursor: pointer;
-  box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
-  background: #484d4d;
-  border-radius: 0px;
-  border: 0px solid #010101;
-}
-input[type=range].slider::-moz-range-thumb {
-  box-shadow: 0px 0px 1px #670000, 0px 0px 0px #810000;
-  border: 0px solid #ff1e00;
-  height: 27px;
-  width: 18px;
-  border-radius: 0px;
-  background: rgba(255, 67, 95, 0.93);
+  appearance: none;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  background: #4CAF50;
   cursor: pointer;
 }
-input[type=range].slider::-ms-track {
-  width: 100%;
-  height: 25.6px;
+.slider::-moz-range-thumb {
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  background: #4CAF50;
   cursor: pointer;
-  background: transparent;
-  border-color: transparent;
-  color: transparent;
-}
-input[type=range].slider::-ms-fill-lower {
-  background: #3c4040;
-  border: 0px solid #010101;
-  border-radius: 0px;
-  box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
-}
-input[type=range].slider::-ms-fill-upper {
-  background: #484d4d;
-  border: 0px solid #010101;
-  border-radius: 0px;
-  box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
-}
-input[type=range].slider::-ms-thumb {
-  box-shadow: 0px 0px 1px #670000, 0px 0px 0px #810000;
-  border: 0px solid #ff1e00;
-  height: 27px;
-  width: 18px;
-  border-radius: 0px;
-  background: rgba(255, 67, 95, 0.93);
-  cursor: pointer;
-  height: 25.6px;
-}
-input[type=range].slider:focus::-ms-fill-lower {
-  background: #484d4d;
-}
-input[type=range].slider:focus::-ms-fill-upper {
-  background: #545a5a;
 }
 
 /* The close X, (<span class="close">&times;</span>) */
