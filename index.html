@@ -909,15 +909,15 @@
     <div id="materialWrap">
     <canvas id="materialCanvas" width="80" height="80"></canvas>
     <div class="fieldTable">
-      <label><span data-i18n="diffuse">Diffuse</span><input type="range"><input id="diffuseMaterial" type="color"></label>
-      <label><span data-i18n="ambient">Ambient</span><input type="range"><input id="ambientMaterial" type="color"></label>
-      <label><span data-i18n="specular">Specular</span><input type="range"><input id="specularMaterial" type="color"></label>
-      <label><span data-i18n="emission">Emission</span><input type="range"><input id="emissionMaterial" type="color"></label>
+      <span data-i18n="diffuse">Diffuse</span><input id="diffuseSlider" class="slider" type="range" min="0" max="255" value="0" step="1"><input id="diffuseMaterial" type="color">
+      <span data-i18n="ambient">Ambient</span><input type="range" class="slider" ><input id="ambientMaterial" type="color">
+      <span data-i18n="specular">Specular</span><input type="range" class="slider" ><input id="specularMaterial" type="color">
+      <span data-i18n="emission">Emission</span><input type="range" class="slider" ><input id="emissionMaterial" type="color">
     </div>
     <div class="fieldTable">
-      <label><span >Vertex Color</span><select id="vertexColorSelect"><option value="1">Ignore</option><option value="2">Set</option></select></label>
-      <label><span data-i18n="shininess">Shineness</span><input type="range"><input id="shininessMaterial" type="number"></label>
-      <label><span data-i18n="opacity">Opacity</span><input type="range"><input id="opacityMaterial" type="number"></label>
+      <span >Vertex Color</span><select id="vertexColorSelect"><option value="1">Ignore</option><option value="2">Set</option></select><span></span>
+      <span data-i18n="shininess">Shininess</span><input type="range" class="slider"><input id="shininessMaterial" type="number">
+      <span data-i18n="opacity">Opacity</span><input type="range" class="slider"><input id="opacityMaterial" type="number">
     </div>
     </div>
     <button type="submit" value="Cancel">Cancel</button>
