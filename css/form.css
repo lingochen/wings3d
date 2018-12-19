@@ -1,5 +1,5 @@
 :root {
-  --diffuse-max: #ffffff;
+  --diffuseMaterialMax: #FFFFFF;
 }
 
 .overlay {
@@ -201,5 +201,5 @@ div.endAlign button {
   background-color: blue;
 }
 #diffuseSlider {
-  background: linear-gradient(to right, #000000, var(--diffuse-max));
+  background: linear-gradient(to right, #000000, var(--diffuseMaterialMax));
 }
