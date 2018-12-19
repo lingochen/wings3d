@@ -1,5 +1,8 @@
 :root {
   --diffuseMaterialMax: #FFFFFF;
+  --ambientMaterialMax: #FFFFFF;
+  --specularMaterialMax: #FFFFFF;
+  --emissionMaterialMax: #FFFFFF;
 }
 
 .overlay {
@@ -202,4 +205,13 @@ div.endAlign button {
 }
 #diffuseSlider {
   background: linear-gradient(to right, #000000, var(--diffuseMaterialMax));
+}
+#ambientSlider {
+  background: linear-gradient(to right, #000000, var(--ambientMaterialMax));
+}
+#specularSlider {
+  background: linear-gradient(to right, #000000, var(--specularMaterialMax));
+}
+#emissionSlider {
+  background: linear-gradient(to right, #000000, var(--emissionMaterialMax));
 }
