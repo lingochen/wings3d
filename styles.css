@@ -338,7 +338,7 @@ label.button span {
     text-align: center;
 }
 :root {
-  --diffuse-max: #ffffff;
+  --diffuseMaterialMax: #FFFFFF;
 }
 
 .overlay {
@@ -540,7 +540,7 @@ div.endAlign button {
   background-color: blue;
 }
 #diffuseSlider {
-  background: linear-gradient(to right, #000000, var(--diffuse-max));
+  background: linear-gradient(to right, #000000, var(--diffuseMaterialMax));
 }
 /*
 interactive Tutor's speech bubble css. like hopscotch js's thick border style. like how shepherd js's bubble arrow is inside the bubble's box, should make position calculation easier.
