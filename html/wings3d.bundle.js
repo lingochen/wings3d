@@ -13478,6 +13478,15 @@ class MaterialList {
           }, false);
       }
    }
+
+   addMaterial(materialData) {
+      let data = "Obj {\n";
+      for (let [key, value] of Object.entries(materialData)) {
+         data += `${key}: ${value}\n`; 
+      }
+      data += "}\n";
+      alert(data);
+   }
 }
 
 function getMaterialList(labelId, id) {
@@ -15506,7 +15515,10 @@ function init() {
    // material List.
    materialList = _wings3d_uitree__WEBPACK_IMPORTED_MODULE_17__["getMaterialList"]('#materialListLabel', '#materialList');
    _wings3d_ui__WEBPACK_IMPORTED_MODULE_0__["bindMenuItem"](_wings3d__WEBPACK_IMPORTED_MODULE_5__["action"].createMaterial.name, function(ev){
-      _wings3d_ui__WEBPACK_IMPORTED_MODULE_0__["runDialog"]('#materialSetting', true);
+      _wings3d_ui__WEBPACK_IMPORTED_MODULE_0__["runDialog"]('#materialSetting', ev, function(form) {
+         const data = _wings3d_ui__WEBPACK_IMPORTED_MODULE_0__["extractDialogValue"](form);
+         materialList.addMaterial(data);
+       });
     });
     
 

@@ -341,6 +341,15 @@ class MaterialList {
           }, false);
       }
    }
+
+   addMaterial(materialData) {
+      let data = "Obj {\n";
+      for (let [key, value] of Object.entries(materialData)) {
+         data += `${key}: ${value}\n`; 
+      }
+      data += "}\n";
+      alert(data);
+   }
 }
 
 function getMaterialList(labelId, id) {
