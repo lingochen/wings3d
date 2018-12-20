@@ -1059,6 +1059,8 @@ function init() {
       UI.runDialog('#materialSetting', ev, function(form) {
          const data = UI.extractDialogValue(form);
          materialList.addMaterial(materialList.newName(), data);
+       }, function(form) {
+          form.reset();
        });
     });
     
