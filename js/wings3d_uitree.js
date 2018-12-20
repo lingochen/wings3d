@@ -350,31 +350,12 @@ class MaterialList {
       // now show on li.
       let li = dat.li = document.createElement('li');
       let pictFrag = document.createRange().createContextualFragment('<span class="materialIcon"></span>');
-      let pict = pictFrag.firstElementChild;
-      pict.addEventListener('click', (ev) => {
+      dat.pict = pictFrag.firstElementChild;
+      dat.pict.addEventListener('click', (ev) => {
          // edit material Setting
-         UI.runDialog('#materialSetting', ev, function(form) {
-            const data = UI.extractDialogValue(form);
-            dat.material = data;
-            pict.style.backgroundColor = data.diffuseMaterial;
-          }, function(form) { // handle setup
-            form.reset();
-            const data = form.querySelector('h3 > span');
-            if (data) {
-               data.textContent = dat.name;
-            }
-            for (let [key, value] of Object.entries(dat.material)) {
-               const data = form.querySelector(`div > [name=${key}]`);
-               if (data) {
-                  data.value = value;
-                  if (data.onchange) { // vertexColorSelect don't have onChange
-                     data.onchange();
-                  }
-               }
-            }
-          });
+         this.editMaterial(ev, [dat]);
        });
-      pict.style.backgroundColor = dat.material.diffuseMaterial;
+      dat.pict.style.backgroundColor = dat.material.diffuseMaterial;
       li.appendChild(pictFrag);
       let whole = document.createRange().createContextualFragment(`<span>${name}</span>`);
       whole.firstElementChild.addEventListener('contextmenu', function(ev) {  // contextMenu
@@ -392,8 +373,52 @@ class MaterialList {
       this.list.push(dat);
    }
 
+   createMaterial(ev) {
+      const materialList = this;
+      UI.runDialog('#materialSetting', ev, function(form) {
+         const data = UI.extractDialogValue(form);
+         materialList.addMaterial(materialList.newName(), data);
+       }, function(form) {
+          form.reset();
+          MaterialList.resetCSS();
+       });
+   }
+
+   editMaterial(ev, objects) {
+      const dat = objects[0];
+      UI.runDialog('#materialSetting', ev, function(form) {
+         const data = UI.extractDialogValue(form);
+         dat.material = data;
+         dat.pict.style.backgroundColor = data.diffuseMaterial;
+       }, function(form) { // handle setup
+         form.reset();
+         MaterialList.resetCSS();
+         const data = form.querySelector('h3 > span');
+         if (data) {
+            data.textContent = dat.name;
+         }
+         for (let [key, value] of Object.entries(dat.material)) {
+            const data = form.querySelector(`div > [name=${key}]`);
+            if (data) {
+               data.value = value;
+               if (data.onchange) { // vertexColorSelect don't have onChange
+                  data.onchange();
+               }
+            }
+         }
+       });
+   }
+
    newName() {
       return `New Material ${this.list.length}`;
+   }
+
+   static resetCSS() {
+      const style = document.documentElement.style;
+      style.setProperty("--diffuseMaterialMax", "#FFFFFF");
+      style.setProperty("--ambientMaterialMax", "#FFFFFF");
+      style.setProperty("--specularMaterialMax", "#FFFFFF");
+      style.setProperty("--emissionMaterialMax", "#FFFFFF");
    }
 }
 

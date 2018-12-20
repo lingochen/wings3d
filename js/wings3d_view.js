@@ -1056,12 +1056,10 @@ function init() {
    // material List.
    materialList = TreeView.getMaterialList('#materialListLabel', '#materialList');
    UI.bindMenuItem(Wings3D.action.createMaterial.name, function(ev){
-      UI.runDialog('#materialSetting', ev, function(form) {
-         const data = UI.extractDialogValue(form);
-         materialList.addMaterial(materialList.newName(), data);
-       }, function(form) {
-          form.reset();
-       });
+      materialList.createMaterial(ev);
+    });
+   UI.bindMenuItem(Wings3D.action.editMaterial.name, function(ev) {
+      materialList.editMaterial(ev, currentObjects);
     });
     
 
