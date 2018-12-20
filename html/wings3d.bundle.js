@@ -13469,8 +13469,8 @@ class MaterialList {
       this.view = listView;
       this.list = [];
       // add default Material.
-      const mat = {name: "default", diffuseMaterial: "#C9CFB1", ambientMaterial: "#C9CFB1", specularMaterial: "#000000", emissionMaterial: "#000000", vertexColorSelect: 0, shininessMaterial: 0, opacityMaterial: 1};
-      this.addMaterial(mat);
+      const mat = {diffuseMaterial: "#C9CFB1", ambientMaterial: "#C9CFB1", specularMaterial: "#000000", emissionMaterial: "#000000", vertexColorSelect: 0, shininessMaterial: 0, opacityMaterial: 1};
+      this.addMaterial("default", mat);
       // context menu
       let contextMenu = document.querySelector('#createMaterialMenu');
       if (contextMenu) {
@@ -13482,27 +13482,39 @@ class MaterialList {
       }
    }
 
-   addMaterial(material) {
-      let data = "Obj {\n";
-      for (let [key, value] of Object.entries(material)) {
-         data += `${key}: ${value}\n`; 
-      }
-      data += "}\n";
-      alert(data);
-      this.list.push(material);
+   addMaterial(name, material) {
+      const dat = {name: name, material: material};
       // now show on li.
-      let li = material.li = document.createElement('li');
-      let pict = document.createRange().createContextualFragment('<span class="materialIcon"></span>');
-      pict.firstElementChild.addEventListener('click', (_ev) => {
+      let li = dat.li = document.createElement('li');
+      let pictFrag = document.createRange().createContextualFragment('<span class="materialIcon"></span>');
+      let pict = pictFrag.firstElementChild;
+      pict.addEventListener('click', (ev) => {
          // edit material Setting
-
+         _wings3d_ui__WEBPACK_IMPORTED_MODULE_2__["runDialog"]('#materialSetting', ev, function(form) {
+            const data = _wings3d_ui__WEBPACK_IMPORTED_MODULE_2__["extractDialogValue"](form);
+            dat.material = data;
+            pict.style.backgroundColor = data.diffuseMaterial;
+          }, function(form) { // handle setup
+            form.reset();
+            for (let [key, value] of Object.entries(material)) {
+               const data = form.querySelector(`[name=${key}]`);
+               if (data) {
+                  data.value = value;
+                  if (data.onchange) { // vertexColorSelect don't have onChange
+                     data.onchange();
+                  }
+               }
+            }
+          });
        });
-      pict.firstElementChild.style.backgroundColor = material.diffuseMaterial;
-      li.appendChild(pict);
-      let whole = document.createRange().createContextualFragment(`<span>${material.name}</span>`);
+      pict.style.backgroundColor = material.diffuseMaterial;
+      li.appendChild(pictFrag);
+      let whole = document.createRange().createContextualFragment(`<span>${name}</span>`);
       
       li.appendChild(whole);
       this.view.appendChild(li);
+
+      this.list.push(dat);
    }
 
    newName() {
@@ -15538,8 +15550,7 @@ function init() {
    _wings3d_ui__WEBPACK_IMPORTED_MODULE_0__["bindMenuItem"](_wings3d__WEBPACK_IMPORTED_MODULE_5__["action"].createMaterial.name, function(ev){
       _wings3d_ui__WEBPACK_IMPORTED_MODULE_0__["runDialog"]('#materialSetting', ev, function(form) {
          const data = _wings3d_ui__WEBPACK_IMPORTED_MODULE_0__["extractDialogValue"](form);
-         data.name = materialList.newName();
-         materialList.addMaterial(data);
+         materialList.addMaterial(materialList.newName(), data);
        });
     });
     

@@ -1058,8 +1058,7 @@ function init() {
    UI.bindMenuItem(Wings3D.action.createMaterial.name, function(ev){
       UI.runDialog('#materialSetting', ev, function(form) {
          const data = UI.extractDialogValue(form);
-         data.name = materialList.newName();
-         materialList.addMaterial(data);
+         materialList.addMaterial(materialList.newName(), data);
        });
     });
     
