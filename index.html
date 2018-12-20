@@ -275,7 +275,6 @@
           <input type="checkbox" id="materialInput">
           <label for="materialInput" class="folder" id="materialListLabel">Materials</label>
           <ul id="materialList">
-            <li><span>default</span></li>
           </ul>
         </li>
         <li>
@@ -960,7 +959,7 @@
     <div class="fieldTable">
       <span >Vertex Color</span><select name="vertexColorSelect"><option value="0">Ignore</option><option value="1">Set</option></select><span></span>
       <span data-i18n="shininess">Shininess</span><input type="range" class="slider" min="0" max="1" step="0.01" value="0" onchange="this.nextElementSibling.value=this.value"><input name="shininessMaterial" type="number" min="0" max="1" step="0.01" value="0" onchange="this.previousElementSibling.value=this.value">
-      <span data-i18n="opacity">Opacity</span><input type="range" class="slider" min="0" max="1" step="0.01" value="0" onchange="this.nextElementSibling.value=this.value"><input name="opacityMaterial" type="number" min="0" max="1" step="0.01" value="0" onchange="this.previousElementSibling.value=this.value">
+      <span data-i18n="opacity">Opacity</span><input type="range" class="slider" min="0" max="1" step="0.01" value="1" onchange="this.nextElementSibling.value=this.value"><input name="opacityMaterial" type="number" min="0" max="1" step="0.01" value="1" onchange="this.previousElementSibling.value=this.value">
     </div>
     </div>
     <button type="submit" value="Cancel">Cancel</button>
