@@ -13496,8 +13496,12 @@ class MaterialList {
             pict.style.backgroundColor = data.diffuseMaterial;
           }, function(form) { // handle setup
             form.reset();
-            for (let [key, value] of Object.entries(material)) {
-               const data = form.querySelector(`[name=${key}]`);
+            const data = form.querySelector('h3 > span');
+            if (data) {
+               data.textContent = dat.name;
+            }
+            for (let [key, value] of Object.entries(dat.material)) {
+               const data = form.querySelector(`div > [name=${key}]`);
                if (data) {
                   data.value = value;
                   if (data.onchange) { // vertexColorSelect don't have onChange
@@ -13507,7 +13511,7 @@ class MaterialList {
             }
           });
        });
-      pict.style.backgroundColor = material.diffuseMaterial;
+      pict.style.backgroundColor = dat.material.diffuseMaterial;
       li.appendChild(pictFrag);
       let whole = document.createRange().createContextualFragment(`<span>${name}</span>`);
       
@@ -15551,6 +15555,8 @@ function init() {
       _wings3d_ui__WEBPACK_IMPORTED_MODULE_0__["runDialog"]('#materialSetting', ev, function(form) {
          const data = _wings3d_ui__WEBPACK_IMPORTED_MODULE_0__["extractDialogValue"](form);
          materialList.addMaterial(materialList.newName(), data);
+       }, function(form) {
+          form.reset();
        });
     });
     
