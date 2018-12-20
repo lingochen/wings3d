@@ -13468,6 +13468,9 @@ class MaterialList {
    constructor(label, listView) {
       this.view = listView;
       this.list = [];
+      // add default Material.
+      const mat = {name: "default", diffuseMaterial: "#C9CFB1", ambientMaterial: "#C9CFB1", specularMaterial: "#000000", emissionMaterial: "#000000", vertexColorSelect: 0, shininessMaterial: 0, opacityMaterial: 1};
+      this.addMaterial(mat);
       // context menu
       let contextMenu = document.querySelector('#createMaterialMenu');
       if (contextMenu) {
@@ -13479,13 +13482,31 @@ class MaterialList {
       }
    }
 
-   addMaterial(materialData) {
+   addMaterial(material) {
       let data = "Obj {\n";
-      for (let [key, value] of Object.entries(materialData)) {
+      for (let [key, value] of Object.entries(material)) {
          data += `${key}: ${value}\n`; 
       }
       data += "}\n";
       alert(data);
+      this.list.push(material);
+      // now show on li.
+      let li = material.li = document.createElement('li');
+      let pict = document.createRange().createContextualFragment('<span class="materialIcon"></span>');
+      pict.firstElementChild.addEventListener('click', (_ev) => {
+         // edit material Setting
+
+       });
+      pict.firstElementChild.style.backgroundColor = material.diffuseMaterial;
+      li.appendChild(pict);
+      let whole = document.createRange().createContextualFragment(`<span>${material.name}</span>`);
+      
+      li.appendChild(whole);
+      this.view.appendChild(li);
+   }
+
+   newName() {
+      return `New Material ${this.list.length}`;
    }
 }
 
@@ -15517,6 +15538,7 @@ function init() {
    _wings3d_ui__WEBPACK_IMPORTED_MODULE_0__["bindMenuItem"](_wings3d__WEBPACK_IMPORTED_MODULE_5__["action"].createMaterial.name, function(ev){
       _wings3d_ui__WEBPACK_IMPORTED_MODULE_0__["runDialog"]('#materialSetting', ev, function(form) {
          const data = _wings3d_ui__WEBPACK_IMPORTED_MODULE_0__["extractDialogValue"](form);
+         data.name = materialList.newName();
          materialList.addMaterial(data);
        });
     });

@@ -892,4 +892,15 @@ li > p {
   content: ")";
 }
 
-
+.materialIcon { /* https://stackoverflow.com/questions/50646577/how-to-ignore-transparent-pixels-with-background-blend-mode */
+  display: inline-block;
+  background-image: url("../img/bluecube/material.png");
+  width: 16px;
+  height: 16px;
+  -webkit-mask-image: url("../img/bluecube/material.png");
+  -webkit-mask-mode: alpha;
+  mask-image: url("../img/bluecube/material.png");
+  mask-mode: alpha;
+  background-blend-mode: multiply;
+  background-color: white;
+}
