@@ -13514,7 +13514,15 @@ class MaterialList {
       pict.style.backgroundColor = dat.material.diffuseMaterial;
       li.appendChild(pictFrag);
       let whole = document.createRange().createContextualFragment(`<span>${name}</span>`);
-      
+      whole.firstElementChild.addEventListener('contextmenu', function(ev) {  // contextMenu
+         ev.preventDefault();
+         let contextMenu = document.querySelector('#materialMenu');
+         if (contextMenu) {
+            _wings3d_ui__WEBPACK_IMPORTED_MODULE_2__["positionDom"](contextMenu, _wings3d_ui__WEBPACK_IMPORTED_MODULE_2__["getPosition"](ev));
+            _wings3d_ui__WEBPACK_IMPORTED_MODULE_2__["showContextMenu"](contextMenu);
+            _wings3d_view__WEBPACK_IMPORTED_MODULE_0__["setObject"](null, [dat]);
+         }
+       }, false);
       li.appendChild(whole);
       this.view.appendChild(li);
 
