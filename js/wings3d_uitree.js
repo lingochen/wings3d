@@ -377,7 +377,15 @@ class MaterialList {
       pict.style.backgroundColor = dat.material.diffuseMaterial;
       li.appendChild(pictFrag);
       let whole = document.createRange().createContextualFragment(`<span>${name}</span>`);
-      
+      whole.firstElementChild.addEventListener('contextmenu', function(ev) {  // contextMenu
+         ev.preventDefault();
+         let contextMenu = document.querySelector('#materialMenu');
+         if (contextMenu) {
+            UI.positionDom(contextMenu, UI.getPosition(ev));
+            UI.showContextMenu(contextMenu);
+            View.setObject(null, [dat]);
+         }
+       }, false);
       li.appendChild(whole);
       this.view.appendChild(li);
 
