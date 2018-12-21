@@ -92,7 +92,10 @@ canvas {
   -webkit-user-drag: none; /* Prevents dragging of images/divs etc */
   user-drag: none;
 }
-.not-implemented { cursor: not-allowed; } /* for temporary disabled selection */
+.not-implemented { 
+  cursor: not-allowed; 
+  opacity: 0.6;
+} /* for temporary disabled selection */
 
 :root {
   --menubarBackground: #3C3B37;
