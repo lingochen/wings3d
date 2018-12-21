@@ -280,6 +280,7 @@ const action = {
    deleteImage: ()=>{notImplemented(this);},
    createMaterial: ()=>{notImplemented(this);},
    editMaterial: ()=>{notImplemented(this);},
+   deleteMaterial: ()=>{notImplemented(this);},
    // selection menu
    selectMenu: () => {notImplemented(this);},
    deselect: () => {notImplemented(this);},

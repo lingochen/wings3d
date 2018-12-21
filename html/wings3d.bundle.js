@@ -1035,6 +1035,7 @@ const action = {
    deleteImage: ()=>{notImplemented(undefined);},
    createMaterial: ()=>{notImplemented(undefined);},
    editMaterial: ()=>{notImplemented(undefined);},
+   deleteMaterial: ()=>{notImplemented(undefined);},
    // selection menu
    selectMenu: () => {notImplemented(undefined);},
    deselect: () => {notImplemented(undefined);},
@@ -13547,6 +13548,14 @@ class MaterialList {
        });
    }
 
+   deleteMaterial(objects) {
+      const mat = objects[0];
+      // remove li
+      this.view.removeChild(mat.li);
+      // remove from list
+      this.list.splice(this.list.indexOf(mat), 1);
+   }
+
    newName() {
       return `New Material ${this.list.length}`;
    }
@@ -15591,7 +15600,9 @@ function init() {
    _wings3d_ui__WEBPACK_IMPORTED_MODULE_0__["bindMenuItem"](_wings3d__WEBPACK_IMPORTED_MODULE_5__["action"].editMaterial.name, function(ev) {
       materialList.editMaterial(ev, currentObjects);
     });
-    
+   _wings3d_ui__WEBPACK_IMPORTED_MODULE_0__["bindMenuItem"](_wings3d__WEBPACK_IMPORTED_MODULE_5__["action"].deleteMaterial.name, function(_ev){
+      materialList.deleteMaterial(currentObjects);
+    });   
 
    // bind .dropdown, click event.
    let buttons = document.querySelectorAll("li.dropdown > a");

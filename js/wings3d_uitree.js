@@ -409,6 +409,14 @@ class MaterialList {
        });
    }
 
+   deleteMaterial(objects) {
+      const mat = objects[0];
+      // remove li
+      this.view.removeChild(mat.li);
+      // remove from list
+      this.list.splice(this.list.indexOf(mat), 1);
+   }
+
    newName() {
       return `New Material ${this.list.length}`;
    }

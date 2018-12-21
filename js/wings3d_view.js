@@ -1061,7 +1061,9 @@ function init() {
    UI.bindMenuItem(Wings3D.action.editMaterial.name, function(ev) {
       materialList.editMaterial(ev, currentObjects);
     });
-    
+   UI.bindMenuItem(Wings3D.action.deleteMaterial.name, function(_ev){
+      materialList.deleteMaterial(currentObjects);
+    });   
 
    // bind .dropdown, click event.
    let buttons = document.querySelectorAll("li.dropdown > a");
