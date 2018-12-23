@@ -3,10 +3,10 @@
 
 */
 
-import * as View from './wings3d_view';
-import * as Wings3D from './wings3d';
-import * as UI from './wings3d_ui';
-import {RenameBodyCommand, BodyMadsor} from './wings3d_bodymads';
+import * as View from './wings3d_view.js';
+import * as Wings3D from './wings3d.js';
+import * as UI from './wings3d_ui.js';
+import {RenameBodyCommand, BodyMadsor} from './wings3d_bodymads.js';
 
 // utility - handling event
 function dragOver(ev) {
@@ -246,6 +246,45 @@ function getTreeView(labelId, id, world) {
    return null;
 };
 
+
+
+class ListView {
+      /**
+    * 
+    * @param {data} - materail/image/light data
+    */
+   static addRenameListener(data) {
+      const entry = function(ev) {
+         if (ev.keyCode == 13) {
+            // rename if different
+            if (this.textContent !== model.name) {
+               const data = {};
+               data[model.uuid] = this.textContent;
+               const command = new RenameBodyCommand([model], data);
+               View.undoQueue( command );
+               command.doIt();   // rename
+            }
+            this.contentEditable = false;
+            this.removeEventListener('keydown', entry);  // remove keyListening event
+         }
+      };
+      text.addEventListener('dblclick', function(ev){
+         this.contentEditable = true;
+         this.focus();
+         this.addEventListener('keydown', entry);
+       });
+      text.addEventListener('blur', function(ev) {
+         // restore 
+         this.textContent = model.name;   // restore name
+         this.contentEditable = false;
+         this.removeEventListener('keydown', entry);
+       });
+
+      return text;
+   }
+}
+
+
 /**
  * for material, image, lights
  */
@@ -358,7 +397,8 @@ class MaterialList {
       dat.pict.style.backgroundColor = dat.material.diffuseMaterial;
       li.appendChild(pictFrag);
       let whole = document.createRange().createContextualFragment(`<span>${name}</span>`);
-      whole.firstElementChild.addEventListener('contextmenu', function(ev) {  // contextMenu
+      dat.text = whole.firstElementChild;
+      dat.text.addEventListener('contextmenu', function(ev) {  // contextMenu
          ev.preventDefault();
          let contextMenu = document.querySelector('#materialMenu');
          if (contextMenu) {
@@ -419,6 +459,11 @@ class MaterialList {
 
    newName() {
       return `New Material ${this.list.length}`;
+   }
+
+   renameMaterial(objects) {
+      const mat = objects[0];
+      //
    }
 
    static resetCSS() {

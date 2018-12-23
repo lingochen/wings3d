@@ -4,25 +4,25 @@
 // Original Erlang Version: Bjorn Gustavsson
 */
 
-import * as UI from './wings3d_ui';
-import * as Renderer from './wings3d_render';
-import * as Camera from './wings3d_camera';
-import {gl} from './wings3d_gl';
-import {WavefrontObjImportExporter } from './plugins/wavefront_obj';
-import * as Wings3D from './wings3d';
-import {EditCommandSimple, EditCommandCombo} from './wings3d_undo';
-import {FaceMadsor} from './wings3d_facemads';
-import {EdgeMadsor} from './wings3d_edgemads';
-import {VertexMadsor} from './wings3d_vertexmads';
-import {BodyMadsor, DeleteBodyCommand, DuplicateBodyCommand} from './wings3d_bodymads';
-import {MultiMadsor} from './wings3d_multimads';
-import {PreviewCage, PreviewGroup} from './wings3d_model';
-import {DraftBench, CheckPoint} from './wings3d_draftbench';
-import {Ray} from './wings3d_boundingvolume';
-import * as Hotkey from './wings3d_hotkey';
-import * as Util from './wings3d_util';
-import * as TreeView from './wings3d_uitree';
-import { GenericEditCommand, ToggleCheckbox } from './wings3d_mads';
+import * as UI from './wings3d_ui.js';
+import * as Renderer from './wings3d_render.js';
+import * as Camera from './wings3d_camera.js';
+import {gl} from './wings3d_gl.js';
+import {WavefrontObjImportExporter } from './plugins/wavefront_obj.js';
+import * as Wings3D from './wings3d.js';
+import {EditCommandSimple, EditCommandCombo} from './wings3d_undo.js';
+import {FaceMadsor} from './wings3d_facemads.js';
+import {EdgeMadsor} from './wings3d_edgemads.js';
+import {VertexMadsor} from './wings3d_vertexmads.js';
+import {BodyMadsor, DeleteBodyCommand, DuplicateBodyCommand} from './wings3d_bodymads.js';
+import {MultiMadsor} from './wings3d_multimads.js';
+import {PreviewCage, PreviewGroup} from './wings3d_model.js';
+import {DraftBench, CheckPoint} from './wings3d_draftbench.js';
+import {Ray} from './wings3d_boundingvolume.js';
+import * as Hotkey from './wings3d_hotkey.js';
+import * as Util from './wings3d_util.js';
+import * as TreeView from './wings3d_uitree.js';
+import { GenericEditCommand, ToggleCheckbox } from './wings3d_mads.js';
 
 
 // 
@@ -1064,6 +1064,10 @@ function init() {
    UI.bindMenuItem(Wings3D.action.deleteMaterial.name, function(_ev){
       materialList.deleteMaterial(currentObjects);
     });   
+   UI.bindMenuItem(Wings3D.action.renameMaterial.name, function(_ev) {
+      materialList.renameMaterial(currentObjects);
+    });
+
 
    // bind .dropdown, click event.
    let buttons = document.querySelectorAll("li.dropdown > a");

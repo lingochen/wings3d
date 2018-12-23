@@ -4,7 +4,7 @@
 */
 
 
-import * as Util from './wings3d_util';
+import * as Util from './wings3d_util.js';
 
 
 

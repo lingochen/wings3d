@@ -9,13 +9,13 @@
 *  Add PreviewGroup. simple grouping without transform.
 */
 "use strict";
-import {BoundingSphere, LooseOctree, Plane} from './wings3d_boundingvolume';
-import {WingedTopology} from './wings3d_wingededge';
-import * as View from './wings3d_view';
-import * as Wings3D from './wings3d';
-import {EditCommand} from './wings3d_undo';
-import * as Util from './wings3d_util';
-import {i18n} from './wings3d_i18n';
+import {BoundingSphere, LooseOctree, Plane} from './wings3d_boundingvolume.js';
+import {WingedTopology} from './wings3d_wingededge.js';
+import * as View from './wings3d_view.js';
+import * as Wings3D from './wings3d.js';
+import {EditCommand} from './wings3d_undo.js';
+import * as Util from './wings3d_util.js';
+import {i18n} from './wings3d_i18n.js';
 
 
 /**

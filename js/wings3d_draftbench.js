@@ -14,12 +14,12 @@
 //    last pass: draw hilite (line, polygon, or vertex).
 //
 "use strict";
-import {gl, ShaderData} from './wings3d_gl';
-import * as ShaderProg from './wings3d_shaderprog';
-import * as Util from './wings3d_util';
-import {BoundingSphere} from './wings3d_boundingvolume';
-import {MeshAllocator} from './wings3d_wingededge';
-import {EditCommand} from './wings3d_undo';
+import {gl, ShaderData} from './wings3d_gl.js';
+import * as ShaderProg from './wings3d_shaderprog.js';
+import * as Util from './wings3d_util.js';
+import {BoundingSphere} from './wings3d_boundingvolume.js';
+import {MeshAllocator} from './wings3d_wingededge.js';
+import {EditCommand} from './wings3d_undo.js';
 
 
 /**

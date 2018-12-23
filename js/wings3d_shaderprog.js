@@ -1,7 +1,7 @@
 // program as text .
 
-import {gl} from './wings3d_gl';
-import * as Wings3D from './wings3d';
+import {gl} from './wings3d_gl.js';
+import * as Wings3D from './wings3d.js';
 
 let uColorArray = {
    vertexShader:[

@@ -2,16 +2,16 @@
 // bodymadsor. 
 //
 
-import {Madsor, DragSelect, MouseMoveAlongAxis, MoveFreePositionHandler, ToggleModeCommand, GenericEditCommand} from './wings3d_mads';
-import {FaceMadsor} from './wings3d_facemads';   // for switching
-import {EdgeMadsor} from './wings3d_edgemads';
-import {VertexMadsor} from './wings3d_vertexmads';
-import {EditCommand } from './wings3d_undo';
-import {PreviewCage} from './wings3d_model';
-import * as View from './wings3d_view';
-import * as UI from './wings3d_ui';
-import * as Util from './wings3d_util';
-import {action} from './wings3d';
+import {Madsor, DragSelect, MouseMoveAlongAxis, MoveFreePositionHandler, ToggleModeCommand, GenericEditCommand} from './wings3d_mads.js';
+import {FaceMadsor} from './wings3d_facemads.js';   // for switching
+import {EdgeMadsor} from './wings3d_edgemads.js';
+import {VertexMadsor} from './wings3d_vertexmads.js';
+import {EditCommand } from './wings3d_undo.js';
+import {PreviewCage} from './wings3d_model.js';
+import * as View from './wings3d_view.js';
+import * as UI from './wings3d_ui.js';
+import * as Util from './wings3d_util.js';
+import {action} from './wings3d.js';
 
 
 class BodyMadsor extends Madsor {

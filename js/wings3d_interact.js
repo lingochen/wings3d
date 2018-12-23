@@ -1,8 +1,8 @@
 //
 // interact. tutoring.
 //
-import * as UI from './wings3d_ui';
-import * as Wings3D from './wings3d';
+import * as UI from './wings3d_ui.js';
+import * as Wings3D from './wings3d.js';
 
 
 

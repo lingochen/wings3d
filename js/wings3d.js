@@ -6,7 +6,7 @@
 //
 // 12-11-2017: convert to es6 module.
 */
-import {gl, createWebGLContext} from './wings3d_gl';
+import {gl, createWebGLContext} from './wings3d_gl.js';
 //import * as View from './wings3d_view';
 //import * as Interact from './wings3d_interact';
 
@@ -281,6 +281,7 @@ const action = {
    createMaterial: ()=>{notImplemented(this);},
    editMaterial: ()=>{notImplemented(this);},
    deleteMaterial: ()=>{notImplemented(this);},
+   renameMaterial: ()=>{notImplemented(this);},
    // selection menu
    selectMenu: () => {notImplemented(this);},
    deselect: () => {notImplemented(this);},

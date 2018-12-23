@@ -4,9 +4,9 @@
 /// later expand to our own tutorial format and editor?
 //
 */
-import * as Tutor from './wings3d_interact';
-import * as UI from './wings3d_ui';
-import * as Wings3D from './wings3d';
+import * as Tutor from './wings3d_interact.js';
+import * as UI from './wings3d_ui.js';
+import * as Wings3D from './wings3d.js';
 
 const tours = {};
 

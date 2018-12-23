@@ -3,7 +3,7 @@
 //
 //
 //
-import {createMask, runAction} from './wings3d';
+import {createMask, runAction} from './wings3d.js';
 
 
 const keyMap = new Map;

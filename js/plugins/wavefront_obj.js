@@ -2,8 +2,8 @@
 // Wavefront Obj Loader and Writer.
 //
 //
-import {ImportExporter} from "../wings3d_importexport";
-import * as View from "../wings3d_view";
+import {ImportExporter} from "../wings3d_importexport.js";
+import * as View from "../wings3d_view.js";
 
 
 class WavefrontObjImportExporter extends ImportExporter {

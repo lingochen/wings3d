@@ -3,16 +3,16 @@
 //
 //    
 **/
-import {Madsor, DragSelect, ToggleModeCommand} from './wings3d_mads';
-import {FaceMadsor} from './wings3d_facemads';   // for switching
-import {BodyMadsor} from './wings3d_bodymads';
-import {EdgeMadsor} from './wings3d_edgemads';
-import {EditCommand, EditSelectHandler} from './wings3d_undo';
-import {PreviewCage} from './wings3d_model';
-import * as View from './wings3d_view';
-import * as ShaderProg from './wings3d_shaderprog';
-import * as UI from './wings3d_ui';
-import {action} from './wings3d';
+import {Madsor, DragSelect, ToggleModeCommand} from './wings3d_mads.js';
+import {FaceMadsor} from './wings3d_facemads.js';   // for switching
+import {BodyMadsor} from './wings3d_bodymads.js';
+import {EdgeMadsor} from './wings3d_edgemads.js';
+import {EditCommand, EditSelectHandler} from './wings3d_undo.js';
+import {PreviewCage} from './wings3d_model.js';
+import * as View from './wings3d_view.js';
+import * as ShaderProg from './wings3d_shaderprog.js';
+import * as UI from './wings3d_ui.js';
+import {action} from './wings3d.js';
 
 
 

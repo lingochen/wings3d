@@ -1,5 +1,4 @@
-import { PreviewCage } from "./wings3d_model";
-import { runInThisContext } from "vm";
+import { PreviewCage } from "./wings3d_model.js";
 
 /* require glmatrix
 * http://kaba.hilvi.org/homepage/blog/halfedge/halfedge.htm. very nicely written half-edge explanation and pseudo code.

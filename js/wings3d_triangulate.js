@@ -6,7 +6,7 @@
 // when all the concave edges were processed, the remaining polygon is convex polygon.
 //
 //"use strict";
-import {Polygon, Vertex, WingedEdge, HalfEdge} from './wings3d_wingededge';
+import {Polygon, Vertex, WingedEdge, HalfEdge} from './wings3d_wingededge.js';
 
 // helper class for triangulate
 const InternalHEdge = function(vertex, next) {

@@ -4,7 +4,7 @@
  stub for i18n, other stuff, like number, date format.
 */
 
-import {ezFetch, onReady} from './wings3d';
+import {ezFetch, onReady} from './wings3d.js';
 
 
 const i18nAttrib = "data-i18n";

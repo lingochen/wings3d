@@ -5,10 +5,10 @@
 // 2) dropbox, yandex.
 // 3) google drive, microsoft onedrive, baidupan to come later.
 //
-import {PreviewCage, CreatePreviewCageCommand} from './wings3d_model';
-import {WingedTopology} from './wings3d_wingededge';
-import * as UI from './wings3d_ui';
-import * as View from './wings3d_view';
+import {PreviewCage, CreatePreviewCageCommand} from './wings3d_model.js';
+import {WingedTopology} from './wings3d_wingededge.js';
+import * as UI from './wings3d_ui.js';
+import * as View from './wings3d_view.js';
 
 
 

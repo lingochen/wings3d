@@ -2,11 +2,11 @@
    n cube create. Use Dialog to create the cube.
    todo: to support spherize, rotate, translate, putOnGround. currently only numberOfCuts and size is working.
 */
-import * as UI from '../wings3d_ui';
-import * as Wings3D from '../wings3d';
-import * as View from '../wings3d_view';
-import {WingedTopology} from '../wings3d_wingededge';
-import {CreatePreviewCageCommand} from '../wings3d_model';
+import * as UI from '../wings3d_ui.js';
+import * as Wings3D from '../wings3d.js';
+import * as View from '../wings3d_view.js';
+import {WingedTopology} from '../wings3d_wingededge.js';
+import {CreatePreviewCageCommand} from '../wings3d_model.js';
 
 
 let createCube, createCubeDialog;

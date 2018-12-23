@@ -2,8 +2,8 @@
    wings3d, ui and ui utility functions. including tutor.
 
 */
-import * as Hotkey from './wings3d_hotkey';
-import * as Wings3D from './wings3d';
+import * as Hotkey from './wings3d_hotkey.js';
+import * as Wings3D from './wings3d.js';
 
 
 function _bindMenuItem(mode, menuItem, button, id, fn, hotkey, meta) {

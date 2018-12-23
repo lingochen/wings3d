@@ -4,13 +4,12 @@
  *
 **/
 
-import {Madsor, ToggleModeCommand} from './wings3d_mads';
-import {FaceMadsor} from './wings3d_facemads';
-import {EdgeMadsor} from './wings3d_edgemads';
-import {VertexMadsor} from './wings3d_vertexmads';
-import {PreviewCage} from './wings3d_model';
-import * as ShaderProg from './wings3d_shaderprog';
-import * as View from './wings3d_view';
+import {Madsor, ToggleModeCommand} from './wings3d_mads.js';
+import {FaceMadsor} from './wings3d_facemads.js';
+import {EdgeMadsor} from './wings3d_edgemads.js';
+import {VertexMadsor} from './wings3d_vertexmads.js';
+import {PreviewCage} from './wings3d_model.js';
+import * as View from './wings3d_view.js';
 
 
 class MultiMadsor extends Madsor {

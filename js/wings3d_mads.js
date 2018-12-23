@@ -3,13 +3,13 @@
  * MADS (Modify, Add, Delete, Select) operation. 
  *
 **/
-import {EditCommand, EditSelectHandler, MouseMoveHandler, MoveableCommand} from './wings3d_undo';
-import {PreviewCage} from './wings3d_model';
-import * as ShaderProg from './wings3d_shaderprog';
-import * as View from './wings3d_view';
-import * as UI from './wings3d_ui';
-import {action} from './wings3d';
-import { Plane } from './wings3d_boundingvolume';
+import {EditCommand, EditSelectHandler, MouseMoveHandler, MoveableCommand} from './wings3d_undo.js';
+import {PreviewCage} from './wings3d_model.js';
+import * as ShaderProg from './wings3d_shaderprog.js';
+import * as View from './wings3d_view.js';
+import * as UI from './wings3d_ui.js';
+import {action} from './wings3d.js';
+import { Plane } from './wings3d_boundingvolume.js';
 
 
 class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
@@ -844,7 +844,6 @@ class GenericEditCommand extends EditCommand {
 
 export {
    Madsor,
-   MultiMadsor,
    DragSelect,
    GenericEditCommand,
    MovePositionHandler,

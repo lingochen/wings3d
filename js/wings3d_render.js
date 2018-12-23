@@ -4,12 +4,12 @@
 //
 //  Original Erlang Version: Bjorn Gustavsson
 */
-import {gl} from './wings3d_gl';
-import * as View from './wings3d_view';
-import * as Camera from './wings3d_camera';
-import {onReady, GROUND_GRID_SIZE} from './wings3d';
-import * as ShaderProg from './wings3d_shaderprog';
-import * as Util from './wings3d_util';
+import {gl} from './wings3d_gl.js';
+import * as View from './wings3d_view.js';
+import * as Camera from './wings3d_camera.js';
+import {onReady, GROUND_GRID_SIZE} from './wings3d.js';
+import * as ShaderProg from './wings3d_shaderprog.js';
+import * as Util from './wings3d_util.js';
 
 
 
