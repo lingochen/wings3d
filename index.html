@@ -7,7 +7,7 @@
    <script src="../js/vendor/FileSaver.min.js" defer></script>
    <script src="../js/vendor/gl-matrix-min.js"> defer></script>
 
-   <script src="wings3d.bundle.js" defer></script>
+   <script src="wings3d.bundle.js" defer type="module"></script>
 
   <script>
     function help(text) {
@@ -336,7 +336,7 @@
       <li class="not-implemented"><a >Export...</a></li>
       <hr>
       <li class="not-implemented"><a >Duplicate</a></li>
-      <li class="not-implemented"><a >Rename</a></li>
+      <li ><a id="renameMaterial">Rename</a></li>
     </ul>
     <ul id="materialMenu" class="popup menu">
       <li><a id="editMaterial">Edit Material...</a></li>
