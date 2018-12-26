@@ -7445,25 +7445,31 @@ const PreviewGroup = function() {
    this.status = {locked: false, visible: true, wireMode: false};
 
    // default to no name
-   let _name = "";
-   Object.defineProperty(this,"name",{
-      get: function() { return _name; },
-      set: function(value) {  
-         if (value === '') {  // cannot assign empty string?
-            return;
-         }
-         _name = value; 
-         if (this.guiStatus.textNode) {   // treeView's representation.
-            if (this.guiStatus.textNode.textContent !== value) {
-               this.guiStatus.textNode.textContent = value;
-            }
-         } 
-       }
-    });
+   this._name = "";
    // how about bvh?
 
 };
 
+/**
+ * registration for handling setting of names.
+ */
+PreviewGroup.nameSetters = [];
+
+/**
+ * getter/setter for (name) attribute - no needs to create new functions for each object, safter but...
+ */
+Object.defineProperty(PreviewGroup.prototype ,"name",{
+   get: function() { return this._name; },
+   set: function(value) {  
+      if (value === '') {  // cannot assign empty string?
+         return;
+      }
+      this._name = value; 
+      for (let setter of PreviewGroup.nameSetters) {
+         setter.call(this, value);
+      }
+    }
+ });
 
 // prototype method.
 PreviewGroup.prototype.insert = function(obj) {
@@ -7472,7 +7478,6 @@ PreviewGroup.prototype.insert = function(obj) {
    }
    this.group.push( obj );
    obj.parent = this;
-   //this.guiStatus.count.textContent = this.numberOfCage();
 };
 
 
@@ -7482,7 +7487,6 @@ PreviewGroup.prototype.remove = function(obj) {
       if (index >= 0) {
          this.group.splice(index, 1);
          obj.parent = null;
-         //this.guiStatus.count.textContent = this.numberOfCage();
          return obj;
       }
    }
@@ -7496,9 +7500,6 @@ function countCage(acc, preview) {
 };
 PreviewGroup.prototype.numberOfCage = function() {
    let count = this.group.reduce(countCage, 0);
-   if (this.guiStatus.count) {
-      this.guiStatus.count.textContent = count;
-   }
    return count;
 };
 
@@ -7570,25 +7571,29 @@ const PreviewCage = function(bench) {
    // selecte(Vertex,Edge,Face)here
    this.selectedSet = new Set;
    // default no name
-   let _name = "";
-   Object.defineProperty(this,"name",{
-      get: function() { return _name; },
-      set: function(value) {  
-         if (value === '') {  // cannot assign empty string?
-            return;
-         }
-         _name = value; 
-         if (this.guiStatus.textNode) {   // treeView's representation.
-            if (this.guiStatus.textNode.textContent !== value) {
-               this.guiStatus.textNode.textContent = value;
-            }
-         }
-       }
-    });
+   this._name = "";
+
    // bvh
    this.bvh = {root: null, queue: new Set};       // queue is for lazy evaluation.1
 };
 
+/**
+ * registration for handling setting of names.
+ */
+PreviewCage.nameSetters = [];
+
+/**
+ * getter/setter for (name) attribute - no needs to create new functions for each object, safter but...
+ */
+Object.defineProperty(PreviewCage.prototype, "name", {
+   get: function() { return this._name; },
+   set: function(value) {  
+      this._name = value; 
+      for (let handler of PreviewCage.nameSetters) {
+         handler.call(this, value);
+      }
+    }
+ });
 
 /**
  * https://stackoverflow.com/questions/105034/create-guid-uuid-in-javascript
@@ -7624,20 +7629,6 @@ PreviewCage.prototype.freeBuffer = function() {
    this.geometry.free();
 };
 
-/**
- * update gui status.
- */
-PreviewCage.prototype.updateStatus = function() {
-   if (!this.isVisible() || (this.selectedSet.size === 0)) {
-      if (this.guiStatus.select.checked) {
-         this.guiStatus.select.checked = false;
-      }
-   } else {
-      if (!this.guiStatus.select.checked) {
-         this.guiStatus.select.checked = true;
-      }
-   }
-};
 
 //-- bvh -----
 
@@ -13135,6 +13126,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _wings3d_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./wings3d.js */ "./js/wings3d.js");
 /* harmony import */ var _wings3d_ui_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./wings3d_ui.js */ "./js/wings3d_ui.js");
 /* harmony import */ var _wings3d_bodymads_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./wings3d_bodymads.js */ "./js/wings3d_bodymads.js");
+/* harmony import */ var _wings3d_model_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./wings3d_model.js */ "./js/wings3d_model.js");
 /**
  * treeView gui
 
@@ -13144,6 +13136,45 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
+
+
+(function() {
+_wings3d_model_js__WEBPACK_IMPORTED_MODULE_4__["PreviewGroup"].nameSetters.push(function(value){
+   if (this.guiStatus && this.guiStatus.textNode) {   // treeView's representation.
+      this.guiStatus.textNode.textContent = value;
+   } 
+});
+
+const superNumberOfCage = _wings3d_model_js__WEBPACK_IMPORTED_MODULE_4__["PreviewGroup"].prototype.numberOfCage;
+_wings3d_model_js__WEBPACK_IMPORTED_MODULE_4__["PreviewGroup"].prototype.numberOfCage = function() {
+   const count = superNumberOfCage.call(this);
+   if (this.guiStatus && this.guiStatus.count) {
+      this.guiStatus.count.textContent = count;
+   }
+   return count;
+};
+
+_wings3d_model_js__WEBPACK_IMPORTED_MODULE_4__["PreviewCage"].nameSetters.push( function(value) {
+   if (this.guiStatus && this.guiStatus.textNode) {   // treeView's representation.
+      this.guiStatus.textNode.textContent = value;
+   } 
+ });
+
+/**
+ * update gui status.
+ */
+_wings3d_model_js__WEBPACK_IMPORTED_MODULE_4__["PreviewCage"].prototype.updateStatus = function() {
+   if (!this.isVisible() || (this.selectedSet.size === 0)) {
+      if (this.guiStatus && this.guiStatus.select.checked) {
+         this.guiStatus.select.checked = false;
+      }
+   } else {
+      if (this.guiStatus && !this.guiStatus.select.checked) {
+         this.guiStatus.select.checked = true;
+      }
+   }
+};
+})();
 
 // utility - handling event
 function dragOver(ev) {
