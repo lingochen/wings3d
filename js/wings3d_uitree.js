@@ -6,7 +6,46 @@
 import * as View from './wings3d_view.js';
 import * as Wings3D from './wings3d.js';
 import * as UI from './wings3d_ui.js';
-import {RenameBodyCommand, BodyMadsor} from './wings3d_bodymads.js';
+import {RenameBodyCommand} from './wings3d_bodymads.js';
+import {PreviewCage, PreviewGroup} from './wings3d_model.js';
+
+(function() {
+PreviewGroup.nameSetters.push(function(value){
+   if (this.guiStatus && this.guiStatus.textNode) {   // treeView's representation.
+      this.guiStatus.textNode.textContent = value;
+   } 
+});
+
+const superNumberOfCage = PreviewGroup.prototype.numberOfCage;
+PreviewGroup.prototype.numberOfCage = function() {
+   const count = superNumberOfCage.call(this);
+   if (this.guiStatus && this.guiStatus.count) {
+      this.guiStatus.count.textContent = count;
+   }
+   return count;
+};
+
+PreviewCage.nameSetters.push( function(value) {
+   if (this.guiStatus && this.guiStatus.textNode) {   // treeView's representation.
+      this.guiStatus.textNode.textContent = value;
+   } 
+ });
+
+/**
+ * update gui status.
+ */
+PreviewCage.prototype.updateStatus = function() {
+   if (!this.isVisible() || (this.selectedSet.size === 0)) {
+      if (this.guiStatus && this.guiStatus.select.checked) {
+         this.guiStatus.select.checked = false;
+      }
+   } else {
+      if (this.guiStatus && !this.guiStatus.select.checked) {
+         this.guiStatus.select.checked = true;
+      }
+   }
+};
+})();
 
 // utility - handling event
 function dragOver(ev) {

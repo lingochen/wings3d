@@ -30,25 +30,31 @@ const PreviewGroup = function() {
    this.status = {locked: false, visible: true, wireMode: false};
 
    // default to no name
-   let _name = "";
-   Object.defineProperty(this,"name",{
-      get: function() { return _name; },
-      set: function(value) {  
-         if (value === '') {  // cannot assign empty string?
-            return;
-         }
-         _name = value; 
-         if (this.guiStatus.textNode) {   // treeView's representation.
-            if (this.guiStatus.textNode.textContent !== value) {
-               this.guiStatus.textNode.textContent = value;
-            }
-         } 
-       }
-    });
+   this._name = "";
    // how about bvh?
 
 };
 
+/**
+ * registration for handling setting of names.
+ */
+PreviewGroup.nameSetters = [];
+
+/**
+ * getter/setter for (name) attribute - no needs to create new functions for each object, safter but...
+ */
+Object.defineProperty(PreviewGroup.prototype ,"name",{
+   get: function() { return this._name; },
+   set: function(value) {  
+      if (value === '') {  // cannot assign empty string?
+         return;
+      }
+      this._name = value; 
+      for (let setter of PreviewGroup.nameSetters) {
+         setter.call(this, value);
+      }
+    }
+ });
 
 // prototype method.
 PreviewGroup.prototype.insert = function(obj) {
@@ -57,7 +63,6 @@ PreviewGroup.prototype.insert = function(obj) {
    }
    this.group.push( obj );
    obj.parent = this;
-   //this.guiStatus.count.textContent = this.numberOfCage();
 };
 
 
@@ -67,7 +72,6 @@ PreviewGroup.prototype.remove = function(obj) {
       if (index >= 0) {
          this.group.splice(index, 1);
          obj.parent = null;
-         //this.guiStatus.count.textContent = this.numberOfCage();
          return obj;
       }
    }
@@ -81,9 +85,6 @@ function countCage(acc, preview) {
 };
 PreviewGroup.prototype.numberOfCage = function() {
    let count = this.group.reduce(countCage, 0);
-   if (this.guiStatus.count) {
-      this.guiStatus.count.textContent = count;
-   }
    return count;
 };
 
@@ -155,25 +156,29 @@ const PreviewCage = function(bench) {
    // selecte(Vertex,Edge,Face)here
    this.selectedSet = new Set;
    // default no name
-   let _name = "";
-   Object.defineProperty(this,"name",{
-      get: function() { return _name; },
-      set: function(value) {  
-         if (value === '') {  // cannot assign empty string?
-            return;
-         }
-         _name = value; 
-         if (this.guiStatus.textNode) {   // treeView's representation.
-            if (this.guiStatus.textNode.textContent !== value) {
-               this.guiStatus.textNode.textContent = value;
-            }
-         }
-       }
-    });
+   this._name = "";
+
    // bvh
    this.bvh = {root: null, queue: new Set};       // queue is for lazy evaluation.1
 };
 
+/**
+ * registration for handling setting of names.
+ */
+PreviewCage.nameSetters = [];
+
+/**
+ * getter/setter for (name) attribute - no needs to create new functions for each object, safter but...
+ */
+Object.defineProperty(PreviewCage.prototype, "name", {
+   get: function() { return this._name; },
+   set: function(value) {  
+      this._name = value; 
+      for (let handler of PreviewCage.nameSetters) {
+         handler.call(this, value);
+      }
+    }
+ });
 
 /**
  * https://stackoverflow.com/questions/105034/create-guid-uuid-in-javascript
@@ -209,20 +214,6 @@ PreviewCage.prototype.freeBuffer = function() {
    this.geometry.free();
 };
 
-/**
- * update gui status.
- */
-PreviewCage.prototype.updateStatus = function() {
-   if (!this.isVisible() || (this.selectedSet.size === 0)) {
-      if (this.guiStatus.select.checked) {
-         this.guiStatus.select.checked = false;
-      }
-   } else {
-      if (!this.guiStatus.select.checked) {
-         this.guiStatus.select.checked = true;
-      }
-   }
-};
 
 //-- bvh -----
 
