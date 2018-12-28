@@ -1064,8 +1064,8 @@ function init() {
    UI.bindMenuItem(Wings3D.action.deleteMaterial.name, function(_ev){
       materialList.deleteMaterial(currentObjects);
     });   
-   UI.bindMenuItem(Wings3D.action.renameMaterial.name, function(_ev) {
-      materialList.renameMaterial(currentObjects);
+   UI.bindMenuItem(Wings3D.action.renameMaterial.name, function(ev) {
+      materialList.renameMaterial(ev, currentObjects);
     });
 
 

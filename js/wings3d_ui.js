@@ -188,6 +188,25 @@ function positionDom(element, mousePosition) {
 };
 
 
+function addLabelInput(form, array) {
+   const content = form.querySelector('div');
+   // reset, clear all old input.
+   let labels = form.querySelectorAll('label');
+   for (let label of labels) {
+      content.removeChild(label);
+   }
+   // add input name 
+   for (let object of array) {
+      const label = document.createElement('label');
+      label.textContent = object.name;
+      const input = document.createElement('input');
+      input.type = "text";
+      input.name = object.uuid;
+      input.placeholder = object.name;
+      label.appendChild(input);
+      content.appendChild(label);
+   }
+};
 function extractDialogValue(form) {
    // get form's input data.
    const obj = {};
@@ -468,6 +487,7 @@ export {
    bindMenuItemMMB,
    bindMenuItemRMB,
    bindMenuItemMode,
+   addLabelInput,
    extractDialogValue,
    runDialog,
    runDialogCenter,

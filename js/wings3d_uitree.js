@@ -9,6 +9,9 @@ import * as UI from './wings3d_ui.js';
 import {RenameBodyCommand} from './wings3d_bodymads.js';
 import {PreviewCage, PreviewGroup} from './wings3d_model.js';
 
+/**
+ * reduce coupling. now PreviewCage don't need to know uitree. uitree extend the appropriate method.
+ */
 (function() {
 PreviewGroup.nameSetters.push(function(value){
    if (this.guiStatus && this.guiStatus.textNode) {   // treeView's representation.
@@ -288,20 +291,18 @@ function getTreeView(labelId, id, world) {
 
 
 class ListView {
-      /**
+   /**
     * 
     * @param {data} - materail/image/light data
     */
-   static addRenameListener(data) {
+   static addRenameListener(text, data) {
       const entry = function(ev) {
          if (ev.keyCode == 13) {
-            // rename if different
-            if (this.textContent !== model.name) {
-               const data = {};
-               data[model.uuid] = this.textContent;
-               const command = new RenameBodyCommand([model], data);
-               View.undoQueue( command );
-               command.doIt();   // rename
+            // rename if not empty
+            if (this.textContent != "") {
+               data.name = this.textContent;
+            } else {
+               this.textContent = data.name;
             }
             this.contentEditable = false;
             this.removeEventListener('keydown', entry);  // remove keyListening event
@@ -314,7 +315,7 @@ class ListView {
        });
       text.addEventListener('blur', function(ev) {
          // restore 
-         this.textContent = model.name;   // restore name
+         this.textContent = data.name;   // restore name
          this.contentEditable = false;
          this.removeEventListener('keydown', entry);
        });
@@ -327,8 +328,9 @@ class ListView {
 /**
  * for material, image, lights
  */
-class ImageList {
+class ImageList extends ListView {
    constructor(label, listView) {
+      super();
       this.view = listView;
       this.list = [];
       // context menu
@@ -347,7 +349,7 @@ class ImageList {
       let reader = new FileReader();
 
       reader.onload = (_ev) => {
-         const dat = {img: null, li: null, name: null, popup: null};
+         const dat = {img: null, li: null, uuid: PreviewCage.get_uuidv4(), name: "", popup: null};
          const img = dat.img = document.createElement("img");
          img.src = reader.result;
          img.onload = function () {
@@ -405,12 +407,13 @@ function getImageList(labelId, id) {
    return null;
 };
 
-class MaterialList {
+class MaterialList extends ListView {
    constructor(label, listView) {
+      super();
       this.view = listView;
       this.list = [];
       // add default Material.
-      const mat = {diffuseMaterial: "#C9CFB1", ambientMaterial: "#C9CFB1", specularMaterial: "#000000", emissionMaterial: "#000000", vertexColorSelect: 0, shininessMaterial: 0, opacityMaterial: 1};
+      const mat = {default: true, diffuseMaterial: "#C9CFB1", ambientMaterial: "#C9CFB1", specularMaterial: "#000000", emissionMaterial: "#000000", vertexColorSelect: 0, shininessMaterial: 0, opacityMaterial: 1};
       this.addMaterial("default", mat);
       // context menu
       let contextMenu = document.querySelector('#createMaterialMenu');
@@ -424,7 +427,7 @@ class MaterialList {
    }
 
    addMaterial(name, material) {
-      const dat = {name: name, material: material};
+      const dat = {name: name, uuid: PreviewCage.get_uuidv4(), material: material};
       // now show on li.
       let li = dat.li = document.createElement('li');
       let pictFrag = document.createRange().createContextualFragment('<span class="materialIcon"></span>');
@@ -437,6 +440,9 @@ class MaterialList {
       li.appendChild(pictFrag);
       let whole = document.createRange().createContextualFragment(`<span>${name}</span>`);
       dat.text = whole.firstElementChild;
+      if (!material.default) {   // default material's name cannot be changed.
+         ListView.addRenameListener(dat.text, dat);
+      }
       dat.text.addEventListener('contextmenu', function(ev) {  // contextMenu
          ev.preventDefault();
          let contextMenu = document.querySelector('#materialMenu');
@@ -454,12 +460,17 @@ class MaterialList {
 
    createMaterial(ev) {
       const materialList = this;
+      const newName = materialList.newName();
       UI.runDialog('#materialSetting', ev, function(form) {
          const data = UI.extractDialogValue(form);
-         materialList.addMaterial(materialList.newName(), data);
+         materialList.addMaterial(newName, data);
        }, function(form) {
           form.reset();
           MaterialList.resetCSS();
+          const data = form.querySelector('h3 > span');
+          if (data) {
+             data.textContent = newName;
+          }
        });
    }
 
@@ -489,20 +500,33 @@ class MaterialList {
    }
 
    deleteMaterial(objects) {
-      const mat = objects[0];
+      const dat = objects[0];
+      if (dat.material.default) {   // default material is not deletable.
+         return;
+      }
       // remove li
-      this.view.removeChild(mat.li);
+      this.view.removeChild(dat.li);
       // remove from list
-      this.list.splice(this.list.indexOf(mat), 1);
+      this.list.splice(this.list.indexOf(dat), 1);
    }
 
    newName() {
       return `New Material ${this.list.length}`;
    }
 
-   renameMaterial(objects) {
-      const mat = objects[0];
-      //
+   renameMaterial(ev, objects) {
+      const dat = objects[0];
+      if (dat.material.default) {   // default material cannot be deleted
+         return;
+      }
+      // run rename dialog
+      UI.runDialog('#renameDialog', ev, function(form) {
+         const data = UI.extractDialogValue(form);
+         dat.name = data[dat.uuid]; // now rename
+         dat.text.textContent = dat.name;
+      }, function(form) {
+         UI.addLabelInput(form, objects);
+      });
    }
 
    static resetCSS() {
