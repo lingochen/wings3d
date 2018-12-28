@@ -12622,7 +12622,7 @@ function triangulatePreview(polygon) {
 /*!**************************!*\
   !*** ./js/wings3d_ui.js ***!
   \**************************/
-/*! exports provided: styleSheet, getArrow, placement, getPosition, positionDom, addMenuItem, bindMenuItem, bindMenuItemMMB, bindMenuItemRMB, bindMenuItemMode, extractDialogValue, runDialog, runDialogCenter, openFile, showContextMenu, showPopup, queuePopupMenu, toggleSubmenu */
+/*! exports provided: styleSheet, getArrow, placement, getPosition, positionDom, addMenuItem, bindMenuItem, bindMenuItemMMB, bindMenuItemRMB, bindMenuItemMode, addLabelInput, extractDialogValue, runDialog, runDialogCenter, openFile, showContextMenu, showPopup, queuePopupMenu, toggleSubmenu */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -12637,6 +12637,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "bindMenuItemMMB", function() { return bindMenuItemMMB; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "bindMenuItemRMB", function() { return bindMenuItemRMB; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "bindMenuItemMode", function() { return bindMenuItemMode; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "addLabelInput", function() { return addLabelInput; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "extractDialogValue", function() { return extractDialogValue; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "runDialog", function() { return runDialog; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "runDialogCenter", function() { return runDialogCenter; });
@@ -12837,6 +12838,25 @@ function positionDom(element, mousePosition) {
 };
 
 
+function addLabelInput(form, array) {
+   const content = form.querySelector('div');
+   // reset, clear all old input.
+   let labels = form.querySelectorAll('label');
+   for (let label of labels) {
+      content.removeChild(label);
+   }
+   // add input name 
+   for (let object of array) {
+      const label = document.createElement('label');
+      label.textContent = object.name;
+      const input = document.createElement('input');
+      input.type = "text";
+      input.name = object.uuid;
+      input.placeholder = object.name;
+      label.appendChild(input);
+      content.appendChild(label);
+   }
+};
 function extractDialogValue(form) {
    // get form's input data.
    const obj = {};
@@ -13138,6 +13158,9 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
+/**
+ * reduce coupling. now PreviewCage don't need to know uitree. uitree extend the appropriate method.
+ */
 (function() {
 _wings3d_model_js__WEBPACK_IMPORTED_MODULE_4__["PreviewGroup"].nameSetters.push(function(value){
    if (this.guiStatus && this.guiStatus.textNode) {   // treeView's representation.
@@ -13417,20 +13440,18 @@ function getTreeView(labelId, id, world) {
 
 
 class ListView {
-      /**
+   /**
     * 
     * @param {data} - materail/image/light data
     */
-   static addRenameListener(data) {
+   static addRenameListener(text, data) {
       const entry = function(ev) {
          if (ev.keyCode == 13) {
-            // rename if different
-            if (this.textContent !== model.name) {
-               const data = {};
-               data[model.uuid] = this.textContent;
-               const command = new _wings3d_bodymads_js__WEBPACK_IMPORTED_MODULE_3__["RenameBodyCommand"]([model], data);
-               _wings3d_view_js__WEBPACK_IMPORTED_MODULE_0__["undoQueue"]( command );
-               command.doIt();   // rename
+            // rename if not empty
+            if (this.textContent != "") {
+               data.name = this.textContent;
+            } else {
+               this.textContent = data.name;
             }
             this.contentEditable = false;
             this.removeEventListener('keydown', entry);  // remove keyListening event
@@ -13443,7 +13464,7 @@ class ListView {
        });
       text.addEventListener('blur', function(ev) {
          // restore 
-         this.textContent = model.name;   // restore name
+         this.textContent = data.name;   // restore name
          this.contentEditable = false;
          this.removeEventListener('keydown', entry);
        });
@@ -13456,8 +13477,9 @@ class ListView {
 /**
  * for material, image, lights
  */
-class ImageList {
+class ImageList extends ListView {
    constructor(label, listView) {
+      super();
       this.view = listView;
       this.list = [];
       // context menu
@@ -13476,7 +13498,7 @@ class ImageList {
       let reader = new FileReader();
 
       reader.onload = (_ev) => {
-         const dat = {img: null, li: null, name: null, popup: null};
+         const dat = {img: null, li: null, uuid: _wings3d_model_js__WEBPACK_IMPORTED_MODULE_4__["PreviewCage"].get_uuidv4(), name: "", popup: null};
          const img = dat.img = document.createElement("img");
          img.src = reader.result;
          img.onload = function () {
@@ -13534,12 +13556,13 @@ function getImageList(labelId, id) {
    return null;
 };
 
-class MaterialList {
+class MaterialList extends ListView {
    constructor(label, listView) {
+      super();
       this.view = listView;
       this.list = [];
       // add default Material.
-      const mat = {diffuseMaterial: "#C9CFB1", ambientMaterial: "#C9CFB1", specularMaterial: "#000000", emissionMaterial: "#000000", vertexColorSelect: 0, shininessMaterial: 0, opacityMaterial: 1};
+      const mat = {default: true, diffuseMaterial: "#C9CFB1", ambientMaterial: "#C9CFB1", specularMaterial: "#000000", emissionMaterial: "#000000", vertexColorSelect: 0, shininessMaterial: 0, opacityMaterial: 1};
       this.addMaterial("default", mat);
       // context menu
       let contextMenu = document.querySelector('#createMaterialMenu');
@@ -13553,7 +13576,7 @@ class MaterialList {
    }
 
    addMaterial(name, material) {
-      const dat = {name: name, material: material};
+      const dat = {name: name, uuid: _wings3d_model_js__WEBPACK_IMPORTED_MODULE_4__["PreviewCage"].get_uuidv4(), material: material};
       // now show on li.
       let li = dat.li = document.createElement('li');
       let pictFrag = document.createRange().createContextualFragment('<span class="materialIcon"></span>');
@@ -13566,6 +13589,9 @@ class MaterialList {
       li.appendChild(pictFrag);
       let whole = document.createRange().createContextualFragment(`<span>${name}</span>`);
       dat.text = whole.firstElementChild;
+      if (!material.default) {   // default material's name cannot be changed.
+         ListView.addRenameListener(dat.text, dat);
+      }
       dat.text.addEventListener('contextmenu', function(ev) {  // contextMenu
          ev.preventDefault();
          let contextMenu = document.querySelector('#materialMenu');
@@ -13618,20 +13644,33 @@ class MaterialList {
    }
 
    deleteMaterial(objects) {
-      const mat = objects[0];
+      const dat = objects[0];
+      if (dat.material.default) {   // default material is not deletable.
+         return;
+      }
       // remove li
-      this.view.removeChild(mat.li);
+      this.view.removeChild(dat.li);
       // remove from list
-      this.list.splice(this.list.indexOf(mat), 1);
+      this.list.splice(this.list.indexOf(dat), 1);
    }
 
    newName() {
       return `New Material ${this.list.length}`;
    }
 
-   renameMaterial(objects) {
-      const mat = objects[0];
-      //
+   renameMaterial(ev, objects) {
+      const dat = objects[0];
+      if (dat.material.default) {   // default material cannot be deleted
+         return;
+      }
+      // run rename dialog
+      _wings3d_ui_js__WEBPACK_IMPORTED_MODULE_2__["runDialog"]('#renameDialog', ev, function(form) {
+         const data = _wings3d_ui_js__WEBPACK_IMPORTED_MODULE_2__["extractDialogValue"](form);
+         dat.name = data[dat.uuid]; // now rename
+         dat.text.textContent = dat.name;
+      }, function(form) {
+         _wings3d_ui_js__WEBPACK_IMPORTED_MODULE_2__["addLabelInput"](form, objects);
+      });
    }
 
    static resetCSS() {
@@ -15677,8 +15716,8 @@ function init() {
    _wings3d_ui_js__WEBPACK_IMPORTED_MODULE_0__["bindMenuItem"](_wings3d_js__WEBPACK_IMPORTED_MODULE_5__["action"].deleteMaterial.name, function(_ev){
       materialList.deleteMaterial(currentObjects);
     });   
-   _wings3d_ui_js__WEBPACK_IMPORTED_MODULE_0__["bindMenuItem"](_wings3d_js__WEBPACK_IMPORTED_MODULE_5__["action"].renameMaterial.name, function(_ev) {
-      materialList.renameMaterial(currentObjects);
+   _wings3d_ui_js__WEBPACK_IMPORTED_MODULE_0__["bindMenuItem"](_wings3d_js__WEBPACK_IMPORTED_MODULE_5__["action"].renameMaterial.name, function(ev) {
+      materialList.renameMaterial(ev, currentObjects);
     });
 
 
