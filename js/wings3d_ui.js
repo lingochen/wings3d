@@ -227,7 +227,10 @@ function runDialogCenter(formID, submitCallback, setup, _ev) {
       const _pvt = {submitSuccess: false};
       // create overlay
       const overlay = document.createElement("div");
-      overlay.classList.add("overlay");   
+      overlay.classList.add("overlay");
+      overlay.addEventListener('keydown', function(ev) { // prevent document handling hotkey.
+         ev.stopPropagation();
+       });
       overlay.appendChild(form); 
       form.style.display = 'block';
       if (_ev) {
