@@ -31,23 +31,7 @@ class BodyMadsor extends Madsor {
                View.undoQueue( command );
                command.doIt();   // rename
             }, function(form) {
-               const content = form.querySelector('div');
-               let labels = form.querySelectorAll('label');
-               for (let label of labels) {
-                  content.removeChild(label);
-               }
-               // add input name 
-               let array = self.getSelected();
-               for (let cage of array) {
-                  const label = document.createElement('label');
-                  label.textContent = cage.name;
-                  const input = document.createElement('input');
-                  input.type = "text";
-                  input.name = cage.uuid;
-                  input.placeholder = cage.name;
-                  label.appendChild(input);
-                  content.appendChild(label);
-               }
+               UI.addLabelInput(form, self.getSelected());
             });
        });
       const duplicateMove = [action.bodyDuplicateMoveX, action.bodyDuplicateMoveY, action.bodyDuplicateMoveZ];
