@@ -1037,6 +1037,7 @@ const action = {
    editMaterial: ()=>{notImplemented(undefined);},
    deleteMaterial: ()=>{notImplemented(undefined);},
    renameMaterial: ()=>{notImplemented(undefined);},
+   duplicateMaterial: ()=>{notImplemented(undefined);},
    // selection menu
    selectMenu: () => {notImplemented(undefined);},
    deselect: () => {notImplemented(undefined);},
@@ -1359,23 +1360,7 @@ class BodyMadsor extends _wings3d_mads_js__WEBPACK_IMPORTED_MODULE_0__["Madsor"]
                _wings3d_view_js__WEBPACK_IMPORTED_MODULE_6__["undoQueue"]( command );
                command.doIt();   // rename
             }, function(form) {
-               const content = form.querySelector('div');
-               let labels = form.querySelectorAll('label');
-               for (let label of labels) {
-                  content.removeChild(label);
-               }
-               // add input name 
-               let array = self.getSelected();
-               for (let cage of array) {
-                  const label = document.createElement('label');
-                  label.textContent = cage.name;
-                  const input = document.createElement('input');
-                  input.type = "text";
-                  input.name = cage.uuid;
-                  input.placeholder = cage.name;
-                  label.appendChild(input);
-                  content.appendChild(label);
-               }
+               _wings3d_ui_js__WEBPACK_IMPORTED_MODULE_7__["addLabelInput"](form, self.getSelected());
             });
        });
       const duplicateMove = [_wings3d_js__WEBPACK_IMPORTED_MODULE_9__["action"].bodyDuplicateMoveX, _wings3d_js__WEBPACK_IMPORTED_MODULE_9__["action"].bodyDuplicateMoveY, _wings3d_js__WEBPACK_IMPORTED_MODULE_9__["action"].bodyDuplicateMoveZ];
@@ -12877,7 +12862,10 @@ function runDialogCenter(formID, submitCallback, setup, _ev) {
       const _pvt = {submitSuccess: false};
       // create overlay
       const overlay = document.createElement("div");
-      overlay.classList.add("overlay");   
+      overlay.classList.add("overlay");
+      overlay.addEventListener('keydown', function(ev) { // prevent document handling hotkey.
+         ev.stopPropagation();
+       });
       overlay.appendChild(form); 
       form.style.display = 'block';
       if (_ev) {
@@ -13609,13 +13597,30 @@ class MaterialList extends ListView {
 
    createMaterial(ev) {
       const materialList = this;
+      const newName = materialList.newName();
       _wings3d_ui_js__WEBPACK_IMPORTED_MODULE_2__["runDialog"]('#materialSetting', ev, function(form) {
          const data = _wings3d_ui_js__WEBPACK_IMPORTED_MODULE_2__["extractDialogValue"](form);
-         materialList.addMaterial(materialList.newName(), data);
+         materialList.addMaterial(newName, data);
        }, function(form) {
           form.reset();
           MaterialList.resetCSS();
+          const data = form.querySelector('h3 > span');
+          if (data) {
+             data.textContent = newName;
+          }
        });
+   }
+
+   duplicateMaterial(objects) {
+      const dat = objects[0];
+      const duplicateMat = Object.assign({}, dat.material);
+      let name = dat.name.split(/\d+$/);
+      if (name.length > 1) {
+         name = name[0] + (parseInt(dat.name.match(/\d+$/), 10) + 1);
+      } else {
+         name = dat.name + '2';
+      }
+      this.addMaterial(name, duplicateMat);
    }
 
    editMaterial(ev, objects) {
@@ -15718,6 +15723,9 @@ function init() {
     });   
    _wings3d_ui_js__WEBPACK_IMPORTED_MODULE_0__["bindMenuItem"](_wings3d_js__WEBPACK_IMPORTED_MODULE_5__["action"].renameMaterial.name, function(ev) {
       materialList.renameMaterial(ev, currentObjects);
+    });
+   _wings3d_ui_js__WEBPACK_IMPORTED_MODULE_0__["bindMenuItem"](_wings3d_js__WEBPACK_IMPORTED_MODULE_5__["action"].duplicateMaterial.name, function(_ev) {
+      materialList.duplicateMaterial(currentObjects);
     });
 
 
