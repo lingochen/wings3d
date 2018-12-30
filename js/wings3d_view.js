@@ -1067,6 +1067,9 @@ function init() {
    UI.bindMenuItem(Wings3D.action.renameMaterial.name, function(ev) {
       materialList.renameMaterial(ev, currentObjects);
     });
+   UI.bindMenuItem(Wings3D.action.duplicateMaterial.name, function(_ev) {
+      materialList.duplicateMaterial(currentObjects);
+    });
 
 
    // bind .dropdown, click event.

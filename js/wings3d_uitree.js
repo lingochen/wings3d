@@ -474,6 +474,18 @@ class MaterialList extends ListView {
        });
    }
 
+   duplicateMaterial(objects) {
+      const dat = objects[0];
+      const duplicateMat = Object.assign({}, dat.material);
+      let name = dat.name.split(/\d+$/);
+      if (name.length > 1) {
+         name = name[0] + (parseInt(dat.name.match(/\d+$/), 10) + 1);
+      } else {
+         name = dat.name + '2';
+      }
+      this.addMaterial(name, duplicateMat);
+   }
+
    editMaterial(ev, objects) {
       const dat = objects[0];
       UI.runDialog('#materialSetting', ev, function(form) {

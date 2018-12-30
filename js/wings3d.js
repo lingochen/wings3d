@@ -282,6 +282,7 @@ const action = {
    editMaterial: ()=>{notImplemented(this);},
    deleteMaterial: ()=>{notImplemented(this);},
    renameMaterial: ()=>{notImplemented(this);},
+   duplicateMaterial: ()=>{notImplemented(this);},
    // selection menu
    selectMenu: () => {notImplemented(this);},
    deselect: () => {notImplemented(this);},
