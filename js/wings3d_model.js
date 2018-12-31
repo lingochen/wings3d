@@ -25,7 +25,7 @@ import {i18n} from './wings3d_i18n.js';
 const PreviewGroup = function() {
    this.group = [];
    this.parent = null;
-   this.uuid = PreviewCage.get_uuidv4();
+   this.uuid = Util.get_uuidv4();
    this.guiStatus = {};
    this.status = {locked: false, visible: true, wireMode: false};
 
@@ -147,7 +147,7 @@ class MeshAllocatorProxy { // we could use Proxy, but ....
  */
 const PreviewCage = function(bench) {
    this.parent = null;
-   this.uuid = PreviewCage.get_uuidv4();
+   this.uuid = Util.get_uuidv4();
    this.geometry = new WingedTopology(new MeshAllocatorProxy(this));
    this.bench = bench;
    this.guiStatus = {};
@@ -180,15 +180,6 @@ Object.defineProperty(PreviewCage.prototype, "name", {
     }
  });
 
-/**
- * https://stackoverflow.com/questions/105034/create-guid-uuid-in-javascript
- * generate unique id using crypto functions to avoid collision.
- */
-PreviewCage.get_uuidv4 = function() {
-   return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
-     (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
-   )
- };
 
  PreviewCage.prototype.numberOfCage = function() {
     return 1;

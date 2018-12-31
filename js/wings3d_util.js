@@ -354,6 +354,16 @@ function hexToCssRGBA(hex) {  // microsft edge don't support #rrggbbaa format ye
    return `rgba(${r}, ${g}, ${b}, ${a})`;
 };
 
+/**
+ * https://stackoverflow.com/questions/105034/create-guid-uuid-in-javascript
+ * generate unique id using crypto functions to avoid collision.
+ */
+function get_uuidv4() {
+   return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
+     (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+   )
+ };
+
 
 export {
    closestPointToPlane,
@@ -373,4 +383,5 @@ export {
    hexToRGB,
    hexToRGBA,
    hexToCssRGBA,
+   get_uuidv4,
 };

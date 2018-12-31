@@ -6,6 +6,7 @@
 import * as View from './wings3d_view.js';
 import * as Wings3D from './wings3d.js';
 import * as UI from './wings3d_ui.js';
+import {Material} from './wings3d_material.js';
 import {RenameBodyCommand} from './wings3d_bodymads.js';
 import {PreviewCage, PreviewGroup} from './wings3d_model.js';
 
@@ -349,7 +350,7 @@ class ImageList extends ListView {
       let reader = new FileReader();
 
       reader.onload = (_ev) => {
-         const dat = {img: null, li: null, uuid: PreviewCage.get_uuidv4(), name: "", popup: null};
+         const dat = {img: null, li: null, uuid: Util.get_uuidv4(), name: "", popup: null};
          const img = dat.img = document.createElement("img");
          img.src = reader.result;
          img.onload = function () {
@@ -413,8 +414,7 @@ class MaterialList extends ListView {
       this.view = listView;
       this.list = [];
       // add default Material.
-      const mat = {default: true, diffuseMaterial: "#C9CFB1", ambientMaterial: "#C9CFB1", specularMaterial: "#000000", emissionMaterial: "#000000", vertexColorSelect: 0, shininessMaterial: 0, opacityMaterial: 1};
-      this.addMaterial("default", mat);
+      this.addMaterial("default");
       // context menu
       let contextMenu = document.querySelector('#createMaterialMenu');
       if (contextMenu) {
@@ -427,7 +427,7 @@ class MaterialList extends ListView {
    }
 
    addMaterial(name, material) {
-      const dat = {name: name, uuid: PreviewCage.get_uuidv4(), material: material};
+      const dat = Material.create(name, material);
       // now show on li.
       let li = dat.li = document.createElement('li');
       let pictFrag = document.createRange().createContextualFragment('<span class="materialIcon"></span>');
@@ -440,7 +440,7 @@ class MaterialList extends ListView {
       li.appendChild(pictFrag);
       let whole = document.createRange().createContextualFragment(`<span>${name}</span>`);
       dat.text = whole.firstElementChild;
-      if (!material.default) {   // default material's name cannot be changed.
+      if (dat !== this.default) {   // default material's name cannot be changed.
          ListView.addRenameListener(dat.text, dat);
       }
       dat.text.addEventListener('contextmenu', function(ev) {  // contextMenu
@@ -455,6 +455,9 @@ class MaterialList extends ListView {
       li.appendChild(whole);
       this.view.appendChild(li);
 
+      if (this.list.length === 0) { // first one is the default
+         this.default = dat;
+      }
       this.list.push(dat);
    }
 
@@ -476,21 +479,20 @@ class MaterialList extends ListView {
 
    duplicateMaterial(objects) {
       const dat = objects[0];
-      const duplicateMat = Object.assign({}, dat.material);
       let name = dat.name.split(/\d+$/);
       if (name.length > 1) {
          name = name[0] + (parseInt(dat.name.match(/\d+$/), 10) + 1);
       } else {
          name = dat.name + '2';
       }
-      this.addMaterial(name, duplicateMat);
+      this.addMaterial(name, dat.material);
    }
 
    editMaterial(ev, objects) {
       const dat = objects[0];
       UI.runDialog('#materialSetting', ev, function(form) {
          const data = UI.extractDialogValue(form);
-         dat.material = data;
+         dat.setValues(data);
          dat.pict.style.backgroundColor = data.diffuseMaterial;
        }, function(form) { // handle setup
          form.reset();
@@ -513,7 +515,7 @@ class MaterialList extends ListView {
 
    deleteMaterial(objects) {
       const dat = objects[0];
-      if (dat.material.default) {   // default material is not deletable.
+      if (dat === this.default) {   // default material is not deletable.
          return;
       }
       // remove li
@@ -528,7 +530,7 @@ class MaterialList extends ListView {
 
    renameMaterial(ev, objects) {
       const dat = objects[0];
-      if (dat.material.default) {   // default material cannot be deleted
+      if (dat === this.default) {   // default material cannot be deleted
          return;
       }
       // run rename dialog
