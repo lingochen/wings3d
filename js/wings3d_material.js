@@ -16,8 +16,11 @@ const Material = function(name) {
                     vertexColorSelect: 0,
                     shininessMaterial: 0, 
                     opacityMaterial: 1};
+   if (!Material.default) {   // set default from the first instantiation. 
+      Material.default = this;
+   }
 };
-
+Material.default;
 
 Material.create = function(name, input) {
    const ret = new Material(name);
@@ -25,7 +28,8 @@ Material.create = function(name, input) {
       ret.setValues(input);
    }
    return ret;
-}
+};
+
 
 Material.prototype.setValues = function(inputDat) {
    for (const key of Object.keys(inputDat)) {
