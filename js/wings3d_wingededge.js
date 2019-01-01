@@ -31,8 +31,10 @@ import { PreviewCage } from "./wings3d_model.js";
 *
 */
 "use strict";
+import {Material} from './wings3d_material.js';
 
-var WingedEdge = function(orgVert, toVert) {
+
+const WingedEdge = function(orgVert, toVert) {
    this.index = -1;
    this.left = new HalfEdge(orgVert, this);
    this.right = new HalfEdge(toVert, this);
@@ -129,7 +131,7 @@ WingedEdge.prototype.getNormal = function(normal) {
    vec3.normalize(normal, normal);
 };
 
-var HalfEdge = function(vert, edge) {  // should only be created by WingedEdge
+const HalfEdge = function(vert, edge) {  // should only be created by WingedEdge
    this.next = null;
 //   this.prev = null;       // not required, but very nice to have shortcut
    this.origin = vert;     // origin vertex, 
@@ -208,7 +210,7 @@ HalfEdge.prototype.eachEdge = function(callbackfn) {
 
 
 //
-var Vertex = function(pt) {
+const Vertex = function(pt) {
    this.vertex = pt;       // vec3. Float32Array. convenient function.
    this.outEdge = null;
  //  this.index = -1;
@@ -417,12 +419,13 @@ Vertex.prototype.getNormal = function(normal) {
 
 
 
-var Polygon = function(startEdge, size) {
+const Polygon = function(startEdge, size) {
    this.halfEdge = startEdge;
    this.numberOfVertex = size;       // how many vertex in the polygon
    this.update(); //this.computeNormal();
    this.index = -1;
    this.visible = true;
+   this.material = Material.default;   // polygon with default material
 };
 
 // not on free list. not deleted and visible
@@ -592,7 +595,7 @@ Polygon.prototype.getCentroid = function(centroid) {
 //
 // 
 //
-let MeshAllocator = function(allocatedSize = 1024) {
+const MeshAllocator = function(allocatedSize = 1024) {
    var buf = new ArrayBuffer(allocatedSize*3 * Float32Array.BYTES_PER_ELEMENT);  // vertices in typedArray
    this.buf = { buffer: buf, data: new Float32Array(buf), len: 0, }; // vertex's pt buffer. to be used for Vertex.
    this.vertices = [];     // class Vertex
@@ -814,7 +817,7 @@ MeshAllocator.prototype.addAffectedEdgeAndFace = function(vertex) {
 // changed - so Vertex, WingedEdge, and Polygon is allocated from meshAllocator. So different 
 // Models on the same DraftBench can use the same Allocation. Merging becomes easier.
 //
-var WingedTopology = function(allocator) {
+const WingedTopology = function(allocator) {
    this.alloc = allocator;
    this.vertices = new Set;
    this.faces = new Set;
