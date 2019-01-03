@@ -1038,6 +1038,8 @@ const action = {
    deleteMaterial: ()=>{notImplemented(undefined);},
    renameMaterial: ()=>{notImplemented(undefined);},
    duplicateMaterial: ()=>{notImplemented(undefined);},
+   assignMaterial: ()=>{notImplemented(undefined);},
+   selectMaterial: ()=>{notImplemented(undefined);},
    // selection menu
    selectMenu: () => {notImplemented(undefined);},
    deselect: () => {notImplemented(undefined);},
@@ -2783,10 +2785,10 @@ __webpack_require__.r(__webpack_exports__);
 //
 //    update as little as possible on cpu side. 
 //
-// todo: done.
+// drawing pass:
 //    first pass: draw line (select, unselected) first (using triangles). 
 //
-//    second pass: draw polygon (selected, unseleced) using slightly optimized index.
+//    second pass: draw polygon (selected, unseleced(sort by material)) using slightly optimized index. 
 //
 //    third pass?: draw vertex.
 //
@@ -6916,6 +6918,18 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       return this.doAll(selection, _wings3d_model_js__WEBPACK_IMPORTED_MODULE_1__["PreviewCage"].prototype.toggleWireMode);
    }
 
+   assignMaterial(material) {
+      return this.snapshotAll(_wings3d_model_js__WEBPACK_IMPORTED_MODULE_1__["PreviewCage"].prototype[`assign${this.modeName()}Material`], material);
+   }
+
+   undoAssignMaterial(saved) {
+      return this.doAll(saved, _wings3d_model_js__WEBPACK_IMPORTED_MODULE_1__["PreviewCage"].prototype[`undoAssign${this.modeName()}Material`]);
+   }
+
+   selectMaterial(material) {
+      return this.snapshotAll(_wings3d_model_js__WEBPACK_IMPORTED_MODULE_1__["PreviewCage"].prototype['select' + this.modeName() + 'Material'], material);
+   }
+
    isVertexSelectable() { return false; }
    isEdgeSelectable() { return false; }
    isFaceSelectable() { return false; }
@@ -7379,6 +7393,65 @@ class GenericEditCommand extends _wings3d_undo_js__WEBPACK_IMPORTED_MODULE_0__["
 
 /***/ }),
 
+/***/ "./js/wings3d_material.js":
+/*!********************************!*\
+  !*** ./js/wings3d_material.js ***!
+  \********************************/
+/*! exports provided: Material */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "Material", function() { return Material; });
+/* harmony import */ var _wings3d_util_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./wings3d_util.js */ "./js/wings3d_util.js");
+/**
+ * 
+ * 
+ */
+
+
+
+
+const Material = function(name) {
+   this.name = name;
+   this.uuid = _wings3d_util_js__WEBPACK_IMPORTED_MODULE_0__["get_uuidv4"]();
+   this.material = {diffuseMaterial: "#C9CFB1", 
+                    ambientMaterial: "#C9CFB1",
+                    specularMaterial: "#000000", 
+                    emissionMaterial: "#000000", 
+                    vertexColorSelect: 0,
+                    shininessMaterial: 0, 
+                    opacityMaterial: 1};
+   if (!Material.default) {   // set default from the first instantiation. 
+      Material.default = this;
+   }
+};
+Material.default;
+
+Material.create = function(name, input) {
+   const ret = new Material(name);
+   if (input) {
+      ret.setValues(input);
+   }
+   return ret;
+};
+
+
+Material.prototype.setValues = function(inputDat) {
+   for (const key of Object.keys(inputDat)) {
+      if (this.material.hasOwnProperty(key)) {
+         this.material[key] = inputDat[key];
+      } else {
+         console.log("unknown input material: " + key);
+      }
+   }
+};
+
+
+
+
+/***/ }),
+
 /***/ "./js/wings3d_model.js":
 /*!*****************************!*\
   !*** ./js/wings3d_model.js ***!
@@ -7425,7 +7498,7 @@ __webpack_require__.r(__webpack_exports__);
 const PreviewGroup = function() {
    this.group = [];
    this.parent = null;
-   this.uuid = PreviewCage.get_uuidv4();
+   this.uuid = _wings3d_util_js__WEBPACK_IMPORTED_MODULE_5__["get_uuidv4"]();
    this.guiStatus = {};
    this.status = {locked: false, visible: true, wireMode: false};
 
@@ -7547,7 +7620,7 @@ class MeshAllocatorProxy { // we could use Proxy, but ....
  */
 const PreviewCage = function(bench) {
    this.parent = null;
-   this.uuid = PreviewCage.get_uuidv4();
+   this.uuid = _wings3d_util_js__WEBPACK_IMPORTED_MODULE_5__["get_uuidv4"]();
    this.geometry = new _wings3d_wingededge_js__WEBPACK_IMPORTED_MODULE_1__["WingedTopology"](new MeshAllocatorProxy(this));
    this.bench = bench;
    this.guiStatus = {};
@@ -7580,15 +7653,6 @@ Object.defineProperty(PreviewCage.prototype, "name", {
     }
  });
 
-/**
- * https://stackoverflow.com/questions/105034/create-guid-uuid-in-javascript
- * generate unique id using crypto functions to avoid collision.
- */
-PreviewCage.get_uuidv4 = function() {
-   return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
-     (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
-   )
- };
 
  PreviewCage.prototype.numberOfCage = function() {
     return 1;
@@ -11193,6 +11257,44 @@ PreviewCage.prototype.undoHardnessEdge = function(result) {
    }
 };
 
+
+/**
+ * assign given material to the current selected Face
+ * @param {Material} - the material that will assigned to the selected set.
+ */
+PreviewCage.prototype.assignFaceMaterial = function(material) {
+   const savedMaterials = new Map;
+
+   for (let polygon of this.selectedSet) {   // don't need to sorted.
+      if (material !== polygon.material) {
+         let array = savedMaterials.get(polygon.material);
+         if (!array) {
+            savedMaterials.set(polygon.material, [polygon]);
+         } else {
+            array.push(polygon);
+         }
+         // now assign Material
+         polygon.material = material;
+      }
+   }
+   if (savedMaterials.size > 0) {
+      return savedMaterials;
+   } else {
+      return undefined;
+   }
+};
+/**
+ * restore original material
+ * @param {map} - the original material to polygons array mapping
+ */
+PreviewCage.prototype.undoAssignFaceMaterial = function(savedMaterials) {
+   for (const [material, array] of savedMaterials.entries()) {
+      for (const polygon of array) {
+         polygon.material = material;
+      }
+   }
+};
+
 //----------------------------------------------------------------------------------------------------------
 
 
@@ -11254,6 +11356,19 @@ __webpack_require__.r(__webpack_exports__);
 class MultiMadsor extends _wings3d_mads_js__WEBPACK_IMPORTED_MODULE_0__["Madsor"] {
    constructor() {
       super('Multi');
+   }
+
+   assignMaterial(materail) {
+      // log that we need to switch mode first.
+   }
+
+   selectMaterial(material) {
+      // or log, that, we should toggleMode first.
+
+      // toggleToFaceMode
+
+      // now run selectMaterial
+
    }
 
    isFaceSelectable() { return true; }
@@ -13133,8 +13248,9 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _wings3d_view_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./wings3d_view.js */ "./js/wings3d_view.js");
 /* harmony import */ var _wings3d_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./wings3d.js */ "./js/wings3d.js");
 /* harmony import */ var _wings3d_ui_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./wings3d_ui.js */ "./js/wings3d_ui.js");
-/* harmony import */ var _wings3d_bodymads_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./wings3d_bodymads.js */ "./js/wings3d_bodymads.js");
-/* harmony import */ var _wings3d_model_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./wings3d_model.js */ "./js/wings3d_model.js");
+/* harmony import */ var _wings3d_material_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./wings3d_material.js */ "./js/wings3d_material.js");
+/* harmony import */ var _wings3d_bodymads_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./wings3d_bodymads.js */ "./js/wings3d_bodymads.js");
+/* harmony import */ var _wings3d_model_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./wings3d_model.js */ "./js/wings3d_model.js");
 /**
  * treeView gui
 
@@ -13146,18 +13262,19 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
+
 /**
  * reduce coupling. now PreviewCage don't need to know uitree. uitree extend the appropriate method.
  */
 (function() {
-_wings3d_model_js__WEBPACK_IMPORTED_MODULE_4__["PreviewGroup"].nameSetters.push(function(value){
+_wings3d_model_js__WEBPACK_IMPORTED_MODULE_5__["PreviewGroup"].nameSetters.push(function(value){
    if (this.guiStatus && this.guiStatus.textNode) {   // treeView's representation.
       this.guiStatus.textNode.textContent = value;
    } 
 });
 
-const superNumberOfCage = _wings3d_model_js__WEBPACK_IMPORTED_MODULE_4__["PreviewGroup"].prototype.numberOfCage;
-_wings3d_model_js__WEBPACK_IMPORTED_MODULE_4__["PreviewGroup"].prototype.numberOfCage = function() {
+const superNumberOfCage = _wings3d_model_js__WEBPACK_IMPORTED_MODULE_5__["PreviewGroup"].prototype.numberOfCage;
+_wings3d_model_js__WEBPACK_IMPORTED_MODULE_5__["PreviewGroup"].prototype.numberOfCage = function() {
    const count = superNumberOfCage.call(this);
    if (this.guiStatus && this.guiStatus.count) {
       this.guiStatus.count.textContent = count;
@@ -13165,7 +13282,7 @@ _wings3d_model_js__WEBPACK_IMPORTED_MODULE_4__["PreviewGroup"].prototype.numberO
    return count;
 };
 
-_wings3d_model_js__WEBPACK_IMPORTED_MODULE_4__["PreviewCage"].nameSetters.push( function(value) {
+_wings3d_model_js__WEBPACK_IMPORTED_MODULE_5__["PreviewCage"].nameSetters.push( function(value) {
    if (this.guiStatus && this.guiStatus.textNode) {   // treeView's representation.
       this.guiStatus.textNode.textContent = value;
    } 
@@ -13174,7 +13291,7 @@ _wings3d_model_js__WEBPACK_IMPORTED_MODULE_4__["PreviewCage"].nameSetters.push( 
 /**
  * update gui status.
  */
-_wings3d_model_js__WEBPACK_IMPORTED_MODULE_4__["PreviewCage"].prototype.updateStatus = function() {
+_wings3d_model_js__WEBPACK_IMPORTED_MODULE_5__["PreviewCage"].prototype.updateStatus = function() {
    if (!this.isVisible() || (this.selectedSet.size === 0)) {
       if (this.guiStatus && this.guiStatus.select.checked) {
          this.guiStatus.select.checked = false;
@@ -13259,7 +13376,7 @@ class TreeView {
             if (this.textContent !== model.name) {
                const data = {};
                data[model.uuid] = this.textContent;
-               const command = new _wings3d_bodymads_js__WEBPACK_IMPORTED_MODULE_3__["RenameBodyCommand"]([model], data);
+               const command = new _wings3d_bodymads_js__WEBPACK_IMPORTED_MODULE_4__["RenameBodyCommand"]([model], data);
                _wings3d_view_js__WEBPACK_IMPORTED_MODULE_0__["undoQueue"]( command );
                command.doIt();   // rename
             }
@@ -13486,7 +13603,7 @@ class ImageList extends ListView {
       let reader = new FileReader();
 
       reader.onload = (_ev) => {
-         const dat = {img: null, li: null, uuid: _wings3d_model_js__WEBPACK_IMPORTED_MODULE_4__["PreviewCage"].get_uuidv4(), name: "", popup: null};
+         const dat = {img: null, li: null, uuid: Util.get_uuidv4(), name: "", popup: null};
          const img = dat.img = document.createElement("img");
          img.src = reader.result;
          img.onload = function () {
@@ -13550,8 +13667,7 @@ class MaterialList extends ListView {
       this.view = listView;
       this.list = [];
       // add default Material.
-      const mat = {default: true, diffuseMaterial: "#C9CFB1", ambientMaterial: "#C9CFB1", specularMaterial: "#000000", emissionMaterial: "#000000", vertexColorSelect: 0, shininessMaterial: 0, opacityMaterial: 1};
-      this.addMaterial("default", mat);
+      this.addMaterial("default");
       // context menu
       let contextMenu = document.querySelector('#createMaterialMenu');
       if (contextMenu) {
@@ -13564,7 +13680,7 @@ class MaterialList extends ListView {
    }
 
    addMaterial(name, material) {
-      const dat = {name: name, uuid: _wings3d_model_js__WEBPACK_IMPORTED_MODULE_4__["PreviewCage"].get_uuidv4(), material: material};
+      const dat = _wings3d_material_js__WEBPACK_IMPORTED_MODULE_3__["Material"].create(name, material);
       // now show on li.
       let li = dat.li = document.createElement('li');
       let pictFrag = document.createRange().createContextualFragment('<span class="materialIcon"></span>');
@@ -13577,7 +13693,7 @@ class MaterialList extends ListView {
       li.appendChild(pictFrag);
       let whole = document.createRange().createContextualFragment(`<span>${name}</span>`);
       dat.text = whole.firstElementChild;
-      if (!material.default) {   // default material's name cannot be changed.
+      if (dat !== this.default) {   // default material's name cannot be changed.
          ListView.addRenameListener(dat.text, dat);
       }
       dat.text.addEventListener('contextmenu', function(ev) {  // contextMenu
@@ -13592,6 +13708,9 @@ class MaterialList extends ListView {
       li.appendChild(whole);
       this.view.appendChild(li);
 
+      if (this.list.length === 0) { // first one is the default
+         this.default = dat;
+      }
       this.list.push(dat);
    }
 
@@ -13613,21 +13732,20 @@ class MaterialList extends ListView {
 
    duplicateMaterial(objects) {
       const dat = objects[0];
-      const duplicateMat = Object.assign({}, dat.material);
       let name = dat.name.split(/\d+$/);
       if (name.length > 1) {
          name = name[0] + (parseInt(dat.name.match(/\d+$/), 10) + 1);
       } else {
          name = dat.name + '2';
       }
-      this.addMaterial(name, duplicateMat);
+      this.addMaterial(name, dat.material);
    }
 
    editMaterial(ev, objects) {
       const dat = objects[0];
       _wings3d_ui_js__WEBPACK_IMPORTED_MODULE_2__["runDialog"]('#materialSetting', ev, function(form) {
          const data = _wings3d_ui_js__WEBPACK_IMPORTED_MODULE_2__["extractDialogValue"](form);
-         dat.material = data;
+         dat.setValues(data);
          dat.pict.style.backgroundColor = data.diffuseMaterial;
        }, function(form) { // handle setup
          form.reset();
@@ -13650,7 +13768,7 @@ class MaterialList extends ListView {
 
    deleteMaterial(objects) {
       const dat = objects[0];
-      if (dat.material.default) {   // default material is not deletable.
+      if (dat === this.default) {   // default material is not deletable.
          return;
       }
       // remove li
@@ -13665,7 +13783,7 @@ class MaterialList extends ListView {
 
    renameMaterial(ev, objects) {
       const dat = objects[0];
-      if (dat.material.default) {   // default material cannot be deleted
+      if (dat === this.default) {   // default material cannot be deleted
          return;
       }
       // run rename dialog
@@ -13862,7 +13980,7 @@ class EditCommandCombo extends EditCommand {
 /*!****************************!*\
   !*** ./js/wings3d_util.js ***!
   \****************************/
-/*! exports provided: closestPointToPlane, computeAngle, getAxisAngle, computeEdgeNormal, getAxisOrder, intersectTriangle, intersectRayAAExtent, intersectRaySphere, intersectPlaneSphere, intersectPlaneAABB, intersectPlaneHEdge, projectVec3, rotationFromToVec3, reflectionMat4, hexToRGB, hexToRGBA, hexToCssRGBA */
+/*! exports provided: closestPointToPlane, computeAngle, getAxisAngle, computeEdgeNormal, getAxisOrder, intersectTriangle, intersectRayAAExtent, intersectRaySphere, intersectPlaneSphere, intersectPlaneAABB, intersectPlaneHEdge, projectVec3, rotationFromToVec3, reflectionMat4, hexToRGB, hexToRGBA, hexToCssRGBA, get_uuidv4 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -13884,6 +14002,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "hexToRGB", function() { return hexToRGB; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "hexToRGBA", function() { return hexToRGBA; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "hexToCssRGBA", function() { return hexToCssRGBA; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "get_uuidv4", function() { return get_uuidv4; });
 
 
 
@@ -14239,6 +14358,16 @@ function hexToCssRGBA(hex) {  // microsft edge don't support #rrggbbaa format ye
    const a = parseInt(hex.slice(7, 9), 16) / 255;
    return `rgba(${r}, ${g}, ${b}, ${a})`;
 };
+
+/**
+ * https://stackoverflow.com/questions/105034/create-guid-uuid-in-javascript
+ * generate unique id using crypto functions to avoid collision.
+ */
+function get_uuidv4() {
+   return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
+     (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+   )
+ };
 
 
 
@@ -15727,6 +15856,15 @@ function init() {
    _wings3d_ui_js__WEBPACK_IMPORTED_MODULE_0__["bindMenuItem"](_wings3d_js__WEBPACK_IMPORTED_MODULE_5__["action"].duplicateMaterial.name, function(_ev) {
       materialList.duplicateMaterial(currentObjects);
     });
+   _wings3d_ui_js__WEBPACK_IMPORTED_MODULE_0__["bindMenuItem"](_wings3d_js__WEBPACK_IMPORTED_MODULE_5__["action"].assignMaterial.name, function(_ev) {
+      const cmd = new _wings3d_mads_js__WEBPACK_IMPORTED_MODULE_18__["GenericEditCommand"](currentMode(), currentMode().assignMaterial, [currentObjects[0]], 
+                                                        currentMode().undoAssignMaterial);
+      undoQueue( cmd );                                                 
+      cmd.doIt();  
+    });
+   _wings3d_ui_js__WEBPACK_IMPORTED_MODULE_0__["bindMenuItem"](_wings3d_js__WEBPACK_IMPORTED_MODULE_5__["action"].selectMaterial.name, function(ev){
+      
+    });
 
 
    // bind .dropdown, click event.
@@ -15822,6 +15960,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "MeshAllocator", function() { return MeshAllocator; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "WingedTopology", function() { return WingedTopology; });
 /* harmony import */ var _wings3d_model_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./wings3d_model.js */ "./js/wings3d_model.js");
+/* harmony import */ var _wings3d_material_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./wings3d_material.js */ "./js/wings3d_material.js");
 
 
 /* require glmatrix
@@ -15856,7 +15995,9 @@ __webpack_require__.r(__webpack_exports__);
 */
 "use strict";
 
-var WingedEdge = function(orgVert, toVert) {
+
+
+const WingedEdge = function(orgVert, toVert) {
    this.index = -1;
    this.left = new HalfEdge(orgVert, this);
    this.right = new HalfEdge(toVert, this);
@@ -15953,7 +16094,7 @@ WingedEdge.prototype.getNormal = function(normal) {
    vec3.normalize(normal, normal);
 };
 
-var HalfEdge = function(vert, edge) {  // should only be created by WingedEdge
+const HalfEdge = function(vert, edge) {  // should only be created by WingedEdge
    this.next = null;
 //   this.prev = null;       // not required, but very nice to have shortcut
    this.origin = vert;     // origin vertex, 
@@ -16032,7 +16173,7 @@ HalfEdge.prototype.eachEdge = function(callbackfn) {
 
 
 //
-var Vertex = function(pt) {
+const Vertex = function(pt) {
    this.vertex = pt;       // vec3. Float32Array. convenient function.
    this.outEdge = null;
  //  this.index = -1;
@@ -16241,12 +16382,13 @@ Vertex.prototype.getNormal = function(normal) {
 
 
 
-var Polygon = function(startEdge, size) {
+const Polygon = function(startEdge, size) {
    this.halfEdge = startEdge;
    this.numberOfVertex = size;       // how many vertex in the polygon
    this.update(); //this.computeNormal();
    this.index = -1;
    this.visible = true;
+   this.material = _wings3d_material_js__WEBPACK_IMPORTED_MODULE_1__["Material"].default;   // polygon with default material
 };
 
 // not on free list. not deleted and visible
@@ -16416,7 +16558,7 @@ Polygon.prototype.getCentroid = function(centroid) {
 //
 // 
 //
-let MeshAllocator = function(allocatedSize = 1024) {
+const MeshAllocator = function(allocatedSize = 1024) {
    var buf = new ArrayBuffer(allocatedSize*3 * Float32Array.BYTES_PER_ELEMENT);  // vertices in typedArray
    this.buf = { buffer: buf, data: new Float32Array(buf), len: 0, }; // vertex's pt buffer. to be used for Vertex.
    this.vertices = [];     // class Vertex
@@ -16638,7 +16780,7 @@ MeshAllocator.prototype.addAffectedEdgeAndFace = function(vertex) {
 // changed - so Vertex, WingedEdge, and Polygon is allocated from meshAllocator. So different 
 // Models on the same DraftBench can use the same Allocation. Merging becomes easier.
 //
-var WingedTopology = function(allocator) {
+const WingedTopology = function(allocator) {
    this.alloc = allocator;
    this.vertices = new Set;
    this.faces = new Set;
@@ -18538,9 +18680,9 @@ WingedTopology.prototype.undoHole = function(hole) {
 /***/ }),
 
 /***/ 0:
-/*!***********************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
-  !*** multi ./js/app.js ./js/wings3d_bodymads.js ./js/wings3d_boundingvolume.js ./js/wings3d_camera.js ./js/wings3d_draftbench.js ./js/wings3d_edgemads.js ./js/wings3d_facemads.js ./js/wings3d_gl.js ./js/wings3d_guidetutor.js ./js/wings3d_hotkey.js ./js/wings3d_i18n.js ./js/wings3d_importexport.js ./js/wings3d_interact.js ./js/wings3d_mads.js ./js/wings3d_model.js ./js/wings3d_multimads.js ./js/wings3d_render.js ./js/wings3d_shaderprog.js ./js/wings3d_similar.js ./js/wings3d_triangulate.js ./js/wings3d_ui.js ./js/wings3d_uitree.js ./js/wings3d_undo.js ./js/wings3d_util.js ./js/wings3d_vertexmads.js ./js/wings3d_view.js ./js/wings3d_wingededge.js ./js/wings3d.js ***!
-  \***********************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+/*!************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** multi ./js/app.js ./js/wings3d_bodymads.js ./js/wings3d_boundingvolume.js ./js/wings3d_camera.js ./js/wings3d_draftbench.js ./js/wings3d_edgemads.js ./js/wings3d_facemads.js ./js/wings3d_gl.js ./js/wings3d_guidetutor.js ./js/wings3d_hotkey.js ./js/wings3d_i18n.js ./js/wings3d_importexport.js ./js/wings3d_interact.js ./js/wings3d_mads.js ./js/wings3d_material.js ./js/wings3d_model.js ./js/wings3d_multimads.js ./js/wings3d_render.js ./js/wings3d_shaderprog.js ./js/wings3d_similar.js ./js/wings3d_triangulate.js ./js/wings3d_ui.js ./js/wings3d_uitree.js ./js/wings3d_undo.js ./js/wings3d_util.js ./js/wings3d_vertexmads.js ./js/wings3d_view.js ./js/wings3d_wingededge.js ./js/wings3d.js ***!
+  \************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -18558,6 +18700,7 @@ __webpack_require__(/*! ./js/wings3d_i18n.js */"./js/wings3d_i18n.js");
 __webpack_require__(/*! ./js/wings3d_importexport.js */"./js/wings3d_importexport.js");
 __webpack_require__(/*! ./js/wings3d_interact.js */"./js/wings3d_interact.js");
 __webpack_require__(/*! ./js/wings3d_mads.js */"./js/wings3d_mads.js");
+__webpack_require__(/*! ./js/wings3d_material.js */"./js/wings3d_material.js");
 __webpack_require__(/*! ./js/wings3d_model.js */"./js/wings3d_model.js");
 __webpack_require__(/*! ./js/wings3d_multimads.js */"./js/wings3d_multimads.js");
 __webpack_require__(/*! ./js/wings3d_render.js */"./js/wings3d_render.js");

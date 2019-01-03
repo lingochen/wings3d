@@ -17,6 +17,19 @@ class MultiMadsor extends Madsor {
       super('Multi');
    }
 
+   assignMaterial(materail) {
+      // log that we need to switch mode first.
+   }
+
+   selectMaterial(material) {
+      // or log, that, we should toggleMode first.
+
+      // toggleToFaceMode
+
+      // now run selectMaterial
+
+   }
+
    isFaceSelectable() { return true; }
    isEdgeSelectable() { return true; }
    isVertexSelectable() { return true; }

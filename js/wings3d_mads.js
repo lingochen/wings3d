@@ -383,6 +383,18 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       return this.doAll(selection, PreviewCage.prototype.toggleWireMode);
    }
 
+   assignMaterial(material) {
+      return this.snapshotAll(PreviewCage.prototype[`assign${this.modeName()}Material`], material);
+   }
+
+   undoAssignMaterial(saved) {
+      return this.doAll(saved, PreviewCage.prototype[`undoAssign${this.modeName()}Material`]);
+   }
+
+   selectMaterial(material) {
+      return this.snapshotAll(PreviewCage.prototype['select' + this.modeName() + 'Material'], material);
+   }
+
    isVertexSelectable() { return false; }
    isEdgeSelectable() { return false; }
    isFaceSelectable() { return false; }

@@ -4,10 +4,10 @@
 //
 //    update as little as possible on cpu side. 
 //
-// todo: done.
+// drawing pass:
 //    first pass: draw line (select, unselected) first (using triangles). 
 //
-//    second pass: draw polygon (selected, unseleced) using slightly optimized index.
+//    second pass: draw polygon (selected, unseleced(sort by material)) using slightly optimized index. 
 //
 //    third pass?: draw vertex.
 //

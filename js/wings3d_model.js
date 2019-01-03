@@ -3784,6 +3784,44 @@ PreviewCage.prototype.undoHardnessEdge = function(result) {
    }
 };
 
+
+/**
+ * assign given material to the current selected Face
+ * @param {Material} - the material that will assigned to the selected set.
+ */
+PreviewCage.prototype.assignFaceMaterial = function(material) {
+   const savedMaterials = new Map;
+
+   for (let polygon of this.selectedSet) {   // don't need to sorted.
+      if (material !== polygon.material) {
+         let array = savedMaterials.get(polygon.material);
+         if (!array) {
+            savedMaterials.set(polygon.material, [polygon]);
+         } else {
+            array.push(polygon);
+         }
+         // now assign Material
+         polygon.material = material;
+      }
+   }
+   if (savedMaterials.size > 0) {
+      return savedMaterials;
+   } else {
+      return undefined;
+   }
+};
+/**
+ * restore original material
+ * @param {map} - the original material to polygons array mapping
+ */
+PreviewCage.prototype.undoAssignFaceMaterial = function(savedMaterials) {
+   for (const [material, array] of savedMaterials.entries()) {
+      for (const polygon of array) {
+         polygon.material = material;
+      }
+   }
+};
+
 //----------------------------------------------------------------------------------------------------------
 
 

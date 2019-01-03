@@ -1070,6 +1070,15 @@ function init() {
    UI.bindMenuItem(Wings3D.action.duplicateMaterial.name, function(_ev) {
       materialList.duplicateMaterial(currentObjects);
     });
+   UI.bindMenuItem(Wings3D.action.assignMaterial.name, function(_ev) {
+      const cmd = new GenericEditCommand(currentMode(), currentMode().assignMaterial, [currentObjects[0]], 
+                                                        currentMode().undoAssignMaterial);
+      undoQueue( cmd );                                                 
+      cmd.doIt();  
+    });
+   UI.bindMenuItem(Wings3D.action.selectMaterial.name, function(ev){
+      
+    });
 
 
    // bind .dropdown, click event.
