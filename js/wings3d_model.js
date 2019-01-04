@@ -3822,6 +3822,7 @@ PreviewCage.prototype.undoAssignFaceMaterial = function(savedMaterials) {
    }
 };
 
+
 //----------------------------------------------------------------------------------------------------------
 
 

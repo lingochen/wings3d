@@ -1071,10 +1071,14 @@ function init() {
       materialList.duplicateMaterial(currentObjects);
     });
    UI.bindMenuItem(Wings3D.action.assignMaterial.name, function(_ev) {
-      const cmd = new GenericEditCommand(currentMode(), currentMode().assignMaterial, [currentObjects[0]], 
-                                                        currentMode().undoAssignMaterial);
-      undoQueue( cmd );                                                 
-      cmd.doIt();  
+      if (mode.current === mode.face) {
+         const cmd = new GenericEditCommand(currentMode(), currentMode().assignMaterial, [currentObjects[0]], 
+                                                           currentMode().undoAssignMaterial);
+         undoQueue( cmd );                                                 
+         cmd.doIt();
+      } else { // help
+         help('Cannot Assign Material without selecting Face');
+      }  
     });
    UI.bindMenuItem(Wings3D.action.selectMaterial.name, function(ev){
       

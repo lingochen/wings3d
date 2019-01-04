@@ -216,6 +216,14 @@ class FaceMadsor extends Madsor {
       View.restoreFaceMode(snapshots);
    }
 
+   assignMaterial(material) {
+      return this.snapshotAll(PreviewCage.prototype.assignFaceMaterial, material);
+   }
+
+   undoAssignMaterial(saved) {
+      return this.doAll(saved, PreviewCage.prototype.undoAssignFaceMaterial);
+   }
+
    dragSelect(cage, hilite, selectArray, onOff) {
       if (hilite.face !== null) {
         if (cage.dragSelectFace(hilite.face, onOff)) {
