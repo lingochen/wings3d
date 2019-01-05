@@ -1081,10 +1081,9 @@ function init() {
       }  
     });
    UI.bindMenuItem(Wings3D.action.selectMaterial.name, function(ev){
-      const cmd = new GenericEditCommand(currentMode(), currentMode().selectMaterial, [currentObjects[0]],
-                                                        currentMode().undoDoSelection);
+      const cmd = currentMode().selectMaterialCmd([currentObjects[0]]);
+      cmd.doIt();    // needs to run first                                                
       undoQueue( cmd );                                                 
-      cmd.doIt();
     });
 
 

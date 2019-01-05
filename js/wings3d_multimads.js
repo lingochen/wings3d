@@ -17,17 +17,11 @@ class MultiMadsor extends Madsor {
       super('Multi');
    }
 
-   assignMaterial(materail) {
-      // log that we need to switch mode first.
-   }
-
-   selectMaterial(material) {
-      // or log, that, we should toggleMode first.
-
-      // toggleToFaceMode
-
-      // now run selectMaterial
-
+   selectMaterialCmd(material) { // override
+      // toggleToFaceMode - queue an extra command.
+      View.toggleFaceMode();
+      // now run faceMode.selectMaterial
+      return View.currentMode().selectMaterialCmd(material);
    }
 
    isFaceSelectable() { return true; }

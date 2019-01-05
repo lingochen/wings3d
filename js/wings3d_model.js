@@ -3877,6 +3877,22 @@ PreviewCage.prototype.selectVertexMaterial = function(material) {
    return snapshot;
 };
 
+/** 
+ * select body that contain polygon with the same input material
+*/
+PreviewCage.prototype.selectBodyMaterial = function(material) {
+   const snapshot = this._resetSelectBody();
+
+   for (let polygon of this.geometry.faces) {
+      if (polygon.material === material) {
+         this.selectBody();
+         break;
+      }
+   }
+
+   return snapshot;
+};
+
 
 //----------------------------------------------------------------------------------------------------------
 

@@ -393,7 +393,11 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       return this.doAll(selection, PreviewCage.prototype.toggleWireMode);
    }
 
-   selectMaterial(material) {
+   selectMaterialCmd(material) {
+      return new GenericEditCommand(this, this._selectMaterial, material, this.undoDoSelection);
+   }
+
+   _selectMaterial(material) {
       return this.snapshotSelectable(PreviewCage.prototype['select' + this.modeName() + 'Material'], material);
    }
 
