@@ -56,19 +56,19 @@ class VertexMadsor extends Madsor {
 
    // get selected vertex snapshot. for doing, and redo queue. 
    snapshotPosition() {
-      return this.snapshotAll(PreviewCage.prototype.snapshotVertexPosition);
+      return this.snapshotSelected(PreviewCage.prototype.snapshotVertexPosition);
    }
 
    snapshotPositionAndNormal() {
-      return this.snapshotAll(PreviewCage.prototype.snapshotVertexPositionAndNormal);
+      return this.snapshotSelected(PreviewCage.prototype.snapshotVertexPositionAndNormal);
    }
 
    snapshotTransformGroup() {
-      return this.snapshotAll(PreviewCage.prototype.snapshotTransformVertexGroup);
+      return this.snapshotSelected(PreviewCage.prototype.snapshotTransformVertexGroup);
    }
 
    bevel() {
-      let snapshots = this.snapshotAll(PreviewCage.prototype.bevelVertex);
+      let snapshots = this.snapshotSelected(PreviewCage.prototype.bevelVertex);
       // change to facemode.
       View.restoreFaceMode(snapshots);
       return snapshots;
@@ -85,7 +85,7 @@ class VertexMadsor extends Madsor {
 
    // extrude Vertex
    extrude() {
-      return this.snapshotAll(PreviewCage.prototype.extrudeVertex);
+      return this.snapshotSelected(PreviewCage.prototype.extrudeVertex);
    }
    undoExtrude(extrudeData) {
       this.doAll(extrudeData, PreviewCage.prototype.undoExtrudeVertex);
@@ -106,7 +106,7 @@ class VertexMadsor extends Madsor {
    }
 
    connect() {
-      return this.snapshotAll(PreviewCage.prototype.connectVertex);
+      return this.snapshotSelected(PreviewCage.prototype.connectVertex);
    };
 
    dissolveConnect(snapshots) {
@@ -114,7 +114,7 @@ class VertexMadsor extends Madsor {
    }
 
    dissolve() {
-      return this.snapshotAll(PreviewCage.prototype.dissolveSelectedVertex);
+      return this.snapshotSelected(PreviewCage.prototype.dissolveSelectedVertex);
    }
 
    undoDissolve(dissolveArray) {
@@ -122,7 +122,7 @@ class VertexMadsor extends Madsor {
    }
 
    flatten(axis) {
-      return this.snapshotAll(PreviewCage.prototype.flattenVertex, axis);
+      return this.snapshotSelected(PreviewCage.prototype.flattenVertex, axis);
    }
 
    dragSelect(cage, hilite, selectArray, onOff) {
@@ -156,16 +156,16 @@ class VertexMadsor extends Madsor {
       var snapshots;
       if (toMadsor instanceof FaceMadsor) {
          redoFn = View.restoreFaceMode;
-         snapshots = this.snapshotAll(PreviewCage.prototype.changeFromVertexToFaceSelect);
+         snapshots = this.snapshotSelected(PreviewCage.prototype.changeFromVertexToFaceSelect);
       } else if (toMadsor instanceof EdgeMadsor) {
          redoFn = View.restoreEdgeMode;
-         snapshots = this.snapshotAll(PreviewCage.prototype.changeFromVertexToEdgeSelect);
+         snapshots = this.snapshotSelected(PreviewCage.prototype.changeFromVertexToEdgeSelect);
       } else if (toMadsor instanceof BodyMadsor) {
          redoFn = View.restoreBodyMode;
-         snapshots = this.snapshotAll(PreviewCage.prototype.changeFromVertexToBodySelect);
+         snapshots = this.snapshotSelected(PreviewCage.prototype.changeFromVertexToBodySelect);
       } else {
          redoFn = View.restoreMultiMode;
-         snapshots = this.snapshotAll(PreviewCage.prototype.changeFromVertexToMultiSelect);
+         snapshots = this.snapshotSelected(PreviewCage.prototype.changeFromVertexToMultiSelect);
       }
       View.undoQueue( new ToggleModeCommand(redoFn, View.restoreVertexMode, snapshots) );
    }

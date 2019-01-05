@@ -70,7 +70,7 @@ class FaceMadsor extends Madsor {
          View.attachHandlerMouseMove(new IntrudeFaceHandler(this));
        });
       UI.bindMenuItem(action.faceLift.name, (ev) => {
-         const snapshots = this.snapshotAll(PreviewCage.prototype.snapshotTransformFaceGroup);
+         const snapshots = this.snapshotSelected(PreviewCage.prototype.snapshotTransformFaceGroup);
          if (snapshots.length === 1) {
             const snapshot = snapshots[0];
             View.attachHandlerMouseSelect(new LiftFaceHandler(this, snapshot.preview));
@@ -107,19 +107,19 @@ class FaceMadsor extends Madsor {
 
    // get selected Face's vertex snapshot. for doing, and redo queue. 
    snapshotPosition() {
-      return this.snapshotAll(PreviewCage.prototype.snapshotFacePosition);
+      return this.snapshotSelected(PreviewCage.prototype.snapshotFacePosition);
    }
 
    snapshotPositionAndNormal() {
-      return this.snapshotAll(PreviewCage.prototype.snapshotFacePositionAndNormal);
+      return this.snapshotSelected(PreviewCage.prototype.snapshotFacePositionAndNormal);
    }
 
    snapshotTransformGroup() {
-      return this.snapshotAll(PreviewCage.prototype.snapshotTransformFaceGroup);
+      return this.snapshotSelected(PreviewCage.prototype.snapshotTransformFaceGroup);
    }
 
    bevel() {
-      return this.snapshotAll(PreviewCage.prototype.bevelFace);
+      return this.snapshotSelected(PreviewCage.prototype.bevelFace);
    }
 
    undoBevel(snapshots, selection) {
@@ -132,7 +132,7 @@ class FaceMadsor extends Madsor {
    }
 
    bump() {
-      return this.snapshotAll(PreviewCage.prototype.bumpFace);
+      return this.snapshotSelected(PreviewCage.prototype.bumpFace);
    }
 
    undoBump(snapshots) {
@@ -141,7 +141,7 @@ class FaceMadsor extends Madsor {
 
    // extrude Face
    extrude() {
-      return this.snapshotAll(PreviewCage.prototype.extrudeFace);
+      return this.snapshotSelected(PreviewCage.prototype.extrudeFace);
    }
 
    undoExtrude(extrudeEdgesContoursArray) {
@@ -154,7 +154,7 @@ class FaceMadsor extends Madsor {
 
    // face dissolve mode
    dissolve() {
-      return this.snapshotAll(PreviewCage.prototype.dissolveSelectedFace);
+      return this.snapshotSelected(PreviewCage.prototype.dissolveSelectedFace);
    }
    undoDissolve(dissolveArray) {
       this.doAll(dissolveArray, PreviewCage.prototype.undoDissolveFace);
@@ -162,7 +162,7 @@ class FaceMadsor extends Madsor {
 
    // face collapse 
    collapse() {
-      return this.snapshotAll(PreviewCage.prototype.collapseSelectedFace);
+      return this.snapshotSelected(PreviewCage.prototype.collapseSelectedFace);
    }
    undoCollapse(collapseArray) {
       this.doAll(collapseArray, PreviewCage.prototype.undoCollapseFace);
@@ -170,7 +170,7 @@ class FaceMadsor extends Madsor {
 
    // intrude, 
    intrude() {
-      return this.snapshotAll(PreviewCage.prototype.intrudeFace);
+      return this.snapshotSelected(PreviewCage.prototype.intrudeFace);
    }
    undoIntrude(snapshots) {
       return this.doAll(snapshots, PreviewCage.prototype.undoIntrudeFace);
@@ -190,11 +190,11 @@ class FaceMadsor extends Madsor {
 
    // Inset
    inset() {
-      return this.snapshotAll(PreviewCage.prototype.insetFace);
+      return this.snapshotSelected(PreviewCage.prototype.insetFace);
    }
 
    mirror() {
-      return this.snapshotAll(PreviewCage.prototype.mirrorFace);
+      return this.snapshotSelected(PreviewCage.prototype.mirrorFace);
    }
 
    undoMirror(snapshots) {
@@ -202,14 +202,14 @@ class FaceMadsor extends Madsor {
    }
 
    flatten(axis) {
-      return this.snapshotAll(PreviewCage.prototype.flattenFace, axis);
+      return this.snapshotSelected(PreviewCage.prototype.flattenFace, axis);
    }
 
    planeCuttable(plane) {
       return this.resultAll(PreviewCage.prototype.planeCuttableFace, plane);
    }
    planeCut(plane) {
-      return this.snapshotAll(PreviewCage.prototype.planeCutFace, plane);
+      return this.snapshotSelected(PreviewCage.prototype.planeCutFace, plane);
    }
    undoPlaneCut(snapshots) { // undo of splitEdge.
       this.doAll(snapshots, PreviewCage.prototype.collapseSplitOrBevelEdge);
@@ -217,7 +217,7 @@ class FaceMadsor extends Madsor {
    }
 
    assignMaterial(material) {
-      return this.snapshotAll(PreviewCage.prototype.assignFaceMaterial, material);
+      return this.snapshotSelected(PreviewCage.prototype.assignFaceMaterial, material);
    }
 
    undoAssignMaterial(saved) {
@@ -256,16 +256,16 @@ class FaceMadsor extends Madsor {
       var snapshots;
       if (toMadsor instanceof EdgeMadsor) {
          redoFn = View.restoreEdgeMode;
-         snapshots = this.snapshotAll(PreviewCage.prototype.changeFromFaceToEdgeSelect);
+         snapshots = this.snapshotSelected(PreviewCage.prototype.changeFromFaceToEdgeSelect);
       } else if (toMadsor instanceof VertexMadsor) {
          redoFn = View.restoreVertexMode;
-         snapshots = this.snapshotAll(PreviewCage.prototype.changeFromFaceToVertexSelect);
+         snapshots = this.snapshotSelected(PreviewCage.prototype.changeFromFaceToVertexSelect);
       } else if (toMadsor instanceof BodyMadsor) {
          redoFn = View.restoreBodyMode;
-         snapshots = this.snapshotAll(PreviewCage.prototype.changeFromFaceToBodySelect);
+         snapshots = this.snapshotSelected(PreviewCage.prototype.changeFromFaceToBodySelect);
       } else {
          redoFn = View.restoreMultiMode;
-         snapshots = this.snapshotAll(PreviewCage.prototype.changeFromFaceToMultiSelect);
+         snapshots = this.snapshotSelected(PreviewCage.prototype.changeFromFaceToMultiSelect);
       }
       View.undoQueue(new ToggleModeCommand(redoFn, View.restoreFaceMode, snapshots));
    }

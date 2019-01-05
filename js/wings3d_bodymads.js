@@ -110,11 +110,11 @@ class BodyMadsor extends Madsor {
    }
 
    snapshotPosition() {
-      return this.snapshotAll(PreviewCage.prototype.snapshotBodyPosition);
+      return this.snapshotSelected(PreviewCage.prototype.snapshotBodyPosition);
    }
 
    snapshotTransformGroup() {
-      return this.snapshotAll(PreviewCage.prototype.snapshotTransformBodyGroup);
+      return this.snapshotSelected(PreviewCage.prototype.snapshotTransformBodyGroup);
    }
 
    combine(cageSelection) {
@@ -189,7 +189,7 @@ class BodyMadsor extends Madsor {
       return this.resultAll(PreviewCage.prototype.planeCuttableFace, plane);
    }
    planeCut(plane) {
-      return this.snapshotAll(PreviewCage.prototype.planeCutBody, plane);
+      return this.snapshotSelected(PreviewCage.prototype.planeCutBody, plane);
    }
    undoPlaneCut(snapshots) { // undo of splitEdge.
       this.doAll(snapshots, PreviewCage.prototype.collapseSplitOrBevelEdge);
@@ -197,7 +197,7 @@ class BodyMadsor extends Madsor {
    }
 
    slice(planeNormal, numberOfPart) {
-      const snapshots = this.snapshotAll(PreviewCage.prototype.sliceBody, planeNormal, numberOfPart);
+      const snapshots = this.snapshotSelected(PreviewCage.prototype.sliceBody, planeNormal, numberOfPart);
       View.restoreVertexMode(snapshots);
       return snapshots;
    }
@@ -262,7 +262,7 @@ class BodyMadsor extends Madsor {
    }
 
    centroid() {
-      return this.snapshotAll(PreviewCage.prototype.bodyCentroid);
+      return this.snapshotSelected(PreviewCage.prototype.bodyCentroid);
    }
 
    dragSelect(cage, hilite, selectArray, onOff) {
@@ -336,16 +336,16 @@ class BodyMadsor extends Madsor {
       var snapshots;
       if (toMadsor instanceof FaceMadsor) {
          redoFn = View.restoreFaceMode;
-         snapshots = this.snapshotAll(PreviewCage.prototype.changeFromBodyToFaceSelect);
+         snapshots = this.snapshotSelected(PreviewCage.prototype.changeFromBodyToFaceSelect);
       } else if (toMadsor instanceof VertexMadsor) {
          redoFn = View.restoreVertexMode;
-         snapshots = this.snapshotAll(PreviewCage.prototype.changeFromBodyToVertexSelect);
+         snapshots = this.snapshotSelected(PreviewCage.prototype.changeFromBodyToVertexSelect);
       } else if (toMadsor instanceof EdgeMadsor) {
          redoFn = View.restoreEdgeMode;
-         snapshots = this.snapshotAll(PreviewCage.prototype.changeFromBodyToEdgeSelect);
+         snapshots = this.snapshotSelected(PreviewCage.prototype.changeFromBodyToEdgeSelect);
       } else {
          redoFn = View.restoreMultiMode;
-         snapshots = this.snapshotAll(PreviewCage.prototype.changeFromBodyToMultiSelect);
+         snapshots = this.snapshotSelected(PreviewCage.prototype.changeFromBodyToMultiSelect);
       }
       View.undoQueue(new ToggleModeCommand(redoFn, View.restoreBodyMode, snapshots));
    }

@@ -150,15 +150,25 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       }
    }
 
-   snapshotAll(func, ...args) {
+   snapshotSelected(func, ...args) {
+      const snapshots = [];
+      //for (let preview of View.getWorld()) {
+      for (let preview of this.selectedCage()) {
+         const snapshot = func.call(preview, ...args);
+         if (snapshot || (snapshot === false)) {
+            snapshots.push( {preview: preview, snapshot: snapshot} );
+         }
+      }
+      return snapshots;
+   }
+
+   snapshotSelectable(func, ...args) {
       const snapshots = [];
       //for (let preview of View.getWorld()) {
       for (let preview of this.selectableCage()) {
-         if (preview.hasSelection()) {
-            const snapshot = func.call(preview, ...args);
-            if (snapshot || (snapshot === false)) {
-               snapshots.push( {preview: preview, snapshot: snapshot} );
-            }
+         const snapshot = func.call(preview, ...args);
+         if (snapshot || (snapshot === false)) {
+            snapshots.push( {preview: preview, snapshot: snapshot} );
          }
       }
       return snapshots;
@@ -288,7 +298,7 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
    }
 
    snapshotSelection() {
-      return this.snapshotAll(PreviewCage.prototype['snapshotSelection' + this.modeName()]);
+      return this.snapshotSelected(PreviewCage.prototype['snapshotSelection' + this.modeName()]);
    }
 
    _doSelection(doName, forceAll=false) {
@@ -384,7 +394,7 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
    }
 
    selectMaterial(material) {
-      return this.snapshotAll(PreviewCage.prototype['select' + this.modeName() + 'Material'], material);
+      return this.snapshotSelectable(PreviewCage.prototype['select' + this.modeName() + 'Material'], material);
    }
 
    isVertexSelectable() { return false; }

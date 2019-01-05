@@ -3839,6 +3839,44 @@ PreviewCage.prototype.selectFaceMaterial = function(material) {
    return snapshot;
 };
 
+/**
+ * select line that has polygon with the same input material.
+ * @param (Material) - input checking material 
+ */
+PreviewCage.prototype.selectEdgeMaterial = function(material) {
+   const snapshot = this._resetSelectEdge();
+
+   for (let wEdge of this.geometry.edges) {
+      for (let hEdge of wEdge) {
+         if (hEdge.face && (hEdge.face.material === material)) {
+            this.selectEdge(hEdge);
+            break;
+         }
+      }
+   }
+
+   return snapshot;
+};
+
+/**
+ * select vertext that has adjacent polygon with the same input material
+ * @param (Material) - input checking material.
+ */
+PreviewCage.prototype.selectVertexMaterial = function(material) {
+   const snapshot = this._resetSelectVertex();
+
+   for (let vertex of this.geometry.vertices) {
+      for (let outEdge of vertex.edgeRing()) {
+         if (outEdge.face && (outEdge.face.material === material)) {
+            this.selectVertex(vertex);
+            break;
+         }
+      }
+   }
+
+   return snapshot;
+};
+
 
 //----------------------------------------------------------------------------------------------------------
 

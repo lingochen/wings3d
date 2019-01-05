@@ -49,16 +49,16 @@ class MultiMadsor extends Madsor {
       let snapshots;
       if (toMadsor instanceof FaceMadsor) {
          redoFn = View.restoreFaceMode;
-         snapshots = this.snapshotAll(PreviewCage.prototype.changeFromMultiToFaceSelect);
+         snapshots = this.snapshotSelected(PreviewCage.prototype.changeFromMultiToFaceSelect);
       } else if (toMadsor instanceof VertexMadsor) {
          redoFn = View.restoreVertexMode;
-         snapshots = this.snapshotAll(PreviewCage.prototype.changeFromMultiToVertexSelect);
+         snapshots = this.snapshotSelected(PreviewCage.prototype.changeFromMultiToVertexSelect);
       } else if (toMadsor instanceof EdgeMadsor) {
          redoFn = View.restoreEdgeMode;
-         snapshots = this.snapshotAll(PreviewCage.prototype.changeFromMultiToEdgeSelect);
+         snapshots = this.snapshotSelected(PreviewCage.prototype.changeFromMultiToEdgeSelect);
       } else { // bodyMadsor
          redoFn = View.restoreEdgeMode;
-         snapshots = this.snapshotAll(PreviewCage.prototype.changeFromMultiToBodySelect);
+         snapshots = this.snapshotSelected(PreviewCage.prototype.changeFromMultiToBodySelect);
       }
       View.undoQueue(new ToggleModeCommand(redoFn, View.restoreMultiMode, snapshots));
    }
