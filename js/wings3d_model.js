@@ -3823,6 +3823,23 @@ PreviewCage.prototype.undoAssignFaceMaterial = function(savedMaterials) {
 };
 
 
+/** 
+ * select polygon that has the input material.
+ * @param (Material) - checking material.
+*/
+PreviewCage.prototype.selectFaceMaterial = function(material) {
+   const snapshot = this._resetSelectFace();
+
+   for (let polygon of this.geometry.faces) {
+      if (polygon.material === material) {
+         this.selectFace(polygon);
+      }
+   }
+
+   return snapshot;
+};
+
+
 //----------------------------------------------------------------------------------------------------------
 
 
