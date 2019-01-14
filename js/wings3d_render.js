@@ -350,7 +350,7 @@ function initMiniAxis(gl, inModelView) {
    mat4.ortho(groundAxisProg.miniAxisVBO.projection, -ratio, ratio, -1.0, 1.0, 0.00001,  10000000.0);
 }
 function renderMiniAxis(gl, inModelView) {
-   if (View.prop.miniAxis) {
+   if (View.prop.showMiniAxis) {
       var ratio = gl.canvas.clientWidth / gl.canvas.clientHeight;
       // set current rotation.
       var modelView = groundAxisProg.miniAxisVBO.modelView;

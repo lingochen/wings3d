@@ -8,6 +8,8 @@ import {ezFetch, onReady} from './wings3d.js';
 
 
 const i18nAttrib = "data-i18n";
+const tooltipAttrib = "data-tooltip";
+const menuIdAttrib = "data-menuid";
 const newLine = "\n";
 let LMB = "LMB: ";
 let MMB = "MMB: ";
@@ -18,26 +20,61 @@ let defaultMessages;
 let currentMessages;
 
 function getTemplate(key) {
-   let template = currentMessages.get(key);
+   let template = currentMessages.msgstr.get(key);
    if (!template && defaultMessages) {
-      return defaultMessages.get(key);
+      return defaultMessages.msgstr.get(key);
    }
    return template;
 }
-
+function getTooltip(key) {
+   let title = currentMessages.tooltip.get(key);
+   if (!title && defaultMessages) {
+      return 
+   }
+}
 function helpTooltip(ev) {
    const text = this.getAttribute("title");
    const helpText = text.replace(newLine, "    ");
    help(helpText);
 }
+function setTooltip(elem, tooltip) {
+   let warning = true;
+   // now prepare tooltips
+   let content = getTooltip(tooltip);
+   if (content) {
+      warning = false;
+      let text = "";
+      if (Array.isArray(content)) {
+         if (content[0]) {
+            text += LMB + content[0];
+         }
+         if (content[1]) {
+            text += newLine + MMB + content[1];
+         }
+         if (content[2]) {
+            text += newLine + RMB + content[2];
+         }
+      } else { // must be string
+         text = content;
+      }
+      elem.setAttribute("title", text);   // use title tooltip directly
+      // should we register/unregister mouseover event?
+      elem.removeEventListener("mouseover", helpTooltip);
+      elem.addEventListener("mouseover", helpTooltip);
+   }
+}
+
 function* entries(obj) {
    for (let key in obj) {
       yield [key, obj[key]];
    }
 }
-function resetStaticElements(langObj) {  
-   // first copy to currentMessages.
-   currentMessages = new Map(entries(langObj));
+function resetStaticElements(langObj) {
+   // instantiated category
+   currentMessages = {msgstr: new Map, tooltip: new Map};   // provide empty default
+   for (let [key, value] of entries(langObj)) {
+      currentMessages[key] = new Map(entries(value));
+   }
    if (!defaultMessages) {
       defaultMessages = currentMessages;
    }
@@ -53,33 +90,21 @@ function resetStaticElements(langObj) {
          elem.textContent = content;
          warning = false;
       } 
-      // now prepare tooltips
-      let tooltip = key + "_tooltip";
-      content = getTemplate(tooltip);
-      if (content) {
-         warning = false;
-         let text = "";
-         if (Array.isArray(content)) {
-            if (content[0]) {
-               text += LMB + content[0];
-            }
-            if (content[1]) {
-               text += newLine + MMB + content[1];
-            }
-            if (content[2]) {
-               text += newLine + RMB + content[2];
-            }
-         } else { // must be string
-            text = content;
-         }
-         elem.setAttribute("title", text);   // use title tooltip directly
-         // should we register/unregister mouseover event?
-         elem.removeEventListener("mouseover", helpTooltip);
-         elem.addEventListener("mouseover", helpTooltip);
-      }
       if (warning) {
          console.log(`Warning: ${key} has no translation`);
       }
+   }
+   // set tooltip.
+   allDom = document.querySelectorAll(`[${menuIdAttrib}]`);
+   for (let elem of allDom) {
+      let tooltip = elem.getAttribute(menuIdAttrib);
+      setTooltip(elem, tooltip);
+   }
+   // set tooltip for data-tooltip
+   allDom = document.querySelectorAll(`[${tooltipAttrib}]`);
+   for (let elem of allDom) {
+      let tooltip = elem.getAttribute(tooltipAttrib);
+      setTooltip(elem, tooltip);
    }
 }
 
@@ -154,7 +179,30 @@ export {
 
 // init
 onReady(()=> {
-   // init
+   // init i18n-data with textContent.
+   let allDom = document.querySelectorAll(`[${i18nAttrib}]`);
+   for (let elem of allDom) {
+      let i18n = elem.getAttribute(i18nAttrib);
+      if (!i18n) { // not empty string
+         i18n = elem.textContent.replace(/ /g,'');
+         i18n = i18n.replace(/^.{1}/g, i18n[0].toLowerCase());
+         elem.setAttribute(i18nAttrib, i18n);
+      }
+      if (elem.hasAttribute(tooltipAttrib)) {
+         elem.setAttribute(tooltipAttrib, i18n);
+      }
+   }
+   // init tooltip - 
+   allDom = document.querySelectorAll(`[${tooltipAttrib}=""]`);
+   for (let elem of allDom) {
+      let str = elem.getAttribute(tooltipAttrib);
+      if (!str) { // empty tooltip, needs to setup again.
+         str = elem.textContent.replace(/ /g,'');
+         str = str.replace(/^.{1}/g, str[0].toLowerCase());
+         elem.setAttribute(tooltipAttrib, str);
+      }
+   }
+   // now set locale.
    setCurrentLocale("en");
    // hookup to language select
    let selectLang = document.querySelector('#selectLanguage');

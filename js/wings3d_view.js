@@ -56,7 +56,7 @@ const prop = {
       //currentView: DEFAULT_VIEW,   // goes to camera
       allowRotation: true,
       allowInfoText: true,
-      miniAxis: true
+      showMiniAxis: true
    };
 const propExtend = {
    numberOfLights: 1,
@@ -971,7 +971,7 @@ function init() {
    // bind geometryGraph
    geometryGraph = TreeView.getTreeView('#objectListLabel','#objectList', world);
    // selectObject
-   Wings3D.bindAction(null, 0, Wings3D.action.toggleObjectSelect.name, (ev) => {
+   Wings3D.bindAction([], 0, Wings3D.action.toggleObjectSelect.name, (ev) => {
       if (isMultiMode()) {
          toggleFaceMode(); // todo: see if we can capture the toggling cmd.
       }
@@ -982,7 +982,7 @@ function init() {
       undoQueueCombo([toggle, cmd]);
     });
    // hide/show Object
-   Wings3D.bindAction(null, 0, Wings3D.action.toggleObjectVisibility.name, (ev) => {
+   Wings3D.bindAction([], 0, Wings3D.action.toggleObjectVisibility.name, (ev) => {
       const toggle = new ToggleCheckbox(ev.target);
       const cmd = new GenericEditCommand(currentMode(), currentMode().toggleObjectVisibility, [currentObjects, ev.target], 
                                                         currentMode().undoObjectVisibility);
@@ -990,7 +990,7 @@ function init() {
       undoQueueCombo([toggle, cmd]);
     });
    // lock/unlock Object
-   Wings3D.bindAction(null, 0, Wings3D.action.toggleObjectLock.name, (ev) => {
+   Wings3D.bindAction([], 0, Wings3D.action.toggleObjectLock.name, (ev) => {
       const toggle = new ToggleCheckbox(ev.target);
       const cmd = new GenericEditCommand(currentMode(), currentMode().toggleObjectLock, [currentObjects, ev.target], 
                                                         currentMode().undoToggleObjectLock);
@@ -998,7 +998,7 @@ function init() {
       undoQueueCombo([toggle, cmd]);
     });
    // toggle wire only mode.
-   Wings3D.bindAction(null, 0, Wings3D.action.toggleWireMode.name, (ev)=>{
+   Wings3D.bindAction([], 0, Wings3D.action.toggleWireMode.name, (ev)=>{
       const toggle = new ToggleCheckbox(ev.target);
       const cmd = new GenericEditCommand(currentMode(), currentMode().toggleObjectWireMode, [currentObjects, ev.target.checked], 
                                                         currentMode().undoToggleObjectWireMode);
@@ -1102,10 +1102,12 @@ function init() {
    // bind li.dropside > a.
    buttons = document.querySelectorAll("li.dropside > a");
    for (let button of buttons) {
-      if (button.id) {
+      const id = button.id;
+      if (id) {
+         button.setAttribute('data-menuid', id);   // copy to data-menuid, duct-taping.
          let ul = button.nextElementSibling;  // popupMenu
          if (ul && ul.classList.contains("popup") && ul.classList.contains("menu")) {
-            UI.bindMenuItem(button.id, function(ev) {
+            UI.bindMenuItem(id, function(ev) {
                UI.toggleSubmenu(ul);  // slide in popup menu, replace the original one
                ev.stopPropagation();
              });

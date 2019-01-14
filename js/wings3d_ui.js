@@ -6,46 +6,48 @@ import * as Hotkey from './wings3d_hotkey.js';
 import * as Wings3D from './wings3d.js';
 
 
-function _bindMenuItem(mode, menuItem, button, id, fn, hotkey, meta) {
-   Wings3D.bindAction(menuItem, button, id, fn);
+const menuIdAttrib = "data-menuId";
+function _bindMenuItem(mode, menuItems, button, id, fn, hotkey, meta) {
+   Wings3D.bindAction(menuItems, button, id, fn);
    if (hotkey !== undefined) {
       Hotkey.setHotkey(mode, id, hotkey, meta);
       // now put it on meta
       const data = meta ? `${meta}+${hotkey}` : hotkey;
-      menuItem.classList.add("hotkey");
-      menuItem.setAttribute("data-hotkey", data.toUpperCase());
+      for (let menuItem of menuItems) {
+         menuItem.classList.add("hotkey");
+         menuItem.setAttribute("data-hotkey", data.toUpperCase());
+      }
    }
 }
 
-
 function bindMenuItem(id, fn, hotkey, meta) {
-   const menuItem = document.querySelector('#' + id);
-   if (menuItem) {
-      _bindMenuItem(null, menuItem, 0, id, fn, hotkey, meta);
+   const menuItems = document.querySelectorAll(`[${menuIdAttrib}="${id}"]`);
+   if (menuItems) {
+      _bindMenuItem(null, menuItems, 0, id, fn, hotkey, meta);
    } else {
       console.log("Click: could not find menuItem " + id);
    }
 }
 function bindMenuItemMMB(id, fn) {
-   const menuItem = document.querySelector('#' + id);
-   if (menuItem) {
-      _bindMenuItem(null, menuItem, 1, id, fn);
+   const menuItem = document.querySelectorAll(`[${menuIdAttrib}="${id}"]`);
+   if (menuItems) {
+      _bindMenuItem(null, menuItems, 1, id, fn);
    } else {
       console.log("AuxClick: could not find menuItem " + id);
    }
 }
 function bindMenuItemRMB(id, fn) {
-   const menuItem = document.querySelector('#' + id);
-   if (menuItem) {
-      _bindMenuItem(null, menuItem, 2, id, fn);
+   const menuItems = document.querySelectorAll(`[${menuIdAttrib}="${id}"]`);
+   if (menuItems) {
+      _bindMenuItem(null, menuItems, 2, id, fn);
    } else {
       console.log("ContextClick: could not find menuItem " + id);
    }
 }
 function bindMenuItemMode(id, fn, mode, hotkey, meta) {
-   const menuItem = document.querySelector('#' + id);
-   if (menuItem) {
-      _bindMenuItem(mode, menuItem, 0, id, fn, hotkey, meta);
+   const menuItems = document.querySelectorAll(`[${menuIdAttrib}="${id}"]`);
+   if (menuItems) {
+      _bindMenuItem(mode, menuItems, 0, id, fn, hotkey, meta);
    } else {
       console.log("Click: could not find menuItem " + id);
    }
@@ -54,7 +56,7 @@ function bindMenuItemMode(id, fn, mode, hotkey, meta) {
 
 
 function addMenuItem(menuId, id, menuItemText, fn, hotkey, meta) {
-   const menu = document.querySelector('#' + menuId);
+   const menu = document.querySelector(`[${menuIdAttrib}="${menuId}"]`);
    // insert the menuItem 
    const menuItem = document.createElement('li');
    const a = document.createElement('a');

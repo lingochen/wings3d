@@ -53,7 +53,7 @@ class CameraMouseMoveHandler extends MouseMoveHandler {
          whRotationSpeed: 0.15,
          highLightZoomAim: false,
          // additional pref
-         wheelZoom: true,
+         wheelZooms: true,
          wheelZoomFactorAlt: 0.0005,
          wheelZoomFactor: 0.005
       };
@@ -275,7 +275,7 @@ generic_event(_, _, _) -> keep.
    };
 
    function wheelRotate(dx, dy) {
-      if (pref.wheelZoom && pref.wheelAdds) {
+      if (pref.wheelZooms && pref.wheelAdds) {
          var s = 2 * pref.wheelRotationSpeed;
          view.azimuth = view.azimuth + (dx * s);
          view.elevation = view.elevation + (dy * s);
@@ -292,7 +292,7 @@ generic_event(_, _, _) -> keep.
    };
 
    function zoomStepAlt(dir) {
-      if (pref.wheelZoom) {
+      if (pref.wheelZooms) {
 		   wheelZoom(pref.wheelZoomFactorAlt, dir);
       } 
       //return keep;
@@ -300,7 +300,7 @@ generic_event(_, _, _) -> keep.
 
 
    function zoomStep(dir) {
-      if (pref.wheelZoom) {
+      if (pref.wheelZooms) {
          wheelZoom(pref.wheelZoomFactor, dir);
       }
       //return keep;
@@ -335,7 +335,7 @@ generic_event(_, _, _) -> keep.
    }
 
    function wheelPan(dx0, dy0) {
-      if (pref.wheelZoom && pref.wheelAdds) {
+      if (pref.wheelZooms && pref.wheelAdds) {
          const s = view.distance * (pref.wheelPanSpeed/100);
          view.panX += (dx * s);
          view.panY -= (dy * s);

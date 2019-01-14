@@ -190,13 +190,14 @@ function handleMouseDown(ev) {
    }
    //ev.stopImmediatePropagation();
 };
+const menuId = "data-menuid";
 function handleMouseUp(ev) {
    if (ev.button <= 2) {
       let lastDownEvent = lastMouseDown[ev.button];
       if (lastDownEvent) {
          if (lastDownEvent === ev.currentTarget) {
             // now we do proper clicking
-            runAction(ev.button, ev.currentTarget.id, ev);
+            runAction(ev.button, ev.currentTarget.getAttribute(menuId), ev);
          }
       }
    }
@@ -204,14 +205,14 @@ function handleMouseUp(ev) {
    lastMouseDown[0] = lastMouseDown[1] = lastMouseDown[2] = null;
    //ev.stopImmediatePropagation();
 };
-function bindAction(menuItem, button, id, fn) {
+function bindAction(menuItems, button, id, fn) {
    if (action.hasOwnProperty(id)) {
       if (!Array.isArray(action[id])) {
          action[id] = [null, null, null];
-         if (menuItem) {
-            menuItem.addEventListener("mousedown", handleMouseDown);
-            menuItem.addEventListener("mouseup", handleMouseUp);
-            menuItem.addEventListener("contextmenu", handleContextmenu);  // no ops.
+         for (const item of menuItems) {
+            item.addEventListener("mousedown", handleMouseDown);
+            item.addEventListener("mouseup", handleMouseUp);
+            item.addEventListener("contextmenu", handleContextmenu);  // no ops.
          }
       }
       action[id][button] = fn;
