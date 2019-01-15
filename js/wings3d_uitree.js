@@ -454,6 +454,28 @@ class MaterialList extends ListView {
        }, false);
       li.appendChild(whole);
       this.view.appendChild(li);
+      // also put on subMenu.
+      dat.menu = {};
+      li = dat.menu.li = document.createElement('li');
+      let aFrag = document.createRange().createContextualFragment('<a></a>');
+      dat.menu.a = aFrag.firstElementChild; 
+      li.appendChild(aFrag);
+      let nameFrag = document.createRange().createContextualFragment(`<span>${name}</span>`);
+      dat.menu.text = nameFrag.firstElementChild;
+      dat.menu.a.appendChild(nameFrag);
+      let square = document.createRange().createContextualFragment('<span style="width: 1rem;"></span>');
+      dat.menu.color = square.firstElementChild; 
+      dat.menu.a.appendChild(square);
+      dat.menu.color.style.backgroundColor = dat.material.diffuseMaterial;
+      let submenu = document.querySelector('#faceMaterialMenu');
+      if (submenu) {
+         submenu = submenu.nextElementSibling;  // the ul
+         submenu.appendChild(li);
+      }
+      dat.menu.a.addEventListener('click', function(ev){
+         View.setObject(null, [dat]);       
+         Wings3D.runAction(ev.button, "assignMaterial", ev);
+       });
 
       if (this.list.length === 0) { // first one is the default
          this.default = dat;

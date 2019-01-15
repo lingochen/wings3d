@@ -445,6 +445,7 @@ const action = {
    facePlaneCutX: ()=> {notImplemented(this);},
    facePlaneCutY: ()=> {notImplemented(this);},
    facePlaneCutZ: ()=> {notImplemented(this);},
+   faceMaterialMenu: ()=> {notImplemented(this);},
    // vertex
    vertexConnect: () => {notImplemented(this);},
    vertexDissolve: () => {notImplemented(this);},
