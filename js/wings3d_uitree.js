@@ -455,27 +455,32 @@ class MaterialList extends ListView {
       li.appendChild(whole);
       this.view.appendChild(li);
       // also put on subMenu.
-      dat.menu = {};
-      li = dat.menu.li = document.createElement('li');
-      let aFrag = document.createRange().createContextualFragment('<a></a>');
-      dat.menu.a = aFrag.firstElementChild; 
-      li.appendChild(aFrag);
-      let nameFrag = document.createRange().createContextualFragment(`<span>${name}</span>`);
-      dat.menu.text = nameFrag.firstElementChild;
-      dat.menu.a.appendChild(nameFrag);
-      let square = document.createRange().createContextualFragment('<span style="width: 1rem;"></span>');
-      dat.menu.color = square.firstElementChild; 
-      dat.menu.a.appendChild(square);
-      dat.menu.color.style.backgroundColor = dat.material.diffuseMaterial;
-      let submenu = document.querySelector('#faceMaterialMenu');
-      if (submenu) {
-         submenu = submenu.nextElementSibling;  // the ul
-         submenu.appendChild(li);
+      if (!this.submenu) {
+         this.submenu = document.querySelector('#faceMaterialMenu');
+         if (this.submenu) {
+            this.submenu = this.submenu.nextElementSibling;  // the ul
+         }
       }
-      dat.menu.a.addEventListener('click', function(ev){
-         View.setObject(null, [dat]);       
-         Wings3D.runAction(ev.button, "assignMaterial", ev);
-       });
+      if (this.submenu) {
+         dat.menu = {};
+         li = dat.menu.li = document.createElement('li');
+         let aFrag = document.createRange().createContextualFragment('<a></a>');
+         dat.menu.a = aFrag.firstElementChild; 
+         li.appendChild(aFrag);
+         let nameFrag = document.createRange().createContextualFragment(`<span>${name}</span>`);
+         dat.menu.text = nameFrag.firstElementChild;
+         dat.menu.a.appendChild(nameFrag);
+         let square = document.createRange().createContextualFragment('<span style="width: 1rem;"></span>');
+         dat.menu.color = square.firstElementChild; 
+         dat.menu.a.appendChild(square);
+         dat.menu.color.style.backgroundColor = dat.material.diffuseMaterial;
+
+         dat.menu.a.addEventListener('click', function(ev){
+            View.setObject(null, [dat]);       
+            Wings3D.runAction(ev.button, "assignMaterial", ev);
+          });
+         this.submenu.prepend(li); // put on submenu
+      }
 
       if (this.list.length === 0) { // first one is the default
          this.default = dat;
@@ -515,7 +520,7 @@ class MaterialList extends ListView {
       UI.runDialog('#materialSetting', ev, function(form) {
          const data = UI.extractDialogValue(form);
          dat.setValues(data);
-         dat.pict.style.backgroundColor = data.diffuseMaterial;
+         dat.menu.color.style.backgroundColor = dat.pict.style.backgroundColor = data.diffuseMaterial;
        }, function(form) { // handle setup
          form.reset();
          MaterialList.resetCSS();
@@ -544,6 +549,8 @@ class MaterialList extends ListView {
       this.view.removeChild(dat.li);
       // remove from list
       this.list.splice(this.list.indexOf(dat), 1);
+      // remove from submenu
+      this.submenu.removeChild(dat.menu.li);
    }
 
    newName() {
@@ -559,7 +566,7 @@ class MaterialList extends ListView {
       UI.runDialog('#renameDialog', ev, function(form) {
          const data = UI.extractDialogValue(form);
          dat.name = data[dat.uuid]; // now rename
-         dat.text.textContent = dat.name;
+         dat.menu.text.textContent = dat.text.textContent = dat.name;
       }, function(form) {
          UI.addLabelInput(form, objects);
       });
