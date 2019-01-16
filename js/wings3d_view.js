@@ -1062,7 +1062,12 @@ function init() {
       materialList.editMaterial(ev, currentObjects);
     });
    UI.bindMenuItem(Wings3D.action.deleteMaterial.name, function(_ev){
-      materialList.deleteMaterial(currentObjects);
+      // check if any alive polygon is using the tobe delete Material
+      if (!draftBench.isMaterialsInUse(currentObjects)) {
+         materialList.deleteMaterial(currentObjects);
+      } else {
+         alert("Materials is in use");
+      }
     });   
    UI.bindMenuItem(Wings3D.action.renameMaterial.name, function(ev) {
       materialList.renameMaterial(ev, currentObjects);
