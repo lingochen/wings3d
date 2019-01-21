@@ -419,14 +419,28 @@ Vertex.prototype.getNormal = function(normal) {
 
 
 
-const Polygon = function(startEdge, size) {
+const Polygon = function(startEdge, size, material=Material.default) {
    this.halfEdge = startEdge;
    this.numberOfVertex = size;       // how many vertex in the polygon
    this.update(); //this.computeNormal();
    this.index = -1;
    this.visible = true;
-   this.material = Material.default;   // polygon with default material
+   this.assignMaterial(material);
 };
+
+/**
+ * assignMaterial - incre assignedMaterial and decre old discard material;
+ * @param {Material} - input material;
+ */
+Polygon.prototype.assignMaterial = function(material) {
+   if (material !== this.material) {
+      if (this.material) {
+         this.material.unassigned();
+      }
+      this.material = material;
+      material.assigned();
+   }
+}
 
 // not on free list. not deleted and visible
 Polygon.prototype.isLive = function() {

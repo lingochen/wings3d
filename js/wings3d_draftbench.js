@@ -420,13 +420,13 @@ DraftBench.prototype.hiliteBody = function(faceGroup, isHilite) {
 
 
 /**
- * polygon drawing routines. draw selected polygon first then draw unselected one. 
+ * polygon drawing routines. draw selected polygon first then draw unselected one (sorted by material)
  * 
  * @param {gl} - drawing context.
  */
 DraftBench.prototype.draw = function(gl, madsor) {
    // draw selected polygon first if application
-   // first check index modification
+   // first check index modification, or material modification.
    if (this.preview.isAltered) {
       const selection = new Uint32Array(this.preview.selectedCount);
       let k = 0;
@@ -890,7 +890,7 @@ DraftBench.prototype.setHardness = function(wEdge, operand) {
 
 
 /**
- * 
+ * @param {materials} - array containing the materials.
  */
 DraftBench.prototype.isMaterialsInUse = function(materials) {
    for (let material of materials) {

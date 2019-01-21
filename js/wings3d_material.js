@@ -9,6 +9,7 @@ import * as Util from './wings3d_util.js';
 const Material = function(name) {
    this.name = name;
    this.uuid = Util.get_uuidv4();
+   this.usageCount = 0;
    this.material = {diffuseMaterial: "#C9CFB1", 
                     ambientMaterial: "#C9CFB1",
                     specularMaterial: "#000000", 
@@ -40,6 +41,15 @@ Material.prototype.setValues = function(inputDat) {
       }
    }
 };
+
+
+Material.prototype.assigned = function() {
+   ++this.usageCount;
+}
+
+Material.prototype.unassigned = function() {
+   --this.usageCount;
+}
 
 
 export {
