@@ -38,7 +38,7 @@ const DraftBench = function(theme, prop, defaultSize = 2048) {  // should only b
    this.hilite = {index: null, indexLength: 0, numberOfTriangles: 0};  // the hilite index triangle list.
    this.numberOfTriangles = 0;
 
-   this.preview = {centroid: {}, isAltered: false};
+   this.preview = {centroid: {}, indexLength: 0, visibleLength: 0, isAltered: false};
    this.preview.shaderData = gl.createShaderData();
    //this.preview.shaderData.setUniform4fv("faceColor", [0.5, 0.5, 0.5, 1.0]);
    //this.preview.shaderData.setUniform4fv("selectedColor", [1.0, 0.0, 0.0, 1.0]);
@@ -50,16 +50,25 @@ const DraftBench = function(theme, prop, defaultSize = 2048) {  // should only b
    this._resizePreview(0, 0);
    this.setTheme(theme, prop);
 
-   // previewEdge
+   // previewFace selected
+   this.preview.face = {};
+   this.preview.face.isAltered = false;
+   this.preview.face.indexLength = 0;
+   this.preview.face.visibleLength = 0;
+   this.preview.face.selected = null;
+   //this.preview.face.hilite = {index: null, indexLength: 0, numberOfTriangles: 0};  // the hilite index triangle list.;
+
+   // previewEdge selected
    this.preview.edge = {};
    this.preview.edge.isAltered = false;
-   this.preview.edge.indexCount = 0;
-   this.preview.edge.hilite = {indexCount: 0, wEdge: null};
-   this.preview.edge.hardness = {isAltered: false, indexCount: 0};
-   this.preview.edge.wireOnly = {isAltered: false, indexCount: 0};
+   this.preview.edge.indexLength = 0;
+   this.preview.edge.hilite = {indexLength: 0, wEdge: null};
+   this.preview.edge.hardness = {isAltered: false, indexLength: 0};
+   this.preview.edge.wireOnly = {isAltered: false, indexLength: 0};
 
    // previewVertex
-   this.preview.vertex = {isModified: false, isAltered: false, min: Number.MAX_SAFE_INTEGER, max: Number.MIN_SAFE_INTEGER};
+   this.preview.vertex = {isModified: false, isAltered: false, 
+                          min: Number.MAX_SAFE_INTEGER, max: Number.MIN_SAFE_INTEGER};
    this.preview.shaderData.createAttribute('vertexState', layoutFloat, gl.DYNAMIC_DRAW);
    this._resizePreviewVertex();
    // body state.
@@ -154,6 +163,7 @@ DraftBench.prototype.alterVertex = function() {
  */
 DraftBench.prototype.alterPreview = function() {
    this.preview.isAltered = true;
+   this.preview.face.isAltered = true;
    this.preview.edge.isAltered = true;
    this.preview.edge.wireOnly.isAltered = true;
    this.preview.vertex.isAltered = true;
@@ -227,8 +237,8 @@ DraftBench.prototype._resizePreview = function() {
             // create new length
             model.preview.barycentric = new Float32Array(length);
             let selected = new Uint8Array(length/3);
-            selected.set(model.preview.selected);
-            model.preview.selected = selected;
+            selected.set(model.preview.face.selected);
+            model.preview.face.selected = selected;
          }
          if (centroidLength > model.preview.centroid.barycentric.length) {
             model.preview.centroid.barycentric = new Float32Array(centroidLength);
@@ -236,14 +246,14 @@ DraftBench.prototype._resizePreview = function() {
       } else { // brand new
          // created array
          model.preview.barycentric = new Float32Array(length);
-         model.preview.selected = new Uint8Array(length/3);
-         model.preview.selectedCount = 0;
-         model.preview.realSelectedCount = 0;
+         model.preview.face.selected = new Uint8Array(length/3);
+         model.preview.face.indexLenth = 0;
+         model.preview.face.visibleLength = 0;
       
          model.preview.centroid.barycentric = new Float32Array(centroidLength);
       }
       model.preview.barycentric.set(DraftBench.CONST.BARYCENTRIC);
-      model.preview.selected.fill(0, oldSize);
+      model.preview.face.selected.fill(0, oldSize);
       model.preview.centroid.barycentric.fill(1.0);
       // upload the data to webgl
       length = this.buf.len;
@@ -270,7 +280,7 @@ DraftBench.prototype._computePreviewIndex = function() {
       return acc + element.numberOfVertex; // -2; for half the vertex
    }, 0);
    this.preview.indexLength = this.numberOfTriangles * 3;
-   this.preview.realIndexLength = this.preview.indexLength;
+   this.preview.visibleLength = this.preview.indexLength;
 };
 
 DraftBench.prototype._computeFaceHiliteIndex = function(polygon, offset) {
@@ -387,14 +397,14 @@ DraftBench.prototype._updatePreviewFace = function(polygon) {
 DraftBench.prototype.hiliteFace = function(polygon, isHilite) {
    if (isHilite) {   // show
       this.hilite.color = DraftBench.theme.unselectedHilite;
-      if ((this.preview.selected[polygon.index] & 1) === 1) {
+      if ((this.preview.face.selected[polygon.index] & 1) === 1) {
          this.hilite.color = DraftBench.theme.selectedHilite;
       }
-      this.preview.selected[polygon.index] |= 2;
+      this.preview.face.selected[polygon.index] |= 2;
       this._computeFaceHiliteIndex(polygon);
    } else { // hide
       this.hilite.indexLength = 0;
-      this.preview.selected[polygon.index] &= ~2;
+      this.preview.face.selected[polygon.index] &= ~2;
    }
 };
 
@@ -403,17 +413,17 @@ DraftBench.prototype.hiliteBody = function(faceGroup, isHilite) {
       let checkColor = true;
       this.hilite.color = DraftBench.theme.unselectedHilite;
       for (let polygon of faceGroup) {
-         if (checkColor && ((this.preview.selected[polygon.index] & 1) === 1)) {
+         if (checkColor && ((this.preview.face.selected[polygon.index] & 1) === 1)) {
             this.hilite.color = DraftBench.theme.selectedHilite;  // unnecessary assignment
             checkColor = false;
          }
-         this.preview.selected[polygon.index] |= 2;
+         this.preview.face.selected[polygon.index] |= 2;
       }
       this._computeGroupHiliteIndex(faceGroup);
    } else { // hide 
       this.hilite.indexLength = 0;
       for (let polygon of faceGroup) { // clear flag
-         this.preview.selected[polygon.index] &= ~2;
+         this.preview.face.selected[polygon.index] &= ~2;
       }
    }
 };
@@ -426,35 +436,46 @@ DraftBench.prototype.hiliteBody = function(faceGroup, isHilite) {
  */
 DraftBench.prototype.draw = function(gl, madsor) {
    // draw selected polygon first if application
-   // first check index modification, or material modification.
-   if (this.preview.isAltered) {
-      const selection = new Uint32Array(this.preview.selectedCount);
+   // first check index modification
+   if (this.preview.face.isAltered) {
+      const selection = new Uint32Array(this.preview.face.indexLenth);
       let k = 0;
-      const index = new Uint32Array(this.preview.indexLength-this.preview.selectedCount);
+      for (let cage of madsor.visibleWireCage(false)) {  // wire only cage was drawn before.
+         for (let polygon of cage.geometry.faces) {
+            if (polygon.isVisible()) {
+               const i = polygon.index;
+               const center = i + this.vertices.length;
+               if (this.preview.face.selected[i] & 1) {
+                  k = polygon.buildIndex(selection, k, center);
+               }
+            }
+         }
+      }
+      this.preview.face.visibleLength = k;
+      this.preview.shaderData.setIndex('selectedFace', selection);
+      this.preview.face.isAltered = false;
+   }
+   // check material modification
+   if (this.preview.isAltered) {
+      const index = new Uint32Array(this.preview.indexLength);
       let j = 0;
       for (let cage of madsor.visibleWireCage(false)) {  // wire only cage was drawn before.
          for (let polygon of cage.geometry.faces) {
             if (polygon.isVisible()) {
                const i = polygon.index;
                const center = i + this.vertices.length;
-               if (this.preview.selected[i] & 1) {
-                  k = polygon.buildIndex(selection, k, center);
-               } else {
-                  j = polygon.buildIndex(index, j, center);
-               }
+               j = polygon.buildIndex(index, j, center);
             }
          }
       }
-      this.preview.realSelectedCount = k;
-      this.preview.realIndexLength = j+k;
+      this.preview.visibleLength = j;
       this.preview.shaderData.setIndex('face', index);
-      this.preview.shaderData.setIndex('selectedFace', selection);
       this.preview.isAltered = false;
    }
    
    // draw faceSelected if not empty
    let bindPosition = false;
-   if (this.preview.realSelectedCount > 0) {
+   if (this.preview.face.visibleLength > 0) {
       gl.bindAttribute(this.preview.shaderData, ['position', 'barycentric']);
       this.preview.shaderData.setUniform4fv('color', DraftBench.theme.edgeColor);
       this.preview.shaderData.setUniform1f('lineWidth', DraftBench.pref.edgeWidth);
@@ -462,10 +483,10 @@ DraftBench.prototype.draw = function(gl, madsor) {
       this.preview.shaderData.setUniform4fv('faceColor', DraftBench.theme.selectedColor);
       gl.bindUniform(this.preview.shaderData, ['color', 'faceColor', 'lineWidth']);
       gl.bindIndex(this.preview.shaderData, 'selectedFace');
-      gl.drawElements(gl.TRIANGLES, this.preview.realSelectedCount, gl.UNSIGNED_INT, 0);
+      gl.drawElements(gl.TRIANGLES, this.preview.face.visibleLength, gl.UNSIGNED_INT, 0);
    }
-   const indexLength = this.preview.realIndexLength - this.preview.realSelectedCount;
-   if (indexLength > 0) {  // draw normal polygon
+   // draw all polygon.
+   if (this.preview.visibleLength > 0) {  // draw normal polygon
       if (!bindPosition) {
          gl.bindAttribute(this.preview.shaderData, ['position', 'barycentric']);
          this.preview.shaderData.setUniform4fv('color', DraftBench.theme.edgeColor);
@@ -475,7 +496,7 @@ DraftBench.prototype.draw = function(gl, madsor) {
       this.preview.shaderData.setUniform4fv('faceColor', DraftBench.theme.faceColor);
       gl.bindUniform(this.preview.shaderData, ['color', 'faceColor', 'lineWidth']);
       gl.bindIndex(this.preview.shaderData, 'face');
-      gl.drawElements(gl.TRIANGLES, indexLength, gl.UNSIGNED_INT, 0);
+      gl.drawElements(gl.TRIANGLES, this.preview.visibleLength, gl.UNSIGNED_INT, 0);
    }
 };
 
@@ -544,9 +565,9 @@ DraftBench.prototype.drawVertex = function(gl, madsor) {
 DraftBench.prototype.drawHardEdgeEtc = function(gl, isEdgeMode, madsor) {
    let isBinded = false;
    // draw hard edge if applicable.
-   if (this.preview.edge.hardness.indexCount > 0) {
+   if (this.preview.edge.hardness.indexLength > 0) {
       if (this.preview.edge.hardness.isAltered) {
-         const index = new Uint32Array(this.preview.edge.hardness.indexCount);
+         const index = new Uint32Array(this.preview.edge.hardness.indexLength);
          let j = 0;
          for (let cage of madsor.visibleCage()) {
             for (let wEdge of cage.geometry.edges) {
@@ -583,10 +604,10 @@ DraftBench.prototype.drawHardEdgeEtc = function(gl, isEdgeMode, madsor) {
       for (let cage of madsor.visibleWireCage(true)) { // looking for wireMode cage only
          indexCount += cage.geometry.edges.size;
       }
-      this.preview.edge.wireOnly.indexCount = indexCount * 6;  // draw 2 triangle for each edge.
+      this.preview.edge.wireOnly.indexLength = indexCount * 6;  // draw 2 triangle for each edge.
       if (indexCount > 0) {
          // now compute the wireOnly polygon
-         const index = new Uint32Array(this.preview.edge.wireOnly.indexCount);
+         const index = new Uint32Array(this.preview.edge.wireOnly.indexLength);
          let j = 0;
          for (let cage of madsor.visibleWireCage(true)) {
             for (let wEdge of cage.geometry.edges) {
@@ -597,12 +618,12 @@ DraftBench.prototype.drawHardEdgeEtc = function(gl, isEdgeMode, madsor) {
          }
          // wireOnly Edge
          this.preview.shaderData.setIndex('wireEdge', index);
-         this.preview.edge.wireOnly.indexCount = j;
+         this.preview.edge.wireOnly.indexLength = j;
       }
       this.preview.edge.wireOnly.isAltered = false;
    }
    // draw wireMode edge if applicable
-   if (this.preview.edge.wireOnly.indexCount > 0) {
+   if (this.preview.edge.wireOnly.indexLength > 0) {
       if (!isBinded) {  // bind program and data
          gl.useShader(ShaderProg.selectedColorLine);
          gl.bindTransform();
@@ -613,7 +634,7 @@ DraftBench.prototype.drawHardEdgeEtc = function(gl, isEdgeMode, madsor) {
       this.preview.shaderData.setUniform1f("lineWidth", DraftBench.CONST.EDGEWIDTH);
       gl.bindUniform(this.preview.shaderData, ['color', 'faceColor', 'lineWidth']);
       gl.bindIndex(this.preview.shaderData, 'wireEdge');
-      gl.drawElements(gl.TRIANGLES, this.preview.edge.wireOnly.indexCount, gl.UNSIGNED_INT, 0);  // draw 1 line.
+      gl.drawElements(gl.TRIANGLES, this.preview.edge.wireOnly.indexLength, gl.UNSIGNED_INT, 0);  // draw 1 line.
    }
 }
 
@@ -635,14 +656,14 @@ DraftBench.prototype.drawEdge = function(gl, madsor) {
       this.preview.shaderData.setUniform4fv("color", hiliteColor);
       gl.bindUniform(this.preview.shaderData, ['color', 'faceColor', 'lineWidth']);
       gl.bindIndex(this.preview.shaderData, 'edgeHilite');
-      gl.drawElements(gl.TRIANGLES, this.preview.edge.hilite.indexCount, gl.UNSIGNED_INT, 0);  // draw 1 line.
+      gl.drawElements(gl.TRIANGLES, this.preview.edge.hilite.indexLength, gl.UNSIGNED_INT, 0);  // draw 1 line.
    }
 
    // 2nd) draw selected
-   if (this.preview.edge.indexCount > 0) { // draw selected edge
+   if (this.preview.edge.indexLength > 0) { // draw selected edge
       if (this.preview.edge.isAltered) {  // rebuild selected index, might as well rebuilt hardEdge.
-         const selected = new Uint32Array( this.preview.edge.indexCount );
-         const hard = new Uint32Array( this.preview.edge.hardness.indexCount );
+         const selected = new Uint32Array( this.preview.edge.indexLength );
+         const hard = new Uint32Array( this.preview.edge.hardness.indexLength );
          let j = 0;
          let k = 0;
          for (let cage of madsor.visibleCage()) {
@@ -776,10 +797,10 @@ DraftBench.prototype.hiliteEdge = function(hEdge, onOff) {
       const index = new Uint32Array( 6 ); // both edge. max 2 triangle.
       wEdge.buildIndex(index, 0, this.vertices.length);
       this.preview.shaderData.setIndex('edgeHilite', index);   // update index.
-      this.preview.edge.hilite.indexCount = 6;
+      this.preview.edge.hilite.indexLength = 6;
    } else {
       this.preview.edge.hilite.wEdge = null;
-      this.preview.edge.hilite.indexCount = 0;
+      this.preview.edge.hilite.indexLength = 0;
    }
 }
 
@@ -792,12 +813,12 @@ DraftBench.prototype.selectEdge = function(wEdge, onOff) {
    if (onOff) {
       if ((wEdge.state & 1) === 0) {
          wEdge.state |= 1;
-         this.preview.edge.indexCount += 6;
+         this.preview.edge.indexLength += 6;
       }
    } else {
       if ((wEdge.state & 1) === 1) {
          wEdge.state &= ~1;
-         this.preview.edge.indexCount -= 6;
+         this.preview.edge.indexLength -= 6;
       }
    }
    this.preview.edge.isAltered = true;
@@ -810,7 +831,7 @@ DraftBench.prototype.resetSelectEdge = function() {
       wEdge.state = 0;
    }
    this.preview.edge.isAltered = false;
-   this.preview.edge.indexCount = 0;
+   this.preview.edge.indexLength = 0;
 };
 
 
@@ -830,20 +851,20 @@ DraftBench.prototype.updatePosition = function() {
 
 DraftBench.prototype.selectFace = function(polygon, toggleOn) {
    if (toggleOn) {
-      if ((this.preview.selected[polygon.index] & 1) === 0) {
-         this.preview.selectedCount += polygon.numberOfVertex * 3;
-         this.preview.selected[polygon.index] |= 1;
-         this.preview.isAltered = true;
-         if (this.preview.selected[polygon.index] & 2) { // now we are both hilite and selected
+      if ((this.preview.face.selected[polygon.index] & 1) === 0) {
+         this.preview.face.indexLenth += polygon.numberOfVertex * 3;
+         this.preview.face.selected[polygon.index] |= 1;
+         this.preview.face.isAltered = true;
+         if (this.preview.face.selected[polygon.index] & 2) { // now we are both hilite and selected
             this.hilite.color = DraftBench.theme.selectedHilite;
          }
       }
    } else {
-      if ((this.preview.selected[polygon.index] & 1) === 1) {
-         this.preview.selectedCount -= polygon.numberOfVertex * 3;
-         this.preview.selected[polygon.index] &= ~1;
-         this.preview.isAltered = true;
-         if (this.preview.selected[polygon.index] & 2) { // now we are both hilite and unselected
+      if ((this.preview.face.selected[polygon.index] & 1) === 1) {
+         this.preview.face.indexLenth -= polygon.numberOfVertex * 3;
+         this.preview.face.selected[polygon.index] &= ~1;
+         this.preview.face.isAltered = true;
+         if (this.preview.face.selected[polygon.index] & 2) { // now we are both hilite and unselected
             this.hilite.color = DraftBench.theme.unselectedHilite;
          }
       }
@@ -851,10 +872,10 @@ DraftBench.prototype.selectFace = function(polygon, toggleOn) {
 };
 
 DraftBench.prototype.resetSelectFace = function() {
-   this.preview.selected.fill(0);            // reset all polygon to non-selected 
-   this.preview.selectedCount = 0;
-   this.preview.realSelectedCount = 0;
-   this.preview.isAltered = true;
+   this.preview.face.selected.fill(0);            // reset all polygon to non-selected 
+   this.preview.face.indexLenth = 0;
+   this.preview.face.visibleLength = 0;
+   this.preview.face.isAltered = true;
 };
 
 
@@ -868,14 +889,14 @@ DraftBench.prototype.setHardness = function(wEdge, operand) {
       if (wEdge.state & 4) { // make sure it hard
          wEdge.state &= ~4;  // clear hardness bit
          this.preview.edge.hardness.isAltered = true;
-         this.preview.edge.hardness.indexCount -= 6;
+         this.preview.edge.hardness.indexLength -= 6;
          return true;
       }
    } else if (operand === 1) {   // set hard
       if ((wEdge.state & 4) === 0) { // make sure it soft
          wEdge.state |= 4;   // set hardness bit
          this.preview.edge.hardness.isAltered = true;
-         this.preview.edge.hardness.indexCount += 6;
+         this.preview.edge.hardness.indexLength += 6;
          return true;
       }
    } else { // invert

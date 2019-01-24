@@ -3801,10 +3801,11 @@ PreviewCage.prototype.assignFaceMaterial = function(material) {
             array.push(polygon);
          }
          // now assign Material
-         polygon.material = material;
+         polygon.assignMaterial(material);
       }
    }
    if (savedMaterials.size > 0) {
+      this.bench.alterMaterial();
       return savedMaterials;
    } else {
       return undefined;
@@ -3817,9 +3818,10 @@ PreviewCage.prototype.assignFaceMaterial = function(material) {
 PreviewCage.prototype.undoAssignFaceMaterial = function(savedMaterials) {
    for (const [material, array] of savedMaterials.entries()) {
       for (const polygon of array) {
-         polygon.material = material;
+         polygon.assignMaterial(material);
       }
    }
+   this.bench.alterMaterial();
 };
 
 
