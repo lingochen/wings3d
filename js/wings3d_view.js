@@ -213,7 +213,7 @@ function initMode() {
 
 
 function toggleMode(mode) {
-   let button = document.getElementById('toggle'+mode+'Mode');  // :checked property only existed on <input>
+   let button = document.getElementById('toggle'+mode+'ModeFor');  // :checked property only existed on <input>
    if (button && !button.checked) {
       button.click();         // https://stackoverflow.com/questions/8206565/check-uncheck-checkbox-with-javascript
    }

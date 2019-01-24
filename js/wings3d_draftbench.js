@@ -430,12 +430,62 @@ DraftBench.prototype.hiliteBody = function(faceGroup, isHilite) {
 
 
 /**
- * polygon drawing routines. draw selected polygon first then draw unselected one (sorted by material)
+ * polygon drawing routines. draw unselected one (sorted by material)
  * 
  * @param {gl} - drawing context.
  */
 DraftBench.prototype.draw = function(gl, madsor) {
-   // draw selected polygon first if application
+   // check material modification
+   if (this.preview.isAltered) {
+      const index = new Uint32Array(this.preview.indexLength);
+      let j = 0;
+      for (let cage of madsor.visibleWireCage(false)) {  // wire only cage was drawn before.
+         for (let polygon of cage.geometry.faces) {
+            if (polygon.isVisible()) {
+               const i = polygon.index;
+               const center = i + this.vertices.length;
+               j = polygon.buildIndex(index, j, center);
+            }
+         }
+      }
+      this.preview.visibleLength = j;
+      this.preview.shaderData.setIndex('face', index);
+      this.preview.isAltered = false;
+   }
+   
+   // draw all polygon.
+   if (this.preview.visibleLength > 0) {  // draw normal polygon
+      //if (!bindPosition) {
+         gl.bindAttribute(this.preview.shaderData, ['position', 'barycentric']);
+         this.preview.shaderData.setUniform4fv('color', DraftBench.theme.edgeColor);
+         this.preview.shaderData.setUniform1f('lineWidth', DraftBench.pref.edgeWidth);
+         //bindPosition = true;
+      //}
+      this.preview.shaderData.setUniform4fv('faceColor', DraftBench.theme.faceColor);
+      gl.bindUniform(this.preview.shaderData, ['color', 'faceColor', 'lineWidth']);
+      gl.bindIndex(this.preview.shaderData, 'face');
+      gl.drawElements(gl.TRIANGLES, this.preview.visibleLength, gl.UNSIGNED_INT, 0);
+   }
+};
+
+
+// draw hilite polygon then selected polygon.
+DraftBench.prototype.drawHilite = function(gl, madsor) {
+   if (this.hilite.indexLength > 0) {
+      try {
+         // set hilite color and hilite index
+         this.preview.shaderData.setUniform4fv("faceColor", this.hilite.color);
+         gl.bindAttribute(this.preview.shaderData, ['position']);
+         gl.bindUniform(this.preview.shaderData, ['faceColor']);
+         gl.bindIndex(this.preview.shaderData, 'faceHilite');
+         gl.drawElements(gl.TRIANGLES, this.hilite.indexLength, gl.UNSIGNED_INT, 0);
+         // restore color
+         this.preview.shaderData.setUniform4fv("faceColor", DraftBench.theme.faceColor);
+      } catch (e) {
+         console.log(e);
+      }
+   }
+   // draw selected polygon
    // first check index modification
    if (this.preview.face.isAltered) {
       const selection = new Uint32Array(this.preview.face.indexLenth);
@@ -455,69 +505,16 @@ DraftBench.prototype.draw = function(gl, madsor) {
       this.preview.shaderData.setIndex('selectedFace', selection);
       this.preview.face.isAltered = false;
    }
-   // check material modification
-   if (this.preview.isAltered) {
-      const index = new Uint32Array(this.preview.indexLength);
-      let j = 0;
-      for (let cage of madsor.visibleWireCage(false)) {  // wire only cage was drawn before.
-         for (let polygon of cage.geometry.faces) {
-            if (polygon.isVisible()) {
-               const i = polygon.index;
-               const center = i + this.vertices.length;
-               j = polygon.buildIndex(index, j, center);
-            }
-         }
-      }
-      this.preview.visibleLength = j;
-      this.preview.shaderData.setIndex('face', index);
-      this.preview.isAltered = false;
-   }
-   
    // draw faceSelected if not empty
-   let bindPosition = false;
    if (this.preview.face.visibleLength > 0) {
       gl.bindAttribute(this.preview.shaderData, ['position', 'barycentric']);
       this.preview.shaderData.setUniform4fv('color', DraftBench.theme.edgeColor);
       this.preview.shaderData.setUniform1f('lineWidth', DraftBench.pref.edgeWidth);
-      bindPosition = true;
       this.preview.shaderData.setUniform4fv('faceColor', DraftBench.theme.selectedColor);
       gl.bindUniform(this.preview.shaderData, ['color', 'faceColor', 'lineWidth']);
       gl.bindIndex(this.preview.shaderData, 'selectedFace');
       gl.drawElements(gl.TRIANGLES, this.preview.face.visibleLength, gl.UNSIGNED_INT, 0);
-   }
-   // draw all polygon.
-   if (this.preview.visibleLength > 0) {  // draw normal polygon
-      if (!bindPosition) {
-         gl.bindAttribute(this.preview.shaderData, ['position', 'barycentric']);
-         this.preview.shaderData.setUniform4fv('color', DraftBench.theme.edgeColor);
-         this.preview.shaderData.setUniform1f('lineWidth', DraftBench.pref.edgeWidth);
-         bindPosition = true;
-      }
-      this.preview.shaderData.setUniform4fv('faceColor', DraftBench.theme.faceColor);
-      gl.bindUniform(this.preview.shaderData, ['color', 'faceColor', 'lineWidth']);
-      gl.bindIndex(this.preview.shaderData, 'face');
-      gl.drawElements(gl.TRIANGLES, this.preview.visibleLength, gl.UNSIGNED_INT, 0);
-   }
-};
-
-
-// draw hilite polygon. not offset
-DraftBench.prototype.drawHilite = function(gl) {
-   if (this.hilite.indexLength == 0) {
-      return;
-   }
-   try {
-      // set hilite color and hilite index
-      this.preview.shaderData.setUniform4fv("faceColor", this.hilite.color);
-      gl.bindAttribute(this.preview.shaderData, ['position']);
-      gl.bindUniform(this.preview.shaderData, ['faceColor']);
-      gl.bindIndex(this.preview.shaderData, 'faceHilite');
-      gl.drawElements(gl.TRIANGLES, this.hilite.indexLength, gl.UNSIGNED_INT, 0);
-      // restore color
-      this.preview.shaderData.setUniform4fv("faceColor", DraftBench.theme.faceColor);
-   } catch (e) {
-      console.log(e);
-   }
+   }   
 };
 
 // draw vertex, select color, 

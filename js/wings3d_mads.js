@@ -412,7 +412,7 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       gl.useShader(ShaderProg.solidColor);
       gl.bindTransform();
       // draw hilite
-      draftBench.drawHilite(gl);
+      draftBench.drawHilite(gl, this);
       //gl.disableShader();
    }
 
