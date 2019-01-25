@@ -409,7 +409,7 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
 
    // default draw FaceHlite, needs to override by vertex/edge/multi mode.
    drawExtra(gl, draftBench) {
-      gl.useShader(ShaderProg.solidColor);
+      gl.useShader(ShaderProg.solidWireframe);//     gl.useShader(ShaderProg.solidColor);
       gl.bindTransform();
       // draw hilite
       draftBench.drawHilite(gl, this);

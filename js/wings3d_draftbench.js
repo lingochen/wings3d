@@ -474,9 +474,11 @@ DraftBench.prototype.drawHilite = function(gl, madsor) {
    if (this.hilite.indexLength > 0) {
       try {
          // set hilite color and hilite index
+         gl.bindAttribute(this.preview.shaderData, ['position', 'barycentric']);
+         this.preview.shaderData.setUniform4fv('color', DraftBench.theme.edgeColor);
+         this.preview.shaderData.setUniform1f('lineWidth', DraftBench.pref.edgeWidth);
          this.preview.shaderData.setUniform4fv("faceColor", this.hilite.color);
-         gl.bindAttribute(this.preview.shaderData, ['position']);
-         gl.bindUniform(this.preview.shaderData, ['faceColor']);
+         gl.bindUniform(this.preview.shaderData, ['color', 'lineWidth', 'faceColor']);
          gl.bindIndex(this.preview.shaderData, 'faceHilite');
          gl.drawElements(gl.TRIANGLES, this.hilite.indexLength, gl.UNSIGNED_INT, 0);
          // restore color
