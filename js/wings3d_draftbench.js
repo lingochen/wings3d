@@ -38,7 +38,7 @@ const DraftBench = function(theme, prop, defaultSize = 2048) {  // should only b
    this.hilite = {index: null, indexLength: 0, numberOfTriangles: 0};  // the hilite index triangle list.
    this.numberOfTriangles = 0;
 
-   this.preview = {centroid: {}, indexLength: 0, visibleLength: 0, isAltered: false};
+   this.preview = {centroid: {}, indexLength: 0, visibleLength: 0, isAltered: false, materials: new Set};
    this.preview.shaderData = gl.createShaderData();
    //this.preview.shaderData.setUniform4fv("faceColor", [0.5, 0.5, 0.5, 1.0]);
    //this.preview.shaderData.setUniform4fv("selectedColor", [1.0, 0.0, 0.0, 1.0]);
@@ -291,7 +291,6 @@ DraftBench.prototype._computeFaceHiliteIndex = function(polygon, offset) {
    if (offset === undefined) {
       offset = 0;
    }
-   let index = polygon.index;
    let indicesLength = 0;
    let barycentric = this.vertices.length + polygon.index;
    for (let hEdge of polygon.hEdges()) {
@@ -559,7 +558,7 @@ DraftBench.prototype.drawVertex = function(gl, madsor) {
 };
 
 /**
- * 
+ * draw hardEdge, and wireframe only edge
  */
 DraftBench.prototype.drawHardEdgeEtc = function(gl, isEdgeMode, madsor) {
    let isBinded = false;

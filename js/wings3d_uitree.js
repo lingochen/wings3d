@@ -292,6 +292,11 @@ function getTreeView(labelId, id, world) {
 
 
 class ListView {
+   constructor(listView) {
+      this.view = listView;
+      this.list = [];
+   }
+
    /**
     * 
     * @param {data} - materail/image/light data
@@ -323,6 +328,13 @@ class ListView {
 
       return text;
    }
+
+   /**
+    * return array iterator
+    */
+   [Symbol.iterator]() {
+      return this.list[Symbol.iterator]();
+   }
 }
 
 
@@ -331,9 +343,7 @@ class ListView {
  */
 class ImageList extends ListView {
    constructor(label, listView) {
-      super();
-      this.view = listView;
-      this.list = [];
+      super(listView);
       // context menu
       let contextMenu = document.querySelector('#importImageMenu');
       if (contextMenu) {
@@ -410,9 +420,7 @@ function getImageList(labelId, id) {
 
 class MaterialList extends ListView {
    constructor(label, listView) {
-      super();
-      this.view = listView;
-      this.list = [];
+      super(listView);
       // add default Material.
       this.addMaterial("default");
       // context menu
@@ -440,7 +448,7 @@ class MaterialList extends ListView {
       li.appendChild(pictFrag);
       let whole = document.createRange().createContextualFragment(`<span>${name}</span>`);
       dat.text = whole.firstElementChild;
-      if (dat !== this.default) {   // default material's name cannot be changed.
+      if (dat !== Material.default) {   // default material's name cannot be changed.
          ListView.addRenameListener(dat.text, dat);
       }
       dat.text.addEventListener('contextmenu', function(ev) {  // contextMenu
@@ -482,9 +490,6 @@ class MaterialList extends ListView {
          this.submenu.prepend(li); // put on submenu
       }
 
-      if (this.list.length === 0) { // first one is the default
-         this.default = dat;
-      }
       this.list.push(dat);
    }
 
@@ -542,7 +547,7 @@ class MaterialList extends ListView {
 
    deleteMaterial(objects) {
       const dat = objects[0];
-      if (dat === this.default) {   // default material is not deletable.
+      if (dat === Material.default) {   // default material is not deletable.
          return;
       }
       // remove li
@@ -559,7 +564,7 @@ class MaterialList extends ListView {
 
    renameMaterial(ev, objects) {
       const dat = objects[0];
-      if (dat === this.default) {   // default material cannot be deleted
+      if (dat === Material.default) {   // default material cannot be deleted
          return;
       }
       // run rename dialog

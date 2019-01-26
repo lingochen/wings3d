@@ -178,7 +178,7 @@ function storePref(form) {
       }
     });
    // store draftBench
-   draftBench.setTheme(theme.draftBench, theme.draftBenchPref);
+   _environment.draftBench.setTheme(theme.draftBench, theme.draftBenchPref);
    // store prop
    traverse(prop, (obj, key, _value)=> {
       const data = form.querySelector(`input[type=checkbox][name=${key}]`);
@@ -328,31 +328,33 @@ const currentMode = () => mode.current;
 //
 // world objects management
 //
-const world = new PreviewGroup;    // private var
-let draftBench;      // = new DraftBench; wait for GL
-let geometryGraph;   // tree management of world; 
-let imageList;       // list management of image List.
-let materialList;    // list management of material list.
-let lightList;       // list management of light list.
-let currentObjects;
-let currentParent;
+const _environment = {
+   world: new PreviewGroup,    // private var
+   draftBench: undefined,      // = new DraftBench; wait for GL
+   geometryGraph: undefined,   // tree management of world; 
+   imageList: undefined,
+   materialList: undefined,
+   lightList: undefined,
+   currentObjects: undefined,
+   currentParent: undefined
+};
 function putIntoWorld() {
-   let model = new PreviewCage(draftBench);
+   let model = new PreviewCage(_environment.draftBench);
    return addToWorld(model);
 };
 function moveCage(newParent, model) {  // drag & drop
    model.removeFromParent();
    newParent.insert(model);
-   world.numberOfCage();   // update Count Status
+   _environment.world.numberOfCage();   // update Count Status
 };
 
-function addToWorld(model, parent = world) { // default parent is world
+function addToWorld(model, parent = _environment.world) { // default parent is world
    parent.insert( model );
-   geometryGraph.addObject(model, parent.guiStatus.ul);
+   _environment.geometryGraph.addObject(model, parent.guiStatus.ul);
    model.setVisible(true);
-   draftBench.updatePreview();
+   _environment.draftBench.updatePreview();
    Renderer.needToRedraw();
-   world.numberOfCage();   // update CountStatus
+   _environment.world.numberOfCage();   // update CountStatus
    return model;
 }
 
@@ -360,23 +362,23 @@ function removeFromWorld(previewCage) {
    const deleted = previewCage.removeFromParent();
    if (deleted) {
       previewCage.setVisible(false);
-      draftBench.updatePreview();
+      _environment.draftBench.updatePreview();
       Renderer.needToRedraw();
       // remove from geometryGraph
-      geometryGraph.removeObject(previewCage);
-      world.numberOfCage();   // update CountStatus.
+      _environment.geometryGraph.removeObject(previewCage);
+      _environment.world.numberOfCage();   // update CountStatus.
    }
    return deleted;
 };
 function getWorld() {
-   return world.getCage();
+   return _environment.world.getCage();
 }
 function updateWorld() {
-   draftBench.updatePreview();
+   _environment.draftBench.updatePreview();
    Renderer.needToRedraw();
 };
 function makeCombineIntoWorld(cageSelection) {
-   let combine = new PreviewCage(draftBench);
+   let combine = new PreviewCage(_environment.draftBench);
    for (let cage of cageSelection) {
       removeFromWorld(cage);
    }
@@ -385,10 +387,17 @@ function makeCombineIntoWorld(cageSelection) {
    return combine;
 }
 function setObject(parent, objects) { // objects is array
-   currentObjects = objects;
-   currentParent = parent;
+   _environment.currentObjects = objects;
+   _environment.currentParent = parent;
 }
-//-- End of World objects management ----------------dra---------
+//-- End of World objects management -------------------------
+//-- material, image, and light management
+const environment = { materials: [], images: [], lights: []};
+function addMaterial(name) {
+
+};
+
+//-- End of material, image, and light management.
 
 //
 // mouse handling hilite
@@ -423,7 +432,7 @@ function setCurrent(edge, intersect, center) {
       const isEdge = isEdgeSelectable();
       const isFace = isFaceSelectable();
       const isPlane = isPlaneShown();
-      const sphere = draftBench.boundingSpheres[edge.face.index];
+      const sphere = _environment.draftBench.boundingSpheres[edge.face.index];
       if (isPlane) {
          vec3.copy(planeRect.halfSize, sphere.getBVHRoot().getHalfSize());
          vec3.copy(planeRect.normal, handler.mouseSelect.getPlaneNormal());
@@ -470,39 +479,39 @@ function setCurrent(edge, intersect, center) {
    // now do hilite.
    if (hiliteVertex !== hilite.vertex) {  
       if (hilite.vertex !== null) {
-         draftBench.hiliteVertex(hilite.vertex, false);
+         _environment.draftBench.hiliteVertex(hilite.vertex, false);
       }
       if (hiliteVertex !== null) {
          if (handler.mouseSelect && !handler.mouseSelect.hilite( {vertex: hiliteVertex, plane: hilite.plane}, currentCage)) {
             hiliteVertex = null;
          } else {
-            draftBench.hiliteVertex(hiliteVertex, true);
+            _environment.draftBench.hiliteVertex(hiliteVertex, true);
          }
       }
       hilite.vertex = hiliteVertex;
    }
    if (hiliteEdge !== hilite.edge) {
       if (hilite.edge !== null) {
-         draftBench.hiliteEdge(hilite.edge, false);
+         _environment.draftBench.hiliteEdge(hilite.edge, false);
       }
       if (hiliteEdge !== null) {
          if (handler.mouseSelect && !handler.mouseSelect.hilite( {edge: hiliteEdge, plane: hilite.plane}, currentCage)) {
             hiliteEdge = null;
          } else {
-            draftBench.hiliteEdge(hiliteEdge, true);
+            _environment.draftBench.hiliteEdge(hiliteEdge, true);
          }
       }
       hilite.edge = hiliteEdge;
    }
    if (hiliteFace !== hilite.face) {
       if (hilite.face !== null) {
-         draftBench.hiliteFace(hilite.face, false); // hiliteFace(null, false)?
+         _environment.draftBench.hiliteFace(hilite.face, false); // hiliteFace(null, false)?
       }
       if (hiliteFace !== null) {
          if (handler.mouseSelect && !handler.mouseSelect.hilite( {face: hiliteFace, plane: hilite.plane}, currentCage)) {
             hiliteFace = null;
          } else {
-            draftBench.hiliteFace(hiliteFace, true);
+            _environment.draftBench.hiliteFace(hiliteFace, true);
          }
       }
       hilite.face = hiliteFace;
@@ -529,7 +538,7 @@ let lastPick = null;
 
 function rayPick(ray) {
    let pick = null;
-   for (let model of world.getCage()) {
+   for (let model of _environment.world.getCage()) {
       if (!model.isLock() && model.isVisible()) {
          const newPick = model.rayPick(ray);
          if (newPick !== null) {
@@ -745,7 +754,7 @@ function undoQueue(editCommand) {
    //if (!editCommand.doIt()) {  // move all check here.
    //   return;
    //}
-   // editCommand = new CheckPoint(draftBench, editCommand);      // debug purpose. 
+   // editCommand = new CheckPoint(_environment.draftBench, editCommand);      // debug purpose. 
 
    while ( (undo.queue.length-1) > undo.current ) {
       // remove branch not taken
@@ -845,7 +854,7 @@ function drawWorld(gl) {
    //if (world.length > 0) {
       // update selectStatus
       let count = 0;
-      for (let model of world.getCage()) {
+      for (let model of _environment.world.getCage()) {
          model.updateStatus();
          ++count;
       }
@@ -857,34 +866,34 @@ function drawWorld(gl) {
       //gl.blendFunc(gl.SRC_COLOR, gl.DST_COLOR);
       // draw Current Select Mode (vertex, edge, or face)
       //if (hilite.vertex || hilite.edge || hilite.face || hilite.cage) {
-         mode.current.drawExtra(gl, draftBench);
+         mode.current.drawExtra(gl, _environment.draftBench);
       //}
       // hack -- draw other hilite selection if any, really should move to multimode
       if (hilite.vertex && (mode.current !== mode.vertex)) {
-         mode.vertex.drawExtra(gl, draftBench);
+         mode.vertex.drawExtra(gl, _environment.draftBench);
       }
       if (hilite.edge && (mode.current !== mode.edge)) {
-         mode.edge.drawExtra(gl, draftBench);
+         mode.edge.drawExtra(gl, _environment.draftBench);
       }
       if (hilite.face && (mode.current !== mode.face)) {
-         mode.face.drawExtra(gl, draftBench);
+         mode.face.drawExtra(gl, _environment.draftBench);
       }
       // hack - draw plane
       if (hilite.plane) {
-         draftBench.drawPlane(gl, hilite.plane);
+         _environment.draftBench.drawPlane(gl, hilite.plane);
       }
       // end of hack ----
       //gl.disable(gl.BLEND);
 
       // draw all other edge (extra, hardEdge, wireframeEdge) if applicable
-      draftBench.drawHardEdgeEtc(gl, mode.current === mode.edge, mode.current);
+      _environment.draftBench.drawHardEdgeEtc(gl, mode.current === mode.edge, mode.current);
 
       //gl.polygonOffset(1.0, 1.0);          // Set the polygon offset
       //gl.enable(gl.POLYGON_OFFSET_FILL);
       mode.current.previewShader(gl);
       //world.forEach(function(model, _index, _array){
          gl.bindTransform();
-         draftBench.draw(gl, mode.current);
+         _environment.draftBench.draw(gl, mode.current);
       //});
       gl.disableShader();
       //gl.disable(gl.POLYGON_OFFSET_FILL);
@@ -969,14 +978,14 @@ function init() {
    // bind createMaterial button.
 
    // bind geometryGraph
-   geometryGraph = TreeView.getTreeView('#objectListLabel','#objectList', world);
+   _environment.geometryGraph = TreeView.getTreeView('#objectListLabel','#objectList', _environment.world);
    // selectObject
    Wings3D.bindAction([], 0, Wings3D.action.toggleObjectSelect.name, (ev) => {
       if (isMultiMode()) {
          toggleFaceMode(); // todo: see if we can capture the toggling cmd.
       }
       const toggle = new ToggleCheckbox(ev.target);
-      const cmd = new GenericEditCommand(currentMode(), currentMode().selectObject, [currentObjects, ev.target], 
+      const cmd = new GenericEditCommand(currentMode(), currentMode().selectObject, [_environment.currentObjects, ev.target], 
                                                         currentMode().undoSelectObject, [ev.target]);
       cmd.doIt();
       undoQueueCombo([toggle, cmd]);
@@ -984,7 +993,7 @@ function init() {
    // hide/show Object
    Wings3D.bindAction([], 0, Wings3D.action.toggleObjectVisibility.name, (ev) => {
       const toggle = new ToggleCheckbox(ev.target);
-      const cmd = new GenericEditCommand(currentMode(), currentMode().toggleObjectVisibility, [currentObjects, ev.target], 
+      const cmd = new GenericEditCommand(currentMode(), currentMode().toggleObjectVisibility, [_environment.currentObjects, ev.target], 
                                                         currentMode().undoObjectVisibility);
       cmd.doIt();
       undoQueueCombo([toggle, cmd]);
@@ -992,7 +1001,7 @@ function init() {
    // lock/unlock Object
    Wings3D.bindAction([], 0, Wings3D.action.toggleObjectLock.name, (ev) => {
       const toggle = new ToggleCheckbox(ev.target);
-      const cmd = new GenericEditCommand(currentMode(), currentMode().toggleObjectLock, [currentObjects, ev.target], 
+      const cmd = new GenericEditCommand(currentMode(), currentMode().toggleObjectLock, [_environment.currentObjects, ev.target], 
                                                         currentMode().undoToggleObjectLock);
       cmd.doIt();
       undoQueueCombo([toggle, cmd]);
@@ -1000,20 +1009,20 @@ function init() {
    // toggle wire only mode.
    Wings3D.bindAction([], 0, Wings3D.action.toggleWireMode.name, (ev)=>{
       const toggle = new ToggleCheckbox(ev.target);
-      const cmd = new GenericEditCommand(currentMode(), currentMode().toggleObjectWireMode, [currentObjects, ev.target.checked], 
+      const cmd = new GenericEditCommand(currentMode(), currentMode().toggleObjectWireMode, [_environment.currentObjects, ev.target.checked], 
                                                         currentMode().undoToggleObjectWireMode);
       cmd.doIt();
       undoQueueCombo([toggle, cmd]);
     });
    // objectDelete, gui
    UI.bindMenuItem(Wings3D.action.objectDelete.name, (_ev)=>{
-      const command = new DeleteBodyCommand(currentObjects);
+      const command = new DeleteBodyCommand(_environment.currentObjects);
       undoQueue( command );
       command.doIt(); // delete current selected.
     });
    // objectDuplicate, gui
    UI.bindMenuItem(Wings3D.action.objectDuplicate.name, (_ev)=>{
-      const command = new DuplicateBodyCommand(currentObjects);
+      const command = new DuplicateBodyCommand(_environment.currentObjects);
       undoQueue( command );
       command.doIt(); // delete current selected.
     });
@@ -1022,62 +1031,62 @@ function init() {
       // createGroup
       const group = new PreviewGroup;
       group.name = "new_folder";
-      let parent = currentParent;
+      let parent = _environment.currentParent;
       if (!parent) {
-         parent = world;
+         parent = _environment.world;
       }
       parent.insert( group ); // later: change to addToWorld()
-      geometryGraph.addGroup(parent.guiStatus.ul, group);
+      _environment.geometryGraph.addGroup(parent.guiStatus.ul, group);
      });
    // CreateGroup-World
    UI.bindMenuItem(Wings3D.action.createGroupWorld.name, (_ev)=>{
       // createGroup
       const group = new PreviewGroup;
       group.name = "new_folder";
-      let parent = world;
+      let parent = _environment.world;
       parent.insert( group ); // later: change to addToWorld()
-      geometryGraph.addGroup(parent.guiStatus.ul, group);
+      _environment.geometryGraph.addGroup(parent.guiStatus.ul, group);
     });
 
    // Image List.
-   imageList = TreeView.getImageList('#imageListLabel','#imageList');
+   _environment.imageList = TreeView.getImageList('#imageListLabel','#imageList');
    UI.bindMenuItem(Wings3D.action.importImageFileGUI.name, function(ev) {
       UI.openFile(function(file) { // open file Dialog, and retrive data
-            imageList.loadImage(file);
+            _environment.imageList.loadImage(file);
          });      
     });
    UI.bindMenuItem(Wings3D.action.showImage.name, function(_ev){
-      imageList.showImage(currentObjects);
+      _environment.imageList.showImage(_environment.currentObjects);
     });
    UI.bindMenuItem(Wings3D.action.deleteImage.name, function(_ev){
-      imageList.deleteImage(currentObjects);
+      _environment.imageList.deleteImage(_environment.currentObjects);
     });
 
    // material List.
-   materialList = TreeView.getMaterialList('#materialListLabel', '#materialList');
+   _environment.materialList = TreeView.getMaterialList('#materialListLabel', '#materialList');
    UI.bindMenuItem(Wings3D.action.createMaterial.name, function(ev){
-      materialList.createMaterial(ev);
+      _environment.materialList.createMaterial(ev);
     });
    UI.bindMenuItem(Wings3D.action.editMaterial.name, function(ev) {
-      materialList.editMaterial(ev, currentObjects);
+      _environment.materialList.editMaterial(ev, _environment.currentObjects);
     });
    UI.bindMenuItem(Wings3D.action.deleteMaterial.name, function(_ev){
       // check if any alive polygon is using the tobe delete Material
-      if (!draftBench.isMaterialsInUse(currentObjects)) {
-         materialList.deleteMaterial(currentObjects);
+      if (!_environment.draftBench.isMaterialsInUse(_environment.currentObjects)) {
+         _environment.materialList.deleteMaterial(_environment.currentObjects);
       } else {
          alert("Materials is in use");
       }
     });   
    UI.bindMenuItem(Wings3D.action.renameMaterial.name, function(ev) {
-      materialList.renameMaterial(ev, currentObjects);
+      _environment.materialList.renameMaterial(ev, _environment.currentObjects);
     });
    UI.bindMenuItem(Wings3D.action.duplicateMaterial.name, function(_ev) {
-      materialList.duplicateMaterial(currentObjects);
+      _environment.materialList.duplicateMaterial(_environment.currentObjects);
     });
    UI.bindMenuItem(Wings3D.action.assignMaterial.name, function(_ev) {
       if (mode.current === mode.face) {
-         const cmd = new GenericEditCommand(currentMode(), currentMode().assignMaterial, [currentObjects[0]], 
+         const cmd = new GenericEditCommand(currentMode(), currentMode().assignMaterial, [_environment.currentObjects[0]], 
                                                            currentMode().undoAssignMaterial);
          undoQueue( cmd );                                                 
          cmd.doIt();
@@ -1086,10 +1095,11 @@ function init() {
       }  
     });
    UI.bindMenuItem(Wings3D.action.selectMaterial.name, function(ev){
-      const cmd = currentMode().selectMaterialCmd([currentObjects[0]]);
+      const cmd = currentMode().selectMaterialCmd([_environment.currentObjects[0]]);
       cmd.doIt();    // needs to run first                                                
       undoQueue( cmd );                                                 
     });
+   // let lightList
 
 
    // bind .dropdown, click event.
@@ -1122,7 +1132,7 @@ function init() {
 
 
    //Renderer.init(gl, drawWorld);  // init by itself
-   draftBench = new DraftBench(theme.draftBench, theme.draftBenchPref);
+   _environment.draftBench = new DraftBench(theme.draftBench, theme.draftBenchPref);
 
    // capture keyevent.
    document.addEventListener('keydown', function(event) {
@@ -1168,7 +1178,6 @@ export {
    // data
    prop,
    theme,
-   draftBench,
    //world,   // we want iteration. can we share it?
    // function
    toggleVertexMode,
