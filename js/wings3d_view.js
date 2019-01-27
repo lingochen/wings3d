@@ -1132,7 +1132,7 @@ function init() {
 
 
    //Renderer.init(gl, drawWorld);  // init by itself
-   _environment.draftBench = new DraftBench(theme.draftBench, theme.draftBenchPref);
+   _environment.draftBench = new DraftBench(theme.draftBench, theme.draftBenchPref, _environment.materialList);
 
    // capture keyevent.
    document.addEventListener('keydown', function(event) {

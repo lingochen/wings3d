@@ -3805,7 +3805,6 @@ PreviewCage.prototype.assignFaceMaterial = function(material) {
       }
    }
    if (savedMaterials.size > 0) {
-      this.bench.alterMaterial();
       return savedMaterials;
    } else {
       return undefined;
@@ -3821,7 +3820,6 @@ PreviewCage.prototype.undoAssignFaceMaterial = function(savedMaterials) {
          polygon.assignMaterial(material);
       }
    }
-   this.bench.alterMaterial();
 };
 
 

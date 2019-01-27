@@ -9,6 +9,7 @@ import * as Util from './wings3d_util.js';
 const Material = function(name) {
    this.name = name;
    this.uuid = Util.get_uuidv4();
+   this.isAltered = false;
    this.usageCount = 0;
    this.material = {diffuseMaterial: "#C9CFB1", 
                     ambientMaterial: "#C9CFB1",
@@ -45,10 +46,12 @@ Material.prototype.setValues = function(inputDat) {
 
 Material.prototype.assigned = function() {
    ++this.usageCount;
+   this.isAltered = true;
 }
 
 Material.prototype.unassigned = function() {
    --this.usageCount;
+   this.isAltered = true;
 }
 
 
