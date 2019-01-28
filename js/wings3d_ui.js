@@ -29,7 +29,7 @@ function bindMenuItem(id, fn, hotkey, meta) {
    }
 }
 function bindMenuItemMMB(id, fn) {
-   const menuItem = document.querySelectorAll(`[${menuIdAttrib}="${id}"]`);
+   const menuItems = document.querySelectorAll(`[${menuIdAttrib}="${id}"]`);
    if (menuItems) {
       _bindMenuItem(null, menuItems, 1, id, fn);
    } else {

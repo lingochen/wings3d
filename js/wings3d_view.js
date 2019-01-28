@@ -1105,10 +1105,11 @@ function init() {
    // bind .dropdown, click event.
    let buttons = document.querySelectorAll("li.dropdown > a");
    for (let button of buttons) {
-      if (button.id) {
+      const id = button.getAttribute('data-menuid');
+      if (id) {
          let ul = button.nextElementSibling;  // popupMenu
          if (ul && ul.classList.contains("popup") && ul.classList.contains("menu")) {
-            UI.bindMenuItem(button.id, function(ev) {
+            UI.bindMenuItem(id, function(ev) {
                UI.queuePopupMenu(ul);  // show popupMenu
              });
          }
