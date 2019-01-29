@@ -208,7 +208,7 @@ class TreeView {
             self.drag.cage = model;
           });
          // select whole object
-         const whole = document.createRange().createContextualFragment('<label><input type="checkbox"><span class="smallIcon" style="background-image: url(\'../img/bluecube/small_whole.png\');"></span></label>');
+         const whole = document.createRange().createContextualFragment('<label><input type="checkbox"><span class="smallIcon smallWhole"></span></label>');
          let input = whole.querySelector('input');
          input.addEventListener('change', (ev)=> {  // whole is fragment. we want label.
             if (model.isLock() || !model.isVisible()) {   // not actually changeable
@@ -233,7 +233,7 @@ class TreeView {
           }, false);
          li.appendChild(text);
          // eye label
-         const eyeLabel = document.createRange().createContextualFragment('<label><input type="checkbox"><span class="smallIcon" style="background-image: url(\'../img/bluecube/small_show.png\');"></span></label>');
+         const eyeLabel = document.createRange().createContextualFragment('<label><input type="checkbox"><span class="smallIcon smallShow"></span></label>');
          input = eyeLabel.querySelector('input');
          input.addEventListener('change', (ev)=> {  // whole is fragment. we want label.
             if (model.isLock()) {   // non modifiable object
@@ -246,16 +246,16 @@ class TreeView {
          model.guiStatus.visibility = input;
          li.appendChild(eyeLabel);
          // lock/unlock
-         const lockLabel = document.createRange().createContextualFragment('<label><input type="checkbox"><span class="smallIcon" style="background-image: url(\'../img/bluecube/small_unlock.png\');"></span></label>');
+         const lockLabel = document.createRange().createContextualFragment('<label><input type="checkbox"><span class="smallIcon smallUnlock"></span></label>');
          input = lockLabel.querySelector('input');
          input.addEventListener('change', (ev)=> {  // whole is fragment. we want label.
-            View.setObject(mode.parent, [model]);
+            View.setObject(model.parent, [model]);
             Wings3D.runAction(0, "toggleObjectLock", ev);
           });
          li.appendChild(lockLabel);
          model.guiStatus.locked = input;
          // wireframe
-         const wireframe = document.createRange().createContextualFragment('<label><input type="checkbox"><span class="smallIcon" style="background-image: url(\'../img/bluecube/small_wire.png\');"></span></label>');
+         const wireframe = document.createRange().createContextualFragment('<label><input type="checkbox"><span class="smallIcon smallWire"></span></label>');
          input = wireframe.querySelector('input');
          input.addEventListener('change', (ev)=> {  // whole is fragment. we want label.
             View.setObject(model.parent, [model]);
@@ -367,7 +367,7 @@ class ImageList extends ListView {
             dat.popup = UI.showPopup(this, file.name);
           }
          let li = dat.li = document.createElement('li');
-         let pict = document.createRange().createContextualFragment('<span class="smallIcon" style="background-image: url(\'../img/bluecube/small_image.png\');"></span>');
+         let pict = document.createRange().createContextualFragment('<span class="smallIcon smallImage"></span>');
          pict.firstElementChild.addEventListener('click', (_ev) => {
             document.body.appendChild(dat.popup);
           });

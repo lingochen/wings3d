@@ -98,6 +98,21 @@ input[type='checkbox']+.smallIcon {
 input:checked+.smallIcon {
   background-position: -16px 0px;
 }
+.smallWhole {
+  background-image: url("../img/bluecube/small_whole.png");
+}
+.smallShow {
+  background-image: url("../img/bluecube/small_show.png");
+}
+.smallUnlock {
+  background-image: url("../img/bluecube/small_unlock.png");
+}
+.smallWire {
+  background-image: url("../img/bluecube/small_wire.png");
+}
+.smallImage {
+  background-image: url("../img/bluecube/small_image.png");
+}
 
 li > p {
   margin: 0px;
