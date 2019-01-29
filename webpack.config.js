@@ -24,10 +24,11 @@ const config = {
         include: path.resolve(__dirname, 'js'),
       },
       { test: /\.txt$/, use: 'raw-loader' },
+      { test: /\.(png|jpg)$/, loader: 'url-loader'},
       { test: /\.css$/, 
         use: ExtractTextPlugin.extract({
           fallback: 'style-loader',
-          use: [{loader:'css-loader', options: {url:false}}]
+          use: [{loader:'css-loader'}]
         })
       },
     ]
