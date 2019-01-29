@@ -113,6 +113,9 @@ input:checked+.smallIcon {
 .smallImage {
   background-image: url("../img/bluecube/small_image.png");
 }
+.smallPref {
+  background-image: url("../img/bluecube/small_pref.png");
+}
 
 li > p {
   margin: 0px;
