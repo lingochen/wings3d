@@ -123,3 +123,72 @@ label.button span {
     text-decoration: none;
     text-align: center;
 }
+
+.iconImg {
+  object-fit: none;
+  object-position: 0 0;
+  width: 32px;
+  height: 32px;
+}
+
+.sidebarImg {
+  object-position: 0 0x;
+}
+
+.openImg {
+  object-position: 0 -32px;
+}
+
+.saveImg {
+  object-position: 0 -64px;
+}
+
+.undoImg {
+  object-position: 0 -96px;
+}
+
+.redoImg {
+  object-position: 0 -128px;
+}
+
+.vertexImg {
+  object-position: 0 -160px;
+}
+
+.edgeImg {
+  object-position: 0 -192px;
+}
+
+.faceImg {
+  object-position: 0 -224px;
+}
+
+.bodyImg {
+  object-position: 0 -256px;
+}
+
+.multiImg {
+  object-position: 0 -288px;
+}
+
+.prefImg {
+  object-position: 0 -320px;
+}
+
+.smoothImg {
+  object-position: 0 -352px;
+}
+
+.perspectiveImg {
+  object-position: 0 -384px;
+}
+
+.groundplaneImg {
+  object-position: 0 -412px;
+}
+
+.axesImg {
+  object-position: 0 -444px;
+}
+
+
