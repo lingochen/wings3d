@@ -451,6 +451,7 @@ class MaterialList extends ListView {
       if (dat !== Material.default) {   // default material's name cannot be changed.
          ListView.addRenameListener(dat.text, dat);
       }
+
       dat.text.addEventListener('contextmenu', function(ev) {  // contextMenu
          ev.preventDefault();
          let contextMenu = document.querySelector('#materialMenu');
@@ -461,6 +462,9 @@ class MaterialList extends ListView {
          }
        }, false);
       li.appendChild(whole);
+      let count = document.createRange().createContextualFragment('<span class="resultCount">0</span>');
+      dat.guiStatus.count = count.firstElementChild;
+      li.appendChild(count);
       this.view.appendChild(li);
       // also put on subMenu.
       if (!this.submenu) {

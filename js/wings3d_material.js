@@ -11,6 +11,7 @@ const Material = function(name) {
    this.uuid = Util.get_uuidv4();
    this.isAltered = false;
    this.usageCount = 0;
+   this.guiStatus = {};
    this.material = {diffuseMaterial: "#C9CFB1", 
                     ambientMaterial: "#C9CFB1",
                     specularMaterial: "#000000", 
@@ -46,12 +47,20 @@ Material.prototype.setValues = function(inputDat) {
 
 Material.prototype.assigned = function() {
    ++this.usageCount;
+   this.updateGUI();
    this.isAltered = true;
 }
 
 Material.prototype.unassigned = function() {
    --this.usageCount;
+   this.updateGUI();
    this.isAltered = true;
+}
+
+Material.prototype.updateGUI = function() {
+   if (this.guiStatus.count) {
+      this.guiStatus.count.textContent = this.usageCount;
+   }
 }
 
 
