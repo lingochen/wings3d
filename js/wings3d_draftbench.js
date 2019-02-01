@@ -949,21 +949,6 @@ DraftBench.prototype.setHardness = function(wEdge, operand) {
 };
 
 
-/**
- * @param {materials} - array containing the materials.
- */
-DraftBench.prototype.isMaterialsInUse = function(materials) {
-   for (let material of materials) {
-      for (let polygon of this.faces) {
-         if (polygon.isLive() && (polygon.material === material)) {
-            return true;
-         }
-      }
-   }
-   return false;
-}
-
-
 class CheckPoint extends EditCommand { // do we really needs to inherited form EditCommand?
    CheckPoint(draftBench, editCommand) {
       this.command = editCommand;

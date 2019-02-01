@@ -1072,7 +1072,7 @@ function init() {
     });
    UI.bindMenuItem(Wings3D.action.deleteMaterial.name, function(_ev){
       // check if any alive polygon is using the tobe delete Material
-      if (!_environment.draftBench.isMaterialsInUse(_environment.currentObjects)) {
+      if (_environment.currentObjects[0].usageCount === 0) {
          _environment.materialList.deleteMaterial(_environment.currentObjects);
       } else {
          alert("Materials is in use");
