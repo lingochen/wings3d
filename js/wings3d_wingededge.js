@@ -1660,7 +1660,7 @@ WingedTopology.prototype.extrudeContours = function(edgeLoops) {
          polygon.push( edge.outer.origin.index );
          polygon.push( edge.outer.destination().index );
          polygon.push( edge.inner.destination().index );
-         this.addPolygon( polygon,  edge.outer.face.material); // todo: check we should use outer, or inner.
+         this.addPolygon( polygon,  edge.inner.face.material); // todo: inner material, but should be be outer.pair.face?
          extrudeContours.push( this.findHalfEdge(edge.inner.origin, edge.outer.origin) );
       }
    }

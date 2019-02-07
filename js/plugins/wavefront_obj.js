@@ -48,7 +48,7 @@ class WavefrontObjImportExporter extends ImportExporter {
 
    _import(objText) {
       // break the objText to lines we needs.
-      const linesMatch = objText.match(/^([vfogs]|vt|vn|usemtl|mtllib)(?:\s+(.+))$/gm);   //objText.match(/^v((?:\s+)[\d|\.|\+|\-|e|E]+){3}$/gm);
+      const linesMatch = objText.match(/^([vfogs]|vt|usemtl|mtllib)(?:\s+(.+))$/gm);   //objText.match(/^v((?:\s+)[\d|\.|\+|\-|e|E]+){3}$/gm);
 
       if (linesMatch) {
          for (let line of linesMatch) {
@@ -97,10 +97,6 @@ class WavefrontObjImportExporter extends ImportExporter {
       this.vertexCount++;
    }
 
-   vn(normal) {
-
-   }
-
    vt(textureVert) {
 
    }
@@ -130,7 +126,7 @@ class WavefrontObjImportExporter extends ImportExporter {
       const materialName = mat[0];
       let material = this.materials.get(materialName);
       if (!material) {
-         material = Material.create();
+         material = Material.create(materialName);
          this.materials.set(materialName, material);
       }
       this.currentMaterial = material;
