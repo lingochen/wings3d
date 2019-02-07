@@ -60,13 +60,13 @@ function addMenuItem(menuId, id, menuItemText, fn, hotkey, meta) {
    // insert the menuItem 
    const menuItem = document.createElement('li');
    const a = document.createElement('a');
-   a.id = id;
+   a.setAttribute(menuIdAttrib, id);
    a.textContent = menuItemText;
    // append to submenu
    menuItem.appendChild(a);
    menu.appendChild(menuItem);
    Wings3D.addActionConstant(id);
-   _bindMenuItem(a, 0, id, fn, hotkey, meta);
+   _bindMenuItem(null, [a], 0, id, fn, hotkey, meta); // [a], should be NodeList, but array is a passable substitute.
 }
 
 
