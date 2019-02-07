@@ -1115,9 +1115,8 @@ function init() {
    // bind li.dropside > a.
    buttons = document.querySelectorAll("li.dropside > a");
    for (let button of buttons) {
-      const id = button.id;
+      const id = button.getAttribute('data-menuid');
       if (id) {
-         button.setAttribute('data-menuid', id);   // copy to data-menuid, duct-taping.
          let ul = button.nextElementSibling;  // popupMenu
          if (ul && ul.classList.contains("popup") && ul.classList.contains("menu")) {
             UI.bindMenuItem(id, function(ev) {

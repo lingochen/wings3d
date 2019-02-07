@@ -361,9 +361,9 @@
       <li class="not-implemented"><a data-menuid="createPlane">Various Planes</a></li>
       <li class="not-implemented"><a data-menuid="createGrid">Grid</a></li>
     </ul>
-    <ul id="edge-context-menu" class="popup menu">
+    <ul data-menuid="edge-context-menu" class="popup menu">
       <li class="dropside">
-	      <a id="edgeMoveMenu" data-i18n>Move</a>
+	      <a data-menuid="edgeMoveMenu" data-i18n>Move</a>
         <ul class="popup menu">
           <li><a data-menuid="edgeMoveNormal" data-i18n>Normal</a></li>
           <li><a data-menuid="edgeMoveFree">Free</a></li>
@@ -373,7 +373,7 @@
         </ul>
       </li>
       <li class="dropside">
-        <a id="edgeRotateMenu">Rotate</a>
+        <a data-menuid="edgeRotateMenu">Rotate</a>
         <ul class ="popup menu">
           <li><a data-menuid="edgeRotateFree">Free</a></li>
           <li><a data-menuid="edgeRotateX">X</a></li>
@@ -383,7 +383,7 @@
       </li>
       <li><a data-menuid="edgeScaleUniform">Scale Uniform</a></li>
       <li class="dropside">
-        <a id="edgeScaleAxis">Scale Axis</a>
+        <a data-menuid="edgeScaleAxis">Scale Axis</a>
         <ul class ="popup menu">
           <li><a data-menuid="edgeScaleAxisX">X</a></li>
           <li><a data-menuid="edgeScaleAxisY">Y</a></li>
@@ -391,7 +391,7 @@
         </ul>
       </li>
       <li class="dropside">
-        <a id="edgeScaleRadial">Scale Radial</a>
+        <a data-menuid="edgeScaleRadial">Scale Radial</a>
         <ul class ="popup menu">
           <li><a data-menuid="edgeScaleRadialX">X</a></li>
           <li><a data-menuid="edgeScaleRadialY">Y</a></li>
@@ -401,7 +401,7 @@
       <li><a data-menuid="edgeSlide">Slide</a></li>
       <hr />
       <li class="dropside">
-        <a id="edgeExtrudeMenu">Extrude</a>
+        <a data-menuid="edgeExtrudeMenu">Extrude</a>
         <ul class ="popup menu">
           <li><a data-menuid="edgeExtrudeNormal">Normal</a></li>
           <li><a data-menuid="edgeExtrudeFree">Free</a></li>
@@ -413,7 +413,7 @@
       <li><a data-menuid="edgeCrease">Crease</a></li>
       <hr />
       <li class="dropside">
-        <a id="edgeFlatten">Flatten</a>
+        <a data-menuid="edgeFlatten">Flatten</a>
         <ul class ="popup menu">
           <li><a data-menuid="edgeFlattenX">X</a></li>
           <li><a data-menuid="edgeFlattenY">Y</a></li>
@@ -422,7 +422,7 @@
       </li>
       <hr />
       <li class="dropside">
-        <a id="cutMenu">Cut</a>
+        <a data-menuid="cutMenu">Cut</a>
         <ul class="popup menu">
           <li><a data-menuid="cutLine2">2 Segments</a></li>
           <li><a data-menuid="cutLine3">3 Segments</a></li>
@@ -443,7 +443,7 @@
       <li><a data-menuid="edgeCollapse">Collapse</a></li>
       <hr>
       <li class="dropside">
-        <a id="edgeHardness">Hardness</a>
+        <a data-menuid="edgeHardness">Hardness</a>
         <ul class="popup menu">
           <li><a data-menuid="edgeSoft">Soft</a></li>
           <li><a data-menuid="edgeHard">Hard</a></li>
@@ -457,7 +457,7 @@
     </ul>
     <ul id="face-context-menu" class="context-menu popup menu">
       <li class="dropside">
-        <a id="faceMoveMenu">Move</a>
+        <a data-menuid="faceMoveMenu">Move</a>
         <ul class="popup menu">
           <li><a data-menuid="faceMoveNormal">Normal</a></li>
           <li><a data-menuid="faceMoveFree">Free</a></li>
@@ -467,7 +467,7 @@
         </ul>
       </li>
       <li class="dropside">
-        <a id="faceRotateMenu">Rotate</a>
+        <a data-menuid="faceRotateMenu">Rotate</a>
         <ul class ="popup menu">
           <li><a data-menuid="faceRotateFree">Free</a></li>
           <li><a data-menuid="faceRotateX">X</a></li>
@@ -475,9 +475,9 @@
           <li><a data-menuid="faceRotateZ">Z</a></li>
         </ul>
       </li>
-      <li><a id="faceScaleUniform">Scale Uniform</a></li>
+      <li><a data-menuid="faceScaleUniform">Scale Uniform</a></li>
       <li class="dropside">
-        <a id="faceScaleAxis">Scale Axis</a>
+        <a data-menuid="faceScaleAxis">Scale Axis</a>
         <ul class ="popup menu">
           <li><a data-menuid="faceScaleAxisX">X</a></li>
           <li><a data-menuid="faceScaleAxisY">Y</a></li>
@@ -485,7 +485,7 @@
         </ul>
       </li>
       <li class="dropside">
-        <a id="faceScaleRadial">Scale Radial</a>
+        <a data-menuid="faceScaleRadial">Scale Radial</a>
         <ul class ="popup menu">
           <li><a data-menuid="faceScaleRadialX">X</a></li>
           <li><a data-menuid="faceScaleRadialY">Y</a></li>
@@ -494,7 +494,7 @@
       </li>
       <hr>
       <li class="dropside">
-        <a id="faceExtrudeMenu">Extrude</a>
+        <a data-menuid="faceExtrudeMenu">Extrude</a>
         <ul class="popup menu">
           <li><a data-menuid="faceExtrudeNormal">Normal</a></li>
           <li><a data-menuid="faceExtrudeFree">Free</a></li>
@@ -505,7 +505,7 @@
       </li>
       <hr />
       <li class="dropside">
-        <a id="faceFlatten">Flatten</a>
+        <a data-menuid="faceFlatten">Flatten</a>
         <ul class ="popup menu">
           <li><a data-menuid="faceFlattenNormal">Normal</a></li>
           <li><a data-menuid="faceFlattenX">X</a></li>
@@ -528,12 +528,12 @@
       <li><a data-menuid="faceCollapse">Collapse</a></li>
       <hr>
       <li class="dropside">
-        <a id="faceMaterialMenu" data-i18n>Material</a>
+        <a data-menuid="faceMaterialMenu" data-i18n>Material</a>
         <ul class="popup menu"></ul>
       </li>
       <hr>
       <li class="dropside">
-        <a id="facePlaneCut">Plane Cut</a>
+        <a data-menuid="facePlaneCut">Plane Cut</a>
         <ul class ="popup menu">
           <li><a data-menuid="facePlaneCutX">X</a></li>
           <li><a data-menuid="facePlaneCutY">Y</a></li>
@@ -541,9 +541,9 @@
         </ul>
       </li>
     </ul>
-    <ul id="vertex-context-menu" class="popup menu">
+    <ul data-menuid="vertex-context-menu" class="popup menu">
       <li class="dropside">
-        <a id="vertexMoveMenu" data-i18n>Move</a>
+        <a data-menuid="vertexMoveMenu" data-i18n>Move</a>
         <ul class="popup menu">
           <li><a data-menuid="vertexMoveNormal" data-i18n>Normal</a></li>
           <li><a data-menuid="vertexMoveFree">Free</a></li>
@@ -553,7 +553,7 @@
         </ul>
       </li>
       <li class="dropside">
-        <a id="vertexRotateMenu">Rotate</a>
+        <a data-menuid="vertexRotateMenu">Rotate</a>
         <ul class ="popup menu">
           <li><a data-menuid="vertexRotateFree">Free</a></li>
           <li><a data-menuid="vertexRotateX">X</a></li>
@@ -561,9 +561,9 @@
           <li><a data-menuid="vertexRotateZ">Z</a></li>
         </ul>
       </li>
-      <li><a id="vertexScaleUniform">Scale Uniform</a></li>
+      <li><a data-menuid="vertexScaleUniform">Scale Uniform</a></li>
       <li class="dropside">
-        <a id="vertexScaleAxis">Scale Axis</a>
+        <a data-menuid="vertexScaleAxis">Scale Axis</a>
         <ul class ="popup menu">
           <li><a data-menuid="vertexScaleAxisX">X</a></li>
           <li><a data-menuid="vertexScaleAxisY">Y</a></li>
@@ -571,7 +571,7 @@
         </ul>
       </li>
       <li class="dropside">
-        <a id="vertexScaleRadial">Scale Radial</a>
+        <a data-menuid="vertexScaleRadial">Scale Radial</a>
         <ul class ="popup menu">
           <li><a data-menuid="vertexScaleRadialX">X</a></li>
           <li><a data-menuid="vertexScaleRadialY">Y</a></li>
@@ -580,7 +580,7 @@
       </li>
       <hr />
       <li class="dropside">
-        <a id="vertexExtrudeMenu">Extrude</a>
+        <a data-menuid="vertexExtrudeMenu">Extrude</a>
         <ul class="popup menu">
           <li><a data-menuid="vertexExtrudeNormal">Normal</a></li>
           <li><a data-menuid="vertexExtrudeFree">Free</a></li>
@@ -591,7 +591,7 @@
       </li>
       <hr>
       <li class="dropside">
-        <a id="vertexFlatten">Flatten</a>
+        <a data-menuid="vertexFlatten">Flatten</a>
         <ul class ="popup menu">
           <li><a data-menuid="vertexFlattenX">X</a></li>
           <li><a data-menuid="vertexFlattenY">Y</a></li>
@@ -607,9 +607,9 @@
       <hr>
 
     </ul>
-    <ul id="body-context-menu" class="popup menu">
+    <ul data-menuid="body-context-menu" class="popup menu">
       <li class="dropside">
-        <a id="bodyMoveMenu">Move</a>
+        <a data-menuid="bodyMoveMenu">Move</a>
         <ul class="popup menu">
           <li><a data-menuid="bodyMoveFree">Free</a></li>
           <li><a data-menuid="bodyMoveX">X</a></li>
@@ -618,7 +618,7 @@
         </ul>
       </li>
       <li class="dropside">
-        <a id="bodyRotateMenu">Rotate</a>
+        <a data-menuid="bodyRotateMenu">Rotate</a>
         <ul class ="popup menu">
           <li><a data-menuid="bodyRotateFree">Free</a></li>
           <li><a data-menuid="bodyRotateX">X</a></li>
@@ -626,9 +626,9 @@
           <li><a data-menuid="bodyRotateZ">Z</a></li>
         </ul>
       </li>
-      <li><a id="bodyScaleUniform">Scale Uniform</a></li>
+      <li><a data-menuid="bodyScaleUniform">Scale Uniform</a></li>
       <li class="dropside">
-        <a id="bodyScaleAxis">Scale Axis</a>
+        <a data-menuid="bodyScaleAxis">Scale Axis</a>
         <ul class ="popup menu">
           <li><a data-menuid="bodyScaleAxisX">X</a></li>
           <li><a data-menuid="bodyScaleAxisY">Y</a></li>
@@ -636,7 +636,7 @@
         </ul>
       </li>
       <li class="dropside">
-        <a id="bodyScaleRadial">Scale Radial</a>
+        <a data-menuid="bodyScaleRadial">Scale Radial</a>
         <ul class ="popup menu">
           <li><a data-menuid="bodyScaleRadialX">X</a></li>
           <li><a data-menuid="bodyScaleRadialY">Y</a></li>
@@ -645,7 +645,7 @@
       </li>
       <hr>
       <li class="dropside">
-        <a id="bodyFlipMenu">Flip...</a>
+        <a data-menuid="bodyFlipMenu">Flip...</a>
         <ul class ="popup menu">
           <li><a data-menuid="bodyFlipX">X</a></li>
           <li><a data-menuid="bodyFlipY">Y</a></li>
@@ -660,7 +660,7 @@
       <hr>
       <li><a data-menuid="bodyWeld">Weld</a></li>
       <li class="dropside">
-        <a id="bodyPlaneCut">Plane Cut</a>
+        <a data-menuid="bodyPlaneCut">Plane Cut</a>
         <ul class ="popup menu">
           <li><a data-menuid="bodyPlaneCutX">X</a></li>
           <li><a data-menuid="bodyPlaneCutY">Y</a></li>
@@ -668,7 +668,7 @@
         </ul>
       </li>
       <li class="dropside">
-        <a id="bodySlice">Slice</a>
+        <a data-menuid="bodySlice">Slice</a>
         <ul class ="popup menu">
           <li><a data-menuid="bodySliceX">X</a></li>
           <li><a data-menuid="bodySliceY">Y</a></li>
@@ -677,7 +677,7 @@
       </li>
       <hr>
       <li class="dropside">
-        <a id="bodyDuplicateMoveMenu">Duplicate</a>
+        <a data-menuid="bodyDuplicateMoveMenu">Duplicate</a>
         <ul class="popup menu">
           <li><a data-menuid="bodyDuplicateMoveFree">Free</a></li>
           <li><a data-menuid="bodyDuplicateMoveX">X</a></li>
