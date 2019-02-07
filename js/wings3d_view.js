@@ -393,9 +393,6 @@ function setObject(parent, objects) { // objects is array
 //-- End of World objects management -------------------------
 //-- material, image, and light management
 const environment = { materials: [], images: [], lights: []};
-function addMaterial(name) {
-
-};
 
 //-- End of material, image, and light management.
 

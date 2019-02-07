@@ -422,7 +422,7 @@ class MaterialList extends ListView {
    constructor(label, listView) {
       super(listView);
       // add default Material.
-      this.addMaterial("default");
+      this.addMaterial(Material.default);
       // context menu
       let contextMenu = document.querySelector('#createMaterialMenu');
       if (contextMenu) {
@@ -434,8 +434,12 @@ class MaterialList extends ListView {
       }
    }
 
-   addMaterial(name, material) {
-      const dat = Material.create(name, material);
+   /**
+    * 
+    * @param {*} material - material
+    */
+   addMaterial(material) {
+      const dat = material;
       // now show on li.
       let li = dat.li = document.createElement('li');
       let pictFrag = document.createRange().createContextualFragment('<span class="materialIcon"></span>');
@@ -446,7 +450,7 @@ class MaterialList extends ListView {
        });
       dat.pict.style.backgroundColor = dat.material.diffuseMaterial;
       li.appendChild(pictFrag);
-      let whole = document.createRange().createContextualFragment(`<span>${name}</span>`);
+      let whole = document.createRange().createContextualFragment(`<span>${dat.name}</span>`);
       dat.text = whole.firstElementChild;
       if (dat !== Material.default) {   // default material's name cannot be changed.
          ListView.addRenameListener(dat.text, dat);
@@ -502,7 +506,7 @@ class MaterialList extends ListView {
       const newName = materialList.newName();
       UI.runDialog('#materialSetting', ev, function(form) {
          const data = UI.extractDialogValue(form);
-         materialList.addMaterial(newName, data);
+         materialList.addMaterial(Material.create(name, data));
        }, function(form) {
           form.reset();
           MaterialList.resetCSS();
@@ -521,7 +525,7 @@ class MaterialList extends ListView {
       } else {
          name = dat.name + '2';
       }
-      this.addMaterial(name, dat.material);
+      this.addMaterial(Material.create(name, dat.material));
    }
 
    editMaterial(ev, objects) {

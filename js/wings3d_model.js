@@ -352,7 +352,7 @@ PreviewCage.duplicate = function(originalCage) {
       polygon.eachVertex( function(vertex) {
          index.push( indexMap.get(vertex.index) );
       });
-      geometry.addPolygon(index);
+      geometry.addPolygon(index, polygon.material);
    }
    //geometry.clearAffected();
    previewCage._updatePreviewAll();
@@ -2800,7 +2800,7 @@ PreviewCage.prototype.intrudeFace = function() {
          connectLoops.push( [lastFront, polygon.halfEdge.origin.index, ptsLoop[0], lastBack]);
       } else { // add the invert polygon.
          ptsLoop.reverse();
-         newPolygons.push( this.geometry.addPolygon(ptsLoop) );
+         newPolygons.push( this.geometry.addPolygon(ptsLoop, Material.default) );   // todo: copy the invert polygon
       }
    }
 
@@ -2816,7 +2816,7 @@ PreviewCage.prototype.intrudeFace = function() {
    // connect to the front polygons.
    ret.connect = [];
    for (let loop of connectLoops) {
-      ret.connect.push( this.geometry.addPolygon(loop) );
+      ret.connect.push( this.geometry.addPolygon(loop, Material.default) );   // todo: copy the connection polygon
    }
 
    this._updatePreviewAll();
@@ -3143,7 +3143,7 @@ PreviewCage.prototype.mirrorFace = function() {
       const newPolygons = newGroups[i];
       const newMirrors = [];
       for (let ptsLoop of newPolygons) {
-         newMirrors.push( this.geometry.addPolygon(ptsLoop) );
+         newMirrors.push( this.geometry.addPolygon(ptsLoop, Material.default) ); // todo: copy the mirror polygon's material
       }
       mirrorGroups.push( {holed: holed, newMirrors: newMirrors} );
    }

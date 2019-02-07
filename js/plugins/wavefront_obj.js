@@ -4,11 +4,15 @@
 //
 import {ImportExporter} from "../wings3d_importexport.js";
 import * as View from "../wings3d_view.js";
+import {Material} from "../wings3d_material.js";
 
 
 class WavefrontObjImportExporter extends ImportExporter {
    constructor() {
       super('Wavefront (.obj)...', 'Wavefront (.obj)...');
+      this.mtl = [];
+      this.materials = new Map;
+      this.currentMaterial = Material.default;
    }
 
    extension() {
@@ -44,7 +48,7 @@ class WavefrontObjImportExporter extends ImportExporter {
 
    _import(objText) {
       // break the objText to lines we needs.
-      const linesMatch = objText.match(/^([vfogs])(?:\s+(.+))$/gm);   //objText.match(/^v((?:\s+)[\d|\.|\+|\-|e|E]+){3}$/gm);
+      const linesMatch = objText.match(/^([vfogs]|vt|vn|usemtl|mtllib)(?:\s+(.+))$/gm);   //objText.match(/^v((?:\s+)[\d|\.|\+|\-|e|E]+){3}$/gm);
 
       if (linesMatch) {
          for (let line of linesMatch) {
@@ -73,24 +77,32 @@ class WavefrontObjImportExporter extends ImportExporter {
    }
 
    g(groupNames) {
-      if (!this.objView) {
-         this.objView = View.putIntoWorld();
-         this.obj = this.objView.geometry;
-         this.objs.push( this.objView );
+      if (groupNames && (groupName)) { // group is like object, except for empty and (null)
+         if (!this.objView) {
+            this.objView = View.putIntoWorld();
+            this.obj = this.objView.geometry;
+            this.objs.push( this.objView );
+         }
       }
-      // to be implemented later
-
    }
 
-   s(groupNumber) {
+   s(groupNumber) {  // smooth group. probably not applicable ?
       // to be implemented later
    }
 
    v(vertex) {
       // should we do error check?
-      const vert = this.obj.addVertex(vertex);
+      const vert = this.obj.addVertex(vertex.slice(0,3));   // meshlab produced vertex with color. we want to support this tool
       this.realVertices.push(vert.index);
       this.vertexCount++;
+   }
+
+   vn(normal) {
+
+   }
+
+   vt(textureVert) {
+
    }
 
    f(index) {
@@ -104,7 +116,7 @@ class WavefrontObjImportExporter extends ImportExporter {
             console.log("face index out of bound: " + idx);
          }
       }
-      let polygonIndex = this.obj.addPolygon(faceIndex);
+      let polygonIndex = this.obj.addPolygon(faceIndex, this.currentMaterial);
       if (polygonIndex === null) {
          this.non_manifold.push( this.polygonCount );    // addup failure.
       }
@@ -113,9 +125,35 @@ class WavefrontObjImportExporter extends ImportExporter {
       //}
       this.polygonCount++;
    }
+
+   usemtl(mat) {
+      const materialName = mat[0];
+      let material = this.materials.get(materialName);
+      if (!material) {
+         material = Material.create();
+         this.materials.set(materialName, material);
+      }
+      this.currentMaterial = material;
+   }
+
+   mtllib(libraries) {
+      this.mtl.concat(libraries);
+   }
 }
 
+// wavefront materialLib reader
+class WavefrontMtlImportExporter extends ImportExporter {
+   constructor() {
+      super('Wavefront (.mtl)...', 'Wavefront (.mtl)...');
+   }
+
+   extension() {
+      return "mtl";
+   }
+
+}
 
 export {
    WavefrontObjImportExporter,
+   WavefrontMtlImportExporter,
 }
