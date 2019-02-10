@@ -5,18 +5,20 @@
 import {ImportExporter} from "../wings3d_importexport.js";
 import * as View from "../wings3d_view.js";
 import {Material} from "../wings3d_material.js";
+import * as UI from '../wings3d_ui.js';
 
 
 class WavefrontObjImportExporter extends ImportExporter {
    constructor() {
       super('Wavefront (.obj)...', 'Wavefront (.obj)...');
-      this.mtl = [];
-      this.materials = new Map;
-      this.currentMaterial = Material.default;
    }
 
    extension() {
       return "obj";
+   }
+
+   readAsText() {
+      return true;
    }
 
    _export(world) {      
@@ -62,8 +64,41 @@ class WavefrontObjImportExporter extends ImportExporter {
             }
          }
          // done reading, return the object.
-         return this.objs;
+         return {world: this.objs, material: this.material};
       }
+   }
+
+   /**
+    * reading auxiliary files, material, images.
+    * nice asynchronous file reading.
+    * https://stackoverflow.com/questions/50485929/read-multiple-files-with-javascript-and-wait-for-result
+    */
+   _readAuxFiles() {
+      const superReadAuxFiles = super._readAuxFiles.bind(this);
+
+      UI.openMultipleFiles(this.mtl, (fileNameMap)=>{
+         let promises = [];
+         for (let [name, file] of fileNameMap) {
+             let filePromise = new Promise(resolve => {
+                 let reader = new FileReader();
+                 reader.readAsText(file);
+                 reader.onload = () => resolve(reader.result);
+             });
+             promises.push(filePromise);
+         }
+
+         Promise.all(promises).then(fileContents => {
+            // parse mtl
+
+            // load Images if any
+            superReadAuxFiles();
+          });
+       });
+   }
+
+   _reset() {
+      super._reset();
+      this.mtl = new Map;
    }
 
    o(objName) {
@@ -77,7 +112,7 @@ class WavefrontObjImportExporter extends ImportExporter {
    }
 
    g(groupNames) {
-      if (groupNames && (groupName)) { // group is like object, except for empty and (null)
+      if (groupNames && (groupNames !== "(null)")) { // group is like object, except for empty and (null)
          if (!this.objView) {
             this.objView = View.putIntoWorld();
             this.obj = this.objView.geometry;
@@ -124,16 +159,18 @@ class WavefrontObjImportExporter extends ImportExporter {
 
    usemtl(mat) {
       const materialName = mat[0];
-      let material = this.materials.get(materialName);
+      let material = this.materialCatalog.get(materialName);
       if (!material) {
          material = Material.create(materialName);
-         this.materials.set(materialName, material);
+         this.materialCatalog.set(materialName, material);
       }
       this.currentMaterial = material;
    }
 
    mtllib(libraries) {
-      this.mtl.concat(libraries);
+      for (let lib of libraries) {
+         this.mtl.set(lib, null);   // adds up
+      }
    }
 }
 

@@ -279,7 +279,7 @@ function runDialogCenter(formID, submitCallback, setup, _ev) {
 
 // fileInput helper
 function openFile(fn) {
-   const fileInput = document.querySelector('#importFile');    // <input type="file" id="wavefrontObj" style="display:none"/> 
+   const fileInput = document.querySelector('#importFile');    // <input id="importFile" style="display:none;" type='file'>
    if (fileInput) {
       fileInput.click();
       fileInput.addEventListener('change', function ok(ev) {
@@ -291,6 +291,48 @@ function openFile(fn) {
          fileInput.value = "";
       });
    }
+};
+
+const multipleFile = {input: undefined, ul: undefined};
+// multiple files input helper.
+function openMultipleFiles(fileNameMap, callBack) {
+   multipleFile.list = [];          // reset
+   if (!multipleFile.input) {       // init
+      const form = document.forms['importFileListForm'];
+      if (form) {
+         const fileInput = form['fileListInput'];  // access the file input directly. bad form?
+         if (fileInput) {
+            fileInput.addEventListener('change', function(_ev) {
+               // check fileNameMap
+               for (let file of fileInput.files) {
+                  if (fileNameMap.has(file.name)) {
+                     fileNameMap.set(file.name, file);
+                     form.querySelector(`input[name="${file.name}"]`).checked = true;
+                  }
+               }
+               fileInput.value = null;    // now clear, and keep moving
+             });
+            multipleFile.input = fileInput;
+            multipleFile.ul = form.getElementsByTagName('ul');
+            if (multipleFile.ul) {
+               multipleFile.ul = multipleFile.ul[0];
+            }
+         }
+      }
+   }
+   runDialog('#importFileListForm', null, (form)=>{ // callback
+      if (multipleFile.ul) {
+         multipleFile.ul.innerHTML = "";
+      }
+      callBack(fileNameMap);
+    }, (form)=>{  // setup, add missing files to
+      if (multipleFile.ul) {
+         for (let [name, _file] of fileNameMap) {
+            const li = document.createRange().createContextualFragment(`<li><input type="checkbox" name="${name}" disabled>${name}</li>`);
+            multipleFile.ul.appendChild(li);
+         }
+      }
+    });
 };
 
 
@@ -497,6 +539,7 @@ export {
    runDialog,
    runDialogCenter,
    openFile,
+   openMultipleFiles,
    showContextMenu,
    showPopup,
    queuePopupMenu,

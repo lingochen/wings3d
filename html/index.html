@@ -730,6 +730,13 @@
     </div>
   </div>
   <input id="importFile" style="display:none;" type='file'>
+  <form id="importFileListForm" name="importFileListForm" class="dialog">
+    <div><label>Missing Files</label>
+    <ul id="missingFiles"></ul>
+    </div>
+    <input name="fileListInput" type='file' multiple>
+    <button type="submit" value="Ok">Import</button>
+  </form>
   <form id="preferenceForm" class="dialog">
     <div class="tabs">
       <input name="tabPref" id="generalPref" type="radio" checked>

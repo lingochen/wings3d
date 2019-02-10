@@ -7,6 +7,7 @@
 //
 import {PreviewCage, CreatePreviewCageCommand} from './wings3d_model.js';
 import {WingedTopology} from './wings3d_wingededge.js';
+import {Material} from "./wings3d_material.js";
 import * as UI from './wings3d_ui.js';
 import * as View from './wings3d_view.js';
 
@@ -34,8 +35,6 @@ class ImportExporter {
              });
          });
       }
-      // init at beginning.
-      this._reset();
    }
 
 
@@ -45,12 +44,14 @@ class ImportExporter {
    }
 
    import(file) {
+      this._reset(); // init before import
       const self = this;
       let reader = new FileReader();
 
       reader.onload = function(ev) {
-         const text = reader.result;
-         const world = self._import(text);
+         const data = reader.result;
+         self._import(data);
+         const world = self.objs;
          const cages = [];
          for (let cage of world) {
             cages.push( new CreatePreviewCageCommand(cage) );
@@ -61,18 +62,38 @@ class ImportExporter {
          } else if (cages.length > 0) {
             View.undoQueue(cages[0]);
          }
+         // put materialCatalog to UItree
+         for (let [_name, material] of self.materialCatalog) {
+            View.addMaterial(material);
+         }
+         // read associate Material/Images, if needed.
+         self._readAuxFiles();
          // after we finalised _reset too.
          self._reset();
          View.updateWorld();
       }
 
-      reader.readAsText(file);
+      // non-blocking read.
+      if (this.readAsText()) {   // to be implemented by subclass, either As binary or Text
+         reader.readAsText(file);
+      } else {
+         reader.readAsArrayBuffer(file);
+      }
+   }
+
+   /**
+    * read images file.
+    */
+   _readAuxFiles() {
+
    }
 
    _reset() {
       this.objs = [];
       this.obj = null;
       this.objView = null;
+      this.materialCatalog = new Map;
+      this.currentMaterial = Material.default;
       this.realVertices = []; // convert index
       this.polygonCount = 0;
       this.vertexCount = 0;

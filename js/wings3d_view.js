@@ -338,6 +338,9 @@ const _environment = {
    currentObjects: undefined,
    currentParent: undefined
 };
+function addMaterial(material) {
+   _environment.materialList.addMaterial(material);
+}
 function putIntoWorld() {
    let model = new PreviewCage(_environment.draftBench);
    return addToWorld(model);
@@ -1197,6 +1200,7 @@ export {
    updateWorld,
    makeCombineIntoWorld,
    setObject,
+   addMaterial,
    // mouse handler
    //rayPick,
    attachHandlerMouseMove,
