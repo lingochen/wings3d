@@ -33,6 +33,19 @@ Material.default = Material.create("default");
 Material.dead = Material.create("dead");
 
 
+Material.prototype.setAmbient = function(ambientRGB) {
+   this.material.ambientMaterial = ambientRGB;
+}
+
+Material.prototype.setDiffuse = function(diffuseRGB) {
+   this.material.diffuseMaterial = diffuseRGB;
+   this.updateGUI();
+}
+
+Material.prototype.setSpecular = function(specularRGB) {
+   this.material.specularMaterial = specularRGB;
+}
+
 Material.prototype.setValues = function(inputDat) {
    for (const key of Object.keys(inputDat)) {
       if (this.material.hasOwnProperty(key)) {
@@ -59,6 +72,12 @@ Material.prototype.unassigned = function() {
 Material.prototype.updateGUI = function() {
    if (this.guiStatus.count) {
       this.guiStatus.count.textContent = this.usageCount;
+   }
+   if (this.menu && this.menu.color) {
+      this.menu.color.style.backgroundColor = Util.rgbToHex(...this.material.diffuseMaterial);
+   }
+   if (this.pict) {
+      this.pict.style.backgroundColor = Util.rgbToHex(...this.material.diffuseMaterial);
    }
 }
 

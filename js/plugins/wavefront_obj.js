@@ -54,8 +54,7 @@ class WavefrontObjImportExporter extends ImportExporter {
 
       if (linesMatch) {
          for (let line of linesMatch) {
-            line = line.trim();            // how can we remove end of space in regex?
-            let split = line.split(/\s+/);
+            let split = line.match(/\S+/g);            // === line.trim().split(/\s+/);
             let tag = split.shift();
             if (typeof this[tag] === 'function') {
                this[tag](split);
@@ -225,31 +224,36 @@ class WavefrontMtlImportExporter extends ImportExporter {
       }
    }
 
-   d(array) {
-
+   /**
+    * we could use unary + operator, but parseFloat is clearer.
+    * always return valid number.
+    * @param {*} array - 3 number starting at index 1.
+    */
+   _parseRGB(array) {
+      return [parseFloat(array[1]) || 0.0, parseFloat(array[2]) || 0.0, parseFloat(array[3]) || 0.0];
    }
 
-   Ka(array) {
-      
+   Ka(ambient) {
+      this.currentMaterial.material.ambientMaterial = this._parseRGB(ambient);
    }
 
    Kd(diffuse) {
-      this.currentMaterial.material.diffuseMaterial = [diffuse[1],diffuse[2],diffuse[3]];
+      this.currentMaterial.setDiffuse(this._parseRGB(diffuse));
    }
 
    /**
     * specular color "Ks r g b"
-    * @param {*} array - rgb color is floating point.
+    * @param {*} specular - rgb color is floating point.
     */
-   Ks(array) {
-
+   Ks(specular) {
+      this.currentMaterial.material.specularMaterial = this._parseRGB(specular);
    }
 
    /**
     * specular exponent "Ns exponent"- exponent range (0, 1000)
-    * @param {*} array - line split
+    * @param {*} exponent - line split
     */
-   Ns(array) {
+   Ns(exponent) {
 
    }
 
@@ -257,19 +261,23 @@ class WavefrontMtlImportExporter extends ImportExporter {
     * transparent. fully opaque = 1.0, 
     * @param {*} array 
     */
-   d(array) {
-
+   d(opacity) {
+      this.currentMaterial.material.opacityMaterial = parseFloat(opacity[1]) || 1.0;
    }
 
    /**
     * transparent, other implementation. Tr = 1-d
     * @param {*} array 
     */
-   Tr(array) {
-
+   Tr(transparent) {
+      this.currentMaterial.material.opacityMaterial = 1 - (parseFloat(transparent[1]) || 0.0);
    }
 
-   illum(array) {
+   /**
+    * 
+    * @param {*} number 
+    */
+   illum(number) {
 
    }
 

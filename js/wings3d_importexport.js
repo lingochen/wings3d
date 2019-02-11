@@ -39,6 +39,7 @@ class ImportExporter {
 
 
    export(filename) {
+      this._reset();    // init before save.
       const blob = this._export(View.getWorld());
       saveAs(blob, filename + '.' + this.extension());
    }
@@ -68,8 +69,7 @@ class ImportExporter {
          }
          // read associate Material/Images, if needed.
          self._readAuxFiles();
-         // after we finalised _reset too.
-         self._reset();
+         // finalized and update
          View.updateWorld();
       }
 

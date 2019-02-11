@@ -447,7 +447,7 @@ class MaterialList extends ListView {
          // edit material Setting
          this.editMaterial(ev, [dat]);
        });
-      dat.pict.style.backgroundColor = dat.material.diffuseMaterial;
+      dat.pict.style.backgroundColor = Util.rgbToHex(...dat.material.diffuseMaterial);
       li.appendChild(pictFrag);
       let whole = document.createRange().createContextualFragment(`<span>${dat.name}</span>`);
       dat.text = whole.firstElementChild;
@@ -465,7 +465,7 @@ class MaterialList extends ListView {
          }
        }, false);
       li.appendChild(whole);
-      let count = document.createRange().createContextualFragment('<span class="resultCount">0</span>');
+      let count = document.createRange().createContextualFragment(`<span class="resultCount">${dat.usageCount}</span>`);
       dat.guiStatus.count = count.firstElementChild;
       li.appendChild(count);
       this.view.appendChild(li);
@@ -488,7 +488,7 @@ class MaterialList extends ListView {
          let square = document.createRange().createContextualFragment('<span style="width: 1rem;"></span>');
          dat.menu.color = square.firstElementChild; 
          dat.menu.a.appendChild(square);
-         dat.menu.color.style.backgroundColor = dat.material.diffuseMaterial;
+         dat.menu.color.style.backgroundColor = Util.rgbToHex(...dat.material.diffuseMaterial);
 
          dat.menu.a.addEventListener('click', function(ev){
             View.setObject(null, [dat]);       
@@ -532,7 +532,7 @@ class MaterialList extends ListView {
       UI.runDialog('#materialSetting', ev, function(form) {
          const data = UI.extractDialogValue(form);
          dat.setValues(data);
-         dat.menu.color.style.backgroundColor = dat.pict.style.backgroundColor = data.diffuseMaterial;
+         dat.menu.color.style.backgroundColor = dat.pict.style.backgroundColor = Util.rgbToHex(...data.diffuseMaterial);
        }, function(form) { // handle setup
          form.reset();
          MaterialList.resetCSS();
