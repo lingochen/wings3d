@@ -500,7 +500,8 @@ DraftBench.prototype.draw = function(gl, madsor) {
    gl.bindUniform(this.preview.shaderData, ['color', 'faceColor', 'lineWidth']);
    for (let material of this.materialList) {  // draw normal polygon
       if (material.indexLength > 0) {
-         this.preview.shaderData.setUniform4fv('faceColor', Util.hexToRGBA(material.material.diffuseMaterial));
+         const diffuse = material.material.diffuseMaterial;
+         this.preview.shaderData.setUniform4fv('faceColor', [diffuse[0], diffuse[1], diffuse[2], 1.0]);
          gl.bindUniform(this.preview.shaderData, ['faceColor']);
          gl.bindIndex(this.preview.shaderData, material.uuid);
          gl.drawElements(gl.TRIANGLES, material.indexLength, gl.UNSIGNED_INT, 0);

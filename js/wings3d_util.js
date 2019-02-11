@@ -355,6 +355,30 @@ function hexToCssRGBA(hex) {  // microsft edge don't support #rrggbbaa format ye
 };
 
 /**
+ * convert float to hex value guarantee 2 digits. range(0, 255)
+ * @param {*} value - between 0.0 - 1.0 
+ */
+function floatToHex(value) {
+   value = Math.min(Math.max(value, 0.0), 1.0); // capped to (0.0, 1.0);
+   return Math.round(value*255).toString(16).padStart(2, '0');
+}
+
+function rgbToHex(r, g, b) {
+   r = floatToHex(r);
+   g = floatToHex(g);
+   b = floatToHex(b);
+   return `#${r}${g}${b}`;
+}
+
+function rgbaToHex(r, g, b, a) {
+   r = floatToHex(r);
+   g = floatToHex(g);
+   b = floatToHex(b);
+   a = floatToHex(a);
+   return `#${r}${g}${b}${a}`;
+}
+
+/**
  * https://stackoverflow.com/questions/105034/create-guid-uuid-in-javascript
  * generate unique id using crypto functions to avoid collision.
  */
@@ -383,5 +407,7 @@ export {
    hexToRGB,
    hexToRGBA,
    hexToCssRGBA,
+   rgbToHex,
+   rgbaToHex,
    get_uuidv4,
 };

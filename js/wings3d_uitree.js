@@ -6,6 +6,7 @@
 import * as View from './wings3d_view.js';
 import * as Wings3D from './wings3d.js';
 import * as UI from './wings3d_ui.js';
+import * as Util from './wings3d_util.js';
 import {Material} from './wings3d_material.js';
 import {RenameBodyCommand} from './wings3d_bodymads.js';
 import {PreviewCage, PreviewGroup} from './wings3d_model.js';
@@ -421,8 +422,6 @@ function getImageList(labelId, id) {
 class MaterialList extends ListView {
    constructor(label, listView) {
       super(listView);
-      // add default Material.
-      this.addMaterial(Material.default);
       // context menu
       let contextMenu = document.querySelector('#createMaterialMenu');
       if (contextMenu) {
@@ -472,7 +471,7 @@ class MaterialList extends ListView {
       this.view.appendChild(li);
       // also put on subMenu.
       if (!this.submenu) {
-         this.submenu = document.querySelector('#faceMaterialMenu');
+         this.submenu = document.querySelector('[data-menuid="faceMaterialMenu"]');
          if (this.submenu) {
             this.submenu = this.submenu.nextElementSibling;  // the ul
          }
@@ -544,7 +543,7 @@ class MaterialList extends ListView {
          for (let [key, value] of Object.entries(dat.material)) {
             const data = form.querySelector(`div > [name=${key}]`);
             if (data) {
-               data.value = value;
+               data.value = Util.rgbToHex(value[0], value[1], value[2]);
                if (data.onchange) { // vertexColorSelect don't have onChange
                   data.onchange();
                }
@@ -598,7 +597,9 @@ function getMaterialList(labelId, id) {
    const listView = document.querySelector(id); // get <ul>
    const label = document.querySelector(labelId);
    if (label && listView) {
-      return new MaterialList(label, listView);
+      const ret = new MaterialList(label, listView);
+      ret.addMaterial(Material.default);
+      return ret;
    }
    // console log error
    return null;

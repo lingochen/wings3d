@@ -12,10 +12,10 @@ const Material = function(name) {
    this.isAltered = false;
    this.usageCount = 0;
    this.guiStatus = {};
-   this.material = {diffuseMaterial: "#C9CFB1", 
-                    ambientMaterial: "#C9CFB1",
-                    specularMaterial: "#000000", 
-                    emissionMaterial: "#000000", 
+   this.material = {diffuseMaterial: Util.hexToRGB("#C9CFB1"), 
+                    ambientMaterial: Util.hexToRGB("#C9CFB1"),
+                    specularMaterial: Util.hexToRGB("#000000"), 
+                    emissionMaterial: Util.hexToRGB("#000000"), 
                     vertexColorSelect: 0,
                     shininessMaterial: 0, 
                     opacityMaterial: 1};
@@ -36,7 +36,7 @@ Material.dead = Material.create("dead");
 Material.prototype.setValues = function(inputDat) {
    for (const key of Object.keys(inputDat)) {
       if (this.material.hasOwnProperty(key)) {
-         this.material[key] = inputDat[key];
+         this.material[key] = Util.hexToRGB(inputDat[key]);
       } else {
          console.log("unknown input material: " + key);
       }

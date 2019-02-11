@@ -89,7 +89,11 @@ class WavefrontObjImportExporter extends ImportExporter {
 
          Promise.all(promises).then(fileContents => {
             // parse mtl
-
+            let reader = new WavefrontMtlImportExporter;
+            reader.setMaterialCatalog(this.materialCatalog);
+            for (let content of fileContents) {
+               reader._import(content);
+            }
             // load Images if any
             superReadAuxFiles();
           });
@@ -177,11 +181,96 @@ class WavefrontObjImportExporter extends ImportExporter {
 // wavefront materialLib reader
 class WavefrontMtlImportExporter extends ImportExporter {
    constructor() {
-      super('Wavefront (.mtl)...', 'Wavefront (.mtl)...');
+      //super('Wavefront (.mtl)...', 'Wavefront (.mtl)...');
+      super(null, null);
    }
 
    extension() {
       return "mtl";
+   }
+
+   setMaterialCatalog(catalog) {
+      this.catalog = catalog;
+   }
+
+   _import(mtlText) {
+      this._reset();
+      // break the objText to lines we needs.
+      const linesMatch = mtlText.match(/^(newmtl|Ka|Kd|Ks|Ns|Tr|d|illum)(?:\s+(.+))$/gm);   //objText.match(/^v((?:\s+)[\d|\.|\+|\-|e|E]+){3}$/gm);
+
+      if (linesMatch) {
+         for (let line of linesMatch) {
+            line = line.match(/\S+/g);            // === line.trim().split(/\s+/);
+            let tag = line[0];
+            this[tag](line);
+         }
+         // done reading, return the object.
+         return {world: this.objs, material: this.material};    
+      } 
+   }
+
+   /**
+    * spec - "newmtl material_name"
+    * @param {*} array - line split to component.
+    */
+   newmtl(array) {
+      const materialName = array[1];
+      this.currentMaterial = null;
+      if (this.catalog) {
+         this.currentMaterial = this.catalog.get(materialName); // get material by name.
+      }
+      if (!this.currentMaterial) {  // set, or reset material
+         this.currentMaterial = Material.create(materialName);
+         this.materialCatalog.set(materialName, this.currentMaterial);
+      }
+   }
+
+   d(array) {
+
+   }
+
+   Ka(array) {
+      
+   }
+
+   Kd(diffuse) {
+      this.currentMaterial.material.diffuseMaterial = [diffuse[1],diffuse[2],diffuse[3]];
+   }
+
+   /**
+    * specular color "Ks r g b"
+    * @param {*} array - rgb color is floating point.
+    */
+   Ks(array) {
+
+   }
+
+   /**
+    * specular exponent "Ns exponent"- exponent range (0, 1000)
+    * @param {*} array - line split
+    */
+   Ns(array) {
+
+   }
+
+   /**
+    * transparent. fully opaque = 1.0, 
+    * @param {*} array 
+    */
+   d(array) {
+
+   }
+
+   /**
+    * transparent, other implementation. Tr = 1-d
+    * @param {*} array 
+    */
+   Tr(array) {
+
+   }
+
+   illum(array) {
+
    }
 
 }
