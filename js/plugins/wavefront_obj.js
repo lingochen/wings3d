@@ -21,27 +21,52 @@ class WavefrontObjImportExporter extends ImportExporter {
       return true;
    }
 
-   _export(world) {      
-      let text = "#wings3d-web wavefront export\n";
-      const fn = function(vertex) {
-         text += " " + (vertex.index+1);
-      };
-      for (const [index, cage] of world.entries()) {
+   /**
+    * 
+    * @param {*} world - generator for iteration.
+    */
+   _export(world) {
+      let idx = 1;      // obj index start at 1;
+      const remap = new Map();
+
+      let text = "#wings3d.net wavefront export\n";
+
+      for (const cage of world) {
          const mesh = cage.geometry;
-         text += "o " + index.toString() + "\n";
+         text += "o " + cage.name + "\n";
          // now append the "v x y z\n"
          text += "\n#vertex total " + mesh.vertices.size + "\n";
          for (let vertex of mesh.vertices) {
             const vert = vertex.vertex;
             text += "v " + vert[0] + " " + vert[1] + " " + vert[2] + "\n";
+            if (!remap.has(vertex.index)) { // this should always true for now(2019/02/14), but not after we refactor to take care of non-manifold mesh
+               remap.set(vertex.index, idx++);
+            }
          }
-         // "f index+1 index+1 index+1"
-         text += "\n#face list total " + mesh.faces.size + "\n";
+         // sort by material.
+         const materialList = new Map;
          for (let polygon of mesh.faces) {
-            text += "f";
-            polygon.eachVertex(fn);
-            text += "\n";
+            let array = materialList.get(polygon.material);
+            if (!array) {
+               array = [];
+               materialList.set(polygon.material, array);
+            }
+            array.push(polygon);
          }
+         // now write out polygons grouping by material
+         for (let [material, polygonArray] of materialList) {
+            text += `\nusemtl ${material.name}\n`;
+            // "f index+1 index+1 index+1"
+            text += "#face list total " + polygonArray.length + "\n";
+            for (let polygon of polygonArray) {
+               text += "f";
+               for (let hEdge of polygon.hEdges()) {
+                  text += " " + remap.get(hEdge.origin.index);
+               }
+               text += "\n";
+            }
+         }
+
       }
       const blob = new Blob([text], {type: "text/plain;charset=utf-8"});
 
@@ -114,14 +139,18 @@ class WavefrontObjImportExporter extends ImportExporter {
       this.objView.name = objName;
    }
 
+   /**
+    * how do we handle group? what is a group? needs to find out.
+    * @param {*} groupNames 
+    */
    g(groupNames) {
-      if (groupNames && (groupNames !== "(null)")) { // group is like object, except for empty and (null)
+      //if (groupNames && (groupNames !== "(null)")) { // group is like object, except for empty and (null)
          if (!this.objView) {
             this.objView = View.putIntoWorld();
             this.obj = this.objView.geometry;
             this.objs.push( this.objView );
          }
-      }
+      //}
    }
 
    s(groupNumber) {  // smooth group. probably not applicable ?
@@ -139,6 +168,10 @@ class WavefrontObjImportExporter extends ImportExporter {
 
    }
 
+   /**
+    * 
+    * @param {*} index 
+    */
    f(index) {
       const faceIndex = [];
       for (let i of index) {
