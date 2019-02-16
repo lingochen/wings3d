@@ -9,6 +9,7 @@ import * as Renderer from './wings3d_render.js';
 import * as Camera from './wings3d_camera.js';
 import {gl} from './wings3d_gl.js';
 import {WavefrontObjImportExporter } from './plugins/wavefront_obj.js';
+import {X3dImportExporter} from './plugins/x3d.js';
 import * as Wings3D from './wings3d.js';
 import {EditCommandSimple, EditCommandCombo} from './wings3d_undo.js';
 import {FaceMadsor} from './wings3d_facemads.js';
@@ -1164,6 +1165,7 @@ function init() {
    }, false);
    //console.log("Workspace init successful");
    let wavefront = new WavefrontObjImportExporter();
+   let X3d = new X3dImportExporter();
 
    // handle redrawingLoop
    function updateFrame(timestamp) {

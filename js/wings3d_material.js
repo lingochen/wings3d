@@ -12,13 +12,13 @@ const Material = function(name) {
    this.isAltered = false;
    this.usageCount = 0;
    this.guiStatus = {};
-   this.material = {diffuseMaterial: Util.hexToRGB("#C9CFB1"), 
-                    ambientMaterial: Util.hexToRGB("#C9CFB1"),
-                    specularMaterial: Util.hexToRGB("#000000"), 
-                    emissionMaterial: Util.hexToRGB("#000000"), 
-                    vertexColorSelect: 0,
-                    shininessMaterial: 0, 
-                    opacityMaterial: 1};
+   this.material = {diffuseMaterial: Util.hexToRGB("#C9CFB1"),    // color
+                    ambientMaterial: Util.hexToRGB("#C9CFB1"),    // going to change to intensity
+                    specularMaterial: Util.hexToRGB("#000000"),   // color
+                    emissionMaterial: Util.hexToRGB("#000000"),   // color
+                    vertexColorSelect: 0,                         // true/false
+                    shininessMaterial: 0,                         // 0-1
+                    opacityMaterial: 1};                          // 0-1
 };
 
 Material.create = function(name, input) {
