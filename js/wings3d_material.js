@@ -1,24 +1,34 @@
 /**
- * 
+ * 2019-02-19 - add pbr. ready to transition from opengl material to pbr.
  * 
  */
 
 import * as Util from './wings3d_util.js';
 
 
+/**
+ * PhysicallyBasedMaterial
+ */
 const Material = function(name) {
    this.name = name;
    this.uuid = Util.get_uuidv4();
    this.isAltered = false;
    this.usageCount = 0;
    this.guiStatus = {};
-   this.material = {diffuseMaterial: Util.hexToRGB("#C9CFB1"),    // color
-                    ambientMaterial: Util.hexToRGB("#C9CFB1"),    // going to change to intensity
+   this.material = {diffuseMaterial: Util.hexToRGB("#C9CFB1"),    // color, old style to be deleted.
+                    ambientMaterial: Util.hexToRGB("#C9CFB1"),    // color
                     specularMaterial: Util.hexToRGB("#000000"),   // color
                     emissionMaterial: Util.hexToRGB("#000000"),   // color
                     vertexColorSelect: 0,                         // true/false
                     shininessMaterial: 0,                         // 0-1
                     opacityMaterial: 1};                          // 0-1
+   this.pbr = { color,                                            // rgb, baseColor, 
+                roughness,                                        // float, 0-1.0
+                metallic,                                         // float, 0-1.0
+                emissive,                                         // rgb, intensity
+                opacity,                                          // float, 0-1.0
+                // occulsion // should be textureMap.
+              };
 };
 
 Material.create = function(name, input) {
@@ -79,6 +89,37 @@ Material.prototype.updateGUI = function() {
    if (this.pict) {
       this.pict.style.backgroundColor = Util.rgbToHex(...this.material.diffuseMaterial);
    }
+}
+
+// https://github.com/AnalyticalGraphicsInc/obj2gltf
+/**
+ * convert rgb to luminance
+ */
+Material.luminance = function(rgb) {
+   return (rgb[0] * 0.2125) + (rgb[1] * 0.7154) + (rbg[2] * 0.0721);
+}
+
+/**
+ * Translate the blinn-phong model to the pbr metallic-roughness model
+ * Roughness factor is a combination of specular intensity and shininess
+ * Metallic factor is 0.0
+ */
+Material.convertTraditionalToMetallicRoughness = function(material) {
+
+   const specularIntensity = luminance(material.specularMaterial);
+   let roughnessFactor = 1.0 - material.shininessMaterial;
+   
+   // Low specular intensity values should produce a rough material even if shininess is high.
+   if (specularIntensity < 0.1) {
+      roughnessFactor *= (1.0 - specularIntensity);
+   }
+
+   return {color: material.diffuseMaterial, 
+           metal: 0.0,
+           roughness: roughnessFactor,
+           emissive: material.emissionMaterial,
+           opacity: material.opacityMaterial,
+          };
 }
 
 

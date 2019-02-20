@@ -6,11 +6,12 @@ import {ImportExporter} from "../wings3d_importexport.js";
 import * as View from "../wings3d_view.js";
 import {Material} from "../wings3d_material.js";
 import * as UI from '../wings3d_ui.js';
+import { PreviewCage } from "../wings3d_model.js";
 
 
 class X3dImportExporter extends ImportExporter {
    constructor() {
-      super("", 'Web3D (.x3d)...');  
+      super('Web3D (.x3d)...', 'Web3D (.x3d)...');
    }
 
    extension() {
@@ -19,6 +20,13 @@ class X3dImportExporter extends ImportExporter {
 
    readAsText() {
       return true;
+   }
+
+   _reset() {
+      super._reset();
+      this.def = new Map;
+      this.count = {appearance: 0, cage: 0};
+      this.current = {};
    }
 
    /**
@@ -124,6 +132,118 @@ class X3dImportExporter extends ImportExporter {
       const s = new XMLSerializer;
       const blob = new Blob([s.serializeToString(xml)], {type: "text/plain;charset=utf-8"});
       return blob;
+   }
+
+   /**
+    * 
+    * @param {*} text - file content as text.
+    */
+   _import(text) {
+      const parser = new DOMParser();
+      const xmlDoc = parser.parseFromString(text, "application/xml");
+      // extract start from Scene?, or just querySelectAll("Scene > Group")? for now, no transform or subgroup.
+      const scene = xmlDoc.querySelector("Scene");
+      if (scene) {
+         this.Scene(scene);
+      }
+   }
+
+   /**
+    * parse recognizable node.
+    * @param {*} node 
+    */
+   _parseNode(node) {
+      if (typeof this[node.tagName] === 'function') {
+         this[node.tagName](node);
+      }
+   }
+
+   _getUse(node) {
+      // first check if already defined.
+      let attr = node.getAttribute("USE");
+      if (attr && this.def.has(attr)) {
+         return this.def.get(attr);
+      }
+      return null;
+   }
+
+   Scene(scene) {
+      for (let node of scene.children) {
+         _parseNode(node);
+      }
+      // let 
+   }
+
+   Group(group) { // create and insert new stuff
+
+   }
+
+   /**
+    * 
+    * @param {*} shape - geometry with material. 
+    */
+   Shape(shape) {
+      // check existence of PreviewCage
+      if (!this.cage) {
+         this.cage = new PreviewCage();
+      }
+      for (let node of scene.children) {
+         _parseNode(node);
+      }
+   }
+
+   /**
+    * Appearance===Material. own material, texture, textureTransform .., create new Material if any.
+    * @param {*} appearance 
+    */
+   Appearance(appearance) {
+      let appear = this._getUse(appearance);
+      if (!appear) { // create and stuffing
+         let name = appearance.getAttribute("DEF");
+         const def = name;
+         if (!name) {
+            name = "Material_" + this.count.appearance++;   // supply generic name
+         }
+         appear = Material.create(name);
+         if (def) {
+            this.def.set(name, appear);
+         }
+      }
+      this.current.appearance = appear;
+      for (let node of appearance) {   // parse material.... etc
+         _parseNode(node);
+      }
+   }
+
+   /**
+    * old style material for now
+    * @param {*} material 
+    */
+   Material(material) { // 
+      let mat = this._getUse(material);
+      if (!mat) {
+         let name = material.getAttribute("DEF");
+         if (name) {
+            this.def.set(name, material);
+         }
+         mat = material;
+      }
+      // get old style blinn-phong material.
+      const old = {};
+      old.diffuseMaterial = material.getAttribute("diffuseColor") || [1.0, 1.0, 1.0];
+      old.specularMaterial = material.getAttribute("specularColor") || [0.0, 0.0, 0.0];
+      old.shininessMaterial = material.getAttribute("shininess") || 0;
+      old.emissionMaterial = material.getAttribute("emissiveColor") || [0.0, 0.0, 0.0];
+      old.opacityMaterial = 1 - (material.getAttribute("transparency") || 0);
+      //old.ambientMaterial = material.getAttribute("ambientIntensity");   // not needed.
+      this.current.appearance.pbr = Material.convertTraditionalToMetallicRoughness(old);
+   }
+
+   IndexedFaceSet(faceSet) {
+      let faceIndex = this._getUse(faceSet);
+      if (!faceIndex) {
+
+      }
    }
 }
 

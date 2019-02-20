@@ -388,6 +388,10 @@ function get_uuidv4() {
    )
  };
 
+function clamp(number, min, max) {
+   return Math.min(max, Math.max(min, value));
+};
+
 
 export {
    closestPointToPlane,
@@ -410,4 +414,5 @@ export {
    rgbToHex,
    rgbaToHex,
    get_uuidv4,
+   clamp,
 };

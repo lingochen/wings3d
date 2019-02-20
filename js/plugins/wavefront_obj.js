@@ -283,11 +283,12 @@ class WavefrontMtlImportExporter extends ImportExporter {
    }
 
    /**
-    * specular exponent "Ns exponent"- exponent range (0, 1000)
+    * specular exponent "Ns exponent"- exponent range (0, 1000) - convert to 0-1.0
     * @param {*} exponent - line split
     */
    Ns(exponent) {
-
+      let shine = (parseFloat(exponent[1]) || 0.0) / 1000.0;
+      this.currentMaterial.material.shininessMaterial = Math.min(1.0, Math.max(0.0, shine))
    }
 
    /**
@@ -308,7 +309,7 @@ class WavefrontMtlImportExporter extends ImportExporter {
 
    /**
     * 
-    * @param {*} number 
+    * @param {*} number - which illumination shader.
     */
    illum(number) {
 
