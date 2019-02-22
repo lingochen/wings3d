@@ -1125,25 +1125,37 @@ WingedTopology.prototype._unwindNewEdges = function(halfEdges) {
    }
 };
 
+/**
+ * add wrapper, use original name,
+ */
+WingedTopology.prototype.addPolygon = function(pts, material) {
+   return this._addPolygon(0, pts.length, pts, material);
+}
+
 // passed in an array of vertex index. automatically create the required edge.
 // return polygon index.
 // add proper handling for non-manifold. (2017/05/28)
 // add checking for complex polygon. (2017/05/29)
-WingedTopology.prototype.addPolygon = function(pts, material) {
-   var halfCount = pts.length;
-   if (halfCount < 3) { // at least a triangle
+/**
+ * param {int} start = start index
+ *       {int} end = end index, not included.
+ *       {array} pts - cw pts polygon list
+ *       {Material} material - assigned material.
+ */
+WingedTopology.prototype._addPolygon = function(start, end, pts, material) {
+   if ((end - start) < 3) { // at least a triangle
       return -1;
    }
 
-   var i, nextIndex;
+   var nextIndex = start;
    // builds WingEdge if not exist
    var halfLoop = [];
    var newEdges = [];
    const complex = new Set;
-   for (i =0; i < halfCount; ++i) {
+   for (let i = start; i < end; ++i) {
       nextIndex = i + 1;
-      if (nextIndex == halfCount) {
-         nextIndex = 0;
+      if (nextIndex === end) {
+         nextIndex = start;
       }
 
       var v0 = this.alloc.getVertices(pts[i]);

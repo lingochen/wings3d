@@ -184,10 +184,11 @@ class X3dImportExporter extends ImportExporter {
     */
    Shape(shape) {
       // check existence of PreviewCage
-      if (!this.cage) {
-         this.cage = new PreviewCage();
+      if (!this.current.cage) {
+         this.current.cage = new PreviewCage();
+         this.current.coords = new Set;
       }
-      for (let node of scene.children) {
+      for (const node of scene.children) {
          _parseNode(node);
       }
    }
@@ -210,7 +211,7 @@ class X3dImportExporter extends ImportExporter {
          }
       }
       this.current.appearance = appear;
-      for (let node of appearance) {   // parse material.... etc
+      for (const node of appearance.children) {   // parse material.... etc
          _parseNode(node);
       }
    }
@@ -239,11 +240,83 @@ class X3dImportExporter extends ImportExporter {
       this.current.appearance.pbr = Material.convertTraditionalToMetallicRoughness(old);
    }
 
-   IndexedFaceSet(faceSet) {
-      let faceIndex = this._getUse(faceSet);
-      if (!faceIndex) {
-
+   IndexedFaceSet(faceSet, current) {
+      let reuse = this._getUse(faceSet);
+      if (!reuse) {
+         let name = faceSet.getAttribute("DEF");   
+         if (name) {
+            this.def.set(name, faceSet);
+         }
+      } else { // we don't do instance, so we will always create new one.
+         faceSet = reuse;
       }
+      // get child coord, color, normal first.
+      for (const node of faceSet.children) {
+         this._parseNode(node);
+      }
+      // ok, now build polygons using index.
+      let idx = [];
+      let index = faceSet.getAttribute("coordIndex");
+      index = index.split(',\\s*');                      // split by comma, or white space
+      for (let i = 0; i < index.length; ++i) {
+         const value = parseInt(index[i], 10);
+         if (value === -1) {  // done, have polygon.
+            if (idx.length < 3) {   // bad polyon, log
+               console.log("Bad polygon: less than 3 edges");
+            } else {
+               this.current.cage.geometry.addPolygon(idx, this.current.appearance);
+            }
+            idx = [];   // reset.
+         } else {
+            idx.push( value );
+         }
+      }
+      // add color?
+   }
+
+   Coordinate(coordinate, current) {
+      let coord = this._getUse(coordinate);
+      if (!coord || !current.coords.has(coord)) {   // if we are reusing, do we have same parent Cage? if not we have to add to current cage
+         if (!coord) {
+            coord = coordinate;
+            let name = coord.getAttribute("DEF");  // set coordSet   
+            if (name) {
+               this.def.set(name, coord);
+            }
+         }
+         // now add coordinate
+         let index = [];
+         let pts = coord.getAttribute("point");
+         pts = pts.split(',\\s*');                 // split by whitespaces or comma
+         const vertex = [0.0, 0.0, 0.0];
+         for (let i = 0; i < pts.length; i+=3) {
+            vertex[0] = parseFloat(pts[i]) || 0.0;
+            vertex[1] = parseFloat(pts[i+1]) || 0.0;
+            vertex[2] = parseFloat(pts[i+2]) || 0.0;
+            index.push( current.cage.geometry.addVertex(vertex) );
+         }
+         // add the remap index.
+         current.index = index;
+         current.coords.set(coordinate, index);
+      } else { // do we actully need next?
+         //current.index = current.coords.get(coord);
+      }
+   }
+
+   Color(rgb) {
+
+   }
+
+   ColorRGBA(rgba) {
+
+   }
+
+   TextureCoordinate() {
+
+   }
+
+   MultiTextureCoordinate() {
+
    }
 }
 
