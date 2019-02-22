@@ -5,7 +5,7 @@
 import * as UI from '../wings3d_ui.js';
 import * as Wings3D from '../wings3d.js';
 import * as View from '../wings3d_view.js';
-import {WingedTopology} from '../wings3d_wingededge.js';
+import {Material} from '../wings3d_material.js';
 import {CreatePreviewCageCommand} from '../wings3d_model.js';
 
 
@@ -78,7 +78,7 @@ document.addEventListener('DOMContentLoaded', function() {
                   polygon.push( vertexIndex[offset+i+1] );
                   polygon.push( vertexIndex[offset+i+1+numberOfCut+1] );
                   polygon.push( vertexIndex[offset+i+numberOfCut+1] );
-                  mesh.addPolygon(polygon);
+                  mesh.addPolygon(polygon, Material.default);
                   polygon.length = 0;
                }
                offset += numberOfCut+1;  // done, add offset 

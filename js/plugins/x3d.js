@@ -152,9 +152,9 @@ class X3dImportExporter extends ImportExporter {
     * parse recognizable node.
     * @param {*} node 
     */
-   _parseNode(node) {
+   _parseNode(node, current) {
       if (typeof this[node.tagName] === 'function') {
-         this[node.tagName](node);
+         this[node.tagName](node, current);
       }
    }
 
@@ -167,9 +167,9 @@ class X3dImportExporter extends ImportExporter {
       return null;
    }
 
-   Scene(scene) {
+   Scene(scene, current) {
       for (let node of scene.children) {
-         _parseNode(node);
+         _parseNode(node, current);
       }
       // let 
    }
@@ -182,11 +182,11 @@ class X3dImportExporter extends ImportExporter {
     * 
     * @param {*} shape - geometry with material. 
     */
-   Shape(shape) {
+   Shape(shape, current) {
       // check existence of PreviewCage
-      if (!this.current.cage) {
-         this.current.cage = new PreviewCage();
-         this.current.coords = new Set;
+      if (!current.cage) {
+         current.cage = new PreviewCage();
+         current.coords = new Map;
       }
       for (const node of scene.children) {
          _parseNode(node);
@@ -197,7 +197,7 @@ class X3dImportExporter extends ImportExporter {
     * Appearance===Material. own material, texture, textureTransform .., create new Material if any.
     * @param {*} appearance 
     */
-   Appearance(appearance) {
+   Appearance(appearance, current) {
       let appear = this._getUse(appearance);
       if (!appear) { // create and stuffing
          let name = appearance.getAttribute("DEF");
@@ -210,7 +210,7 @@ class X3dImportExporter extends ImportExporter {
             this.def.set(name, appear);
          }
       }
-      this.current.appearance = appear;
+      current.appearance = appear;
       for (const node of appearance.children) {   // parse material.... etc
          _parseNode(node);
       }
@@ -220,7 +220,7 @@ class X3dImportExporter extends ImportExporter {
     * old style material for now
     * @param {*} material 
     */
-   Material(material) { // 
+   Material(material, current) { // 
       let mat = this._getUse(material);
       if (!mat) {
          let name = material.getAttribute("DEF");
@@ -237,7 +237,7 @@ class X3dImportExporter extends ImportExporter {
       old.emissionMaterial = material.getAttribute("emissiveColor") || [0.0, 0.0, 0.0];
       old.opacityMaterial = 1 - (material.getAttribute("transparency") || 0);
       //old.ambientMaterial = material.getAttribute("ambientIntensity");   // not needed.
-      this.current.appearance.pbr = Material.convertTraditionalToMetallicRoughness(old);
+      current.appearance.pbr = Material.convertTraditionalToMetallicRoughness(old);
    }
 
    IndexedFaceSet(faceSet, current) {
@@ -255,23 +255,20 @@ class X3dImportExporter extends ImportExporter {
          this._parseNode(node);
       }
       // ok, now build polygons using index.
-      let idx = [];
+      let start = 0;
       let index = faceSet.getAttribute("coordIndex");
-      index = index.split(',\\s*');                      // split by comma, or white space
+      index = index.split(/[,\s]+/);                      // split by comma, or white space
       for (let i = 0; i < index.length; ++i) {
          const value = parseInt(index[i], 10);
          if (value === -1) {  // done, have polygon.
-            if (idx.length < 3) {   // bad polyon, log
-               console.log("Bad polygon: less than 3 edges");
-            } else {
-               this.current.cage.geometry.addPolygon(idx, this.current.appearance);
-            }
-            idx = [];   // reset.
+            this.current.cage.geometry._addPolygon(start, i, idx, this.current.appearance);
+            start = i+1;
          } else {
-            idx.push( value );
+            index[i] = current.remap[value];
          }
       }
       // add color?
+
    }
 
    Coordinate(coordinate, current) {
@@ -287,7 +284,7 @@ class X3dImportExporter extends ImportExporter {
          // now add coordinate
          let index = [];
          let pts = coord.getAttribute("point");
-         pts = pts.split(',\\s*');                 // split by whitespaces or comma
+         pts = pts.split(/[,\s]+/);                 // split by whitespaces or comma
          const vertex = [0.0, 0.0, 0.0];
          for (let i = 0; i < pts.length; i+=3) {
             vertex[0] = parseFloat(pts[i]) || 0.0;

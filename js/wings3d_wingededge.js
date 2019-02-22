@@ -697,7 +697,7 @@ MeshAllocator.prototype.allocEdge = function(begVert, endVert, delOutEdge) {
 MeshAllocator.prototype.allocPolygon = function(halfEdge, numberOfVertex, material, delPolygon) {
    let polygon;
    if (this.free.faces.length > 0) {
-      if (typeof delPolygon !== undefined) {
+      if (typeof delPolygon !== 'undefined') {
          const index = delPolygon.index;   // remove delOutEdge from freeEdges list
          this.free.faces = this.free.faces.filter(function(element) {
             return element !== index;
@@ -1143,7 +1143,9 @@ WingedTopology.prototype.addPolygon = function(pts, material) {
  *       {Material} material - assigned material.
  */
 WingedTopology.prototype._addPolygon = function(start, end, pts, material) {
-   if ((end - start) < 3) { // at least a triangle
+   const length = end - start;
+   if (length < 3) { // at least a triangle
+      console.log("Bad polygon: less than 3 edges");
       return -1;
    }
 
@@ -1190,10 +1192,10 @@ WingedTopology.prototype._addPolygon = function(start, end, pts, material) {
    }
 
    // Try to reorder the links to get proper orientation.
-   for (i = 0;i < halfCount;++i) {
+   for (let i = 0; i < length; ++i) {
       nextIndex = i + 1;
-      if (nextIndex == halfCount) {
-         nextIndex = 0;
+      if (nextIndex === length) {
+         nextIndex = start;
       }
 
       if (!this.spliceAdjacent(halfLoop[i], halfLoop[nextIndex])) {
@@ -1205,10 +1207,10 @@ WingedTopology.prototype._addPolygon = function(start, end, pts, material) {
    }
 
    // Create and link the polygon
-   var newPolygon = this._createPolygon(halfLoop[0], pts.length, material);
+   var newPolygon = this._createPolygon(halfLoop[0], length, material);
 
    // Link half-edges to the polygon.
-   for (i = 0;i < halfCount; ++i) {
+   for (let i = 0; i < length; ++i) {
       halfLoop[i].face = newPolygon;
    }
 

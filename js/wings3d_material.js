@@ -22,11 +22,11 @@ const Material = function(name) {
                     vertexColorSelect: 0,                         // true/false
                     shininessMaterial: 0,                         // 0-1
                     opacityMaterial: 1};                          // 0-1
-   this.pbr = { color,                                            // rgb, baseColor, 
-                roughness,                                        // float, 0-1.0
-                metallic,                                         // float, 0-1.0
-                emissive,                                         // rgb, intensity
-                opacity,                                          // float, 0-1.0
+   this.pbr = { color: Util.hexToRGB("#C9CFB1"),                  // rgb, baseColor, 
+                roughness: 0.8,                                   // float, 0-1.0
+                metallic: 0.1,                                    // float, 0-1.0
+                emissive: [0, 0, 0],                              // rgb, intensity
+                opacity: 1,                                       // float, 0-1.0
                 // occulsion // should be textureMap.
               };
 };
