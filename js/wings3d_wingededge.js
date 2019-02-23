@@ -1195,7 +1195,7 @@ WingedTopology.prototype._addPolygon = function(start, end, pts, material) {
    for (let i = 0; i < length; ++i) {
       nextIndex = i + 1;
       if (nextIndex === length) {
-         nextIndex = start;
+         nextIndex = 0;
       }
 
       if (!this.spliceAdjacent(halfLoop[i], halfLoop[nextIndex])) {

@@ -26,7 +26,6 @@ class X3dImportExporter extends ImportExporter {
       super._reset();
       this.def = new Map;
       this.count = {appearance: 0, cage: 0};
-      this.current = {};
    }
 
    /**
@@ -144,7 +143,8 @@ class X3dImportExporter extends ImportExporter {
       // extract start from Scene?, or just querySelectAll("Scene > Group")? for now, no transform or subgroup.
       const scene = xmlDoc.querySelector("Scene");
       if (scene) {
-         this.Scene(scene);
+         let current = {};
+         this.Scene(scene, current);
       }
    }
 
@@ -169,12 +169,12 @@ class X3dImportExporter extends ImportExporter {
 
    Scene(scene, current) {
       for (let node of scene.children) {
-         _parseNode(node, current);
+         this._parseNode(node, current);
       }
       // let 
    }
 
-   Group(group) { // create and insert new stuff
+   Group(group, current) { // create and insert new stuff
 
    }
 
@@ -185,11 +185,11 @@ class X3dImportExporter extends ImportExporter {
    Shape(shape, current) {
       // check existence of PreviewCage
       if (!current.cage) {
-         current.cage = new PreviewCage();
+         current.cage = View.putIntoWorld();
          current.coords = new Map;
       }
-      for (const node of scene.children) {
-         _parseNode(node);
+      for (const node of shape.children) {
+         this._parseNode(node, current);
       }
    }
 
@@ -212,7 +212,7 @@ class X3dImportExporter extends ImportExporter {
       }
       current.appearance = appear;
       for (const node of appearance.children) {   // parse material.... etc
-         _parseNode(node);
+         this._parseNode(node, current);
       }
    }
 
@@ -252,19 +252,20 @@ class X3dImportExporter extends ImportExporter {
       }
       // get child coord, color, normal first.
       for (const node of faceSet.children) {
-         this._parseNode(node);
+         this._parseNode(node, current);
       }
       // ok, now build polygons using index.
+      const appearance = current.appearance || Material.default;
       let start = 0;
       let index = faceSet.getAttribute("coordIndex");
       index = index.split(/[,\s]+/);                      // split by comma, or white space
       for (let i = 0; i < index.length; ++i) {
          const value = parseInt(index[i], 10);
          if (value === -1) {  // done, have polygon.
-            this.current.cage.geometry._addPolygon(start, i, idx, this.current.appearance);
+            current.cage.geometry._addPolygon(start, i, index, appearance);
             start = i+1;
          } else {
-            index[i] = current.remap[value];
+            index[i] = current.remapIndex[value];
          }
       }
       // add color?
@@ -290,13 +291,13 @@ class X3dImportExporter extends ImportExporter {
             vertex[0] = parseFloat(pts[i]) || 0.0;
             vertex[1] = parseFloat(pts[i+1]) || 0.0;
             vertex[2] = parseFloat(pts[i+2]) || 0.0;
-            index.push( current.cage.geometry.addVertex(vertex) );
+            index.push( current.cage.geometry.addVertex(vertex).index );
          }
          // add the remap index.
-         current.index = index;
+         current.remapIndex = index;
          current.coords.set(coordinate, index);
       } else { // do we actully need next?
-         //current.index = current.coords.get(coord);
+         //current.rempIndex = current.coords.get(coord);   // make sure we have the correct one?
       }
    }
 
