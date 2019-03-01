@@ -978,15 +978,11 @@
     <div id="materialWrap">
     <canvas id="materialCanvas" width="80" height="80"></canvas>
     <div class="fieldTable">
-      <span data-i18n>Diffuse</span><input id="diffuseSlider" class="slider" type="range" min="0" max="255" value="255" onchange="matGradient(this)"><input name="diffuseMaterial" type="color" value="#ffffff" onchange="matColor(this)">
-      <span data-i18n>Ambient</span><input id="ambientSlider" type="range" class="slider" min="0" max="255" value="255" onchange="matGradient(this)"><input name="ambientMaterial" type="color" value="#ffffff" onchange="matColor(this)">
-      <span data-i18n>Specular</span><input id="specularSlider" type="range" class="slider" min="0" max="255" value="0" onchange="matGradient(this)"><input name="specularMaterial" type="color" value="#000000" onchange="matColor(this)">
-      <span data-i18n>Emission</span><input id="emissionSlider" type="range" class="slider" min="0" max="255" value="0" onchange="matGradient(this)"><input name="emissionMaterial" type="color" value="#000000" onchange="matColor(this)">
-    </div>
-    <div class="fieldTable">
-      <span >Vertex Color</span><select name="vertexColorSelect"><option value="0">Ignore</option><option value="1">Set</option></select><span></span>
-      <span data-i18n>Shininess</span><input type="range" class="slider" min="0" max="1" step="0.01" value="0" onchange="this.nextElementSibling.value=this.value"><input name="shininessMaterial" type="number" min="0" max="1" step="0.01" value="0" onchange="this.previousElementSibling.value=this.value">
-      <span data-i18n>Opacity</span><input type="range" class="slider" min="0" max="1" step="0.01" value="1" onchange="this.nextElementSibling.value=this.value"><input name="opacityMaterial" type="number" min="0" max="1" step="0.01" value="1" onchange="this.previousElementSibling.value=this.value">
+      <span data-i18n>Base Color</span><input id="baseColorSlider" class="slider" type="range" min="0" max="255" value="255" onchange="matGradient(this)"><input name="baseColor" type="color" value="#ffffff" onchange="matColor(this)">
+      <span data-i18n>Metallic</span><input type="range" class="slider" min="0" max="1" step="0.01" value="1" onchange="this.nextElementSibling.value=this.value"><input name="metallic" type="number" min="0" max="1" step="0.01" value="1" onchange="this.previousElementSibling.value=this.value">
+      <span data-i18n>Roughness</span><input type="range" class="slider" min="0" max="1" step="0.01" value="1" onchange="this.nextElementSibling.value=this.value"><input name="roughness" type="number" min="0" max="1" step="0.01" value="1" onchange="this.previousElementSibling.value=this.value">
+      <span data-i18n>Emission</span><input id="emissionSlider" type="range" class="slider" min="0" max="255" value="0" onchange="matGradient(this)"><input name="emission" type="color" value="#000000" onchange="matColor(this)">
+      <span data-i18n>Opacity</span><input type="range" class="slider" min="0" max="1" step="0.01" value="1" onchange="this.nextElementSibling.value=this.value"><input name="opacity" type="number" min="0" max="1" step="0.01" value="1" onchange="this.previousElementSibling.value=this.value">
     </div>
     </div>
     <button type="submit" value="Cancel">Cancel</button>

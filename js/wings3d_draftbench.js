@@ -67,6 +67,7 @@ const DraftBench = function(theme, prop, materialList, defaultSize = 2048) {  //
    this.preview.edge.hilite = {indexLength: 0, wEdge: null};
    this.preview.edge.hardness = {isAltered: false, indexLength: 0};
    this.preview.edge.wireOnly = {isAltered: false, indexLength: 0};
+   this.preview.edge.state = null;  // unsigned int, flags.
 
    // previewVertex
    this.preview.vertex = {isModified: false, isAltered: false, 
@@ -500,7 +501,7 @@ DraftBench.prototype.draw = function(gl, madsor) {
    gl.bindUniform(this.preview.shaderData, ['color', 'faceColor', 'lineWidth']);
    for (let material of this.materialList) {  // draw normal polygon
       if (material.indexLength > 0) {
-         const diffuse = material.material.diffuseMaterial;
+         const diffuse = material.pbr.baseColor;
          this.preview.shaderData.setUniform4fv('faceColor', [diffuse[0], diffuse[1], diffuse[2], 1.0]);
          gl.bindUniform(this.preview.shaderData, ['faceColor']);
          gl.bindIndex(this.preview.shaderData, material.uuid);

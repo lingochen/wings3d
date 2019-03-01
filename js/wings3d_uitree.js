@@ -447,7 +447,7 @@ class MaterialList extends ListView {
          // edit material Setting
          this.editMaterial(ev, [dat]);
        });
-      dat.pict.style.backgroundColor = Util.rgbToHex(...dat.material.diffuseMaterial);
+      dat.pict.style.backgroundColor = Util.rgbToHex(...dat.pbr.baseColor);
       li.appendChild(pictFrag);
       let whole = document.createRange().createContextualFragment(`<span>${dat.name}</span>`);
       dat.text = whole.firstElementChild;
@@ -482,13 +482,13 @@ class MaterialList extends ListView {
          let aFrag = document.createRange().createContextualFragment('<a></a>');
          dat.menu.a = aFrag.firstElementChild; 
          li.appendChild(aFrag);
-         let nameFrag = document.createRange().createContextualFragment(`<span>${name}</span>`);
+         let nameFrag = document.createRange().createContextualFragment(`<span>${dat.name}</span>`);
          dat.menu.text = nameFrag.firstElementChild;
          dat.menu.a.appendChild(nameFrag);
          let square = document.createRange().createContextualFragment('<span style="width: 1rem;"></span>');
          dat.menu.color = square.firstElementChild; 
          dat.menu.a.appendChild(square);
-         dat.menu.color.style.backgroundColor = Util.rgbToHex(...dat.material.diffuseMaterial);
+         dat.menu.color.style.backgroundColor = Util.rgbToHex(...dat.pbr.baseColor);
 
          dat.menu.a.addEventListener('click', function(ev){
             View.setObject(null, [dat]);       
@@ -505,7 +505,7 @@ class MaterialList extends ListView {
       const newName = materialList.newName();
       UI.runDialog('#materialSetting', ev, function(form) {
          const data = UI.extractDialogValue(form);
-         materialList.addMaterial(Material.create(name, data));
+         materialList.addMaterial(Material.create(newName, data));
        }, function(form) {
           form.reset();
           MaterialList.resetCSS();
@@ -524,7 +524,7 @@ class MaterialList extends ListView {
       } else {
          name = dat.name + '2';
       }
-      this.addMaterial(Material.create(name, dat.material));
+      this.addMaterial(Material.create(name, dat.pbr));
    }
 
    editMaterial(ev, objects) {
@@ -532,7 +532,7 @@ class MaterialList extends ListView {
       UI.runDialog('#materialSetting', ev, function(form) {
          const data = UI.extractDialogValue(form);
          dat.setValues(data);
-         dat.menu.color.style.backgroundColor = dat.pict.style.backgroundColor = Util.rgbToHex(...data.diffuseMaterial);
+         dat.menu.color.style.backgroundColor = dat.pict.style.backgroundColor = Util.rgbToHex(...dat.pbr.baseColor);
        }, function(form) { // handle setup
          form.reset();
          MaterialList.resetCSS();
@@ -540,10 +540,14 @@ class MaterialList extends ListView {
          if (data) {
             data.textContent = dat.name;
          }
-         for (let [key, value] of Object.entries(dat.material)) {
+         for (let [key, value] of Object.entries(dat.pbr)) {
             const data = form.querySelector(`div > [name=${key}]`);
             if (data) {
-               data.value = Util.rgbToHex(value[0], value[1], value[2]);
+               if(isNaN(value)) {
+                  data.value = Util.rgbToHex(value[0], value[1], value[2]);
+               } else {
+                  data.value = value;
+               }
                if (data.onchange) { // vertexColorSelect don't have onChange
                   data.onchange();
                }
@@ -586,10 +590,8 @@ class MaterialList extends ListView {
 
    static resetCSS() {
       const style = document.documentElement.style;
-      style.setProperty("--diffuseMaterialMax", "#FFFFFF");
-      style.setProperty("--ambientMaterialMax", "#FFFFFF");
-      style.setProperty("--specularMaterialMax", "#FFFFFF");
-      style.setProperty("--emissionMaterialMax", "#FFFFFF");
+      style.setProperty("--baseColorMax", "#FFFFFF");
+      style.setProperty("--emissionMax", "#FFFFFF");
    }
 }
 
