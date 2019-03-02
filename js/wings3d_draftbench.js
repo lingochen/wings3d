@@ -67,7 +67,7 @@ const DraftBench = function(theme, prop, materialList, defaultSize = 2048) {  //
    this.preview.edge.hilite = {indexLength: 0, wEdge: null};
    this.preview.edge.hardness = {isAltered: false, indexLength: 0};
    this.preview.edge.wireOnly = {isAltered: false, indexLength: 0};
-   this.preview.edge.state = null;  // unsigned int, flags.
+   this.preview.edge.state = null;  // unsigned byte, state.
 
    // previewVertex
    this.preview.vertex = {isModified: false, isAltered: false, 
@@ -175,6 +175,7 @@ DraftBench.prototype.alterPreview = function() {
 DraftBench.prototype.updatePreview = function() {
    this._resizeBoundingSphere();
    this._resizePreview();
+   this._resizePreviewEdge();
    this._resizePreviewVertex();
    this._updatePreviewSize();
    this._updateAffected(this.affected);
@@ -329,6 +330,24 @@ DraftBench.prototype._computeGroupHiliteIndex = function(faceGroup) {
 };
 
 
+DraftBench.prototype._resizePreviewEdge = function() {
+/*   const oldSize = this.lastPreviewSize.edges;
+   const length = this.edges.length;
+   const size = length - oldSize;
+   if (size > 0) {
+      const oldState = this.preview.edge.state;
+      this.preview.edge.state = new Uint8Array(length);
+      if (oldSize > 0) {
+         this.preview.edge.state.set(oldState);
+      }
+      //this.preview.edge.state.fill(0, oldSize); // already initialized.
+      this.preview.edge.isAltered = true;
+      // dump to texture
+
+   }  */
+};
+
+
 DraftBench.prototype._resizePreviewVertex = function() {
    const oldSize = this.lastPreviewSize.vertices;
    const length = this.vertices.length;
@@ -339,7 +358,7 @@ DraftBench.prototype._resizePreviewVertex = function() {
       if (oldSize > 0) {
          color.set(preview.color);
       }
-      color.fill(0.0, oldSize);
+      //color.fill(0.0, oldSize);   // already initialized.
       preview.color = color;
       //this.preview.vertex.isModified = true;
       this.preview.vertex.isAltered = true;

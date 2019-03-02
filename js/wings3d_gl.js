@@ -18,10 +18,10 @@ function createWebGLContext(canvasID, attrib) {
    attrib = typeof attrib !== 'undefined' ? attrib : { depth: true, stencil: true, antialias: true };
 //   gl = canvas.getContext("webgl2", attrib);
 //   if (!gl) {
-      gl = canvas.getContext("webgl", attrib) || canvas.getContext("experimental-webgl", attrib);
+      gl = canvas.getContext("webgl", attrib);
       if (gl) {
          // init_extensions(), init_restrictions()
-         let ext = gl.getExtension("OES_standard_derivatives"); // webgl2 is standard.
+         let ext = gl.getExtension("OES_standard_derivatives"); // in webgl2 is standard.
          if (ext === null) {
             console.log("No OES_standard_derivatives");
             return null;   
@@ -31,6 +31,20 @@ function createWebGLContext(canvasID, attrib) {
             console.log("No OES_element_index_uint");
             return null;
          }
+/*         // require float texture
+         ext = gl.getExtension('OES_texture_float');
+         if (ext === null) {
+            console.log("No floating texture");
+            return null;
+         }
+         // require 4 vertex texture unit
+         let units = gl.getParameter(gl.MAX_VERTEX_TEXTURE_IMAGE_UNITS);
+         if (units < 4) {
+            console.log("Not enough vertex texture units");
+            return null;
+         }
+         // get textureSize
+         gl.textureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE); */
          console.log("WebGL 1 init with extension");
       } else {
          alert("Unable to initialize WebGL");
