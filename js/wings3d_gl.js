@@ -31,7 +31,7 @@ function createWebGLContext(canvasID, attrib) {
             console.log("No OES_element_index_uint");
             return null;
          }
-/*         // require float texture
+         // require float texture
          ext = gl.getExtension('OES_texture_float');
          if (ext === null) {
             console.log("No floating texture");
@@ -44,7 +44,7 @@ function createWebGLContext(canvasID, attrib) {
             return null;
          }
          // get textureSize
-         gl.textureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE); */
+         gl.textureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
          console.log("WebGL 1 init with extension");
       } else {
          alert("Unable to initialize WebGL");
@@ -347,6 +347,102 @@ function createWebGLContext(canvasID, attrib) {
 };
 
 
+/**
+ * 
+ * @param {gl.FORMAT} format - format's size, number from (1-4)
+ */
+function getFormat(formatSize) {
+   if (formatSize === 1) {
+      return gl.LUMINANCE;
+   } else if (formatSize === 2) {
+      return gl.LUMINACE_ALPHA;
+   } else if (formatSize === 3) {
+      return gl.RGB;
+   } else if (formatSize === 4) {
+      return gl.RGBA;
+   }
+   console.log(`unsupport format size: ${formatSize}`);
+}
+
+/**
+ * use 2d texture as 1d texture buffer. it is used in vertex shader for vertex pulling drawing.
+ */
+const SamplerBuffer = function(handle, formatChannelCount, type) {
+   this.handle = handle;
+   this.format = getFormat(formatChannelCount);
+   this.formatChannel = formatChannelCount;
+   this.type = type;
+   this.height = 0;        // width === gl.textureSize;
+   this.size = 0;          // sampler's buffer size in type (ie... byte, float).
+};
+
+/**
+ * return bufferSize with padding
+ * Params {int} bufferSize - the given sampler's size
+ */
+SamplerBuffer.getSize = function(bufferSize, formatChannels=1) {
+   const height = Math.ceil(bufferSize / gl.textureSize);
+   return gl.textureSize * height * formatChannels;
+};
+
+SamplerBuffer.prototype.deleteBuffer = function() {
+   gl.deleteTexture(this.handle);
+};
+
+/**
+ * 
+ */
+SamplerBuffer.prototype.bufferData = function(buffer) { //, srcOffset, length) {
+   this.height = Math.ceil(buffer.length / this.formatChannel / gl.textureSize);
+   // texImage
+   gl.texImage2D(gl.TEXTURE_2D, 0, this.format, gl.textureWidth, this.height, 0, this.format, this.type, buffer);
+   // no mipmap
+   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_W, gl.CLAMP_TO_EDGE);
+};
+
+/**
+ * 
+ */
+SamplerBuffer.prototype.bufferSubData = function(formatOffset, buffer, srcOffset, length) {
+   if (!srcOffset) {
+      srcOffset = 0;
+      if (!length) {
+         length = buffer.length;
+      }
+   } else { // get new view(rectangle) of the buffer
+      if (!length) {
+         length = buffer.length - srcOffset;
+      }
+      buffer = buffer.subarray(srcOffset, srcOffset+length);
+   }
+
+   // compute update rectangle.
+   const formatLength = (length/this.formatChannel);
+   const yOffset = Math.floor(formatOffset / gl.textureSize);
+   const yEnd = Math.floor((formatOffset+formatLength) / gl.textureSize);
+   const height = yEnd - yOffset + 1;
+   let xOffset = 0;
+   let width = gl.textureSize;
+   if (height === 1) {  // optimize for 1 line.
+      xOffset = formatOffset % gl.textureSize;
+      width = formatLength;
+   }
+   // update subData rectangle.
+   gl.texSubImage2D(gl.TEXTURE_2D, 0, xOffset, yOffset, width, height, this.format, this.type, buffer);
+   // nomipmap
+   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_W, gl.CLAMP_TO_EDGE);
+};
+
+
+
+
+
 //
 // define ShaderProgram, ShaderData.
 //
@@ -425,6 +521,22 @@ ShaderData.prototype.uploadAttribute = function(name, byteOffset, typedArray)  {
    }
 };
 
+ShaderData.prototype.createSampler = function(name, format, type) {
+   let sampler = null;
+   if (!this.sampler[name]) {
+      const handle = gl.createTexture();
+      sampler = new SamplerBuffer(handle, format, type);
+      this.sampler[name] = sampler;
+   } else {
+      console.log("Shader Data: " + name + " already initialized");
+   }
+   return sampler;
+};
+
+ShaderData.prototype.getSampler = function(name) {
+   return this.sampler[name];
+};
+
 
 /** 
  * index is used for drawElement
@@ -466,6 +578,7 @@ ShaderData.prototype.setUniform4fv = function(name, arry4) {
 ShaderData.uniform4fvFn = function(gl, loc, value) {
    gl.uniform4fv(loc, value);
 };
+
 
 // a few predefine var. 
 //        attributes: ["position", "normal", "uv"],
@@ -586,6 +699,7 @@ ShaderProgram.prototype.getTypeByName = function(type) {
 export {
    createWebGLContext,
    ShaderData,
+   SamplerBuffer,
    ShaderProgram,
    gl
 }

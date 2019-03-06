@@ -75,6 +75,91 @@ fragment:[
       '}',
    '}'].join("\n"),
 };
+let wireframeLine = {   // http://codeflow.org/entries/2012/aug/02/easy-wireframe-display-with-barycentric-coordinates/
+   vertex: textureSize => `uniform mat4 projection; 
+      uniform mat4 worldView;
+      // color of various state
+      uniform vec4 edgeColor;
+      uniform vec4 hardEdgeColor;
+      uniform vec4 selectedColor;
+      uniform vec4 selectedHilite;
+      uniform vec4 unselectedHilite;
+      uniform float edgeWidth;
+      uniform float selectedEdgeWidth;
+      uniform float hardEdgeWidth;
+
+      // hilite Index
+      uniform highp int hilite;     
+      // draw triangle array.
+      attribute highp vec3 indexBuffer;
+
+      // position texture (x,y,z), state texture(uint8)
+      uniform sampler2D positionBuffer;
+      uniform sampler2D stateBuffer;
+      uniform float positionBufferHeight;
+      uniform float stateBufferHeight;
+
+      varying vec3 vBC;
+      varying float lineWidth;
+      varying vec4 color;
+
+      vec2 index2TexCoord(index, height) {
+         vec2(mod(index, ${textureSize}) / float(${textureSize}), (float(index)/float(${textureSize})) / height);
+      }
+      void main() {
+         if (indexBuffer.z == 0) {
+            vBC = vec3(0.0, 0.0, 0.0);
+         } else if indexBuffer.z == 1) {
+            vBC = vec3(1.0, 0.0, 0.0);
+         } else {
+            vBC = vec3(0.0, 0.0, 1.0);
+         }
+         int state = texture2DLod(stateBuffer, index2TexCoord(indexBuffer.y, stateBufferHeight), 0);
+         if (indexBuffer.y == hilite) {
+            if (state > 1) {  // 0x0010
+               color = selectedHilite;
+               lineWidth = selectedEdgeWidth;
+            } else {
+               color = unselectedHilite;
+               lineWidth = selectedEdgeWidth;
+            }
+         } else if (state > 1) {       // 0x0010
+            color = selectedColor;
+            lineWidth = selectedEdgeWidth;
+         } else if (state > 0) {       // 0x0001
+            color = hardEdgeColor;
+            lineWidth = hardEdgeWidth;
+         } else {                      // 0x0000
+            color = edgeColor;
+            lineWidth = edgeWidth;
+         }
+         vec3 pos = texture2DLod((positionBuffer, index2TexCoord(indexBuffer.x, positionBufferHeight), 0);
+         gl_Position = projection * worldView * vec4(pos, 1.0);
+      }
+   `,
+   fragment: `#extension GL_OES_standard_derivatives : enable
+      precision mediump float;
+      varying vec3 vBC;
+      varying float lineWidth,
+      varying vec4 color;
+
+      float edgeFactor() {
+         vec3 d = fwidth(vBC);
+         vec3 a3 = smoothstep(vec3(0.0), d*lineWidth, vBC);
+         return min(min(a3.x, a3.y), a3.z);
+      }
+
+      void main() {
+         // coloring by edge
+         float edge = edgeFactor();
+         if (edge < 1.0) {
+            gl_FragColor = vec4(color.rgb, (1.0-edge)*0.95);
+         } else {
+            discard;
+         }
+      }
+   `
+};
 let selectedColorPoint = {
    vertex: [
       'attribute vec3 position;',
@@ -368,6 +453,7 @@ export {
    uColorArray,
    colorArray,
    selectedColorLine,
+   wireframeLine,
    selectedColorPoint,
    textArray,
    cameraLight,

@@ -153,6 +153,9 @@ const PreviewCage = function(bench) {
    this.guiStatus = {};
    this.status = {locked: false, visible: true, wireMode: false};
 
+   // index
+   this.edge = {size: 0, index: null};
+
    // selecte(Vertex,Edge,Face)here
    this.selectedSet = new Set;
    // default no name
@@ -489,6 +492,16 @@ PreviewCage.prototype._getGeometrySize = function() {
 
 
 PreviewCage.prototype._updatePreviewAll = function() {
+   if (this.edge.size !== this.geometry.edges.size) {  // rebuild edge index
+      const newSize = this.geometry.edges.size;
+      const index = new Uint32Array(newSize*3*6);  // one Wedges has 2 triangles(6) and 3 index(vertex, state, baryCentric);
+      let i = 0;
+      for (const wEdge of this.geometry.edges) {
+         i = wEdge.buildIndex2(index, i); // minus non-showing polygon edge
+      }
+      this.edge.index = index;   // get it done here.
+      this.edge.indexLength = i;
+   }
    this.bench.updatePreview();
 };
 

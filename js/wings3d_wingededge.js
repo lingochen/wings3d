@@ -74,6 +74,38 @@ WingedEdge.prototype.buildIndex = function(data, idx, vertexLength) {
    return idx;
 }
 
+/**
+ * buildup drawingLine using triangle
+ * @param {Uint32Array} data - array
+ * @param {number} idx - start index
+ * @return {number} - current index position.
+ */
+WingedEdge.prototype.buildIndex2 = function(data, idx) {
+   if (this.left.face && this.left.face.isVisible()) {
+      data[idx++] = this.left.origin.index;           // vertex
+      data[idx++] = this.index;                       // state
+      data[idx++] = 1;                                // barycentric
+      data[idx++] = this.right.origin.index;
+      data[idx++] = this.index;
+      data[idx++] = 2;
+      data[idx++] = this.left.next.destination().index;
+      data[idx++] = this.index;
+      data[idx++] = 0;
+   }
+   if (this.right.face && this.right.face.isVisible()) {
+      data[idx++] = this.right.origin.index;
+      data[idx++] = this.index;
+      data[idx++] = 1;
+      data[idx++] = this.left.origin.index;
+      data[idx++] = this.index;
+      data[idx++] = 2;
+      data[idx++] = this.right.next.destination().index;
+      data[idx++] = this.index;
+      data[idx++] = 0;
+   }
+   return idx;
+}
+
 WingedEdge.prototype.isLive = function() {
    return (this.left.origin !== null) && (this.right.origin !== null);
 };
