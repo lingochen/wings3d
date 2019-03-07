@@ -76,7 +76,8 @@ fragment:[
    '}'].join("\n"),
 };
 let wireframeLine = {   // http://codeflow.org/entries/2012/aug/02/easy-wireframe-display-with-barycentric-coordinates/
-   vertex: textureSize => `uniform mat4 projection; 
+   vertex: textureSize => `//#extension OES_texture_float : enable
+      uniform mat4 projection; 
       uniform mat4 worldView;
       // color of various state
       uniform vec4 edgeColor;
@@ -94,53 +95,53 @@ let wireframeLine = {   // http://codeflow.org/entries/2012/aug/02/easy-wirefram
       attribute highp vec3 indexBuffer;
 
       // position texture (x,y,z), state texture(uint8)
-      uniform sampler2D positionBuffer;
-      uniform sampler2D stateBuffer;
+      uniform highp sampler2D positionBuffer;
+      uniform sampler2D edgeState;
       uniform float positionBufferHeight;
-      uniform float stateBufferHeight;
+      uniform float edgeStateHeight;
 
       varying vec3 vBC;
       varying float lineWidth;
       varying vec4 color;
 
-      vec2 index2TexCoord(index, height) {
-         vec2(mod(index, ${textureSize}) / float(${textureSize}), (float(index)/float(${textureSize})) / height);
+      vec2 index2TexCoord(float index, float height) {
+         return vec2( mod(index, float(${textureSize})) / float(${textureSize}), (index/float(${textureSize})) / height);
       }
       void main() {
-         if (indexBuffer.z == 0) {
+         if (indexBuffer.z == 0.0) {
             vBC = vec3(0.0, 0.0, 0.0);
-         } else if indexBuffer.z == 1) {
+         } else if (indexBuffer.z == 1.0) {
             vBC = vec3(1.0, 0.0, 0.0);
          } else {
             vBC = vec3(0.0, 0.0, 1.0);
          }
-         int state = texture2DLod(stateBuffer, index2TexCoord(indexBuffer.y, stateBufferHeight), 0);
-         if (indexBuffer.y == hilite) {
-            if (state > 1) {  // 0x0010
+         float state = texture2D(edgeState, index2TexCoord(indexBuffer.y, edgeStateHeight)).x; // luminance === {l, l, l, 1};
+         if (indexBuffer.y == float(hilite)) {
+            if (state > 1.0) {  // 0x0010
                color = selectedHilite;
                lineWidth = selectedEdgeWidth;
             } else {
                color = unselectedHilite;
                lineWidth = selectedEdgeWidth;
             }
-         } else if (state > 1) {       // 0x0010
+         } else if (state > 1.0) {       // 0x0010
             color = selectedColor;
             lineWidth = selectedEdgeWidth;
-         } else if (state > 0) {       // 0x0001
+         } else if (state > 0.0) {       // 0x0001
             color = hardEdgeColor;
             lineWidth = hardEdgeWidth;
          } else {                      // 0x0000
             color = edgeColor;
             lineWidth = edgeWidth;
          }
-         vec3 pos = texture2DLod((positionBuffer, index2TexCoord(indexBuffer.x, positionBufferHeight), 0);
+         vec3 pos = texture2D(positionBuffer, index2TexCoord(indexBuffer.x, positionBufferHeight)).xyz;
          gl_Position = projection * worldView * vec4(pos, 1.0);
       }
    `,
    fragment: `#extension GL_OES_standard_derivatives : enable
       precision mediump float;
       varying vec3 vBC;
-      varying float lineWidth,
+      varying float lineWidth;
       varying vec4 color;
 
       float edgeFactor() {
@@ -447,6 +448,8 @@ Wings3D.onReady(function() {
    selectedColorLine = gl.createShaderProgram(selectedColorLine.vertex, selectedColorLine.fragment);
 
    selectedColorPoint = gl.createShaderProgram(selectedColorPoint.vertex, selectedColorPoint.fragment);
+
+   wireframeLine = gl.createShaderProgram(wireframeLine.vertex(gl.textureSize), wireframeLine.fragment);
 });
 
 export {

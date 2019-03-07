@@ -46,8 +46,9 @@ const DraftBench = function(theme, prop, materialList, defaultSize = 2048) {  //
    //this.preview.shaderData.setUniform4fv("selectedColor", [1.0, 0.0, 0.0, 1.0]);
    var layoutVec = ShaderData.attribLayout();
    var layoutFloat = ShaderData.attribLayout(1);
-   this.preview.shaderData.createAttribute('position', layoutVec, gl.STATIC_DRAW);
+   this.preview.shaderData.createAttribute('position', layoutVec, gl.DYNAMIC_DRAW);
    this.preview.shaderData.createAttribute('barycentric', layoutVec, gl.STATIC_DRAW);
+   this.preview.shaderData.createSampler('positionBuffer', 0, 3, gl.FLOAT);
    this._resizeBoundingSphere(0);
    this._resizePreview(0, 0);
    this.setTheme(theme, prop);
@@ -68,6 +69,7 @@ const DraftBench = function(theme, prop, materialList, defaultSize = 2048) {  //
    this.preview.edge.hardness = {isAltered: false, indexLength: 0};
    this.preview.edge.wireOnly = {isAltered: false, indexLength: 0};
    this.preview.edge.states = null;  // unsigned byte, state.
+   this.preview.shaderData.createSampler("edgeState", 1, 1, gl.UNSIGNED_BYTE);
 
    // previewVertex
    this.preview.vertex = {isModified: false, isAltered: false, 

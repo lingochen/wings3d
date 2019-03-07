@@ -367,13 +367,13 @@ function getFormat(formatSize) {
 /**
  * use 2d texture as 1d texture buffer. it is used in vertex shader for vertex pulling drawing.
  */
-const SamplerBuffer = function(handle, formatChannelCount, type) {
+const SamplerBuffer = function(handle, textureUnit, formatChannelCount, type) {
    this.handle = handle;
    this.format = getFormat(formatChannelCount);
    this.formatChannel = formatChannelCount;
    this.type = type;
    this.height = 0;        // width === gl.textureSize;
-   this.size = 0;          // sampler's buffer size in type (ie... byte, float).
+   this.unit = textureUnit;
 };
 
 /**
@@ -395,6 +395,7 @@ SamplerBuffer.prototype.deleteBuffer = function() {
 SamplerBuffer.prototype.bufferData = function(buffer) { //, srcOffset, length) {
    this.height = Math.ceil(buffer.length / this.formatChannel / gl.textureSize);
    // texImage
+   gl.bindTexture(gl.TEXTURE_2D, this.handle);
    gl.texImage2D(gl.TEXTURE_2D, 0, this.format, gl.textureWidth, this.height, 0, this.format, this.type, buffer);
    // no mipmap
    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
@@ -431,6 +432,7 @@ SamplerBuffer.prototype.bufferSubData = function(formatOffset, buffer, srcOffset
       width = formatLength;
    }
    // update subData rectangle.
+   gl.bindTexture(gl.TEXTURE_2D, this.handle);
    gl.texSubImage2D(gl.TEXTURE_2D, 0, xOffset, yOffset, width, height, this.format, this.type, buffer);
    // nomipmap
    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
@@ -453,6 +455,7 @@ const ShaderData = function() {
    this.attribute = {};
    this.uniform = {};
    this.index = {};
+   this.sampler = {};
 };
 
 ShaderData.attribLayout = function(attribSize=3, attribType=gl.FLOAT, normalized=false, stride=0, offset=0) {
@@ -527,6 +530,7 @@ ShaderData.prototype.createSampler = function(name, format, type) {
       const handle = gl.createTexture();
       sampler = new SamplerBuffer(handle, format, type);
       this.sampler[name] = sampler;
+      this.setUniformSampler(name, sampler); // sampler is also uniform
    } else {
       console.log("Shader Data: " + name + " already initialized");
    }
@@ -577,6 +581,29 @@ ShaderData.prototype.setUniform4fv = function(name, arry4) {
 
 ShaderData.uniform4fvFn = function(gl, loc, value) {
    gl.uniform4fv(loc, value);
+};
+
+ShaderData.prototype.setUniformSampler = function(name, sampler) {
+   this.uniform[name] = {value: {unit: sampler.unit, 
+                                 handle: sampler.handle}, 
+                        binder: ShaderData.uniformSampler};
+   // also bind "nameHeight".
+   this.uniform[name+"Height"] = {value: sampler.height, binder: ShaderData.uniform1f};
+};
+
+/*ShaderData.unifomr1i = function(gl, loc, value) {
+   gl.uniform1i(loc, value);
+};*/
+
+ShaderData.uniformSampler = function(gl, loc, value) {
+  // Tell WebGL we want to affect texture unit (0+unit)
+  gl.activeTexture(gl.TEXTURE0+value.unit);
+
+  // Bind the texture to texture unit (0+unit)
+  gl.bindTexture(gl.TEXTURE_2D, value.handle);
+
+  // Tell the shader we bound the texture to texture unit (0+unit)
+  gl.uniform1i(loc, value.unit);
 };
 
 
