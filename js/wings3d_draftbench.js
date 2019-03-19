@@ -18,8 +18,10 @@ import {gl, ShaderData} from './wings3d_gl.js';
 import * as ShaderProg from './wings3d_shaderprog.js';
 import * as Util from './wings3d_util.js';
 import {BoundingSphere} from './wings3d_boundingvolume.js';
-import {MeshAllocator} from './wings3d_wingededge.js';
+import {MeshAllocator, WingedEdge} from './wings3d_wingededge.js';
 import {EditCommand} from './wings3d_undo.js';
+
+
 
 
 /**
@@ -46,8 +48,8 @@ const DraftBench = function(theme, prop, materialList, defaultSize = 2048) {  //
    //this.preview.shaderData.setUniform4fv("selectedColor", [1.0, 0.0, 0.0, 1.0]);
    var layoutVec = ShaderData.attribLayout();
    var layoutFloat = ShaderData.attribLayout(1);
-   this.preview.shaderData.createAttribute('position', layoutVec, gl.DYNAMIC_DRAW);
-   this.preview.shaderData.createAttribute('barycentric', layoutVec, gl.STATIC_DRAW);
+   this.preview.shaderData.createAttribute('position', layoutVec, gl.STREAM_DRAW);
+   this.preview.shaderData.createAttribute('barycentric', layoutVec, gl.STREAM_DRAW);
    this.preview.shaderData.createSampler('positionBuffer', 0, 3, gl.FLOAT);
    this._resizeBoundingSphere(0);
    this._resizePreview(0, 0);
@@ -68,7 +70,8 @@ const DraftBench = function(theme, prop, materialList, defaultSize = 2048) {  //
    this.preview.edge.hilite = {indexLength: 0, wEdge: null};
    this.preview.edge.hardness = {isAltered: false, indexLength: 0};
    this.preview.edge.wireOnly = {isAltered: false, indexLength: 0};
-   this.preview.edge.states = null;  // unsigned byte, state.
+   this.preview.shaderData.createAttribute('indexBuffer', layoutVec, gl.STREAM_DRAW);
+   this.edgeIndex = new Float32Array(6*3);  // every wEdge has 2 triangle (6) and (vertex, state, barycentric); 
    this.preview.shaderData.createSampler("edgeState", 1, 1, gl.UNSIGNED_BYTE);
 
    // previewVertex
@@ -90,6 +93,12 @@ const DraftBench = function(theme, prop, materialList, defaultSize = 2048) {  //
       this.previewPlane.pts[i] = this.previewPlane.rectangle.subarray(i*3, (i+1)*3);
    }
 };
+// draftBench inherited from MeshAllocator, so we canintercept freeXXX and allocXXX call easier. It also makes logical sense.
+DraftBench.prototype = Object.create(MeshAllocator.prototype);
+Object.defineProperty(DraftBench.prototype, 'constructor', { 
+   value: DraftBench,
+   enumerable: false, // so that it does not appear in 'for in' loop
+   writable: true });
 
 // temp structure
 DraftBench.theme = {edgeColor: [0.0, 0.0, 0.0, 1.0],
@@ -124,28 +133,20 @@ DraftBench.CONST = (function() {
 }());
 
 
-// draftBench inherited from MeshAllocator, so we canintercept freeXXX and allocXXX call easier. It also makes logical sense.
-DraftBench.prototype = Object.create(MeshAllocator.prototype);
-
-
 /**
  * 
  */
 DraftBench.prototype.setTheme = function(theme, pref) {
    Object.entries(theme).forEach(([key, value]) => {
-      // put the hext value to shader
+      // put the hex value to shader
       this.preview.shaderData.setUniform4fv(key, Util.hexToRGBA(value));
       DraftBench.theme[key] = Util.hexToRGBA(value);     // to be deleted
     });
    // set pref
    Object.entries(pref).forEach(([key, value]) => {
       DraftBench.pref[key] = value;
+      this.preview.shaderData.setUniform1f(key, value);
     });
-   // manual update
-   const manualKeys = ['vertexSize', 'selectedVertexSize', 'maskedVertexSize'];
-   for (let key of manualKeys) {
-      this.preview.shaderData.setUniform1f(key, pref[key]);
-   }
 };
 
 // free webgl buffer.
@@ -177,7 +178,6 @@ DraftBench.prototype.alterPreview = function() {
 DraftBench.prototype.updatePreview = function() {
    this._resizeBoundingSphere();
    this._resizePreview();
-   this._resizePreviewEdge();
    this._resizePreviewVertex();
    this._updatePreviewSize();
    this._updateAffected(this.affected);
@@ -235,43 +235,42 @@ DraftBench.prototype._resizePreview = function() {
    const size = this.vertices.length - oldSize;
    const centroidSize = this.faces.length - oldCentroidSize;
    if ((size > 0) || (centroidSize > 0)) {
-      const model = this;
-      let length = model.buf.data.length;
-      let centroidLength = model.preview.centroid.buf.data.length;
+      let length = this.position.usedSize;
+      let centroidLength = this.preview.centroid.buf.data.length;
       if (oldSize > 0) {
-         if (length > model.preview.barycentric.length) {
+         if (length > this.preview.barycentric.length) {
             // create new length
-            model.preview.barycentric = new Float32Array(length);
+            this.preview.barycentric = new Float32Array(length);
             let selected = new Uint8Array(length/3);
-            selected.set(model.preview.face.selected);
-            model.preview.face.selected = selected;
+            selected.set(this.preview.face.selected);
+            this.preview.face.selected = selected;
          }
-         if (centroidLength > model.preview.centroid.barycentric.length) {
-            model.preview.centroid.barycentric = new Float32Array(centroidLength);
+         if (centroidLength > this.preview.centroid.barycentric.length) {
+            this.preview.centroid.barycentric = new Float32Array(centroidLength);
          }
       } else { // brand new
          // created array
-         model.preview.barycentric = new Float32Array(length);
-         model.preview.face.selected = new Uint8Array(length/3);
-         model.preview.face.indexLenth = 0;
-         model.preview.face.visibleLength = 0;
+         this.preview.barycentric = new Float32Array(length);
+         this.preview.face.selected = new Uint8Array(length/3);
+         this.preview.face.indexLenth = 0;
+         this.preview.face.visibleLength = 0;
       
-         model.preview.centroid.barycentric = new Float32Array(centroidLength);
+         this.preview.centroid.barycentric = new Float32Array(centroidLength);
       }
-      model.preview.barycentric.set(DraftBench.CONST.BARYCENTRIC);
-      model.preview.face.selected.fill(0, oldSize);
-      model.preview.centroid.barycentric.fill(1.0);
+      this.preview.barycentric.set(DraftBench.CONST.BARYCENTRIC);
+      this.preview.face.selected.fill(0, oldSize);
+      this.preview.centroid.barycentric.fill(1.0);
       // upload the data to webgl
-      length = this.buf.len;
+      length = this.position.usedSize;
       centroidLength = this.preview.centroid.buf.len;
-      model.preview.shaderData.resizeAttribute('position', (length+centroidLength)*4);
-      model.preview.shaderData.uploadAttribute('position', 0, this.buf.data.subarray(0, length));
-      model.preview.shaderData.uploadAttribute('position', length*4, this.preview.centroid.buf.data.subarray(0, centroidLength));
-      model.preview.shaderData.resizeAttribute('barycentric', (length+centroidLength)*4);
-      model.preview.shaderData.uploadAttribute('barycentric', 0, this.preview.barycentric.subarray(0, length));
-      model.preview.shaderData.uploadAttribute('barycentric', length*4, this.preview.centroid.barycentric.subarray(0, centroidLength));
+      this.preview.shaderData.resizeAttribute('position', (length+centroidLength)*4);
+      this.preview.shaderData.uploadAttribute('position', 0, this.position.buffer.subarray(0, length));
+      this.preview.shaderData.uploadAttribute('position', length*4, this.preview.centroid.buf.data.subarray(0, centroidLength));
+      this.preview.shaderData.resizeAttribute('barycentric', (length+centroidLength)*4);
+      this.preview.shaderData.uploadAttribute('barycentric', 0, this.preview.barycentric.subarray(0, length));
+      this.preview.shaderData.uploadAttribute('barycentric', length*4, this.preview.centroid.barycentric.subarray(0, centroidLength));
       // invalidate hilite
-      model.hilite.indexLength = 0;
+      this.hilite.indexLength = 0;
       this.preview.isAltered = true;
    }
       
@@ -332,24 +331,6 @@ DraftBench.prototype._computeGroupHiliteIndex = function(faceGroup) {
 };
 
 
-DraftBench.prototype._resizePreviewEdge = function() {
-   const oldSize = this.lastPreviewSize.edges;
-   const length = this.edges.length;
-   const size = length - oldSize;
-   if (size > 0) {
-      const oldState = this.preview.edge.states;
-      this.preview.edge.states = new Uint8Array(length);
-      if (oldSize > 0) {
-         this.preview.edge.states.set(oldState); // copy over old states.
-      }
-      //this.preview.edge.state.fill(0, oldSize); // already initialized.
-      this.preview.edge.isAltered = true;
-      // dump to texture
-
-   }
-};
-
-
 DraftBench.prototype._resizePreviewVertex = function() {
    const oldSize = this.lastPreviewSize.vertices;
    const length = this.vertices.length;
@@ -374,7 +355,6 @@ DraftBench.prototype._resizePreviewVertex = function() {
 
 DraftBench.prototype._updatePreviewSize = function() {
    this.lastPreviewSize.vertices = this.vertices.length;
-   this.lastPreviewSize.edges = this.edges.length;
    this.lastPreviewSize.faces = this.faces.length;
 };
 
@@ -624,7 +604,7 @@ DraftBench.prototype.drawVertex = function(gl, madsor) {
 /**
  * draw hardEdge, and wireframe only edge
  */
-DraftBench.prototype.drawHardEdgeEtc = function(gl, isEdgeMode, madsor) {
+/*DraftBench.prototype.drawHardEdgeEtc = function(gl, isEdgeMode, madsor) {
    let isBinded = false;
    // draw hard edge if applicable.
    if (this.preview.edge.hardness.indexLength > 0) {
@@ -698,15 +678,39 @@ DraftBench.prototype.drawHardEdgeEtc = function(gl, isEdgeMode, madsor) {
       gl.bindIndex(this.preview.shaderData, 'wireEdge');
       gl.drawElements(gl.TRIANGLES, this.preview.edge.wireOnly.indexLength, gl.UNSIGNED_INT, 0);  // draw 1 line.
    }
-}
+} */
 
 /** 
- * draw select, hilite, and (normal) edge
+ * draw select, hilite, hard and normal edge
  * @param {gl} - drawing context
  */
 DraftBench.prototype.drawEdge = function(gl, madsor) {
-   gl.bindAttribute(this.preview.shaderData, ['position', 'barycentric']);
-   this.preview.shaderData.setUniform1f("lineWidth", DraftBench.pref.selectedEdgeWidth);
+   // indexBuffer upload if needed
+   if (this.lastPreviewSize.edges !== WingedEdge.index.usedSize) { // needs to resize?
+      this.lastPreviewSize.edges = WingedEdge.index.usedSize;
+      this.preview.shaderData.resizeAttribute('indexBuffer', WingedEdge.index.usedSize*4);
+      this.preview.shaderData.uploadAttribute('indexBuffer', 0, WingedEdge.index.buffer.subarray(0, WingedEdge.index.usedSize));
+      WingedEdge.index.submitted(); // clear altered buffer.
+   } else if (WingedEdge.index.isAltered()) {   // needs partial update?
+      this.preview.shaderData.uploadAttribute('indexBuffer', WingedEdge.index.alterdMin*4, WingedEdge.index.buffer.subarray(WingedEdge.index.alterdMin, WingedEdge.index.alteredMax+1));
+      WingedEdge.index.submitted();
+   } // now bind attribute
+   gl.bindAttribute(this.preview.shaderData, ['indexBuffer']);
+
+   // update positionBuffer texture if modified
+   this.preview.shaderData.updateSampler("positionBuffer", this.position);
+
+   // update edgeState. should refactored.
+   this.preview.shaderData.updateSampler("edgeState", WingedEdge.state);
+
+   // bindUniform all
+   gl.bindUniform(this.preview.shaderData, ['edgeColor', 'hardEdgeColor', 'selectedColor', 'selectedHilite', 'unselectedHilite',
+                                            'edgeWidth', 'selectedEdgeWidth', 'hardEdgeWidth',
+                                            'positionBuffer', 'positionBufferHeight', 'edgeState', 'edgeStateHeight']);
+
+   gl.drawArrays(gl.TRIANGLES,  0, WingedEdge.index.usedSize/3);
+
+/*   this.preview.shaderData.setUniform1f("lineWidth", DraftBench.pref.selectedEdgeWidth);
 
    // draw hilite first
    if (this.preview.edge.hilite.wEdge) {
@@ -754,7 +758,7 @@ DraftBench.prototype.drawEdge = function(gl, madsor) {
          gl.bindIndex(this.preview.shaderData, 'edgeSelected');
          gl.drawElements(gl.TRIANGLES, this.preview.edge.realIndexCount, gl.UNSIGNED_INT, 0);  // draw selected lines
       }
-   }
+   } */
 };
 
 DraftBench.prototype.drawPlane = (function() {
@@ -820,6 +824,26 @@ DraftBench.prototype.resetBody = function(bodyGroup) {
 };
 
 
+/**
+ * toggle hilite of wEdge, third position, 0x0100
+ */
+DraftBench.prototype.hiliteEdge = function(hEdge, onOff) {
+   // select polygon set color,
+   hEdge.wingedEdge.setEdgeMask(onOff, 4);
+}
+
+
+/*
+DraftBench.prototype.resetSelectEdge = function() {
+   // zeroout the edge selection,
+   for (let i = 0; i < this.edgeState.buffer.length; ++i) {
+      this.edgeState.buffer[i] &= ~2;
+   }
+   // gpu needs to update all.
+   this.edgeState.alteredMin = 0 ;
+   this.edgeState.alteredMax = this.edgeState.buffer.length-1;
+};
+*/
 
 DraftBench.prototype.hiliteVertex = function(vertex, show) {
    // select polygon set color,
@@ -834,14 +858,13 @@ DraftBench.prototype.setVertexColor = function(vertex, color) {
    // selected color
    const j = vertex.index;  
    this.preview.vertex.color[j] += color;
-      if (j < this.preview.vertex.min) {
-         this.preview.vertex.min = j;
-      }
-      if (j > this.preview.vertex.max) {
-         this.preview.vertex.max = j;
-      }
-      this.preview.vertex.isModified = true;
-      //this.preview.vertex.min = this.preview.vertex.max = j;
+   if (j < this.preview.vertex.min) {
+      this.preview.vertex.min = j;
+   }
+   if (j > this.preview.vertex.max) {
+      this.preview.vertex.max = j;
+   }
+   this.preview.vertex.isModified = true;
 };
 
 DraftBench.prototype.resetSelectVertex = function() {
@@ -851,55 +874,18 @@ DraftBench.prototype.resetSelectVertex = function() {
    this.preview.shaderData.uploadAttribute('vertexState', 0, this.preview.vertex.color);
 };
 
-DraftBench.prototype.hiliteEdge = function(hEdge, onOff) {
-   // select polygon set color,
-   if (onOff) {
-      this.preview.edge.hilite.wEdge = hEdge.wingedEdge;
-   } else {
-      this.preview.edge.hilite.wEdge = null;
-   }
-}
-
-/**
- * toggle selection of wEdge
- * @param {WingedEdge} wEdge - target wEdge
- * @param {boolean} onOff - on/off toggle.
- */
-DraftBench.prototype.selectEdge = function(wEdge, onOff) {
-   const state = this.preview.edge.states[wEdge.index];
-   if (onOff) {
-      if ((state & 2) === 0) {
-         state |= 2;
-      }
-   } else {
-      if ((state & 2) === 2) {
-         state &= ~2;
-      }
-   }
-   this.preview.edge.isAltered = true;
-};
-
-
-DraftBench.prototype.resetSelectEdge = function() {
-   // zeroout the edge selection, except hardEdge
-   for (let i = 0; i < this.preview.edge.states.length; ++i) {
-      this.preview.edge.states[i] &= ~1;
-   }
-   this.preview.edge.isAltered = false;
-   this.preview.edge.indexLength = 0;
-};
 
 
 DraftBench.prototype.updateCentroid = function(snapshot) {
    // done, update shader data, should we update each vertex individually?
    const centroids = this.preview.centroid.buf.data.subarray(0, this.preview.centroid.buf.len)
-   this.preview.shaderData.uploadAttribute('position', this.buf.len*4, centroids);
+   this.preview.shaderData.uploadAttribute('position', this.position.usedSize*4, centroids);
 };
 
 
 DraftBench.prototype.updatePosition = function() {
    // todo: we really should update as little as possible.
-   const vertices = this.buf.data.subarray(0, this.buf.len);
+   const vertices = this.position.buffer.subarray(0, this.position.usedSize);
    this.preview.shaderData.uploadAttribute('position', 0, vertices);
 };
 
@@ -931,36 +917,6 @@ DraftBench.prototype.resetSelectFace = function() {
    this.preview.face.indexLenth = 0;
    this.preview.face.visibleLength = 0;
    this.preview.face.isAltered = true;
-};
-
-
-/**
- * set bitmask on 3rd position. off meant soft, on meant hard
- * @param {WingedEdge} wEdge - target edge
- * @param {number} operand - 0=soft, 1=hard, 2=invert.
- */
-DraftBench.prototype.setHardness = function(wEdge, operand) {
-   const state = this.preview.edge.states[wEdge.index];
-   if (operand === 0)  {   // set soft
-      if (state & 1) { // make sure it hard
-         state &= ~1;  // clear hardness bit
-         this.preview.edge.isAltered = true;
-         return true;
-      }
-   } else if (operand === 1) {   // set hard
-      if ((state & 1) === 0) { // make sure it soft
-         state |= 1;   // set hardness bit
-         this.preview.edge.isAltered = true;
-         return true;
-      }
-   } else { // invert
-      if (state & 1) { // it hard, turn to soft
-         return this.setHardness(wEdge, 0);
-      } else { // wEdge is soft turn to hard
-         return this.setHardness(wEdge, 1);
-      }
-   }
-   return false;
 };
 
 

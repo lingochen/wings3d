@@ -344,7 +344,7 @@ class EdgeMadsor extends Madsor {
    drawExtra(gl, draftBench) {
       //if (this.currentEdge) {
          //gl.useShader(ShaderProg.solidColor);
-         gl.useShader(ShaderProg.selectedColorLine);
+         gl.useShader(ShaderProg.wireframeLine);//ShaderProg.selectedColorLine);
          gl.bindTransform();
          draftBench.drawEdge(gl, this);
          gl.disableShader();
@@ -352,7 +352,7 @@ class EdgeMadsor extends Madsor {
    }
 
    previewShader(gl) {
-      gl.useShader(ShaderProg.edgeSolidWireframe);
+      gl.useShader(ShaderProg.wireframeLine);//ShaderProg.edgeSolidWireframe);
    }
 }
 

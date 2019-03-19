@@ -89,8 +89,6 @@ let wireframeLine = {   // http://codeflow.org/entries/2012/aug/02/easy-wirefram
       uniform float selectedEdgeWidth;
       uniform float hardEdgeWidth;
 
-      // hilite Index
-      uniform highp int hilite;     
       // draw triangle array.
       attribute highp vec3 indexBuffer;
 
@@ -109,31 +107,30 @@ let wireframeLine = {   // http://codeflow.org/entries/2012/aug/02/easy-wirefram
       }
       void main() {
          if (indexBuffer.z == 0.0) {
-            vBC = vec3(0.0, 0.0, 0.0);
+            vBC = vec3(1.0, 1.0, 1.0);
          } else if (indexBuffer.z == 1.0) {
-            vBC = vec3(1.0, 0.0, 0.0);
+            vBC = vec3(1.0, 0.0, 1.0);
          } else {
-            vBC = vec3(0.0, 0.0, 1.0);
+            vBC = vec3(1.0, 0.0, 1.0);
          }
-         float state = texture2D(edgeState, index2TexCoord(indexBuffer.y, edgeStateHeight)).x; // luminance === {l, l, l, 1};
-         if (indexBuffer.y == float(hilite)) {
-            if (state > 1.0) {  // 0x0010
-               color = selectedHilite;
-               lineWidth = selectedEdgeWidth;
-            } else {
-               color = unselectedHilite;
-               lineWidth = selectedEdgeWidth;
-            }
-         } else if (state > 1.0) {       // 0x0010
+         float state = texture2D(edgeState, index2TexCoord(indexBuffer.y, edgeStateHeight)).x * 255.0; // luminance === {l, l, l, 1}; l is [0-1]
+         if (state > 5.5) {  // 0x0110 === 6
+            color = selectedHilite;
+            lineWidth = selectedEdgeWidth;
+         } else if (state > 3.5) { // 0x0100 === 4
+            color = unselectedHilite;
+            lineWidth = selectedEdgeWidth;
+         } else if (state > 1.5) {       // 0x0010 === 2
             color = selectedColor;
             lineWidth = selectedEdgeWidth;
-         } else if (state > 0.0) {       // 0x0001
+         } else if (state > 0.5) {       // 0x0001 === 1
             color = hardEdgeColor;
             lineWidth = hardEdgeWidth;
          } else {                      // 0x0000
             color = edgeColor;
             lineWidth = edgeWidth;
          }
+         lineWidth = 2.0;
          vec3 pos = texture2D(positionBuffer, index2TexCoord(indexBuffer.x, positionBufferHeight)).xyz;
          gl_Position = projection * worldView * vec4(pos, 1.0);
       }
@@ -146,7 +143,7 @@ let wireframeLine = {   // http://codeflow.org/entries/2012/aug/02/easy-wirefram
 
       float edgeFactor() {
          vec3 d = fwidth(vBC);
-         vec3 a3 = smoothstep(vec3(0.0), d*lineWidth, vBC);
+         vec3 a3 = smoothstep(vec3(0.0), d*1.5, vBC);
          return min(min(a3.x, a3.y), a3.z);
       }
 
@@ -155,6 +152,7 @@ let wireframeLine = {   // http://codeflow.org/entries/2012/aug/02/easy-wirefram
          float edge = edgeFactor();
          if (edge < 1.0) {
             gl_FragColor = vec4(color.rgb, (1.0-edge)*0.95);
+            //gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
          } else {
             discard;
          }

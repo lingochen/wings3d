@@ -376,6 +376,7 @@ const SamplerBuffer = function(handle, textureUnit, formatChannelCount, type) {
    this.unit = textureUnit;
 };
 
+
 /**
  * return bufferSize with padding
  * Params {int} bufferSize - the given sampler's size
@@ -384,6 +385,11 @@ SamplerBuffer.getSize = function(bufferSize, formatChannels=1) {
    const height = Math.ceil(bufferSize / gl.textureSize);
    return gl.textureSize * height * formatChannels;
 };
+
+
+SamplerBuffer.prototype.getSize = function() {
+   return gl.textureSize * this.height * this.formatChannel;
+}
 
 SamplerBuffer.prototype.deleteBuffer = function() {
    gl.deleteTexture(this.handle);
@@ -396,12 +402,12 @@ SamplerBuffer.prototype.bufferData = function(buffer) { //, srcOffset, length) {
    this.height = Math.ceil(buffer.length / this.formatChannel / gl.textureSize);
    // texImage
    gl.bindTexture(gl.TEXTURE_2D, this.handle);
-   gl.texImage2D(gl.TEXTURE_2D, 0, this.format, gl.textureWidth, this.height, 0, this.format, this.type, buffer);
+   gl.texImage2D(gl.TEXTURE_2D, 0, this.format, gl.textureSize, this.height, 0, this.format, this.type, buffer);
    // no mipmap
    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_W, gl.CLAMP_TO_EDGE);
+   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 };
 
 /**
@@ -438,7 +444,7 @@ SamplerBuffer.prototype.bufferSubData = function(formatOffset, buffer, srcOffset
    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_W, gl.CLAMP_TO_EDGE);
+   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 };
 
 
@@ -524,11 +530,11 @@ ShaderData.prototype.uploadAttribute = function(name, byteOffset, typedArray)  {
    }
 };
 
-ShaderData.prototype.createSampler = function(name, format, type) {
+ShaderData.prototype.createSampler = function(name, textureUnit, format, type) {
    let sampler = null;
    if (!this.sampler[name]) {
       const handle = gl.createTexture();
-      sampler = new SamplerBuffer(handle, format, type);
+      sampler = new SamplerBuffer(handle, textureUnit, format, type);
       this.sampler[name] = sampler;
       this.setUniformSampler(name, sampler); // sampler is also uniform
    } else {
@@ -604,6 +610,25 @@ ShaderData.uniformSampler = function(gl, loc, value) {
 
   // Tell the shader we bound the texture to texture unit (0+unit)
   gl.uniform1i(loc, value.unit);
+};
+
+
+ShaderData.prototype.updateSampler = function(name, bufferObj) {
+   const sampler = this.getSampler(name);
+   if (sampler) {
+      const nameHeight = name + "Height";
+      if (sampler.getSize() !== bufferObj.buffer.length) { // resize texture
+         sampler.bufferData(bufferObj.buffer);
+         bufferObj.submitted();
+         this.setUniform1f(nameHeight, sampler.height);
+      } else if (bufferObj.isAltered()) {  // needs to update?
+         let offset = bufferObj.alteredMin;
+         sampler.bufferSubData(offset/bufferObj.component, bufferObj.buffer, offset, bufferObj.alteredMax - offset + 1);
+         bufferObj.submitted();
+      }
+   } else {
+      console.log("unknown sampler: " + name);
+   }
 };
 
 
@@ -723,8 +748,95 @@ ShaderProgram.prototype.getTypeByName = function(type) {
 };
 
 
+const BufferObject = function(componentSize) {
+   this.buffer = null;
+   this.component = componentSize;
+   this.usedSize = 0;
+   this.alteredMin = 0;
+   this.alteredMax = -1;
+};
+
+
+BufferObject.prototype.alloc = function() {
+   if (this.usedSize < this.buffer.length) {
+      const ret = this.buffer.subarray(this.usedSize, this.usedSize+this.component);
+      this.usedSize += this.component;
+      return ret;
+   }
+   return null;
+};
+
+BufferObject.prototype.computeAllocateSize = function(size) {
+   return Math.ceil(size / gl.textureSize) * gl.textureSize * this.component;
+};
+
+/**
+ * expand by 1.5x.
+ */
+BufferObject.prototype.expand = function() {
+   const oldSize = this.buffer.length;
+   let newSize = Math.ceil((oldSize/this.component) * 1.5);
+   // resize to larger by 1.5x;
+   const oldBuffer = this.buffer;
+   this.buffer = this._allocateBuffer(newSize);
+   this.buffer.set(oldBuffer);
+   this.alteredMax = this.usedSize;
+   // reset.
+   this.usedSize = 0;   // reset;
+};
+
+
+/**
+ * after copying memory to gpu, reset the alteredXXX.
+ */
+BufferObject.prototype.submitted = function() {
+   this.alteredMin = this.buffer ? this.buffer.length : 0;
+   this.alteredMax = -1;
+}
+
+BufferObject.prototype.isAltered = function() {
+   return (this.alteredMin <= this.alteredMax);
+}
+
+const Float32Buffer = function(componentSize, allocationSize) {
+   BufferObject.call(this, componentSize);
+   if (!allocationSize) {
+      allocationSize = gl.textureSize;
+   }
+   this.buffer = this._allocateBuffer(allocationSize);
+};
+Float32Buffer.prototype = Object.create(BufferObject.prototype);
+Object.defineProperty(Float32Buffer.prototype, 'constructor', { 
+   value: Float32Buffer,
+   enumerable: false, // so that it does not appear in 'for in' loop
+   writable: true });
+
+Float32Buffer.prototype._allocateBuffer = function(size) {
+   return new Float32Array(this.computeAllocateSize(size));
+};
+
+
+const ByteBuffer = function(componentSize, allocationSize) {
+   BufferObject.call(this, componentSize);
+   if (!allocationSize) {
+      allocationSize = gl.textureSize;
+   }
+   this.buffer = this._allocateBuffer(allocationSize);
+};
+ByteBuffer.prototype = Object.create(BufferObject.prototype);
+Object.defineProperty(ByteBuffer.prototype, 'constructor', { 
+   value: ByteBuffer,
+   enumerable: false, // so that it does not appear in 'for in' loop
+   writable: true });
+
+ByteBuffer.prototype._allocateBuffer = function(size) {
+   return new Uint8Array(this.computeAllocateSize(size));
+};
+
 export {
    createWebGLContext,
+   Float32Buffer,
+   ByteBuffer,
    ShaderData,
    SamplerBuffer,
    ShaderProgram,

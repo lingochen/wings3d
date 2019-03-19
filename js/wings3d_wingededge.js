@@ -31,6 +31,7 @@ import { PreviewCage } from "./wings3d_model.js";
 *
 */
 "use strict";
+import {Float32Buffer, ByteBuffer} from './wings3d_gl.js';
 import {Material} from './wings3d_material.js';
 
 
@@ -45,12 +46,70 @@ const WingedEdge = function(orgVert, toVert) {
    this.right.pair = this.left;
    this.right.next = this.left;
    // this.right.prev = this.left;
-   this.state = 0;
 };
+WingedEdge.index = null;
+WingedEdge.state = null;
 
 WingedEdge.prototype[Symbol.iterator] = function* () {
    yield this.left;
    yield this.right;
+};
+
+/**
+ * return true if this wingedEdge is hardEdge.
+ */
+WingedEdge.prototype.isHard = function() {
+   return (WingedEdge.state.buffer[this.index] & 1);
+}
+
+/**
+ * set bitmask on 1st position. off meant soft, on meant hard, 0x0001
+ * @param {WingedEdge} wEdge - target edge
+ * @param {number} operand - 0=soft, 1=hard, 2=invert.
+ */
+WingedEdge.prototype.setHardness = function(operand) {
+   if (operand < 2) {
+      return this.setEdgeMask(operand, 1);
+   } else { // invert
+      if (this.isHard())  {  // originally hard, turn to soft
+         return this.setHardness(false, 1);
+      } else { // soft turn to hard
+         return this.setHardness(true, 1);
+      }
+   }
+};
+
+/**
+ * toggle selection of wEdge, 2nd position, 0x0010
+ * @param {WingedEdge} wEdge - target wEdge
+ * @param {boolean} onOff - on/off toggle.
+ */
+WingedEdge.prototype.selectEdge = function(onOff) {
+   this.setEdgeMask(onOff, 2);
+};
+
+WingedEdge.prototype.setEdgeMask = function(onOff, mask) {
+   const i = this.index;
+   let state = WingedEdge.state.buffer[i];
+   let modified;
+   const result = state & mask;
+   if (onOff) {
+      WingedEdge.state.buffer[i] |= mask;
+      modified = (result === 0);   // originally off
+   } else {
+      WingedEdge.state.buffer[i] &= ~mask;
+      modified = (result === mask);   // originally on
+   }
+   //this.preview.edge.isAltered = true;
+   if (modified) {   // setup min and max.
+      if (i < WingedEdge.state.alteredMin) {
+         WingedEdge.state.alteredMin = i;
+      }
+      if (i > WingedEdge.state.alteredMax) {
+         WingedEdge.state.alteredMax = i;
+      }
+   }
+   return modified;
 };
 
 /**
@@ -75,35 +134,38 @@ WingedEdge.prototype.buildIndex = function(data, idx, vertexLength) {
 }
 
 /**
- * buildup drawingLine using triangle
- * @param {Uint32Array} data - array
+ * buildup drawingLine using triangle, assume this wingedEdge is lived.
+ * @param {Float32Array} data - array
  * @param {number} idx - start index
  * @return {number} - current index position.
  */
-WingedEdge.prototype.buildIndex2 = function(data, idx) {
-   if (this.left.face && this.left.face.isVisible()) {
-      data[idx++] = this.left.origin.index;           // vertex
-      data[idx++] = this.index;                       // state
-      data[idx++] = 1;                                // barycentric
-      data[idx++] = this.right.origin.index;
-      data[idx++] = this.index;
-      data[idx++] = 2;
-      data[idx++] = this.left.next.destination().index;
-      data[idx++] = this.index;
-      data[idx++] = 0;
+WingedEdge.prototype.updateIndex = function(hEdge) {
+   const data = WingedEdge.index.buffer;
+   let idx = this.index * 18;    // 18 = 3*3*2;
+   if (this.right === hEdge) {
+      idx += 9;
    }
-   if (this.right.face && this.right.face.isVisible()) {
-      data[idx++] = this.right.origin.index;
-      data[idx++] = this.index;
-      data[idx++] = 1;
-      data[idx++] = this.left.origin.index;
-      data[idx++] = this.index;
-      data[idx++] = 2;
-      data[idx++] = this.right.next.destination().index;
-      data[idx++] = this.index;
-      data[idx++] = 0;
+
+   if (idx < WingedEdge.index.alteredMin) {
+      WingedEdge.index.alteredMin = idx;
+   }  
+
+   let draw = hEdge.face ? hEdge.face.isVisible() : false;
+   data[idx++] = hEdge.origin.index;
+   data[idx++] = this.index;
+   data[idx++] = draw ? 1 : 0;
+   data[idx++] = hEdge.destination().index;
+   data[idx++] = this.index;
+   data[idx++] = draw ? 2 : 0;
+   data[idx++] = hEdge.next.destination().index;
+   data[idx++] = this.index;
+   data[idx] = 0;
+   
+   if (idx > WingedEdge.index.alteredMax) {
+      WingedEdge.index.alteredMax = idx;
    }
-   return idx;
+
+   return ++idx;
 }
 
 WingedEdge.prototype.isLive = function() {
@@ -175,6 +237,10 @@ const HalfEdge = function(vert, edge) {  // should only be created by WingedEdge
    this.wingedEdge = edge; // parent winged edge
 };
 
+HalfEdge.prototype.updateIndex = function() {
+   this.wingedEdge.updateIndex(this);
+};
+
 // boundary edge if no assigned face.
 HalfEdge.prototype.isBoundary = function() {
    return this.face === null;
@@ -197,6 +263,7 @@ HalfEdge.prototype.isNotBoundary = function() {
 HalfEdge.prototype.destination = function() {
    return this.pair.origin;
 }
+
 
 // using polygon to find prev
 HalfEdge.prototype.prevAux = function() {
@@ -454,10 +521,10 @@ Vertex.prototype.getNormal = function(normal) {
 const Polygon = function(startEdge, size, material=Material.default) {
    this.halfEdge = startEdge;
    this.numberOfVertex = size;       // how many vertex in the polygon
-   this.update(); //this.computeNormal();
    this.index = -1;
    this.visible = true;
    this.assignMaterial(material);
+   this.update(); //this.computeNormal();
 };
 
 /**
@@ -480,7 +547,7 @@ Polygon.prototype.isLive = function() {
 };
 
 Polygon.prototype.isVisible = function() {
-   return this.visible && (this.halfEdge !== null);
+   return (this.visible && (this.halfEdge !== null));
 }
 
 Polygon.prototype.buildIndex = function(data, index, center) {
@@ -602,6 +669,7 @@ Polygon.prototype.update = function() {
          console.log("something is wrong with polygon link list");
          return;
       }
+      current.updateIndex();
       current = current.next;
    } while (current !== begin);
    this.halfEdge = halfEdge;              // the lowest index.
@@ -636,14 +704,13 @@ Polygon.prototype.getCentroid = function(centroid) {
 };*/
 
 
-
-
 //
 // 
 //
-const MeshAllocator = function(allocatedSize = 1024) {
-   var buf = new ArrayBuffer(allocatedSize*3 * Float32Array.BYTES_PER_ELEMENT);  // vertices in typedArray
-   this.buf = { buffer: buf, data: new Float32Array(buf), len: 0, }; // vertex's pt buffer. to be used for Vertex.
+const MeshAllocator = function(allocatedSize) {
+   WingedEdge.index = new Float32Buffer(18);           // drawing index.
+   WingedEdge.state = new ByteBuffer(1),    // unsigned byte state 
+   this.position = new Float32Buffer(3, allocatedSize),  // position buffer.
    this.vertices = [];     // class Vertex
    this.edges = [];        // class WingedEdge
    this.faces = [];        // class Polygon
@@ -667,23 +734,15 @@ MeshAllocator.prototype.allocVertex = function(pt, delVertex) {
       this.affected.vertices.add( vertex );
       return vertex;
    } else {
-      if ((this.buf.len+3) >= (this.buf.data.length)) {
-         // reached maximum buff size, resize, double the size
-         var buffer = new ArrayBuffer(Float32Array.BYTES_PER_ELEMENT*this.buf.len*2);
-         var data = new Float32Array(buffer);
-         // copy data to new buffer.
-         data.set(this.buf.data);
-         // update Vertex.position;
-         this.vertices.forEach(function(element, index, arry) {
-            element.vertex = new Float32Array(buffer, Float32Array.BYTES_PER_ELEMENT*index*3, 3);
-         });
-         // replace
-         this.buf.data = data;
-         this.buf.buffer = buffer;
+      let vertex = this.position.alloc();
+      if (!vertex) {
+         this.position.expand();
+         // update Vertex
+         for (let element of this.vertices) {
+            element.vertex = this.position.alloc();
+         }
+         vertex = this.position.alloc();
       }
-      // vec3 is 3 float32. mapped into the big buffer. float32=4 byte.
-      let vertex = new Float32Array(this.buf.buffer, Float32Array.BYTES_PER_ELEMENT*this.buf.len, 3);
-      this.buf.len += 3;
       vertex[0] = pt[0];
       vertex[1] = pt[1];
       vertex[2] = pt[2];
@@ -718,6 +777,14 @@ MeshAllocator.prototype.allocEdge = function(begVert, endVert, delOutEdge) {
       edge = new WingedEdge(begVert, endVert);
       edge.index = this.edges.length;
       this.edges.push( edge );
+      if (!WingedEdge.state.alloc()) {    // advance usedSize
+         WingedEdge.state.expand();
+         WingedEdge.state.alloc();
+      }
+      if (!WingedEdge.index.alloc()) { // advance usedSize
+         WingedEdge.index.expand();
+         WingedEdge.index.alloc();
+      }
       outEdge = edge.left;
       //this.affected.edges.add( edge );
    }

@@ -492,16 +492,6 @@ PreviewCage.prototype._getGeometrySize = function() {
 
 
 PreviewCage.prototype._updatePreviewAll = function() {
-   if (this.edge.size !== this.geometry.edges.size) {  // rebuild edge index
-      const newSize = this.geometry.edges.size;
-      const index = new Uint32Array(newSize*3*6);  // one Wedges has 2 triangles(6) and 3 index(vertex, state, baryCentric);
-      let i = 0;
-      for (const wEdge of this.geometry.edges) {
-         i = wEdge.buildIndex2(index, i); // minus non-showing polygon edge
-      }
-      this.edge.index = index;   // get it done here.
-      this.edge.indexLength = i;
-   }
    this.bench.updatePreview();
 };
 
@@ -958,19 +948,16 @@ PreviewCage.prototype.selectEdge = function(selectEdge) {
    var wingedEdge = selectEdge.wingedEdge;
 
    var onOff;
-   var color;
    if (this.selectedSet.has(wingedEdge)) {
-      this.selectedSet.delete(wingedEdge);
-      color = -0.25;
+      this.selectedSet.delete(wingedEdge);5;
       onOff = false;
    } else {
       this.selectedSet.add(wingedEdge);
-      color = 0.25;
       onOff = true;
       geometryStatus("select edge: " + wingedEdge.index);
    }
    // selected color
-   this.bench.selectEdge(wingedEdge, onOff);
+   wingedEdge.selectEdge(onOff);
    return onOff;
 };
 
@@ -1326,8 +1313,10 @@ PreviewCage.prototype.snapshotTransformVertexGroup = function() {
 
 PreviewCage.prototype._resetSelectEdge = function() {
    const snapshot = this.snapshotSelectionEdge();
+   for (let wEdge of this.selectedSet) {
+      wEdge.selectEdge(false);
+   }
    this.selectedSet = new Set;
-   this.bench.resetSelectEdge();
    return snapshot;
 };
 
@@ -3768,7 +3757,7 @@ PreviewCage.prototype.hardnessEdge = function(operand) {
    let ret = {operand: operand, selection: []};
 
    for (let wEdge of this.selectedSet) {
-      if (this.bench.setHardness(wEdge, operand)) {   // check set successfully
+      if (wEdge.setHardness(operand)) {   // check set successfully
          ret.selection.push(wEdge);
       }
    }
@@ -3793,7 +3782,7 @@ PreviewCage.prototype.undoHardnessEdge = function(result) {
       operand = 0;
    }
    for (let wEdge of result.selection) {   // restore edges state
-      this.bench.setHardness(wEdge, operand);
+      wEdge.setHardness(operand);
    }
 };
 
