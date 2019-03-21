@@ -75,6 +75,7 @@ fragment:[
       '}',
    '}'].join("\n"),
 };
+// gl_Position = vec4(2.0,2.0,2.0, 1.0);
 let wireframeLine = {   // http://codeflow.org/entries/2012/aug/02/easy-wireframe-display-with-barycentric-coordinates/
    vertex: textureSize => `//#extension OES_texture_float : enable
       uniform mat4 projection; 

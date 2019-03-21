@@ -35,8 +35,8 @@ import {Float32Buffer, ByteBuffer} from './wings3d_gl.js';
 import {Material} from './wings3d_material.js';
 
 
-const WingedEdge = function(orgVert, toVert) {
-   this.index = -1;
+const WingedEdge = function(orgVert, toVert, index) {
+   this.index = index;
    this.left = new HalfEdge(orgVert, this);
    this.right = new HalfEdge(toVert, this);
    this.left.pair = this.right;
@@ -773,10 +773,6 @@ MeshAllocator.prototype.allocEdge = function(begVert, endVert, delOutEdge) {
       outEdge.pair.origin = endVert;
       this.affected.edges.add( edge );
    } else {
-      // initialized data.
-      edge = new WingedEdge(begVert, endVert);
-      edge.index = this.edges.length;
-      this.edges.push( edge );
       if (!WingedEdge.state.alloc()) {    // advance usedSize
          WingedEdge.state.expand();
          WingedEdge.state.alloc();
@@ -785,6 +781,10 @@ MeshAllocator.prototype.allocEdge = function(begVert, endVert, delOutEdge) {
          WingedEdge.index.expand();
          WingedEdge.index.alloc();
       }
+      // initialized data.
+      edge = new WingedEdge(begVert, endVert, this.edges.length);
+      this.edges.push( edge );
+
       outEdge = edge.left;
       //this.affected.edges.add( edge );
    }
