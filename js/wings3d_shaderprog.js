@@ -77,7 +77,7 @@ fragment:[
 };
 // gl_Position = vec4(2.0,2.0,2.0, 1.0);
 let wireframeLine = {   // http://codeflow.org/entries/2012/aug/02/easy-wireframe-display-with-barycentric-coordinates/
-   vertex: textureSize => `//#extension OES_texture_float : enable
+   vertex: index2TexCoord => `//#extension OES_texture_float : enable
       uniform mat4 projection; 
       uniform mat4 worldView;
       // color of various state
@@ -103,9 +103,8 @@ let wireframeLine = {   // http://codeflow.org/entries/2012/aug/02/easy-wirefram
       varying float lineWidth;
       varying vec4 color;
 
-      vec2 index2TexCoord(float index, float height) {
-         return vec2( mod(index, float(${textureSize})) / float(${textureSize}), (index/float(${textureSize})) / height);
-      }
+      ${index2TexCoord}
+
       void main() {
          if (indexBuffer.z == 0.0) {
             vBC = vec3(1.0, 1.0, 1.0);
@@ -157,6 +156,47 @@ let wireframeLine = {   // http://codeflow.org/entries/2012/aug/02/easy-wirefram
          } else {
             discard;
          }
+      }
+   `
+};
+// we could put positionBuffer into attribute, but that meant we have to manage positionBuffer update separately.
+// there is no method for treating a texture2d as vertex array attribute.
+let drawVertex = {  
+   vertex: index2TexCoord =>
+     `uniform mat4 worldView;
+      uniform mat4 projection;
+      uniform float vertexSize[8];
+
+      // draw point array;
+      attribute highp float indexBuffer;                 // klutch 
+      attribute float vertexState;
+
+      // attribute texture
+      uniform highp sampler2D positionBuffer;
+      uniform float positionBufferHeight;
+
+      // output
+      varying float vState;
+
+      ${index2TexCoord}
+
+      void main(void) {
+         gl_Position = vec4(2.0, 2.0, 2.0, 1.0);         // culled as default.
+         if (vertexState < 128) {
+            vec3 pos = texture2D(positionBuffer, index2TexCoord(indexBuffer, positionBufferHeight)).xyz;
+            gl_Position = projection * worldView * vec4(pos, 1.0);
+            vState = vertexState;
+            gl_PointSize = vertexSize[vertexState];
+         }
+      }
+   `,
+   fragment:
+     `precision lowp float;
+      varying lowp float vState;
+      uniform vec4 vertexColor[8];
+
+      void main(void) {
+         gl_FragColor = vertexColor[vState];
       }
    `
 };
@@ -429,6 +469,11 @@ let colorSolidWireframe = {  // we don't have geometry shader, so we have to man
 };
 
 Wings3D.onReady(function() {
+   const index2TexCoord = 
+     `vec2 index2TexCoord(float index, float height) {
+         return vec2( mod(index, float(${gl.textureSize})) / float(${gl.textureSize}), (index/float(${gl.textureSize})) / height);
+      }
+   `;
    // compiled the program
    cameraLight = gl.createShaderProgram(cameraLight.vertex, cameraLight.fragment);
 
@@ -448,7 +493,7 @@ Wings3D.onReady(function() {
 
    selectedColorPoint = gl.createShaderProgram(selectedColorPoint.vertex, selectedColorPoint.fragment);
 
-   wireframeLine = gl.createShaderProgram(wireframeLine.vertex(gl.textureSize), wireframeLine.fragment);
+   wireframeLine = gl.createShaderProgram(wireframeLine.vertex(index2TexCoord), wireframeLine.fragment);
 });
 
 export {

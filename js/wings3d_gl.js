@@ -758,12 +758,12 @@ const BufferObject = function(componentSize) {
 
 
 BufferObject.prototype.alloc = function() {
-   if (this.usedSize < this.buffer.length) {
-      const ret = this.buffer.subarray(this.usedSize, this.usedSize+this.component);
-      this.usedSize += this.component;
-      return ret;
+   const index = this.usedSize;
+   this.usedSize += this.component;
+   if (this.usedSize > this.buffer.length) {
+      this.expand();
    }
-   return null;
+   return index;
 };
 
 BufferObject.prototype.computeAllocateSize = function(size) {
@@ -780,11 +780,25 @@ BufferObject.prototype.expand = function() {
    const oldBuffer = this.buffer;
    this.buffer = this._allocateBuffer(newSize);
    this.buffer.set(oldBuffer);
-   this.alteredMax = this.usedSize;
-   // reset.
-   this.usedSize = 0;   // reset;
 };
 
+BufferObject.prototype.get = function(index) {
+   return this.buffer[index];
+}
+
+BufferObject.prototype.set = function(index, newValue) {
+   if (this.buffer[index] !== newValue) {
+      this.buffer[index] = newValue;
+      if (index < this.alteredMin) {
+         this.alteredMin = index;
+      }
+      if (index > this.alteredMax) {
+         this.alteredMax = index;
+      }
+      return true;
+   }
+   return false;
+}
 
 /**
  * after copying memory to gpu, reset the alteredXXX.

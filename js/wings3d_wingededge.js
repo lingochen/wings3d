@@ -90,26 +90,12 @@ WingedEdge.prototype.selectEdge = function(onOff) {
 
 WingedEdge.prototype.setEdgeMask = function(onOff, mask) {
    const i = this.index;
-   let state = WingedEdge.state.buffer[i];
-   let modified;
-   const result = state & mask;
+   const state = WingedEdge.state.buffer[i];
    if (onOff) {
-      WingedEdge.state.buffer[i] |= mask;
-      modified = (result === 0);   // originally off
+      return WingedEdge.state.set(i,  state | mask);
    } else {
-      WingedEdge.state.buffer[i] &= ~mask;
-      modified = (result === mask);   // originally on
+      return WingedEdge.state.set(i, state & ~mask);
    }
-   //this.preview.edge.isAltered = true;
-   if (modified) {   // setup min and max.
-      if (i < WingedEdge.state.alteredMin) {
-         WingedEdge.state.alteredMin = i;
-      }
-      if (i > WingedEdge.state.alteredMax) {
-         WingedEdge.state.alteredMax = i;
-      }
-   }
-   return modified;
 };
 
 /**
@@ -237,6 +223,14 @@ const HalfEdge = function(vert, edge) {  // should only be created by WingedEdge
    this.wingedEdge = edge; // parent winged edge
 };
 
+/**
+ * toggle hilite of wEdge, third position, 0x0100
+ */
+HalfEdge.prototype.setHilite = function(onOff) {
+   // select polygon set color,
+   this.wingedEdge.setEdgeMask(onOff, 4);
+}
+
 HalfEdge.prototype.updateIndex = function() {
    this.wingedEdge.updateIndex(this);
 };
@@ -309,17 +303,42 @@ HalfEdge.prototype.eachEdge = function(callbackfn) {
 
 
 //
-const Vertex = function(pt) {
-   this.vertex = pt;       // vec3. Float32Array. convenient function.
+const Vertex = function(posOffset, index) {
    this.outEdge = null;
- //  this.index = -1;
+   //this.vertex = pt;       // vec3. Float32Array. convenient function
+   this.posOffset = posOffset;
+   this._index = index;
 };
+Vertex.index = null;  // index and state not combined eventhough it map one on one. 
+Vertex.state = null;
+Vertex.position = null;
+
+// faked array [0,1,2]
+Object.defineProperty(Vertex.prototype, '0', {
+   get: function() {return Vertex.position.buffer[this.posOffset];},
+   set: function(value) {Vertex.position.set(this.posOffset, value);}
+});
+Object.defineProperty(Vertex.prototype, '1', {
+   get: function() {return Vertex.position.buffer[this.posOffset+1];},
+   set: function(value) {Vertex.position.set(this.posOfset+1, value);}
+});
+Object.defineProperty(Vertex.prototype, '2', {
+   get: function() {return Vertex.position.buffer[this.posOffset+2];},
+   set: function(value) {Vertex.position.set(this.posOffset+2, value);}
+});
 
 Object.defineProperty(Vertex.prototype, 'index', {
    get: function() {
-      return (this.vertex.byteOffset / (this.vertex.BYTES_PER_ELEMENT*3));
+      return this.posOffset / 3; // or should we get index?
    },
 });
+
+Vertex.prototype.set = function(inArray) {
+   Vertex.position.set(this.posOffset, inArray[0]);
+   Vertex.position.set(this.posOffset+1, inArray[1]);
+   Vertex.position.set(this.posOffset+2, inArray[2]);
+};
+
 
 Object.defineProperty(Vertex.prototype, 'valence', {
    get: function() {
@@ -335,6 +354,45 @@ Object.defineProperty(Vertex.prototype, 'valence', {
       return valence;
    },
 });
+
+
+Vertex.prototype.hide = function() {
+   this.setMask(false, 128);
+};
+
+Vertex.prototype.show = function() {
+   this.setMask(true, 128);
+};
+
+Vertex.prototype.resetState = function() {
+   const state = parseInt(Vertex.state.buffer[this.posOffset]);
+   Vertex.state.set(this.posOffset, state & 128);   // clear all bit except hide/show
+};
+
+Vertex.prototype.setHilite = function(onOff) {
+   this.setState(onOff, 4);
+};
+
+Vertex.prototype.setSelect = function(onOff) {
+   this.setState(onOff, 1);
+};
+
+
+Vertex.prototype.setMagnet = function(onOff) {
+   this.setState(onOff, 2);
+}
+
+Vertex.prototype.setState = function(onOff, mask) {
+   const index = this.posOffset;
+
+   const state = parseInt(Vertex.state.buffer[index]);   // float to int, so easier to mask?
+   if (onOff) {
+      return Vertex.state.set(index, state | mask);
+   } else {
+      return Vertex.state.set(index, state & (~mask));
+   }
+};
+
 
 //
 // compute normal(later) and adjust outEdge to lowest index edge.
@@ -504,10 +562,10 @@ Vertex.prototype.getNormal = function(normal) {
    const start = this.outEdge;
    let current = start;
    const a = vec3.create(), b = vec3.create(), temp = vec3.create();
-   vec3.sub(a, current.destination().vertex, current.origin.vertex);
+   vec3.sub(a, current.destination(), current.origin);
    do {
       current = current.pair.next;
-      vec3.sub(b, current.destination().vertex, current.origin.vertex);
+      vec3.sub(b, current.destination(), current.origin);
       vec3.cross(temp, b, a);
       vec3.add(normal, normal, temp);
       vec3.copy(a, b);
@@ -639,9 +697,9 @@ Polygon.prototype.oneRing = function* () {
 Polygon.prototype.computeNormal = function() {
    const U = vec3.create();
    const V = vec3.create();
-   const v1 = this.halfEdge.origin.vertex;
-   const v0 = this.halfEdge.next.origin.vertex;
-   const v2 = this.halfEdge.next.destination().vertex;
+   const v1 = this.halfEdge.origin;
+   const v0 = this.halfEdge.next.origin;
+   const v2 = this.halfEdge.next.destination();
    vec3.sub(U, v1, v0);
    vec3.sub(V, v2, v0);
    if (!this.normal) {
@@ -688,7 +746,7 @@ Polygon.prototype.getCentroid = function(centroid) {
    let current = begin;
    let numberOfVertex = 0;
    do {
-      vec3.add(centroid, centroid, current.origin.vertex);
+      vec3.add(centroid, centroid, current.origin);
       ++numberOfVertex;
       current = current.next;
    } while (current !== begin);
@@ -709,8 +767,10 @@ Polygon.prototype.getCentroid = function(centroid) {
 //
 const MeshAllocator = function(allocatedSize) {
    WingedEdge.index = new Float32Buffer(18);           // drawing index.
-   WingedEdge.state = new ByteBuffer(1),    // unsigned byte state 
-   this.position = new Float32Buffer(3, allocatedSize),  // position buffer.
+   WingedEdge.state = new ByteBuffer(1),    // unsigned byte state
+   Vertex.index = new Float32Buffer(1);
+   Vertex.state = new Float32Buffer(1);
+   Vertex.position = this.position = new Float32Buffer(3, allocatedSize),  // position buffer.
    this.vertices = [];     // class Vertex
    this.edges = [];        // class WingedEdge
    this.faces = [];        // class Polygon
@@ -730,23 +790,13 @@ MeshAllocator.prototype.allocVertex = function(pt, delVertex) {
          });
          vertex = delVertex;
       }
-      vertex.vertex.set(pt);
+      vertex.set(pt);
       this.affected.vertices.add( vertex );
       return vertex;
    } else {
-      let vertex = this.position.alloc();
-      if (!vertex) {
-         this.position.expand();
-         // update Vertex
-         for (let element of this.vertices) {
-            element.vertex = this.position.alloc();
-         }
-         vertex = this.position.alloc();
-      }
-      vertex[0] = pt[0];
-      vertex[1] = pt[1];
-      vertex[2] = pt[2];
-      var _vert = new Vertex(vertex);
+      let posIndex = this.position.alloc();  // allocate component.
+      let _vert = new Vertex(posIndex, this.vertices.length);
+      _vert.set(pt); // copy value
       //_vert.index = this.vertices.length;
       this.vertices.push( _vert );
       //this.affected.vertices.add( _vert );
@@ -773,14 +823,8 @@ MeshAllocator.prototype.allocEdge = function(begVert, endVert, delOutEdge) {
       outEdge.pair.origin = endVert;
       this.affected.edges.add( edge );
    } else {
-      if (!WingedEdge.state.alloc()) {    // advance usedSize
-         WingedEdge.state.expand();
-         WingedEdge.state.alloc();
-      }
-      if (!WingedEdge.index.alloc()) { // advance usedSize
-         WingedEdge.index.expand();
-         WingedEdge.index.alloc();
-      }
+      WingedEdge.state.alloc();     // advance usedSize
+      WingedEdge.index.alloc();      // advance usedSize
       // initialized data.
       edge = new WingedEdge(begVert, endVert, this.edges.length);
       this.edges.push( edge );
@@ -1120,12 +1164,12 @@ WingedTopology.prototype.getExtent = function(min, max) {
    //min[0] = min[1] = min[2] = Number.MAX_VALUE;
    //max[0] = max[1] = max[2] = Number.MIN_VALUE;
    for (let vertex of this.vertices) {
-      const pt = vertex.vertex;
       for (let i = 0; i < 3; ++i) {
-         if (pt[i] > max[i]) {
-            max[i] = pt[i];
-         } else if (pt[i] < min[i]) {
-            min[i] = pt[i];
+         const p = vertex[i];
+         if (p > max[i]) {
+            max[i] = p;
+         } else if (p < min[i]) {
+            min[i] = p;
          }
       }
    }
@@ -1484,7 +1528,7 @@ WingedTopology.prototype.prepVertex = function(inStart, outStop, adjacentRed, ve
    }
 };
 WingedTopology.prototype.prepVertexAdd = function(inStart, outStop, adjacentRed, vertexLimit, slideEdge) {
-   const origin = this.addVertex(inStart.destination().vertex);
+   const origin = this.addVertex(inStart.destination());
    vertexLimit.set(origin, []);
    this.prepVertex(inStart, outStop, adjacentRed, vertexLimit, slideEdge, origin);
    return origin;
@@ -1670,8 +1714,8 @@ WingedTopology.prototype.bevelEdge = function(wingedEdges) {   // wingedEdges(se
          avg = 0.4;
       }
       for (let hEdge of hEdges) {
-         vec3.copy(pt, hEdge.origin.vertex);
-         vec3.copy(position, vertex.vertex);
+         vec3.copy(pt, hEdge.origin);
+         vec3.copy(position, vertex);
          vec3.sub(pt, pt, position);
          let average = avg;
          if (slideEdge.has(hEdge.pair)) { // yep, we can only go as far as half point.
@@ -1706,7 +1750,7 @@ WingedTopology.prototype.bevelVertex = function(vertices) {
       ret.vertices.push(vertex);
       slideHEdges.add(outEdge);
       while (outEdge !== vertex.outEdge) { // splice between outTarget and inEdge. add a new Vertex
-         const origin = this.addVertex(outEdge.origin.vertex);
+         const origin = this.addVertex(outEdge.origin);
          ret.vertices.push(origin);
          outEdge.origin = origin;
          origin.outEdge = outEdge;
@@ -1746,8 +1790,8 @@ WingedTopology.prototype.bevelVertex = function(vertices) {
    for (let vertex of ret.vertices) {
       const position = ret.position.subarray(i, i+3);
       const direction = ret.direction.subarray(i, i+3);
-      vec3.copy(position, vertex.vertex);
-      vec3.sub(direction, vertex.outEdge.destination().vertex, position);
+      vec3.copy(position, vertex);
+      vec3.sub(direction, vertex.outEdge.destination(), position);
       if (slideHEdges.has(vertex.outEdge.pair)) {  // half length because we are sharing the expansion.
          ret.vertexLimit = Math.min(vec3.length(direction)*0.5, ret.vertexLimit);
       } else {
@@ -1900,7 +1944,7 @@ WingedTopology.prototype.weldContour = function(edgeLoop) {
 
    // now we can safely release memory
    for (let edge of edgeLoop) {
-      edge.restore = {origin: edge.inner.origin, pt: vec3.clone(edge.inner.origin.vertex), hEdge: edge.inner};
+      edge.restore = {origin: edge.inner.origin, pt: vec3.clone(edge.inner.origin), hEdge: edge.inner};
       // remove vertex, and edge.
       this._freeVertex(edge.inner.origin);
       this._freeEdge(edge.inner);
@@ -1950,7 +1994,7 @@ WingedTopology.prototype.liftContour = function(edgeLoop) {
       return edgeLoop;
    }
 
-   let firstVertex = this.addVertex(edgeLoop[0].outer.origin.vertex);
+   let firstVertex = this.addVertex(edgeLoop[0].outer.origin);
    let fromVertex = firstVertex; 
    for (let i = 0; i < edgeLoop.length; ++i) {
       let outerEdge = edgeLoop[i].outer;
@@ -1958,7 +2002,7 @@ WingedTopology.prototype.liftContour = function(edgeLoop) {
       if (i == (edgeLoop.length-1)) {  // the last one loopback
          toVertex = firstVertex;
       } else {
-         toVertex = this.addVertex(outerEdge.destination().vertex);
+         toVertex = this.addVertex(outerEdge.destination());
       }
       edgeLoop[i].inner = this.addEdge(fromVertex, toVertex);
       fromVertex = toVertex;
@@ -2182,7 +2226,7 @@ WingedTopology.prototype.restoreCollapseEdge = function(undo) {
       this._restoreLoop(undo.leftLoop.next, undo.leftLoop.hEdge, undo.leftLoop.polygon);
    }
    // undo collapseEdge
-   this._liftEdge(undo.pairNext, undo.prev, this.addVertex(undo.vertex.vertex, undo.vertex), undo.hEdge);
+   this._liftEdge(undo.pairNext, undo.prev, this.addVertex(undo.vertex, undo.vertex), undo.hEdge);
 };
 
 
@@ -2405,7 +2449,7 @@ WingedTopology.prototype.dissolveVertex = function(vertex) {
    // now free the vertex.
    const self = this;
    const pt = new Float32Array(3);
-   vec3.copy(pt, vertex.vertex);
+   vec3.copy(pt, vertex);
    if (vertex.isIsolated()) {
       this._freeVertex(vertex);
       return {pt: pt, vertex: vertex};
@@ -2501,7 +2545,7 @@ WingedTopology.prototype.bridgeFace = function(targetFace, sourceFace, deltaCent
    }
    // move source to target
    for (let hEdge of sourceFace.hEdges()) {
-      const point = vec3.clone(hEdge.origin.vertex);
+      const point = vec3.clone(hEdge.origin);
       vec3.add(point, point, deltaCenter);
       sourceHEdges.unshift( {hEdge: hEdge, delta: point} );  // reverse direction.
       hEdge.face = null;   // remove face reference
@@ -2515,7 +2559,7 @@ WingedTopology.prototype.bridgeFace = function(targetFace, sourceFace, deltaCent
       // add up th length
       let currentLen = 0;
       for (let j = 0; j < targetHEdges.length; ++j) {
-         vec3.sub(temp, targetHEdges[j].origin.vertex, sourceHEdges[j].delta);
+         vec3.sub(temp, targetHEdges[j].origin, sourceHEdges[j].delta);
          len += vec3.length(temp);
       }
       if (currentLen < len) {
@@ -2593,8 +2637,8 @@ WingedTopology.prototype.liftCornerEdge = function(hEdge, percent = 0.2) {
    const vector = vec3.create();
    // lift destination corner vertex
    let next = hEdge.next;
-   vec3.lerp(pt, next.origin.vertex, next.destination().vertex, percent);
-   vec3.sub(vector, hEdge.origin.vertex, hEdge.destination().vertex);
+   vec3.lerp(pt, next.origin, next.destination(), percent);
+   vec3.sub(vector, hEdge.origin, hEdge.destination());
    vec3.scale(vector, vector, percent);
    vec3.add(pt, pt, vector);
    let destVert = this.addVertex(pt);
@@ -2812,8 +2856,8 @@ WingedTopology.prototype.invert = function() {
 WingedTopology.prototype.flip = function(pivot, axis) {
    const axisX2 = pivot[axis] * 2;
    for (let vertex of this.vertices) {
-      vertex.vertex[axis] = axisX2 - vertex.vertex[axis];  // == center[axis] - (vertex.vertex[axis]-center[ais])
-         this.addAffectedEdgeAndFace(vertex);               // optimiztion: addAllAffected() functions.
+      vertex[axis] = axisX2 - vertex[axis];        // == center[axis] - (vertex.vertex[axis]-center[ais])
+         this.addAffectedEdgeAndFace(vertex);      // optimiztion: addAllAffected() functions.
       }
 };
 

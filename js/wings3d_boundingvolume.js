@@ -44,12 +44,12 @@ BoundingSphere.computeSphere = function(polygon, center) {  // vec3
    center.fill(0.0);
    var ret = {center: center, radius: 0.0};
    polygon.eachVertex( function(vertex) {
-      vec3.add(ret.center, ret.center, vertex.vertex);
+      vec3.add(ret.center, ret.center, vertex);
    });
    vec3.scale(ret.center, ret.center, 1.0/polygon.numberOfVertex);
    // get the furthest distance. that the radius.
    polygon.eachVertex( function(vertex) {
-      var distance = vec3.distance(ret.center, vertex.vertex);
+      var distance = vec3.distance(ret.center, vertex);
       if (distance > ret.radius) {
          ret.radius = distance;
       }

@@ -420,8 +420,8 @@ function setCurrent(edge, intersect, center) {
    hilite.plane = null;
    if (edge !== null) {
       const a = vec3.create(), b = vec3.create(), c = vec3.create();
-      const destination = edge.destination().vertex; // find out if we are within the distance threshold
-      const origin = edge.origin.vertex;
+      const destination = edge.destination(); // find out if we are within the distance threshold
+      const origin = edge.origin;
       vec3.sub(a, intersect, origin);
       vec3.sub(b, intersect, destination);
       vec3.sub(c, destination, origin);
@@ -449,7 +449,7 @@ function setCurrent(edge, intersect, center) {
             }
          }
          if (hiliteVertex && isPlane) {
-            vec3.copy(planeRect.center, hiliteVertex.vertex);
+            vec3.copy(planeRect.center, hiliteVertex);
             hilite.plane = planeRect;
          }
       }
@@ -460,7 +460,7 @@ function setCurrent(edge, intersect, center) {
          if (!(isVertex || isFace) || (distance < threshold)) {
             hiliteEdge = edge;
             if (isPlane) {
-               vec3.add(planeRect.center, hiliteEdge.origin.vertex, hiliteEdge.destination().vertex);
+               vec3.add(planeRect.center, hiliteEdge.origin, hiliteEdge.destination());
                vec3.scale(planeRect.center, planeRect.center, 0.5);
                hilite.plane = planeRect;
             }
@@ -480,26 +480,26 @@ function setCurrent(edge, intersect, center) {
    // now do hilite.
    if (hiliteVertex !== hilite.vertex) {  
       if (hilite.vertex !== null) {
-         _environment.draftBench.hiliteVertex(hilite.vertex, false);
+         hilite.vertex.setHilite(false);
       }
       if (hiliteVertex !== null) {
          if (handler.mouseSelect && !handler.mouseSelect.hilite( {vertex: hiliteVertex, plane: hilite.plane}, currentCage)) {
             hiliteVertex = null;
          } else {
-            _environment.draftBench.hiliteVertex(hiliteVertex, true);
+            hiliteVertex.setHilite(true);
          }
       }
       hilite.vertex = hiliteVertex;
    }
    if (hiliteEdge !== hilite.edge) {
       if (hilite.edge !== null) {
-         _environment.draftBench.hiliteEdge(hilite.edge, false);
+         hilite.edge.setHilite(false);
       }
       if (hiliteEdge !== null) {
          if (handler.mouseSelect && !handler.mouseSelect.hilite( {edge: hiliteEdge, plane: hilite.plane}, currentCage)) {
             hiliteEdge = null;
          } else {
-            _environment.draftBench.hiliteEdge(hiliteEdge, true);
+            hiliteEdge.setHilite(true);
          }
       }
       hilite.edge = hiliteEdge;

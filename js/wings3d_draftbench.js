@@ -18,7 +18,7 @@ import {gl, ShaderData} from './wings3d_gl.js';
 import * as ShaderProg from './wings3d_shaderprog.js';
 import * as Util from './wings3d_util.js';
 import {BoundingSphere} from './wings3d_boundingvolume.js';
-import {MeshAllocator, WingedEdge} from './wings3d_wingededge.js';
+import {MeshAllocator, WingedEdge, Vertex} from './wings3d_wingededge.js';
 import {EditCommand} from './wings3d_undo.js';
 
 
@@ -564,6 +564,15 @@ DraftBench.prototype.drawHilite = function(gl, madsor) {
 
 // draw vertex, select color, 
 DraftBench.prototype.drawVertex = function(gl, madsor) {
+   // indexBuffer upload if needed, 
+   if (Vertex.index.isAltered()) {
+      
+   }
+
+   // stateBuffer upload if needed
+
+   // position texture already upload?
+
    // drawing using vertex array
    try {
       if (this.preview.vertex.isModified) {  // upload min  - max
@@ -824,15 +833,6 @@ DraftBench.prototype.resetBody = function(bodyGroup) {
 };
 
 
-/**
- * toggle hilite of wEdge, third position, 0x0100
- */
-DraftBench.prototype.hiliteEdge = function(hEdge, onOff) {
-   // select polygon set color,
-   hEdge.wingedEdge.setEdgeMask(onOff, 4);
-}
-
-
 /*
 DraftBench.prototype.resetSelectEdge = function() {
    // zeroout the edge selection,
@@ -845,35 +845,6 @@ DraftBench.prototype.resetSelectEdge = function() {
 };
 */
 
-DraftBench.prototype.hiliteVertex = function(vertex, show) {
-   // select polygon set color,
-   if (show) {
-      this.setVertexColor(vertex, 0.5);
-   } else {
-      this.setVertexColor(vertex, -0.5);
-   }
-};
-
-DraftBench.prototype.setVertexColor = function(vertex, color) {
-   // selected color
-   const j = vertex.index;  
-   this.preview.vertex.color[j] += color;
-   if (j < this.preview.vertex.min) {
-      this.preview.vertex.min = j;
-   }
-   if (j > this.preview.vertex.max) {
-      this.preview.vertex.max = j;
-   }
-   this.preview.vertex.isModified = true;
-};
-
-DraftBench.prototype.resetSelectVertex = function() {
-   // zeroout the edge seleciton.
-   this.preview.vertex.isModified = false;
-   this.preview.vertex.color.fill(0.0);
-   this.preview.shaderData.uploadAttribute('vertexState', 0, this.preview.vertex.color);
-};
-
 
 
 DraftBench.prototype.updateCentroid = function(snapshot) {
@@ -883,11 +854,11 @@ DraftBench.prototype.updateCentroid = function(snapshot) {
 };
 
 
-DraftBench.prototype.updatePosition = function() {
+/*DraftBench.prototype.updatePosition = function() {
    // todo: we really should update as little as possible.
    const vertices = this.position.buffer.subarray(0, this.position.usedSize);
    this.preview.shaderData.uploadAttribute('position', 0, vertices);
-};
+};*/
 
 
 DraftBench.prototype.selectFace = function(polygon, toggleOn) {

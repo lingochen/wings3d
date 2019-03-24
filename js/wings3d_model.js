@@ -315,7 +315,7 @@ PreviewCage.prototype.rayPick = function(ray) {
    for (let sphere of this.bvh.root.intersectExtent(ray)) {
       sphere.polygon.eachEdge( function(edge) {
          // now check the triangle is ok?
-         var t = Util.intersectTriangle(ray, [sphere.center, edge.origin.vertex, edge.destination().vertex]);
+         var t = Util.intersectTriangle(ray, [sphere.center, edge.origin, edge.destination()]);
          if ((t != 0.0) && (t < hitT)) {
             // intersection, check for smallest t, closest intersection
             hitT = t;
@@ -347,7 +347,7 @@ PreviewCage.duplicate = function(originalCage) {
    const previewCage = new PreviewCage(originalCage.bench);
    const geometry = previewCage.geometry;
    for (let vertex of originalCage.geometry.vertices) {
-      const copy = geometry.addVertex(vertex.vertex);
+      const copy = geometry.addVertex(vertex);
       indexMap.set(vertex.index, copy.index);
    }
    for (let polygon of originalCage.geometry.faces) {
@@ -525,7 +525,7 @@ PreviewCage.prototype.changeFromBodyToVertexSelect = function() {
       // select all vertex
       for (let vertex of this.geometry.vertices) {
          this.selectedSet.add(vertex);
-         this.setVertexColor(vertex, 0.25);
+         vertex.setSelect(true);
       }
    }
 
@@ -685,22 +685,17 @@ PreviewCage.prototype.snapshotSelectionBody = function() {
    return {body: new Set(this.selectedSet)};
 }
 
-PreviewCage.prototype.setVertexColor = function(vertex, color) {
-   // selected color
-   this.bench.setVertexColor(vertex, color);
-};
-
 PreviewCage.prototype.dragSelectVertex = function(vertex, onOff) {
    if (this.selectedSet.has(vertex)) {
       if (onOff === false) {
          this.selectedSet.delete(vertex);
-         this.setVertexColor(vertex, -0.25);
+         vertex.setSelect(false);
          return true;
       }
    } else {
       if (onOff === true) {
          this.selectedSet.add(vertex);
-         this.setVertexColor(vertex, 0.25);
+         vertex.setSelect(true);
          geometryStatus("select vertex: " + vertex.index);
          return true;
       }
@@ -713,25 +708,24 @@ PreviewCage.prototype.selectVertex = function(vertex) {
    var color;
    if (this.selectedSet.has(vertex)) {
       this.selectedSet.delete(vertex);
-      color = -0.25;
       onOff = false;
    } else {
       this.selectedSet.add(vertex);
-      color = 0.25;
       onOff = true;
       geometryStatus("select vertex: " + vertex.index);
    }
    // selected color
-   this.setVertexColor(vertex, color);
+   vertex.setSelect(onOff);
    return onOff;
 };
 
 
 PreviewCage.prototype._resetSelectVertex = function() {
    var snapshot = this.snapshotSelectionVertex();
+   for (let vertex of this.selectedSet) {
+      vertex.resetState();    // zero out the vertex state
+   }
    this.selectedSet = new Set;
-   // zeroout the edge seleciton.
-   this.bench.resetSelectVertex();
    return snapshot;
 };
 
@@ -977,10 +971,10 @@ PreviewCage.prototype.restoreMoveSelection = function(snapshot) {
    // restore to the snapshot position.
    let i = 0;
    for (let vertex of snapshot.vertices) {
-      vec3.copy(vertex.vertex, snapshot.position.subarray(i, i+3));
+      vec3.copy(vertex, snapshot.position.subarray(i, i+3));
       i += 3;
    }
-   this.bench.updatePosition();
+//   this.bench.updatePosition();
    this.computeSnapshot(snapshot);
 };
 
@@ -991,15 +985,15 @@ PreviewCage.prototype.moveSelection = function(snapshot, movement) {
    if (snapshot.direction) {
       let i = 0; 
       for (let vertex of snapshot.vertices) {
-         vec3.scaleAndAdd(vertex.vertex, vertex.vertex, snapshot.direction.subarray(i, i+3), movement);  // movement is magnitude
+         vec3.scaleAndAdd(vertex, vertex, snapshot.direction.subarray(i, i+3), movement);  // movement is magnitude
          i+=3;
       }
    } else {
       for (let vertex of snapshot.vertices) {
-         vec3.add(vertex.vertex, vertex.vertex, movement);
+         vec3.add(vertex, vertex, movement);
       }
    }
-   this.bench.updatePosition();
+//   this.bench.updatePosition();
    this.computeSnapshot(snapshot);
 };
 
@@ -1039,11 +1033,11 @@ PreviewCage.prototype.transformSelection = function(snapshot, transformFn) {
       transformFn(transform, group.center);
       for (let index = 0; index < group.count; index++) {
          const vertex = vArry.next().value;
-         vec3.transformMat4(vertex.vertex, vertex.vertex, transform);
+         vec3.transformMat4(vertex, vertex, transform);
       }
    }
 
-   this.bench.updatePosition();
+//   this.bench.updatePosition();
    this.computeSnapshot(snapshot);
 };
 
@@ -1076,7 +1070,7 @@ PreviewCage.prototype.snapshotPosition = function(vertices, normalArray) {
          }
       });
       // save position data
-      ret.position.set(vertex.vertex, i);
+      ret.position.set(vertex, i);
       i += 3;
    }
    return ret;
@@ -1228,7 +1222,7 @@ PreviewCage.prototype.snapshotTransformEdgeGroup = function() {
             if (!vertices.has(vertex)){
                vertices.add(vertex);
                count++;
-               vec3.add(center, center, vertex.vertex);
+               vec3.add(center, center, vertex);
             }
           };
       }
@@ -1258,7 +1252,7 @@ PreviewCage.prototype.snapshotTransformFaceGroup = function() {
             if (!vertices.has(vertex)){
                vertices.add(vertex);
                count++;
-               vec3.add(center, center, vertex.vertex);
+               vec3.add(center, center, vertex);
             }
           });
       }
@@ -1280,7 +1274,7 @@ PreviewCage.prototype.snapshotTransformBodyGroup = function() {
       for (let vertex of this.geometry.vertices) {
          if (vertex.isLive()) {
             vertices.add(vertex);
-            vec3.add(center, center, vertex.vertex);
+            vec3.add(center, center, vertex);
          }
       }
       vec3.scale(center, center, 1.0/vertices.size);
@@ -1300,7 +1294,7 @@ PreviewCage.prototype.snapshotTransformVertexGroup = function() {
    if (this.hasSelection()) {
       for (let vertex of this.selectedSet) {
          vertices.add(vertex);
-         vec3.add(center, center, vertex.vertex);
+         vec3.add(center, center, vertex);
       }
       vec3.scale(center, center, 1.0/vertices.size);
    }
@@ -1802,7 +1796,7 @@ PreviewCage.prototype.extrudeEdge = function(creaseFlag = false) {
                   if (end === end.pair.next.pair.next) { // special case of -- edge. lift Edge.
                      endAdjust = true;
                   } else { // split it out.
-                     vec3.lerp(pt, current.origin.vertex, current.destination().vertex, 0.2);
+                     vec3.lerp(pt, current.origin, current.destination(), 0.2);
                      current = this.geometry.splitEdge(current, pt); // current newly create edge
                      end = current;
                      extrudeOut.add(current);
@@ -1815,7 +1809,7 @@ PreviewCage.prototype.extrudeEdge = function(creaseFlag = false) {
                   if (start === start.next.pair.next.pair) { // special case of -- edge. lift Edge
                      startAdjust = true;
                   } else { // split it out, start stay in the front.
-                     vec3.lerp(pt, start.origin.vertex, start.destination().vertex, 0.8);
+                     vec3.lerp(pt, start.origin, start.destination(), 0.8);
                      let newOut = this.geometry.splitEdge(start.pair, pt).pair;
                      extrudeIn.add(newOut);
                      liftEdges.push(newOut);
@@ -1843,7 +1837,7 @@ PreviewCage.prototype.extrudeEdge = function(creaseFlag = false) {
    for (let fence of adjustEnd) {
       let end = fence.end;
       end.face.getCentroid(pt);
-      vec3.lerp(pt, end.origin.vertex, pt, 0.2);
+      vec3.lerp(pt, end.origin, pt, 0.2);
       const destVert = this.geometry.addVertex(pt);
       end = this.geometry._liftDanglingEdge(end.prev(), destVert);
       liftEdges.push(end.pair);
@@ -1852,7 +1846,7 @@ PreviewCage.prototype.extrudeEdge = function(creaseFlag = false) {
    for (let fence of adjustStart) {
       let start = fence.start;
       start.face.getCentroid(pt);
-      vec3.lerp(pt, start.destination().vertex, pt, 0.2);
+      vec3.lerp(pt, start.destination(), pt, 0.2);
       const destVert = this.geometry.addVertex(pt);
       start = this.geometry._liftDanglingEdge(start, destVert);
       liftEdges.push(start.pair);
@@ -1876,7 +1870,7 @@ PreviewCage.prototype.extrudeEdge = function(creaseFlag = false) {
             if ((currentOut.face.numberOfVertex > 3) && (currentOut.pair.face.numberOfVertex > 3)) {  // could not do diagonal with triangle.
                // check if we have to splitEdge because we share the edge with other selected edge.
                if (extrudeIn.has(currentOut.next.pair) && extrudeOut.has(currentOut.pair.prev().pair)) {
-                  vec3.lerp(pt, currentOut.origin.vertex, currentOut.destination().vertex, 0.5);
+                  vec3.lerp(pt, currentOut.origin, currentOut.destination(), 0.5);
                   let newOut = this.geometry.splitEdge(currentOut, pt);
                   liftEdges.push(newOut.pair);
                   currentOut = newOut;
@@ -1897,7 +1891,7 @@ PreviewCage.prototype.extrudeEdge = function(creaseFlag = false) {
             collapsibleWings.add(connect.wingedEdge);
             break;
          } else { // split edge and connect
-            vec3.lerp(pt, hIn.destination().vertex, hIn.origin.vertex, 0.2);
+            vec3.lerp(pt, hIn.destination(), hIn.origin, 0.2);
             let newOut = this.geometry.splitEdge(hIn.pair, pt);
             hIn = newOut.pair;
             liftEdges.push( hIn );
@@ -1944,7 +1938,7 @@ PreviewCage.prototype.extrudeVertex = function() {
       let prevHalf = null;
       let hEdge = vertex.outEdge;
       do {
-         vec3.lerp(pt, hEdge.origin.vertex, hEdge.destination().vertex, 0.25);
+         vec3.lerp(pt, hEdge.origin, hEdge.destination(), 0.25);
          let newOut = this.geometry.splitEdge(hEdge, pt);   // pt is the split point.
          splitEdges.push( newOut );
          hEdge = newOut.pair.next;                          // move to next
@@ -2113,7 +2107,7 @@ PreviewCage.prototype.bumpFace = function() {
                      fans.add(current);
                   }
                } else { // split edge, and connect to prevLift
-                  vec3.lerp(pt, current.origin.vertex, current.destination().vertex, 0.5);
+                  vec3.lerp(pt, current.origin, current.destination(), 0.5);
                   splitOut = this.geometry.splitEdge(current, pt);   // pt is the split point.
                   liftEdges.add(splitOut.pair);
                   if (prevLift) {   // connect to prevLift
@@ -2187,11 +2181,11 @@ PreviewCage.prototype.cutEdge = function(numberOfSegments) {
    let vertex = vec3.create();
    for (let wingedEdge of edges) {
       let edge = wingedEdge.left;
-      vec3.sub(diff, edge.origin.vertex, edge.destination().vertex); // todo: we could use vec3.lerp?
+      vec3.sub(diff, edge.origin, edge.destination()); // todo: we could use vec3.lerp?
       for (let i = 1; i < numberOfSegments; ++i) {
          const scaler = (numberOfSegments-i)/numberOfSegments;
          vec3.scale(vertex, diff, scaler);                  
-         vec3.add(vertex, edge.destination().vertex, vertex);
+         vec3.add(vertex, edge.destination(), vertex);
          const newEdge = this.geometry.splitEdge(edge, vertex);       // input edge will take the new vertex as origin.
          vertices.push( edge.origin );
          splitEdges.push( newEdge.pair );
@@ -2287,13 +2281,13 @@ PreviewCage.prototype.collapseSelectedEdge = function() {
       let vertex = edge.left.origin;
       let pt;
       if (selected.has(vertex)) {
-         pt = selected.get(vertex);    
+         pt = selected.get(vertex);
          selected.delete(vertex);   // going to be freed, so we can safely remove it.
-         vec3.add(pt.pt, pt.pt, vertex.vertex);
+         vec3.add(pt.pt, pt.pt, vertex);
          pt.count++;
       } else {
          pt = {pt: new Float32Array(3), count: 1};
-         vec3.copy(pt.pt, vertex.vertex);
+         vec3.copy(pt.pt, vertex);
       }
       let keep = edge.right.origin;
       if (selected.has(keep)) {
@@ -2316,11 +2310,11 @@ PreviewCage.prototype.collapseSelectedEdge = function() {
       selectedVertex.push( vertex );
       // save and move the position
       const savePt = new Float32Array(3);
-      vec3.copy(savePt, vertex.vertex);
+      vec3.copy(savePt, vertex);
       restoreVertex.push({vertex: vertex, savePt: savePt});
       vec3.add(pt.pt, pt.pt, savePt);
       vec3.scale(pt.pt, pt.pt, 1.0/(pt.count+1)); 
-      vec3.copy(vertex.vertex, pt.pt);
+      vertex.set(pt.pt);
       this.geometry.addAffectedEdgeAndFace(vertex);
    }
    // after deletion of
@@ -2346,7 +2340,7 @@ PreviewCage.prototype.restoreCollapseEdge = function(data) {
    }
    const restoreVertex = collapse.vertices;
    for (let restore of restoreVertex) {   // restore position
-      vec3.copy(restore.vertex.vertex, restore.savePt);
+      restore.vertex.set(restore.savePt);
       this.geometry.addAffectedEdgeAndFace(restore.vertex);
    }
    // 
@@ -2671,13 +2665,13 @@ PreviewCage.prototype.insetFace = function() {
          let position = contours.position.subarray(count, count+3);
          let direction = contours.direction.subarray(count, count+3);
          count += 3;
-         vec3.copy(position, hEdge.origin.vertex);
+         vec3.copy(position, hEdge.origin);
          if (!prev) {
             prev = hEdge.prev();
          }
-         vec3.scale(direction, hEdge.destination().vertex, 1.0/2);            // compute the sliding middle point
-         vec3.scaleAndAdd(direction, direction, prev.origin.vertex, 1.0/2);
-         vec3.sub(direction, direction, hEdge.origin.vertex);
+         vec3.scale(direction, hEdge.destination(), 1.0/2);            // compute the sliding middle point
+         vec3.scaleAndAdd(direction, direction, prev.origin, 1.0/2);
+         vec3.sub(direction, direction, hEdge.origin);
          // get length and normalized.
          const len = vec3.length(direction);
          if (len < contours.vertexLimit) {
@@ -2717,7 +2711,7 @@ PreviewCage.prototype.bodyCentroid = function() {
    const pt = vec3.create();
    let count = 0;
    for (let vertex of this.geometry.vertices) {
-      vec3.add(pt, pt, vertex.vertex);
+      vec3.add(pt, pt, vertex);
       ++count;
    }
    if (count > 0) {
@@ -2772,7 +2766,7 @@ PreviewCage.prototype.intrudeFace = function() {
    const addVertex = (vertex) => {
       let pt = uniqueVertex.get(vertex);
       if (!pt) {
-         pt = this.geometry.addVertex(vertex.vertex);
+         pt = this.geometry.addVertex(vertex);
          uniqueVertex.set(vertex, pt);
       }
       return pt.index;
@@ -2999,7 +2993,7 @@ PreviewCage.prototype._putOn = function(target) {
 
    // now transform all vertex
    for (let vertex of this.geometry.vertices) {
-      vec3.transformMat4(vertex.vertex, vertex.vertex, transform);
+      vec3.transformMat4(vertex, vertex, transform);
       this.geometry.addAffectedVertex(vertex);
       this.geometry.addAffectedEdgeAndFace(vertex);
    }
@@ -3016,14 +3010,14 @@ PreviewCage.prototype.putOnVertex = function(vertex) {
    const normal = vec3.create();
    vertex.getNormal(normal);
 
-   this._putOn({normal: normal, center: vertex.vertex});
+   this._putOn({normal: normal, center: vertex});
 };
 
 PreviewCage.prototype.putOnEdge = function(hEdge) {
    const normal = vec3.create();
    hEdge.wingedEdge.getNormal(normal);
    const center = vec3.create();
-   vec3.add(center, hEdge.origin.vertex, hEdge.destination().vertex);
+   vec3.add(center, hEdge.origin, hEdge.destination());
    vec3.scale(center, center, 0.5);
 
    this._putOn({normal: normal, center: center});
@@ -3104,13 +3098,13 @@ PreviewCage.prototype.mirrorFace = function() {
          protectVertex.add(hEdge.origin);
          protectWEdge.add(hEdge.wingedEdge);
       }
-      Util.reflectionMat4(mirrorMat, targetFace.normal, targetFace.halfEdge.origin.vertex);
+      Util.reflectionMat4(mirrorMat, targetFace.normal, targetFace.halfEdge.origin);
    };
    const addVertex = (vertex) => {
       let pt = uniqueVertex.get(vertex);
       if (!pt) {
-         pt = this.geometry.addVertex(vertex.vertex);
-         vec3.transformMat4(pt.vertex, pt.vertex, mirrorMat);
+         pt = this.geometry.addVertex(vertex);
+         vec3.transformMat4(pt, pt, mirrorMat);
          uniqueVertex.set(vertex, pt);
       }
       return pt.index;
@@ -3210,7 +3204,7 @@ PreviewCage.prototype.cornerEdge = function() {
          faces.push( three.face );
          faces.push( five.face );
          // insert mid point at wEdge.
-         vec3.add(vertex, three.origin.vertex, five.origin.vertex);
+         vec3.add(vertex, three.origin, five.origin);
          vec3.scale(vertex, vertex, 0.5);
          let outEdge = this.geometry.splitEdge(five, vertex);
          vertices.push(five.origin);
@@ -3226,7 +3220,7 @@ PreviewCage.prototype.cornerEdge = function() {
    let direction = new Float32Array(dissolveEdges.length*3);
    for (let connect of dissolveEdges) {
       const dir = direction.subarray(count, count+3);
-      vec3.sub(dir, connect.origin.vertex, connect.destination().vertex);
+      vec3.sub(dir, connect.origin, connect.destination());
       vec3.normalize(dir, dir);
       count += 3;
    }
@@ -3289,14 +3283,14 @@ PreviewCage.prototype.slideEdge = function() {
          }
          // now compute the dir
          if (index > 2) {   // check if needs to reverse negative and positive.
-            vec3.sub(pt, hEdge.origin.vertex, prev.origin.vertex);
+            vec3.sub(pt, hEdge.origin, prev.origin);
             vec3.add(dir.negative, dir.negative, pt);
-            vec3.sub(pt, next.destination().vertex, next.origin.vertex);
+            vec3.sub(pt, next.destination(), next.origin);
             vec3.add(dir.positive, dir.positive, pt);
          } else {
-            vec3.sub(pt, prev.origin.vertex, hEdge.origin.vertex);
+            vec3.sub(pt, prev.origin, hEdge.origin);
             vec3.add(dir.positive, dir.positive, pt);
-            vec3.sub(pt, next.origin.vertex, next.destination().vertex);
+            vec3.sub(pt, next.origin, next.destination());
             vec3.add(dir.negative, dir.negative, pt);
          }
       }
@@ -3348,7 +3342,7 @@ PreviewCage.prototype.flattenEdge = function(axis) {
       for (let wEdge of group) { // compute center.
          for (let hEdge of wEdge) {
             if (!vertices.has(hEdge.origin)) {
-               vec3.add(center, center, hEdge.origin.vertex);
+               vec3.add(center, center, hEdge.origin);
                vertices.add(hEdge.origin);
                this.geometry.addAffectedEdgeAndFace(hEdge.origin);
             }
@@ -3384,7 +3378,7 @@ PreviewCage.prototype.flattenFace = function(planeNormal) {
          for (let hEdge of face.hEdges()) {
             if (!vertices.has(hEdge.origin)) {
                vertices.add(hEdge.origin);
-               vec3.add(center, center, hEdge.origin.vertex);
+               vec3.add(center, center, hEdge.origin);
                this.geometry.addAffectedEdgeAndFace(hEdge.origin);
             }
          }
@@ -3411,7 +3405,7 @@ PreviewCage.prototype.flattenVertex = function(planeNormal) {
 
       const center = vec3.create();
       for (let vertex of selectedVertices) {
-         vec3.add(center, center, vertex.vertex);
+         vec3.add(center, center, vertex);
          this.geometry.addAffectedEdgeAndFace(vertex);
       }
       vec3.scale(center, center, 1/selectedVertices.length);
@@ -3643,7 +3637,7 @@ PreviewCage.weldableFace = function(target, compare, tolerance) {
          let match = [];
          let j = i;
          do {  // iterated through the loop
-            if (vec3.sqrDist(current.origin.vertex, current2.destination().vertex) > toleranceSquare) {
+            if (vec3.sqrDist(current.origin, current2.destination()) > toleranceSquare) {
                match = undefined;
                break;
             }
