@@ -392,6 +392,47 @@ function clamp(number, min, max) {
    return Math.min(max, Math.max(min, value));
 };
 
+const Vec4View = function(buffer, offset = 0) {
+   this.buffer = buffer;
+   this.offset = offset;
+};
+
+Vec4View.prototype.inc = function() {
+   this.offset += 4;
+   return this;
+};
+
+Vec4View.prototype.dec = function() {
+   this.offset -= 4;
+   return this;
+};
+
+Vec4View.prototype.set = function(inVec4) {
+   this.buffer[this.offset] = inVec4[0];
+   this.buffer[this.offset+1] = inVec4[1];
+   this.buffer[this.offset+2] = inVec4[2];
+   this.buffer[this.offset+3] = inVec4[3];
+   return this;
+}
+
+// faked array [0,1,2,3]
+Object.defineProperty(Vec4View.prototype, 0, {
+   get: function() {return this.buffer[this.offset];},
+   set: function(value) {this.buffer[this.offset] = value;}
+});
+Object.defineProperty(Vec4View.prototype, 1, {
+   get: function() {return this.buffer[this.offset+1];},
+   set: function(value) {this.buffer[this.offset+1] = value;}
+});
+Object.defineProperty(Vec4View.prototype, 2, {
+   get: function() {return this.buffer[this.offset+2];},
+   set: function(value) {this.buffer[this.offset+2] = value;}
+});
+Object.defineProperty(Vec4View.prototype, 3, {
+   get: function() {return this.buffer[this.offset+3];},
+   set: function(value) {this.buffer[this.offset+3] = value;}
+});
+
 
 export {
    closestPointToPlane,
@@ -415,4 +456,5 @@ export {
    rgbaToHex,
    get_uuidv4,
    clamp,
+   Vec4View,
 };

@@ -36,6 +36,9 @@ import {Material} from './wings3d_material.js';
 
 
 const WingedEdge = function(orgVert, toVert, index) {
+   WingedEdge.state.alloc();     // advance usedSize
+   WingedEdge.index.alloc();     // advance usedSize
+   // start init
    this.index = index;
    this.left = new HalfEdge(orgVert, this);
    this.right = new HalfEdge(toVert, this);
@@ -139,13 +142,13 @@ WingedEdge.prototype.updateIndex = function(hEdge) {
    let draw = hEdge.face ? hEdge.face.isVisible() : false;
    data[idx++] = hEdge.origin.index;
    data[idx++] = this.index;
-   data[idx++] = draw ? 1 : 0;
+   data[idx++] = draw ? 0 : -1;
    data[idx++] = hEdge.destination().index;
    data[idx++] = this.index;
-   data[idx++] = draw ? 2 : 0;
+   data[idx++] = draw ? 0 : -1;
    data[idx++] = hEdge.next.destination().index;
    data[idx++] = this.index;
-   data[idx] = 0;
+   data[idx] = draw ? 1 : -1;
    
    if (idx > WingedEdge.index.alteredMax) {
       WingedEdge.index.alteredMax = idx;
@@ -303,33 +306,38 @@ HalfEdge.prototype.eachEdge = function(callbackfn) {
 
 
 //
-const Vertex = function(posOffset, index) {
+const Vertex = function(index) {
+   Vertex.index.alloc();                     // get value from global buffer
+   Vertex.state.alloc();
+   let posOffset = Vertex.position.alloc();   // allocate component.
+   // real init
    this.outEdge = null;
-   //this.vertex = pt;       // vec3. Float32Array. convenient function
    this.posOffset = posOffset;
    this._index = index;
+   const i = posOffset/3;
+   Vertex.index.set(i, i);
 };
 Vertex.index = null;  // index and state not combined eventhough it map one on one. 
 Vertex.state = null;
 Vertex.position = null;
 
 // faked array [0,1,2]
-Object.defineProperty(Vertex.prototype, '0', {
+Object.defineProperty(Vertex.prototype, 0, {
    get: function() {return Vertex.position.buffer[this.posOffset];},
    set: function(value) {Vertex.position.set(this.posOffset, value);}
 });
-Object.defineProperty(Vertex.prototype, '1', {
+Object.defineProperty(Vertex.prototype, 1, {
    get: function() {return Vertex.position.buffer[this.posOffset+1];},
    set: function(value) {Vertex.position.set(this.posOfset+1, value);}
 });
-Object.defineProperty(Vertex.prototype, '2', {
+Object.defineProperty(Vertex.prototype, 2, {
    get: function() {return Vertex.position.buffer[this.posOffset+2];},
    set: function(value) {Vertex.position.set(this.posOffset+2, value);}
 });
 
 Object.defineProperty(Vertex.prototype, 'index', {
    get: function() {
-      return this.posOffset / 3; // or should we get index?
+      return this.posOffset / 3; // or should we get this._index?
    },
 });
 
@@ -365,8 +373,9 @@ Vertex.prototype.show = function() {
 };
 
 Vertex.prototype.resetState = function() {
-   const state = parseInt(Vertex.state.buffer[this.posOffset]);
-   Vertex.state.set(this.posOffset, state & 128);   // clear all bit except hide/show
+   const index =this.posOffset/3;
+   const state = parseInt(Vertex.state.buffer[index]);
+   Vertex.state.set(index, state & 128);   // clear all bit except hide/show
 };
 
 Vertex.prototype.setHilite = function(onOff) {
@@ -383,7 +392,7 @@ Vertex.prototype.setMagnet = function(onOff) {
 }
 
 Vertex.prototype.setState = function(onOff, mask) {
-   const index = this.posOffset;
+   const index = this.posOffset/3;
 
    const state = parseInt(Vertex.state.buffer[index]);   // float to int, so easier to mask?
    if (onOff) {
@@ -794,8 +803,7 @@ MeshAllocator.prototype.allocVertex = function(pt, delVertex) {
       this.affected.vertices.add( vertex );
       return vertex;
    } else {
-      let posIndex = this.position.alloc();  // allocate component.
-      let _vert = new Vertex(posIndex, this.vertices.length);
+      let _vert = new Vertex(this.vertices.length);
       _vert.set(pt); // copy value
       //_vert.index = this.vertices.length;
       this.vertices.push( _vert );
@@ -823,8 +831,6 @@ MeshAllocator.prototype.allocEdge = function(begVert, endVert, delOutEdge) {
       outEdge.pair.origin = endVert;
       this.affected.edges.add( edge );
    } else {
-      WingedEdge.state.alloc();     // advance usedSize
-      WingedEdge.index.alloc();      // advance usedSize
       // initialized data.
       edge = new WingedEdge(begVert, endVert, this.edges.length);
       this.edges.push( edge );

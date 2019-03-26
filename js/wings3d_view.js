@@ -70,12 +70,12 @@ const theme = {
        gridColor: '#4D4D4D',
        
        draftBench: {
-         edgeColor: '#000000',
+         unselectedEdgeColor: '#000000',
          hardEdgeColor: '#FF8000',
          selectedColor: '#A60000',
          selectedHilite: '#B3B300',
          unselectedHilite: '#00A600',
-         vertexColor: '#000000',
+         unselectedVertexColor: '#000000',
          //maskedVertexColor: '#80FF00', // alpha #0.8,
          faceColor: '#C9CFB1',   // materialDefault
          sculptMagnetColor: '#0000FF',  // alpha #0.1
@@ -84,10 +84,10 @@ const theme = {
        },
 
        draftBenchPref: {
-         vertexSize: 4.0,
+         unselectedVertexSize: 4.0,
          selectedVertexSize: 5.0,
          maskedVertexSize: 8.0,
-         edgeWidth: 2.0,
+         unselectedEdgeWidth: 2.0,
          selectedEdgeWidth: 2.0,
          hardEdgeWidth: 2.0,
        },

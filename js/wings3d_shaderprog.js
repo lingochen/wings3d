@@ -81,14 +81,8 @@ let wireframeLine = {   // http://codeflow.org/entries/2012/aug/02/easy-wirefram
       uniform mat4 projection; 
       uniform mat4 worldView;
       // color of various state
-      uniform vec4 edgeColor;
-      uniform vec4 hardEdgeColor;
-      uniform vec4 selectedColor;
-      uniform vec4 selectedHilite;
-      uniform vec4 unselectedHilite;
-      uniform float edgeWidth;
-      uniform float selectedEdgeWidth;
-      uniform float hardEdgeWidth;
+      uniform vec4 edgeColor[8];
+      uniform float edgeWidth[8];
 
       // draw triangle array.
       attribute highp vec3 indexBuffer;
@@ -106,33 +100,21 @@ let wireframeLine = {   // http://codeflow.org/entries/2012/aug/02/easy-wirefram
       ${index2TexCoord}
 
       void main() {
-         if (indexBuffer.z == 0.0) {
-            vBC = vec3(1.0, 1.0, 1.0);
-         } else if (indexBuffer.z == 1.0) {
-            vBC = vec3(1.0, 0.0, 1.0);
-         } else {
-            vBC = vec3(1.0, 0.0, 1.0);
+         gl_Position = vec4(2.0, 2.0, 2.0, 1.0);         // culled as default.
+         if (indexBuffer.z >= 0.0) {
+            vBC = vec3(1.0, indexBuffer.z, 1.0);
+  
+            int state = int(texture2D(edgeState, index2TexCoord(indexBuffer.y, edgeStateHeight)).x * 255.0); // luminance === {l, l, l, 1}; l is [0-1]
+            for (int i = 0; i < 8; i++) {
+               if (i == state) {
+                  color = edgeColor[i];
+                  lineWidth = edgeWidth[i];
+                  break;
+               }
+            }
+            vec3 pos = texture2D(positionBuffer, index2TexCoord(indexBuffer.x, positionBufferHeight)).xyz;
+            gl_Position = projection * worldView * vec4(pos, 1.0);
          }
-         float state = texture2D(edgeState, index2TexCoord(indexBuffer.y, edgeStateHeight)).x * 255.0; // luminance === {l, l, l, 1}; l is [0-1]
-         if (state > 5.5) {  // 0x0110 === 6
-            color = selectedHilite;
-            lineWidth = selectedEdgeWidth;
-         } else if (state > 3.5) { // 0x0100 === 4
-            color = unselectedHilite;
-            lineWidth = selectedEdgeWidth;
-         } else if (state > 1.5) {       // 0x0010 === 2
-            color = selectedColor;
-            lineWidth = selectedEdgeWidth;
-         } else if (state > 0.5) {       // 0x0001 === 1
-            color = hardEdgeColor;
-            lineWidth = hardEdgeWidth;
-         } else {                      // 0x0000
-            color = edgeColor;
-            lineWidth = edgeWidth;
-         }
-         lineWidth = 2.0;
-         vec3 pos = texture2D(positionBuffer, index2TexCoord(indexBuffer.x, positionBufferHeight)).xyz;
-         gl_Position = projection * worldView * vec4(pos, 1.0);
       }
    `,
    fragment: `#extension GL_OES_standard_derivatives : enable
@@ -143,7 +125,7 @@ let wireframeLine = {   // http://codeflow.org/entries/2012/aug/02/easy-wirefram
 
       float edgeFactor() {
          vec3 d = fwidth(vBC);
-         vec3 a3 = smoothstep(vec3(0.0), d*1.5, vBC);
+         vec3 a3 = smoothstep(vec3(0.0), d*lineWidth, vBC);
          return min(min(a3.x, a3.y), a3.z);
       }
 
@@ -161,14 +143,16 @@ let wireframeLine = {   // http://codeflow.org/entries/2012/aug/02/easy-wirefram
 };
 // we could put positionBuffer into attribute, but that meant we have to manage positionBuffer update separately.
 // there is no method for treating a texture2d as vertex array attribute.
-let drawVertex = {  
+let selectedColorPoint = {  
    vertex: index2TexCoord =>
      `uniform mat4 worldView;
       uniform mat4 projection;
-      uniform float vertexSize[8];
+
+      uniform vec4 vertexColor[8];
+      uniform float sizeOfVertex[8];
 
       // draw point array;
-      attribute highp float indexBuffer;                 // klutch 
+      attribute highp float vertexIndex;                 // klutch 
       attribute float vertexState;
 
       // attribute texture
@@ -176,77 +160,35 @@ let drawVertex = {
       uniform float positionBufferHeight;
 
       // output
-      varying float vState;
+      varying vec4 color;
 
       ${index2TexCoord}
 
       void main(void) {
          gl_Position = vec4(2.0, 2.0, 2.0, 1.0);         // culled as default.
-         if (vertexState < 128) {
-            vec3 pos = texture2D(positionBuffer, index2TexCoord(indexBuffer, positionBufferHeight)).xyz;
+         if (vertexState < 128.0) {
+            vec3 pos = texture2D(positionBuffer, index2TexCoord(vertexIndex, positionBufferHeight)).xyz;
             gl_Position = projection * worldView * vec4(pos, 1.0);
-            vState = vertexState;
-            gl_PointSize = vertexSize[vertexState];
+
+            int vState = int(vertexState);
+            for (int i = 0; i < 8; ++i) {
+               if (i == vState) {
+                  color = vertexColor[i];
+                  gl_PointSize = sizeOfVertex[i];
+                  break;
+               }
+            }
          }
       }
    `,
    fragment:
      `precision lowp float;
-      varying lowp float vState;
-      uniform vec4 vertexColor[8];
+      varying vec4 color;
 
       void main(void) {
-         gl_FragColor = vertexColor[vState];
+         gl_FragColor = color;
       }
    `
-};
-let selectedColorPoint = {
-   vertex: [
-      'attribute vec3 position;',
-      'attribute float vertexState;',
-      'uniform mat4 worldView;',
-      'uniform mat4 projection;',
-      'uniform float vertexSize;',
-      'uniform float selectedVertexSize;',
-      'uniform float maskedVertexSize;',
-
-      'varying lowp float vState;',
-
-      'void main(void) {',
-      '   gl_Position = projection * worldView * vec4(position, 1.0);',
-      '   vState = vertexState;',
-      '   if (vertexState == 0.0) {',
-      '      gl_PointSize = vertexSize;',
-      '   } else if (vertexState < 1.0) {',
-      '      gl_PointSize = selectedVertexSize;',
-      '   } else {',
-      '      gl_PointSize = maskedVertexSize;',
-      '   }',
-      '}'].join("\n"),
-   fragment: [
-      'precision lowp float;',
-      'varying lowp float vState;',
-      'uniform vec4 vertexColor;',
-      'uniform vec4 unselectedHilite;',
-      'uniform vec4 selectedHilite;',
-      'uniform vec4 selectedColor;',
-      'uniform vec4 maskedVertexColor;',
-
-      'void main(void) {',
-      '   if (vState < 0.0) {',
-      '      discard;',
-      '   } else if (vState == 0.0) {',
-      '      gl_FragColor = vertexColor;',     // unselected color         
-      '   } else if (vState == 0.25) {',
-      '      gl_FragColor = selectedColor;',
-      '   } else if (vState == 0.5) {',
-      '      gl_FragColor = unselectedHilite;',
-      '   } else if (vState == 0.75) {',
-      '      gl_FragColor = selectedHilite;',     
-      '   } else {',
-      '      gl_FragColor = maskedVertexColor;',
-      '   }',
-      '}'].join("\n"),
 };
 let textArray = {
    vertexShader:[
@@ -491,9 +433,9 @@ Wings3D.onReady(function() {
 
    selectedColorLine = gl.createShaderProgram(selectedColorLine.vertex, selectedColorLine.fragment);
 
-   selectedColorPoint = gl.createShaderProgram(selectedColorPoint.vertex, selectedColorPoint.fragment);
-
    wireframeLine = gl.createShaderProgram(wireframeLine.vertex(index2TexCoord), wireframeLine.fragment);
+
+   selectedColorPoint = gl.createShaderProgram(selectedColorPoint.vertex(index2TexCoord), selectedColorPoint.fragment);
 });
 
 export {

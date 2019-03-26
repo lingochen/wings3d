@@ -232,8 +232,12 @@ function createWebGLContext(canvasID, attrib) {
             if (transform.hasOwnProperty(info.name)) {
                transform[info.name] = gl.getUniformLocation(progHandle, info.name);
             } else {
-               // check for array suffix?
-               uniform[info.name] = {loc: gl.getUniformLocation(progHandle, info.name),
+               let name = info.name;
+               // eliminate array suffix.
+               if (name.substr(-3) === "[0]") {
+                  name = name.substr(0, name.length - 3);
+               }
+               uniform[name] = {loc: gl.getUniformLocation(progHandle, info.name),
                                      size: info.size, type: info.type};
             }
          }
@@ -530,6 +534,22 @@ ShaderData.prototype.uploadAttribute = function(name, byteOffset, typedArray)  {
    }
 };
 
+/**
+ * flush to gpu as attribute if modified.
+ */
+ShaderData.prototype.updateAttribute = function(name, bufferObj) {
+   if (bufferObj.gpuSize !== bufferObj.usedSize) {  // should we use buffer.length? 
+      bufferObj.gpuSize = bufferObj.usedSize;
+      this.resizeAttribute(name, bufferObj.usedSize*4);
+      this.uploadAttribute(name, 0, bufferObj.buffer.subarray(0, bufferObj.usedSize));
+      bufferObj._resetCounter(); // clear altered buffer.
+   } else if (bufferObj.isAltered()) {
+      this.uploadAttribute(name, bufferObj.alterdMin*4, bufferObj.buffer.subarray(bufferObj.alterdMin, bufferObj.alteredMax+1));
+      bufferObj._resetCounter();
+   }
+};
+
+
 ShaderData.prototype.createSampler = function(name, textureUnit, format, type) {
    let sampler = null;
    if (!this.sampler[name]) {
@@ -573,8 +593,22 @@ ShaderData.uniform1fFn = function(gl, loc, value) {
    gl.uniform1f(loc, value);
 };
 
+ShaderData.prototype.setUniform1fv = function(name, array) {
+   const val =  {value: new Float32Array(array), binder: ShaderData.uniform1fvFn};
+   this.uniform[name] = val;
+};
+
+ShaderData.uniform1fvFn = function(gl, loc, value) {
+   try {
+      gl.uniform1fv(loc, value);
+   } catch (e) {
+      console.log(e);
+   }
+}
+
 ShaderData.prototype.setUniform3fv = function(name, arry3) {   // 3fv === vec3
-   this.uniform[name] = {value: new Float32Array(arry3), binder: ShaderData.uniform3fvFn};
+   const val = {value: new Float32Array(arry3), binder: ShaderData.uniform3fvFn};
+   this.uniform[name] = val;
 };
 
 ShaderData.uniform3fvFn = function(gl, loc, value) {
@@ -582,7 +616,8 @@ ShaderData.uniform3fvFn = function(gl, loc, value) {
 }; 
 
 ShaderData.prototype.setUniform4fv = function(name, arry4) {
-   this.uniform[name] = {value: new Float32Array(arry4), binder: ShaderData.uniform4fvFn};
+   const val = {value: new Float32Array(arry4), binder: ShaderData.uniform4fvFn};
+   this.uniform[name] = val;
 };
 
 ShaderData.uniform4fvFn = function(gl, loc, value) {
@@ -619,12 +654,12 @@ ShaderData.prototype.updateSampler = function(name, bufferObj) {
       const nameHeight = name + "Height";
       if (sampler.getSize() !== bufferObj.buffer.length) { // resize texture
          sampler.bufferData(bufferObj.buffer);
-         bufferObj.submitted();
+         bufferObj._resetCounter();
          this.setUniform1f(nameHeight, sampler.height);
       } else if (bufferObj.isAltered()) {  // needs to update?
          let offset = bufferObj.alteredMin;
          sampler.bufferSubData(offset/bufferObj.component, bufferObj.buffer, offset, bufferObj.alteredMax - offset + 1);
-         bufferObj.submitted();
+         bufferObj._resetCounter();
       }
    } else {
       console.log("unknown sampler: " + name);
@@ -752,6 +787,7 @@ const BufferObject = function(componentSize) {
    this.buffer = null;
    this.component = componentSize;
    this.usedSize = 0;
+   this.gpuSize = 0;
    this.alteredMin = 0;
    this.alteredMax = -1;
 };
@@ -800,10 +836,11 @@ BufferObject.prototype.set = function(index, newValue) {
    return false;
 }
 
+
 /**
  * after copying memory to gpu, reset the alteredXXX.
  */
-BufferObject.prototype.submitted = function() {
+BufferObject.prototype._resetCounter = function() {
    this.alteredMin = this.buffer ? this.buffer.length : 0;
    this.alteredMax = -1;
 }
