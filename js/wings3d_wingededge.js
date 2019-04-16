@@ -847,7 +847,7 @@ Polygon.prototype.update = function() {
       }
       current = current.next;
    } while (current !== begin);
-
+   this.radius2 = this.radius*this.radius;
    this.halfEdge = halfEdge;              // the lowest index.
    // compute normal.
    if (this.numberOfVertex > 2) {

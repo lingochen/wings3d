@@ -306,7 +306,7 @@ PreviewCage.prototype.rayPick = function(ray) {
    var hitT = Number.POSITIVE_INFINITY;   // z_far is the furthest possible intersection
 
    for (let sphere of this.bvh.root.intersectExtent(ray)) {
-      spherePolygon.eachEdge( function(edge) {
+      sphere.eachEdge( function(edge) {
          // now check the triangle is ok?
          var t = Util.intersectTriangle(ray, [sphere.center, edge.origin, edge.destination()]);
          if ((t != 0.0) && (t < hitT)) {

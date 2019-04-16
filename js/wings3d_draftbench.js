@@ -172,7 +172,7 @@ function getFaceColor(theme) {
    color.set(theme.faceColor).inc();         // 0 (none), wont get used!
    color.set(theme.selectedColor).inc();     // 1 (selected)
    color.set(theme.unselectedHilite).inc();  // 2 (hilite)
-   color.set(theme.selectedColor);           // 3 (hilite+selected)
+   color.set(theme.selectedHilite);           // 3 (hilite+selected)
    return buffer;
 };
 
@@ -360,19 +360,6 @@ DraftBench.prototype._updatePreviewFace = function(polygon) {
 
 
 /*
-DraftBench.prototype.hiliteFace = function(polygon, isHilite) {
-   if (isHilite) {   // show
-      this.hilite.color = DraftBench.theme.unselectedHilite;
-      if ((this.preview.face.selected[polygon.index] & 1) === 1) {
-         this.hilite.color = DraftBench.theme.selectedHilite;
-      }
-      this.preview.face.selected[polygon.index] |= 2;
-      this._computeFaceHiliteIndex(polygon);
-   } else { // hide
-      this.hilite.indexLength = 0;
-      this.preview.face.selected[polygon.index] &= ~2;
-   }
-};
 
 DraftBench.prototype.hiliteBody = function(faceGroup, isHilite) {
    if (isHilite) { // show

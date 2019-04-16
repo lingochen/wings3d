@@ -433,7 +433,7 @@ function setCurrent(edge, intersect, center) {
       const isEdge = isEdgeSelectable();
       const isFace = isFaceSelectable();
       const isPlane = isPlaneShown();
-      const sphere = _environment.draftBench.boundingSpheres[edge.face.index];
+      const sphere = edge.face;
       if (isPlane) {
          vec3.copy(planeRect.halfSize, sphere.getBVHRoot().getHalfSize());
          vec3.copy(planeRect.normal, handler.mouseSelect.getPlaneNormal());
@@ -506,13 +506,13 @@ function setCurrent(edge, intersect, center) {
    }
    if (hiliteFace !== hilite.face) {
       if (hilite.face !== null) {
-         _environment.draftBench.hiliteFace(hilite.face, false); // hiliteFace(null, false)?
+         hilite.face.setHilite(false);
       }
       if (hiliteFace !== null) {
          if (handler.mouseSelect && !handler.mouseSelect.hilite( {face: hiliteFace, plane: hilite.plane}, currentCage)) {
             hiliteFace = null;
          } else {
-            _environment.draftBench.hiliteFace(hiliteFace, true);
+            hiliteFace.setHilite(true);
          }
       }
       hilite.face = hiliteFace;

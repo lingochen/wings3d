@@ -25,7 +25,7 @@ Object.defineProperties(BoundingSphere.prototype, {
    2: { get: function() {return BoundingSphere.center.buffer[this.cntrOffset+2];},
         set: function(value) {BoundingSphere.center.set(this.cntrOffset+2, value);} },
    3: { get: function() { return this.radius;},
-        set: function(value) { this.radius = value; return value; }},
+        set: function(value) { this.radius = value; this.radius = value*value; return value; }},
    center: { get: function() { return this; },
              set: function(center) { 
                BoundingSphere.center.set(this.cntrOffset, center[0]);
