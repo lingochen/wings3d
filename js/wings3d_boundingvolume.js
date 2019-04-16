@@ -8,26 +8,48 @@ import * as Util from './wings3d_util.js';
 
 
 
-const BoundingSphere = function(polygon, center, radius) {
-   this.center = center;
-   this.radius = radius;
-   if (radius) {
-      this.radius2 = radius*radius;
-   }
-   this.polygon = polygon;
+const BoundingSphere = function() {
+   this.cntrOffset = BoundingSphere.center.alloc();
+   this.radius = 0;
+   this.radius2 = 0;
    this.octree = null;
 };
+BoundingSphere.center = null;
 
-BoundingSphere.prototype.isLive = function() {
-   return (this.polygon.isVisible && this.polygon.isLive());
-};
+// faked array [0,1,2]
+Object.defineProperties(BoundingSphere.prototype, {
+   0: { get: function() {return BoundingSphere.center.buffer[this.cntrOffset];},
+        set: function(value) {BoundingSphere.center.set(this.cntrOffset, value);} },
+   1: { get: function() {return BoundingSphere.center.buffer[this.cntrOffset+1];},
+        set: function(value) {BoundingSphere.center.set(this.cntrOffset+1, value);} },
+   2: { get: function() {return BoundingSphere.center.buffer[this.cntrOffset+2];},
+        set: function(value) {BoundingSphere.center.set(this.cntrOffset+2, value);} },
+   3: { get: function() { return this.radius;},
+        set: function(value) { this.radius = value; return value; }},
+   center: { get: function() { return this; },
+             set: function(center) { 
+               BoundingSphere.center.set(this.cntrOffset, center[0]);
+               BoundingSphere.center.set(this.cntrOffset+1, center[1]);
+               BoundingSphere.center.set(this.cntrOffset+2, center[2]);
+             }
+           }
+});
+
+
+// to be overrided by subClass
+/*BoundingSphere.prototype.isLive = function() {
+   return this.isVisible();      
+}*/
 
 BoundingSphere.prototype.isIntersect = function(ray) {
+
    return Util.intersectRaySphere(ray, this);
 };
 
 BoundingSphere.prototype.setSphere = function(sphere) {
-   this.center = sphere.center;
+   BoundingSphere.center.set(this.cntrOffset, sphere.center[0]);
+   BoundingSphere.center.set(this.cntrOffset+1, sphere.center[1]);
+   BoundingSphere.center.set(this.cntrOffset+2, sphere.center[2]);
    this.radius = sphere.radius;
    this.radius2 = sphere.radius*sphere.radius;
    if (this.octree) {
@@ -41,7 +63,7 @@ BoundingSphere.prototype.getBVHRoot = function() {
 
 BoundingSphere.computeSphere = function(polygon, center) {  // vec3
    // get all the polygon's vertex. compute barycentric.
-   center.fill(0.0);
+   center[0] = center[1] = center[2] = 0.0;
    var ret = {center: center, radius: 0.0};
    polygon.eachVertex( function(vertex) {
       vec3.add(ret.center, ret.center, vertex);
@@ -56,16 +78,17 @@ BoundingSphere.computeSphere = function(polygon, center) {  // vec3
    });
    return ret;
 };
-
-
-// simple minded bounding sphere builder.
-BoundingSphere.create = function(polygon, center) {
-   var sphere = BoundingSphere.computeSphere(polygon, center);
-   return new BoundingSphere(polygon, sphere.center, sphere.radius);
-}
-BoundingSphere.allocate = function(polygon) {
-   return new BoundingSphere(polygon);
-}
+//
+// getCentroid - not really centroid, but center of points.
+// todo - find a good centroid algorithm. like tessellate to triangles. and use triangle's centroid to find real centroid.
+//
+BoundingSphere.prototype.getCentroid = function(centroid) {
+   const index = this.cntrOffset;
+   centroid[0] = BoundingSphere.center.buffer[index];
+   centroid[1] = BoundingSphere.center.buffer[index+1];
+   centroid[2] = BoundingSphere.center.buffer[index+2];
+   return centroid;
+};
 
 
 // loose octree for ease of implementation, and adequate performance. AABB tree, OBB tree can wait if needed.

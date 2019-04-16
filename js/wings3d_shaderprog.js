@@ -75,6 +75,72 @@ fragment:[
       '}',
    '}'].join("\n"),
 };
+let drawSelectablePolygon = {
+vertex: index2TexCoord =>
+`  uniform mat4 projection;
+   uniform mat4 worldView;
+   uniform vec4 faceColor[4];
+
+   // (vertex, halfEdge, face, group) index/ HalfEdge
+   attribute highp vec4 polygonIndex;
+
+   // positionTexture, centroidTexture, stateTexture, materialTexture, vertexColorTexture, 
+   uniform highp sampler2D positionBuffer;
+   uniform highp sampler2D centerBuffer;
+   uniform sampler2D faceState;
+   uniform float positionBufferHeight;
+   uniform float centerBufferHeight;
+   uniform float faceStateHeight;
+
+
+   varying vec4 color;                    // color of material * vertex 
+   varying vec4 stateColor;               // selected, or hiliteColor, or just original color
+
+   ${index2TexCoord}
+
+   void main() {
+      gl_Position = vec4(2.0, 2.0, 2.0, 1.0);         // culled as default.
+      int state = int(texture2D(faceState, index2TexCoord(polygonIndex.z, faceStateHeight)).x * 255.0); // luminance === {l, l, l, 1}; l is [0-1]
+      if (state < 8) {
+         //float packColor = texture2D(materialColor, index2TexCoord(polygonIndex.z, materialColorHeight)).r;   // material color
+         color = vec4(0.5, 0.5, 0.5, 1.0);
+         if (state == 0) {
+            stateColor = color;       // current Material color
+         } else {
+            for (int i = 1; i < 4; i++) {
+               if (i == state) {
+                  stateColor = faceColor[i];
+                  break;
+               }
+            }
+         }
+         vec3 pos;
+         if (polygonIndex.x >= 0.0) {
+            pos = texture2D(positionBuffer, index2TexCoord(polygonIndex.x, positionBufferHeight)).xyz;
+         } else {
+            pos = texture2D(centerBuffer, index2TexCoord((-polygonIndex.x) - 1.0, centerBufferHeight)).xyz;
+         }
+         gl_Position = projection * worldView * vec4(pos, 1.0);
+      }
+   }
+`,
+fragment:
+`precision mediump float;     // stipple/screendoor shader
+   varying vec4 color;
+   varying vec4 stateColor;
+
+   void main(void) {
+      vec2 oddEven = floor( fract(gl_FragCoord.xy * 0.5) + 0.5 ); // floor( value + 0.5 ) == round( value );
+      float result = oddEven.x + oddEven.y;
+
+      if (result == 1.0) {
+         gl_FragColor = color;
+      } else {
+         gl_FragColor = stateColor;
+      }
+   }
+` 
+};
 // gl_Position = vec4(2.0,2.0,2.0, 1.0);
 let wireframeLine = {   // http://codeflow.org/entries/2012/aug/02/easy-wireframe-display-with-barycentric-coordinates/
    vertex: index2TexCoord => `//#extension OES_texture_float : enable
@@ -436,6 +502,8 @@ Wings3D.onReady(function() {
    wireframeLine = gl.createShaderProgram(wireframeLine.vertex(index2TexCoord), wireframeLine.fragment);
 
    selectedColorPoint = gl.createShaderProgram(selectedColorPoint.vertex(index2TexCoord), selectedColorPoint.fragment);
+
+   drawSelectablePolygon = gl.createShaderProgram(drawSelectablePolygon.vertex(index2TexCoord), drawSelectablePolygon.fragment);
 });
 
 export {
@@ -452,4 +520,5 @@ export {
    solidWireframe,
    edgeSolidWireframe,
    colorSolidWireframe,
+   drawSelectablePolygon,
 };

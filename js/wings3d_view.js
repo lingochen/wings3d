@@ -912,6 +912,8 @@ function render(gl) {
 //
 function init() {
    initMode();
+   //Renderer.init(gl, drawWorld);  // init by itself
+   _environment.draftBench = new DraftBench(theme.draftBench, theme.draftBenchPref, _environment.materialList);
    // init menu
    const selectionMenu = [ {id: Wings3D.action.deselect, fn: 'resetSelection', hotKey: ' '},
                          {id: Wings3D.action.more, fn: 'moreSelection', hotKey: '+'},
@@ -1130,10 +1132,6 @@ function init() {
          }
       }
    }
-
-
-   //Renderer.init(gl, drawWorld);  // init by itself
-   _environment.draftBench = new DraftBench(theme.draftBench, theme.draftBenchPref, _environment.materialList);
 
    // capture keyevent.
    document.addEventListener('keydown', function(event) {

@@ -39,7 +39,7 @@ function createWebGLContext(canvasID, attrib) {
          }
          // require 4 vertex texture unit
          let units = gl.getParameter(gl.MAX_VERTEX_TEXTURE_IMAGE_UNITS);
-         if (units < 4) {
+         if (units < 8) {  // we need at least 5?
             console.log("Not enough vertex texture units");
             return null;
          }
@@ -548,6 +548,84 @@ ShaderData.prototype.updateAttribute = function(name, bufferObj) {
       bufferObj._resetCounter();
    }
 };
+ShaderData.prototype.updateAttributeEx = function(name, bufferOne, bufferTwo) {
+   const attrb = this.attribute[name];
+   if (attrb) {
+      if (bufferOne.isLengthAltered() || bufferTwo.isLengthAltered()) {
+         // resize all, and upload all
+         gl.bindBuffer(gl.ARRAY_BUFFER, attrb.handle);
+         gl.bufferData(gl.ARRAY_BUFFER, bufferOne.byteLength()+bufferTwo.byteLength(), attrb.usage); // resize
+         gl.bufferSubData(gl.ARRAY_BUFFER, 0, bufferOne.getBuffer());
+         gl.bufferSubData(gl.ARRAY_BUFFER, bufferOne.byteLength(), bufferTwo.getBuffer());
+         // reset length
+         bufferOne._resetLength();
+         bufferTwo._resetLength();
+      } else {
+         if (bufferOne.isAltered()) {
+            gl.bindBuffer(gl.ARRAY_BUFFER, attrb.handle);
+            const data = bufferOne.getChanged();
+            gl.bufferSubData(gl.ARRAY_BUFFER, data.byteOffset, data.array);
+         }
+         if (bufferTwo.isAltered()) {
+            if (!bufferOne.isAltered()) {
+               gl.bindBuffer(gl.ARRAY_BUFFER, attrb.handle);
+            }
+            const data = bufferTwo.getChanged();
+            gl.bufferSubData(gl.ARRAY_BUFFER, bufferOne.byteLenth() + data.byteOffset, data.array);
+         }
+      } 
+      bufferOne._resetCounter();
+      bufferTwo._resetCounter();
+   } else {
+      console.log("Shader Attribute: " + name + " not initialized");
+   }
+};
+
+/** 
+ * index is used for drawElement
+ * @param {string} - index name
+ * @param {typedArray} - array of unsigned int
+ */
+ShaderData.prototype.createIndex = function(name) {
+   let handle = this.index[name];
+   if (!handle) {
+      this.index[name] = gl.createBuffer();
+   } else {
+      console.log("Shader Index: " + name + " already initialized");
+   }
+};
+
+ShaderData.prototype.updateIndex = function(name, bufferObj, triangleSize, usage=gl.STATIC_DRAW) {
+   let handle = this.index[name];
+   if (handle) {
+      if (bufferObj.isLengthAltered()) {  // should we use buffer.length? 
+         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, handle);
+         const source = bufferObj.buffer.subarray(0, bufferObj.usedSize);
+         const array = new Uint32Array(source);
+         for (let i = 2; i < array.length; i+=3) {
+            if (source[i] < 0) {
+               array[i] = (-source[i] - 1) + triangleSize;  // convert to positive
+            }
+         }
+         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, array, usage);
+         bufferObj._resetCounter(); // clear altered buffer.
+         bufferObj._resetLength();
+      } else if (bufferObj.isAltered()) {
+         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, handle);
+         const data = bufferObj.getChanged();
+         const array = new Uint32Array(data.array);
+         for (let i = 2; i < array.length; i+=3) {
+            if (data.array[i] < 0) {
+               array[i] = (-data.array[i] - 1) + triangleSize; // convert to positive 
+            }
+         }
+         gl.bufferSubData(gl.ELEMENT_ARRAY_BUFFER, data.byteOffset, array);
+         bufferObj._resetCounter();
+      }
+   } else {
+      console.log("unknown index: " + name);
+   }
+};
 
 
 ShaderData.prototype.createSampler = function(name, textureUnit, format, type) {
@@ -567,22 +645,26 @@ ShaderData.prototype.getSampler = function(name) {
    return this.sampler[name];
 };
 
-
-/** 
- * index is used for drawElement
- * @param {string} - index name
- * @param {typedArray} - array of unsigned int
- */
-ShaderData.prototype.setIndex = function(name, index) {
-   let handle = this.index[name];
-   if (handle) {
-      gl.deleteBuffer(handle);
-      this.index[name] = undefined;
-   }
-   if (index) {
-      this.index[name] = gl.createBufferHandle(index, gl.ELEMENT_ARRAY_BUFFER);
+ShaderData.prototype.updateSampler = function(name, bufferObj) {
+   const sampler = this.getSampler(name);
+   if (sampler) {
+      const nameHeight = name + "Height";
+      if (sampler.getSize() !== bufferObj.buffer.length) { // resize texture
+         sampler.bufferData(bufferObj.buffer);
+         bufferObj._resetCounter();
+         this.setUniform1f(nameHeight, sampler.height);
+      } else if (bufferObj.isAltered()) {  // needs to update?
+         let offset = bufferObj.alteredMin;
+         sampler.bufferSubData(offset/bufferObj.component, bufferObj.buffer, offset, bufferObj.alteredMax - offset + 1);
+         bufferObj._resetCounter();
+      }
+   } else {
+      console.log("unknown sampler: " + name);
    }
 };
+
+
+
 
 ShaderData.prototype.setUniform1f = function(name, float) {
    this.uniform[name] = {value: new Float32Array(1), binder: ShaderData.uniform1fFn};
@@ -648,23 +730,7 @@ ShaderData.uniformSampler = function(gl, loc, value) {
 };
 
 
-ShaderData.prototype.updateSampler = function(name, bufferObj) {
-   const sampler = this.getSampler(name);
-   if (sampler) {
-      const nameHeight = name + "Height";
-      if (sampler.getSize() !== bufferObj.buffer.length) { // resize texture
-         sampler.bufferData(bufferObj.buffer);
-         bufferObj._resetCounter();
-         this.setUniform1f(nameHeight, sampler.height);
-      } else if (bufferObj.isAltered()) {  // needs to update?
-         let offset = bufferObj.alteredMin;
-         sampler.bufferSubData(offset/bufferObj.component, bufferObj.buffer, offset, bufferObj.alteredMax - offset + 1);
-         bufferObj._resetCounter();
-      }
-   } else {
-      console.log("unknown sampler: " + name);
-   }
-};
+
 
 
 // a few predefine var. 
@@ -793,6 +859,20 @@ const BufferObject = function(componentSize) {
 };
 
 
+BufferObject.prototype.byteLength = function() {
+   return this.usedSize * this.byteSize();
+};
+
+BufferObject.prototype.getBuffer = function() {
+   return this.buffer.subarray(0, this.usedSize);
+};
+
+BufferObject.prototype.getChanged = function() {
+   return {byteOffset: this.alteredMin*this.byteSize(),
+           array: this.buffer.subarray(this.alterdMin, this.alteredMax+1)};
+};
+
+
 BufferObject.prototype.alloc = function() {
    const index = this.usedSize;
    this.usedSize += this.component;
@@ -836,7 +916,6 @@ BufferObject.prototype.set = function(index, newValue) {
    return false;
 }
 
-
 /**
  * after copying memory to gpu, reset the alteredXXX.
  */
@@ -845,9 +924,19 @@ BufferObject.prototype._resetCounter = function() {
    this.alteredMax = -1;
 }
 
+BufferObject.prototype._resetLength = function() {
+   this.gpuSize = this.usedSize;
+};
+
 BufferObject.prototype.isAltered = function() {
    return (this.alteredMin <= this.alteredMax);
-}
+};
+
+BufferObject.prototype.isLengthAltered = function() {
+   return (this.gpuSize !== this.usedSize); 
+};
+
+
 
 const Float32Buffer = function(componentSize, allocationSize) {
    BufferObject.call(this, componentSize);
@@ -864,6 +953,10 @@ Object.defineProperty(Float32Buffer.prototype, 'constructor', {
 
 Float32Buffer.prototype._allocateBuffer = function(size) {
    return new Float32Array(this.computeAllocateSize(size));
+};
+
+Float32Buffer.prototype.byteSize = function() {
+   return 4;
 };
 
 
@@ -884,9 +977,60 @@ ByteBuffer.prototype._allocateBuffer = function(size) {
    return new Uint8Array(this.computeAllocateSize(size));
 };
 
+ByteBuffer.prototype.byteSize = function() {
+   return 1;
+};
+
+
+const Int32Buffer = function(componentSize, allocationSize) {
+   BufferObject.call(this, componentSize);
+   if (!allocationSize) {
+      allocationSize = gl.textureSize;
+   }
+   this.buffer = this._allocateBuffer(allocationSize);
+};
+Int32Buffer.prototype = Object.create(BufferObject.prototype);
+Object.defineProperty(Int32Buffer.prototype, 'constructor', { 
+   value: Int32Buffer,
+   enumerable: false, // so that it does not appear in 'for in' loop
+   writable: true });
+
+Int32Buffer.prototype._allocateBuffer = function(size) {
+   return new Int32Array(this.computeAllocateSize(size));
+};
+
+Int32Buffer.prototype.byteSize = function() {
+   return 4;
+};
+
+
+const Uint32Buffer = function(componentSize, allocationSize) {
+   BufferObject.call(this, componentSize);
+   if (!allocationSize) {
+      allocationSize = gl.textureSize;
+   }
+   this.buffer = this._allocateBuffer(allocationSize);
+};
+Uint32Buffer.prototype = Object.create(BufferObject.prototype);
+Object.defineProperty(Uint32Buffer.prototype, 'constructor', { 
+   value: Uint32Buffer,
+   enumerable: false, // so that it does not appear in 'for in' loop
+   writable: true });
+
+Uint32Buffer.prototype._allocateBuffer = function(size) {
+   return new Uint32Array(this.computeAllocateSize(size));
+};
+
+Uint32Buffer.prototype.byteSize = function() {
+   return 4;
+}
+
+
 export {
    createWebGLContext,
    Float32Buffer,
+   Int32Buffer,
+   Uint32Buffer,
    ByteBuffer,
    ShaderData,
    SamplerBuffer,

@@ -6,6 +6,13 @@
 import * as Util from './wings3d_util.js';
 
 
+const defaultPBR = { baseColor: Util.hexToRGB("#C9CFB1"),              // rgb, baseColor, 
+                     roughness: 0.8,                                   // float, 0-1.0
+                     metallic: 0.1,                                    // float, 0-1.0
+                     emission: Util.hexToRGB("#000000"),               // rgb, intensity
+                     opacity: 1,                                       // float, 0-1.0
+                     // occulsion // should be textureMap.
+                    };
 /**
  * PhysicallyBasedMaterial
  */
@@ -22,25 +29,39 @@ const Material = function(name) {
                     vertexColorSelect: 0,                         // true/false
                     shininessMaterial: 0,                         // 0-1
                     opacityMaterial: 1};                          // 0-1*/
-   this.pbr = { baseColor: Util.hexToRGB("#C9CFB1"),              // rgb, baseColor, 
-                roughness: 0.8,                                   // float, 0-1.0
-                metallic: 0.1,                                    // float, 0-1.0
-                emission: Util.hexToRGB("#000000"),               // rgb, intensity
-                opacity: 1,                                       // float, 0-1.0
-                // occulsion // should be textureMap.
-              };
+   this.pbr = Object.assign({}, defaultPBR);
+   this.index = Material.color.alloc();
 };
+Material.color = null;  // saved the color
 
+const gList = [];
+const gFreeList = [];
 Material.create = function(name, input) {
-   const ret = new Material(name);
+   let ret;
+   if (gFreeList.lenth > 0) {
+      ret = gFreeList.pop();
+      ret.name = name;
+      ret.setValues(defaultPBR);
+   } else { 
+      ret = new Material(name);
+      gList.push(ret);
+   }
    if (input) {
       ret.setValues(input);
    }
    return ret;
 };
+//Material.default = Material.create("default");
+//Material.dead = Material.create("dead");
 
-Material.default = Material.create("default");
-Material.dead = Material.create("dead");
+Material.release = function(material) {
+   if (material.usageCunt === 0) {
+      gFreeList.push(material);
+      return true;
+   } else {
+      return false;
+   }
+};
 
 
 Material.prototype.setValues = function(inputDat) {
@@ -55,6 +76,8 @@ Material.prototype.setValues = function(inputDat) {
          console.log("unknown input material: " + key);
       }
    }
+   // now put on Material.color (for gpu)
+
 };
 
 

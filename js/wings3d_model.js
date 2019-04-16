@@ -108,9 +108,6 @@ class MeshAllocatorProxy { // we could use Proxy, but ....
 
    allocPolygon(...args) {
       const face = this.preview.bench.allocPolygon(...args);
-      if (this.preview.bench.boundingSpheres.length < this.preview.bench.faces.length) {   // now create sphere and insert to preview's bvh
-         this.preview.bench.boundingSpheres.push( BoundingSphere.allocate(face) );
-      }
       this.preview.insertFace(face);
       return face;
    }
@@ -118,7 +115,6 @@ class MeshAllocatorProxy { // we could use Proxy, but ....
    freeAll(polygons, wEdges, vertices) { this.preview.bench.freeAll(polygons, wEdges, vertices); }
 
    freeVertex(vertex) { 
-      this.preview.bench.alterVertex(); 
       this.preview.bench.freeVertex(vertex); 
    }
 
@@ -218,8 +214,7 @@ PreviewCage.prototype.initBVH = function() {
    const center = vec3.create();
    // first compute midPoint.
    const spheres = [];
-   for (let face of faceSet) {
-      const sphere = this.bench.boundingSpheres[face.index];
+   for (let sphere of faceSet) {
       spheres.push(sphere);
       vec3.add(center, center, sphere.center);
       if (!max) {
@@ -254,10 +249,9 @@ PreviewCage.prototype.initBVH = function() {
    //this.bvh.root.check(new Set);
 }
 
-PreviewCage.prototype.insertFace = function(face) {
-   const sphere = this.bench.boundingSpheres[face.index];
-   if (!sphere.octree) {
-      this.bvh.queue.add(sphere);
+PreviewCage.prototype.insertFace = function(faceSphere) {
+   if (!faceSphere.octree) {
+      this.bvh.queue.add(faceSphere);
    } else {
       console.log("octree insert duplicated");
    }
@@ -268,12 +262,11 @@ PreviewCage.prototype.moveSphere = function(sphere) { // lazy evaluation.
    this.bvh.queue.add(sphere);
 }
 
-PreviewCage.prototype.removeFace = function(face) { 
-   const sphere = this.bench.boundingSpheres[face.index];
-   if (sphere.octree) { // octree should exist, or 
-      sphere.octree._remove(sphere);                     
+PreviewCage.prototype.removeFace = function(faceSphere) { 
+   if (faceSphere.octree) { // octree should exist, or 
+      faceSphere.octree._remove(faceSphere);                     
    } else {
-      this.bvh.queue.delete(sphere);
+      this.bvh.queue.delete(faceSphere);
    }
 }
 
@@ -313,7 +306,7 @@ PreviewCage.prototype.rayPick = function(ray) {
    var hitT = Number.POSITIVE_INFINITY;   // z_far is the furthest possible intersection
 
    for (let sphere of this.bvh.root.intersectExtent(ray)) {
-      sphere.polygon.eachEdge( function(edge) {
+      spherePolygon.eachEdge( function(edge) {
          // now check the triangle is ok?
          var t = Util.intersectTriangle(ray, [sphere.center, edge.origin, edge.destination()]);
          if ((t != 0.0) && (t < hitT)) {
@@ -958,12 +951,8 @@ PreviewCage.prototype.selectEdge = function(selectEdge) {
 PreviewCage.prototype.computeSnapshot = function(snapshot) {
    // update all affected polygon(use sphere). copy and recompute vertex.
    for (let polygon of snapshot.faces) {
-      const sphere = this.bench.boundingSpheres[polygon.index];
-      // recompute sphere center. and normal
-      polygon.computeNormal();
-      sphere.setSphere( BoundingSphere.computeSphere(polygon, sphere.center) );
+      polygon.update();
    }
-   this.bench.updateCentroid();
 };
 
 
@@ -1484,12 +1473,12 @@ PreviewCage.prototype.restoreFromEdgeToMultiSelect = function(_snapshot) {
    this.changeFromEdgeToMultiSelect();
 };
 
-PreviewCage.prototype.setFaceSelectionOff = function(polygon) {
-   this.bench.selectFace(polygon, false);
+PreviewCage.prototype._setFaceSelectionOff = function(polygon) {
+   polygon.setSelect(false);
    this.selectedSet.delete(polygon);
 };
-PreviewCage.prototype.setFaceSelectionOn = function(polygon) {
-   this.bench.selectFace(polygon, true);
+PreviewCage.prototype._setFaceSelectionOn = function(polygon) {
+   polygon.setSelect(true);
    this.selectedSet.add(polygon);
 };
 
@@ -1497,12 +1486,12 @@ PreviewCage.prototype.dragSelectFace = function(polygon, onOff) {
    // select polygon set color,
    if (this.selectedSet.has(polygon)) {
       if (onOff === false) {
-         this.setFaceSelectionOff(polygon);
+         this._setFaceSelectionOff(polygon);
          return true;
       }
    } else {
       if (onOff === true) {
-         this.setFaceSelectionOn(polygon);
+         this._setFaceSelectionOn(polygon);
          return true;
       }
    }
@@ -1516,11 +1505,11 @@ PreviewCage.prototype.dragSelectFace = function(polygon, onOff) {
 PreviewCage.prototype.selectFace = function(polygon) {
    var onOff;
    if (this.selectedSet.has(polygon)) {
-      this.setFaceSelectionOff(polygon);
+      this._setFaceSelectionOff(polygon);
       Wings3D.log("faceSelectOff", polygon.index);
       onOff = false;
    } else {
-      this.setFaceSelectionOn(polygon);
+      this._setFaceSelectionOn(polygon);
       Wings3D.log("faceSelectOn", polygon.index);
       onOff = true;
    }
@@ -2021,13 +2010,9 @@ PreviewCage.prototype.collapseExtrudeEdge = function(undo) {
    // update all affected polygon(use sphere). recompute centroid.
    for (let polygon of affectedPolygon) {
       if (polygon.isLive()) {
-         const sphere = this.bench.boundingSpheres[polygon.index];
-         // recompute sphere center.
-         sphere.setSphere( BoundingSphere.computeSphere(polygon, sphere.center) );
+         polygon.update();
       }
    }
-   // done, update shader data, should we update each vertex individually?
-   this.bench.updateCentroid();
 };
 
 //
@@ -2601,8 +2586,6 @@ PreviewCage.prototype.bridge = function(targetFace, sourceFace) {
    if (this.selectedSet.size === 2) {  // make sure. it really target, source
       const oldSize = this._getGeometrySize();
 
-      const targetSphere = this.bench.boundingSpheres[targetFace.index];
-      const sourceSphere = this.bench.boundingSpheres[sourceFace.index];
       const deltaCenter = vec3.create();
       //vec3.sub(deltaCenter, targetSphere.center, sourceSphere.center);   // what if we don't move the center, would it work better? so far, no
       const result = this.geometry.bridgeFace(targetFace, sourceFace, deltaCenter);
@@ -2975,7 +2958,7 @@ PreviewCage.prototype.undoLoopCut = function(undo) {
 PreviewCage.prototype._putOn = function(target) {
    let fromFace = this.selectedSet.values().next().value; // must be true
 
-   const center = this.bench.boundingSpheres[fromFace.index].center;
+   const center = fromFace.center;
    const normal = vec3.create();
    vec3.copy(normal, fromFace.normal);
    vec3.negate(normal, normal);
@@ -3023,11 +3006,8 @@ PreviewCage.prototype.putOnEdge = function(hEdge) {
    this._putOn({normal: normal, center: center});
 };
 
-PreviewCage.prototype.putOnFace = function(polygon) {
-   const normal = polygon.normal;
-   const center = this.bench.boundingSpheres[polygon.index].center;
-   
-   this._putOn({normal:normal, center: center});
+PreviewCage.prototype.putOnFace = function(polygon) {   
+   this._putOn({normal: polygon.normal, center: polygon.center});
 };
 
 
@@ -3421,10 +3401,10 @@ PreviewCage.prototype.flattenVertex = function(planeNormal) {
 
 // check if given plane can cut selected face. coplanar does not count.
 PreviewCage.prototype.planeCuttableFace = function(plane) {
-   for (let sphere of this.bvh.root.intersectBound(plane)) {
-      if (this.selectedSet.has(sphere.polygon)) {
+   for (let spherePolygon of this.bvh.root.intersectBound(plane)) {
+      if (this.selectedSet.has(spherePolygon)) {
          // now, check hEdge against plane.
-         for (let hEdge of sphere.polygon.hEdges()) {
+         for (let hEdge of spherePolygon.hEdges()) {
             const t = Util.intersectPlaneHEdge(null, plane, hEdge);
             if ((t>0) && (t<1)) {   // intersection at begin or end don't count
                return true;
@@ -3442,9 +3422,9 @@ PreviewCage.prototype._planeCutFace = function(cutPlanes) {
    const pt = vec3.create();
    for (let plane of cutPlanes) {
       const cutList = [];
-      for (let sphere of this.bvh.root.intersectBound(plane)) {
-         if (this.selectedSet.has(sphere.polygon)) {
-            cutList.push(sphere.polygon);
+      for (let spherePolygon of this.bvh.root.intersectBound(plane)) {
+         if (this.selectedSet.has(spherePolygon)) {
+            cutList.push(spherePolygon);
          }
       }
 
@@ -3518,7 +3498,7 @@ PreviewCage.prototype.getBodySelection = function(selection, extent) {
    this.geometry.getExtent(extent.min, extent.max);
    // now push all faces's sphere.
    for (let polygon of this.selectedSet) {
-      selection.push( this.bench.boundingSpheres[polygon.index] );
+      selection.push( polygon );
    }
 };
 
@@ -3526,9 +3506,9 @@ PreviewCage.prototype.getBodySelection = function(selection, extent) {
 // make holes
 PreviewCage.prototype.makeHolesFromBB = function(selection) {
    const restore = [];
-   for (let sphere of selection) {
-      this.selectedSet.delete(sphere.polygon);              // remove from selection. also selection off(not done)?
-      restore.unshift( this.geometry.makeHole(sphere.polygon) );  // restore has to be done in reverse
+   for (let spherePolygon of selection) {
+      this.selectedSet.delete(spherePolygon);              // remove from selection. also selection off(not done)?
+      restore.unshift( this.geometry.makeHole(spherePolygon) );  // restore has to be done in reverse
    }
    return restore;
 };

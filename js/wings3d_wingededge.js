@@ -1,5 +1,3 @@
-import { PreviewCage } from "./wings3d_model.js";
-
 /* require glmatrix
 * http://kaba.hilvi.org/homepage/blog/halfedge/halfedge.htm. very nicely written half-edge explanation and pseudo code.
 * https://fgiesen.wordpress.com/2012/02/21/half-edge-based-mesh-representations-theory/
@@ -31,8 +29,10 @@ import { PreviewCage } from "./wings3d_model.js";
 *
 */
 "use strict";
-import {Float32Buffer, ByteBuffer} from './wings3d_gl.js';
+import {Float32Buffer, ByteBuffer, Int32Buffer} from './wings3d_gl.js';
+import {BoundingSphere} from './wings3d_boundingvolume.js';
 import {Material} from './wings3d_material.js';
+import { Vec3View } from "./wings3d_util.js";
 
 
 const WingedEdge = function(orgVert, toVert, index) {
@@ -40,8 +40,8 @@ const WingedEdge = function(orgVert, toVert, index) {
    WingedEdge.index.alloc();     // advance usedSize
    // start init
    this.index = index;
-   this.left = new HalfEdge(orgVert, this);
-   this.right = new HalfEdge(toVert, this);
+   this.left = new HalfEdge(this);
+   this.right = new HalfEdge(this);
    this.left.pair = this.right;
    // link together for a complete loop
    this.left.next = this.right;
@@ -49,8 +49,18 @@ const WingedEdge = function(orgVert, toVert, index) {
    this.right.pair = this.left;
    this.right.next = this.left;
    // this.right.prev = this.left;
+   // now set origin.
+   this.left.origin = orgVert;
+   this.right.origin = toVert;
+   // update HalfEdge.index.
+   const i = this.index * 2 * 4;
+   const idx = this.index * 2;
+   HalfEdge.index.set(i+1, idx);
+   HalfEdge.index.set(i+5, idx+1);
+   HalfEdge.triangleList.set(idx*3, idx);
+   HalfEdge.triangleList.set((idx+1)*3, idx+1);
 };
-WingedEdge.index = null;
+WingedEdge.index = null;   // (vertex, index, barycentric)
 WingedEdge.state = null;
 
 WingedEdge.prototype[Symbol.iterator] = function* () {
@@ -101,25 +111,16 @@ WingedEdge.prototype.setEdgeMask = function(onOff, mask) {
    }
 };
 
-/**
- * buildup drawingLine using triangle
- * @param {Uint32Array} data - array
- * @param {number} idx - start index
- * @param {number} vertexLength - center is after vertexLength.
- * @return {number} - current index position.
- */
-WingedEdge.prototype.buildIndex = function(data, idx, vertexLength) {
-   if (this.left.face && this.left.face.isVisible()) {
-      data[idx++] = this.left.origin.index;
-      data[idx++] = this.right.origin.index;
-      data[idx++] = this.left.face.index + vertexLength;
-   }
-   if (this.right.face && this.right.face.isVisible()) {
-      data[idx++] = this.right.origin.index;
-      data[idx++] = this.left.origin.index;
-      data[idx++] = this.right.face.index + vertexLength;
-   }
-   return idx;
+WingedEdge.prototype.setGroup = function(topology) {
+   // update HalfEdge.index.
+   const topologyIndex = 0; // temporary
+   const i = this.index * 2 * 4;
+   HalfEdge.index.set(i+3, topologyIndex);
+   HalfEdge.index.set(i+7, topologyIndex);
+};
+
+WingedEdge.prototype.getIndex = function(hEdge) {
+   return (this.index*2) + ((hEdge === this.left) ? 0 : 1);
 }
 
 /**
@@ -214,17 +215,68 @@ WingedEdge.prototype.getNormal = function(normal) {
    vec3.normalize(normal, normal);
 };
 
-const HalfEdge = function(vert, edge) {  // should only be created by WingedEdge
-   this.next = null;
+
+const HalfEdge = function(wEdge) {  // should only be created by WingedEdge
+   HalfEdge.index.alloc();    // allocate 12 (4 * 3)
+   HalfEdge.triangleList.alloc();
+   this.wingedEdge = wEdge;   // parent winged edge
+   this._next = null;
 //   this.prev = null;       // not required, but very nice to have shortcut
-   this.origin = vert;     // origin vertex, 
+   this._origin = null;        // origin vertex, 
 //   if (vert.outEdge === null) {
 //     vert.outEdge = this;
 //   }
-   this.face = null;       // face pointer, not required, but useful shortcut
+   this._face = null;
    this.pair = null;
-   this.wingedEdge = edge; // parent winged edge
 };
+HalfEdge.index = null;         // (vertex(index), hEdge(index), PolygonIndex, GroupIndex) hEdge(normal, color, texCoord) (polygon has material, state, centroid), (group state)
+HalfEdge.normal = null;
+HalfEdge.color = null;
+// HalfEdge.texCoord = null;  
+// HalfEdge.texCoord1 = null;
+HalfEdge.triangleList = null; // Polygon.index = (HalfEdge.totalSize * 3) - (hEdge, hEdge, fakeCenterToDo)
+HalfEdge.edgeIndex = null;    // HalfEdge index = (HalfEdge.totalSize *3) - (hEdge, hEdge, hEdge) - draw center.
+Object.defineProperties(HalfEdge.prototype, {
+   origin: {get: function() {return this._origin;},
+            set: function(vertex) {
+               this._origin = vertex;
+               // update index
+               let i = this.wingedEdge.getIndex(this) * 4;
+               HalfEdge.index.set(i, vertex.index);
+            } },
+   face: {get: function() {return this._face;},
+          set: function(polygon) {
+            this._face = polygon;
+            // update index
+            const i = this.wingedEdge.getIndex(this) * 4;
+            const idx = this.getIndex();
+            if (polygon) {
+               HalfEdge.index.set(i+2, polygon.index);
+               HalfEdge.triangleList.set(idx*3+2, -polygon.index - 1);    // centerFakehEdge.
+            } else {
+               HalfEdge.index.set(i+2, -1);              // negative number indicate null polygon.
+               HalfEdge.triangleList.set(idx*3+2, idx);           // null face. point back to self.
+            }
+          } },
+   next: {get: function() {return this._next;},
+          set: function(hEdge) {
+             this._next = hEdge;
+             const idx = this.getIndex();
+             let index = idx;
+             if (hEdge) {
+                index = hEdge.getIndex();
+             }
+             HalfEdge.triangleList.set(idx*3+1, index);  // point to next
+          }}
+});
+
+HalfEdge.prototype.updateIndex = function() {
+   this.wingedEdge.updateIndex(this);
+};
+
+HalfEdge.prototype.getIndex = function() {
+   return this.wingedEdge.getIndex(this);
+}
 
 /**
  * toggle hilite of wEdge, third position, 0x0100
@@ -234,10 +286,6 @@ HalfEdge.prototype.setHilite = function(onOff) {
    this.wingedEdge.setEdgeMask(onOff, 4);
 }
 
-HalfEdge.prototype.updateIndex = function() {
-   this.wingedEdge.updateIndex(this);
-};
-
 // boundary edge if no assigned face.
 HalfEdge.prototype.isBoundary = function() {
    return this.face === null;
@@ -246,21 +294,9 @@ HalfEdge.prototype.isNotBoundary = function() {
    return this.face !== null;
 };
 
-/*Object.defineProperty(HalfEdge.prototype, 'pair', {
-   get: function() {
-      if (this.wingedEdge.left === this) {
-         return this.wingedEdge.right;
-      } else {
-         return this.wingedEdge.left;
-      }
-    },
-});*/
-
-
 HalfEdge.prototype.destination = function() {
    return this.pair.origin;
 }
-
 
 // using polygon to find prev
 HalfEdge.prototype.prevAux = function() {
@@ -321,19 +357,6 @@ Vertex.index = null;  // index and state not combined eventhough it map one on o
 Vertex.state = null;
 Vertex.position = null;
 
-// faked array [0,1,2]
-Object.defineProperty(Vertex.prototype, 0, {
-   get: function() {return Vertex.position.buffer[this.posOffset];},
-   set: function(value) {Vertex.position.set(this.posOffset, value);}
-});
-Object.defineProperty(Vertex.prototype, 1, {
-   get: function() {return Vertex.position.buffer[this.posOffset+1];},
-   set: function(value) {Vertex.position.set(this.posOfset+1, value);}
-});
-Object.defineProperty(Vertex.prototype, 2, {
-   get: function() {return Vertex.position.buffer[this.posOffset+2];},
-   set: function(value) {Vertex.position.set(this.posOffset+2, value);}
-});
 
 Object.defineProperty(Vertex.prototype, 'index', {
    get: function() {
@@ -341,12 +364,21 @@ Object.defineProperty(Vertex.prototype, 'index', {
    },
 });
 
+// faked array [0,1,2]
+Object.defineProperties(Vertex.prototype, {
+   0: { get: function() {return Vertex.position.buffer[this.posOffset];},
+        set: function(value) {Vertex.position.set(this.posOffset, value);} },
+   1: { get: function() {return Vertex.position.buffer[this.posOffset+1];},
+        set: function(value) {Vertex.position.set(this.posOfset+1, value);} },
+   2: { get: function() {return Vertex.position.buffer[this.posOffset+2];},
+        set: function(value) {Vertex.position.set(this.posOffset+2, value);} }
+});
+
 Vertex.prototype.set = function(inArray) {
    Vertex.position.set(this.posOffset, inArray[0]);
    Vertex.position.set(this.posOffset+1, inArray[1]);
    Vertex.position.set(this.posOffset+2, inArray[2]);
 };
-
 
 Object.defineProperty(Vertex.prototype, 'valence', {
    get: function() {
@@ -586,12 +618,57 @@ Vertex.prototype.getNormal = function(normal) {
 
 
 const Polygon = function(startEdge, size, material=Material.default) {
+   BoundingSphere.call(this);
+   this.index = Polygon.state.alloc();
+   Polygon.material.alloc();
+   Polygon.normal.alloc();
    this.halfEdge = startEdge;
-   this.numberOfVertex = size;       // how many vertex in the polygon
-   this.index = -1;
-   this.visible = true;
+   this.numberOfVertex = size;      // how many vertex in the polygon
    this.assignMaterial(material);
    this.update(); //this.computeNormal();
+   Polygon.centerIndex.alloc();                     // (vIdx, hIdx, face, group) (vIdx is negative number)
+   const i = this.index * 4;
+   Polygon.centerIndex.set(i, -this.index - 1);
+   Polygon.centerIndex.set(i+1, this.index);       // this is don't care stuff
+   Polygon.centerIndex.set(i+2, this.index);
+   Polygon.centerIndex.set(i+3, 0);
+};
+Polygon.prototype = Object.create(BoundingSphere.prototype);
+Object.defineProperty(Polygon.prototype, 'constructor', { 
+   value: Polygon,
+   enumerable: false, // so that it does not appear in 'for in' loop
+   writable: true });
+Polygon.isIndexModified = false; // 
+Polygon.state = null;         // state(selected, hilite). byte.
+Polygon.fakeHalf = null;      // fake halfEdge. (vertex, noHalfEdge(-Number), Polygon, Group)
+Polygon.material = null;      // material index to be merged with state, 2 bytes should be enough for material.
+Polygon.normal = null;        // normal per polygon.
+
+Polygon.prototype.hide = function() {
+   this.setState(true, 4);
+};
+
+Polygon.prototype.show = function() {
+   this.setState(false, 4);
+};
+
+Polygon.prototype.setHilite = function(onOff) {
+   this.setState(onOff, 2);
+};
+
+Polygon.prototype.setSelect = function(onOff) {
+   this.setState(onOff, 1);
+};
+
+Polygon.prototype.setState = function(onOff, mask) {
+   const index = this.index;
+
+   const state = Polygon.state.buffer[index];
+   if (onOff) {
+      return Polygon.state.set(index, state | mask);
+   } else {
+      return Polygon.state.set(index, state & (~mask));
+   }
 };
 
 /**
@@ -605,7 +682,16 @@ Polygon.prototype.assignMaterial = function(material) {
       }
       this.material = material;
       material.assigned();
+      Polygon.material[this.index] = material.index;     // copy index
    }
+}
+
+Polygon.prototype.getNormal = function(normal) {
+   let index = this.cntrOffset;
+   normal[0] = Polygon.normal[index];
+   normal[1] = Polygon.normal[index+1];
+   normal[2] = Polygon.normal[index+2];
+   return normal;
 }
 
 // not on free list. not deleted and visible
@@ -614,7 +700,8 @@ Polygon.prototype.isLive = function() {
 };
 
 Polygon.prototype.isVisible = function() {
-   return (this.visible && (this.halfEdge !== null));
+   const visible = Polygon.state.buffer[this.index] & 4;
+   return (visible && (this.halfEdge !== null));
 }
 
 Polygon.prototype.buildIndex = function(data, index, center) {
@@ -703,64 +790,69 @@ Polygon.prototype.oneRing = function* () {
 };
 
 // ccw ordering
-Polygon.prototype.computeNormal = function() {
+Polygon.prototype.computeNormal = (function() {
    const U = vec3.create();
    const V = vec3.create();
-   const v1 = this.halfEdge.origin;
-   const v0 = this.halfEdge.next.origin;
-   const v2 = this.halfEdge.next.destination();
-   vec3.sub(U, v1, v0);
-   vec3.sub(V, v2, v0);
-   if (!this.normal) {
-      this.normal = vec3.create();
-   }
-   vec3.cross(this.normal, V, U);
-   vec3.normalize(this.normal, this.normal);
-};
+   return function() {
+      const v1 = this.halfEdge.origin;
+      const v0 = this.halfEdge.next.origin;
+      const v2 = this.halfEdge.next.destination();
+      vec3.sub(U, v1, v0);
+      vec3.sub(V, v2, v0);
+      vec3.cross(V, V, U);
+      vec3.normalize(V, V);
+      const i = this.index * 3;
+      Polygon.normal[i]   = V[0];
+      Polygon.normal[i+1] = V[1];
+      Polygon.normal[i+2] = V[2];
+   };
+}());
 
 
-// recompute numberOfVertex and normal. and reorient.
+// recompute numberOfVertex, normal and centroid and radius, and reorient.
 Polygon.prototype.update = function() {
    const begin = this.halfEdge;
    let halfEdge = begin;
    let current = begin;
    this.numberOfVertex = 0;
    do {
-      current.face = this;
+      vec3.add(this, this, current.origin);
+      current.face = this;       // should be checking?
+      let i = current.getIndex();       // every halfEdge form a triangle.
+      //HalfEdge.triangleList.set(i*3, i);   // never changed.
       //current.origin.reorient();
       ++this.numberOfVertex;
-      if (current.index < halfEdge.index) {
+      if (current.getIndex() < halfEdge.getIndex()) {
          halfEdge = current;
       }
       if (this.numberOfVertex > 1001) {   // break;   
          console.log("something is wrong with polygon link list");
          return;
       }
-      current.updateIndex();
+      current.updateIndex();     // to be refactored.
+      current = current.next;
+      //HalfEdge.triangleList.set(i*3+1, current.getIndex()); // next hEdge
+      //HalfEdge.triangleList.set(i*3+2, (-this.index) - 1);    // centerFakehEdge.
+   } while (current !== begin);
+   vec3.scale(this, this, 1.0/this.numberOfVertex);     // set center.
+   // fake index?
+   // also check if index was modified?
+   // now get radius, after we have center, or we could compute min, max, and get distance to center.
+   this.radius = 0.0; 
+   let distance;
+   do {
+      distance = vec3.distance(this, current.origin);
+      if (distance > this.radius) {
+         this.radius = distance;
+      }
       current = current.next;
    } while (current !== begin);
+
    this.halfEdge = halfEdge;              // the lowest index.
    // compute normal.
    if (this.numberOfVertex > 2) {
       this.computeNormal();
    }
-};
-
-//
-// getCentroid - not really centroid, but center of points.
-// todo - find a good centroid algorithm. like tessellate to triangles. and use triangle's centroid to find real centroid.
-//
-Polygon.prototype.getCentroid = function(centroid) {
-   const begin = this.halfEdge;
-   let current = begin;
-   let numberOfVertex = 0;
-   do {
-      vec3.add(centroid, centroid, current.origin);
-      ++numberOfVertex;
-      current = current.next;
-   } while (current !== begin);
-   // compute centroid.
-   vec3.scale(centroid, centroid, 1.0/numberOfVertex);
 };
 
 
@@ -775,11 +867,27 @@ Polygon.prototype.getCentroid = function(centroid) {
 // 
 //
 const MeshAllocator = function(allocatedSize) {
+   // Material
+   Material.color = new Float32Buffer(3);    // packed byte to float.
+   Material.default = Material.create("default");
+   Material.dead = Material.create("dead");
+   // wEdge
    WingedEdge.index = new Float32Buffer(18);           // drawing index.
    WingedEdge.state = new ByteBuffer(1),    // unsigned byte state
+   // HalfEdge
+   HalfEdge.index = new Float32Buffer(4);   // (vIdx, hIdx, pIdx, gIdx)
+   HalfEdge.triangleList = new Int32Buffer(3);     // (hEdge0, hEdge1, hEdge2)
+   // Vertex
    Vertex.index = new Float32Buffer(1);
    Vertex.state = new Float32Buffer(1);
-   Vertex.position = this.position = new Float32Buffer(3, allocatedSize),  // position buffer.
+   Vertex.position = this.position = new Float32Buffer(3, allocatedSize);  // position buffer.
+   // polygon
+   BoundingSphere.center = new Float32Buffer(3, allocatedSize);
+   //Polygon.index = new Float32Buffer(4);
+   Polygon.centerIndex = new Float32Buffer(4);  // (vIdx, hIdx, pIdx, gIdx)
+   Polygon.state = new ByteBuffer(1);
+   Polygon.material = new Float32Buffer(3);
+   Polygon.normal = new Float32Buffer(3, allocatedSize);
    this.vertices = [];     // class Vertex
    this.edges = [];        // class WingedEdge
    this.faces = [];        // class Polygon
@@ -859,7 +967,7 @@ MeshAllocator.prototype.allocPolygon = function(halfEdge, numberOfVertex, materi
       polygon.halfEdge = halfEdge;
       polygon.numberOfVertex = numberOfVertex;
       polygon.update();
-      polygon.visible = true;  // make sure it visible.
+      polygon.show();            // make sure it visible.
       this.affected.faces.add( polygon );
    } else {
       polygon = new Polygon(halfEdge, numberOfVertex, material);
@@ -915,6 +1023,7 @@ MeshAllocator.prototype.freePolygon = function(polygon) {
    polygon.halfEdge = null;
    polygon.numberOfVertex = 0;
    polygon.assignMaterial(Material.dead); // dead material.
+   polygon.hide();
    // assert !freeFaces.has( polygon );
    //this.free.faces.push( polygon );
    this._insertFreeList(polygon.index, this.free.faces);
@@ -988,6 +1097,7 @@ const WingedTopology = function(allocator) {
    this.faces = new Set;
    this.edges = new Set;
 };
+WingedTopology.state = null;     // onOff, select, hilite state.
 
 // act as destructor
 WingedTopology.prototype.free = function() {
@@ -1141,6 +1251,7 @@ WingedTopology.prototype.addVertex = function(pt, delVertex) {
 
 WingedTopology.prototype._createEdge = function(begVert, endVert, delOutEdge) {
    const outEdge = this.alloc.allocEdge(begVert, endVert, delOutEdge);
+   outEdge.wingedEdge.setGroup(this);  // copy index.
    this.edges.add(outEdge.wingedEdge);
    return outEdge;
 };

@@ -392,6 +392,45 @@ function clamp(number, min, max) {
    return Math.min(max, Math.max(min, value));
 };
 
+const Vec3View = function(buffer, index = 0) {
+   this.buffer = buffer;
+   this.offset = index * 3;
+};
+
+Vec3View.prototype.init = function(buffer, index) {
+   this.buffer = buffer;
+   this.offset = index *3;
+   return this;
+}
+
+Vec3View.prototype.inc = function() {
+   this.offset += 3;
+   return this;
+};
+
+Vec3View.prototype.dec = function() {
+   this.offset -= 3;
+   return this;
+};
+
+Vec3View.prototype.set = function(inVec3) {
+   this.buffer[this.offset] = inVec3[0];
+   this.buffer[this.offset+1] = inVec3[1];
+   this.buffer[this.offset+2] = inVec3[2];
+   return this;
+}
+
+// faked array [0,1,2]
+Object.defineProperties(Vec3View.prototype, {
+   0: { get: function() {return this.buffer[this.offset];},
+        set: function(value) {this.buffer[this.offset] = value; return value;} },
+   1: { get: function() {return this.buffer[this.offset+1];},
+        set: function(value) {this.buffer[this.offset+1] = value; return value;} },
+   2: { get: function() {return this.buffer[this.offset+2];},
+        set: function(value) {this.buffer[this.offset+2] = value; return value;} },
+});
+
+
 const Vec4View = function(buffer, offset = 0) {
    this.buffer = buffer;
    this.offset = offset;
@@ -416,21 +455,15 @@ Vec4View.prototype.set = function(inVec4) {
 }
 
 // faked array [0,1,2,3]
-Object.defineProperty(Vec4View.prototype, 0, {
-   get: function() {return this.buffer[this.offset];},
-   set: function(value) {this.buffer[this.offset] = value;}
-});
-Object.defineProperty(Vec4View.prototype, 1, {
-   get: function() {return this.buffer[this.offset+1];},
-   set: function(value) {this.buffer[this.offset+1] = value;}
-});
-Object.defineProperty(Vec4View.prototype, 2, {
-   get: function() {return this.buffer[this.offset+2];},
-   set: function(value) {this.buffer[this.offset+2] = value;}
-});
-Object.defineProperty(Vec4View.prototype, 3, {
-   get: function() {return this.buffer[this.offset+3];},
-   set: function(value) {this.buffer[this.offset+3] = value;}
+Object.defineProperties(Vec4View.prototype, {
+   0: { get: function() {return this.buffer[this.offset];},
+        set: function(value) {this.buffer[this.offset] = value; return value;} },
+   1: { get: function() {return this.buffer[this.offset+1];},
+        set: function(value) {this.buffer[this.offset+1] = value; return value;} },
+   2: { get: function() {return this.buffer[this.offset+2];},
+        set: function(value) {this.buffer[this.offset+2] = value; return value;} },
+   3: { get: function() {return this.buffer[this.offset+3];},
+        set: function(value) {this.buffer[this.offset+3] = value; return value;} }
 });
 
 
@@ -456,5 +489,6 @@ export {
    rgbaToHex,
    get_uuidv4,
    clamp,
+   Vec3View,
    Vec4View,
 };
