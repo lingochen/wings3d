@@ -701,7 +701,8 @@ Polygon.prototype.isLive = function() {
 
 Polygon.prototype.isVisible = function() {
    const visible = Polygon.state.buffer[this.index] & 4;
-   return (visible && (this.halfEdge !== null));
+   //return (visible && (this.halfEdge !== null));
+   return (this.halfEdge !== null);
 }
 
 Polygon.prototype.buildIndex = function(data, index, center) {

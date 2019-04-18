@@ -142,7 +142,7 @@ fragment:
 ` 
 };
 // gl_Position = vec4(2.0,2.0,2.0, 1.0);
-let wireframeLine = {   // http://codeflow.org/entries/2012/aug/02/easy-wireframe-display-with-barycentric-coordinates/
+let selectedWireframeLine = {   // http://codeflow.org/entries/2012/aug/02/easy-wireframe-display-with-barycentric-coordinates/
    vertex: index2TexCoord => `//#extension OES_texture_float : enable
       uniform mat4 projection; 
       uniform mat4 worldView;
@@ -372,6 +372,58 @@ let colorPoint = {
          'gl_FragColor = uColor;',
       '}'].join("\n"),
 };
+let wireframeLine = {   // http://codeflow.org/entries/2012/aug/02/easy-wireframe-display-with-barycentric-coordinates/
+   vertex: index2TexCoord => `//#extension OES_texture_float : enable
+      uniform mat4 projection; 
+      uniform mat4 worldView;
+      // color of various state
+      uniform vec4 edgeColor[8];
+
+      // draw triangle array.
+      attribute highp vec3 indexBuffer;
+
+      // position texture (x,y,z), state texture(uint8)
+      uniform highp sampler2D positionBuffer;
+      uniform float positionBufferHeight;
+
+      varying vec3 vBC;
+      varying vec4 color;
+
+      ${index2TexCoord}
+
+      void main() {
+         gl_Position = vec4(2.0, 2.0, 2.0, 1.0);         // culled as default.
+         if (indexBuffer.z >= 0.0) {
+            vBC = vec3(1.0, indexBuffer.z, 1.0);  
+            color = edgeColor[0];                        // unselected color
+ 
+            vec3 pos = texture2D(positionBuffer, index2TexCoord(indexBuffer.x, positionBufferHeight)).xyz;
+            gl_Position = projection * worldView * vec4(pos, 1.0);
+         }
+      }
+   `,
+   fragment: `#extension GL_OES_standard_derivatives : enable
+      precision mediump float;
+      varying vec3 vBC;
+      varying vec4 color;
+
+      float edgeFactor() {
+         vec3 d = fwidth(vBC);
+         vec3 a3 = smoothstep(vec3(0.0), d, vBC);
+         return min(min(a3.x, a3.y), a3.z);
+      }
+
+      void main() {
+         // coloring by edge
+         float edge = edgeFactor();
+         if (edge < 1.0) {
+            gl_FragColor = vec4(color.rgb, (1.0-edge)*0.95);
+         } else {
+            discard;
+         }
+      }
+   `
+};
 let solidWireframe = {  // we don't have geometry shader, so we have to manually pass barycentric to do 'single pass wireframe' 
    vertex: [       // http://codeflow.org/entries/2012/aug/02/easy-wireframe-display-with-barycentric-coordinates/
       'attribute vec3 position;', 
@@ -501,6 +553,8 @@ Wings3D.onReady(function() {
 
    wireframeLine = gl.createShaderProgram(wireframeLine.vertex(index2TexCoord), wireframeLine.fragment);
 
+   selectedWireframeLine = gl.createShaderProgram(selectedWireframeLine.vertex(index2TexCoord), selectedWireframeLine.fragment);
+
    selectedColorPoint = gl.createShaderProgram(selectedColorPoint.vertex(index2TexCoord), selectedColorPoint.fragment);
 
    drawSelectablePolygon = gl.createShaderProgram(drawSelectablePolygon.vertex(index2TexCoord), drawSelectablePolygon.fragment);
@@ -511,6 +565,7 @@ export {
    colorArray,
    selectedColorLine,
    wireframeLine,
+   selectedWireframeLine,
    selectedColorPoint,
    textArray,
    cameraLight,

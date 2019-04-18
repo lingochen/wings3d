@@ -863,41 +863,34 @@ function drawWorld(gl) {
          return;
       }
 
-      //gl.enable(gl.BLEND);
-      //gl.blendFunc(gl.SRC_COLOR, gl.DST_COLOR);
+      //offset
+      gl.enable(gl.POLYGON_OFFSET_FILL);
+      gl.polygonOffset(1.0, 1.0);          // Set the polygon offset
       // draw Current Select Mode (vertex, edge, or face)
-      //if (hilite.vertex || hilite.edge || hilite.face || hilite.cage) {
-         mode.current.drawExtra(gl, _environment.draftBench);
-      //}
-      // hack -- draw other hilite selection if any, really should move to multimode
-      if (hilite.vertex && (mode.current !== mode.vertex)) {
-         mode.vertex.drawExtra(gl, _environment.draftBench);
+      mode.face.polygonShader(gl, hilite.face || hilite.cage);
+      gl.bindTransform();
+      _environment.draftBench.draw(gl, mode.current);       // draw polygon.
+      gl.disable(gl.POLYGON_OFFSET_FILL);
+      // end offset
+
+      // blend 
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.SRC_COLOR, gl.DST_COLOR);
+      mode.current.edgeShader(gl, hilite.edge !== null);
+      gl.bindTransform();
+      _environment.draftBench.drawEdge(gl, mode.current);
+
+      if (mode.current.vertexShader(gl, hilite.vertex !== null)) {
+         gl.bindTransform();
+         _environment.draftBench.drawVertex(gl, mode.current);
       }
-      if (hilite.edge && (mode.current !== mode.edge)) {
-         mode.edge.drawExtra(gl, _environment.draftBench);
-      }
-      if (hilite.face && (mode.current !== mode.face)) {
-         mode.face.drawExtra(gl, _environment.draftBench);
-      }
+      gl.disable(gl.BLEND);
+      // end of blend 
+
       // hack - draw plane
       if (hilite.plane) {
          _environment.draftBench.drawPlane(gl, hilite.plane);
       }
-      // end of hack ----
-      //gl.disable(gl.BLEND);
-
-      // draw all other edge (extra, hardEdge, wireframeEdge) if applicable
-      //_environment.draftBench.drawHardEdgeEtc(gl, mode.current === mode.edge, mode.current);
-
-      //gl.polygonOffset(1.0, 1.0);          // Set the polygon offset
-      //gl.enable(gl.POLYGON_OFFSET_FILL);
-      mode.current.previewShader(gl);
-      //world.forEach(function(model, _index, _array){
-         gl.bindTransform();
-         _environment.draftBench.draw(gl, mode.current);
-      //});
-      gl.disableShader();
-      //gl.disable(gl.POLYGON_OFFSET_FILL);
    //}
 }
 

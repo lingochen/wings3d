@@ -9,6 +9,7 @@ import {FaceMadsor} from './wings3d_facemads.js';
 import {EdgeMadsor} from './wings3d_edgemads.js';
 import {VertexMadsor} from './wings3d_vertexmads.js';
 import {PreviewCage} from './wings3d_model.js';
+import * as ShaderProg from './wings3d_shaderprog.js';
 import * as View from './wings3d_view.js';
 
 
@@ -69,8 +70,23 @@ class MultiMadsor extends Madsor {
       }
    }
 
-   drawExtra(_gl, _draftBench) {
-      // no hilite
+   
+   polygonShader(gl, _hilite) {
+      gl.useShader(ShaderProg.drawSelectablePolygon);//gl.useShader(ShaderProg.solidWireframe);
+   }
+   edgeShader(gl, hilite) {
+      if (hilite) {
+         gl.useShader(ShaderProg.selectedWireframeLine);
+      } else {
+         gl.useShader(ShaderProg.wireframeLine);
+      }
+   }
+   vertexShader(gl, hilite) {  // let vertexMadsor override.
+      if (hilite) {
+         gl.useShader(ShaderProg.selectedColorPoint)
+         return true;
+      }
+      return false;        
    }
 };
 

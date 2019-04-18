@@ -215,110 +215,7 @@ DraftBench.prototype.updatePreview = function() {
    // compute index
    //this._computePreviewIndex();
 };
-/*
-DraftBench.prototype._resizePreview = function() {
-   let oldSize = this.lastPreviewSize.vertices;
-   let oldCentroidSize = this.lastPreviewSize.faces;
 
-   const size = this.vertices.length - oldSize;
-   const centroidSize = this.faces.length - oldCentroidSize;
-   if ((size > 0) || (centroidSize > 0)) {
-      let length = this.position.usedSize;
-      let centroidLength = this.preview.centroid.buf.data.length;
-      if (oldSize > 0) {
-         if (length > this.preview.barycentric.length) {
-            // create new length
-            this.preview.barycentric = new Float32Array(length);
-            let selected = new Uint8Array(length/3);
-            selected.set(this.preview.face.selected);
-            this.preview.face.selected = selected;
-         }
-         if (centroidLength > this.preview.centroid.barycentric.length) {
-            this.preview.centroid.barycentric = new Float32Array(centroidLength);
-         }
-      } else { // brand new
-         // created array
-         this.preview.barycentric = new Float32Array(length);
-         this.preview.face.selected = new Uint8Array(length/3);
-         this.preview.face.indexLenth = 0;
-         this.preview.face.visibleLength = 0;
-      
-         this.preview.centroid.barycentric = new Float32Array(centroidLength);
-      }
-      this.preview.barycentric.set(DraftBench.CONST.BARYCENTRIC);
-      this.preview.face.selected.fill(0, oldSize);
-      this.preview.centroid.barycentric.fill(1.0);
-      // upload the data to webgl
-      length = this.position.usedSize;
-      centroidLength = this.preview.centroid.buf.len;
-      this.preview.shaderData.resizeAttribute('position', (length+centroidLength)*4);
-      this.preview.shaderData.uploadAttribute('position', 0, this.position.buffer.subarray(0, length));
-      this.preview.shaderData.uploadAttribute('position', length*4, this.preview.centroid.buf.data.subarray(0, centroidLength));
-      this.preview.shaderData.resizeAttribute('barycentric', (length+centroidLength)*4);
-      this.preview.shaderData.uploadAttribute('barycentric', 0, this.preview.barycentric.subarray(0, length));
-      this.preview.shaderData.uploadAttribute('barycentric', length*4, this.preview.centroid.barycentric.subarray(0, centroidLength));
-      // invalidate hilite
-      this.hilite.indexLength = 0;
-      this.preview.isAltered = true;
-   }
-      
-   // compute index
-   if (this.preview.isAltered) {
-      this._computePreviewIndex();
-   }
-};
-
-
-DraftBench.prototype._computePreviewIndex = function() {
-   this.numberOfTriangles = this.faces.reduce( function(acc, element) {
-      return acc + element.numberOfVertex; // -2; for half the vertex
-   }, 0);
-   this.preview.indexLength = this.numberOfTriangles * 3;
-   this.preview.visibleLength = this.preview.indexLength;
-};
-*/
-/*
-DraftBench.prototype._computeFaceHiliteIndex = function(polygon, offset) {
-   if (this.hilite.numberOfTriangles < polygon.numberOfVertex) {
-      this.hilite.numberOfTriangles = polygon.numberOfVertex;
-      this.hilite.index = new Uint32Array(this.hilite.numberOfTriangles*3);
-   }
-   if (offset === undefined) {
-      offset = 0;
-   }
-   let indicesLength = 0;
-   let barycentric = this.vertices.length + polygon.index;
-   for (let hEdge of polygon.hEdges()) {
-      const vertex = hEdge.origin;
-      if (indicesLength > 0) {
-         this.hilite.index[offset+indicesLength++] = vertex.index;
-         this.hilite.index[offset+indicesLength++] = barycentric;
-      }
-      this.hilite.index[offset+indicesLength++] = vertex.index;
-   }
-   // last triangle using the first vertices
-   this.hilite.index[offset+indicesLength++] = this.hilite.index[offset];
-   this.hilite.index[offset+indicesLength++] = barycentric;
-
-   this.hilite.indexLength = offset+indicesLength;
-   // copy to gpu
-   this.preview.shaderData.setIndex('faceHilite', this.hilite.index);
-};
-
-DraftBench.prototype._computeGroupHiliteIndex = function(faceGroup) {
-   let numberOfTriangles = 0;
-   for (let polygon of faceGroup) {
-      numberOfTriangles += polygon.numberOfVertex;
-   }
-   if (this.hilite.numberOfTriangles < numberOfTriangles) {
-      this.hilite.numberOfTriangles = numberOfTriangles;
-      this.hilite.index = new Uint32Array(this.hilite.numberOfTriangles*3);
-   }
-   this.hilite.indexLength = 0;
-   for (let polygon of faceGroup) {
-      this._computeFaceHiliteIndex(polygon, this.hilite.indexLength);
-   }
-};*/
 
 
 DraftBench.prototype._updateAffected = function(affected) {
@@ -338,13 +235,6 @@ DraftBench.prototype._updateAffected = function(affected) {
    this.clearAffected();
 };
 
-/*
-DraftBench.prototype._updateVertex = function(vertex, affected) {
-   if (vertex.isLive()) {
-      // first the simple case, update the vertexPreview,
-      this.preview.shaderData.uploadAttribute('position', vertex.vertex.byteOffset, vertex.vertex);
-   }
-}; */
 
 DraftBench.prototype._updatePreviewFace = function(polygon) {
    // recompute boundingSphere centroid, and if numberOfVertex changed, needs to recompute index.
@@ -358,28 +248,6 @@ DraftBench.prototype._updatePreviewFace = function(polygon) {
    } */
 };
 
-
-/*
-
-DraftBench.prototype.hiliteBody = function(faceGroup, isHilite) {
-   if (isHilite) { // show
-      let checkColor = true;
-      this.hilite.color = DraftBench.theme.unselectedHilite;
-      for (let polygon of faceGroup) {
-         if (checkColor && ((this.preview.face.selected[polygon.index] & 1) === 1)) {
-            this.hilite.color = DraftBench.theme.selectedHilite;  // unnecessary assignment
-            checkColor = false;
-         }
-         this.preview.face.selected[polygon.index] |= 2;
-      }
-      this._computeGroupHiliteIndex(faceGroup);
-   } else { // hide 
-      this.hilite.indexLength = 0;
-      for (let polygon of faceGroup) { // clear flag
-         this.preview.face.selected[polygon.index] &= ~2;
-      }
-   }
-}; */
 
 
 /**
@@ -422,129 +290,8 @@ DraftBench.prototype.draw = function(gl, madsor) {
    } catch (e) {
       console.log(e);
    }
-/*
-   if (this.preview.isAltered) { // rebuild all
-      for (let material of this.materialList) {
-         //if (material.usageCount > 0) {
-         material.indexLength = 0;
-         material.index = new Uint32Array(this.preview.indexLength);    // give the maximum index
-         //}
-      }
-      for (let cage of madsor.visibleWireCage(false)) {  // wire only cage was drawn before.
-         for (let polygon of cage.geometry.faces) {
-            if (polygon.isVisible()) {
-               const material = polygon.material;
-               const center = polygon.index + this.vertices.length;
-               material.indexLength = polygon.buildIndex(material.index, material.indexLength, center);
-            }
-         }
-      }
-      for (let material of this.materialList) {
-         if (material.indexLength > 0) {
-            this.preview.shaderData.setIndex(material.uuid, material.index);
-         }
-         material.isAltered = false;
-         delete material.index;   // release memory
-      }
-      this.preview.isAltered = false;
-   } else { // rebuild only altered materials list.
-      let isAltered = false;
-      for (let material of this.materialList) {
-         if (material.isAltered) {
-            isAltered = true;
-            material.indexLength = 0;
-            material.index = new Uint32Array(this.preview.indexLength);    // give the maximum index
-         }
-      }
-      if (isAltered) {  // rebuild altered Material index
-         for (let cage of madsor.visibleWireCage(false)) {
-            for (let polygon of cage.geometry.faces) {
-               if (polygon.isVisible() && polygon.material.isAltered) {
-                  const material = polygon.material;
-                  const center = polygon.index + this.vertices.length;
-                  material.indexLength = polygon.buildIndex(material.index, material.indexLength, center);
-               }
-            }
-         }
-         // rebuild altered material
-         for (let material of this.materialList) {
-            if (material.isAltered) {
-               if (material.indexLength > 0) {
-                  this.preview.shaderData.setIndex(material.uuid, material.index);
-               }
-               delete material.index;
-               material.isAltered = false;
-            }
-         }
-      }
-   }
-   
-   // draw all polygon sorted by material
-   gl.bindAttribute(this.preview.shaderData, ['position', 'barycentric']);
-   this.preview.shaderData.setUniform4fv('color', DraftBench.theme.unselectedEdgeColor);
-   this.preview.shaderData.setUniform1f('lineWidth', DraftBench.pref.unselectedEdgeWidth);
-   gl.bindUniform(this.preview.shaderData, ['color', 'faceColor', 'lineWidth']);
-   for (let material of this.materialList) {  // draw normal polygon
-      if (material.indexLength > 0) {
-         const diffuse = material.pbr.baseColor;
-         this.preview.shaderData.setUniform4fv('faceColor', [diffuse[0], diffuse[1], diffuse[2], 1.0]);
-         gl.bindUniform(this.preview.shaderData, ['faceColor']);
-         gl.bindIndex(this.preview.shaderData, material.uuid);
-         gl.drawElements(gl.TRIANGLES, material.indexLength, gl.UNSIGNED_INT, 0);
-      }
-   } */
 };
 
-
-// draw hilite polygon then selected polygon.
-/*DraftBench.prototype.drawHilite = function(gl, madsor) {
-   if (this.hilite.indexLength > 0) {
-      try {
-         // set hilite color and hilite index
-         gl.bindAttribute(this.preview.shaderData, ['position', 'barycentric']);
-         this.preview.shaderData.setUniform4fv('color', DraftBench.theme.unselectedEdgeColor);
-         this.preview.shaderData.setUniform1f('lineWidth', DraftBench.pref.unselectedEdgeWidth);
-         this.preview.shaderData.setUniform4fv("faceColor", this.hilite.color);
-         gl.bindUniform(this.preview.shaderData, ['color', 'lineWidth', 'faceColor']);
-         gl.bindIndex(this.preview.shaderData, 'faceHilite');
-         gl.drawElements(gl.TRIANGLES, this.hilite.indexLength, gl.UNSIGNED_INT, 0);
-         // restore color
-         this.preview.shaderData.setUniform4fv("faceColor", DraftBench.theme.faceColor);
-      } catch (e) {
-         console.log(e);
-      }
-   }
-   // draw selected polygon
-   // first check index modification
-   if (this.preview.face.isAltered) {
-      const selection = new Uint32Array(this.preview.face.indexLenth);
-      let k = 0;
-      for (let cage of madsor.visibleWireCage(false)) {  // wire only cage was drawn before.
-         for (let polygon of cage.geometry.faces) {
-            if (polygon.isVisible()) {
-               const i = polygon.index;
-               const center = i + this.vertices.length;
-               if (this.preview.face.selected[i] & 1) {
-                  k = polygon.buildIndex(selection, k, center);
-               }
-            }
-         }
-      }
-      this.preview.face.visibleLength = k;
-      this.preview.shaderData.setIndex('selectedFace', selection);
-      this.preview.face.isAltered = false;
-   }
-   // draw faceSelected if not empty
-   if (this.preview.face.visibleLength > 0) {
-      gl.bindAttribute(this.preview.shaderData, ['position', 'barycentric']);
-      this.preview.shaderData.setUniform4fv('color', DraftBench.theme.unselectedEdgeColor);
-      this.preview.shaderData.setUniform1f('lineWidth', DraftBench.pref.unselectedEdgeWidth);
-      this.preview.shaderData.setUniform4fv('faceColor', DraftBench.theme.selectedColor);
-      gl.bindUniform(this.preview.shaderData, ['color', 'faceColor', 'lineWidth']);
-      gl.bindIndex(this.preview.shaderData, 'selectedFace');
-      gl.drawElements(gl.TRIANGLES, this.preview.face.visibleLength, gl.UNSIGNED_INT, 0);
-   }   
-}; */
 
 // draw vertex, select color, 
 DraftBench.prototype.drawVertex = function(gl, madsor) {
