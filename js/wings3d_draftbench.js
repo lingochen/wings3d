@@ -219,33 +219,8 @@ DraftBench.prototype.updatePreview = function() {
 
 
 DraftBench.prototype._updateAffected = function(affected) {
-/*   if (affected.vertices.size > 0) {
-      for (let vertex of affected.vertices) {
-         this._updateVertex(vertex, affected);
-      }
-   } */
-   if (affected.faces.size > 0) {
-      for (let face of affected.faces) {
-         this._updatePreviewFace(face);
-      }
-      // update index
-
-   }
 
    this.clearAffected();
-};
-
-
-DraftBench.prototype._updatePreviewFace = function(polygon) {
-   // recompute boundingSphere centroid, and if numberOfVertex changed, needs to recompute index.
- /*  if ((polygon.index < this.boundingSpheres.length) && polygon.isLive()) { // will be get recompute on resize
-      polygon.update();
-      const sphere = this.boundingSpheres[ polygon.index ];
-      sphere.setSphere( BoundingSphere.computeSphere(sphere.polygon, sphere.center) ); 
-      // update center
-      const index = this.vertices.length+polygon.index;
-      this.preview.shaderData.uploadAttribute('position', index*3*4, sphere.center);
-   } */
 };
 
 
@@ -393,18 +368,6 @@ DraftBench.prototype.drawPlane = (function() {
       gl.enable(gl.CULL_FACE);
    };
 })();
-
-
-DraftBench.prototype.selectGroup = function(selection, isOn) {
-   for (let polygon of selection) {
-      this.selectFace(polygon, isOn);
-   }
-};
-
-
-DraftBench.prototype.resetBody = function(bodyGroup) {
-   this.selectGroup(bodyGroup, false);    // turn group off.
-};
 
 
 /*

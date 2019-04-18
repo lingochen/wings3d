@@ -700,9 +700,8 @@ Polygon.prototype.isLive = function() {
 };
 
 Polygon.prototype.isVisible = function() {
-   const visible = Polygon.state.buffer[this.index] & 4;
-   //return (visible && (this.halfEdge !== null));
-   return (this.halfEdge !== null);
+   const visible = !(Polygon.state.buffer[this.index] & 4);
+   return (visible && (this.halfEdge !== null));
 }
 
 Polygon.prototype.buildIndex = function(data, index, center) {
@@ -889,6 +888,9 @@ const MeshAllocator = function(allocatedSize) {
    Polygon.state = new ByteBuffer(1);
    Polygon.material = new Float32Buffer(3);
    Polygon.normal = new Float32Buffer(3, allocatedSize);
+   // WingedTopology
+   WingedTopology.state = new ByteBuffer(1);
+   // data init
    this.vertices = [];     // class Vertex
    this.edges = [];        // class WingedEdge
    this.faces = [];        // class Polygon
@@ -1093,12 +1095,38 @@ MeshAllocator.prototype.addAffectedEdgeAndFace = function(vertex) {
 // Models on the same DraftBench can use the same Allocation. Merging becomes easier.
 //
 const WingedTopology = function(allocator) {
+   this.guid = WingedTopology.state.alloc();
    this.alloc = allocator;
    this.vertices = new Set;
    this.faces = new Set;
    this.edges = new Set;
 };
 WingedTopology.state = null;     // onOff, select, hilite state.
+
+WingedTopology.prototype.hide = function() {
+   this.setState(true, 4);
+};
+WingedTopology.prototype.show = function() {
+   this.setState(false, 4);
+};
+
+WingedTopology.prototype.setHilite = function(onOff) {
+   this.setState(onOff, 2);
+};
+
+WingedTopology.prototype.setSelect = function(onOff) {
+   this.setState(onOff, 1);
+};
+
+WingedTopology.prototype.setState = function(onOff, mask) {
+   const index = this.guid;
+   const state = WingedTopology.state.buffer[index];
+   if (onOff) {
+      return WingedTopology.state.set(index, state | mask);
+   } else {
+      return WingedTopology.state.set(index, state & (~mask));
+   }
+};
 
 // act as destructor
 WingedTopology.prototype.free = function() {

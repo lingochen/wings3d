@@ -601,8 +601,9 @@ PreviewCage.prototype.restoreFromBodyToMultiSelect = function(_snapshot) {
 
 PreviewCage.prototype._resetSelectBody = function() {
    const oldSet = this.snapshotSelectionBody();
-   this.selectedSet = new Set();
-   this.bench.resetBody(oldSet.body);
+   this.selectedSet.delete(this.geometry);
+   this.geometry.setSelect(false);
+   //this.geometry.setHilite(false);
    return oldSet;
 };
 
@@ -632,15 +633,11 @@ PreviewCage.prototype.selectBody = function() {
    //let faceColor;
    // we change interior color to show the selection
    if (this.hasSelection()) {
-      this.bench.selectGroup(this.selectedSet, false);
-      this.selectedSet = new Set;
-         //faceColor = [0.0, 1.0, 0.0];   // hilite and unselected         
-         //faceColor = [0.5, 0.5, 0.5];   // unselected
+      this.geometry.setSelect(false);
+      this.selectedSet.delete(this.geometry);
    } else {
-      this.selectedSet = new Set(this.geometry.faces);
-      this.bench.selectGroup(this.selectedSet, true);
-         //faceColor = [1.0, 1.0, 0.0];   // selected and hilite
-         //faceColor = [1.0, 0.0, 0.0];   // selected.
+      this.selectedSet.add(this.geometry);
+      this.geometry.setSelect(true);
       geometryStatus(i18n("body_status", {name: this.name, polygonSize: this.geometry.faces.size, edgeSize: this.geometry.edges.size, vertexSize: this.geometry.vertices.size}));
    }
    return this.hasSelection();
@@ -1521,7 +1518,9 @@ PreviewCage.prototype.selectFace = function(polygon) {
 PreviewCage.prototype._resetSelectFace = function() {
    const snapshot = this.snapshotSelectionFace();
    this.selectedSet = new Set;
-   this.bench.selectGroup(snapshot.selectedFaces, false);   // turn off selected Face
+   for (let polygon of snapshot.selectedFaces) {
+      polygon.setSelect(false);
+   }
    return snapshot;
 }
 
@@ -1559,7 +1558,7 @@ PreviewCage.prototype._selectFaceAll = function() {
    const snapshot = this.snapshotSelectionFace();
 
    for (let polygon of this.geometry.faces) {
-      if (polygon.isLive && !snapshot.selectedFaces.has(polygon)) {
+      if (polygon.isLive() && !snapshot.selectedFaces.has(polygon)) {
          this.selectFace(polygon);
       }
    }
