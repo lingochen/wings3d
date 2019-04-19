@@ -960,7 +960,7 @@ PreviewCage.prototype.restoreMoveSelection = function(snapshot) {
       vec3.copy(vertex, snapshot.position.subarray(i, i+3));
       i += 3;
    }
-//   this.bench.updatePosition();
+
    this.computeSnapshot(snapshot);
 };
 
@@ -979,7 +979,6 @@ PreviewCage.prototype.moveSelection = function(snapshot, movement) {
          vec3.add(vertex, vertex, movement);
       }
    }
-//   this.bench.updatePosition();
    this.computeSnapshot(snapshot);
 };
 
@@ -1023,7 +1022,6 @@ PreviewCage.prototype.transformSelection = function(snapshot, transformFn) {
       }
    }
 
-//   this.bench.updatePosition();
    this.computeSnapshot(snapshot);
 };
 

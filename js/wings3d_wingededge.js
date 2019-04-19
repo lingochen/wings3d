@@ -818,6 +818,7 @@ Polygon.prototype.update = function() {
    let halfEdge = begin;
    let current = begin;
    this.numberOfVertex = 0;
+   this[0] = this[1] = this[2] = 0.0;  // reset center
    do {
       vec3.add(this, this, current.origin);
       current.face = this;       // should be checking?
