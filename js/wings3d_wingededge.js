@@ -630,7 +630,7 @@ const Polygon = function(startEdge, size, material=Material.default) {
    Polygon.centerIndex.set(i, -this.index - 1);
    Polygon.centerIndex.set(i+1, this.index);       // this is don't care stuff
    Polygon.centerIndex.set(i+2, this.index);
-   Polygon.centerIndex.set(i+3, 0);
+   Polygon.centerIndex.set(i+3, -1);
 };
 Polygon.prototype = Object.create(BoundingSphere.prototype);
 Object.defineProperty(Polygon.prototype, 'constructor', { 
@@ -639,7 +639,7 @@ Object.defineProperty(Polygon.prototype, 'constructor', {
    writable: true });
 Polygon.isIndexModified = false; // 
 Polygon.state = null;         // state(selected, hilite). byte.
-Polygon.fakeHalf = null;      // fake halfEdge. (vertex, noHalfEdge(-Number), Polygon, Group)
+Polygon.centerIndex = null;      // fake halfEdge. (vertex, noHalfEdge(-Number), Polygon, Group)
 Polygon.material = null;      // material index to be merged with state, 2 bytes should be enough for material.
 Polygon.normal = null;        // normal per polygon.
 
@@ -668,6 +668,10 @@ Polygon.prototype.setState = function(onOff, mask) {
    } else {
       return Polygon.state.set(index, state & (~mask));
    }
+};
+
+Polygon.prototype.setGroup = function(idx) {
+   Polygon.centerIndex.set(this.index*4 + 3, idx);
 };
 
 /**
@@ -1266,6 +1270,7 @@ WingedTopology.prototype._createPolygon = function(halfEdge, numberOfVertex, mat
    } else {
       polygon = this.alloc.allocPolygon(halfEdge, numberOfVertex, material);
    }
+   polygon.setGroup(this.guid);
    this.faces.add(polygon);
    return polygon;
 };

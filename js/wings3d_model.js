@@ -503,7 +503,7 @@ PreviewCage.prototype.changeFromBodyToEdgeSelect = function() {
       // select all edge
       for (let wingedEdge of this.geometry.edges) {
          this.selectedSet.add(wingedEdge);
-         this.bench.setEdgeColor(wingedEdge, true);
+         wingedEdge.selectEdge(true);
       }
    }
 
@@ -913,13 +913,13 @@ PreviewCage.prototype.dragSelectEdge = function(selectEdge, dragOn) {
    if (this.selectedSet.has(wingedEdge)) { 
       if (dragOn === false) { // turn from on to off
          this.selectedSet.delete(wingedEdge);
-         this.bench.selectEdge(wingedEdge, false);
+         wingedEdge.selectEdge(false);
          return true;   // new off selection
       }
    } else {
       if (dragOn === true) {   // turn from off to on.
          this.selectedSet.add(wingedEdge);
-         this.bench.selectEdge(wingedEdge, true);
+         wingedEdge.selectEdge(true);
          return true;
       }
    }

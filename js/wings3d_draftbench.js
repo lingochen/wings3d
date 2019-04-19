@@ -371,26 +371,6 @@ DraftBench.prototype.drawPlane = (function() {
 })();
 
 
-/*
-DraftBench.prototype.resetSelectEdge = function() {
-   // zeroout the edge selection,
-   for (let i = 0; i < this.edgeState.buffer.length; ++i) {
-      this.edgeState.buffer[i] &= ~2;
-   }
-   // gpu needs to update all.
-   this.edgeState.alteredMin = 0 ;
-   this.edgeState.alteredMax = this.edgeState.buffer.length-1;
-};
-*/
-
-
-DraftBench.prototype.resetSelectFace = function() {
-   for (let polygon of this.faces) {
-      polygon.setSelect(false);           // reset all polygon to non-selected
-   }
-};
-
-
 class CheckPoint extends EditCommand { // do we really needs to inherited form EditCommand?
    CheckPoint(draftBench, editCommand) {
       this.command = editCommand;
