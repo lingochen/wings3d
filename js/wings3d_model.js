@@ -644,7 +644,7 @@ PreviewCage.prototype.selectBody = function() {
 };
 
 PreviewCage.prototype.hiliteBody = function(hilite) {
-   this.bench.hiliteBody(this.geometry.faces, hilite); 
+   this.geometry.setHilite(hilite);
 }
 
 PreviewCage.prototype.hasSelection = function() {

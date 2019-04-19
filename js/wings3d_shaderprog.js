@@ -66,7 +66,7 @@ vertex: index2TexCoord =>
    void main() {
       gl_Position = vec4(2.0, 2.0, 2.0, 1.0);         // culled as default.
       if ((polygonIndex.w < 0.0) || (polygonIndex.z < 0.0)) {  // non 
-         //return;
+         return;
       }
       float gState = texture2D(groupState, index2TexCoord(polygonIndex.w, groupStateHeight)).x * 255.0; // luminance === {l, l, l, 1}; l is [0-1]
       if (gState < 8.0) {
