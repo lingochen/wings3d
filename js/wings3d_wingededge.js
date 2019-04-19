@@ -111,9 +111,8 @@ WingedEdge.prototype.setEdgeMask = function(onOff, mask) {
    }
 };
 
-WingedEdge.prototype.setGroup = function(topology) {
+WingedEdge.prototype.setGroup = function(topologyIndex) {
    // update HalfEdge.index.
-   const topologyIndex = 0; // temporary
    const i = this.index * 2 * 4;
    HalfEdge.index.set(i+3, topologyIndex);
    HalfEdge.index.set(i+7, topologyIndex);
@@ -1280,7 +1279,7 @@ WingedTopology.prototype.addVertex = function(pt, delVertex) {
 
 WingedTopology.prototype._createEdge = function(begVert, endVert, delOutEdge) {
    const outEdge = this.alloc.allocEdge(begVert, endVert, delOutEdge);
-   outEdge.wingedEdge.setGroup(this);  // copy index.
+   outEdge.wingedEdge.setGroup(this.guid);  // copy index.
    this.edges.add(outEdge.wingedEdge);
    return outEdge;
 };
@@ -1293,6 +1292,7 @@ WingedTopology.prototype._freeVertex = function(vertex) {
 
 WingedTopology.prototype._freeEdge = function(edge) {
    if (this.edges.delete(edge.wingedEdge)){
+      edge.wingedEdge.setGroup(-1);
       this.alloc.freeHEdge(edge);
    }
 };

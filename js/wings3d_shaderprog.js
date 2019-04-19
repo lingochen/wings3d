@@ -38,43 +38,6 @@ let colorArray = {
       '   gl_FragColor = vColor;',
       '}'].join("\n"),
 };
-let selectedColorLine =  {  // we don't have geometry shader, so we have to manually pass barycentric to do 'single pass wireframe' 
-vertex: [       // http://codeflow.org/entries/2012/aug/02/easy-wireframe-display-with-barycentric-coordinates/
-   'attribute vec3 position;', 
-   'attribute vec3 barycentric;',
-   'uniform mat4 projection;', 
-   'uniform mat4 worldView;',
-
-   'varying vec3 vBC;',
-   'void main(){',
-      'vBC = barycentric;',
-      'gl_Position = projection * worldView * vec4(position, 1.0);',
-   '}'].join("\n"),
-
-fragment:[
-   '#extension GL_OES_standard_derivatives : enable',
-   'precision mediump float;',
-   'uniform vec4 faceColor;',
-   'uniform vec4 color;',
-   'uniform float lineWidth;',
-   'varying vec3 vBC;',
-
-   'float edgeFactor(){',
-      'vec3 d = fwidth(vBC);',
-      'vec3 a3 = smoothstep(vec3(0.0), d*lineWidth, vBC);',
-      'return min(min(a3.x, a3.y), a3.z);',
-   '}',
-
-   'void main(){',
-      // coloring by edge
-      'float edge = edgeFactor();',
-      'if (edge < 1.0) {',
-        'gl_FragColor = mix(color, faceColor, edge);',
-      '} else {',
-         'discard;',
-      '}',
-   '}'].join("\n"),
-};
 let drawSelectablePolygon = {
 vertex: index2TexCoord =>
 `  uniform mat4 projection;
@@ -87,10 +50,12 @@ vertex: index2TexCoord =>
    // positionTexture, centroidTexture, stateTexture, materialTexture, vertexColorTexture, 
    uniform highp sampler2D positionBuffer;
    uniform highp sampler2D centerBuffer;
+   uniform sampler2D groupState;
    uniform sampler2D faceState;
    uniform float positionBufferHeight;
    uniform float centerBufferHeight;
    uniform float faceStateHeight;
+   uniform float groupStateHeight;
 
 
    varying vec4 color;                    // color of material * vertex 
@@ -100,27 +65,33 @@ vertex: index2TexCoord =>
 
    void main() {
       gl_Position = vec4(2.0, 2.0, 2.0, 1.0);         // culled as default.
-      int state = int(texture2D(faceState, index2TexCoord(polygonIndex.z, faceStateHeight)).x * 255.0); // luminance === {l, l, l, 1}; l is [0-1]
-      if (state < 8) {
-         //float packColor = texture2D(materialColor, index2TexCoord(polygonIndex.z, materialColorHeight)).r;   // material color
-         color = vec4(0.5, 0.5, 0.5, 1.0);
-         if (state == 0) {
-            stateColor = color;       // current Material color
-         } else {
-            for (int i = 1; i < 4; i++) {
-               if (i == state) {
-                  stateColor = faceColor[i];
-                  break;
+      if ((polygonIndex.w < 0.0) || (polygonIndex.z < 0.0)) {  // non 
+         //return;
+      }
+      float gState = texture2D(groupState, index2TexCoord(polygonIndex.w, groupStateHeight)).x * 255.0; // luminance === {l, l, l, 1}; l is [0-1]
+      if (gState < 8.0) {
+         int state = int(max(gState, texture2D(faceState, index2TexCoord(polygonIndex.z, faceStateHeight)).x * 255.0)); // luminance === {l, l, l, 1}; l is [0-1]         
+         if (state < 8) {
+            //float packColor = texture2D(materialColor, index2TexCoord(polygonIndex.z, materialColorHeight)).r;   // material color
+            color = vec4(0.5, 0.5, 0.5, 1.0);
+            if (state == 0) {
+               stateColor = color;       // current Material color
+            } else {
+               for (int i = 1; i < 4; i++) {
+                  if (i == state) {
+                     stateColor = faceColor[i];
+                     break;
+                  }
                }
             }
+            vec3 pos;
+            if (polygonIndex.x >= 0.0) {
+               pos = texture2D(positionBuffer, index2TexCoord(polygonIndex.x, positionBufferHeight)).xyz;
+            } else {
+               pos = texture2D(centerBuffer, index2TexCoord((-polygonIndex.x) - 1.0, centerBufferHeight)).xyz;
+            }
+            gl_Position = projection * worldView * vec4(pos, 1.0);
          }
-         vec3 pos;
-         if (polygonIndex.x >= 0.0) {
-            pos = texture2D(positionBuffer, index2TexCoord(polygonIndex.x, positionBufferHeight)).xyz;
-         } else {
-            pos = texture2D(centerBuffer, index2TexCoord((-polygonIndex.x) - 1.0, centerBufferHeight)).xyz;
-         }
-         gl_Position = projection * worldView * vec4(pos, 1.0);
       }
    }
 `,
@@ -328,27 +299,6 @@ let solidColor = {
       '  gl_FragColor = faceColor;',
       '}'].join("\n")
 };
-let simplePoint = { 
-   vertex: [
-      'attribute vec3 position;',
-      'attribute vec3 color;',
-      'uniform mat4 worldView;',
-      'uniform mat4 projection;',			
-      
-      'varying vec3 vColor;',
-      'void main() {',
-      '  vColor = color;',
-      '  gl_Position = projection * worldView * vec4(position, 1.0);',
-      '  gl_PointSize = 8.8;',
-      '}'].join("\n"),
-   fragment: [
-      'precision mediump float;',
-      'varying vec3 vColor;',
-
-      'void main() {',
-         ' gl_FragColor = vec4(vColor, 1.0);',
-      '}'].join("\n")
-};
 let colorPoint = {
    vertex: [
       'attribute vec3 position;',
@@ -424,109 +374,7 @@ let wireframeLine = {   // http://codeflow.org/entries/2012/aug/02/easy-wirefram
       }
    `
 };
-let solidWireframe = {  // we don't have geometry shader, so we have to manually pass barycentric to do 'single pass wireframe' 
-   vertex: [       // http://codeflow.org/entries/2012/aug/02/easy-wireframe-display-with-barycentric-coordinates/
-      'attribute vec3 position;', 
-      'attribute vec3 barycentric;',
-      'uniform mat4 projection;', 
-      'uniform mat4 worldView;',
 
-      'varying vec3 vBC;',
-      'void main(){',
-         'vBC = barycentric;',
-         'gl_Position = projection * worldView * vec4(position, 1.0);',
-      '}'].join("\n"),
-
-   fragment:[
-      '#extension GL_OES_standard_derivatives : enable',
-      'precision mediump float;',
-      'uniform vec4 color;',
-      'uniform vec4 faceColor;',
-      'varying vec3 vBC;',
-
-      'float edgeFactor(){',
-         'vec3 d = fwidth(vBC);',
-         'vec3 a3 = smoothstep(vec3(0.0), d*1.1, vBC);',
-         'return min(min(a3.x, a3.y), a3.z);',
-      '}',
-
-      'void main(){',
-         // coloring by edge
-         'gl_FragColor = mix(color, faceColor, edgeFactor());',
-      '}'].join("\n"),
-};
-let edgeSolidWireframe = {  // we don't have geometry shader, so we have to manually pass barycentric to do 'single pass wireframe' 
-      vertex: [       // http://codeflow.org/entries/2012/aug/02/easy-wireframe-display-with-barycentric-coordinates/
-         'attribute vec3 position;', 
-         'attribute vec3 barycentric;',
-         'uniform mat4 projection;', 
-         'uniform mat4 worldView;',
-
-         'varying vec3 vBC;',
-         'void main(){',
-            'vBC = barycentric;',
-            'gl_Position = projection * worldView * vec4(position, 1.0);',
-         '}'].join("\n"),
-
-      fragment:[
-         '#extension GL_OES_standard_derivatives : enable',
-         'precision mediump float;',
-         'uniform vec4 color;',
-         'uniform vec4 faceColor;',
-         'uniform float lineWidth;',
-         'varying vec3 vBC;',
-
-         'float edgeFactor(){',
-            'vec3 d = fwidth(vBC);',
-            'vec3 a3 = smoothstep(vec3(0.0), d*lineWidth, vBC);',
-            'return min(min(a3.x, a3.y), a3.z);',
-         '}',
-
-         'void main(){',
-            // coloring by edge
-            'gl_FragColor = mix(color, faceColor, edgeFactor());',
-         '}'].join("\n"),
-};
-let colorSolidWireframe = {  // we don't have geometry shader, so we have to manually pass barycentric to do 'single pass wireframe' 
-   vertex: [       // http://codeflow.org/entries/2012/aug/02/easy-wireframe-display-with-barycentric-coordinates/
-      'attribute vec3 position;', 
-      'attribute vec3 barycentric;',
-      'attribute float selected;',  // (x,y), x is for edge, y is for interior. (y>0 is turnon), (x==1 is turnon).
-      'uniform mat4 projection;', 
-      'uniform mat4 worldView;',
-
-      'varying vec3 vBC;',
-      'varying float vSelected;',
-      'void main(){',
-         'vSelected = selected;',
-         'vBC = barycentric;',
-         'gl_Position = projection * worldView * vec4(position, 1.0);',
-      '}'].join("\n"),
-
-   fragment:[
-      '#extension GL_OES_standard_derivatives : enable',
-      'precision mediump float;',
-      'uniform vec4 faceColor;',
-      'uniform vec4 selectedColor;',  // hilite color
-      'varying vec3 vBC;',
-      'varying float vSelected;',
-
-      'float edgeFactor(){',
-         'vec3 d = fwidth(vBC);',
-         'vec3 a3 = smoothstep(vec3(0.0), d*1.5, vBC);',
-         'return min(min(a3.x, a3.y), a3.z);',
-      '}',
-
-      'void main(){',
-         'vec4 interiorColor = faceColor;',
-         'if (vSelected == 1.0) {',
-         '  interiorColor = selectedColor;',
-         '}',
-         // coloring by edge
-         'gl_FragColor.rgb = mix(vec3(0.0), vec3(interiorColor), edgeFactor());',
-         'gl_FragColor.a = interiorColor[3];',
-      '}'].join("\n"),
-};
 
 Wings3D.onReady(function() {
    const index2TexCoord = 
@@ -539,17 +387,7 @@ Wings3D.onReady(function() {
 
    solidColor = gl.createShaderProgram(solidColor.vertex, solidColor.fragment);
 
-   simplePoint = gl.createShaderProgram(simplePoint.vertex, simplePoint.fragment);
-
    colorPoint = gl.createShaderProgram(colorPoint.vertex, colorPoint.fragment);
-
-   solidWireframe = gl.createShaderProgram(solidWireframe.vertex, solidWireframe.fragment);
-
-   edgeSolidWireframe = gl.createShaderProgram(edgeSolidWireframe.vertex, edgeSolidWireframe.fragment);
-
-   colorSolidWireframe = gl.createShaderProgram(colorSolidWireframe.vertex, colorSolidWireframe.fragment);
-
-   selectedColorLine = gl.createShaderProgram(selectedColorLine.vertex, selectedColorLine.fragment);
 
    wireframeLine = gl.createShaderProgram(wireframeLine.vertex(index2TexCoord), wireframeLine.fragment);
 
@@ -563,17 +401,12 @@ Wings3D.onReady(function() {
 export {
    uColorArray,
    colorArray,
-   selectedColorLine,
    wireframeLine,
    selectedWireframeLine,
    selectedColorPoint,
    textArray,
    cameraLight,
    solidColor,
-   simplePoint,
    colorPoint,
-   solidWireframe,
-   edgeSolidWireframe,
-   colorSolidWireframe,
    drawSelectablePolygon,
 };

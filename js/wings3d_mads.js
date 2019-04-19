@@ -409,7 +409,7 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
 
    // default draw FaceHlite, needs to override by vertex/edge/multi mode.
    polygonShader(gl, _hilite) {
-      gl.useShader(ShaderProg.drawSelectablePolygon);//gl.useShader(ShaderProg.solidWireframe);
+      gl.useShader(ShaderProg.drawSelectablePolygon);
    }
    edgeShader(gl, _hilite) {
       gl.useShader(ShaderProg.wireframeLine);

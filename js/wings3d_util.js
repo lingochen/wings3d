@@ -392,14 +392,14 @@ function clamp(number, min, max) {
    return Math.min(max, Math.max(min, value));
 };
 
-const Vec3View = function(buffer, index = 0) {
+const Vec3View = function(buffer, offset = 0) {
    this.buffer = buffer;
-   this.offset = index * 3;
+   this.offset = offset;
 };
 
-Vec3View.prototype.init = function(buffer, index) {
+Vec3View.prototype.init = function(buffer, offset) {
    this.buffer = buffer;
-   this.offset = index *3;
+   this.offset = offset;
    return this;
 }
 

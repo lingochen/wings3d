@@ -72,7 +72,7 @@ class MultiMadsor extends Madsor {
 
    
    polygonShader(gl, _hilite) {
-      gl.useShader(ShaderProg.drawSelectablePolygon);//gl.useShader(ShaderProg.solidWireframe);
+      gl.useShader(ShaderProg.drawSelectablePolygon);
    }
    edgeShader(gl, hilite) {
       if (hilite) {

@@ -18,7 +18,7 @@ import {gl, ShaderData} from './wings3d_gl.js';
 import * as ShaderProg from './wings3d_shaderprog.js';
 import * as Util from './wings3d_util.js';
 import {BoundingSphere} from './wings3d_boundingvolume.js';
-import {MeshAllocator, WingedEdge, HalfEdge, Polygon, Vertex} from './wings3d_wingededge.js';
+import {MeshAllocator, WingedTopology, WingedEdge, HalfEdge, Polygon, Vertex} from './wings3d_wingededge.js';
 import {EditCommand} from './wings3d_undo.js';
 
 
@@ -43,6 +43,7 @@ const DraftBench = function(theme, prop, materialList, defaultSize = 2048) {  //
    var layoutFloat = ShaderData.attribLayout(1);
    this.preview.shaderData.createAttribute('polygonIndex', layoutVec4, gl.STATIC_DRAW);
    this.preview.shaderData.createSampler("faceState", 2, 1, gl.UNSIGNED_BYTE);
+   this.preview.shaderData.createSampler("groupState", 3, 1, gl.UNSIGNED_BYTE);
    this.preview.shaderData.createSampler('positionBuffer', 0, 3, gl.FLOAT);
    this.preview.shaderData.createSampler('centerBuffer', 1, 3, gl.FLOAT);
    this.preview.shaderData.createIndex('triangleList');
@@ -245,7 +246,7 @@ DraftBench.prototype.draw = function(gl, madsor) {
 
       // update polygon, group state if needed
       this.preview.shaderData.updateSampler("faceState", Polygon.state);
-      // this.preview.shaderData.updateSampler("groupState", WingedTopology.state);
+      this.preview.shaderData.updateSampler("groupState", WingedTopology.state);
 
       // update material if needed
 
@@ -256,7 +257,7 @@ DraftBench.prototype.draw = function(gl, madsor) {
       gl.bindAttribute(this.preview.shaderData, ['polygonIndex']);
 
       // bindUniform all
-      gl.bindUniform(this.preview.shaderData, ['faceColor', 'faceState', 'faceStateHeight',
+      gl.bindUniform(this.preview.shaderData, ['faceColor', 'faceState', 'faceStateHeight', 'groupState', 'groupStateHeight',
                                                'positionBuffer', 'positionBufferHeight', 'centerBuffer', 'centerBufferHeight']);
 
       gl.bindIndex(this.preview.shaderData, 'triangleList');
