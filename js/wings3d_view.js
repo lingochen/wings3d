@@ -863,6 +863,10 @@ function drawWorld(gl) {
          return;
       }
 
+      //gl.enable(gl.BLEND);
+      //gl.blendFunc(gl.SRC_COLOR, gl.DST_COLOR);
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
       //offset
       gl.enable(gl.POLYGON_OFFSET_FILL);
       gl.polygonOffset(1.0, 1.0);          // Set the polygon offset
@@ -874,8 +878,8 @@ function drawWorld(gl) {
       // end offset
 
       // blend 
-      gl.enable(gl.BLEND);
-      gl.blendFunc(gl.SRC_COLOR, gl.DST_COLOR);
+      //gl.enable(gl.BLEND);
+      gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
       mode.current.edgeShader(gl, hilite.edge !== null);
       gl.bindTransform();
       _environment.draftBench.drawEdge(gl, mode.current);

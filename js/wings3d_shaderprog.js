@@ -70,10 +70,15 @@ vertex: index2TexCoord =>
       }
       float gState = texture2D(groupState, index2TexCoord(polygonIndex.w, groupStateHeight)).x * 255.0; // luminance === {l, l, l, 1}; l is [0-1]
       if (gState < 8.0) {
+         float transparency = 1.0;
+         if (gState >= 4.0) {
+            transparency = 0.0;
+            gState -= 4.0;       // == gState & ~4;
+         }
          int state = int(max(gState, texture2D(faceState, index2TexCoord(polygonIndex.z, faceStateHeight)).x * 255.0)); // luminance === {l, l, l, 1}; l is [0-1]         
-         if (state < 8) {
+         if (state < 4) {
             //float packColor = texture2D(materialColor, index2TexCoord(polygonIndex.z, materialColorHeight)).r;   // material color
-            color = vec4(0.5, 0.5, 0.5, 1.0);
+            color = vec4(0.5, 0.5, 0.5, transparency);
             if (state == 0) {
                stateColor = color;       // current Material color
             } else {

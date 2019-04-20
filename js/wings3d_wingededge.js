@@ -1107,11 +1107,17 @@ const WingedTopology = function(allocator) {
 };
 WingedTopology.state = null;     // onOff, select, hilite state.
 
+
+
 WingedTopology.prototype.hide = function() {
-   this.setState(true, 4);
+   this.setState(true, 8);
 };
 WingedTopology.prototype.show = function() {
-   this.setState(false, 4);
+   this.setState(false, 8);
+};
+
+WingedTopology.prototype.setTransparency = function(onOff) {
+   this.setState(onOff, 4);
 };
 
 WingedTopology.prototype.setHilite = function(onOff) {

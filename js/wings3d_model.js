@@ -408,13 +408,13 @@ PreviewCage.prototype.setVisible = function(on) {
    if (on) {
       if (!this.status.visible) {
          this.status.visible = true;
-         this.bench.alterPreview();
+         this.geometry.show();
          return (!on);
       }
    } else {
       if (this.status.visible) {
          this.status.visible = false;
-         this.bench.alterPreview();
+         this.geometry.hide();
          return (!on);
       }
    }
@@ -449,13 +449,13 @@ PreviewCage.prototype.toggleWireMode = function(on) {
    if (on) {
       if (!this.status.wireMode) {
          this.status.wireMode = true;
-         this.bench.alterPreview();
+         this.geometry.setTransparency(true);
          return (!on);
       }
    } else {
       if (this.status.wireMode) {
          this.status.wireMode = false;
-         this.bench.alterPreview();
+         this.geometry.setTransparency(false);
          return (!on);
       }
    }
