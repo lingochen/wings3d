@@ -56,7 +56,7 @@ const DraftBench = function(theme, prop, materialList, defaultSize = 2048) {  //
 
    // previewEdge selected
    this.preview.edge = {};
-   this.preview.shaderData.createAttribute('indexBuffer', layoutVec, gl.STATIC_DRAW);
+   this.preview.shaderData.createAttribute('indexBuffer', layoutVec4, gl.STATIC_DRAW);
    this.preview.shaderData.createSampler("edgeState", 1, 1, gl.UNSIGNED_BYTE);
 
    // previewVertex
@@ -309,12 +309,15 @@ DraftBench.prototype.drawEdge = function(gl, madsor) {
 
       // update edgeState. should refactored.
       this.preview.shaderData.updateSampler("edgeState", WingedEdge.state);
+      // update polygon, group state if needed
+      //this.preview.shaderData.updateSampler("faceState", Polygon.state);
+      this.preview.shaderData.updateSampler("groupState", WingedTopology.state);
 
       // bindUniform all
-      gl.bindUniform(this.preview.shaderData, ['edgeColor', 'edgeWidth',
+      gl.bindUniform(this.preview.shaderData, ['edgeColor', 'edgeWidth', 'groupState', 'groupStateHeight',
                                                'positionBuffer', 'positionBufferHeight', 'edgeState', 'edgeStateHeight']);
 
-      gl.drawArrays(gl.TRIANGLES,  0, WingedEdge.index.usedSize/3);
+      gl.drawArrays(gl.TRIANGLES,  0, WingedEdge.index.usedSize/4);
    } catch (e) {
       console.log(e);
    }

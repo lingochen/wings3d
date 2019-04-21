@@ -80,6 +80,9 @@ vertex: index2TexCoord =>
             //float packColor = texture2D(materialColor, index2TexCoord(polygonIndex.z, materialColorHeight)).r;   // material color
             color = vec4(0.5, 0.5, 0.5, transparency);
             if (state == 0) {
+               if (transparency == 0.0) { // whole triangle is transparent.
+                  return;
+               }
                stateColor = color;       // current Material color
             } else {
                for (int i = 1; i < 4; i++) {
@@ -117,7 +120,6 @@ fragment:
    }
 ` 
 };
-// gl_Position = vec4(2.0,2.0,2.0, 1.0);
 let selectedWireframeLine = {   // http://codeflow.org/entries/2012/aug/02/easy-wireframe-display-with-barycentric-coordinates/
    vertex: index2TexCoord => `//#extension OES_texture_float : enable
       uniform mat4 projection; 
@@ -126,14 +128,16 @@ let selectedWireframeLine = {   // http://codeflow.org/entries/2012/aug/02/easy-
       uniform vec4 edgeColor[8];
       uniform float edgeWidth[8];
 
-      // draw triangle array.
-      attribute highp vec3 indexBuffer;
+      // (vertex, wEdge, face, group)
+      attribute highp vec4 indexBuffer;
 
       // position texture (x,y,z), state texture(uint8)
       uniform highp sampler2D positionBuffer;
       uniform sampler2D edgeState;
+      uniform sampler2D groupState;
       uniform float positionBufferHeight;
       uniform float edgeStateHeight;
+      uniform float groupStateHeight;
 
       varying vec3 vBC;
       varying float lineWidth;
@@ -143,10 +147,18 @@ let selectedWireframeLine = {   // http://codeflow.org/entries/2012/aug/02/easy-
 
       void main() {
          gl_Position = vec4(2.0, 2.0, 2.0, 1.0);         // culled as default.
-         if (indexBuffer.z >= 0.0) {
-            vBC = vec3(1.0, indexBuffer.z, 1.0);
-  
-            int state = int(texture2D(edgeState, index2TexCoord(indexBuffer.y, edgeStateHeight)).x * 255.0); // luminance === {l, l, l, 1}; l is [0-1]
+         if ((indexBuffer.w < 0.0) || (indexBuffer.z < 0.0)) {  // no group, or no face
+            return;
+         }
+         float gState = texture2D(groupState, index2TexCoord(indexBuffer.w, groupStateHeight)).x * 255.0; // luminance === {l, l, l, 1}; l is [0-1]
+         if (gState < 8.0) {
+            vBC = vec3(1.0, 0.0, 1.0);
+            float indexBufferY = indexBuffer.y;
+            if (indexBufferY < 0.0) {
+               vBC.y = 1.0;
+               indexBufferY = (-indexBufferY) - 1.0;     // convert to positive
+            }
+            int state = int(texture2D(edgeState, index2TexCoord(indexBufferY, edgeStateHeight)).x * 255.0); // luminance === {l, l, l, 1}; l is [0-1]
             for (int i = 0; i < 8; i++) {
                if (i == state) {
                   color = edgeColor[i];
@@ -155,6 +167,7 @@ let selectedWireframeLine = {   // http://codeflow.org/entries/2012/aug/02/easy-
                }
             }
             vec3 pos = texture2D(positionBuffer, index2TexCoord(indexBuffer.x, positionBufferHeight)).xyz;
+         
             gl_Position = projection * worldView * vec4(pos, 1.0);
          }
       }
@@ -176,7 +189,6 @@ let selectedWireframeLine = {   // http://codeflow.org/entries/2012/aug/02/easy-
          float edge = edgeFactor();
          if (edge < 1.0) {
             gl_FragColor = vec4(color.rgb, (1.0-edge)*0.95);
-            //gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
          } else {
             discard;
          }
@@ -334,12 +346,14 @@ let wireframeLine = {   // http://codeflow.org/entries/2012/aug/02/easy-wirefram
       // color of various state
       uniform vec4 edgeColor[8];
 
-      // draw triangle array.
-      attribute highp vec3 indexBuffer;
+      // (vertex, wEdge, face, group)
+      attribute highp vec4 indexBuffer;
 
       // position texture (x,y,z), state texture(uint8)
       uniform highp sampler2D positionBuffer;
+      uniform sampler2D groupState;
       uniform float positionBufferHeight;
+      uniform float groupStateHeight;
 
       varying vec3 vBC;
       varying vec4 color;
@@ -348,8 +362,16 @@ let wireframeLine = {   // http://codeflow.org/entries/2012/aug/02/easy-wirefram
 
       void main() {
          gl_Position = vec4(2.0, 2.0, 2.0, 1.0);         // culled as default.
-         if (indexBuffer.z >= 0.0) {
-            vBC = vec3(1.0, indexBuffer.z, 1.0);  
+         if ((indexBuffer.w < 0.0) || (indexBuffer.z < 0.0)) {  // no group, or no face
+            return;
+         }
+
+         float gState = texture2D(groupState, index2TexCoord(indexBuffer.w, groupStateHeight)).x * 255.0; // luminance === {l, l, l, 1}; l is [0-1]
+         if (gState < 8.0) {
+            vBC = vec3(1.0, 0.0, 1.0);
+            if (indexBuffer.y < 0.0) {
+               vBC.y = 1.0;
+            }
             color = edgeColor[0];                        // unselected color
  
             vec3 pos = texture2D(positionBuffer, index2TexCoord(indexBuffer.x, positionBufferHeight)).xyz;

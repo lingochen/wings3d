@@ -112,8 +112,13 @@ WingedEdge.prototype.setEdgeMask = function(onOff, mask) {
 };
 
 WingedEdge.prototype.setGroup = function(topologyIndex) {
+   // update WingedEdge.index;
+   let i = this.index * 24;      // 4*3*2;
+   for (let j = i; j < (i+23); j+=4) {
+      WingedEdge.index.set(j+3, topologyIndex);
+   }
    // update HalfEdge.index.
-   const i = this.index * 2 * 4;
+   i = this.index * 2 * 4;
    HalfEdge.index.set(i+3, topologyIndex);
    HalfEdge.index.set(i+7, topologyIndex);
 };
@@ -130,31 +135,31 @@ WingedEdge.prototype.getIndex = function(hEdge) {
  */
 WingedEdge.prototype.updateIndex = function(hEdge) {
    const data = WingedEdge.index.buffer;
-   let idx = this.index * 18;    // 18 = 3*3*2;
+   let idx = this.index * 24;    // 24 = 4*3*2;
    if (this.right === hEdge) {
-      idx += 9;
+      idx += 12;
    }
 
    if (idx < WingedEdge.index.alteredMin) {
       WingedEdge.index.alteredMin = idx;
    }  
 
-   let draw = hEdge.face ? hEdge.face.isVisible() : false;
-   data[idx++] = hEdge.origin.index;
+   const faceId = hEdge.face ? hEdge.face.index : -1;
+   data[idx++] = hEdge.origin ? hEdge.origin.index : -1;   // vertexId
+   data[idx++] = this.index;           // wEdge
+   data[idx++] = faceId;               // face
+   idx++;                              // body
+   data[idx++] = hEdge.destination() ? hEdge.destination().index : -1;
    data[idx++] = this.index;
-   data[idx++] = draw ? 0 : -1;
-   data[idx++] = hEdge.destination().index;
-   data[idx++] = this.index;
-   data[idx++] = draw ? 0 : -1;
-   data[idx++] = hEdge.next.destination().index;
-   data[idx++] = this.index;
-   data[idx] = draw ? 1 : -1;
+   data[idx++] = faceId;
+   idx++;
+   data[idx++] = hEdge.next ? hEdge.next.destination().index : -1;
+   data[idx++] = (-this.index) - 1;    // -wEdge - 1. barycentric indication.
+   data[idx]   =  faceId;
    
    if (idx > WingedEdge.index.alteredMax) {
       WingedEdge.index.alteredMax = idx;
    }
-
-   return ++idx;
 }
 
 WingedEdge.prototype.isLive = function() {
@@ -234,14 +239,16 @@ HalfEdge.color = null;
 // HalfEdge.texCoord = null;  
 // HalfEdge.texCoord1 = null;
 HalfEdge.triangleList = null; // Polygon.index = (HalfEdge.totalSize * 3) - (hEdge, hEdge, fakeCenterToDo)
-HalfEdge.edgeIndex = null;    // HalfEdge index = (HalfEdge.totalSize *3) - (hEdge, hEdge, hEdge) - draw center.
+//HalfEdge.edgeIndex = null;    // HalfEdge index = (HalfEdge.totalSize *3) - (hEdge, hEdge, hEdge) - draw center.
+//HalfEdge.barycentric = null;  // clutch for webgl1
 Object.defineProperties(HalfEdge.prototype, {
    origin: {get: function() {return this._origin;},
             set: function(vertex) {
                this._origin = vertex;
                // update index
                let i = this.wingedEdge.getIndex(this) * 4;
-               HalfEdge.index.set(i, vertex.index);
+               const idx = vertex ? vertex.index : -1;
+               HalfEdge.index.set(i, idx);
             } },
    face: {get: function() {return this._face;},
           set: function(polygon) {
@@ -625,10 +632,10 @@ const Polygon = function(startEdge, size, material=Material.default) {
    this.numberOfVertex = size;      // how many vertex in the polygon
    this.assignMaterial(material);
    this.update(); //this.computeNormal();
-   Polygon.centerIndex.alloc();                     // (vIdx, hIdx, face, group) (vIdx is negative number)
+   Polygon.centerIndex.alloc();                    // (vIdx, hIdx, face, group) (vIdx is negative number)
    const i = this.index * 4;
    Polygon.centerIndex.set(i, -this.index - 1);
-   Polygon.centerIndex.set(i+1, this.index);       // this is don't care stuff
+   Polygon.centerIndex.set(i+1, -1);               // fakeHalf edge is all -1
    Polygon.centerIndex.set(i+2, this.index);
    Polygon.centerIndex.set(i+3, -1);
 };
@@ -876,7 +883,7 @@ const MeshAllocator = function(allocatedSize) {
    Material.default = Material.create("default");
    Material.dead = Material.create("dead");
    // wEdge
-   WingedEdge.index = new Float32Buffer(18);           // drawing index.
+   WingedEdge.index = new Float32Buffer(24);           // drawing index.
    WingedEdge.state = new ByteBuffer(1),    // unsigned byte state
    // HalfEdge
    HalfEdge.index = new Float32Buffer(4);   // (vIdx, hIdx, pIdx, gIdx)
