@@ -544,7 +544,7 @@ ShaderData.prototype.updateAttribute = function(name, bufferObj) {
       this.uploadAttribute(name, 0, bufferObj.buffer.subarray(0, bufferObj.usedSize));
       bufferObj._resetCounter(); // clear altered buffer.
    } else if (bufferObj.isAltered()) {
-      this.uploadAttribute(name, bufferObj.alterdMin*4, bufferObj.buffer.subarray(bufferObj.alterdMin, bufferObj.alteredMax+1));
+      this.uploadAttribute(name, bufferObj.alteredMin*4, bufferObj.buffer.subarray(bufferObj.alteredMin, bufferObj.alteredMax+1));
       bufferObj._resetCounter();
    }
 };
@@ -869,7 +869,7 @@ BufferObject.prototype.getBuffer = function() {
 
 BufferObject.prototype.getChanged = function() {
    return {byteOffset: this.alteredMin*this.byteSize(),
-           array: this.buffer.subarray(this.alterdMin, this.alteredMax+1)};
+           array: this.buffer.subarray(this.alteredMin, this.alteredMax+1)};
 };
 
 

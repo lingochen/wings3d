@@ -350,17 +350,15 @@ HalfEdge.prototype.eachEdge = function(callbackfn) {
 //
 const Vertex = function(index) {
    Vertex.index.alloc();                     // get value from global buffer
-   Vertex.state.alloc();
    let posOffset = Vertex.position.alloc();   // allocate component.
    // real init
    this.outEdge = null;
    this.posOffset = posOffset;
    this._index = index;
-   const i = posOffset/3;
-   Vertex.index.set(i, i);
+   const i = posOffset;
+   Vertex.index.set(i, i/3);
 };
-Vertex.index = null;  // index and state not combined eventhough it map one on one. 
-Vertex.state = null;
+Vertex.index = null;  // (vIndex, state, group) - map together. (how about webgl2?)
 Vertex.position = null;
 
 
@@ -411,9 +409,9 @@ Vertex.prototype.show = function() {
 };
 
 Vertex.prototype.resetState = function() {
-   const index =this.posOffset/3;
-   const state = parseInt(Vertex.state.buffer[index]);
-   Vertex.state.set(index, state & 128);   // clear all bit except hide/show
+   const index =this.posOffset+1;
+   const state = parseInt(Vertex.index.buffer[index]);
+   Vertex.index.set(index, state & 128);   // clear all bit except hide/show
 };
 
 Vertex.prototype.setHilite = function(onOff) {
@@ -430,14 +428,19 @@ Vertex.prototype.setMagnet = function(onOff) {
 }
 
 Vertex.prototype.setState = function(onOff, mask) {
-   const index = this.posOffset/3;
+   const index = this.posOffset + 1;
 
-   const state = parseInt(Vertex.state.buffer[index]);   // float to int, so easier to mask?
+   const state = parseInt(Vertex.index.buffer[index]);   // float to int, so easier to mask?
    if (onOff) {
-      return Vertex.state.set(index, state | mask);
+      return Vertex.index.set(index, state | mask);
    } else {
-      return Vertex.state.set(index, state & (~mask));
+      return Vertex.index.set(index, state & (~mask));
    }
+};
+
+Vertex.prototype.setGroup = function(topology) {
+   const index = this.posOffset+2;
+   Vertex.index.set(index, topology);
 };
 
 
@@ -889,8 +892,7 @@ const MeshAllocator = function(allocatedSize) {
    HalfEdge.index = new Float32Buffer(4);   // (vIdx, hIdx, pIdx, gIdx)
    HalfEdge.triangleList = new Int32Buffer(3);     // (hEdge0, hEdge1, hEdge2)
    // Vertex
-   Vertex.index = new Float32Buffer(1);
-   Vertex.state = new Float32Buffer(1);
+   Vertex.index = new Float32Buffer(3);
    Vertex.position = this.position = new Float32Buffer(3, allocatedSize);  // position buffer.
    // polygon
    BoundingSphere.center = new Float32Buffer(3, allocatedSize);
@@ -1293,6 +1295,7 @@ WingedTopology.prototype._createPolygon = function(halfEdge, numberOfVertex, mat
 WingedTopology.prototype.addVertex = function(pt, delVertex) {
    const vertex = this.alloc.allocVertex(pt, delVertex);
    this.vertices.add(vertex);
+   vertex.setGroup(this.guid);
    return vertex;
 };
 
@@ -1305,6 +1308,7 @@ WingedTopology.prototype._createEdge = function(begVert, endVert, delOutEdge) {
 // recycled
 WingedTopology.prototype._freeVertex = function(vertex) {
    if (this.vertices.delete(vertex)) {
+      vertex.setGroup(-1);
       this.alloc.freeVertex(vertex);
    }
 };

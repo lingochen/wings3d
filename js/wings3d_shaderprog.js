@@ -206,12 +206,13 @@ let selectedColorPoint = {
       uniform float sizeOfVertex[8];
 
       // draw point array;
-      attribute highp float vertexIndex;                 // klutch 
-      attribute float vertexState;
+      attribute highp vec3 vertexIndex;                 // (vIndex, state, group)
 
       // attribute texture
       uniform highp sampler2D positionBuffer;
+      uniform sampler2D groupState;
       uniform float positionBufferHeight;
+      uniform float groupStateHeight;
 
       // output
       varying vec4 color;
@@ -220,11 +221,15 @@ let selectedColorPoint = {
 
       void main(void) {
          gl_Position = vec4(2.0, 2.0, 2.0, 1.0);         // culled as default.
-         if (vertexState < 128.0) {
-            vec3 pos = texture2D(positionBuffer, index2TexCoord(vertexIndex, positionBufferHeight)).xyz;
+         if (vertexIndex.z < 0.0) {
+            return;
+         }
+         float gState = texture2D(groupState, index2TexCoord(vertexIndex.z, groupStateHeight)).x * 255.0; // luminance === {l, l, l, 1}; l is [0-1]
+         if ((gState < 8.0) && (vertexIndex.y < 128.0)) {
+            vec3 pos = texture2D(positionBuffer, index2TexCoord(vertexIndex.x, positionBufferHeight)).xyz;
             gl_Position = projection * worldView * vec4(pos, 1.0);
 
-            int vState = int(vertexState);
+            int vState = int(vertexIndex.y);
             for (int i = 0; i < 8; ++i) {
                if (i == vState) {
                   color = vertexColor[i];

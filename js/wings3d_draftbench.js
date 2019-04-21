@@ -38,9 +38,9 @@ const DraftBench = function(theme, prop, materialList, defaultSize = 2048) {  //
 
    this.preview = {centroid: {}, indexLength: 0, visibleLength: 0, isAltered: false};
    this.preview.shaderData = gl.createShaderData();
-   var layoutVec = ShaderData.attribLayout();
+   var layoutVec = ShaderData.attribLayout(3);
    var layoutVec4 = ShaderData.attribLayout(4);
-   var layoutFloat = ShaderData.attribLayout(1);
+   //var layoutFloat = ShaderData.attribLayout(1);
    this.preview.shaderData.createAttribute('polygonIndex', layoutVec4, gl.STATIC_DRAW);
    this.preview.shaderData.createSampler("faceState", 2, 1, gl.UNSIGNED_BYTE);
    this.preview.shaderData.createSampler("groupState", 3, 1, gl.UNSIGNED_BYTE);
@@ -61,8 +61,7 @@ const DraftBench = function(theme, prop, materialList, defaultSize = 2048) {  //
 
    // previewVertex
    this.preview.vertex = {};
-   this.preview.shaderData.createAttribute('vertexIndex', layoutFloat, gl.DYNAMIC_DRAW);
-   this.preview.shaderData.createAttribute('vertexState', layoutFloat, gl.DYNAMIC_DRAW);
+   this.preview.shaderData.createAttribute('vertexIndex', layoutVec, gl.DYNAMIC_DRAW);
 
    // body state.
    this.previewBody = {hilite: false};
@@ -274,19 +273,20 @@ DraftBench.prototype.drawVertex = function(gl, madsor) {
    try {
       // indexBuffer upload if needed, 
       this.preview.shaderData.updateAttribute("vertexIndex", Vertex.index);
+      // now bind Attribute
+      gl.bindAttribute(this.preview.shaderData, ['vertexIndex']);
 
-      // stateBuffer upload if needed
-      this.preview.shaderData.updateAttribute("vertexState", Vertex.state);
-      gl.bindAttribute(this.preview.shaderData, ['vertexIndex', 'vertexState']);
+      // update groupState if needed
+      this.preview.shaderData.updateSampler("groupState", WingedTopology.state);
 
       // update positionBuffer texture if modified
       this.preview.shaderData.updateSampler("positionBuffer", Vertex.position); // this.position === Vertex.position
 
       // bindUniform all
-      gl.bindUniform(this.preview.shaderData, ['vertexColor', 'sizeOfVertex',
+      gl.bindUniform(this.preview.shaderData, ['vertexColor', 'sizeOfVertex', 'groupState', 'groupStateHeight',
                                                'positionBuffer', 'positionBufferHeight']);
 
-      gl.drawArrays(gl.POINTS,  0, Vertex.index.usedSize);
+      gl.drawArrays(gl.POINTS,  0, Vertex.index.usedSize/3);
    } catch (e) {
       console.log(e);
    }
