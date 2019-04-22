@@ -427,7 +427,10 @@ SamplerBuffer.prototype.bufferSubData = function(formatOffset, buffer, srcOffset
       if (!length) {
          length = buffer.length - srcOffset;
       } else {
-         length = Math.ceil(length/this.formatChannel) * this.formatChannel;  // pad to structure.
+         let end = srcOffset+length;
+         srcOffset = Math.floor(srcOffset/this.formatChannel) * this.formatChannel;   // pad to structure
+         end = Math.ceil(end/this.formatChannel) * this.formatChannel; 
+         length = end - srcOffset;
       }
       buffer = buffer.subarray(srcOffset, srcOffset+length);
    }
