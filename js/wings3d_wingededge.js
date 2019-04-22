@@ -638,8 +638,8 @@ const Polygon = function(startEdge, size, material=Material.default) {
    this.update(); //this.computeNormal();
    Polygon.centerIndex.alloc();                    // (vIdx, hIdx, face, group) (vIdx is negative number)
    const i = this.index * 4;
-   Polygon.centerIndex.set(i, -this.index - 1);
-   Polygon.centerIndex.set(i+1, -1);               // fakeHalf edge is all -1
+   Polygon.centerIndex.set(i, this.index);
+   Polygon.centerIndex.set(i+1, -this.index - 1);  // fakeHalf edge is all -1
    Polygon.centerIndex.set(i+2, this.index);
    Polygon.centerIndex.set(i+3, -1);
 };

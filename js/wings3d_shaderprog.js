@@ -65,7 +65,7 @@ vertex: index2TexCoord =>
 
    void main() {
       gl_Position = vec4(2.0, 2.0, 2.0, 1.0);         // culled as default.
-      if ((polygonIndex.w < 0.0) || (polygonIndex.z < 0.0)) {  // non 
+      if ((polygonIndex.w < 0.0) || (polygonIndex.z < 0.0) || (polygonIndex.x < 0.0)) {  // non 
          return;
       }
       float gState = texture2D(groupState, index2TexCoord(polygonIndex.w, groupStateHeight)).x * 255.0; // luminance === {l, l, l, 1}; l is [0-1]
@@ -93,10 +93,10 @@ vertex: index2TexCoord =>
                }
             }
             vec3 pos;
-            if (polygonIndex.x >= 0.0) {
+            if (polygonIndex.y >= 0.0) {
                pos = texture2D(positionBuffer, index2TexCoord(polygonIndex.x, positionBufferHeight)).xyz;
             } else {
-               pos = texture2D(centerBuffer, index2TexCoord((-polygonIndex.x) - 1.0, centerBufferHeight)).xyz;
+               pos = texture2D(centerBuffer, index2TexCoord(polygonIndex.x, centerBufferHeight)).xyz;
             }
             gl_Position = projection * worldView * vec4(pos, 1.0);
          }

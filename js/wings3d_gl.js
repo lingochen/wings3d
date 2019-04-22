@@ -872,9 +872,12 @@ BufferObject.prototype.getBuffer = function() {
    return this.buffer.subarray(0, this.usedSize);
 };
 
+// aligned to componentSize, much easier to reason about.
 BufferObject.prototype.getChanged = function() {
-   return {byteOffset: this.alteredMin*this.byteSize(),
-           array: this.buffer.subarray(this.alteredMin, this.alteredMax+1)};
+   let start = Math.floor(this.alteredMin/this.componentSize) * this.componentSize;
+   let end = Math.ceil((this.alteredMax+1)/this.componentSize) * this.componentSize;
+   return {byteOffset: start*this.byteSize(),
+           array: this.buffer.subarray(start, end)};
 };
 
 
