@@ -700,6 +700,9 @@ Polygon.prototype.assignMaterial = function(material) {
    }
 }
 
+Object.defineProperty(Polygon.prototype, 'normal', {
+   get: function() { return new Vec3View(Polygon.normal, this.cntrOffset);},
+});
 Polygon.prototype.getNormal = function(normal) {
    let index = this.cntrOffset;
    normal[0] = Polygon.normal[index];

@@ -428,6 +428,8 @@ Object.defineProperties(Vec3View.prototype, {
         set: function(value) {this.buffer[this.offset+1] = value; return value;} },
    2: { get: function() {return this.buffer[this.offset+2];},
         set: function(value) {this.buffer[this.offset+2] = value; return value;} },
+   length: { get: function() { return 3;},
+             set: function(_value) {}}
 });
 
 
@@ -463,7 +465,9 @@ Object.defineProperties(Vec4View.prototype, {
    2: { get: function() {return this.buffer[this.offset+2];},
         set: function(value) {this.buffer[this.offset+2] = value; return value;} },
    3: { get: function() {return this.buffer[this.offset+3];},
-        set: function(value) {this.buffer[this.offset+3] = value; return value;} }
+        set: function(value) {this.buffer[this.offset+3] = value; return value;} },
+   length: { get: function() { return 4;},
+             set: function(_value) {}} 
 });
 
 
