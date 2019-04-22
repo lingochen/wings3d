@@ -426,12 +426,14 @@ SamplerBuffer.prototype.bufferSubData = function(formatOffset, buffer, srcOffset
    } else { // get new view(rectangle) of the buffer
       if (!length) {
          length = buffer.length - srcOffset;
+      } else {
+         length = Math.ceil(length/this.formatChannel) * this.formatChannel;  // pad to structure.
       }
       buffer = buffer.subarray(srcOffset, srcOffset+length);
    }
 
    // compute update rectangle.
-   const formatLength = (length/this.formatChannel);
+   const formatLength = Math.ceil(length/this.formatChannel);
    const yOffset = Math.floor(formatOffset / gl.textureSize);
    const yEnd = Math.floor((formatOffset+formatLength) / gl.textureSize);
    const height = yEnd - yOffset + 1;
