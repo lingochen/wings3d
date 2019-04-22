@@ -375,9 +375,10 @@ Object.defineProperties(Vertex.prototype, {
    1: { get: function() {return Vertex.position.buffer[this.posOffset+1];},
         set: function(value) {Vertex.position.set(this.posOfset+1, value);} },
    2: { get: function() {return Vertex.position.buffer[this.posOffset+2];},
-        set: function(value) {Vertex.position.set(this.posOffset+2, value);} }
-});
-
+        set: function(value) {Vertex.position.set(this.posOffset+2, value);} },
+   length: { get: function() { return 3;},
+             set: function(_value) {}}
+}); 
 Vertex.prototype.set = function(inArray) {
    Vertex.position.set(this.posOffset, inArray[0]);
    Vertex.position.set(this.posOffset+1, inArray[1]);

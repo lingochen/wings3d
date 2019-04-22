@@ -109,10 +109,6 @@ DraftBench.CONST = (function() {
    const constant = {};
 
    constant.EDGEWIDTH = 1.1;
-   constant.BARYCENTRIC = new Float32Array(3);
-   constant.BARYCENTRIC[0] = 1.0;
-   constant.BARYCENTRIC[1] = 0.0;
-   constant.BARYCENTRIC[2] = 1.0;
    return constant;
 }());
 
