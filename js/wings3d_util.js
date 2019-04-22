@@ -389,7 +389,7 @@ function get_uuidv4() {
  };
 
 function clamp(number, min, max) {
-   return Math.min(max, Math.max(min, value));
+   return Math.min(max, Math.max(min, number));
 };
 
 const Vec3View = function(buffer, offset = 0) {
