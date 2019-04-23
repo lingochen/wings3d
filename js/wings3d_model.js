@@ -485,7 +485,7 @@ PreviewCage.prototype._getGeometrySize = function() {
 
 
 PreviewCage.prototype._updatePreviewAll = function() {
-   this.bench.updatePreview();
+   this.bench.updateAffected();
 };
 
 

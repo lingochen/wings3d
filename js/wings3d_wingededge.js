@@ -1105,6 +1105,25 @@ MeshAllocator.prototype.addAffectedEdgeAndFace = function(vertex) {
      }
    });
 };
+MeshAllocator.prototype.updateAffected = function() {
+   for (let vertex of this.affected.vertices) {
+      if (vertex.isLive()) {
+         for (let hEdge of vertex.edgeRing()) {
+            if (hEdge.face) {
+               this.affected.faces.add(hEdge.face);
+            }
+         }
+      }
+   }
+
+   for (let polygon of this.affected.faces) {
+      if (polygon.isLive()) {
+         polygon.update();
+      }
+   }
+   // now cleanup.
+   this.clearAffected();
+};
 
 
 // 
