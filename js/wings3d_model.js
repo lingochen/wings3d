@@ -1930,16 +1930,16 @@ PreviewCage.prototype.extrudeVertex = function() {
          hEdge = newOut.pair.next;                          // move to next
          // connect vertex
          if (prevHalf) {
-            let outConnect = this.geometry.insertEdge(prevHalf, newOut.next);
+            let outConnect = this.geometry.insertEdge(newOut, prevHalf);
             extrudeLoops.push( outConnect );
-            prevHalf = outConnect.next.pair;
+            prevHalf = newOut.pair;
          } else {
             firstHalf = newOut;   // remember to save the first one
-            prevHalf = newOut.next.pair;
+            prevHalf = newOut.pair;
          }
       } while (hEdge !== firstHalf);   // firstHalf is the new vertex.outEdge;
       // connect last to first loop.
-      let outConnect = this.geometry.insertEdge(prevHalf, firstHalf.next);
+      let outConnect = this.geometry.insertEdge(firstHalf, prevHalf);
       extrudeLoops.push( outConnect );
    }
 

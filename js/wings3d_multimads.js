@@ -63,7 +63,7 @@ class MultiMadsor extends Madsor {
          this.doAll(snapshots, PreviewCage.prototype.restoreFromMultiToFaceSelect);
       } else if (toMadsor instanceof VertexMadsor) {
          this.doAll(snapshots, PreviewCage.prototype.restoreFromMultiToVertexSelect);
-      } else if (toMadsor instanceof EdgeVertex) {
+      } else if (toMadsor instanceof EdgeMadsor) {
          this.doAll(snapshots, PreviewCage.prototype.restoreFromMultiToEdgeSelect);
       } else {
          this.doAll(snapshots, PreviewCage.prototype.restoreFromMultiToBodySelect);      
