@@ -271,8 +271,8 @@ class VertexCollapseCommand extends EditCommand {
       View.restoreFaceMode(this.dissolve);
    }
 
-   undo() {
-      this.madsor.resetSelection();
+   undo(current) {
+      current.resetSelection();
       View.restoreVertexMode();
       this.madsor.undoDissolve(this.dissolve);
    }
