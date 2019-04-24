@@ -1951,7 +1951,7 @@ PreviewCage.prototype.undoExtrudeVertex = function(extrude) {
    const oldSize = this._getGeometrySize();
 
    for (let hEdge of extrude.insertEdges) {
-      this.geometry.removeEdge(hEdge.pair);
+      this.geometry.removeEdge(hEdge);
    }
    for (let hEdge of extrude.splitEdges) {
       this.geometry.collapseEdge(hEdge.pair);

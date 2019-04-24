@@ -659,8 +659,9 @@ ShaderData.prototype.updateSampler = function(name, bufferObj) {
          bufferObj._resetCounter();
          this.setUniform1f(nameHeight, sampler.height);
       } else if (bufferObj.isAltered()) {  // needs to update?
+         let interval = bufferObj.getInterval();
          let offset = bufferObj.alteredMin;
-         sampler.bufferSubData(offset/bufferObj.component, bufferObj.buffer, offset, bufferObj.alteredMax - offset + 1);
+         sampler.bufferSubData(interval.start/bufferObj.component, bufferObj.buffer, interval.start, interval.end - interval.start);
          bufferObj._resetCounter();
       }
    } else {
@@ -874,11 +875,20 @@ BufferObject.prototype.getBuffer = function() {
 
 // aligned to componentSize, much easier to reason about.
 BufferObject.prototype.getChanged = function() {
-   let start = Math.floor(this.alteredMin/this.componentSize) * this.componentSize;
-   let end = Math.ceil((this.alteredMax+1)/this.componentSize) * this.componentSize;
+   let start = Math.floor(this.alteredMin/this.component) * this.component;
+   let end =  (Math.floor(this.alteredMax/this.component)+1) * this.component;
    return {byteOffset: start*this.byteSize(),
            array: this.buffer.subarray(start, end)};
 };
+
+BufferObject.prototype.getInterval = function() {
+   const ret = {start: 0, end: 0};
+   if (this.isAltered()) {
+      ret.start = Math.floor(this.alteredMin/this.component) * this.component;
+      ret.end =  (Math.floor(this.alteredMax/this.component)+1) * this.component;
+   }
+   return ret;
+}
 
 
 BufferObject.prototype.alloc = function() {

@@ -243,36 +243,42 @@ HalfEdge.triangleList = null; // Polygon.index = (HalfEdge.totalSize * 3) - (hEd
 //HalfEdge.barycentric = null;  // clutch for webgl1
 Object.defineProperties(HalfEdge.prototype, {
    origin: {get: function() {return this._origin;},
-            set: function(vertex) {
-               this._origin = vertex;
-               // update index
-               let i = this.wingedEdge.getIndex(this) * 4;
-               const idx = vertex ? vertex.index : -1;
-               HalfEdge.index.set(i, idx);
+            set: function(pt) {
+               if (this._origin !== pt) {
+                  this._origin = pt;
+                  // update index
+                  let i = this.wingedEdge.getIndex(this) * 4;
+                  const idx = pt ? pt.index : -1;
+                  HalfEdge.index.set(i, idx);
+               }
             } },
    face: {get: function() {return this._face;},
           set: function(polygon) {
-            this._face = polygon;
-            // update index
-            const i = this.wingedEdge.getIndex(this) * 4;
-            const idx = this.getIndex();
-            if (polygon) {
-               HalfEdge.index.set(i+2, polygon.index);
-               HalfEdge.triangleList.set(idx*3+2, -polygon.index - 1);    // centerFakehEdge.
-            } else {
-               HalfEdge.index.set(i+2, -1);              // negative number indicate null polygon.
-               HalfEdge.triangleList.set(idx*3+2, idx);           // null face. point back to self.
+            if (this._face !== polygon) {
+               this._face = polygon;
+               // update index
+               const i = this.wingedEdge.getIndex(this) * 4;
+               const idx = this.getIndex();
+               if (polygon) {
+                  HalfEdge.index.set(i+2, polygon.index);
+                  HalfEdge.triangleList.set(idx*3+2, -polygon.index - 1);    // centerFakehEdge.
+               } else {
+                  HalfEdge.index.set(i+2, -1);              // negative number indicate null polygon.
+                  HalfEdge.triangleList.set(idx*3+2, idx);           // null face. point back to self.
+               }
             }
           } },
    next: {get: function() {return this._next;},
           set: function(hEdge) {
-             this._next = hEdge;
-             const idx = this.getIndex();
-             let index = idx;
-             if (hEdge) {
-                index = hEdge.getIndex();
+             if (this._next !== hEdge) {
+               this._next = hEdge;
+               const idx = this.getIndex();
+               let index = idx;
+               if (hEdge) {
+                  index = hEdge.getIndex();
+               }
+               HalfEdge.triangleList.set(idx*3+1, index);  // point to next
              }
-             HalfEdge.triangleList.set(idx*3+1, index);  // point to next
           }}
 });
 
@@ -1112,6 +1118,13 @@ MeshAllocator.prototype.updateAffected = function() {
             if (hEdge.face) {
                this.affected.faces.add(hEdge.face);
             }
+         }
+      }
+   }
+   for (let wEdge of this.affected.edges) {
+      for (let hEdge of wEdge) {
+         if (hEdge.face) {
+            this.affected.faces.add(hEdge.face);
          }
       }
    }
