@@ -2642,9 +2642,9 @@ WingedTopology.prototype.removePolygon = function(polygon) {
 /*function isCorner(outEdge) {
    const prev = outEdge.prev();
    const a = vec3.create();
-   vec3.sub(a, outEdge.destination().vertex, outEdge.origin.vertex); 
+   vec3.sub(a, outEdge.destination(), outEdge.origin); 
    const b = vec3.create();
-   vec3.sub(b, prev.origin.vertex, prev.destination().vertex);
+   vec3.sub(b, prev.origin, prev.destination());
    const cosTheta = vec3.dot(a, b) / (vec3.len(a) + vec3.len(b));
    // none straight line is corner; cos 180 === -1. cos 0 === 1.
    return cosTheta > -0.992;   // ~< 175 degree. is a corner.
@@ -3061,7 +3061,7 @@ WingedTopology.prototype.invert = function() {
 WingedTopology.prototype.flip = function(pivot, axis) {
    const axisX2 = pivot[axis] * 2;
    for (let vertex of this.vertices) {
-      vertex[axis] = axisX2 - vertex[axis];        // == center[axis] - (vertex.vertex[axis]-center[ais])
+      vertex[axis] = axisX2 - vertex[axis];        // == center[axis] - (vertex[axis]-center[ais])
          this.addAffectedEdgeAndFace(vertex);      // optimiztion: addAllAffected() functions.
       }
 };

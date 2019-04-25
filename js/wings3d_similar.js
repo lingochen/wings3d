@@ -108,13 +108,13 @@ class SimilarFace extends SimilarGeometry {
       const m = SimilarGeometry.mStruct();
       polygon.eachEdge( function(edge) {
          if (m.aLength === -1) {
-            vec3.sub(m.a, edge.prev().origin.vertex, edge.origin.vertex);
+            vec3.sub(m.a, edge.prev().origin, edge.origin);
             m.aLength = vec3.length(m.a);
          } else {
             vec3.negate(m.a, m.b);
             m.aLength = m.bLength;
          }
-         vec3.sub(m.b, edge.destination().vertex, edge.origin.vertex);
+         vec3.sub(m.b, edge.destination(), edge.origin);
          m.bLength = vec3.length(m.b);
          SimilarGeometry.computeRatio(m);
       });
@@ -145,9 +145,9 @@ class SimilarWingedEdge extends SimilarGeometry {
          // down side.
          const hEdgeA = hEdge.prev();
          const hEdgeB = hEdge.next;
-         vec3.sub(metric.a, hEdgeA.origin.vertex, hEdge.origin.vertex);
+         vec3.sub(metric.a, hEdgeA.origin, hEdge.origin);
          metric.aLength = vec3.length(metric.a); 
-         vec3.sub(metric.b, hEdgeB.origin.vertex, hEdge.origin.vertex);
+         vec3.sub(metric.b, hEdgeB.origin, hEdge.origin);
          metric.bLength = vec3.length(metric.b);
          SimilarGeometry.computeRatio(metric);
          const norm = vec3.create();
@@ -157,7 +157,7 @@ class SimilarWingedEdge extends SimilarGeometry {
          // up
          vec3.negate(metric.a, metric.b);
          metric.aLength = metric.bLength;
-         vec3.sub(metric.b, hEdgeB.destination().vertex, hEdgeB.origin.vertex);
+         vec3.sub(metric.b, hEdgeB.destination(), hEdgeB.origin);
          metric.bLength = vec3.length(metric.b);
          SimilarGeometry.computeRatio(metric);
       }
@@ -187,13 +187,13 @@ class SimilarVertex extends SimilarGeometry {
       const m = SimilarGeometry.mStruct();
       vertex.eachOutEdge( function(edge) {
          if (m.aLength === -1) {
-            vec3.sub(m.a, edge.destination().vertex, vertex.vertex);  // similar to SimilarFace, but everything point outEdge.
+            vec3.sub(m.a, edge.destination(), vertex);  // similar to SimilarFace, but everything point outEdge.
             m.aLength = vec3.length(m.a);
          } else {
             vec3.copy(m.a, m.b);
             m.aLength = m.bLength;
          }
-         vec3.sub(m.b, edge.destination().vertex, vertex.vertex);
+         vec3.sub(m.b, edge.destination(), vertex);
          m.bLength = vec3.length(m.b);
          SimilarGeometry.computeRatio(m);
       });
