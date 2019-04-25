@@ -113,9 +113,9 @@ WingedEdge.prototype.setEdgeMask = function(onOff, mask) {
 
 WingedEdge.prototype.setGroup = function(topologyIndex) {
    // update WingedEdge.index;
-   let i = this.index * 24;      // 4*3*2;
-   for (let j = i; j < (i+23); j+=4) {
-      WingedEdge.index.set(j+3, topologyIndex);
+   let i = this.index * 24 + 3;      // 4*3*2;
+   for (let j = 0; j < 6; j++, i+=4) {
+      WingedEdge.index.set(i, topologyIndex);
    }
    // update HalfEdge.index.
    i = this.index * 2 * 4;

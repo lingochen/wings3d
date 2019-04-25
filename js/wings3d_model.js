@@ -2877,7 +2877,7 @@ PreviewCage.prototype.loopCut = function() {
 
    if (partitionGroup.length < 2) {   // make sure, there is at least 2 partition.
       geometryStatus("less than 2 partitions");
-      return false;
+      return null;
    }
 
    // we have to separate from smallest to largest, so that separation can gel into single face correctly.
