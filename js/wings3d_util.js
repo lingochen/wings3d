@@ -115,8 +115,8 @@ function intersectPlaneAABB(plane, box) {
 // paul burke explain the intersection code pretty clearly.
 // same side check and coplane check are from moller.
 function intersectPlaneHEdge(out, plane, hEdge) {
-   const pt0 = hEdge.origin.vertex;
-   const pt1 = hEdge.destination().vertex;
+   const pt0 = hEdge.origin;
+   const pt1 = hEdge.destination();
 
    let d0 = vec3.dot(plane.normal, pt0) - plane.distance; 
    let d1 = vec3.dot(plane.normal, pt1) - plane.distance;
@@ -261,8 +261,8 @@ function reflectionMat4(mat, norm, pt) {
 function computeAngle(crossNorm, v0, v1, v2) {
    let edge0 = vec3.create(), edge1 = vec3.create();
    // angle = pi - atan2(v[i] x v[i+1].magnitude, v[i] * v[i+1]);
-   vec3.sub(edge0, v0.vertex, v1.vertex);
-   vec3.sub(edge1, v2.vertex, v1.vertex);
+   vec3.sub(edge0, v0, v1);
+   vec3.sub(edge1, v2, v1);
    vec3.cross(crossNorm, edge0, edge1);
    let rad = Math.atan2(vec3.length(crossNorm), vec3.dot(edge0, edge1));
    vec3.normalize(crossNorm, crossNorm);
@@ -300,10 +300,10 @@ function projectVec3(vertices, planeNormal, planeOrigin) {
    const pt = vec3.create();
 
    for (let vertex of vertices) {
-      vec3.sub(pt, vertex.vertex, planeOrigin);
+      vec3.sub(pt, vertex, planeOrigin);
       let d = vec3.dot(pt, planeNormal);
       vec3.scale(pt, planeNormal, d);
-      vec3.sub(vertex.vertex, vertex.vertex, pt);
+      vec3.sub(vertex, vertex, pt);
    }
 };
 
