@@ -2583,6 +2583,12 @@ PreviewCage.prototype.edgeRing = function(nth) {
 // bridge, and unbridge
 PreviewCage.prototype.bridge = function(targetFace, sourceFace) {
    if (this.selectedSet.size === 2) {  // make sure. it really target, source
+      for (let polygon of targetFace.oneRing()) {  // make sure they are not neighbor
+         if (polygon === sourceFace) {
+            return null;
+         }
+      }
+
       const oldSize = this._getGeometrySize();
 
       const deltaCenter = vec3.create();
