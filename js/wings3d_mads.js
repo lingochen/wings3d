@@ -408,14 +408,21 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
    toggleMulti(_hilite) {}
 
    // default draw FaceHlite, needs to override by vertex/edge/multi mode.
-   polygonShader(gl, _hilite) {
+   polygonShader(gl, _selectable) {
       gl.useShader(ShaderProg.drawSelectablePolygon);
    }
-   edgeShader(gl, _hilite) {
-      gl.useShader(ShaderProg.wireframeLine);
+   edgeShader(gl, selectable) {
+      if (selectable) {
+         gl.useShader(ShaderProg.selectedWireframeLine);
+      } else {
+         gl.useShader(ShaderProg.wireframeLine);
+      }
    }
-   vertexShader(_gl, _hilite) {  // let vertexMadsor override.
-      return false;        
+   vertexShader(gl, selectable) {  // let vertexMadsor override.
+      if (selectable) {
+         gl.useShader(ShaderProg.selectedColorPoint);
+      }
+      return selectable;      
    }
 }
 

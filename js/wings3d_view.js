@@ -880,11 +880,11 @@ function drawWorld(gl) {
       // blend 
       //gl.enable(gl.BLEND);
       gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-      mode.current.edgeShader(gl, hilite.edge !== null);
+      mode.current.edgeShader(gl, isEdgeSelectable());//hilite.edge !== null);
       gl.bindTransform();
       _environment.draftBench.drawEdge(gl, mode.current);
 
-      if (mode.current.vertexShader(gl, hilite.vertex !== null)) {
+      if (mode.current.vertexShader(gl, isVertexSelectable())) { //hilite.vertex !== null)) {
          gl.bindTransform();
          _environment.draftBench.drawVertex(gl, mode.current);
       }
