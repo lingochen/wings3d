@@ -2398,6 +2398,7 @@ PreviewCage.prototype.collapseSelectedFace = function() {
 };
 PreviewCage.prototype.undoCollapseFace = function(collapse) {
    this.restoreCollapseEdge(collapse);
+   this._resetSelectEdge();
 };
 
 
