@@ -576,7 +576,7 @@ ShaderData.prototype.updateAttributeEx = function(name, bufferOne, bufferTwo) {
                gl.bindBuffer(gl.ARRAY_BUFFER, attrb.handle);
             }
             const data = bufferTwo.getChanged();
-            gl.bufferSubData(gl.ARRAY_BUFFER, bufferOne.byteLenth() + data.byteOffset, data.array);
+            gl.bufferSubData(gl.ARRAY_BUFFER, bufferOne.byteLength() + data.byteOffset, data.array);
          }
       } 
       bufferOne._resetCounter();
