@@ -2372,8 +2372,8 @@ PreviewCage.prototype.dissolveSelectedFace = function() {
 };
 PreviewCage.prototype.undoDissolveFace = function(dissolve) {
    const oldSize = this._getGeometrySize();
-   for (let dissolveUndo of dissolve.edges) {
-      dissolveUndo();
+   for (let undoDissolve of dissolve.edges) {
+      this.geometry.restoreDissolveEdge(undoDissolve);
    }
    this.selectedSet.clear();
    // reselected the polygon in order.
