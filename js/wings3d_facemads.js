@@ -510,7 +510,7 @@ class LiftFaceHandler extends EditSelectHandler {  // also moveable
       if (hilite.edge && (this.contours.edges.has(hilite.edge.wingedEdge))) {
          // compute axis and center.
          this.axis = vec3.create();
-         vec3.sub(this.axis, hilite.edge.destination().vertex, hilite.edge.origin.vertex);
+         vec3.sub(this.axis, hilite.edge.destination(), hilite.edge.origin);
          this.hiliteEdge = hilite.edge;
          // lift
          this.lift = this.preview.liftFace(this.contours, hilite.edge);
@@ -530,7 +530,7 @@ class LiftFaceHandler extends EditSelectHandler {  // also moveable
    undo() {
       super.doIt();  // this really not needede.
       // collapseFace
-      this.preview.collapseExtrudeEdge(this.lift.extrudeEdges);
+      this.preview.collapseExtrudeEdge(this.lift);
    }
 }
 
