@@ -515,7 +515,7 @@ class LiftFaceHandler extends EditSelectHandler {  // also moveable
          // lift
          this.lift = this.preview.liftFace(this.contours, hilite.edge);
          // now ready for rotation.
-         this.moveHandler = new MouseRotateAlongAxis(this.madsor, this.axis, hilite.edge.origin.vertex);
+         this.moveHandler = new MouseRotateAlongAxis(this.madsor, this.axis, hilite.edge.origin);
          return true;
       }
       return false;
