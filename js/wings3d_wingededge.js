@@ -2800,6 +2800,7 @@ WingedTopology.prototype.undoBridgeFace = function(bridge) {
    }
    for (let hEdge of bridge.hEdges) {
       this._removeEdge(hEdge, hEdge.pair); // remove edge later.
+      this._freeEdge(hEdge);
    }
    // now, get the 2 face back
    this._createPolygon(bridge.target.hEdge, bridge.hEdges.length, Material.default, bridge.target.face);
