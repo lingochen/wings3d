@@ -659,9 +659,8 @@ ShaderData.prototype.updateSampler = function(name, bufferObj) {
          bufferObj._resetCounter();
          this.setUniform1f(nameHeight, sampler.height);
       } else if (bufferObj.isAltered()) {  // needs to update?
-         let interval = bufferObj.getInterval();
-         let offset = bufferObj.alteredMin;
-         sampler.bufferSubData(interval.start/bufferObj.component, bufferObj.buffer, interval.start, interval.end - interval.start);
+         let interval = bufferObj.getInterval(sampler.formatChannel);
+         sampler.bufferSubData(interval.start/sampler.formatChannel, bufferObj.buffer, interval.start, interval.end - interval.start);
          bufferObj._resetCounter();
       }
    } else {
@@ -881,11 +880,11 @@ BufferObject.prototype.getChanged = function() {
            array: this.buffer.subarray(start, end)};
 };
 
-BufferObject.prototype.getInterval = function() {
+BufferObject.prototype.getInterval = function(formatChannel) {
    const ret = {start: 0, end: 0};
    if (this.isAltered()) {
-      ret.start = Math.floor(this.alteredMin/this.component) * this.component;
-      ret.end =  (Math.floor(this.alteredMax/this.component)+1) * this.component;
+      ret.start = Math.floor(this.alteredMin/formatChannel) * formatChannel;
+      ret.end =  (Math.floor(this.alteredMax/formatChannel)+1) * formatChannel;
    }
    return ret;
 }

@@ -39,7 +39,7 @@ let colorArray = {
       '}'].join("\n"),
 };
 let drawSelectablePolygon = {
-vertex: index2TexCoord =>
+vertex: (index2TexCoord, materialIndex) =>
 `  uniform mat4 projection;
    uniform mat4 worldView;
    uniform vec4 faceColor[4];
@@ -52,16 +52,20 @@ vertex: index2TexCoord =>
    uniform highp sampler2D centerBuffer;
    uniform sampler2D groupState;
    uniform sampler2D faceState;
+   uniform sampler2D materialColor;
    uniform float positionBufferHeight;
    uniform float centerBufferHeight;
    uniform float faceStateHeight;
    uniform float groupStateHeight;
+   uniform float materialColorHeight;
 
 
    varying vec4 color;                    // color of material * vertex 
    varying vec4 stateColor;               // selected, or hiliteColor, or just original color
 
    ${index2TexCoord}
+
+   ${materialIndex}
 
    void main() {
       gl_Position = vec4(2.0, 2.0, 2.0, 1.0);         // culled as default.
@@ -75,10 +79,12 @@ vertex: index2TexCoord =>
             transparency = 0.0;
             gState -= 4.0;       // == gState & ~4;
          }
-         int state = int(max(gState, texture2D(faceState, index2TexCoord(polygonIndex.z, faceStateHeight)).x * 255.0)); // luminance === {l, l, l, 1}; l is [0-1]         
+         vec3 polyState = texture2D(faceState, index2TexCoord(polygonIndex.z, faceStateHeight)).xyz;
+         int state = int(max(gState, polyState.x * 255.0)); // luminance === {l, l, l, 1}; l is [0-1]         
          if (state < 4) {
-            //float packColor = texture2D(materialColor, index2TexCoord(polygonIndex.z, materialColorHeight)).r;   // material color
-            color = vec4(0.5, 0.5, 0.5, transparency);
+            float matIndex = materialIndex(polyState) * 3.;
+            color = vec4(texture2D(materialColor, index2TexCoord(matIndex, materialColorHeight)).xyz, transparency);   // material color
+            //color = vec4(0.5, 0.5, 0.5, transparency);
             if (state == 0) {
                if (transparency == 0.0) { // whole triangle is transparent.
                   return;
@@ -91,6 +97,7 @@ vertex: index2TexCoord =>
                      break;
                   }
                }
+               color = mix(stateColor, color, 0.5);
             }
             vec3 pos;
             if (polygonIndex.y >= 0.0) {
@@ -414,6 +421,11 @@ Wings3D.onReady(function() {
          return vec2( mod(index, float(${gl.textureSize})) / float(${gl.textureSize}), (index/float(${gl.textureSize})) / height);
       }
    `;
+   const materialIndex =
+     `float materialIndex(vec3 v) {
+         return dot(v, vec3(0., 255., 255.*255.));
+      }
+     `;
    // compiled the program
    cameraLight = gl.createShaderProgram(cameraLight.vertex, cameraLight.fragment);
 
@@ -427,7 +439,7 @@ Wings3D.onReady(function() {
 
    selectedColorPoint = gl.createShaderProgram(selectedColorPoint.vertex(index2TexCoord), selectedColorPoint.fragment);
 
-   drawSelectablePolygon = gl.createShaderProgram(drawSelectablePolygon.vertex(index2TexCoord), drawSelectablePolygon.fragment);
+   drawSelectablePolygon = gl.createShaderProgram(drawSelectablePolygon.vertex(index2TexCoord, materialIndex), drawSelectablePolygon.fragment);
 });
 
 export {

@@ -1,17 +1,16 @@
 //
 // strategy:
-//    use GPU as much as possible. multiple passes for drawing. we have more than enough GPU power.
+//    use GPU as much as possible. use vertex pulling to compute all state. 
+//     multiple passes for drawing. we have more than enough GPU power.
 //
-//    update as little as possible on cpu side. 
+//    let GPU do all the work, cpu just supply state.
 //
 // drawing pass:
-//    first pass: draw line (select, unselected) first (using triangles). 
+//    first pass: draw polygon.
 //
-//    second pass: draw polygon (selected, unseleced(sort by material)) using slightly optimized index. 
+//    second pass: draw edge.
 //
-//    third pass?: draw vertex.
-//
-//    last pass: draw hilite (line, polygon, or vertex).
+//    third pass: draw vertex.
 //
 "use strict";
 import {gl, ShaderData} from './wings3d_gl.js';
@@ -19,6 +18,7 @@ import * as ShaderProg from './wings3d_shaderprog.js';
 import * as Util from './wings3d_util.js';
 import {BoundingSphere} from './wings3d_boundingvolume.js';
 import {MeshAllocator, WingedTopology, WingedEdge, HalfEdge, Polygon, Vertex} from './wings3d_wingededge.js';
+import {Material} from './wings3d_material.js';
 import {EditCommand} from './wings3d_undo.js';
 
 
@@ -42,25 +42,21 @@ const DraftBench = function(theme, prop, materialList, defaultSize = 2048) {  //
    var layoutVec4 = ShaderData.attribLayout(4);
    //var layoutFloat = ShaderData.attribLayout(1);
    this.preview.shaderData.createAttribute('polygonIndex', layoutVec4, gl.STATIC_DRAW);
-   this.preview.shaderData.createSampler("faceState", 2, 1, gl.UNSIGNED_BYTE);
+   this.preview.shaderData.createSampler("faceState", 2, 3, gl.UNSIGNED_BYTE);
    this.preview.shaderData.createSampler("groupState", 3, 1, gl.UNSIGNED_BYTE);
    this.preview.shaderData.createSampler('positionBuffer', 0, 3, gl.FLOAT);
    this.preview.shaderData.createSampler('centerBuffer', 1, 3, gl.FLOAT);
    this.preview.shaderData.createIndex('triangleList');
-   //this._resizePreview(0, 0);
    this.setTheme(theme, prop);
 
    // previewFace selected
-   this.preview.face = {};
-   //this.preview.face.hilite = {index: null, indexLength: 0, numberOfTriangles: 0};  // the hilite index triangle list.;
+   this.preview.shaderData.createSampler('materialColor', 4, 3, gl.FLOAT);
 
    // previewEdge selected
-   this.preview.edge = {};
    this.preview.shaderData.createAttribute('indexBuffer', layoutVec4, gl.STATIC_DRAW);
    this.preview.shaderData.createSampler("edgeState", 1, 1, gl.UNSIGNED_BYTE);
 
    // previewVertex
-   this.preview.vertex = {};
    this.preview.shaderData.createAttribute('vertexIndex', layoutVec, gl.DYNAMIC_DRAW);
 
    // body state.
@@ -244,6 +240,7 @@ DraftBench.prototype.draw = function(gl, madsor) {
       this.preview.shaderData.updateSampler("groupState", WingedTopology.state);
 
       // update material if needed
+      this.preview.shaderData.updateSampler("materialColor", Material.color);
 
       // update index if needed,
       this.preview.shaderData.updateIndex("triangleList", HalfEdge.triangleList, HalfEdge.index.usedSize/4, gl.STATIC_DRAW);
@@ -253,6 +250,7 @@ DraftBench.prototype.draw = function(gl, madsor) {
 
       // bindUniform all
       gl.bindUniform(this.preview.shaderData, ['faceColor', 'faceState', 'faceStateHeight', 'groupState', 'groupStateHeight',
+                                               'materialColor', 'materialColorHeight',
                                                'positionBuffer', 'positionBufferHeight', 'centerBuffer', 'centerBufferHeight']);
 
       gl.bindIndex(this.preview.shaderData, 'triangleList');

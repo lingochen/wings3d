@@ -635,8 +635,7 @@ Vertex.prototype.getNormal = function(normal) {
 
 const Polygon = function(startEdge, size, material=Material.default) {
    BoundingSphere.call(this);
-   this.index = Polygon.state.alloc();
-   Polygon.material.alloc();
+   this.index = Polygon.state.alloc()/3;
    Polygon.normal.alloc();
    this.halfEdge = startEdge;
    this.numberOfVertex = size;      // how many vertex in the polygon
@@ -654,10 +653,8 @@ Object.defineProperty(Polygon.prototype, 'constructor', {
    value: Polygon,
    enumerable: false, // so that it does not appear in 'for in' loop
    writable: true });
-Polygon.isIndexModified = false; // 
-Polygon.state = null;         // state(selected, hilite). byte.
+Polygon.state = null;         // state(selected, hilite). byte. 2 bytes should be enough for material.
 Polygon.centerIndex = null;      // fake halfEdge. (vertex, noHalfEdge(-Number), Polygon, Group)
-Polygon.material = null;      // material index to be merged with state, 2 bytes should be enough for material.
 Polygon.normal = null;        // normal per polygon.
 
 Polygon.prototype.hide = function() {
@@ -677,7 +674,7 @@ Polygon.prototype.setSelect = function(onOff) {
 };
 
 Polygon.prototype.setState = function(onOff, mask) {
-   const index = this.index;
+   const index = this.index * 3;
 
    const state = Polygon.state.buffer[index];
    if (onOff) {
@@ -702,7 +699,9 @@ Polygon.prototype.assignMaterial = function(material) {
       }
       this.material = material;
       material.assigned();
-      Polygon.material[this.index] = material.index;     // copy index
+      const i = this.index * 3;
+      Polygon.state.set(i+1,  material.index & 0x000000ff);          // pack into 2 byte, assume no more than 65026 material.
+      Polygon.state.set(i+2, (material.index & 0x0000ff00) >> 8);
    }
 }
 
@@ -892,7 +891,7 @@ Polygon.prototype.update = function() {
 //
 const MeshAllocator = function(allocatedSize) {
    // Material
-   Material.color = new Float32Buffer(3);    // packed byte to float.
+   Material.color = new Float32Buffer(3*3);    // packed byte to float not
    Material.default = Material.create("default");
    Material.dead = Material.create("dead");
    // wEdge
@@ -908,8 +907,7 @@ const MeshAllocator = function(allocatedSize) {
    BoundingSphere.center = new Float32Buffer(3, allocatedSize);
    //Polygon.index = new Float32Buffer(4);
    Polygon.centerIndex = new Float32Buffer(4);  // (vIdx, hIdx, pIdx, gIdx)
-   Polygon.state = new ByteBuffer(1);
-   Polygon.material = new Float32Buffer(3);
+   Polygon.state = new ByteBuffer(3);
    Polygon.normal = new Float32Buffer(3, allocatedSize);
    // WingedTopology
    WingedTopology.state = new ByteBuffer(1);

@@ -30,7 +30,8 @@ const Material = function(name) {
                     shininessMaterial: 0,                         // 0-1
                     opacityMaterial: 1};                          // 0-1*/
    this.pbr = Object.assign({}, defaultPBR);
-   this.index = Material.color.alloc();
+   this.index = Material.color.alloc()/(3*3);
+   this.setGPU();
 };
 Material.color = null;  // saved the color
 
@@ -64,6 +65,21 @@ Material.release = function(material) {
 };
 
 
+Material.prototype.setGPU = function() {
+   // now put on Material.color (for gpu)
+   const i = this.index * (3*3);
+   Material.color.set(i, this.pbr.baseColor[0]);
+   Material.color.set(i+1, this.pbr.baseColor[1]);
+   Material.color.set(i+2, this.pbr.baseColor[2]);
+   Material.color.set(i+3, this.pbr.roughness);
+   Material.color.set(i+4, this.pbr.metallic);
+   Material.color.set(i+5, this.pbr.opacity);
+   Material.color.set(i+6, this.pbr.emission[0]);
+   Material.color.set(i+7, this.pbr.emission[1]);
+   Material.color.set(i+8, this.pbr.emission[2]);
+};
+
+
 Material.prototype.setValues = function(inputDat) {
    for (const key of Object.keys(inputDat)) {
       if (this.pbr.hasOwnProperty(key)) {
@@ -76,8 +92,7 @@ Material.prototype.setValues = function(inputDat) {
          console.log("unknown input material: " + key);
       }
    }
-   // now put on Material.color (for gpu)
-
+   this.setGPU();
 };
 
 
