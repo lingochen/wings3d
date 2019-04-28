@@ -83,8 +83,8 @@ vertex: (index2TexCoord, materialIndex) =>
          int state = int(max(gState, polyState.x * 255.0)); // luminance === {l, l, l, 1}; l is [0-1]         
          if (state < 4) {
             float matIndex = materialIndex(polyState) * 3.;
+            transparency = transparency * texture2D(materialColor, index2TexCoord(matIndex+1., materialColorHeight)).z;
             color = vec4(texture2D(materialColor, index2TexCoord(matIndex, materialColorHeight)).xyz, transparency);   // material color
-            //color = vec4(0.5, 0.5, 0.5, transparency);
             if (state == 0) {
                if (transparency == 0.0) { // whole triangle is transparent.
                   return;

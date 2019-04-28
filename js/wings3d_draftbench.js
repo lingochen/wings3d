@@ -200,23 +200,6 @@ DraftBench.prototype.freeBuffer = function() {
 };
 
 
-DraftBench.prototype.updatePreview = function() {
-//   this._resizePreview();
-//   this._updatePreviewSize();
-   this._updateAffected(this.affected);
-   // compute index
-   //this._computePreviewIndex();
-};
-
-
-
-DraftBench.prototype._updateAffected = function(affected) {
-
-   this.clearAffected();
-};
-
-
-
 /**
  * polygon drawing routines.
  * 
