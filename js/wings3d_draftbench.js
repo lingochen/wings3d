@@ -202,6 +202,24 @@ DraftBench.prototype.freeBuffer = function() {
 };
 
 
+DraftBench.prototype.isModified = function() {
+   return (Vertex.index.isAltered() ||
+           HalfEdge.index.isAltered() ||
+           WingedEdge.index.isAltered() ||
+           //Polygon.centerIndex.isAltered() ||
+           Vertex.position.isAltered() ||
+           //BoundingSphere.center.isAltered() ||
+           Polygon.state.isAltered() ||
+           WingedEdge.state.isAltered() ||
+           WingedTopology.state.isAltered() ||
+           Material.color.isAltered() ||
+           HalfEdge.triangleList.isAltered() ||
+           HalfEdge.color.isAltered() 
+           //Polygon.color.isAltered() ||
+           );
+};
+
+
 /**
  * polygon drawing routines.
  * 
@@ -287,7 +305,7 @@ DraftBench.prototype.drawEdge = function(gl, madsor) {
       gl.bindAttribute(this.preview.shaderData, ['indexBuffer']);
 
       // update positionBuffer texture if modified
-      this.preview.shaderData.updateSampler("positionBuffer", this.position);
+      this.preview.shaderData.updateSampler("positionBuffer", Vertex.position);
 
       // update edgeState. should refactored.
       this.preview.shaderData.updateSampler("edgeState", WingedEdge.state);

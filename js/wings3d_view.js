@@ -896,6 +896,9 @@ function drawWorld(gl) {
 }
 
 function render(gl) {
+   if (_environment.draftBench.isModified()) {   // check for modification. 
+      Renderer.needToRedraw();
+   }
    Renderer.render(gl, drawWorld);
 };
 
