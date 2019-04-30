@@ -219,9 +219,15 @@ class FaceMadsor extends Madsor {
    assignMaterial(material) {
       return this.snapshotSelected(PreviewCage.prototype.assignFaceMaterial, material);
    }
-
    undoAssignMaterial(saved) {
       return this.doAll(saved, PreviewCage.prototype.undoAssignFaceMaterial);
+   }
+
+   setVertexColor(color) {
+      return this.snapshotSelected(PreviewCage.prototype.setFaceColor, color);
+   }
+   undoVertexColor(snapshots) {
+      this.doAll(snapshots, PreviewCage.prototype.undoVertexColor);
    }
 
    dragSelect(cage, hilite, selectArray, onOff) {

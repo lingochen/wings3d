@@ -3905,6 +3905,9 @@ PreviewCage.prototype.setVertexColor = function(color) {
    return snapshot;
 };
 
+/**
+ * undo of setVertexColor
+ */
 PreviewCage.prototype.undoVertexColor = function(snapshot) {
    const affected = new Set;
 
@@ -3918,6 +3921,31 @@ PreviewCage.prototype.undoVertexColor = function(snapshot) {
    for (let polygon of affected) {
       polygon.updateCentroidColor();
    }
+};
+
+
+/**
+ * 
+ */
+PreviewCage.prototype.setFaceColor = function(color) {
+   const overSize = this.selectedSet.size * 3 * 5;       // should be slight Overize;
+   const snapshot = {hEdges: [], vertexColor: new Util.Vec3View(new Uint8Array(overSize))};
+
+   for (let polygon of this.selectedSet) {
+      for (let hEdge of polygon.hEdges()) {
+         // snapshot vertexColor
+         snapshot.hEdges.push( hEdge );
+         snapshot.vertexColor.alloc(Util.Vec3View.uint8resize);
+         hEdge.getVertexColor(snapshot.vertexColor);
+         snapshot.vertexColor.inc();
+         // set new color.
+         hEdge.setVertexColor(color);
+      }
+      polygon._setColor(color);
+   }
+
+   // let _setVertexColor do the work.
+   return snapshot;
 };
 
 

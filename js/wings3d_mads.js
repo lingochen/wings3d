@@ -147,7 +147,7 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
          }
          colorPicker.removeEventListener("change", vertexColorHandler);
       };
-      const vertexColor = { vertex: action.vertexColor };
+      const vertexColor = { vertex: action.vertexColor, face: action.faceColor };
       if (vertexColor[mode]) {
          UI.bindMenuItem(vertexColor[mode].name, (ev) => {
             ev.currentTarget.addEventListener("change", vertexColorHandler);  // currentTarget === colorPicker
