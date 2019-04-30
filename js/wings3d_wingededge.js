@@ -52,6 +52,9 @@ const WingedEdge = function(orgVert, toVert, index) {
    // now set origin.
    this.left.origin = orgVert;
    this.right.origin = toVert;
+   // update vertex color
+   this.left.setVertexColor(HalfEdge.WHITE);
+   this.right.setVertexColor(HalfEdge.WHITE);
    // update HalfEdge.index.
    const i = this.index * 2 * 4;
    const idx = this.index * 2;
@@ -223,6 +226,7 @@ WingedEdge.prototype.getNormal = function(normal) {
 const HalfEdge = function(wEdge) {  // should only be created by WingedEdge
    HalfEdge.index.alloc();    // allocate 12 (4 * 3)
    HalfEdge.triangleList.alloc();
+   HalfEdge.color.alloc();
    this.wingedEdge = wEdge;   // parent winged edge
    this._next = null;
 //   this.prev = null;       // not required, but very nice to have shortcut
@@ -236,6 +240,7 @@ const HalfEdge = function(wEdge) {  // should only be created by WingedEdge
 HalfEdge.index = null;         // (vertex(index), hEdge(index), PolygonIndex, GroupIndex) hEdge(normal, color, texCoord) (polygon has material, state, centroid), (group state)
 HalfEdge.normal = null;
 HalfEdge.color = null;
+HalfEdge.WHITE = [255, 255, 255];
 // HalfEdge.texCoord = null;  
 // HalfEdge.texCoord1 = null;
 HalfEdge.triangleList = null; // Polygon.index = (HalfEdge.totalSize * 3) - (hEdge, hEdge, fakeCenterToDo)
@@ -297,6 +302,26 @@ HalfEdge.prototype.setHilite = function(onOff) {
    // select polygon set color,
    this.wingedEdge.setEdgeMask(onOff, 4);
 }
+
+/**
+ * 
+ */
+HalfEdge.prototype.getVertexColor = function(color) {
+   let i = this.getIndex() * 3;
+   color[0] = HalfEdge.color.get(i++);
+   color[1] = HalfEdge.color.get(i++);
+   color[2] = HalfEdge.color.get(i);
+};
+/**
+ * 
+ */
+HalfEdge.prototype.setVertexColor = function(color) {
+   let i = this.getIndex() * 3;
+   HalfEdge.color.set(i++, color[0]);
+   HalfEdge.color.set(i++, color[1]);
+   HalfEdge.color.set(i, color[2]);
+};
+
 
 // boundary edge if no assigned face.
 HalfEdge.prototype.isBoundary = function() {
@@ -637,10 +662,12 @@ const Polygon = function(startEdge, size, material=Material.default) {
    BoundingSphere.call(this);
    this.index = Polygon.state.alloc()/3;
    Polygon.normal.alloc();
+   Polygon.color.alloc();
    this.halfEdge = startEdge;
    this.numberOfVertex = size;      // how many vertex in the polygon
    this.assignMaterial(material);
    this.update(); //this.computeNormal();
+   this._setColor(HalfEdge.WHITE);
    Polygon.centerIndex.alloc();                    // (vIdx, hIdx, face, group) (vIdx is negative number)
    const i = this.index * 4;
    Polygon.centerIndex.set(i, this.index);
@@ -656,6 +683,7 @@ Object.defineProperty(Polygon.prototype, 'constructor', {
 Polygon.state = null;         // state(selected, hilite). byte. 2 bytes should be enough for material.
 Polygon.centerIndex = null;      // fake halfEdge. (vertex, noHalfEdge(-Number), Polygon, Group)
 Polygon.normal = null;        // normal per polygon.
+Polygon.color = null;
 
 Polygon.prototype.hide = function() {
    this.setState(true, 4);
@@ -824,11 +852,34 @@ Polygon.prototype.computeNormal = (function() {
       vec3.cross(V, V, U);
       vec3.normalize(V, V);
       const i = this.index * 3;
-      Polygon.normal[i]   = V[0];
-      Polygon.normal[i+1] = V[1];
-      Polygon.normal[i+2] = V[2];
+      Polygon.normal.set(i, V[0]);
+      Polygon.normal.set(i+1, V[1]);
+      Polygon.normal.set(i+2, V[2]);
    };
 }());
+
+
+/**
+ * recompute centroid color
+ */
+Polygon.prototype.updateCentroidColor = function() {
+   const color = [0, 0, 0];
+   const accu = [0, 0, 0];
+   let current = this.halfEdge;
+   do {
+      current.getVertexColor(color);
+      vec3.add(accu, accu, color);
+      current = current.next;
+   } while (current !== this.halfEdge);
+   vec3.scale(accu, accu, 1.0/this.numberOfVertex);
+   this._setColor(accu);
+}
+Polygon.prototype._setColor = function(color) {
+   const i = this.index * 3;
+   Polygon.color.set(i, color[0]);      // copy over the color
+   Polygon.color.set(i+1, color[1]);
+   Polygon.color.set(i+2, color[2]);
+}
 
 
 // recompute numberOfVertex, normal and centroid and radius, and reorient.
@@ -900,6 +951,7 @@ const MeshAllocator = function(allocatedSize) {
    // HalfEdge
    HalfEdge.index = new Float32Buffer(4);   // (vIdx, hIdx, pIdx, gIdx)
    HalfEdge.triangleList = new Int32Buffer(3);     // (hEdge0, hEdge1, hEdge2)
+   HalfEdge.color = new ByteBuffer(3);
    // Vertex
    Vertex.index = new Float32Buffer(3);
    Vertex.position = this.position = new Float32Buffer(3, allocatedSize);  // position buffer.
@@ -909,6 +961,7 @@ const MeshAllocator = function(allocatedSize) {
    Polygon.centerIndex = new Float32Buffer(4);  // (vIdx, hIdx, pIdx, gIdx)
    Polygon.state = new ByteBuffer(3);
    Polygon.normal = new Float32Buffer(3, allocatedSize);
+   Polygon.color = new ByteBuffer(3);
    // WingedTopology
    WingedTopology.state = new ByteBuffer(1);
    // data init

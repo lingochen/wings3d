@@ -356,7 +356,6 @@ function addToWorld(model, parent = _environment.world) { // default parent is w
    parent.insert( model );
    _environment.geometryGraph.addObject(model, parent.guiStatus.ul);
    model.setVisible(true);
-   //_environment.draftBench.updatePreview();
    Renderer.needToRedraw();
    _environment.world.numberOfCage();   // update CountStatus
    return model;
@@ -366,7 +365,6 @@ function removeFromWorld(previewCage) {
    const deleted = previewCage.removeFromParent();
    if (deleted) {
       previewCage.setVisible(false);
-      //_environment.draftBench.updatePreview();
       Renderer.needToRedraw();
       // remove from geometryGraph
       _environment.geometryGraph.removeObject(previewCage);
@@ -378,7 +376,6 @@ function getWorld() {
    return _environment.world.getCage();
 }
 function updateWorld() {
-   //_environment.draftBench.updatePreview();
    Renderer.needToRedraw();
 };
 function makeCombineIntoWorld(cageSelection) {

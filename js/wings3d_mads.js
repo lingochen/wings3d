@@ -8,6 +8,7 @@ import {PreviewCage} from './wings3d_model.js';
 import * as ShaderProg from './wings3d_shaderprog.js';
 import * as View from './wings3d_view.js';
 import * as UI from './wings3d_ui.js';
+import * as Util from './wings3d_util.js';
 import {action} from './wings3d.js';
 import { Plane } from './wings3d_boundingvolume.js';
 
@@ -135,6 +136,22 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
                View.attachHandlerMouseSelect(new PlaneCutHandler(this, axisVec[axis]));
              });
          }
+      }
+      // Vertex Coloring
+      const vertexColorHandler = (ev) => {
+         const colorPicker = ev.currentTarget;
+         let color = Util.hexToRGB8(colorPicker.value);
+         const cmd = new GenericEditCommand(this, this.setVertexColor, [color], this.undoVertexColor);
+         if (cmd.doIt()) {
+            View.undoQueue(cmd);
+         }
+         colorPicker.removeEventListener("change", vertexColorHandler);
+      };
+      const vertexColor = { vertex: action.vertexColor };
+      if (vertexColor[mode]) {
+         UI.bindMenuItem(vertexColor[mode].name, (ev) => {
+            ev.currentTarget.addEventListener("change", vertexColorHandler);  // currentTarget === colorPicker
+          });
       }
    }
 

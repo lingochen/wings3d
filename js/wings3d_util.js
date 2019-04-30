@@ -340,7 +340,12 @@ function hexToRGB(hex) {
    return [parseInt(hex.slice(1, 3), 16)/255,
            parseInt(hex.slice(3, 5), 16)/255,
            parseInt(hex.slice(5, 7), 16)/255];
- };
+};
+function hexToRGB8(hex) {
+   return [parseInt(hex.slice(1, 3), 16),
+           parseInt(hex.slice(3, 5), 16),
+           parseInt(hex.slice(5, 7), 16)];
+};
 function hexToRGBA(hex) {
   return [parseInt(hex.slice(1, 3), 16)/255,
           parseInt(hex.slice(3, 5), 16)/255,
@@ -397,11 +402,29 @@ const Vec3View = function(buffer, offset = 0) {
    this.offset = offset;
 };
 
-Vec3View.prototype.init = function(buffer, offset) {
+Vec3View.prototype.init = function(buffer, offset = 0) {
    this.buffer = buffer;
    this.offset = offset;
    return this;
 }
+
+Vec3View.prototype.reset = function() {
+   this.offset = 0;
+   return this;
+}
+
+Vec3View.uint8resize = function(oldBuffer) {
+   const buffer = new Uint8Array(oldBuffer.length*1.5);
+   buffer.set(oldBuffer);
+   return buffer;
+}
+
+Vec3View.prototype.alloc = function(resize) {
+   if (this.offset >= this.buffer.length) {
+      this.buffer = resize(this.buffer);
+   };
+   return this.buffer;
+};
 
 Vec3View.prototype.inc = function() {
    this.offset += 3;
@@ -487,6 +510,7 @@ export {
    rotationFromToVec3,
    reflectionMat4,
    hexToRGB,
+   hexToRGB8,
    hexToRGBA,
    hexToCssRGBA,
    rgbToHex,

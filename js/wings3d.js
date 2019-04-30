@@ -482,6 +482,7 @@ const action = {
    vertexScaleRadialX: ()=> {notImplemented(this);},
    vertexScaleRadialY: ()=> {notImplemented(this);},
    vertexScaleRadialZ: ()=> {notImplemented(this);},
+   vertexColor: ()=>{notImplemented(this);},
    // guide tour
    helpMenu: () => {notImplemented(this);},
    about: () => {notImplemented(this);},

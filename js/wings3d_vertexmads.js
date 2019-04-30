@@ -125,6 +125,14 @@ class VertexMadsor extends Madsor {
       return this.snapshotSelected(PreviewCage.prototype.flattenVertex, axis);
    }
 
+   setVertexColor(color) {
+      return this.snapshotSelected(PreviewCage.prototype.setVertexColor, color);
+   }
+
+   undoVertexColor(snapshots) {
+      this.doAll(snapshots, PreviewCage.prototype.undoVertexColor);
+   }
+
    dragSelect(cage, hilite, selectArray, onOff) {
       if (hilite.vertex !== null) {
         if (cage.dragSelectVertex(hilite.vertex, onOff)) {

@@ -17,6 +17,7 @@ import * as Wings3D from './wings3d.js';
 import {EditCommand} from './wings3d_undo.js';
 import * as Util from './wings3d_util.js';
 import {i18n} from './wings3d_i18n.js';
+import { ByteBuffer } from './wings3d_gl.js';
 
 
 /**
@@ -3872,6 +3873,51 @@ PreviewCage.prototype.selectBodyMaterial = function(material) {
    }
 
    return snapshot;
+};
+
+
+/**
+ * 
+ */
+PreviewCage.prototype.setVertexColor = function(color) {
+   const overSize = this.selectedSet.size * 3 * 5;       // should be slight Overize;
+   const snapshot = {hEdges: [], vertexColor: new Util.Vec3View(new Uint8Array(overSize))};
+   const affected = new Set;
+
+   for (let vertex of this.selectedSet) {
+      for (let hEdge of vertex.edgeRing()) { // get all outEdge
+         // snapshot vertexColor
+         snapshot.hEdges.push( hEdge );
+         snapshot.vertexColor.alloc(Util.Vec3View.uint8resize);
+         hEdge.getVertexColor(snapshot.vertexColor);
+         snapshot.vertexColor.inc();
+         // set new color.
+         hEdge.setVertexColor(color);
+         affected.add(hEdge.face);
+      }
+   }
+   snapshot.vertexColor.reset();
+
+   // now recompute the affected face centroid.
+   for (let polygon of affected) {
+      polygon.updateCentroidColor();
+   }
+   return snapshot;
+};
+
+PreviewCage.prototype.undoVertexColor = function(snapshot) {
+   const affected = new Set;
+
+   snapshot.vertexColor.reset();
+   for (let hEdge of snapshot.hEdges) {
+      hEdge.setVertexColor(snapshot.vertexColor);  // restore color
+      affected.add(hEdge.face);
+   }
+
+   // now restore affected face centroid
+   for (let polygon of affected) {
+      polygon.updateCentroidColor();
+   }
 };
 
 
