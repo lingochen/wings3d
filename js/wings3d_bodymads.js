@@ -261,6 +261,10 @@ class BodyMadsor extends Madsor {
       PreviewCage.undoWeldHole(weld.holes);
    }
 
+   setVertexColor(color) {
+      return this.snapshotSelected(PreviewCage.prototype.setBodyColor, color);
+   }
+
    centroid() {
       return this.snapshotSelected(PreviewCage.prototype.bodyCentroid);
    }

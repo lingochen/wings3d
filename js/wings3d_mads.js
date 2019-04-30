@@ -147,7 +147,7 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
          }
          colorPicker.removeEventListener("change", vertexColorHandler);
       };
-      const vertexColor = { vertex: action.vertexColor, face: action.faceColor };
+      const vertexColor = { vertex: action.vertexColor, face: action.faceColor, body: action.bodyColor };
       if (vertexColor[mode]) {
          UI.bindMenuItem(vertexColor[mode].name, (ev) => {
             ev.currentTarget.addEventListener("change", vertexColorHandler);  // currentTarget === colorPicker
@@ -416,6 +416,10 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
 
    _selectMaterial(material) {
       return this.snapshotSelectable(PreviewCage.prototype['select' + this.modeName() + 'Material'], material);
+   }
+
+   undoVertexColor(snapshots) {
+      this.doAll(snapshots, PreviewCage.prototype.undoVertexColor);
    }
 
    isVertexSelectable() { return false; }

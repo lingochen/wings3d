@@ -226,9 +226,6 @@ class FaceMadsor extends Madsor {
    setVertexColor(color) {
       return this.snapshotSelected(PreviewCage.prototype.setFaceColor, color);
    }
-   undoVertexColor(snapshots) {
-      this.doAll(snapshots, PreviewCage.prototype.undoVertexColor);
-   }
 
    dragSelect(cage, hilite, selectArray, onOff) {
       if (hilite.face !== null) {

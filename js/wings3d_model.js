@@ -3949,6 +3949,32 @@ PreviewCage.prototype.setFaceColor = function(color) {
 };
 
 
+/**
+ * 
+ */
+PreviewCage.prototype.setBodyColor = function(color) {
+   const overSize = this.geometry.edges.size * 3 * 2;       // should be slight Overize;
+   const snapshot = {hEdges: [], vertexColor: new Util.Vec3View(new Uint8Array(overSize))};
+
+   for (let polygon of this.geometry.faces) {
+      if (polygon.isLive()) {
+         for (let hEdge of polygon.hEdges()) {
+            // snapshot vertexColor
+            snapshot.hEdges.push( hEdge );
+            snapshot.vertexColor.alloc(Util.Vec3View.uint8resize);
+            hEdge.getVertexColor(snapshot.vertexColor);
+            snapshot.vertexColor.inc();
+            // set new color.
+            hEdge.setVertexColor(color);
+         }
+         polygon._setColor(color);
+      }
+   }
+
+   // let _setVertexColor do the work.
+   return snapshot;
+};
+
 //----------------------------------------------------------------------------------------------------------
 
 
