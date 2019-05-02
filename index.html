@@ -302,12 +302,15 @@
       <label for="selectionGroupbox" class="folder"><span>Selection Groups</span></label>
       <div id="selectionGroup" class="sidebarPanel"><span>test3</span></div>
     </div>
-    <div class="workbench">
+    <div id="workbench" class="workbench">
       <div id="statusbar"> Wings3D Geometry </div>
-      <canvas id="glcanvas">
-        Your browser doesn't appear to support the 
-        <code>&lt;canvas&gt;</code> element.
-      </canvas>
+      <div class="glWrapper">
+        <canvas id="glcanvas">
+          Your browser doesn't appear to support the 
+          <code>&lt;canvas&gt;</code> element.
+        </canvas>
+        <canvas id="text"></canvas>
+      </div>
     </div>
   </div>
   <footer id="helpbar" class="marginal">This is help bar</footer>
