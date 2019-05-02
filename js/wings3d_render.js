@@ -60,6 +60,22 @@ onReady(function() {
  //  console.log("Render.init() success");
 });
 
+/**
+ * return screen space windows position for Canvas2D to draw. == gluProject
+ * @param {*} pt - model 3d pt in the world transform.
+ */
+/*function worldToScreenPoint(pt) {
+   const point3D = [pt[0], pt[1], pt[2], 1.0];
+   // to clipSpace
+   Vec4.transformMat4(point3D, point3D, viewMatrix);
+   Vec4.transformMat4(point3D, point3D, projectionMatrix);
+   // to ndcSpacePos
+   point3D[0] /= point3D[3];
+   point3D[1] /= point3D[3];
+   // return windowPos
+   return [(point3D[0] *  0.5 + 0.5) * gl.canvas.width, 
+           (point3D[1] * -0.5 + 0.5) * gl.canvas.height];
+};*/
 
 
 function makeVerticesForString(s) {

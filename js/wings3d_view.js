@@ -662,8 +662,15 @@ function canvasHandleMouseMove(e) {
    } else {
       // handle pick selection
       var viewport = gl.getViewport();
-      var winx = e.pageX - e.currentTarget.offsetLeft;
-      var winy = (viewport[3]+1) - (e.pageY - e.currentTarget.offsetTop);   // y is upside-down
+      // needs to get the real offset by walking over all the parent.
+      const offset = { left: e.currentTarget.offsetLeft, top: e.currentTarget.offsetTop};
+      for (let reference = e.currentTarget.offsetParent; reference; reference = reference.offsetParet) {
+         offset.left += reference.offsetLeft;
+         offset.top += reference.offsetTop;
+      }
+
+      var winx = e.pageX - offset.left;
+      var winy = (viewport[3]+1) - (e.pageY - offset.top);   // y is upside-down
       // yes, sometimes mouse coordinate is outside of the viewport. firefox is larger than width, height.
       if (winx < 0) { winx = 0; }
       if (winx > viewport[2]) { winx = viewport[2];}
