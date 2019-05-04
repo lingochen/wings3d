@@ -19,6 +19,7 @@ import * as Util from './wings3d_util.js';
 let lineProg;        // to be replaced
 let groundAxisProg;  // to be replaced
 let textProg;        // to be replaced
+let textCtx;
 
 onReady(function() {
    redrawFlag = true;
@@ -57,6 +58,8 @@ onReady(function() {
    
    initSimpleASCII(gl);
 
+   const element = document.getElementById("text");
+   textCtx = element.getContext("2d");
  //  console.log("Render.init() success");
 });
 
@@ -298,7 +301,12 @@ function renderASCII(gl, origin, end, c, color, viewport) {
       var x = Math.trunc((0.5*end[0]/end[3]+0.5)*(viewport[2]-20) + 10);
       var y = viewport[3] - Math.trunc((0.5*end[1]/end[3]+0.5)*(viewport[3]-16) + 7);
       //console.log("x:", x, "y:", y);
-      renderText(gl, x, y, color, c);
+      //renderText(gl, x, y, color, c);
+      textCtx.font = '18px Arial';
+      //textCtx.textAlign = "start";
+      //textCtx.textBaseline = "bottom";
+      textCtx.fillStyle = color;
+      textCtx.fillText(c, x, y);
    }
 };
 
@@ -322,9 +330,9 @@ function renderAxisLetter(gl, zFar) {
       var endx = gl.transformVertex(vec4.fromValues(zFar, 0.0, 0.0, 1.0)), 
           endy = gl.transformVertex(vec4.fromValues(0.0, zFar, 0.0, 1.0)), 
           endz = gl.transformVertex(vec4.fromValues(0.0, 0.0, zFar, 1.0));
-      renderASCII(gl, origin, endx, 'x', color[0], viewPort);
-      renderASCII(gl, origin, endy, 'y', color[1], viewPort);
-      renderASCII(gl, origin, endz, 'z', color[2], viewPort);
+      renderASCII(gl, origin, endx, 'x', View.theme.colorX, viewPort);
+      renderASCII(gl, origin, endy, 'y', View.theme.colorY, viewPort);
+      renderASCII(gl, origin, endz, 'z', View.theme.colorZ, viewPort);
    }
 };
 
@@ -500,14 +508,27 @@ function renderGroundAndAxes(gl, projection, modelView) {
    return yon;
 };
 
-let redrawFlag = false;
 
+// make sure webgl framebuffer size matched real canvas size.
+// make sure overlay text canvas matched real screen size.
+function resizeToDisplaySize() {
+   if (gl.resizeToDisplaySize()) {  // we should resize with webgl
+      textCtx.canvas.width = textCtx.canvas.clientWidth;
+      textCtx.canvas.height = textCtx.canvas.clientHeight;
+      return true;
+   } 
+   return false;
+};
+
+
+let redrawFlag = true;
 function needToRedraw() {
    redrawFlag = true;
 };
 
 function render(gl, drawWorldFn) {
-   if (gl.resizeToDisplaySize() || Camera.view.isModified || redrawFlag) {
+   if (resizeToDisplaySize() || Camera.view.isModified || redrawFlag) {
+      textCtx.clearRect(0, 0, textCtx.canvas.width, textCtx.canvas.height)
       redrawFlag = false; 
       const backColor = Util.hexToRGBA(View.theme.geometryBackground);
       gl.clearColor(backColor[0], backColor[1], backColor[2], backColor[3]);
@@ -547,5 +568,6 @@ export {
    renderText,
    needToRedraw,
    render,
+   resizeToDisplaySize,
 };
 

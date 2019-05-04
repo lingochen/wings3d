@@ -69,7 +69,7 @@ function createWebGLContext(canvasID, attrib) {
       }
       return false;
    };
-   gl.resizeToDisplaySize();
+   //gl.resizeToDisplaySize();
 
    // setup variables
    gl.projection = mat4.create();

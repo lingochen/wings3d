@@ -13,13 +13,13 @@
 }*/
 
 html, body {
-    margin: 0;
-    padding: 0;
-    height: 100%;
+  margin: 0;
+  padding: 0;
 }
 
 body {
-    overflow:hidden;
+  display: block;
+  overflow:hidden;
 }
 
 .unfocus:not(.exclude) {
@@ -29,7 +29,7 @@ body {
 .page-layout {
   display: flex;
   flex-flow: column;
-  height: 100%;
+  height: 100vh;
 }
 
 .content {
@@ -37,7 +37,10 @@ body {
   display: flex; 
   flex-direction: row;
 }
-
+.marginal {
+  flex: 0 1 auto;
+  border: 1px dotted grey;
+}
 .sidebar {
   display: none;
   flex-direction: column;
@@ -47,46 +50,38 @@ body {
   max-width: 18rem;
 }
 
-.workbench {
+.viewport {
   flex: 1 1 auto;
   display: flex; 
-  flex-direction: column;
+  flex-direction: row;
+}
+
+.workbench {
+  flex-grow: 1;
+  position: relative;
+  overflow: hidden;
 }
 canvas {
-/*  display: inline-block;
-  vertical-align: baseline; */
-  width: 100%;
-  height: 100%;
-}
-.glWrapper {
-  position: relative;
-  width: 100%;
-  height: 100%;
-}
-.glWrapper canvas {
-
-}
-.glWrapper #text {
   position: absolute;
   left: 0px;
   top: 0px;
+  width: 100%;
+  height: 100%;
+  line-height: 0px;
+}
+.workbench #text {
   z-index: 10;
   pointer-events: none;
 }
-
-.marginal {
-  flex: 0 1 auto;
-  border: 1px dotted grey;
-}
-
 #glcanvas {
-  flex-grow: 1;
   background-color: black;
 }
 
 #statusbar {
   position:absolute;
-  z-index: 10;
+  z-index: 20;
+  left: 0px;
+  top: 0px;
   width: 100%;
   background-color: var(--infoBackground);
   color: var(--infoText);

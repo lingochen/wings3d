@@ -903,8 +903,14 @@ function drawWorld(gl) {
 }
 
 function render(gl) {
-   if (_environment.draftBench.isModified()) {   // check for modification. 
-      Renderer.needToRedraw();
+   let count = 0;
+   for (let model of _environment.world.getCage()) {
+      ++count;
+   }
+   if (count > 0) {
+      if (_environment.draftBench.isModified()) {   // check for modification. 
+         Renderer.needToRedraw();
+      }
    }
    Renderer.render(gl, drawWorld);
 };
