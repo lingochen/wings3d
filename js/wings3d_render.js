@@ -148,7 +148,7 @@ function renderAxisLetter(gl, zFar) {
       //gl:loadIdentity(),
       //{_,_,W,H} = ViewPort,
       //glu:ortho2D(0.0, W, H, 0.0, -1, 1);
-      mat4.ortho(textProg.bitmapTextVBO.projection, 0.0, viewPort[2], viewPort[3], 0.0, -1.0,  1.0);
+      //mat4.ortho(textProg.bitmapTextVBO.projection, 0.0, viewPort[2], viewPort[3], 0.0, -1.0,  1.0);
       //gl:matrixMode(?GL_MODELVIEW),
       //gl:loadIdentity(),
       zFar = zFar + GROUND_GRID_SIZE;
