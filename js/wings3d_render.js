@@ -210,6 +210,8 @@ function renderMiniAxis(gl, inModelView) {
       modelView[12] = 0.11-ratio;
       modelView[13] = -1.0+0.11;
       modelView[14] = 0.0;
+      // set current projection
+      mat4.ortho(groundAxisProg.miniAxisVBO.projection, -ratio, ratio, -1.0, 1.0, 0.00001,  10000000.0);
       // save attribute
       var length = groundAxisProg.miniAxisVBO.length;
 

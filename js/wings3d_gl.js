@@ -93,7 +93,7 @@ function createWebGLContext(canvasID, attrib) {
    };
    // project() transform objectSpace vert to screenSpace,
    //   return vec4. vec4[3] == 0 meant failure, problems with input projection.
-   gl.project = function(objx, objy, objz, modelview, projection) {
+   gl.project = function(objx, objy, objz, modelView, projection) {
       //Transformation vectors
       var input = vec4.fromValues(objx, objy, objz, 1.0);
           out = vec4.create();
@@ -118,14 +118,14 @@ function createWebGLContext(canvasID, attrib) {
       return out;
   };
 
-   gl.unProject = function(winx, winy, winz, modelview, projection, viewport) {
+   gl.unProject = function(winx, winy, winz, modelView, projection, viewport) {
       //Transformation matrices
       var final = mat4.create(),
           input = vec4.create(),
           out = vec4.create();
       //Calculation for inverting a matrix, compute projection x modelview
       //and store in A[16]
-      mat4.multiply(final, projection, modelview);
+      mat4.multiply(final, projection, modelView);
       //Now compute the inverse of matrix A
       if(mat4.invert(final, final)==null) {
          out[3]=0.0;
