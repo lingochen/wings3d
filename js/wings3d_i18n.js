@@ -29,8 +29,9 @@ function getTemplate(key) {
 function getTooltip(key) {
    let title = currentMessages.tooltip.get(key);
    if (!title && defaultMessages) {
-      return 
+      return defaultMessages.tooltip.get(key);
    }
+   return title;
 }
 function helpTooltip(ev) {
    const text = this.getAttribute("title");
