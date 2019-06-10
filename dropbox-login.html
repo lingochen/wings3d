@@ -1,0 +1,111 @@
+<!--
+/**Originally from https://github.com/lurchmath/cloud-storage/blob/master/source/dropbox-login.html **/
+This page has no HTML content, but instead contains the script content
+that (a) checks to see if a user is already authenticated on Dropbox, and if
+so, sends back their access token, or (b) asks the user to authenticate with
+Dropbox, and if that succeeds, sends back their access token.
+
+This page must be shown to the user in a new browser window/tab, because
+security concerns have caused Dropbox to refuse to permit loading its login
+page in an iframe.  After loading it in a new browser window/tab, the
+originating window/tab must then pass a message containing the app's client
+ID.  Once that is done, the authentication process will begin.  When it
+finishes, the user's access token will be passed back, as another message,
+to the originating window/tab.
+-->
+<!DOCTYPE html>
+<html>
+    <head>
+      <meta charset="utf-8"/>
+        <!-- Import the Dropbox SDK. -->
+        <script type="text/javascript" src='https://unpkg.com/dropbox/dist/Dropbox-sdk.min.js'>
+        </script>
+        <!--
+        Define the scripts that take all of the actions described at the top
+        of this document.  Note that most of this code is inspired by or
+        copied directly from the Dropbox SDK examples folder, specifically
+        the "auth" example at the following URL.  Thanks for the examples,
+        Dropbox team!
+
+        https://github.com/dropbox/dropbox-sdk-js/blob/master/examples/javascript/auth/index.html
+        -->
+        <script>
+            /*
+             * Listen for the message from the originating window/tab that
+             * gives us the client ID of the app that wants access to the
+             * user's Dropbox.  Upon receiving such a message, load the
+             * Dropbox login page for that app.
+             *
+             * Note that we ask the Dropbox login page to redirect, after
+             * login, to THIS same URL.  So you will need, in the settings
+             * for your Dropbox app, to premit the following URL as
+             * acceptable for redirection.
+             *     http://your.server.name/path/to/dropbox-login.html
+             * If you are testing on localhost, ensure that you're testing
+             * via a web server (such as Python's SimpleHTTPServer) rather
+             * than with file:// URLs, and Dropbox will let you add the
+             * following URL to your app settings.
+             *     http://localhost:port/path/to/dropbox-login.html
+             */
+            window.addEventListener( 'message', function ( event ) {
+                if ( event.data[0] === 'setClientID' ) {
+                    var D = new Dropbox.Dropbox( { clientId: event.data[1] } ); // <-- error in original file.
+                    window.location.href =
+                        D.getAuthenticationUrl( window.location.href );
+                }
+            } );
+            /*
+             * The following utility function parses a query string of the
+             * form `?key1=value1&key2=value2&...&keyN=valueN` into a JSON
+             * object `{ key1 : value1, ..., keyN : valueN }`.  This code,
+             * in particular, comes almost exactly from the Dropbox "auth"
+             * example above, in the `utils.js` file.  It is necessary
+             * because the redirection to this page after a successful
+             * Dropbox login uses a query string of this form to tell the
+             * page what happened with the login attempt.
+             */
+            function parseQueryString ( str ) {
+                var ret = Object.create( null );
+                if ( typeof str !== 'string' ) return ret;
+                str = str.trim().replace( /^(\?|#|&)/, '' );
+                if ( !str ) return ret;
+                str.split( '&' ).forEach( function ( param ) {
+                    var parts = param.replace( /\+/g, ' ' ).split( '=' );
+                    var key = parts.shift();
+                    var val = parts.length > 0 ? parts.join( '=' )
+                                               : undefined;
+                    key = decodeURIComponent( key );
+                    val = val === undefined ? null
+                                            : decodeURIComponent(val);
+                    if ( ret[key] === undefined ) {
+                        ret[key] = val;
+                    } else if ( Array.isArray( ret[key] ) ) {
+                        ret[key].push(val);
+                    } else {
+                        ret[key] = [ret[key], val];
+                    }
+                } );
+                return ret;
+            }
+            /*
+             * If this page was loaded by dropbox-backend.js to start a
+             * login, there will be no `window.location.hash`, and we will
+             * take no action in the following section of code.
+             *
+             * If, however, this page was loaded by the redirection after
+             * the Dropbox login attempt, we will find that
+             * `window.location.hash` contains the result of the login
+             * attempt, as several pieces of data.
+             *
+             * In such a case, we will communicate all of that information
+             * back to the window/tab that loaded this one, so that it can
+             * use that information to access the user's Dropbox.
+             */
+            var hashData = parseQueryString( window.location.hash );
+            if ( hashData.access_token || hashData.error )
+                window.opener.postMessage(JSON.stringify( [ 'dialogLogin', hashData ] ), '*' );
+        </script>
+    </head>
+    <body>
+    </body>
+</html>
