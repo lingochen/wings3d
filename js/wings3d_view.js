@@ -24,6 +24,7 @@ import * as Hotkey from './wings3d_hotkey.js';
 import * as Util from './wings3d_util.js';
 import * as TreeView from './wings3d_uitree.js';
 import { GenericEditCommand, ToggleCheckbox } from './wings3d_mads.js';
+import * as OpenSave from './wings3d_opensave.js'
 
 
 // 
@@ -1174,6 +1175,13 @@ function init() {
    //console.log("Workspace init successful");
    let wavefront = new WavefrontObjImportExporter();
    let X3d = new X3dImportExporter();
+   // registering save/saveAs/open handling.
+   UI.bindMenuItem(Wings3D.action.save.name, function(evt) {
+      // use X3d as default format.
+      OpenSave.save(function(saveFn) {
+         X3d.store(getWorld(), saveFn, "test");
+       });
+    });
 
    // handle redrawingLoop
    function updateFrame(timestamp) {

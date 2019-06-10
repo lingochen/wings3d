@@ -82,7 +82,7 @@
           <li class="not-implemented"><a onmouseover="help('Open a previously saved scene')" onmouseleave="help()">Open...</a></li>
           <li class="not-implemented"><a onmouseover="help('Merge a previously saved scene into the current scene')" onmouseleave="help()">Merge...</a></li>
           <hr/>
-          <li class="not-implemented"><a onmouseover="help('Save the current scene')" onmouseleave="help()">Save</a></li>
+          <li><a data-menuid="save" onmouseover="help('Save the current scene')" onmouseleave="help()">Save</a></li>
           <li class="not-implemented"><a onmouseover="help('Save the current scene under a new name')" onmouseleave="help()">Save As...</a></li>
           <li class="not-implemented"><a onmouseover="help('Save only the selected objects or faces')" onmouseleave="help()">Save Selected...</a></li>
           <li class="not-implemented"><a onmouseover="help('Generate new filename and save')" onmouseleave="help()">Save Incrementally</a></li>
@@ -196,7 +196,7 @@
         <img src="../img/bluecube.png"  class="iconImg openImg">
         <span>Open</span>
       </label>
-      <label data-menuid="saveCloudButton" class="button not-implemented" >
+      <label data-menuid="save" class="button">
       	<input type="button">
         <img src="../img/bluecube.png" class="iconImg saveImg">
         <span>Save</span>
@@ -736,6 +736,8 @@
       </div>
     </div>
   </div>
+  <form id="uploadFile" class="dialog">
+  </form>
   <input id="importFile" style="display:none;" type='file'>
   <form id="importFileListForm" name="importFileListForm" class="dialog">
     <div><label>Missing Files</label>
@@ -994,6 +996,11 @@
     </div>
     <button type="submit" value="Cancel">Cancel</button>
     <button type="submit" value="Ok">Ok</button>
+  </form>
+<!-- Save Load -->
+  <form id="cloudSaveDialog" class="dialog">
+     <h3> Save As <button type="submit" value="cancel" class="close">&times;</button></h3>
+     <button type="submit" value="Ok" id="dropboxSave" data-app-key="p6wfhvtsa2hd9nh"> <span>Save to Dropbox</span></button>
   </form>
 </body>
 

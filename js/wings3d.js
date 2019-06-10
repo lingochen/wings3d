@@ -248,6 +248,7 @@ const action = {
    fileMenu: () => {notImplemented(this);},
    importMenu: () => {notImplemented(this);},
    exportMenu: () => {notImplemented(this);},
+   save: () => {notImplemented(this);},
    // view action, button bar
    openSidebar: () => {notImplemented(this);},
    toggleVertexMode: () => {notImplemented(this);},
