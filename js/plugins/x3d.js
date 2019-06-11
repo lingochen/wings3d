@@ -11,7 +11,7 @@ import { PreviewCage } from "../wings3d_model.js";
 
 class X3dImportExporter extends ImportExporter {
    constructor() {
-      super('Web3D (.x3d)...', 'Web3D (.x3d)...');
+      super(['Web3D', 'x3d'], ['Web3D', 'x3d']);
    }
 
    extension() {

@@ -10,7 +10,7 @@ import * as UI from '../wings3d_ui.js';
 
 class WavefrontObjImportExporter extends ImportExporter {
    constructor() {
-      super('Wavefront (.obj)...', 'Wavefront (.obj)...');
+      super(['Wavefront', 'obj'], ['Wavefront', 'obj']);
    }
 
    extension() {

@@ -8,32 +8,19 @@
 import {PreviewCage, CreatePreviewCageCommand} from './wings3d_model.js';
 import {WingedTopology} from './wings3d_wingededge.js';
 import {Material} from "./wings3d_material.js";
-import * as UI from './wings3d_ui.js';
 import * as View from './wings3d_view.js';
 
 
 
 class ImportExporter {
    constructor(importMenuText, exportMenuText) {
-      const self = this;
-      // plug into import/export menu
       if (importMenuText) {
-         // first get import Submenu.
-         UI.addMenuItem('fileImport', 'import' + importMenuText.split(" ")[0], importMenuText, function(ev) {
-               UI.openFile(function(file) { // open file Dialog, and retrive data
-                     self.import(file);
-                  });      
-            });
+         this.importMenuText = {name: importMenuText[0],
+                                ext: importMenuText[1]};
       }
       if (exportMenuText) {
-         UI.addMenuItem('fileExport', 'export' + exportMenuText.split(" ")[0], exportMenuText, function(ev) {
-            UI.runDialog('#exportFile', ev, function(form) {
-               const data = form.querySelector('input[name="Filename"');
-               if (data) {
-                  self.export(data.value);
-               }
-             });
-         });
+         this.exportMenuText = {name: exportMenuText[0],
+                                ext: exportMenuText[1]};
       }
    }
 
@@ -104,7 +91,25 @@ class ImportExporter {
       this.vertexCount = 0;
       this.non_manifold = [];
    }
+
+
+   static addLoadStore(loadStore) {
+      if (loadStore.importMenuText || loadStore.exportMenuText) {
+         ImportExporter.LOADSTORE.add(loadStore);
+      }
+   }
+
+   static setDefault(loadstore) {
+      if (ImportExporter.DEFAULT) {
+         ImportExporter.LOADSTORE.add(ImportExporter.DEFAULT);
+      }
+      ImportExporter.DEFAULT = loadstore;
+      // remove from LOADER, STORER.
+      ImportExporter.LOADSTORE.delete(loadstore);
+   }
 };
+ImportExporter.LOADSTORE = new Set;
+ImportExporter.DEFAULT = null;
 
 export {
    ImportExporter

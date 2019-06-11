@@ -25,6 +25,7 @@ import * as Util from './wings3d_util.js';
 import * as TreeView from './wings3d_uitree.js';
 import { GenericEditCommand, ToggleCheckbox } from './wings3d_mads.js';
 import * as OpenSave from './wings3d_opensave.js'
+import { ImportExporter } from './wings3d_importexport.js';
 
 
 // 
@@ -1171,14 +1172,40 @@ function init() {
          UI.positionDom(contextMenu.menu, UI.getPosition(e));
          UI.showContextMenu(contextMenu.menu);
       }
-   }, false);
+   }, false);   
    //console.log("Workspace init successful");
-   let wavefront = new WavefrontObjImportExporter();
+
+   // import/export
+   ImportExporter.addLoadStore( new WavefrontObjImportExporter() );
    let X3d = new X3dImportExporter();
+   ImportExporter.setDefault(X3d);
+      // plug into import/export menu
+   for (let loadStore of ImportExporter.LOADSTORE) {
+      if (loadStore.importMenuText) {
+         const importMenuText = loadStore.importMenuText;
+         // first get import Submenu.
+         UI.addMenuItem('fileImport', 'import' + importMenuText.name, `${importMenuText.name} (.${importMenuText.ext})...`, function(ev) {
+               UI.openFile(function(file) { // open file Dialog, and retrive data
+                     loadStore.import(file);
+                  });      
+            });
+      }
+      if (loadStore.exportMenuText) {
+         const exportMenuText = loadStore.exportMenuText;
+         UI.addMenuItem('fileExport', 'export' + exportMenuText.name, `${exportMenuText.name} (.${exportMenuText.ext})...`, function(ev) {
+            UI.runDialog('#exportFile', ev, function(form) {
+               const data = form.querySelector('input[name="Filename"');
+               if (data) {
+                  loadStore.export(data.value);
+               }
+             });
+         });
+      }
+   }
    // registering save/saveAs/open handling.
    UI.bindMenuItem(Wings3D.action.save.name, function(evt) {
       // use X3d as default format.
-      OpenSave.save(function(saveFn) {
+      OpenSave.save(evt, function(saveFn) {
          X3d.store(getWorld(), saveFn, "test");
        });
     });
