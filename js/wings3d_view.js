@@ -1192,13 +1192,10 @@ function init() {
       }
       if (loadStore.exportMenuText) {
          const exportMenuText = loadStore.exportMenuText;
-         UI.addMenuItem('fileExport', 'export' + exportMenuText.name, `${exportMenuText.name} (.${exportMenuText.ext})...`, function(ev) {
-            UI.runDialog('#exportFile', ev, function(form) {
-               const data = form.querySelector('input[name="Filename"');
-               if (data) {
-                  loadStore.export(data.value);
-               }
-             });
+         UI.addMenuItem('fileExport', 'export' + exportMenuText.name, `${exportMenuText.name} (.${exportMenuText.ext})...`, function(evt) {
+            OpenSave.save(evt, function(saveFn) {
+               loadStore.store(getWorld(), saveFn, "test");
+            });
          });
       }
    }

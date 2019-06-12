@@ -38,7 +38,19 @@ function save(evt, storeFn) {
       setOptions();
       // now setup dropbox/onedrive/yandex/google/box/pcloud buttons
       Dropbox.setupSaveButton(document.getElementById('dropboxSave'));
-      //
+      // setup local file store
+      const button = document.getElementById('localSave');
+      button.addEventListener('click', function(evt) {
+         /*UI.runDialog('#exportFile', ev, function(form) {
+            const data = form.querySelector('input[name="Filename"');
+            if (data) {
+               loadStore.export(data.value);
+            }
+          });*/
+          CloudStorage.storeObject(function(blob, filename) {
+            saveAs(blob, filename);   // FileSaver.js
+           });
+       });
    }
 
    // store function callback. but we are doing repeatly, not good.
