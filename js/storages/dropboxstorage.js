@@ -208,7 +208,8 @@ function setupSaveButton(button) {
     cancel: function() {},
 };
  */
-function open(options) {
+function open(loader) {
+
 
 };
 

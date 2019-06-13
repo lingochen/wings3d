@@ -1184,10 +1184,8 @@ function init() {
       if (loadStore.importMenuText) {
          const importMenuText = loadStore.importMenuText;
          // first get import Submenu.
-         UI.addMenuItem('fileImport', 'import' + importMenuText.name, `${importMenuText.name} (.${importMenuText.ext})...`, function(ev) {
-               UI.openFile(function(file) { // open file Dialog, and retrive data
-                     loadStore.import(file);
-                  });      
+         UI.addMenuItem('fileImport', 'import' + importMenuText.name, `${importMenuText.name} (.${importMenuText.ext})...`, function(evt) {
+               OpenSave.open(evt, loadStore); 
             });
       }
       if (loadStore.exportMenuText) {

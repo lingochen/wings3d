@@ -60,8 +60,42 @@ function save(evt, storeFn) {
    UI.runDialogCenter('#cloudSaveDialog', function() {}, null, evt);
 };
 
-function open() {
+let cloudOpenDialog;
+function open(evt, loader) {
+   // popup windows 
+   if (!cloudOpenDialog) {
+      cloudOpenDialog = document.getElementById('cloudOpenDialog');
+      if (!cloudOpenDialog) {
+         alert('Error: no OpenDialog');
+         return false;
+      }
+      // first, setOptions
+      setOptions();
+      // now setup dropbox/onedrive/yandex/google/box/pcloud buttons
+      //Dropbox.setupOpenButton(document.getElementById('dropboxOpen'));
+      // setup local file open
+      const fileInput = document.querySelector('#importFile');    // <input id="importFile" style="display:none;" type='file'>
+      if (fileInput) {  // hidden open file dialog
+         fileInput.addEventListener('change', function ok(_ev) {
+            let fileList = this.files;    // = ev.target.files;
+            for (let file of fileList) {
+               CloudStorage.loader.import(file);
+            }
+            // reset value
+            fileInput.value = "";
+         });
+         const button = document.getElementById('localOpen');
+         if (button) {
+            button.addEventListener('click', function(_evt) {
+               fileInput.click();      // open file dialog.
+             });
+         }
+      }
+   }
+   CloudStorage.setLoadFn(loader);
 
+   // now show dialog, 
+   UI.runDialogCenter('#cloudOpenDialog', function() {}, null, evt);
 };
 
 

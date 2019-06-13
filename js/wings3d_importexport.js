@@ -30,17 +30,11 @@ class ImportExporter {
       saveFn(blob, filename + '.' + this.extension());
    }
 
-   export(filename) {
-      this._reset();    // init before save.
-      const blob = this._export(View.getWorld());
-      saveAs(blob, filename + '.' + this.extension());
-   }
-
    import(file) {
       this._reset(); // init before import
       const self = this;
-      let reader = new FileReader();
-
+      let reader = new FileReader;
+      
       reader.onload = function(ev) {
          const data = reader.result;
          self._import(data);

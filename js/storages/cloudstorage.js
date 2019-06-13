@@ -118,6 +118,11 @@ function ezAjax(url, options = {}, progress, cancel) {
 	return xhrPromise;
 };
 
+let gLoadObject = function() {};
+function setLoadFn(fn) {
+   gLoadObject = fn;
+}
+
 let gStoreObject = function() {};
 function setStoreFn(fn) {
    gStoreObject = fn;
@@ -134,6 +139,8 @@ function getOptions() {
 
 
 export {
+   setLoadFn,
+   gLoadObject as loader,
    setStoreFn,
    gStoreObject as storeObject,
    setOptions,
