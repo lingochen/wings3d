@@ -26,7 +26,7 @@ function setOptions() {
 };
 
 let cloudSaveDialog;
-function save(evt, storeFn) {
+function save(evt) {
    // popup windows 
    if (!cloudSaveDialog) {
       cloudSaveDialog = document.getElementById('cloudSaveDialog');
@@ -40,24 +40,24 @@ function save(evt, storeFn) {
       Dropbox.setupSaveButton(document.getElementById('dropboxSave'));
       // setup local file store
       const button = document.getElementById('localSave');
+      if (button) {
       button.addEventListener('click', function(evt) {
-         /*UI.runDialog('#exportFile', ev, function(form) {
-            const data = form.querySelector('input[name="Filename"');
-            if (data) {
-               loadStore.export(data.value);
-            }
-          });*/
-          CloudStorage.storeObject(function(blob, filename) {
-            saveAs(blob, filename);   // FileSaver.js
+          CloudStorage.setStoreFn( function(blobNameFn) {
+               const {blob, filename} = blobNameFn();
+               saveAs(blob, filename);
+               return "Save success";
            });
        });
+      }
    }
-
-   // store function callback. but we are doing repeatly, not good.
-   CloudStorage.setStoreFn(storeFn);
    
-   // now show dialog, 
-   UI.runDialogCenter('#cloudSaveDialog', function() {}, null, evt);
+   return new Promise(function(resolve, _reject) {
+      // now show dialog, 
+      UI.runDialogCenter('#cloudSaveDialog', function(_form) {
+         // success submit, now resolve
+         resolve(CloudStorage.storeFn);   // pass the selected storeFn.
+       }, null, evt);
+   });
 };
 
 let cloudOpenDialog;

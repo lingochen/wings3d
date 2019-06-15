@@ -24,10 +24,10 @@ class ImportExporter {
       }
    }
 
-   store(world, saveFn, filename) {
+   export(world, filename) {
       this._reset();    // init before save.
       const blob = this._export(world);
-      saveFn(blob, filename + '.' + this.extension());
+      return {blob: blob, filename: filename + '.' + this.extension()};
    }
 
    import(file) {

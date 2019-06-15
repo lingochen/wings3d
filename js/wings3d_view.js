@@ -1191,18 +1191,20 @@ function init() {
       if (loadStore.exportMenuText) {
          const exportMenuText = loadStore.exportMenuText;
          UI.addMenuItem('fileExport', 'export' + exportMenuText.name, `${exportMenuText.name} (.${exportMenuText.ext})...`, function(evt) {
-            OpenSave.save(evt, function(saveFn) {
-               loadStore.store(getWorld(), saveFn, "test");
-            });
+            OpenSave.save(evt)
+             .then( saveFn => {
+               saveFn(loadStore.export(getWorld(), "test"));
+             });
          });
       }
    }
    // registering save/saveAs/open handling.
    UI.bindMenuItem(Wings3D.action.save.name, function(evt) {
       // use X3d as default format.
-      OpenSave.save(evt, function(saveFn) {
-         X3d.store(getWorld(), saveFn, "test");
-       });
+      OpenSave.save(evt)
+       .then( saveFn => {
+          return saveFn(function() {return X3d.export(getWorld(), 'text')});
+        });
     });
 
    // handle redrawingLoop

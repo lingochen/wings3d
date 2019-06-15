@@ -540,7 +540,7 @@ const ezFetch = (function() {
    return response.text()
      .then(text => {
        if (response.ok) {
-         return json
+         return text;
        } else {
          return Promise.reject({
            status: response.status,

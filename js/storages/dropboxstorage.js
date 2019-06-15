@@ -29,41 +29,49 @@ let dropboxToken;
  * this code from a CDN, you will at least need to download that login page
  * and place it in your project's web space.
  */
-function getAuth( successFn, blob, filename, failureFn ){
-   if ( !dropboxToken ) {
-      const url = window.location.protocol + "//" + window.location.host  + '/dropbox-login.html';// + "/" + window.location.pathname;
-      const loginWindow = window.open( url );
+function getAuth() {
+
+   const tokenPromise = new Promise(function (resolve, reject) {
+      if (dropboxToken) {
+         resolve(dropboxToken);
+      } else {
+         const url = window.location.protocol + "//" + window.location.host  + '/dropbox-login.html';// + "/" + window.location.pathname;
+         const loginWindow = window.open( url );
       
-      window.addEventListener('message', function eventHandler(evt) {
-         try {
-            const message = JSON.parse( evt.data );
-            if ( !( message instanceof Array ) ) return;
-            const command = message.shift();
-            if ( command === 'dialogLogin' ) {
-               loginWindow.close();
-               const accountData = message.shift();
-               if ( accountData.access_token ) {
-                  dropboxToken = accountData.access_token;
-                  successFn(blob, filename);
-               } else {
-                  failureFn( accountData );
+         window.addEventListener('message', function eventHandler(evt) {
+            try {
+               const message = JSON.parse( evt.data );
+               if ( !( message instanceof Array ) ) return;
+               const command = message.shift();
+               if ( command === 'dialogLogin' ) {
+                  loginWindow.close();
+                  const accountData = message.shift();
+                  if ( accountData.access_token ) {
+                     dropboxToken = accountData.access_token;
+                     resolve(dropboxToken);
+                  } else {
+                     reject( accountData );
+                  }
+                  window.removeEventListener('message', eventHandler);   // cleanup
                }
-               window.removeEventListener('message', eventHandler);   // cleanup
+            } catch ( e ) { }
+         });
+
+         loginWindow.addEventListener('load', () => {
+            loginWindow.postMessage( ['setClientID', clientID], '*');
+         });
+
+         loginWindow.addEventListener('unload', () => {  // do cleanup if close without authorization
+            if (!dropboxToken) {
+               window.removeEventListener('message', eventHandler);   // now cleanup
+               reject( "Authorization failed" );
             }
-        } catch ( e ) { }
-      });
-
-      loginWindow.addEventListener('load', () => {
-         loginWindow.postMessage( ['setClientID', clientID], '*');
-       });
-
-      loginWindow.addEventListener('unload', () => {  // do cleanup if close without authorization
-         if (!dropboxToken) {
-            window.removeEventListener('message', eventHandler);   // now cleanup
-         }
-       });
-   }
+         });
+      }
+   });
+   return tokenPromise;
 }
+
 
 /*
  * Reads the contents of a folder in the user's Dropbox.  Fails if the user
@@ -74,24 +82,51 @@ function getAuth( successFn, blob, filename, failureFn ){
  * suitable for handing to the `showList()` method of the file dialog
  * defined in `dialog.js`.
  */
-/*DropboxFileSystem.prototype.readFolder =
-    function ( fullPath, successCB, failureCB )
-{
-    if ( !this.dropbox )
-        failureCB( 'The user has not logged in to Dropbox.' );
-    this.dropbox
-    .filesListFolder( { path : fullPath.join( '/' ) } )
-    .then( function ( response ) {
-        var result = [ ];
-        for ( var i = 0 ; i < response.entries.length ; i++ )
-            result.push( {
-                type : response.entries[i]['.tag'],
-                name : response.entries[i].name
-            } );
-        successCB( result );
+function readFolder( fullPath, successCB, failureCB ) {
+    if ( !dropboxToken ) {
+      getAuth(readFolder, failureFn, fullPath);
+    } else {
+         const ajaxOptions = {
+           method: 'POST',
+           headers: {
+              Authorization: `Bearer ${accessToken}`,
+              'Content-Type': 'application/json',
+           },
+           data: JSON.stringify({ path : fullPath.join('/') }),
+         };
+
+         ezAjax('https://content.dropboxapi.com/2/files/list_folder', ajaxOptions)
+           .then(res => parseResponseToJson(res))
+           .then(([res, response]) => {
+             // maintaining existing API for error codes not equal to 200 range
+             let result = [ ];
+             for ( var i = 0 ; i < response.entries.length ; i++ )
+                result.push( {
+                    type : response.entries[i]['.tag'],
+                    name : response.entries[i].name
+                } );
+            successCB( result );
+             if (!res.ok) {
+               // eslint-disable-next-line no-throw-literal
+               throw {
+                 error: data,
+                 response: res,
+                 status: res.status,
+               };
+             }
+     
+             return data;
+           });
+
+
+      ezAjax(ajaxOptions)
+      .filesListFolder( { path : fullPath.join( '/' ) } )
+      .then( function ( response ) {
+
     } )
     .catch( failureCB );
-}*/
+   }
+}
 
 /*
  * Reads the contents of a file in the user's Dropbox.  Fails if the user
@@ -140,10 +175,73 @@ function getAuth( successFn, blob, filename, failureFn ){
  * } 
  * @param {file} fileObject - single fileObject to save.
  */
-function save(blob, filename) {
+function save(getDataFn) {
+   const options = CloudStorage.getOptions();
+   return getAuth()
+          .then(function(accessToken) {
+      const {blob, filename} = getDataFn();
+      const ajaxOptions = {
+         method: 'POST',
+         headers: {
+            Authorization: 'Bearer ' + accessToken,
+            'Content-Type': 'application/octet-stream',
+            'Dropbox-API-Arg': JSON.stringify({
+               path: '/' + filename,           // path : '/' + fullPath.join( '/' ),
+               mode: 'add',                     // 'overwrite', shorthand for {'.tag': 'add' };
+               autorename: true,
+               mute: false
+            }),
+         },
+         data: blob,                            
+      };
+
+      return CloudStorage.ezAjax('https://content.dropboxapi.com/2/files/upload', ajaxOptions, options.progress, options.cancel)
+             .then( result => {
+         // format result then return it
+         return result.data;
+      });
+   });
+};
+
+
+/**
+ * model after chooser/saver
+ * @param {*} options - same as save options.
+
+ */
+function setupSaveButton(button) {
+   if (button) {
+      // get clientID from button.
+      clientID = button.getAttribute('data-app-key');
+
+      // add handling code.
+      button.addEventListener('click', function(evt) {
+         //evt.preventDefault(); // <- this prevent submit.
+         // we really should call SaveAs dialog?
+         CloudStorage.setStoreFn(save);  // pass save function as callBack.
+       });
+   }
+};
+
+
+/**
+ * model after dropbox chooser
+ * @param {*} options
+ * options = {
+    files: [filename, ...], 
+ 
+    // Required. Called when a user selects an item in the Chooser.
+    success: function(files) {alert("Here's the file link: " + files[0].link)},
+
+    // Optional. Called when the user closes the dialog without selecting a file
+    // and does not include any parameters.
+    cancel: function() {},
+};
+ */
+function open(loader) {
    const options = CloudStorage.getOptions();
    if (!dropboxToken) {   // check login, if not do it now.
-      getAuth(save, blob, filename, options.error);
+      getAuth(open, loader, options.error);
    } else { // we have access, now save one by one.
          const ajaxOptions = {
             method: 'POST',
@@ -171,46 +269,6 @@ function save(blob, filename) {
          }
        });
    }
-};
-
-
-/**
- * model after chooser/saver
- * @param {*} options - same as save options.
-
- */
-function setupSaveButton(button) {
-   if (button) {
-      // get clientID from button.
-      clientID = button.getAttribute('data-app-key');
-
-      // add handling code.
-      button.addEventListener('click', function(evt) {
-         //evt.preventDefault(); // <- this prevent submit.
-         // we really should call SaveAs dialog?
-         CloudStorage.storeObject(save);  // pass save function as callBack.
-       });
-   }
-};
-
-
-/**
- * model after dropbox chooser
- * @param {*} options
- * options = {
-    files: [filename, ...], 
- 
-    // Required. Called when a user selects an item in the Chooser.
-    success: function(files) {alert("Here's the file link: " + files[0].link)},
-
-    // Optional. Called when the user closes the dialog without selecting a file
-    // and does not include any parameters.
-    cancel: function() {},
-};
- */
-function open(loader) {
-
-
 };
 
 function setupOpenButton(options) {

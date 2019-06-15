@@ -118,6 +118,13 @@ function ezAjax(url, options = {}, progress, cancel) {
 	return xhrPromise;
 };
 
+function parseToJson(res) {
+   if (res.headers.get('Content-Type') === 'application/json') {
+     return [res, res.response];
+   }
+   return [res, JSON.parse(res.response)];
+}
+
 let gLoadObject = function() {};
 function setLoadFn(fn) {
    gLoadObject = fn;
@@ -140,10 +147,11 @@ function getOptions() {
 
 export {
    setLoadFn,
-   gLoadObject as loader,
+   gLoadObject as loadFn,
    setStoreFn,
-   gStoreObject as storeObject,
+   gStoreObject as storeFn,
    setOptions,
    getOptions,
    ezAjax,
+   parseToJson,
 }
