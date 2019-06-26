@@ -702,27 +702,27 @@
      <label>Segments
      <input type="number" name="Segments" value="8">
      </label>
-     <button type="submit" value="Cancel">Cancel</button>
-     <button type="submit" value="Ok">Ok</button>
+     <button type="submit" value="cancel">Cancel</button>
+     <button type="submit" value="ok">Ok</button>
   </form>
   <form id="sliceBodyDialog" class="dialog">
      <label>Slice into Equal Parts     </label>
      <input type="range" name="amountRange" min="2" max="100" value="2" oninput="this.form.amountInput.value=this.value" />
      <input type="number" name="amountInput" min="2" max="100" value="2" oninput="this.form.amountRange.value=this.value" />
-     <button type="submit" value="Cancel">Cancel</button>
-     <button type="submit" value="Ok">Ok</button>
+     <button type="submit" value="cancel">Cancel</button>
+     <button type="submit" value="ok">Ok</button>
   </form>
   <form id="exportFile" class="dialog">
      <h2>Saving Scene</h2>
        <label>Filename: <input type="text" name="Filename" placeholder="wings3d-web"/></label>
-       <button type="submit" value="Ok">Ok</button>
-       <button type="submit" value="Cancel">Cancel</button>
+       <button type="submit" value="ok">Ok</button>
+       <button type="submit" value="cancel">Cancel</button>
   </form>
   <form id="renameDialog" class="dialog">
      <h2>Rename</h2>
        <div class="content-dummy"></div>
-       <button type="submit" value="Cancel">Cancel</button>
-       <button type="submit" value="Ok">Ok</button>
+       <button type="submit" value="cancel">Cancel</button>
+       <button type="submit" value="ok">Ok</button>
   </form>
   <div id="tutorGuide" class="exclude tutor-bubble left hide">
     <span class="tutor-arrow"></span>
@@ -744,7 +744,7 @@
     <ul id="missingFiles"></ul>
     </div>
     <input name="fileListInput" type='file' multiple>
-    <button type="submit" value="Ok">Import</button>
+    <button type="submit" value="ok">Import</button>
   </form>
   <form id="preferenceForm" class="dialog">
     <div class="tabs">
@@ -978,8 +978,8 @@
     </div>
 
     <div class="endAlign">
-    <button type="submit" value="Cancel">Cancel</button>
-    <button type="submit" value="Ok">Ok</button>
+    <button type="submit" value="cancel">Cancel</button>
+    <button type="submit" value="ok">Ok</button>
     </div>
   </form>
   <form id="materialSetting" class="dialog">
@@ -994,28 +994,29 @@
       <span data-i18n>Opacity</span><input type="range" class="slider" min="0" max="1" step="0.01" value="1" onchange="this.nextElementSibling.value=this.value"><input name="opacity" type="number" min="0" max="1" step="0.01" value="1" onchange="this.previousElementSibling.value=this.value">
     </div>
     </div>
-    <button type="submit" value="Cancel">Cancel</button>
-    <button type="submit" value="Ok">Ok</button>
+    <button type="submit" value="cancel">Cancel</button>
+    <button type="submit" value="ok">Ok</button>
   </form>
 <!-- Save Load -->
   <form id="cloudSaveDialog" class="dialog">
      <h3> Save As <button type="submit" value="cancel" class="close">&times;</button></h3>
-     <button type="submit" value="Ok" id="dropboxSave" data-app-key="p6wfhvtsa2hd9nh"> <span>Save to Dropbox</span></button>
-     <button type="submit" value="Ok" id="localSave"> <span>Save to Local</span></button>
+     <button type="submit" value="ok" id="dropboxSave" data-app-key="p6wfhvtsa2hd9nh"> <span>Save to Dropbox</span></button>
+     <button type="submit" value="ok" id="localSave"> <span>Save to Local</span></button>
   </form>
   <form id="cloudOpenDialog" class="dialog">
      <h3> Open from <button type="submit" value="cancel" class="close">&times;</button></h3>
-     <button type="submit" value="Ok" id="localOpen"> <span>Open from Local</span></button>
+     <button type="submit" value="ok" id="dropboxOpen" data-app-key="p6wfhvtsa2hd9nh"> <span>Open from Dropbox</span></button>
+     <button type="submit" value="ok" id="localOpen"> <span>Open from Local</span></button>
   </form>
-  <form id="contenPicker" class="dialog">
+  <form id="contentPicker" class="dialog">
      <h3><span>Select</span><button type="submit" value="cancel" class="close">&times;</button></h3>
      <div>search bar</search>
-     <div>nav bar</div>
-     <div class="scrollable">
+     <div class="breadCrumb">nav bar</div>
+     <div class="filePicker scrollable">
      </div>
      <div>
        <p><span>0</span> selected</p>
-       <button type="submit" value="Ok" id="localOpen"> <span>Ok</span></button>
+       <button type="submit" value="ok"> <span>Ok</span></button>
      </div>
   </form>
 </body>
