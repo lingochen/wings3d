@@ -30,15 +30,19 @@ let dropboxToken;
  * and place it in your project's web space.
  */
 function getAuth() {
-
-   const tokenPromise = new Promise(function (resolve, reject) {
+   return new Promise(function (resolve, reject) {
       if (dropboxToken) {
+         resolve(dropboxToken);
+      } else if (dropboxToken = window.localStorage.getItem("dropboxAccessToken")) {   // check if already in localStorage.
          resolve(dropboxToken);
       } else {
          const url = window.location.protocol + "//" + window.location.host  + '/dropbox-login.html';// + "/" + window.location.pathname;
-         const loginWindow = window.open( url );
-      
-         window.addEventListener('message', function eventHandler(evt) {
+         const loginWindow = window.open( url, '_blank');
+         if (!loginWindow) {
+            reject("open window failed, popup blocked?");
+         } else {
+            let eventHandler;
+         window.addEventListener('message', eventHandler = function(evt) {
             try {
                const message = JSON.parse( evt.data );
                if ( !( message instanceof Array ) ) return;
@@ -48,6 +52,7 @@ function getAuth() {
                   const accountData = message.shift();
                   if ( accountData.access_token ) {
                      dropboxToken = accountData.access_token;
+                     window.localStorage.setItem("dropboxAccessToken", dropboxToken);
                      resolve(dropboxToken);
                   } else {
                      reject( accountData );
@@ -61,71 +66,66 @@ function getAuth() {
             loginWindow.postMessage( ['setClientID', clientID], '*');
          });
 
-         loginWindow.addEventListener('unload', () => {  // do cleanup if close without authorization
+         /*loginWindow.addEventListener('unload', () => {  // do cleanup if close without authorization
             if (!dropboxToken) {
                window.removeEventListener('message', eventHandler);   // now cleanup
                reject( "Authorization failed" );
             }
-         });
+         });*/
+         }
       }
    });
-   return tokenPromise;
 }
 
 
 /*
- * Reads the contents of a folder in the user's Dropbox.  Fails if the user
- * has not yet logged in, or if the given path does not point to a folder.
+ * Reads the contents of a folder in the user's Dropbox.  Fails if the given path does not point to a folder.
  * The path should be provided as an array of steps in the path.  E.g.,
- * `/foo/bar` should be `['foo','bar']`.  The data sent to the success
- * callback is an array of objects with `type` and `name` attributes,
+ * `/foo/bar` should be `['foo','bar']`.  The data sent back is an array of objects with  attributes,
  * suitable for handing to the `showList()` method of the file dialog
  * defined in `dialog.js`.
  */
-function readFolder( fullPath, successCB, failureCB ) {
-    if ( !dropboxToken ) {
-      getAuth(readFolder, failureFn, fullPath);
-    } else {
-         const ajaxOptions = {
+async function readFolder( fullPath ) {
+   const accessToken = await getAuth();
+
+   const path = fullPath.join('/');
+   const ajaxOptions = {
            method: 'POST',
+           responseType: 'json',
            headers: {
               Authorization: `Bearer ${accessToken}`,
               'Content-Type': 'application/json',
            },
-           data: JSON.stringify({ path : fullPath.join('/') }),
+           data: JSON.stringify({"path": path,
+                                 "recursive": false,
+                                 "include_deleted": false,
+                                 "include_has_explicit_shared_members": false,
+                                 "include_mounted_folders": true,
+                                 "include_non_downloadable_files": true
+                                 }),
          };
 
-         ezAjax('https://content.dropboxapi.com/2/files/list_folder', ajaxOptions)
-           .then(res => parseResponseToJson(res))
-           .then(([res, response]) => {
-             // maintaining existing API for error codes not equal to 200 range
-             let result = [ ];
-             for ( var i = 0 ; i < response.entries.length ; i++ )
-                result.push( {
-                    type : response.entries[i]['.tag'],
-                    name : response.entries[i].name
-                } );
-            successCB( result );
-             if (!res.ok) {
-               // eslint-disable-next-line no-throw-literal
-               throw {
-                 error: data,
-                 response: res,
-                 status: res.status,
-               };
-             }
-     
-             return data;
-           });
 
-
-      ezAjax(ajaxOptions)
-      .filesListFolder( { path : fullPath.join( '/' ) } )
-      .then( function ( response ) {
-
-    } )
-    .catch( failureCB );
-   }
+   const fileItems = await CloudStorage.ezAjax('https://api.dropboxapi.com/2/files/list_folder', ajaxOptions)
+                  .then(res => CloudStorage.parseToJson(res))
+                  .then(([_res, data]) => {
+                     const folders = [], files = [];
+                     for (let entry of data.entries) {
+                        if (entry['.tag'] === 'folder') {
+                           folders.push( {isFile: false, name : entry.name, path: entry.path_lower, pathDisplay: entry.path_display} );
+                        } else {
+                           files.push( {isFile: true, name : entry.name, path: entry.path_lower, pathDisplay: entry.path_display,
+                                        modified: entry.client_modified, size: entry.size} );
+                        }
+                     }
+                     let cursor;
+                     if (data.entries.has_more) {
+                        cursor = data.entries.cursor;
+                     }
+                     // order by folders then files. continuation cursor if needed.
+                     return {fileItems: folders.concat(files), cursor: cursor};
+                   });
+   return fileItems;
 }
 
 /*
@@ -238,41 +238,45 @@ function setupSaveButton(button) {
     cancel: function() {},
 };
  */
-function open(loader) {
+async function open(path) {
    const options = CloudStorage.getOptions();
-   if (!dropboxToken) {   // check login, if not do it now.
-      getAuth(open, loader, options.error);
-   } else { // we have access, now save one by one.
-         const ajaxOptions = {
-            method: 'POST',
-            headers: {
-               Authorization: 'Bearer ' + dropboxToken,
-               'Content-Type': 'application/octet-stream',
-               'Dropbox-API-Arg': JSON.stringify({
-                  path: '/' + filename,           // path : '/' + fullPath.join( '/' ),
-                  mode: 'add',                     // 'overwrite', shorthand for {'.tag': 'add' };
-                  autorename: true,
-                  mute: false
-                }),
-            },
-            data: blob,                            
-          };
+   
+   //try {
+   const accessToken = await getAuth();
+   const files = await CloudStorage.contentSelectDialog(readFolder, path);
 
-      CloudStorage.ezAjax('https://content.dropboxapi.com/2/files/upload', ajaxOptions, options.progress, options.cancel)
-       .then( result => {
-         if (options.sucess) {
-            options.sucess(result.data);
-         }
-       }).catch( error => {
-         if (options.error) {
-            options.error(error.statusText);
+   const ajaxOptions = {
+            method: 'POST',
+            responseType: 'arraybuffer',
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              'Dropbox-API-Arg': JSON.stringify({path: files[0]}),
+            },
+          };
+   const dataBuffer = await CloudStorage.ezAjax('https://content.dropboxapi.com/2/files/download', ajaxOptions, options.progress, options.cancel)
+   
+   return new Blob([dataBuffer.data], {type: "application/octet-stream"});
+   //} catch (e) {
+   //   console.log(e);
+   //}
+};
+
+function setupOpenButton(button) {
+   if (button) {
+      // get clientID from button.
+      clientID = button.getAttribute('data-app-key');
+
+      // add handling code.
+      button.addEventListener('click', async function(evt) {
+         //evt.preventDefault(); // <- this prevent submit.
+         try {
+            const blob = await open([""]);
+            CloudStorage.loader.import(blob);
+         } catch(e) {   // no file select, or unable to connect.
+            console.log(e);
          }
        });
    }
-};
-
-function setupOpenButton(options) {
-
 };
 
 export {

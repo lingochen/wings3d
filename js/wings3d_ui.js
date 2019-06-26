@@ -262,16 +262,16 @@ function runDialogCenter(formID, submitCallback, setup, _ev) {
       
       // wait for handling event.
       form.addEventListener('submit', function submitted(ev) {
-         if ((_pvt.submitSuccess)) {
-            // get form's input data.
-            submitCallback(form);     // ask function to extract element's value.
-         }
          // hide the dialog, prevent default.
          ev.preventDefault();
          form.style.display = 'none';
          form.removeEventListener('submit', submitted);
          document.body.appendChild(form);
          document.body.removeChild(overlay);
+         // get form's input data.
+         if ((_pvt.submitSuccess)) {
+            submitCallback(form);     // ask function to extract element's value.
+         }
       });
    }
 };

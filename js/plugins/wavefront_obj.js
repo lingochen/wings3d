@@ -37,8 +37,7 @@ class WavefrontObjImportExporter extends ImportExporter {
          // now append the "v x y z\n"
          text += "\n#vertex total " + mesh.vertices.size + "\n";
          for (let vertex of mesh.vertices) {
-            const vert = vertex.vertex;
-            text += "v " + vert[0] + " " + vert[1] + " " + vert[2] + "\n";
+            text += "v " + vertex[0] + " " + vertex[1] + " " + vertex[2] + "\n";
             if (!remap.has(vertex.index)) { // this should always true for now(2019/02/14), but not after we refactor to take care of non-manifold mesh
                remap.set(vertex.index, idx++);
             }

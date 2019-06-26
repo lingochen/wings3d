@@ -72,7 +72,7 @@ function open(evt, loader) {
       // first, setOptions
       setOptions();
       // now setup dropbox/onedrive/yandex/google/box/pcloud buttons
-      //Dropbox.setupOpenButton(document.getElementById('dropboxOpen'));
+      Dropbox.setupOpenButton(document.getElementById('dropboxOpen'));
       // setup local file open
       const fileInput = document.querySelector('#importFile');    // <input id="importFile" style="display:none;" type='file'>
       if (fileInput) {  // hidden open file dialog
@@ -92,8 +92,8 @@ function open(evt, loader) {
          }
       }
    }
-   CloudStorage.setLoadFn(loader);
 
+   CloudStorage.setLoadFn(loader);
    // now show dialog, 
    UI.runDialogCenter('#cloudOpenDialog', function() {}, null, evt);
 };

@@ -12,6 +12,147 @@
  */
 
 
+/**
+ * return a Promise. that will resolve [accessToken, files] - files is an array of filename.
+ * 
+ * @param {string} accessToken 
+ * @param {function} readFolder 
+ * @param {string} path to query. 
+ */
+let contentDialog;
+async function contentSelectDialog(readFolder, startingPath) {
+   return new Promise( function(resolve, reject) {
+      if (!contentDialog) {
+         const main = document.getElementById('contentPicker');
+         if (!main) { // now reject
+            reject("No dialog exist");
+         }
+         // now attach nav event.
+         const nav = main.querySelector('.breadCrumb');
+         if (!nav) {
+            reject("No contentSelect Nav");
+         }
+         const filePane = main.querySelector('.filePicker');
+         if (!filePane) {
+            reject("No contentSelect fileList Pane");
+         }
+         contentDialog = {main: main, nav: nav, filePane: filePane, selected: [], resolve: null, reject: null,
+            updateFolder: async function(newPath) {
+               function updateLabel(label, item) {
+                     // get input
+                     const input = label.querySelector('input');
+                     input.dataset.filepath = item.path;
+                     // get span, before, after.
+                     let span = label.querySelector('span');
+                     span.textContent = item.name;
+                     span.setAttribute('data-after', '');   // modified date, size,
+                     //span.setAttribute('data-before', '');  // folder, or not
+               };
+               const {fileItems, cursor} = await this.readFolder(newPath);
+               const labelItems = this.filePane.querySelectorAll("label");
+               if (labelItems.length < fileItems.length) {
+                  let i = 0;
+                  for (let item of fileItems) {
+                     let label;
+                     if (i >= labelItems.length) {   // create new <label><input><span></label>
+                        const aFrag = document.createRange().createContextualFragment('<label><input type="radio" name="selectFile"><span></span></label>');
+                        label = aFrag.firstElementChild;
+                        this.filePane.appendChild(aFrag);
+                     } else {
+                        label = labelItems[i];
+                     }
+                     updateLabel(label, item);
+                     i++;
+                  }
+               } else {
+                  let i = 0;
+                  for (const label of labelItems) {
+                     if (i >= fileItems.length) {
+                        label.hidden = true;    // instead of display = none.
+                     } else {
+                        updateLabel(label, fileItems[i]);
+                     }
+                     i++;
+                  }
+               }
+            },
+            handleSubmit: function(evt) {
+               evt.preventDefault();
+               contentDialog.main.style.display = 'none';
+               document.body.removeChild(contentDialog.main.parentNode);
+               document.body.appendChild(contentDialog.main);
+               if (this.submitButton.value === 'ok') {
+                  this.resolve(this.selected);
+               } else if (this.submitButton.value === 'cancel') {
+                  this.reject('cancel');
+               }
+             },
+            handleNav: function(evt) { // click
+               evt.stopPropagation();
+               if (evt.target.matches('a')) {   // yes, navigate to the directory.
+                  const target = evt.target.parentNode;
+                  const path = [];
+                  const directory = this.nav.querySelectorAll('li');
+                  for (let li of directory) {
+                     if (li === target) {
+                        break;
+                     }
+                     path.push( li.textContent );
+                  }
+                  while (target.nextElementSibling) { // remove all element after target
+                     this.nav.removeChild(target.nextElementSibling);
+                  }
+                  target.textContent = evt.target.textContent;  // remove <a>
+               }
+             },
+            handleFileItems: function(evt) { // on change
+               evt.stopPropagation();
+               if (evt.target.matches('input')) {
+                  if (evt.target.classList.contains('folder')) {  // we click on folder
+                     this.updateFolder(etv.target.dataset.path);
+                  } else { // click select file. click again to deselected.
+                     if (evt.target.checked) {
+                        this.selected = [evt.target.dataset.filepath];
+                     } else { // disabled ok button
+                        this.main.querySelectorAll('[type="submit"][value="ok"]').forEach((ok)=>{ ok.disabled=true; });
+                     }
+                  }
+                }
+             },
+          };
+         // eventHandler
+         contentDialog.filePane.addEventListener('change', (evt)=>{contentDialog.handleFileItems(evt);});
+         contentDialog.nav.addEventListener('click', (evt)=>{contentDialog.handleNav(evt);});
+         contentDialog.main.addEventListener('submit', (evt)=>{contentDialog.handleSubmit(evt);});
+         for (let button of contentDialog.main.querySelectorAll('[type=submit]')) {
+            button.addEventListener('click', (evt)=> {
+               evt.stopPropagation();
+               contentDialog.submitButton = button;
+             });
+         }
+      }
+      // update to current (resolve, reject, readFolder) functions.
+      contentDialog.resolve = resolve;
+      contentDialog.reject = reject;
+      contentDialog.readFolder = readFolder;
+      // startingPath first
+      contentDialog.updateFolder(startingPath);
+      // show dialog 
+      const overlay = document.createElement("div");
+      overlay.classList.add("overlay");
+      overlay.addEventListener('keydown', function(ev) { // prevent document handling hotkey.
+         ev.stopPropagation();
+       });
+      overlay.appendChild(contentDialog.main); 
+      contentDialog.main.style.display = 'block';
+      overlay.classList.add("realCenterModal");
+      contentDialog.main.reset();
+      // show
+      document.body.appendChild(overlay);
+    });
+};
+
+
 
 
 /**
@@ -24,7 +165,7 @@ const defaults = {
 	method: 'GET',
    username: null,
 	password: null,
-	data: {},
+	data: null,
 	headers: {
       'Content-Type': 'application/x-www-form-urlencoded'
    },
@@ -43,7 +184,8 @@ const defaults = {
 */
 function ezAjax(url, options = {}, progress, cancel) {
    // Merge options into defaults
-   const settings = Object.assign(defaults, options);
+   let settings = Object.assign({}, defaults);
+   settings = Object.assign(settings, options);
    
    // Create the XHR request
    const request = new XMLHttpRequest();
@@ -72,7 +214,7 @@ function ezAjax(url, options = {}, progress, cancel) {
 				reject({
 					status: request.status,
 					statusText: request.statusText,
-					responseText : request.responseText
+					responseText : request.response
 				});
 			}
       });
@@ -119,10 +261,10 @@ function ezAjax(url, options = {}, progress, cancel) {
 };
 
 function parseToJson(res) {
-   if (res.headers.get('Content-Type') === 'application/json') {
-     return [res, res.response];
+   if (res.xhr.responseType === 'json') {
+     return [res, res.data];
    }
-   return [res, JSON.parse(res.response)];
+   return [res, JSON.parse(res.data)];
 }
 
 let gLoadObject = function() {};
@@ -147,11 +289,12 @@ function getOptions() {
 
 export {
    setLoadFn,
-   gLoadObject as loadFn,
+   gLoadObject as loader,
    setStoreFn,
    gStoreObject as storeFn,
    setOptions,
    getOptions,
    ezAjax,
    parseToJson,
+   contentSelectDialog,
 }
