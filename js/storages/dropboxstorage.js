@@ -189,6 +189,7 @@ function setupSaveButton(button) {
    if (button) {
       // get clientID from button.
       clientID = button.getAttribute('data-app-key');
+      button.querySelector('.home').src = logo;
 
       // add handling code.
       button.addEventListener('click', function(evt) {
@@ -251,6 +252,7 @@ function setupOpenButton(button) {
    if (button) {
       // get clientID from button.
       clientID = button.getAttribute('data-app-key');
+      button.querySelector('.home').src = logo;
 
       // add handling code.
       button.addEventListener('click', async function(evt) {
