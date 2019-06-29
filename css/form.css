@@ -262,3 +262,8 @@ ul.breadcrumb li a:hover {
   color: #01447e;
   text-decoration: underline;
 } 
+
+img.home {
+  width: 1rem;
+  height: 1rem;
+}

@@ -20,7 +20,7 @@
  * @param {string} path to query. 
  */
 let contentDialog;
-async function contentSelectDialog(logoClass, readFolder, startingPath) {
+async function contentSelectDialog(logo, readFolder, startingPath) {
    return new Promise( function(resolve, reject) {
       if (!contentDialog) {
          const main = document.getElementById('contentPicker');
@@ -140,8 +140,7 @@ async function contentSelectDialog(logoClass, readFolder, startingPath) {
       contentDialog.reject = reject;
       contentDialog.readFolder = readFolder;
       // logo
-      contentDialog.logoClass = logoClass;
-      contentDialog.nav.querySelector(".home").appendChild(logoClass);
+      contentDialog.nav.querySelector(".home").src = logo;
       // startingPath first
       contentDialog.updateFolder(startingPath);
       // show dialog 

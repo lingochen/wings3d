@@ -203,17 +203,8 @@ function setupSaveButton(button) {
 /**
  * got the svg logo from dropbox official branding. base64 encode
  */
-let logo;
-function getLogo() {
-   if (!logo) {
-      logo = document.createElement('img');
-      logo.src = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMzUuNDUgMjAwIj48ZGVmcz48c3R5bGU+LmNscy0xe2ZpbGw6IzAwNjFmZjt9PC9zdHlsZT48L2RlZnM+PHRpdGxlPkRyb3Bib3hHbHlwaDwvdGl0bGU+PHBvbHlnb24gY2xhc3M9ImNscy0xIiBwb2ludHM9IjU4Ljg2IDAgMCAzNy41IDU4Ljg2IDc1IDExNy43MyAzNy41IDU4Ljg2IDAiLz48cG9seWdvbiBjbGFzcz0iY2xzLTEiIHBvaW50cz0iMTc2LjU5IDAgMTE3LjczIDM3LjUgMTc2LjU5IDc1IDIzNS40NSAzNy41IDE3Ni41OSAwIi8+PHBvbHlnb24gY2xhc3M9ImNscy0xIiBwb2ludHM9IjAgMTEyLjUgNTguODYgMTUwIDExNy43MyAxMTIuNSA1OC44NiA3NSAwIDExMi41Ii8+PHBvbHlnb24gY2xhc3M9ImNscy0xIiBwb2ludHM9IjE3Ni41OSA3NSAxMTcuNzMgMTEyLjUgMTc2LjU5IDE1MCAyMzUuNDUgMTEyLjUgMTc2LjU5IDc1Ii8+PHBvbHlnb24gY2xhc3M9ImNscy0xIiBwb2ludHM9IjU4Ljg2IDE2Mi41IDExNy43MyAyMDAgMTc2LjU5IDE2Mi41IDExNy43MyAxMjUgNTguODYgMTYyLjUiLz48L3N2Zz4=";
-      logo.style.width = "1rem";
-      logo.style.height = "1rem";
-   }
-   return logo;
-}
-
+//const logo = 'data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 235.45 200"><defs><style>.cls-1{fill:#0061ff;}</style></defs><title>DropboxGlyph</title><polygon class="cls-1" points="58.86 0 0 37.5 58.86 75 117.73 37.5 58.86 0"/><polygon class="cls-1" points="176.59 0 117.73 37.5 176.59 75 235.45 37.5 176.59 0"/><polygon class="cls-1" points="0 112.5 58.86 150 117.73 112.5 58.86 75 0 112.5"/><polygon class="cls-1" points="176.59 75 117.73 112.5 176.59 150 235.45 112.5 176.59 75"/><polygon class="cls-1" points="58.86 162.5 117.73 200 176.59 162.5 117.73 125 58.86 162.5"/></svg>';
+const logo = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 235.45 200'%3E%3Cdefs%3E%3Cstyle%3E.cls-1%7Bfill:%230061ff;%7D%3C/style%3E%3C/defs%3E%3Ctitle%3EDropboxGlyph%3C/title%3E%3Cpolygon class='cls-1' points='58.86 0 0 37.5 58.86 75 117.73 37.5 58.86 0'/%3E%3Cpolygon class='cls-1' points='176.59 0 117.73 37.5 176.59 75 235.45 37.5 176.59 0'/%3E%3Cpolygon class='cls-1' points='0 112.5 58.86 150 117.73 112.5 58.86 75 0 112.5'/%3E%3Cpolygon class='cls-1' points='176.59 75 117.73 112.5 176.59 150 235.45 112.5 176.59 75'/%3E%3Cpolygon class='cls-1' points='58.86 162.5 117.73 200 176.59 162.5 117.73 125 58.86 162.5'/%3E%3C/svg%3E%0A";
 /*
  * Reads the contents of a file in the user's Dropbox.  
  * Fails if the given path does not point to a file.
@@ -238,7 +229,7 @@ async function open(path) {
    
    //try {
    const accessToken = await getAuth();
-   const files = await CloudStorage.contentSelectDialog(getLogo(), readFolder, path);
+   const files = await CloudStorage.contentSelectDialog(logo, readFolder, path);
 
    const ajaxOptions = {
             method: 'POST',
