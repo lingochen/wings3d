@@ -28,7 +28,7 @@ async function contentSelectDialog(readFolder, startingPath) {
             reject("No dialog exist");
          }
          // now attach nav event.
-         const nav = main.querySelector('.breadCrumb');
+         const nav = main.querySelector('.breadcrumb');
          if (!nav) {
             reject("No contentSelect Nav");
          }
@@ -36,7 +36,7 @@ async function contentSelectDialog(readFolder, startingPath) {
          if (!filePane) {
             reject("No contentSelect fileList Pane");
          }
-         contentDialog = {main: main, nav: nav, filePane: filePane, selected: [], resolve: null, reject: null,
+         contentDialog = {main: main, nav: nav, filePane: filePane, selected: null, resolve: null, reject: null,
             updateFolder: async function(newPath) {
                function updateLabel(label, item) {
                      // get input
@@ -55,7 +55,7 @@ async function contentSelectDialog(readFolder, startingPath) {
                   for (let item of fileItems) {
                      let label;
                      if (i >= labelItems.length) {   // create new <label><input><span></label>
-                        const aFrag = document.createRange().createContextualFragment('<label><input type="radio" name="selectFile"><span></span></label>');
+                        const aFrag = document.createRange().createContextualFragment('<label class="fileItem"><input type="radio" name="selectFile"><span></span></label>');
                         label = aFrag.firstElementChild;
                         this.filePane.appendChild(aFrag);
                      } else {
@@ -82,7 +82,7 @@ async function contentSelectDialog(readFolder, startingPath) {
                document.body.removeChild(contentDialog.main.parentNode);
                document.body.appendChild(contentDialog.main);
                if (this.submitButton.value === 'ok') {
-                  this.resolve(this.selected);
+                  this.resolve([this.selected.dataset.filepath]);
                } else if (this.submitButton.value === 'cancel') {
                   this.reject('cancel');
                }
@@ -111,8 +111,12 @@ async function contentSelectDialog(readFolder, startingPath) {
                   if (evt.target.classList.contains('folder')) {  // we click on folder
                      this.updateFolder(etv.target.dataset.path);
                   } else { // click select file. click again to deselected.
+                     if (this.selected && (this.selected !== evt.target)) {
+                        this.selected.parentNode.classList.toggle('selected');
+                     }
+                     evt.target.parentNode.classList.toggle('selected');
                      if (evt.target.checked) {
-                        this.selected = [evt.target.dataset.filepath];
+                        this.selected = evt.target;
                      } else { // disabled ok button
                         this.main.querySelectorAll('[type="submit"][value="ok"]').forEach((ok)=>{ ok.disabled=true; });
                      }

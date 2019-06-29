@@ -128,31 +128,7 @@ async function readFolder( fullPath ) {
    return fileItems;
 }
 
-/*
- * Reads the contents of a file in the user's Dropbox.  Fails if the user
- * has not yet logged in, or if the given path does not point to a file.
- * The path should be provided as an array, as in the previous function.
- * The data sent to the success callback is the contents of the file as
- * text.
- */
-/*DropboxFileSystem.prototype.readFile =
-    function ( fullPath, successCB, failureCB )
-{
-    if ( !this.dropbox )
-        failureCB( 'The user has not logged in to Dropbox.' );
-    this.dropbox.filesDownload( {
-        path : '/' + fullPath.join( '/' )
-    } )
-    .then( function ( response ) {
-        var savedFile = response.fileBlob;
-        var reader = new FileReader();
-        reader.onload = function () { successCB( reader.result ); };
-        reader.onerror = function () { failureCB( reader.error ); };
-        reader.readAsText( savedFile );
-    } ).catch( function ( error ) {
-        failureCB( error );
-    } );
-}*/
+
 
 /*
  * Write the given text to a file in the user's Dropbox.  Fails if the user
@@ -224,6 +200,11 @@ function setupSaveButton(button) {
 };
 
 
+/*
+ * Reads the contents of a file in the user's Dropbox.  
+ * Fails if the given path does not point to a file.
+ * The path should be provided as an array.
+ */
 /**
  * model after dropbox chooser
  * @param {*} options
@@ -250,7 +231,7 @@ async function open(path) {
             responseType: 'arraybuffer',
             headers: {
               Authorization: `Bearer ${accessToken}`,
-              'Dropbox-API-Arg': JSON.stringify({path: files[0]}),
+              'Dropbox-API-Arg': JSON.stringify({path: files[0]}),   // open one file only, 
             },
           };
    const dataBuffer = await CloudStorage.ezAjax('https://content.dropboxapi.com/2/files/download', ajaxOptions, options.progress, options.cancel)

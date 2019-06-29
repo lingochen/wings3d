@@ -207,3 +207,59 @@ div.endAlign button {
 #emissionSlider {
   background: linear-gradient(to right, #000000, var(--emissionMax));
 }
+
+.filePickerForm {
+  width: 100%
+  height: 100%
+  margin: 0
+  padding: 0
+  min-width: 32rem;
+}
+
+.filePicker {
+  overflow-y: auto;
+  min-height: 8rem;
+  max-height: 8rem;
+}
+
+label.fileItem {
+  display: flex;
+  flex-direction: row;
+}
+
+label.fileItem input {
+  display: none;
+}
+
+label.selected {
+  background-color: Chocolate;
+}
+
+/* breadCrumb styling */
+ul.breadcrumb {
+  padding: 10px 16px;
+  list-style: none;
+  background-color: #eee;
+}
+
+ul.breadcrumb li {  /* row instead of wrap */
+  display: inline;
+  font-size: 18px;
+}
+
+ul.breadcrumb li+li:before {  /* add slash before item except first */
+  padding: 8px;
+  color: black;
+  content: "/\00a0";
+}
+
+ul.breadcrumb li a {
+  color: #0275d8;
+  text-decoration: none;
+}
+
+ul.breadcrumb li a:hover {
+  color: #01447e;
+  text-decoration: underline;
+} 
+
