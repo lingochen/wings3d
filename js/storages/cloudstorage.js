@@ -20,7 +20,7 @@
  * @param {string} path to query. 
  */
 let contentDialog;
-async function contentSelectDialog(readFolder, startingPath) {
+async function contentSelectDialog(logoClass, readFolder, startingPath) {
    return new Promise( function(resolve, reject) {
       if (!contentDialog) {
          const main = document.getElementById('contentPicker');
@@ -36,7 +36,7 @@ async function contentSelectDialog(readFolder, startingPath) {
          if (!filePane) {
             reject("No contentSelect fileList Pane");
          }
-         contentDialog = {main: main, nav: nav, filePane: filePane, selected: null, resolve: null, reject: null,
+         contentDialog = {main: main, nav: nav, filePane: filePane, selected: null, resolve: null, reject: null, logoClass: "",
             updateFolder: async function(newPath) {
                function updateLabel(label, item) {
                      // get input
@@ -139,6 +139,9 @@ async function contentSelectDialog(readFolder, startingPath) {
       contentDialog.resolve = resolve;
       contentDialog.reject = reject;
       contentDialog.readFolder = readFolder;
+      // logo
+      contentDialog.logoClass = logoClass;
+      contentDialog.nav.querySelector(".home").appendChild(logoClass);
       // startingPath first
       contentDialog.updateFolder(startingPath);
       // show dialog 
