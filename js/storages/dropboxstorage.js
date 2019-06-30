@@ -114,8 +114,9 @@ async function readFolder( fullPath ) {
                         if (entry['.tag'] === 'folder') {
                            folders.push( {isFile: false, name : entry.name, path: entry.path_lower, pathDisplay: entry.path_display} );
                         } else {
+                           let date = new Date(entry.client_modified);
                            files.push( {isFile: true, name : entry.name, path: entry.path_lower, pathDisplay: entry.path_display,
-                                        modified: entry.client_modified, size: entry.size} );
+                                        modified: date, size: entry.size} );
                         }
                      }
                      let cursor;

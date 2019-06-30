@@ -12,6 +12,27 @@
  */
 
 
+ /**
+  * https://stackoverflow.com/questions/15900485/correct-way-to-convert-size-in-bytes-to-kb-mb-gb-in-javascript
+  * format bytes size to human readable (bytes, kb, mb, gb...)
+  *
+  * @param {number} bytes - number of bytes
+  * @param {number} decimals - number of decimal after 0.
+  * @param {string} - size in (b, kb, mb, gb...), the most appropriate one.
+  */
+function formatBytes(bytes, decimals = 1) {
+   if (bytes === 0) return '0 Bytes';
+
+   const k = 1024;
+   const dm = decimals < 0 ? 0 : decimals;
+   const sizes = ['bytes', 'kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+
+   const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+}
+
+
 /**
  * return a Promise. that will resolve [accessToken, files] - files is an array of filename.
  * 
@@ -43,10 +64,11 @@ async function contentSelectDialog(logo, readFolder, startingPath) {
                      const input = label.querySelector('input');
                      input.dataset.filepath = item.path;
                      // get span, before, after.
-                     let span = label.querySelector('span');
-                     span.textContent = item.name;
-                     span.setAttribute('data-after', '');   // modified date, size,
-                     //span.setAttribute('data-before', '');  // folder, or not
+                     let span = label.querySelectorAll('span');
+                     span[0].textContent = item.name;
+                     span[1].textContent = formatBytes(item.size);                  // file size.
+                     span[1].setAttribute('data-after', item.modified.toLocaleString('en-US', {year: '2-digit', month: 'short', day: 'numeric' }));      // modified date
+                     //span[0].setAttribute('data-before', '');  // folder, or not
                };
                const {fileItems, cursor} = await this.readFolder(newPath);
                const labelItems = this.filePane.querySelectorAll("label");
@@ -55,7 +77,7 @@ async function contentSelectDialog(logo, readFolder, startingPath) {
                   for (let item of fileItems) {
                      let label;
                      if (i >= labelItems.length) {   // create new <label><input><span></label>
-                        const aFrag = document.createRange().createContextualFragment('<label class="fileItem"><input type="radio" name="selectFile"><span></span></label>');
+                        const aFrag = document.createRange().createContextualFragment('<label class="fileItem"><input type="radio" name="selectFile"><span class="filename"></span><span class="sizeDate"></span></label>');
                         label = aFrag.firstElementChild;
                         this.filePane.appendChild(aFrag);
                      } else {
