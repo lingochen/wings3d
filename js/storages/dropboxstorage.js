@@ -203,10 +203,9 @@ function setupSaveButton(button) {
 
 
 /**
- * got the svg logo from dropbox official branding. base64 encode
+ * got the svg logo from dropbox official branding. uriencode(#), utf-8
  */
-//const logo = 'data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 235.45 200"><defs><style>.cls-1{fill:#0061ff;}</style></defs><title>DropboxGlyph</title><polygon class="cls-1" points="58.86 0 0 37.5 58.86 75 117.73 37.5 58.86 0"/><polygon class="cls-1" points="176.59 0 117.73 37.5 176.59 75 235.45 37.5 176.59 0"/><polygon class="cls-1" points="0 112.5 58.86 150 117.73 112.5 58.86 75 0 112.5"/><polygon class="cls-1" points="176.59 75 117.73 112.5 176.59 150 235.45 112.5 176.59 75"/><polygon class="cls-1" points="58.86 162.5 117.73 200 176.59 162.5 117.73 125 58.86 162.5"/></svg>';
-const logo = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 235.45 200'%3E%3Cdefs%3E%3Cstyle%3E.cls-1%7Bfill:%230061ff;%7D%3C/style%3E%3C/defs%3E%3Ctitle%3EDropboxGlyph%3C/title%3E%3Cpolygon class='cls-1' points='58.86 0 0 37.5 58.86 75 117.73 37.5 58.86 0'/%3E%3Cpolygon class='cls-1' points='176.59 0 117.73 37.5 176.59 75 235.45 37.5 176.59 0'/%3E%3Cpolygon class='cls-1' points='0 112.5 58.86 150 117.73 112.5 58.86 75 0 112.5'/%3E%3Cpolygon class='cls-1' points='176.59 75 117.73 112.5 176.59 150 235.45 112.5 176.59 75'/%3E%3Cpolygon class='cls-1' points='58.86 162.5 117.73 200 176.59 162.5 117.73 125 58.86 162.5'/%3E%3C/svg%3E%0A";
+const logo = 'data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 235.45 200"><defs><style>.cls-1{fill:%230061ff;}</style></defs><title>DropboxGlyph</title><polygon class="cls-1" points="58.86 0 0 37.5 58.86 75 117.73 37.5 58.86 0"/><polygon class="cls-1" points="176.59 0 117.73 37.5 176.59 75 235.45 37.5 176.59 0"/><polygon class="cls-1" points="0 112.5 58.86 150 117.73 112.5 58.86 75 0 112.5"/><polygon class="cls-1" points="176.59 75 117.73 112.5 176.59 150 235.45 112.5 176.59 75"/><polygon class="cls-1" points="58.86 162.5 117.73 200 176.59 162.5 117.73 125 58.86 162.5"/></svg>';
 /*
  * Reads the contents of a file in the user's Dropbox.  
  * Fails if the given path does not point to a file.
