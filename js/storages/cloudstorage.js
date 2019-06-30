@@ -34,6 +34,12 @@ function formatBytes(bytes, decimals = 1) {
 
 
 /**
+ * temp from wikimedia
+ */
+const folderSVG = 'data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-folder"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>';
+
+
+/**
  * return a Promise. that will resolve [accessToken, files] - files is an array of filename.
  * 
  * @param {string} accessToken 
@@ -66,8 +72,16 @@ async function contentSelectDialog(logo, readFolder, startingPath) {
                      // get span, before, after.
                      let span = label.querySelectorAll('span');
                      span[0].textContent = item.name;
-                     span[1].textContent = formatBytes(item.size);                  // file size.
-                     span[1].setAttribute('data-after', item.modified.toLocaleString('en-US', {year: '2-digit', month: 'short', day: 'numeric' }));      // modified date
+                     if (item.size) {
+                        input.classList.remove('folder');
+                        span[1].textContent = formatBytes(item.size);                  // file size.
+                        span[1].setAttribute('data-after', item.modified.toLocaleString('en-US', {year: '2-digit', month: 'short', day: 'numeric' }));      // modified date
+                     } else {
+                        label.querySelector('img').src = folderSVG;
+                        input.classList.add('folder');
+                        span[1].textContent = "";
+                        span[1].setAttribute('data-after', "");
+                     }
                      //span[0].setAttribute('data-before', '');  // folder, or not
                };
                const {fileItems, cursor} = await this.readFolder(newPath);
@@ -77,7 +91,7 @@ async function contentSelectDialog(logo, readFolder, startingPath) {
                   for (let item of fileItems) {
                      let label;
                      if (i >= labelItems.length) {   // create new <label><input><span></label>
-                        const aFrag = document.createRange().createContextualFragment('<label class="fileItem"><input type="radio" name="selectFile"><span class="filename"></span><span class="sizeDate"></span></label>');
+                        const aFrag = document.createRange().createContextualFragment('<label class="fileItem"><input type="radio" name="selectFile"><img><span class="filename"></span><span class="sizeDate"></span></label>');
                         label = aFrag.firstElementChild;
                         this.filePane.appendChild(aFrag);
                      } else {
@@ -131,7 +145,7 @@ async function contentSelectDialog(logo, readFolder, startingPath) {
                evt.stopPropagation();
                if (evt.target.matches('input')) {
                   if (evt.target.classList.contains('folder')) {  // we click on folder
-                     this.updateFolder(etv.target.dataset.path);
+                     this.updateFolder(evt.target.dataset.filepath.split('/'));
                   } else { // click select file. click again to deselected.
                      if (this.selected && (this.selected !== evt.target)) {
                         this.selected.parentNode.classList.toggle('selected');

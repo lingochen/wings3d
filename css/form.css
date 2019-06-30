@@ -232,6 +232,15 @@ label.fileItem input {
   display: none;
 }
 
+label.fileItem img {
+  width: 1rem;
+  height: 1rem;
+  visibility: hidden;
+}
+label.fileItem img[src] {
+  visibility: visible;
+}
+
 label.fileItem .filename {
   flex-grow: 3;
 }

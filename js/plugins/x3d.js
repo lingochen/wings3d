@@ -62,8 +62,7 @@ class X3dImportExporter extends ImportExporter {
          let idx = 0;
          for (let vertex of mesh.vertices) { // guarantee to be lived.
             mapCoord.set(vertex.index, idx++);
-            const vert = vertex.vertex;
-            coord = `${coord} ${vert[0]} ${vert[1]} ${vert[2]}`;
+            coord = `${coord} ${vertex[0]} ${vertex[1]} ${vertex[2]}`;
          }
          let coordinate = xml.createElement('Coordinate');  // create first to be used
          const coordName = cage.name+"Coord";
