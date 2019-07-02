@@ -34,7 +34,7 @@ function formatBytes(bytes, decimals = 1) {
 
 
 /**
- * temp from wikimedia
+ * simple folder Icon
  */
 const folderSVG = 'data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-folder"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>';
 
@@ -64,7 +64,41 @@ async function contentSelectDialog(logo, readFolder, startingPath) {
             reject("No contentSelect fileList Pane");
          }
          contentDialog = {main: main, nav: nav, filePane: filePane, selected: null, resolve: null, reject: null, logoClass: "",
-            updateFolder: async function(newPath) {
+            updateNav: function(path) {   // 
+               const newPath = path.split('/');
+               let oldPath = this.nav.querySelectorAll("a");
+               let addition = newPath.length - oldPath.length;
+               if (addition > 0) {  // handle the addition first.
+                  const crumbs = document.createRange().createContextualFragment('<li><a></a></li>'.repeat(addition));
+                  this.nav.appendChild(crumbs);
+                  oldPath = this.nav.querySelectorAll("a");
+               } else if (addition < 0) {
+                  while (addition++ < 0) {
+                     this.nav.removeChild(this.nav.lastChild);
+                  }
+                  oldPath = this.nav.querySelectorAll("a");
+               }
+               let pathCurrent = "";              // constructing path along breadcrumb
+               let a;
+               for (let i = 0; i < newPath.length; ++i) {   // check and update stuff
+                  a = oldPath[i];
+                  const name = newPath[i];
+                  const flag = (a.textContent !== name);
+                  a.classList.remove('current');
+                  if (name.length > 0) {  // not the root
+                     pathCurrent += "/" + name;
+                  }
+                  a.dataset.filepath = pathCurrent;
+                  if (flag) {
+                     a.textContent = name;   // update value
+                  }
+               }
+               oldPath[oldPath.length-1].classList.add('current');   // last one is the current. and we guarantee at least we have root.
+            },
+            updateFolder: async function(newPath) {   // newPath is array of string.
+               // update navigation.
+               this.updateNav(newPath);
+               // update filecontent
                function updateLabel(label, item) {
                      // get input
                      const input = label.querySelector('input');
@@ -85,31 +119,20 @@ async function contentSelectDialog(logo, readFolder, startingPath) {
                      //span[0].setAttribute('data-before', '');  // folder, or not
                };
                const {fileItems, cursor} = await this.readFolder(newPath);
-               const labelItems = this.filePane.querySelectorAll("label");
-               if (labelItems.length < fileItems.length) {
-                  let i = 0;
-                  for (let item of fileItems) {
-                     let label;
-                     if (i >= labelItems.length) {   // create new <label><input><span></label>
-                        const aFrag = document.createRange().createContextualFragment('<label class="fileItem"><input type="radio" name="selectFile"><img><span class="filename"></span><span class="sizeDate"></span></label>');
-                        label = aFrag.firstElementChild;
-                        this.filePane.appendChild(aFrag);
-                     } else {
-                        label = labelItems[i];
-                     }
-                     updateLabel(label, item);
-                     i++;
+               let labelItems = this.filePane.querySelectorAll("label");
+               let addition = fileItems.length - labelItems.length;
+               if (addition > 0) {
+                  const aFrag = document.createRange().createContextualFragment('<label class="fileItem"><input type="radio" name="selectFile"><img><span class="filename"></span><span class="sizeDate"></span></label>'.repeat(addition));
+                  this.filePane.appendChild(aFrag);
+                  labelItems = this.filePane.querySelectorAll("label");
+               } else if (addition < 0) {
+                  while (addition++ < 0) {
+                     this.filePane.removeChild(this.filePane.lastChild);
                   }
-               } else {
-                  let i = 0;
-                  for (const label of labelItems) {
-                     if (i >= fileItems.length) {
-                        label.hidden = true;    // instead of display = none.
-                     } else {
-                        updateLabel(label, fileItems[i]);
-                     }
-                     i++;
-                  }
+                  labelItems = this.filePane.querySelectorAll("label");
+               }
+               for (let i = 0; i < fileItems.length; ++i) {
+                  updateLabel(labelItems[i], fileItems[i]);
                }
             },
             handleSubmit: function(evt) {
@@ -125,27 +148,18 @@ async function contentSelectDialog(logo, readFolder, startingPath) {
              },
             handleNav: function(evt) { // click
                evt.stopPropagation();
-               if (evt.target.matches('a')) {   // yes, navigate to the directory.
-                  const target = evt.target.parentNode;
-                  const path = [];
-                  const directory = this.nav.querySelectorAll('li');
-                  for (let li of directory) {
-                     if (li === target) {
-                        break;
-                     }
-                     path.push( li.textContent );
-                  }
-                  while (target.nextElementSibling) { // remove all element after target
-                     this.nav.removeChild(target.nextElementSibling);
-                  }
-                  target.textContent = evt.target.textContent;  // remove <a>
+               let target;
+               for (target = evt.target; !target.matches('a'); target = target.parentNode) {} 
+               // yes, navigate to the directory.
+               if (!target.classList.contains('current')) {
+                  this.updateFolder(target.dataset.filepath);
                }
              },
             handleFileItems: function(evt) { // on change
                evt.stopPropagation();
                if (evt.target.matches('input')) {
                   if (evt.target.classList.contains('folder')) {  // we click on folder
-                     this.updateFolder(evt.target.dataset.filepath.split('/'));
+                     this.updateFolder(evt.target.dataset.filepath);
                   } else { // click select file. click again to deselected.
                      if (this.selected && (this.selected !== evt.target)) {
                         this.selected.parentNode.classList.toggle('selected');

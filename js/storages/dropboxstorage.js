@@ -78,17 +78,14 @@ function getAuth() {
 }
 
 
-/*
+/** 
  * Reads the contents of a folder in the user's Dropbox.  Fails if the given path does not point to a folder.
- * The path should be provided as an array of steps in the path.  E.g.,
- * `/foo/bar` should be `['foo','bar']`.  The data sent back is an array of objects with  attributes,
- * suitable for handing to the `showList()` method of the file dialog
- * defined in `dialog.js`.
+ * @params {string} - path as in '/test/dir/etc'
+ * The data sent back is an array of objects with  attributes,
  */
-async function readFolder( fullPath ) {
+async function readFolder( path ) {
    const accessToken = await getAuth();
 
-   const path = fullPath.join('/');
    const ajaxOptions = {
            method: 'POST',
            responseType: 'json',
@@ -258,7 +255,7 @@ function setupOpenButton(button) {
       button.addEventListener('click', async function(evt) {
          //evt.preventDefault(); // <- this prevent submit.
          try {
-            const blob = await open([""]);
+            const blob = await open("");
             CloudStorage.loader.import(blob);
          } catch(e) {   // no file select, or unable to connect.
             console.log(e);

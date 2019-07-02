@@ -238,7 +238,7 @@ label.fileItem img {
   visibility: hidden;
 }
 label.fileItem img[src] {
-  visibility: visible;
+  visibility: inherit;
 }
 
 label.fileItem .filename {
@@ -283,9 +283,16 @@ ul.breadcrumb li a {
   text-decoration: none;
 }
 
-ul.breadcrumb li a:hover {
-  color: #01447e;
-  text-decoration: underline;
+ul.breadcrumb li a.current {
+  cursor: default;
+  color: black;
+  filter: grayscale(100%);
+}
+
+ul.breadcrumb li a:hover:not(.current) {
+  /*color: #01447e;
+  text-decoration: underline;*/
+  border-bottom: 2px solid blue;
 } 
 
 img.home {
