@@ -1206,7 +1206,10 @@ function init() {
           return saveFn(function() {return X3d.export(getWorld(), 'untitled')});
         });
     });
-   // Registering open/openas handling.
+   // Registering open handling
+   UI.bindMenuItem(Wings3D.action.open.name, function(evt) {
+      OpenSave.open(evt, X3d);
+    });
 
    // handle redrawingLoop
    function updateFrame(timestamp) {
