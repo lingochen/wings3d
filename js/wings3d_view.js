@@ -1193,7 +1193,7 @@ function init() {
          UI.addMenuItem('fileExport', 'export' + exportMenuText.name, `${exportMenuText.name} (.${exportMenuText.ext})...`, function(evt) {
             OpenSave.save(evt)
              .then( saveFn => {
-               saveFn(function() {return loadStore.export(getWorld(), "test")});
+               saveFn(function() {return loadStore.export(getWorld(), "untitled")});
              });
          });
       }
@@ -1203,7 +1203,7 @@ function init() {
       // use X3d as default format.
       OpenSave.save(evt)
        .then( saveFn => {
-          return saveFn(function() {return X3d.export(getWorld(), 'text')});
+          return saveFn(function() {return X3d.export(getWorld(), 'untitled')});
         });
     });
    // Registering open/openas handling.

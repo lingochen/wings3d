@@ -223,6 +223,11 @@ div.endAlign button {
   min-width: 36rem;
 }
 
+.fileSelected {
+  width: 98%;
+  font-size: 1.5rem;
+}
+
 label.fileItem {
   display: flex;
   flex-direction: row;

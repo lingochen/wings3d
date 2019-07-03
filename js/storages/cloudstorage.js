@@ -40,14 +40,14 @@ const folderSVG = 'data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.or
 
 
 /**
- * return a Promise. that will resolve [accessToken, files] - files is an array of filename.
+ * return a Promise. that will resolve(file) 
  * 
  * @param {string} accessToken 
  * @param {function} readFolder 
  * @param {string} path to query. 
  */
 let contentDialog;
-async function contentSelectDialog(logo, readFolder, startingPath) {
+async function contentSelectDialog(logo, readFolder, startingPath, saveAs) {
    return new Promise( function(resolve, reject) {
       if (!contentDialog) {
          const main = document.getElementById('contentPicker');
@@ -63,7 +63,11 @@ async function contentSelectDialog(logo, readFolder, startingPath) {
          if (!filePane) {
             reject("No contentSelect fileList Pane");
          }
-         contentDialog = {main: main, nav: nav, filePane: filePane, selected: null, resolve: null, reject: null, logoClass: "",
+         const nameInput = main.querySelector('.fileSelected');
+         if (!nameInput) {
+            reject("no fileSelected input");
+         }
+         contentDialog = {main: main, nav: nav, filePane: filePane, selected: null, nameInput: nameInput, resolve: null, reject: null, logoClass: "",
             updateNav: function(path) {   // 
                const newPath = path.split('/');
                let oldPath = this.nav.querySelectorAll("a");
@@ -103,6 +107,7 @@ async function contentSelectDialog(logo, readFolder, startingPath) {
                      // get input
                      const input = label.querySelector('input');
                      input.dataset.filepath = item.path;
+                     input.dataset.filename = item.name;
                      // get span, before, after.
                      let span = label.querySelectorAll('span');
                      span[0].textContent = item.name;
@@ -167,6 +172,7 @@ async function contentSelectDialog(logo, readFolder, startingPath) {
                      evt.target.parentNode.classList.toggle('selected');
                      if (evt.target.checked) {
                         this.selected = evt.target;
+                        this.nameInput.value = this.selected.dataset.filename;
                      } else { // disabled ok button
                         this.main.querySelectorAll('[type="submit"][value="ok"]').forEach((ok)=>{ ok.disabled=true; });
                      }
@@ -189,6 +195,16 @@ async function contentSelectDialog(logo, readFolder, startingPath) {
       contentDialog.resolve = resolve;
       contentDialog.reject = reject;
       contentDialog.readFolder = readFolder;
+      // title (open, or save), nameInput(readonly, or editable)
+      if (typeof(saveAs) === 'undefined') {  // open for no saveAs
+         contentDialog.main.querySelector(".title").textContent = "Open";
+         contentDialog.nameInput.value = "";
+         contentDialog.nameInput.disabled = true;
+      } else { // use the saveAs "string"
+         contentDialog.main.querySelector(".title").textContent = "SaveAs";
+         contentDialog.nameInput.value = saveAs;
+         contentDialog.nameInput.disbled = false;
+      }
       // logo
       contentDialog.nav.querySelector(".home").src = logo;
       // startingPath first
