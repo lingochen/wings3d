@@ -1009,14 +1009,15 @@
      <button type="submit" value="ok" id="localOpen"> <span>Open from Local</span></button>
   </form>
   <form id="contentPicker" class="filePickerForm dialog">
-     <h3><span>Select</span><button type="submit" value="cancel" class="close">&times;</button></h3>
-     <div>search bar</search>
+     <div><h3 class="title">Select</h3><button type="submit" value="cancel" class="close">&times;</button></div>
+     <div class="searchbar"></div>
      <ul class="breadcrumb"><li><a><img class="home" alt="Home"></a></li></ul>
      <fieldset class="filePicker">
      </fieldset>
+     <input class="fileSelected" type="text" name="selected" value="">
      <div>
-       <p><span>0</span> selected</p>
        <button type="submit" value="ok">Ok</button>
+       <button type="submit" value="cancel">Cancel</button>
      </div>
   </form>
 </body>
