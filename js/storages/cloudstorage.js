@@ -98,6 +98,7 @@ async function contentSelectDialog(logo, readFolder, startingPath, saveAs) {
                   }
                }
                oldPath[oldPath.length-1].classList.add('current');   // last one is the current. and we guarantee at least we have root.
+               this.nav.dataset.filepath = path;
             },
             updateFolder: async function(newPath) {   // newPath is array of string.
                // update navigation.
@@ -146,7 +147,8 @@ async function contentSelectDialog(logo, readFolder, startingPath, saveAs) {
                document.body.removeChild(contentDialog.main.parentNode);
                document.body.appendChild(contentDialog.main);
                if (this.submitButton.value === 'ok') {
-                  this.resolve([this.selected.dataset.filepath]);
+                  const filepath = this.nav.dataset.filepath + "/" + this.nameInput.value;
+                  this.resolve([filepath]); //[this.selected.dataset.filepath]);
                } else if (this.submitButton.value === 'cancel') {
                   this.reject('cancel');
                }
@@ -345,13 +347,17 @@ function setLoadFn(fn) {
 }
 
 let gStoreObject = function() {};
-function setStoreFn(fn) {
+let gSaveFlag = 0;
+let gExtension = 0;
+function setStoreFn(fn, ext, flag) {
    gStoreObject = fn;
+   gSaveFlag = flag;
+   gExtension = ext;
 }
 
-let _options;
+let _options = {};
 function setOptions(options) {
-   _options = options;
+   _options = Object.assign(_options, options);
 };
 function getOptions() {
    return _options;
@@ -359,11 +365,14 @@ function getOptions() {
 
 
 
+
 export {
    setLoadFn,
    gLoadObject as loader,
    setStoreFn,
-   gStoreObject as storeFn,
+   gStoreObject as storer,
+   gSaveFlag as saveFlag,
+   gExtension as ext,
    setOptions,
    getOptions,
    ezAjax,

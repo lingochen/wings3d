@@ -339,7 +339,8 @@ const _environment = {
    materialList: undefined,
    lightList: undefined,
    currentObjects: undefined,
-   currentParent: undefined
+   currentParent: undefined,
+   fileName: "",              // save fileName. + path.
 };
 function addMaterial(material) {
    _environment.materialList.addMaterial(material);
@@ -1191,20 +1192,14 @@ function init() {
       if (loadStore.exportMenuText) {
          const exportMenuText = loadStore.exportMenuText;
          UI.addMenuItem('fileExport', 'export' + exportMenuText.name, `${exportMenuText.name} (.${exportMenuText.ext})...`, function(evt) {
-            OpenSave.save(evt)
-             .then( saveFn => {
-               saveFn(function() {return loadStore.export(getWorld(), "untitled")});
-             });
+            OpenSave.save(evt, ()=>{return loadStore.export(getWorld())}, loadStore.extension());
          });
       }
    }
    // registering save/saveAs/ handling.
    UI.bindMenuItem(Wings3D.action.save.name, function(evt) {
       // use X3d as default format.
-      OpenSave.save(evt)
-       .then( saveFn => {
-          return saveFn(function() {return X3d.export(getWorld(), 'untitled')});
-        });
+      OpenSave.save(evt, ()=>{return X3d.export(getWorld())}, X3d.extension());
     });
    // Registering open handling
    UI.bindMenuItem(Wings3D.action.open.name, function(evt) {

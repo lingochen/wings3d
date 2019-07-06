@@ -26,7 +26,7 @@ function setOptions() {
 };
 
 let cloudSaveDialog;
-function save(evt) {
+function save(evt, storer, ext, flag=0) {
    // popup windows 
    if (!cloudSaveDialog) {
       cloudSaveDialog = document.getElementById('cloudSaveDialog');
@@ -44,22 +44,26 @@ function save(evt) {
       button.addEventListener('click', function(evt) {
           CloudStorage.setStoreFn( function(blobNameFn) {
                const {blob, filename} = blobNameFn();
-               saveAs(blob, filename);
+               saveAs(blob, filename);                // local file save
                return "Save success";
            });
        });
       }
    }
    
-   return new Promise(function(resolve, _reject) {
-      // now show dialog, 
-      UI.runDialogCenter('#cloudSaveDialog', function(_form) {
-         // success submit, now resolve
-         resolve(CloudStorage.storeFn);   // pass the selected storeFn.
-       }, null, evt);
-   });
+   // set options, storer
+   CloudStorage.setStoreFn(storer, ext, flag);
+      
+   // now show dialog, 
+   UI.runDialogCenter('#cloudSaveDialog', function() {}, null, evt);
 };
-
+function saveAs(evt, storer, ext) {
+   save(evt, storer, ext, 1);
+};
+function exportAs(evt, storer, ext) {
+   save(evt, storer, ext, 2);
+};
+ 
 let cloudOpenDialog;
 function open(evt, loader) {
    // popup windows 
@@ -97,9 +101,15 @@ function open(evt, loader) {
    // now show dialog, 
    UI.runDialogCenter('#cloudOpenDialog', function() {}, null, evt);
 };
+function importAs(loader) {
+
+};
 
 
 export {
    save,
-   open
+   saveAs,
+   exportAs,
+   open,
+   importAs,
 }

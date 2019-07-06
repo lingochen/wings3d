@@ -24,10 +24,11 @@ class ImportExporter {
       }
    }
 
-   export(world, filename) {
+   export(world,) {
       this._reset();    // init before save.
       const blob = this._export(world);
-      return {blob: blob, filename: filename + '.' + this.extension()};
+      return blob;
+      //return {blob: blob, filename: filename + '.' + this.extension()};
    }
 
    import(file) {

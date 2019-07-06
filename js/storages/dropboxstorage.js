@@ -16,6 +16,7 @@ import * as CloudStorage from "./cloudstorage.js";
 
 let clientID;
 let dropboxToken;
+let openFileInfo;     // saved, or opened fileInfo from last called
 /*
  * Opens a new tab/window in the browser showing the Dropbox login page for
  * the app.  If the user logs in successfully, then the success callback will be called, and all
@@ -149,32 +150,45 @@ async function readFolder( path ) {
  * } 
  * @param {file} fileObject - single fileObject to save.
  */
-function save(getDataFn) {
+async function save(storer, ext, saveAs) {
    const options = CloudStorage.getOptions();
-   return getAuth()
-          .then(function(accessToken) {
-      const {blob, filename} = getDataFn();
-      const ajaxOptions = {
+
+   const accessToken = await getAuth();
+
+   let filename;
+   if ((saveAs > 0) || !openFileInfo) {  // not saved or open from dropbox, or force saveAs
+      const files = await CloudStorage.contentSelectDialog(logo, readFolder, "", "untitled");
+      filename = files[0]; // the selected filename
+   }
+   const blob = storer();  // get result 
+   if (filename) {   // add extension.
+      filename = filename + "." + ext;
+   } else { // get it from openFileInfo
+      filename = openFileInfo.path_display;
+   }
+
+   const ajaxOptions = {
          method: 'POST',
          headers: {
             Authorization: 'Bearer ' + accessToken,
             'Content-Type': 'application/octet-stream',
             'Dropbox-API-Arg': JSON.stringify({
-               path: '/' + filename,           // path : '/' + fullPath.join( '/' ),
-               mode: 'add',                     // 'overwrite', shorthand for {'.tag': 'add' };
-               autorename: true,
+               path: filename,                  // path : '/' + fullPath.join( '/' ),
+               mode: 'overwrite',                     // 'overwrite', shorthand for {'.tag': 'add' };
+               autorename: false,
                mute: false
             }),
          },
          data: blob,                            
       };
 
-      return CloudStorage.ezAjax('https://content.dropboxapi.com/2/files/upload', ajaxOptions, options.progress, options.cancel)
-             .then( result => {
-         // format result then return it
-         return result.data;
-      });
-   });
+   return CloudStorage.ezAjax('https://content.dropboxapi.com/2/files/upload', ajaxOptions, options.progress, options.cancel)
+         .then( result => {
+            // save result
+            openFileInfo = JSON.parse(result.xhr.response); //.getResponseHeader('Dropbox-API-Result'));
+            // return filename
+            return openFileInfo.name;
+         });
 };
 
 
@@ -192,8 +206,12 @@ function setupSaveButton(button) {
       // add handling code.
       button.addEventListener('click', function(evt) {
          //evt.preventDefault(); // <- this prevent submit.
-         // we really should call SaveAs dialog?
-         CloudStorage.setStoreFn(save);  // pass save function as callBack.
+         try {
+            //CloudStorage.filename = await save(CloudStorage.storer);
+            save(CloudStorage.storer, CloudStorage.ext, CloudStorage.saveFlag);
+         } catch(e) {   // no file write, or unable to connect.
+            console.log(e);
+         }
        });
    }
 };
@@ -239,6 +257,11 @@ async function open(path) {
           };
    const dataBuffer = await CloudStorage.ezAjax('https://content.dropboxapi.com/2/files/download', ajaxOptions, options.progress, options.cancel)
    
+   // save JSON in the Dropbox-API-Result response header.
+   /*
+   openFileInfo = JSON.parse(dataBuffer.xhr.getResponseHeader('Dropbox-API-Result'));
+   */
+
    return new Blob([dataBuffer.data], {type: "application/octet-stream"});
    //} catch (e) {
    //   console.log(e);
