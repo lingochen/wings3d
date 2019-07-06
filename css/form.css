@@ -209,10 +209,10 @@ div.endAlign button {
 }
 
 .filePickerForm {
-  width: 100%
-  height: 100%
-  margin: 0
-  padding: 0
+  width: 36rem;
+  height: auto;
+  margin: 0;
+  padding: 0;
 
 }
 
@@ -220,7 +220,6 @@ div.endAlign button {
   overflow-y: auto;
   min-height: 8rem;
   max-height: 8rem;
-  min-width: 36rem;
 }
 
 .fileSelected {
