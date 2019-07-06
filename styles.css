@@ -630,6 +630,102 @@ div.endAlign button {
 #emissionSlider {
   background: linear-gradient(to right, #000000, var(--emissionMax));
 }
+
+.filePickerForm {
+  width: 36rem;
+  height: auto;
+  margin: 0;
+  padding: 0;
+
+}
+
+.filePicker {
+  overflow-y: auto;
+  min-height: 8rem;
+  max-height: 8rem;
+}
+
+.fileSelected {
+  width: 98%;
+  font-size: 1.5rem;
+}
+
+label.fileItem {
+  display: flex;
+  flex-direction: row;
+}
+
+label.fileItem input {
+  display: none;
+}
+
+label.fileItem img {
+  width: 1rem;
+  height: 1rem;
+  visibility: hidden;
+}
+label.fileItem img[src] {
+  visibility: inherit;
+}
+
+label.fileItem .filename {
+  flex-grow: 3;
+}
+
+label.fileItem .sizeDate::after  {
+  content: attr(data-after);
+  flex: 0 0 10em;
+  float: right;
+  text-align: right;
+}
+
+label.fileItem .sizeDate {
+  flex: 0 0 9em;
+}
+
+label.selected {
+  background-color: Chocolate;
+}
+
+/* breadCrumb styling */
+ul.breadcrumb {
+  padding: 10px 16px;
+  list-style: none;
+  background-color: #eee;
+}
+
+ul.breadcrumb li {  /* row instead of wrap */
+  display: inline;
+  font-size: 18px;
+}
+
+ul.breadcrumb li+li:before {  /* add slash before item except first */
+  padding: 8px;
+  color: black;
+  content: "/\A0";
+}
+
+ul.breadcrumb li a {
+  color: #0275d8;
+  text-decoration: none;
+}
+
+ul.breadcrumb li a.current {
+  cursor: default;
+  color: black;
+  filter: grayscale(100%);
+}
+
+ul.breadcrumb li a:hover:not(.current) {
+  /*color: #01447e;
+  text-decoration: underline;*/
+  border-bottom: 2px solid blue;
+} 
+
+img.home {
+  width: 1rem;
+  height: 1rem;
+}
 /*
 interactive Tutor's speech bubble css. like hopscotch js's thick border style. like how shepherd js's bubble arrow is inside the bubble's box, should make position calculation easier.
 Use flex-box ability to move arrow around(up,down,left,right) easier.
