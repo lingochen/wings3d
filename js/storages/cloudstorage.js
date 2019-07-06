@@ -112,7 +112,8 @@ async function contentSelectDialog(logo, readFolder, startingPath, saveAs) {
                      // get span, before, after.
                      let span = label.querySelectorAll('span');
                      span[0].textContent = item.name;
-                     if (item.size) {
+                     if (item.isFile) {
+                        label.querySelector('img').src = '#';
                         input.classList.remove('folder');
                         span[1].textContent = formatBytes(item.size);                  // file size.
                         span[1].setAttribute('data-after', item.modified.toLocaleString('en-US', {year: '2-digit', month: 'short', day: 'numeric' }));      // modified date
