@@ -41,12 +41,9 @@ function save(evt, storer, ext, flag=0) {
       // setup local file store
       const button = document.getElementById('localSave');
       if (button) {
-      button.addEventListener('click', function(evt) {
-          CloudStorage.setStoreFn( function(blobNameFn) {
-               const {blob, filename} = blobNameFn();
-               saveAs(blob, filename);                // local file save
-               return "Save success";
-           });
+      button.addEventListener('click', function(evt) {      // should we try to ask user to supply name?
+            const blob = CloudStorage.storer();
+            window.saveAs(blob, "untitled." + CloudStorage.ext);                // local file save
        });
       }
    }
