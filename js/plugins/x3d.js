@@ -246,14 +246,18 @@ class X3dImportExporter extends ImportExporter {
       }
       // set pbr
       const old = {};
-      for (const [key, attr] of [["baseColor", "baseColor"], ["opacity", "transparency"], ["roughness", "roughnessFactor"], ["metallic", "metallicFactor"]]) {
-         let value = material.getAttribute(attr);
-         if (value) {
-            old[key] = value;
-         }
+      let value;
+      if (value = material.getAttribute('baseColor')) {
+         old.baseColor = value.trim().split(/[,\s]+/).map(Number);
       }
-      if (old.opacity) {
-         old.opacity = 1.0 - old.opacity; // transparency to opacity
+      if (value = material.getAttribute('roughnessFactor')) {
+         old.roughness = value;
+      }
+      if (value = material.getAttribute('metallicFactor')) {
+         old.metallic = value;
+      }
+      if (value = material.getAttribute('transparency')) {
+         old.opacity = 1.0 - value; // transparency to opacity
       }
       current.appearance.setValues(old);
    };
@@ -300,8 +304,7 @@ class X3dImportExporter extends ImportExporter {
       const appearance = current.appearance || Material.default;
       let start = 0;
       let index = faceSet.getAttribute("coordIndex");
-      index = index.trim();                     // remove leading and trailing spaces
-      index = index.split(/[,\s]+/);                      // split by comma, or white space
+      index = index.trim().split(/[,\s]+/);  // split by comma, or white space. todo: match "integer"
       for (let i = 0; i < index.length; ++i) {
          const value = parseInt(index[i], 10);
          if (value === -1) {  // done, have polygon.
@@ -328,7 +331,7 @@ class X3dImportExporter extends ImportExporter {
          // now add coordinate
          let index = [];
          let pts = coord.getAttribute("point");
-         pts = pts.split(/[,\s]+/);                 // split by whitespaces or comma
+         pts = pts.trim().split(/[,\s]+/);                 // split by whitespaces or comma
          const vertex = [0.0, 0.0, 0.0];
          for (let i = 0; i < pts.length; i+=3) {
             vertex[0] = parseFloat(pts[i]) || 0.0;

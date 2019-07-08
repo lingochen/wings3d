@@ -83,7 +83,7 @@ Material.prototype.setGPU = function() {
 Material.prototype.setValues = function(inputDat) {
    for (const key of Object.keys(inputDat)) {
       if (this.pbr.hasOwnProperty(key)) {
-         if (isNaN(inputDat[key])) {
+         if (isNaN(inputDat[key]) && !Array.isArray(inputDat[key])) {
             this.pbr[key] = Util.hexToRGB(inputDat[key]);
          } else {
             this.pbr[key] = inputDat[key];
