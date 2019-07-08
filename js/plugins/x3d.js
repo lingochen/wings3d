@@ -141,8 +141,17 @@ class X3dImportExporter extends ImportExporter {
       // extract start from Scene?, or just querySelectAll("Scene > Group")? for now, no transform or subgroup.
       const scene = xmlDoc.querySelector("Scene");
       if (scene) {
-         let current = {};
-         this.Scene(scene, current);
+         let current = {children:[]};
+         for (let node of scene.children) {
+            this._parseNode(node, current);
+         }
+         // now, put everthing into world
+         for (let group of current.children) {
+            View.addToWorld(group);
+         }
+         if (current.cage) {
+            View.addToWorld(current.cage);
+         }
       }
    }
 
@@ -165,15 +174,22 @@ class X3dImportExporter extends ImportExporter {
       return null;
    }
 
-   Scene(scene, current) {
-      for (let node of scene.children) {
-         this._parseNode(node, current);
+   Group(groupNode, current) { // create and insert new stuff
+      const group = {children: []};
+      for (const node of groupNode.children) {
+         this._parseNode(node, group);
       }
-      // let 
-   }
+      // now we parse all the children, decide if we want cage or group?
+      if (group.children.length > 0) { // yes, yes grouping. now create grouping and append
+         // new Group
+         // newGroup.name =
+         // newGroup.append(group.children)
+         // current.children.push( newGroup );
 
-   Group(group, current) { // create and insert new stuff
-
+      } else if (group.cage) {   // cage is enough, so handle it.
+         group.cage.name = groupNode.getAttribute('name');
+         current.children.push( group.cage );
+      }
    }
 
    /**
@@ -183,7 +199,7 @@ class X3dImportExporter extends ImportExporter {
    Shape(shape, current) {
       // check existence of PreviewCage
       if (!current.cage) {
-         current.cage = View.putIntoWorld();
+         current.cage = View.newCage();
          current.coords = new Map;
       }
       for (const node of shape.children) {
@@ -284,6 +300,7 @@ class X3dImportExporter extends ImportExporter {
       const appearance = current.appearance || Material.default;
       let start = 0;
       let index = faceSet.getAttribute("coordIndex");
+      index = index.trim();                     // remove leading and trailing spaces
       index = index.split(/[,\s]+/);                      // split by comma, or white space
       for (let i = 0; i < index.length; ++i) {
          const value = parseInt(index[i], 10);
