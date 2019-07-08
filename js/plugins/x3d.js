@@ -85,26 +85,25 @@ class X3dImportExporter extends ImportExporter {
          group.setAttribute("DEF", groupName);
          scene.appendChild(group);
          def.set(groupName, group);
-         for (let [mat, indexedFaceSet] of materialList) {
+         for (const [mat, indexedFaceSet] of materialList) {
             const shape = xml.createElement("Shape");
             group.appendChild(shape);
             // create material
-            const materialName = mat.name+"Material";
+            const materialName = mat.name+"PBR";
             const appearance = xml.createElement("Appearance");
             shape.appendChild(appearance);
-            const material = xml.createElement("Material");
+            const material = xml.createElement("PhysicalMaterial");
             appearance.appendChild(material);
             if (def.has(materialName)) {
                material.setAttribute("USE", materialName);
             } else {
                material.setAttribute("DEF", materialName);
-               mat = mat.material;
-               material.setAttribute("diffuseColor", `${mat.diffuseMaterial[0]} ${mat.diffuseMaterial[1]} ${mat.diffuseMaterial[2]}` );
-               material.setAttribute("ambientIntensity", "0.2");  //`${mat.ambientMaterial}`);
-               material.setAttribute("emissiveColor", `${mat.emissionMaterial[0]} ${mat.emissionMaterial[1]} ${mat.emissionMaterial[2]}`);
-               material.setAttribute("shininess", `${mat.shininessMaterial}`);
-               material.setAttribute("specularColor", `${mat.specularMaterial[0]} ${mat.specularMaterial[1]} ${mat.specularMaterial[2]}`)
-               material.setAttribute("transparency",`${1.0-mat.opacityMaterial}`);
+               const pbr = mat.pbr;
+               material.setAttribute("baseColor", `${pbr.baseColor[0]} ${pbr.baseColor[1]} ${pbr.baseColor[2]}` );
+               //material.setAttribute("emissiveColor", `${pbr.emissionMaterial[0]} ${pbr.emissionMaterial[1]} ${pbr.emissionMaterial[2]}`);
+               material.setAttribute("roughnessFactor", `${pbr.roughness}`);
+               material.setAttribute("metallicFactor", `${pbr.metallic}`);
+               material.setAttribute("transparency",`${1.0-pbr.opacity}`);
             }
             // create indexFaceSet
             let coordIndex = "";
@@ -214,6 +213,34 @@ class X3dImportExporter extends ImportExporter {
          this._parseNode(node, current);
       }
    }
+
+   /**
+    * new Physical based material.
+    * @param {*} material 
+    * @param {*} current 
+    */
+   PhysicalMaterial(material, current) {
+      let mat = this._getUse(material);
+      if (!mat) {
+         let name = material.getAttribute("DEF");
+         if (name) {
+            this.def.set(name, material);
+         }
+         mat = material;
+      }
+      // set pbr
+      const old = {};
+      for (const [key, attr] of [["baseColor", "baseColor"], ["opacity", "transparency"], ["roughness", "roughnessFactor"], ["metallic", "metallicFactor"]]) {
+         let value = material.getAttribute(attr);
+         if (value) {
+            old[key] = value;
+         }
+      }
+      if (old.opacity) {
+         old.opacity = 1.0 - old.opacity; // transparency to opacity
+      }
+      current.appearance.setValues(old);
+   };
 
    /**
     * old style material for now
