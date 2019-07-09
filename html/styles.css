@@ -211,7 +211,7 @@ li.dropdown:after {
   content: "\2304";
 }
 li.dropside::after {
-  content: "\203A";
+  content: "\203a";
   padding: 0 0.5em 0 0;
   align-self: center;
 }
@@ -702,7 +702,7 @@ ul.breadcrumb li {  /* row instead of wrap */
 ul.breadcrumb li+li:before {  /* add slash before item except first */
   padding: 8px;
   color: black;
-  content: "/\A0";
+  content: "/\00a0";
 }
 
 ul.breadcrumb li a {
