@@ -37,8 +37,11 @@ function getAuth() {
       } else if (dropboxToken = window.localStorage.getItem("dropboxAccessToken")) {   // check if already in localStorage.
          resolve(dropboxToken);
       } else {
+         const h = 780, w = 580;
+         const y = window.top.outerHeight / 2 + window.top.screenY - (h / 2);
+         const x = window.top.outerWidth / 2 + window.top.screenX - (w / 2);
          const url = window.location.protocol + "//" + window.location.host  + '/dropbox-login.html';// + "/" + window.location.pathname;
-         const loginWindow = window.open( url, '_blank');
+         const loginWindow = window.open( url, '_blank', `alwaysRaised=1, toolbar=0, menubar=0, status=0, height=${h}, width=${w}, top=${y}, left=${x}`);
          if (!loginWindow) {
             reject("open window failed, popup blocked?");
          } else {
