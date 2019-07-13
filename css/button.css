@@ -1,0 +1,194 @@
+/* slider, copy from http://danielstern.ca/range.css */
+.slider {
+  -webkit-appearance: none;
+  height: 15px;
+  border-radius: 5px;
+  background: #d3d3d3;
+  width: 90%;
+  /*margin-left: 5%; */
+}
+.slider::-moz-focus-outer {
+  border: 0;
+}
+.slider:focus {
+  outline: none;
+}
+.slider::-moz-range-track {
+  background: none;
+}
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  background: #4CAF50;
+  cursor: pointer;
+}
+.slider::-moz-range-thumb {
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  background: #4CAF50;
+  cursor: pointer;
+}
+
+/* The close X, (<span class="close">&times;</span>) */
+.close {
+  float: right;
+  font-size: 1.5em;
+  font-weight: bold;
+  line-height: 1;
+  color: #000;
+  text-shadow: 0 1px 0 #fff;
+  opacity: .5;
+}
+
+.close:focus, .close:hover {
+  color: #000;
+  text-decoration: none;
+  opacity: .75;
+  cursor: pointer;
+}
+
+button.close {
+  padding: 0;
+  background: transparent;
+  border: 0;
+  -webkit-appearance: none;
+}
+
+.button-bar {
+  display: flex;                  /* establish flex container */
+  flex-direction: row;            /* default value; can be omitted */
+  flex-wrap: nowrap;              /* default value; can be omitted */
+  justify-content: space-between; /* switched from default (flex-start, see below) */
+  background-color: white;
+}
+.button-bar > div {
+    display: flex;
+}
+.button-bar a,
+.button-bar label {
+  display: inline-block;
+  appearance: none;
+  box-shadow: none;
+  border-style: solid;
+  text-decoration: none;
+}
+.button-bar input {
+  display: none;
+}
+label.button:hover,
+.button-bar input:checked+label.button {
+  border-style: ridge;
+  border-color: black;
+}
+label.button {
+    display: flex;
+    flex-direction: column;
+}
+label.button {
+  position: relative;
+  width: 3.5em;
+  height: 2.5em;
+  border-style: solid;
+  border-color: white; 
+}
+label.button:active {
+  top: 1px;
+  left: 1px;
+}
+label.button img {
+  display: block;
+  align-self: center;
+  pointer-events: none;	/*disable img draggin*/
+}
+label.button:hover span {
+  opacity: 0.8;
+}
+label.button span {
+    opacity: 0;
+    font-size: 0.8em;
+    position: absolute;
+    left: 0px;
+    right: 0px;
+    bottom: 0px;
+    color: black;
+    text-shadow:		/* stroke font */
+    -1px -1px 0 gold,
+    1px -1px 0 gold,
+    -1px 1px 0 gold,
+    1px 1px 0 gold;  
+    text-decoration: none;
+    text-align: center;
+}
+
+.iconImg {
+  object-fit: none;
+  object-position: 0 0;
+  width: 32px;
+  height: 32px;
+}
+
+.sidebarImg {
+  object-position: 0 0x;
+}
+
+.openImg {
+  object-position: 0 -32px;
+}
+
+.saveImg {
+  object-position: 0 -64px;
+}
+
+.undoImg {
+  object-position: 0 -96px;
+}
+
+.redoImg {
+  object-position: 0 -128px;
+}
+
+.vertexImg {
+  object-position: 0 -160px;
+}
+
+.edgeImg {
+  object-position: 0 -192px;
+}
+
+.faceImg {
+  object-position: 0 -224px;
+}
+
+.bodyImg {
+  object-position: 0 -256px;
+}
+
+.multiImg {
+  object-position: 0 -288px;
+}
+
+.prefImg {
+  object-position: 0 -320px;
+}
+
+.smoothImg {
+  object-position: 0 -352px;
+}
+
+.perspectiveImg {
+  object-position: 0 -384px;
+}
+
+.groundplaneImg {
+  object-position: 0 -412px;
+}
+
+.axesImg {
+  object-position: 0 -444px;
+}
+
+

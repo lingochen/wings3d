@@ -1,0 +1,111 @@
+:root {
+  --infoLineBackground: #F2F1F0;
+  --infoLineText: #4C4C4C;
+  --infoBackground: rgba(38%, 38%, 38%, 0.5);
+  --infoText: #FFFFFF;
+}
+
+/*
+*,
+*:after,
+*:before {
+  box-sizing: border-box;
+}*/
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  display: block;
+  overflow:hidden;
+}
+
+.unfocus:not(.exclude) {
+  opacity: 0.5;
+}
+
+.page-layout {
+  display: flex;
+  flex-flow: column;
+  height: 100vh;
+}
+
+.content {
+  flex: 1 1 auto;
+  display: flex; 
+  flex-direction: row;
+}
+.marginal {
+  flex: 0 1 auto;
+  border: 1px dotted grey;
+}
+.sidebar {
+  display: none;
+  flex-direction: column;
+  flex-grow: 1;
+  white-space: nowrap;
+  min-width: 18rem;
+  max-width: 18rem;
+}
+
+.viewport {
+  flex: 1 1 auto;
+  display: flex; 
+  flex-direction: row;
+}
+
+.workbench {
+  flex-grow: 1;
+  position: relative;
+  overflow: hidden;
+}
+canvas {
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  width: 100%;
+  height: 100%;
+  line-height: 0px;
+}
+.workbench #text {
+  z-index: 10;
+  pointer-events: none;
+}
+#glcanvas {
+  background-color: black;
+}
+
+#statusbar {
+  position:absolute;
+  z-index: 20;
+  left: 0px;
+  top: 0px;
+  width: 100%;
+  background-color: var(--infoBackground);
+  color: var(--infoText);
+}
+
+#helpbar {
+  white-space: pre;   /* keep bar in place */
+  background-color: var(--infoLineBackground);
+  color: var(--infoLineText);
+  height: 1.5rem;
+}
+
+/* global class */
+.unselectable {
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+
+  -webkit-user-drag: none; /* Prevents dragging of images/divs etc */
+  user-drag: none;
+}
+.not-implemented { 
+  cursor: not-allowed; 
+  opacity: 0.6;
+} /* for temporary disabled selection */
+

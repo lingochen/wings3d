@@ -1,0 +1,305 @@
+:root {
+  --baseColorMax: #FFFFFF;
+  --emissionMax: #FFFFFF;
+}
+
+.overlay {
+  position:fixed;
+  top:0;
+  left:0;
+
+  padding: 0;
+  margin: 0;
+
+  width: 100%;
+  height: 100%;
+  background: rgba(255,255,255,0.5);
+}
+
+div.popup {
+  position: absolute;
+  background-color:  #fff;
+  border: solid 1px #dfdfdf;
+}
+
+div.popup > h3, form > h3 {
+  text-align: center;
+  margin: 0.1em;
+}
+
+div.wrap {
+  overflow: scroll;
+  max-height: 50vh;
+  max-width: 50vw;
+}
+
+.dialog {
+  background-color:  #fff;
+  border: solid 1px #dfdfdf;
+  box-shadow: 1px 1px 2px #cfcfcf;
+  min-width: 340px;
+  max-width: 100vw;
+}
+
+.dialog input[type=number] {
+   width: 60px;
+}
+
+.dialog span {
+   display: inline-block;
+}
+
+/* all form dialog start in hiding */
+form {
+  display: none;
+  flex-direction: column;
+  position: absolute;
+}
+
+#cutLineDialog {
+  background-color:  #fff;
+  border: solid 1px #dfdfdf;
+  box-shadow: 1px 1px 2px #cfcfcf;
+  width: 240px;
+}
+
+/* pref tabs */
+.centerModal {
+  display: flex;
+/*  align-items: center; */
+  justify-content: center;
+}
+.realCenterModal {
+  display: flex;
+  align-items: center; 
+  justify-content: center;
+}
+
+
+/* change to using grid */
+.tabs>.tabButton{
+    display: block;
+    margin-top: 1px;
+    background: #5a5243;
+    color: #f5f5f5;
+    text-align: center;
+}
+.tabs>input{
+    display: none;
+}
+.tabs>input:checked+label+.tabPanel{
+    display: block;
+}
+.tabs>.tabPanel{
+  background: #fff;
+  display: none;
+  border-color: silver;
+}
+@media screen and (min-width: 768px){
+  form#preferenceForm {
+     width: 50rem;
+  }
+  .tabs{
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-areas: "pref0 pref1 pref2 pref3"
+                         "panel panel panel panel"
+  }
+  .tabs>.tabButton{
+    cursor:pointer;
+  }
+  .tabs>input:checked+label{
+    background:#fff;
+    color:#5a5243
+  }
+  .tabs>input:checked+label+.tabPanel{
+    grid-area: panel;
+    display: flex;
+    flex-wrap: wrap;
+    padding: 1rem;
+  }
+  label[for$="generalPref"] {
+    grid-area: pref0;
+  }
+  label[for$="cameraPref"] {
+    grid-area: pref1;
+  }
+  label[for$="interfacePref"] {
+    grid-area: pref2;
+  }
+  label[for$="advancedMiscPref"] {
+    grid-area: pref3;
+  }
+}
+
+form fieldset input[type="number"] {
+  width: 5rem;
+}
+
+.fieldTable {
+  display: grid;
+  grid-template-columns: max-content max-content max-content;
+  grid-gap:5px;
+  margin: 0.5rem;
+}
+
+form .fieldPref {
+  display: grid;
+  grid-template-columns: max-content max-content;
+  grid-gap:5px;
+  margin: 0.5rem;
+}
+.fieldPref label.right { 
+  text-align:right; 
+}
+form .verticalPref {
+  display: flex;
+  flex-direction: column;
+  padding: 0.5rem;
+}
+form .horizontalPref {
+  display: flex;
+  flex-direction: row;
+  padding: 0.5rem;
+  flex-wrap: nowrap;
+}
+input[name$="Conditional"]:not(:checked) ~ fieldset input[name$="Conditional"],
+input[name$="Conditional"]:not(:checked) ~ label input[name$="Conditional"] {
+  visibility: hidden;
+}
+input[name$="Conditional"]:not(:checked)+label+label,
+input[name$="Conditional"]:not(:checked) ~ fieldset[name$="Conditional"] {
+  pointer-events: none;
+  opacity: 0.5;
+}
+label.setValue {
+  display: flex;
+  justify-content: space-between;
+}
+.verticalPref hr {  /* force hr back to horizontal line again */
+  margin-left: 0;
+  margin-right: 0;
+}
+form div.tabs label:not(.setValue):after { /* force line break after label */
+  content: "\A";
+  white-space: pre;
+}
+div.endAlign {
+  display: flex;
+  justify-content: flex-end;
+}
+div.endAlign button {
+  margin: 1em;
+}
+
+#materialWrap {
+  display: grid;
+  grid-gap: 10px;
+  grid-template-columns: 100px auto; 
+}
+
+#materialCanvas {
+  background-color: blue;
+}
+#baseColorSlider {
+  background: linear-gradient(to right, #000000, var(--baseColorMax));
+}
+#emissionSlider {
+  background: linear-gradient(to right, #000000, var(--emissionMax));
+}
+
+.filePickerForm {
+  width: 36rem;
+  height: auto;
+  margin: 0;
+  padding: 0;
+
+}
+
+.filePicker {
+  overflow-y: auto;
+  min-height: 8rem;
+  max-height: 8rem;
+}
+
+.fileSelected {
+  width: 98%;
+  font-size: 1.5rem;
+}
+
+label.fileItem {
+  display: flex;
+  flex-direction: row;
+}
+
+label.fileItem input {
+  display: none;
+}
+
+label.fileItem img {
+  width: 1rem;
+  height: 1rem;
+  visibility: hidden;
+}
+label.fileItem img[src] {
+  visibility: inherit;
+}
+
+label.fileItem .filename {
+  flex-grow: 3;
+}
+
+label.fileItem .sizeDate::after  {
+  content: attr(data-after);
+  flex: 0 0 10em;
+  float: right;
+  text-align: right;
+}
+
+label.fileItem .sizeDate {
+  flex: 0 0 9em;
+}
+
+label.selected {
+  background-color: Chocolate;
+}
+
+/* breadCrumb styling */
+ul.breadcrumb {
+  padding: 10px 16px;
+  list-style: none;
+  background-color: #eee;
+}
+
+ul.breadcrumb li {  /* row instead of wrap */
+  display: inline;
+  font-size: 18px;
+}
+
+ul.breadcrumb li+li:before {  /* add slash before item except first */
+  padding: 8px;
+  color: black;
+  content: "/\00a0";
+}
+
+ul.breadcrumb li a {
+  color: #0275d8;
+  text-decoration: none;
+}
+
+ul.breadcrumb li a.current {
+  cursor: default;
+  color: black;
+  filter: grayscale(100%);
+}
+
+ul.breadcrumb li a:hover:not(.current) {
+  /*color: #01447e;
+  text-decoration: underline;*/
+  border-bottom: 2px solid blue;
+} 
+
+img.home {
+  width: 1rem;
+  height: 1rem;
+}

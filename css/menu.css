@@ -1,0 +1,118 @@
+:root {
+  --menubarBackground: #3C3B37;
+  --menubarText: #FFFFFF;
+  --menuBackground: #3C3B37;
+  --menuText: #FFFFFF;
+  --menuHighlight: #F07746;
+  --menuHighlightText: #FFFFFF; 
+}
+
+nav.menu {
+  display: block;
+  margin: 0;
+  padding: 0;
+/*  overflow: hidden; */
+}
+ul.menu {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+/* dropdown menu */
+ul.popup.menu {
+  visibility : hidden;
+  position: absolute;    /* parent need to be relative */
+  top: 100%;             /* place directly under parent */
+  z-index: 100;
+}
+ul.popup.menu > li {
+  display: flex;
+  position: relative;
+}
+ul.popup.menu > hr {
+  margin: 0em;
+  border-width: 2px
+}
+ul.popup.menu ul.popup.menu {
+  width: 100%;
+}
+ul.menu.bar {
+  display: flex;
+  flex-direction: row;
+}
+ul.menu.bar > li {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  position: relative;
+  list-style-type: none;
+  transition: all 0s; 
+}
+
+/* menuItem */
+nav.menu li {
+  background-color: var(--menuBackground);
+}
+nav.menu {
+  color: var(--menuText);
+}
+nav.menu.bar li {
+  background-color: var(--menubarBackground);
+}
+nav.menu.bar {
+  color: var(--menubarText);
+}
+
+ul.menu > li > a {
+  display: flex;
+  justify-content: space-between;
+  flex: 1;
+  line-height: 1rem;
+  padding: 0.5rem 1rem;
+  text-decoration: none;
+  white-space: nowrap;
+
+  -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none; /* Safari */
+     -khtml-user-select: none; /* Konqueror HTML */
+       -moz-user-select: none; /* Firefox */
+        -ms-user-select: none; /* Internet Explorer/Edge */
+            user-select: none; /* Non-prefixed version, currently supported by Chrome and Opera */
+}
+ul.popup.menu > li > img {
+  align-self: center;
+  padding: 0 0.3em 0 0;
+}
+
+ul.menu li:hover {
+  background-color: var(--menuHighlight);
+}
+ul.menu li > a:hover {
+  color: var(--menuHighlightText);
+}
+ul.menu li > a.hotkey:after {
+  content: attr(data-hotkey);
+  padding-left: 1rem;
+}
+
+/* added attribute for showing extra menu available. */
+li.dropdown:after {
+  content: "\2304";
+}
+li.dropside::after {
+  content: "\203a";
+  padding: 0 0.5em 0 0;
+  align-self: center;
+}
+li.dropside.hideAfter::after {
+  display: none;
+}
+li.dropside::before {
+  content:"\2039";
+  align-self: center;
+  padding: 0 0 0 0.5em;
+  display: none;
+}
+li.dropside.showBefore::before {
+  display: block;
+}

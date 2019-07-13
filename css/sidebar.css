@@ -1,0 +1,152 @@
+
+.sidebar > .sidebarPanel {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+.sidebar > .sidebarPanel{
+  background: #fff;
+  display: none;
+  border-color: silver;
+}
+
+.sidebar > input{
+  display: none;
+}
+.sidebar > input:checked+label+.sidebarPanel{
+  display: block;
+}
+.sidebar > label:hover, .sidebar > input:checked+label:hover {
+  border-style: outset;
+}
+.sidebar > label {
+  background-color: gray;
+  border-style: ridge;
+  border-color: silver;
+  cursor: pointer;
+}
+.sidebar> input:checked+label {
+  background-color: #F07746;
+  border-style: groove;
+}
+
+/* tree view */
+ul.treeview {
+  padding-left: 1em;
+}
+.treeview ul, .treeview li {
+  list-style: none;
+}
+.treeview ul {
+  padding-left: 1em; 
+} 
+
+.treeview input[type='checkbox']{
+  display: none;
+}
+.treeview input[type='checkbox'] ~ ul {
+  display: none;
+}
+.treeview input:checked ~ ul {
+  display: block;
+}
+.treeview input[type='checkbox'] ~ label {
+  cursor: pointer;
+  font-weight: bold;
+}
+.treeview input[type='checkbox'] ~ .folder:before {
+  content: '';
+  width: 0;
+  height: 0;
+  position: absolute;
+  margin-left: -0.8em;
+  margin-top: 0.4em;
+  border-width: 4px;
+  border-style: solid;
+  border-top-color: transparent;
+  border-right-color: red;
+  border-bottom-color: red;
+  border-left-color: transparent;
+}
+.treeview input:checked ~ .folder:before {
+  content: '';
+  margin-left: -0.6em;
+  border-width: 5px;
+  border-top-color: transparent;
+  border-right-color: transparent;
+  border-bottom-color: transparent;
+  border-left-color: red;
+}
+
+.objectName {
+  display: flex;
+}
+
+.objectName > span {
+  flex-grow: 2;
+}
+
+.smallIcon {
+  display: inline-block;
+  background-repeat: no-repeat;
+  height: 16px;
+  width: 16px;
+}
+input[type='checkbox']+.smallIcon {
+  background-position: 0px 0px;
+}
+input:checked+.smallIcon {
+  background-position: -16px 0px;
+}
+.smallWhole {
+  background-image: url("../img/bluecube/small_whole.png");
+}
+.smallShow {
+  background-image: url("../img/bluecube/small_show.png");
+}
+.smallUnlock {
+  background-image: url("../img/bluecube/small_unlock.png");
+}
+.smallWire {
+  background-image: url("../img/bluecube/small_wire.png");
+}
+.smallImage {
+  background-image: url("../img/bluecube/small_image.png");
+}
+.smallPref {
+  background-image: url("../img/bluecube/small_pref.png");
+}
+
+li > p {
+  margin: 0px;
+}
+
+.dropZone {
+  border-style: dashed;
+  border-color: #333;
+  background: #ccc;
+}
+
+.dropZone * { /* avoid dragleave event when .dropZone have children */
+  pointer-events: none;
+}
+
+.resultCount:before {
+  content: "(";
+}
+.resultCount:after {
+  content: ")";
+}
+
+.materialIcon { /* https://stackoverflow.com/questions/50646577/how-to-ignore-transparent-pixels-with-background-blend-mode */
+  display: inline-block;
+  background-image: url("../img/bluecube/material.png");
+  width: 16px;
+  height: 16px;
+  -webkit-mask-image: url("../img/bluecube/material.png");
+  -webkit-mask-mode: alpha;
+  mask-image: url("../img/bluecube/material.png");
+  mask-mode: alpha;
+  background-blend-mode: multiply;
+  background-color: white;
+}
