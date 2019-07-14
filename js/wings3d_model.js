@@ -1107,17 +1107,20 @@ PreviewCage.prototype.snapshotBodyPosition = function() {
 PreviewCage.prototype.snapshotFacePositionAndNormal = function() {
    const vertices = new Set;
    let normalMap = new Map;
+   const polygonNormal = [0,0,0];
    // first collect all the vertex
    for (let polygon of this.selectedSet) {
       polygon.eachVertex( function(vertex) {
          if (!vertices.has(vertex)) {
             vertices.add(vertex);
-            const normal = [polygon.normal[0], polygon.normal[1], polygon.normal[2]];
+            const normal = [0, 0, 0];
+            polygon.getNormal(normal);
             normalMap.set(vertex, normal);
          } else {
             const normal = normalMap.get(vertex);
-            if (vec3.dot(normal, polygon.normal) < 0.999) {  // check for nearly same normal, or only added if hard edge?
-               vec3.add(normal, normal, polygon.normal);
+            polygon.getNormal(polygonNormal);
+            if (vec3.dot(normal, polygonNormal) < 0.999) {  // check for nearly same normal, or only added if hard edge?
+               vec3.add(normal, normal, polygonNormal);
             } 
          }
       });
