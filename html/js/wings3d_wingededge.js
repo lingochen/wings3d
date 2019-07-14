@@ -733,8 +733,9 @@ Polygon.prototype.assignMaterial = function(material) {
    }
 }
 
+// the return value should not be modified. todo:?
 Object.defineProperty(Polygon.prototype, 'normal', {
-   get: function() { return new Vec3View(Polygon.normal, this.cntrOffset);},
+   get: function() { return new Vec3View(Polygon.normal.buffer, this.cntrOffset);},
 });
 Polygon.prototype.getNormal = function(normal) {
    let index = this.cntrOffset;

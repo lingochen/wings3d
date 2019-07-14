@@ -1113,7 +1113,7 @@ PreviewCage.prototype.snapshotFacePositionAndNormal = function() {
       polygon.eachVertex( function(vertex) {
          if (!vertices.has(vertex)) {
             vertices.add(vertex);
-            const normal = [0, 0, 0];
+            const normal = [0,0,0];
             polygon.getNormal(normal);
             normalMap.set(vertex, normal);
          } else {
@@ -1129,9 +1129,9 @@ PreviewCage.prototype.snapshotFacePositionAndNormal = function() {
    const normalArray = new Float32Array(vertices.size*3);
    let i = 0;
    for (let [_vert, normal] of normalMap) {
-      let inputNormal = normalArray.subarray(i, i+3);
-      vec3.copy(inputNormal, normal);
-      i+=3;
+      normalArray[i++] = normal[0];
+      normalArray[i++] = normal[1];
+      normalArray[i++] = normal[2];
    }
    return this.snapshotPosition(vertices, normalArray);
 };
