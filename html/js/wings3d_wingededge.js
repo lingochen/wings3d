@@ -738,9 +738,9 @@ Object.defineProperty(Polygon.prototype, 'normal', {
 });
 Polygon.prototype.getNormal = function(normal) {
    let index = this.cntrOffset;
-   normal[0] = Polygon.normal[index];
-   normal[1] = Polygon.normal[index+1];
-   normal[2] = Polygon.normal[index+2];
+   normal[0] = Polygon.normal.get(index);
+   normal[1] = Polygon.normal.get(index+1);
+   normal[2] = Polygon.normal.get(index+2);
    return normal;
 }
 
