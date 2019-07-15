@@ -249,6 +249,7 @@ const action = {
    importMenu: () => {notImplemented(this);},
    exportMenu: () => {notImplemented(this);},
    save: () => {notImplemented(this);},
+   saveAs: () => {notImpelmented(this);},
    open: () => {notImplemented(this);},
    // view action, button bar
    openSidebar: () => {notImplemented(this);},
