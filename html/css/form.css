@@ -208,6 +208,11 @@ div.endAlign button {
   background: linear-gradient(to right, #000000, var(--emissionMax));
 }
 
+.cloudForm button {
+  display: block;
+  margin: 8px auto; /* padding top/bottom, center left/right */
+}
+
 .filePickerForm {
   width: 36rem;
   height: auto;
