@@ -4,11 +4,11 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
    <link rel="icon" type="image/png" href="img/favicon-96x96.png" />
-   <link rel="stylesheet" href="styles.css?v=8a00e7b50f7f9e2ac378aa0646a23366" />
+   <link rel="stylesheet" href="styles.css?v=af6b55512d1fc7ec6a5982853901ca61" />
    <script src="./vendor/FileSaver.min.js?v=0cd1ebc44c182996e7d62f29b28dba9f" defer></script>
    <script src="./vendor/gl-matrix-min.js?v=8d57dae6ce3862af598c7ccad3df15ad" defer></script>
 
-   <script src="wings3d.bundle.js?v=e028d3356a520edbd9aa2645e2ee0ad3" defer type="module"></script>
+   <script src="wings3d.bundle.js?v=6feb2da82d9770a28afc41e1fd051bfc" defer type="module"></script>
 
   <script>
     function help(text) {
@@ -998,12 +998,12 @@
     <button type="submit" value="ok">Ok</button>
   </form>
 <!-- Save Load -->
-  <form id="cloudSaveDialog" class="dialog">
+  <form id="cloudSaveDialog" class="dialog cloudForm">
      <h3> Save As <button type="submit" value="cancel" class="close">&times;</button></h3>
      <button type="submit" value="ok" id="dropboxSave" data-app-key="p6wfhvtsa2hd9nh"><img class="home" alt="Dropbox"><span>Save to Dropbox</span></button>
      <button type="submit" value="ok" id="localSave"> <span>Save to Local</span></button>
   </form>
-  <form id="cloudOpenDialog" class="dialog">
+  <form id="cloudOpenDialog" class="dialog cloudForm">
      <h3> Open from <button type="submit" value="cancel" class="close">&times;</button></h3>
      <button type="submit" value="ok" id="dropboxOpen" data-app-key="p6wfhvtsa2hd9nh"><img class="home" alt="Dropbox"><span>Open from Dropbox</span></button>
      <button type="submit" value="ok" id="localOpen"> <span>Open from Local</span></button>
