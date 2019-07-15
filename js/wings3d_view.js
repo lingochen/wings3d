@@ -1204,6 +1204,9 @@ function init() {
       // use X3d as default format.
       OpenSave.save(evt, ()=>{return X3d.export(getWorld())}, X3d.extension());
     });
+   UI.bindMenuItem(Wings3D.action.saveAs.name, function(evt) {
+      OpenSave.save(evt, ()=>{return X3d.export(getWorld())}, X3d.extension(), 1);
+    });
    // Registering open handling
    UI.bindMenuItem(Wings3D.action.open.name, function(evt) {
       OpenSave.open(evt, X3d);
