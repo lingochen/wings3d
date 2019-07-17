@@ -2,7 +2,7 @@
 wings3d web version. Polygonal Modelling using web browser. Interactive Tutorial mode, so teaching and assistant is going to be easy.
 
 ## getting started
-* [Playground](https://www.wings3d.net) - Current Version.
+* [Playground](http://www.wings3d.net) - Current Version.
 
 ### Prerequisites
 Current Firefox, Chrome, Safari, and Microsoft Edge browser, with support for webgl.
