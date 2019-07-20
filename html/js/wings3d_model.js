@@ -58,6 +58,30 @@ Object.defineProperty(PreviewGroup.prototype ,"name",{
     }
  });
 
+/**
+ * empty all child including all mesh data
+ * return all childs with deleted mesh data for undo purpose.
+ */
+PreviewGroup.prototype.empty = function() {
+   const children = [];
+   for (const child of this.group) {
+      children.push( {child: child, restore: child.empty() } );
+      this.remove(child);
+   }
+   return children;
+};
+
+/**
+ * 
+ */
+PreviewGroup.prototype.emptyUndo = function(children) {
+   for (const {child, restore} of children) {
+      child.emptyUndo(restore);
+      this.insert(child);
+   }
+}
+
+
 // prototype method.
 PreviewGroup.prototype.insert = function(obj) {
    if (obj.parent) {
@@ -180,6 +204,18 @@ Object.defineProperty(PreviewCage.prototype, "name", {
       }
     }
  });
+
+/** 
+ * delete mesh, edge, vertex data
+ * return the deletion
+*/
+PreviewCage.prototype.empty = function() {
+   return this.geometry.empty();
+};
+
+PreviewCage.prototype.emptyUndo = function(restore) {
+   this.geometry.emptyUndo(restore);
+};
 
 
  PreviewCage.prototype.numberOfCage = function() {
