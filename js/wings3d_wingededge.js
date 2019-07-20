@@ -65,6 +65,23 @@ const WingedEdge = function(orgVert, toVert, index) {
 };
 WingedEdge.index = null;   // (vertex, index, barycentric)
 WingedEdge.state = null;
+/**
+ * 
+ */
+WingedEdge.prototype.getRestore = function(colorView) {
+   this.left.getVertexColor(colorView); colorView.inc();
+   this.right.getVertexColor(colorView); colorView.inc();
+   return {wEdge: this, left: {origin: this.left.origin, next: this.left.next}, 
+                        right: {origin: this.right.origin, next: this.right.next} };
+};
+WingedEdge.prototype.setRestore = function(restore, colorView) {
+   this.left.setVertexColor(colorView); colorView.inc();
+   this.right.setVertexColor(colorView); colorView.inc();
+   this.left.origin = restore.left.origin;
+   this.right.origin = restore.right.origin;
+   this.left.next = restore.left.next;
+   this.right.next = restore.right.next;
+};
 
 WingedEdge.prototype[Symbol.iterator] = function* () {
    yield this.left;
@@ -430,6 +447,18 @@ Object.defineProperty(Vertex.prototype, 'valence', {
       return valence;
    },
 });
+/**
+ * for undo/redo purpose
+ */
+Vertex.prototype.getRestore = function(ptView) {
+   ptView.set(this); ptView.inc();
+   return {vertex: this, outEdge: this.outEdge};
+
+};
+Vertex.prototype.setRestore = function(restore, ptView) {
+   this.outEdge = restore.outEdge;
+   this.set(ptView); ptView.inc();
+};
 
 
 Vertex.prototype.hide = function() {
@@ -684,6 +713,16 @@ Polygon.state = null;         // state(selected, hilite). byte. 2 bytes should b
 Polygon.centerIndex = null;      // fake halfEdge. (vertex, noHalfEdge(-Number), Polygon, Group)
 Polygon.normal = null;        // normal per polygon.
 Polygon.color = null;
+/**
+ * for undo/redo purpose.
+ */
+Polygon.prototype.getRestore = function() {
+   return {polygon: this, halfEdge: this.halfEdge, material: this.material};  // all other data can be computed.
+};
+Polygon.prototype.setRestore = function(_restore) {   // recompute all other data.
+   this.update();
+};
+
 
 Polygon.prototype.hide = function() {
    this.setState(true, 4);
@@ -1232,6 +1271,52 @@ WingedTopology.prototype.setState = function(onOff, mask) {
       return WingedTopology.state.set(index, state | mask);
    } else {
       return WingedTopology.state.set(index, state & (~mask));
+   }
+};
+
+/**
+ * release all faces, edges, and vertices.
+ * return all undo data so we can redo. 
+ */
+WingedTopology.prototype.empty = function() {
+   const delPolygons = [];  // could be reused, so we have to save polygon and it material.
+   for (let polygon of this.faces) {   // free all polygon, and save polygo list
+      delPolygons.push( polygon.getRestore() );
+      this.alloc.freePolygon(polygon);
+   }
+   this.faces.clear();
+   const delWedges = [];
+   const colors = new Float32Array(this.edges.size * 3 * 2);
+   const colorView = new Vec3View(colors);
+   for (const wEdge of this.edges) {
+      delWedges.push( wEdge.getRestore(colorView) );
+      this.alloc.freeHEdge(wEdge.left);
+   }
+   this.edges.clear();
+   const delVertices = [];
+   const pts = new Float32Array(this.vertices.size * 3);
+   const ptView = new Vec3View(pts);
+   for (let vertex of this.vertices) {
+      delVertices.push( {vertex: vertex, halfEdge: vertex.outEdge, pt: [vertex[0], vertex[1], vertex[2]]} );
+      this.alloc.freeVertex(vertex);
+   }
+   this.vertices.clear();
+   return {faces: delPolygons, edges: delWedges, vertices: delVertices, colors: colors, pts: pts};
+};
+WingedTopology.prototype.emptyUndo = function(restoreAll) {
+   const ptView = new Vec3View(restoreAll.pts);
+   for (let vert of restoreAll.vertices) {
+      this.addVertex(vert.vertex);
+      vert.vertex.setRestore(vert, ptView);
+   }
+   const colorView = new Vec3View(restoreAll.colors);
+   for (let wEdge of restoreAll.edges) {
+      this.addEdge(wEdge.left.origin, wEdge.right.origin, wEdge.left);
+      wEdge.wEdge.setRestore(wEdge, colorView);
+   }
+   for (let restore of restoreAll.faces) {
+      this._createPolygon(restore.halfEdge, 4, restore.material, restore.polygon);
+      restore.polygon.setRestore(restore); 
    }
 };
 
