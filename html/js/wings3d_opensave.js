@@ -69,7 +69,8 @@ function exportAs(evt, storer, ext) {
 };
  
 let cloudOpenDialog;
-function open(evt, loader) {
+let _open = new Map;
+async function open(evt, loader) {
    // popup windows 
    if (!cloudOpenDialog) {
       cloudOpenDialog = document.getElementById('cloudOpenDialog');
@@ -80,30 +81,52 @@ function open(evt, loader) {
       // first, setOptions
       setOptions();
       // now setup dropbox/onedrive/yandex/google/box/pcloud buttons
-      Dropbox.setupOpenButton(document.getElementById('dropboxOpen'));
+      let button = document.getElementById('dropboxOpen');
+      if (button) {
+         _open.set(button, Dropbox.setupOpenButton());
+      }
       // setup local file open
       const fileInput = document.querySelector('#importFile');    // <input id="importFile" style="display:none;" type='file'>
       if (fileInput) {  // hidden open file dialog
-         fileInput.addEventListener('change', function ok(_ev) {
-            let fileList = this.files;    // = ev.target.files;
-            for (let file of fileList) {
-               CloudStorage.loader(file);
-            }
-            // reset value
-            fileInput.value = "";
-         });
          const button = document.getElementById('localOpen');
          if (button) {
-            button.addEventListener('click', function(_evt) {
-               fileInput.click();      // open file dialog.
+            let fileList;
+            button.addEventListener('click', function(evt){
+               fileInput.value = "";   // clear first.
+               fileInput.click();      // open file dialog inside click;.
              });
+            _open.set(button, async function(fileName) {
+               return new Promise((resolve, reject)=>{
+                  window.addEventListener('focus', function localOpen(_ev) {  // we use window.onfocus instead of fileInput.onchange is because of cancel event.
+                     window.removeEventListener('focus', localOpen);
+                     console.log("localOpen");
+                     if (fileInput.value.length) {
+                        resolve(fileInput.files);
+                     } else {
+                        reject([]);
+                     }
+                  });
+               });
+            });
          }
       }
    }
 
-   CloudStorage.setLoadFn(loader);
+//   CloudStorage.setLoadFn(loader);
    // now show dialog, 
-   UI.runDialogCenter('#cloudOpenDialog', function() {}, null, evt);
+ //  UI.runDialogCenter('#cloudOpenDialog', function() {}, null, evt);
+   // now show dialog
+   try {
+      const [_form, button] = await UI.execDialog('#cloudOpenDialog', null);
+      const open = _open.get(button);
+      const blobs = await open("");
+      for (let file of blobs) {
+         loader(file);
+      }
+      return true;
+   } finally {
+      return false; 
+   }
 };
 function importAs(loader) {
 
