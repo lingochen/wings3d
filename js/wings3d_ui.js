@@ -223,7 +223,7 @@ function runDialog(formID, ev, submitCallback, setup) {
    runDialogCenter(formID, submitCallback, setup, ev);
 };
 
-function runDialogCenter(formID, submitCallback, setup, _ev) {
+function runDialogCenter(formID, submitCallback, setup, _ev, reject) {
    const form = document.querySelector(formID);
    if (form) {
       const _pvt = {submitSuccess: false};
@@ -250,10 +250,15 @@ function runDialogCenter(formID, submitCallback, setup, _ev) {
          if ('ok'.localeCompare(submit.value, 'en', {'sensitivity': 'base'}) == 0) {
             submit.addEventListener('click', function oked(ev) {
                _pvt.submitSuccess = true;
+               _pvt.button = this;
                submit.removeEventListener('click', oked);
             });
          } else if ('cancel'.localeCompare(submit.value, 'en', {'sensitivity': 'base'}) == 0) {
-
+            submit.addEventListener('click', function cancel(ev) {
+               _pvt.submitSuccess = false;
+               _pvt.button = this;
+               submit.removeEventListener('click', cancel);
+            });
          } else {
             console.log('submit ' + submit.value + ' type not supported');
          }
@@ -269,12 +274,27 @@ function runDialogCenter(formID, submitCallback, setup, _ev) {
          document.body.appendChild(form);
          document.body.removeChild(overlay);
          // get form's input data.
-         if ((_pvt.submitSuccess)) {
-            submitCallback(form);     // ask function to extract element's value.
+         if (_pvt.submitSuccess) { 
+            submitCallback(form, _pvt.button);     // ask function to extract element's value.
+         } else {
+            if (reject) {
+               reject(form, _pvt.button);
+            }
          }
       });
    }
 };
+async function execDialog(formID, setup) {
+   let promise = new Promise((resolve, reject) => {
+      runDialogCenter(formID, function(form, button) {
+         resolve([form, button]);
+      }, setup, "ev", function(form, button){
+         reject([form, button]);
+      });
+    });
+
+  return promise;
+}
 
 
 // fileInput helper
@@ -538,6 +558,7 @@ export {
    extractDialogValue,
    runDialog,
    runDialogCenter,
+   execDialog,
    openFile,
    openMultipleFiles,
    showContextMenu,

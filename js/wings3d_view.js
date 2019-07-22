@@ -909,11 +909,7 @@ function drawWorld(gl) {
 }
 
 function render(gl) {
-   let count = 0;
-   for (let model of _environment.world.getCage()) {
-      ++count;
-   }
-   if (count > 0) {
+   if (_environment.world.numberOfCage() > 0) {
       if (_environment.draftBench.isModified()) {   // check for modification. 
          Renderer.needToRedraw();
       }
@@ -1183,33 +1179,56 @@ function init() {
    ImportExporter.addLoadStore( new WavefrontObjImportExporter() );
    let X3d = new X3dImportExporter();
    ImportExporter.setDefault(X3d);
-      // plug into import/export menu
+   // clearNew
+   async function clearNew(evt, saver) {
+      if (_environment.world.numberOfCage() > 0) {
+         await OpenSave.save(evt, ()=>{return saver.export(getWorld())}, saver.extension(), 0);
+         // deselect all
+         mode.current.resetSelection();
+         // delete allBody
+         _environment.world.empty();
+         Renderer.needToRedraw();
+      }
+   }
+   function open(evt, loader) {
+      clearNew(evt, loader);
+      OpenSave.open(evt, (file)=>{  loader.import(file);}); 
+   }
+   function save(evt, saver, flag=0) {
+      if (_environment.world.numberOfCage() > 0) {
+         OpenSave.save(evt, ()=>{return saver.export(getWorld())}, saver.extension(), flag);
+      }
+   }
+   // plug into import/export menu
    for (let loadStore of ImportExporter.LOADSTORE) {
       if (loadStore.importMenuText) {
          const importMenuText = loadStore.importMenuText;
          // first get import Submenu.
          UI.addMenuItem('fileImport', 'import' + importMenuText.name, `${importMenuText.name} (.${importMenuText.ext})...`, function(evt) {
-               OpenSave.open(evt, loadStore); 
+               open(evt, loadStore);
             });
       }
       if (loadStore.exportMenuText) {
          const exportMenuText = loadStore.exportMenuText;
          UI.addMenuItem('fileExport', 'export' + exportMenuText.name, `${exportMenuText.name} (.${exportMenuText.ext})...`, function(evt) {
-            OpenSave.save(evt, ()=>{return loadStore.export(getWorld())}, loadStore.extension());
+            save(evt, loadStore);
          });
       }
    }
    // registering save/saveAs/ handling.
    UI.bindMenuItem(Wings3D.action.save.name, function(evt) {
-      // use X3d as default format.
-      OpenSave.save(evt, ()=>{return X3d.export(getWorld())}, X3d.extension());
+      save(evt, X3d);
     });
    UI.bindMenuItem(Wings3D.action.saveAs.name, function(evt) {
-      OpenSave.save(evt, ()=>{return X3d.export(getWorld())}, X3d.extension(), 1);
+      save(evt, X3d, 1);
     });
-   // Registering open handling
+   // Open handling, remember to save first. then new.
    UI.bindMenuItem(Wings3D.action.open.name, function(evt) {
-      OpenSave.open(evt, X3d);
+      open(evt, X3d);
+    });
+   // "New", clear away old objects, but ask to save it first.
+   UI.bindMenuItem(Wings3D.action.clearNew.name, function(evt) {
+      clearNew(evt, X3d);
     });
 
    // handle redrawingLoop

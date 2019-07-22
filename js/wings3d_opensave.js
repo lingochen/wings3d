@@ -26,7 +26,8 @@ function setOptions() {
 };
 
 let cloudSaveDialog;
-function save(evt, storer, ext, flag=0) {
+let _save = new Map;
+async function save(evt, storer, ext, flag=0) {
    // popup windows 
    if (!cloudSaveDialog) {
       cloudSaveDialog = document.getElementById('cloudSaveDialog');
@@ -37,22 +38,28 @@ function save(evt, storer, ext, flag=0) {
       // first, setOptions
       setOptions();
       // now setup dropbox/onedrive/yandex/google/box/pcloud buttons
-      Dropbox.setupSaveButton(document.getElementById('dropboxSave'));
-      // setup local file store
-      const button = document.getElementById('localSave');
+      let button = document.getElementById('dropboxSave');
       if (button) {
-      button.addEventListener('click', function(evt) {      // should we try to ask user to supply name?
-            const blob = CloudStorage.storer();
-            window.saveAs(blob, "untitled." + CloudStorage.ext);                // local file save
-       });
+         _save.set(button, Dropbox.setupSaveButton(button));
+      }
+      // setup local file store
+      button = document.getElementById('localSave');
+      if (button) {
+         _save.set(button, function(storer, ext, flag) {
+            const blob = storer();
+            window.saveAs(blob, "untitled." + ext);                // local file save, should give user a chance to give a name
+         });
       }
    }
-   
-   // set options, storer
-   CloudStorage.setStoreFn(storer, ext, flag);
       
-   // now show dialog, 
-   UI.runDialogCenter('#cloudSaveDialog', function() {}, null, evt);
+   // now show dialog
+   try {
+      const [_form, button] = await UI.execDialog('#cloudSaveDialog', null);
+      const save = _save.get(button);
+      return save(storer, ext, flag); // should we await?
+   } finally {
+      return null;   // not saved, so no filename.
+   }
 };
 function saveAs(evt, storer, ext) {
    save(evt, storer, ext, 1);
@@ -80,7 +87,7 @@ function open(evt, loader) {
          fileInput.addEventListener('change', function ok(_ev) {
             let fileList = this.files;    // = ev.target.files;
             for (let file of fileList) {
-               CloudStorage.loader.import(file);
+               CloudStorage.loader(file);
             }
             // reset value
             fileInput.value = "";
