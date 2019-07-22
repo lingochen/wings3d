@@ -258,7 +258,8 @@ async function open(path) {
    openFileInfo = JSON.parse(dataBuffer.xhr.getResponseHeader('Dropbox-API-Result'));
    */
 
-   return new Blob([dataBuffer.data], {type: "application/octet-stream"});
+   // return blob in an array.
+   return [new Blob([dataBuffer.data], {type: "application/octet-stream"})];
    //} catch (e) {
    //   console.log(e);
    //}
@@ -270,16 +271,8 @@ function setupOpenButton(button) {
       clientID = button.getAttribute('data-app-key');
       button.querySelector('.home').src = logo;
 
-      // add handling code.
-      button.addEventListener('click', async function(evt) {
-         //evt.preventDefault(); // <- this prevent submit.
-         try {
-            const blob = await open("");
-            CloudStorage.loader(blob);
-         } catch(e) {   // no file select, or unable to connect.
-            console.log(e);
-         }
-       });
+      // return handling code.
+      return open;
    }
 };
 

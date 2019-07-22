@@ -1190,8 +1190,8 @@ function init() {
          Renderer.needToRedraw();
       }
    }
-   function open(evt, loader) {
-      clearNew(evt, loader);
+   async function open(evt, loader) {
+      await clearNew(evt, loader);
       OpenSave.open(evt, (file)=>{  loader.import(file);}); 
    }
    function save(evt, saver, flag=0) {
