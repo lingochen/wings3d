@@ -206,17 +206,10 @@ function setupSaveButton(button) {
       clientID = button.getAttribute('data-app-key');
       button.querySelector('.home').src = logo;
 
-      // add handling code.
-      button.addEventListener('click', function(evt) {
-         //evt.preventDefault(); // <- this prevent submit.
-         try {
-            //CloudStorage.filename = await save(CloudStorage.storer);
-            save(CloudStorage.storer, CloudStorage.ext, CloudStorage.saveFlag);
-         } catch(e) {   // no file write, or unable to connect.
-            console.log(e);
-         }
-       });
+      // return handling code.
+      return save;
    }
+   return null;
 };
 
 
@@ -282,7 +275,7 @@ function setupOpenButton(button) {
          //evt.preventDefault(); // <- this prevent submit.
          try {
             const blob = await open("");
-            CloudStorage.loader.import(blob);
+            CloudStorage.loader(blob);
          } catch(e) {   // no file select, or unable to connect.
             console.log(e);
          }

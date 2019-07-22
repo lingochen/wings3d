@@ -251,6 +251,7 @@ const action = {
    save: () => {notImplemented(this);},
    saveAs: () => {notImpelmented(this);},
    open: () => {notImplemented(this);},
+   clearNew: () => {notImplemented(this);},
    // view action, button bar
    openSidebar: () => {notImplemented(this);},
    toggleVertexMode: () => {notImplemented(this);},

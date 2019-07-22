@@ -347,14 +347,8 @@ function setLoadFn(fn) {
    gLoadObject = fn;
 }
 
-let gStoreObject = function() {};
 let gSaveFlag = 0;
 let gExtension = 0;
-function setStoreFn(fn, ext, flag) {
-   gStoreObject = fn;
-   gSaveFlag = flag;
-   gExtension = ext;
-}
 
 let _options = {};
 function setOptions(options) {
@@ -370,8 +364,6 @@ function getOptions() {
 export {
    setLoadFn,
    gLoadObject as loader,
-   setStoreFn,
-   gStoreObject as storer,
    gSaveFlag as saveFlag,
    gExtension as ext,
    setOptions,
