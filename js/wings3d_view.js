@@ -1183,9 +1183,9 @@ function init() {
    async function clearNew(evt, saver) {
       if (_environment.world.numberOfCage() > 0) {
          await OpenSave.save(evt, ()=>{return saver.export(getWorld())}, saver.extension(), 0);
-         // deselect all
+         // deselect all, delete all
+         OpenSave.reset();
          mode.current.resetSelection();
-         // delete allBody
          _environment.world.empty();
          Renderer.needToRedraw();
       }

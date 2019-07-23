@@ -164,7 +164,7 @@ async function save(storer, ext, saveAs) {
       filename = files[0]; // the selected filename
    }
    const blob = storer();  // get result 
-   if (filename) {   // add extension.
+   if (filename) {   // add extension
       filename = filename + "." + ext;
    } else { // get it from openFileInfo
       filename = openFileInfo.path_display;
@@ -269,7 +269,7 @@ function setupOpenButton(button) {
       button.querySelector('.home').src = logo;
 
       // return handling code.
-      return open;
+      return [open, save];
    }
    return null;
 };
