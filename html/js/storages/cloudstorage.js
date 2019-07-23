@@ -342,14 +342,6 @@ function parseToJson(res) {
    return [res, JSON.parse(res.data)];
 }
 
-let gLoadObject = function() {};
-function setLoadFn(fn) {
-   gLoadObject = fn;
-}
-
-let gSaveFlag = 0;
-let gExtension = 0;
-
 let _options = {};
 function setOptions(options) {
    _options = Object.assign(_options, options);
@@ -362,10 +354,6 @@ function getOptions() {
 
 
 export {
-   setLoadFn,
-   gLoadObject as loader,
-   gSaveFlag as saveFlag,
-   gExtension as ext,
    setOptions,
    getOptions,
    ezAjax,

@@ -254,15 +254,12 @@ async function open(path) {
    const dataBuffer = await CloudStorage.ezAjax('https://content.dropboxapi.com/2/files/download', ajaxOptions, options.progress, options.cancel)
    
    // save JSON in the Dropbox-API-Result response header.
-   /*
    openFileInfo = JSON.parse(dataBuffer.xhr.getResponseHeader('Dropbox-API-Result'));
-   */
+   
 
-   // return blob in an array.
-   return [new Blob([dataBuffer.data], {type: "application/octet-stream"})];
-   //} catch (e) {
-   //   console.log(e);
-   //}
+   const blob = new File([dataBuffer.data], files[0], {type: "application/octet-stream"});
+
+   return [blob]; // return blob in an array
 };
 
 function setupOpenButton(button) {
@@ -274,6 +271,7 @@ function setupOpenButton(button) {
       // return handling code.
       return open;
    }
+   return null;
 };
 
 

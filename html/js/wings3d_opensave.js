@@ -83,7 +83,7 @@ async function open(evt, loader) {
       // now setup dropbox/onedrive/yandex/google/box/pcloud buttons
       let button = document.getElementById('dropboxOpen');
       if (button) {
-         _open.set(button, Dropbox.setupOpenButton());
+         _open.set(button, Dropbox.setupOpenButton(button));
       }
       // setup local file open
       const fileInput = document.querySelector('#importFile');    // <input id="importFile" style="display:none;" type='file'>
@@ -99,7 +99,6 @@ async function open(evt, loader) {
                return new Promise((resolve, reject)=>{
                   window.addEventListener('focus', function localOpen(_ev) {  // we use window.onfocus instead of fileInput.onchange is because of cancel event.
                      window.removeEventListener('focus', localOpen);
-                     console.log("localOpen");
                      if (fileInput.value.length) {
                         resolve(fileInput.files);
                      } else {
@@ -112,9 +111,6 @@ async function open(evt, loader) {
       }
    }
 
-//   CloudStorage.setLoadFn(loader);
-   // now show dialog, 
- //  UI.runDialogCenter('#cloudOpenDialog', function() {}, null, evt);
    // now show dialog
    try {
       const [_form, button] = await UI.execDialog('#cloudOpenDialog', null);
