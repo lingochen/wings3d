@@ -164,8 +164,11 @@ async function save(storer, ext, saveAs) {
       filename = files[0]; // the selected filename
    }
    const blob = storer();  // get result 
-   if (filename) {   // add extension
-      filename = filename + "." + ext;
+   if (filename) {   // add extension if not == the supply ext.
+      const pieces = filename.split('.');
+      if (ext.localeCompare(pieces[pieces.length-1]) !== 0) {
+         filename = filename + "." + ext;       // not the same "ext"
+      }
    } else { // get it from openFileInfo
       filename = openFileInfo.path_display;
    }
