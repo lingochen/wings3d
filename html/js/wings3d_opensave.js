@@ -64,22 +64,18 @@ async function save(evt, storer, ext, flag=0) {
          save = _save.get(button);  // get the save routine
       }
       const ret = save(storer, ext, flag); // should we await?
-      _lastSave = save;
+      if (flag < 2) {   // export() will not be reused.
+         _lastSave = save;
+      }
       return ret;
    } finally {
       return null;   // not saved, so no filename.
    }
 };
-function saveAs(evt, storer, ext) {
-   save(evt, storer, ext, 1);
-};
-function exportAs(evt, storer, ext) {
-   save(evt, storer, ext, 2);
-};
  
 let cloudOpenDialog;
 let _open = new Map;
-async function open(evt, loader) {
+async function open(evt, loader, importFlag=0) {
    // popup windows 
    if (!cloudOpenDialog) {
       cloudOpenDialog = document.getElementById('cloudOpenDialog');
@@ -128,22 +124,18 @@ async function open(evt, loader) {
       for (let file of files) {
          loader(file);
       }
-      _lastSave = save;
+      if (!importFlag) {   // import won't save fileName
+         _lastSave = save;
+      }
       return true;
    } finally {
       return false; 
    }
 };
-function importAs(loader) {
-
-};
 
 
 export {
    save,
-   saveAs,
-   exportAs,
    open,
-   importAs,
    reset,
 }

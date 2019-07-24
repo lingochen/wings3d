@@ -1180,9 +1180,9 @@ function init() {
    let X3d = new X3dImportExporter();
    ImportExporter.setDefault(X3d);
    // clearNew
-   async function clearNew(evt, saver) {
+   async function clearNew(evt) {
       if (_environment.world.numberOfCage() > 0) {
-         await OpenSave.save(evt, ()=>{return saver.export(getWorld())}, saver.extension(), 0);
+         await OpenSave.save(evt, ()=>{return X3d.export(getWorld())}, X3d.extension(), 1);  // ask for save if new
          // deselect all, delete all
          OpenSave.reset();
          mode.current.resetSelection();
@@ -1190,28 +1190,28 @@ function init() {
          Renderer.needToRedraw();
       }
    }
-   async function open(evt, loader) {
-      await clearNew(evt, loader);
-      OpenSave.open(evt, (file)=>{  loader.import(file);}); 
+   // plug into import/export menu
+   async function open(evt, loader, flag=0) {
+      await clearNew(evt);
+      OpenSave.open(evt, (file)=>{loader.import(file);}, flag);
    }
    function save(evt, saver, flag=0) {
       if (_environment.world.numberOfCage() > 0) {
          OpenSave.save(evt, ()=>{return saver.export(getWorld())}, saver.extension(), flag);
       }
    }
-   // plug into import/export menu
    for (let loadStore of ImportExporter.LOADSTORE) {
       if (loadStore.importMenuText) {
          const importMenuText = loadStore.importMenuText;
          // first get import Submenu.
          UI.addMenuItem('fileImport', 'import' + importMenuText.name, `${importMenuText.name} (.${importMenuText.ext})...`, function(evt) {
-               open(evt, loadStore);
+               open(evt, loadStore, 1);
             });
       }
       if (loadStore.exportMenuText) {
          const exportMenuText = loadStore.exportMenuText;
          UI.addMenuItem('fileExport', 'export' + exportMenuText.name, `${exportMenuText.name} (.${exportMenuText.ext})...`, function(evt) {
-            save(evt, loadStore);
+            save(evt, loadStore, 2);
          });
       }
    }
@@ -1228,7 +1228,7 @@ function init() {
     });
    // "New", clear away old objects, but ask to save it first.
    UI.bindMenuItem(Wings3D.action.clearNew.name, function(evt) {
-      clearNew(evt, X3d);
+      clearNew(evt);
     });
 
    // handle redrawingLoop
