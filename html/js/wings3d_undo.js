@@ -7,7 +7,7 @@
 class EditCommand {
    _calibrateMovement(mouseMove, cameraView) {
       // use the erlang Wings3d scaling code to be consistent.
-      const speed = 8.5;
+      const speed = cameraView.dragSpeed;
       const dist = cameraView.distance;
       const factor = (dist/((11-speed) * ((11-speed)*300))) * cameraView.fov / 60;
 

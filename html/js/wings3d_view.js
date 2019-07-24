@@ -190,7 +190,12 @@ function storePref(form) {
       }
     });
     // store camera's dragging value
-
+    traverse(Camera.pref, (obj, key, _value)=>{
+      const data = form.querySelector(`input[type=number][name=${key}]`);
+      if (data) {
+         obj[key] = data.value;
+      }
+    });
     Renderer.needToRedraw();
 };
 
