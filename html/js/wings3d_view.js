@@ -189,6 +189,8 @@ function storePref(form) {
          obj[key] = data.checked;
       }
     });
+    // store camera's dragging value
+
     Renderer.needToRedraw();
 };
 

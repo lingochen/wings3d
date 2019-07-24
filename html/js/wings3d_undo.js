@@ -5,22 +5,16 @@
 
 // merge MouseMoveHandler to EditCommand
 class EditCommand {
-   _calibrateMovement(mouseMove) {
-      // todo: instead of magic constant. should supply a scaling factor.
-      let move;
-      if (mouseMove == 0) {
-         move = 0;
-      } else if (mouseMove < 0) {
-         move = Math.log(-mouseMove) / 5.0;  // log to counteract mouse acceleration.
-         move = -move;
-      } else {
-         move = Math.log(mouseMove) / 5.0;
-      }
+   _calibrateMovement(mouseMove, cameraView) {
+      // use the erlang Wings3d scaling code to be consistent.
+      const speed = 8.5;
+      const dist = cameraView.distance;
+      const factor = (dist/((11-speed) * ((11-speed)*300))) * cameraView.fov / 60;
 
-      return move;
+      return mouseMove * factor;
    }
 
-   _xPercentMovement(ev) {
+   _xPercentMovement(ev, _cameraView) {
       let width = window.innertWidth || document.documentElement.clientWidth || document.body.clientWidth;
       return (ev.movementX / width);
    }

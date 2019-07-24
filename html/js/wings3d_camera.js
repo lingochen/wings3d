@@ -56,6 +56,7 @@ class CameraMouseMoveHandler extends MouseMoveHandler {
          wheelZooms: true,
          wheelZoomFactorAlt: 0.0005,
          wheelZoomFactor: 0.005
+         // dragging
       };
    let view = (function(){
          let camera = {
