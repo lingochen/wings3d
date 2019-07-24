@@ -55,8 +55,9 @@ class CameraMouseMoveHandler extends MouseMoveHandler {
          // additional pref
          wheelZooms: true,
          wheelZoomFactorAlt: 0.0005,
-         wheelZoomFactor: 0.005
+         wheelZoomFactor: 0.005,
          // dragging
+         dragSpeed: 8.5,
       };
    let view = (function(){
          let camera = {
@@ -87,6 +88,7 @@ class CameraMouseMoveHandler extends MouseMoveHandler {
                vec3.normalize(ret.z, ret.z);
                return ret;
             }, 
+            get dragSpeed() { return pref.dragSpeed; },
             get origin() { return camera.origin; },
             set origin(org) { 
                if ( camera.origin[0] != org[0] || camera.origin[1] != org[1] || camera.origin[2] != org[2]) {
