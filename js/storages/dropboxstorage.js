@@ -191,9 +191,12 @@ async function save(storer, ext, saveAs) {
    return CloudStorage.ezAjax('https://content.dropboxapi.com/2/files/upload', ajaxOptions, options.progress, options.cancel)
          .then( result => {
             // save result
-            openFileInfo = JSON.parse(result.xhr.response); //.getResponseHeader('Dropbox-API-Result'));
+            let info = JSON.parse(result.xhr.response); //.getResponseHeader('Dropbox-API-Result'));
+            if (saveAs < 2) {    // update only if not export
+               openFileInfo = info;
+            }
             // return filename
-            return openFileInfo.name;
+            return info.name;
          });
 };
 
