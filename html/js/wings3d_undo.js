@@ -14,6 +14,12 @@ class EditCommand {
       return mouseMove * factor;
    }
 
+   _rotateMovement(mouseMove, cameraView) {
+      const speed = cameraView.dragRotateSpeed;
+      const factor = 1.0/((10.1-speed)*8) * (Math.PI/180);
+      return mouseMove * factor;
+   }
+
    _xPercentMovement(ev, _cameraView) {
       let width = window.innertWidth || document.documentElement.clientWidth || document.body.clientWidth;
       return (ev.movementX / width);
