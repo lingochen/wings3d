@@ -617,12 +617,12 @@ function canvasHandleMouseDown(ev) {
          help('L:Select   M:Start Camera   R:Show Menu   [Alt]+R:Tweak menu');      
       } else if (handler.mousemove !== null) {
          undoQueue( handler.mousemove );  // put on queue, commit()?
-         handler.mousemove = null;
+         releaseHandlerMouseMove(); // handler.mousemove = null;
       } else if (handler.mouseSelect !== null) {
          if (handler.mouseSelect.select(hilite)) {
             if (handler.mouseSelect.isMoveable()) {   // now do mousemove.
                // handler.mousemove must be null.
-               handler.mousemove = handler.mouseSelect;
+               attachHandlerMouseMove(handler.mouseSelect); //handler.mousemove = handler.mouseSelect;
             } else {
                undoQueue( handler.mouseSelect );
             }
@@ -632,6 +632,12 @@ function canvasHandleMouseDown(ev) {
          //e.stopImmediatePropagation();
          // ask view to select current hilite if any.
          selectStart();
+      }
+   } else if (ev.button === 2) { // hack up 2019/07/25 to handle no contextmenu event in pointerLock - needs refactor
+      if (handler.mousemove) {
+         handler.mousemove.undo();
+         releaseHandlerMouseMove();
+         Renderer.needToRedraw();
       }
    }
 };
@@ -717,7 +723,7 @@ function canvasHandleContextMenu(ev) {
          help('L:Select   M:Start Camera   R:Show Menu   [Alt]+R:Tweak menu');
       } else if (handler.mousemove) {
          handler.mousemove.undo();
-         handler.mousemove = null;
+         releaseHandlerMouseMove();
          Renderer.needToRedraw();
       } else {
          handler.mouseSelect = null;   // no needs to undo because we havent doIt() yet.
@@ -729,8 +735,13 @@ function canvasHandleContextMenu(ev) {
    return false;
 };
 
+function releaseHandlerMouseMove() {
+   handler.mousemove = null;
+   document.exitPointerLock();
+};
 // handling in reverse order. the newest one will handle the event. (should be at most 2 handler)
 function attachHandlerMouseMove(mousemoveHandler) {
+   gl.canvas.requestPointerLock();
    // should we make sure handler.mousemove is null?
    handler.mousemove = mousemoveHandler;
 };
