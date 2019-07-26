@@ -686,14 +686,9 @@ class ScaleHandler extends MovePositionHandler {
    }
 
    _updateMovement(ev, cameraView) {
-      let scale = this._xPercentMovement(ev, cameraView);   // return (100% to -100%)
-      if (scale < 0) {
-         scale = 1.0 + Math.abs(scale);
-      } else {
-         scale = 1.0 / (1.0 + scale);
-      }
-      this.movement *= scale;
-      return scale;
+      let scale = this._scaleMovement(ev.movementX, cameraView);   // return (100% to -100%)
+      this.movement += scale;
+      return this.movement;
    }
 }
 

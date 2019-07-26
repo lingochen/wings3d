@@ -20,9 +20,11 @@ class EditCommand {
       return mouseMove * factor;
    }
 
-   _xPercentMovement(ev, _cameraView) {
-      let width = window.innertWidth || document.documentElement.clientWidth || document.body.clientWidth;
-      return (ev.movementX / width);
+   _scaleMovement(mouseMove, cameraView) {
+      const speed = cameraView.dragSpeed;
+      const dist = cameraView.distance;
+      const factor = (dist/((11-speed)*((11-speed)*900)));
+      return  mouseMove * factor;
    }
 
    free() {}
