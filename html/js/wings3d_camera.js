@@ -59,6 +59,7 @@ class CameraMouseMoveHandler extends MouseMoveHandler {
          // dragging
          dragSpeed: 8.5,
          dragRotateSpeed: 8.5,
+         dragScaleSpeed: 8.5,
       };
    let view = (function(){
          let camera = {
@@ -89,8 +90,25 @@ class CameraMouseMoveHandler extends MouseMoveHandler {
                vec3.normalize(ret.z, ret.z);
                return ret;
             }, 
-            get dragSpeed() { return pref.dragSpeed; },
-            get dragRotateSpeed() { return pref.dragRotateSpeed; },
+            calibrateMovement: function(mouseMove) {
+               // use the erlang Wings3d scaling code to be consistent.
+               const speed = pref.dragSpeed;
+               const dist = camera.distance;
+               const factor = (dist/((11-speed) * ((11-speed)*300))) * camera.fov / 60;
+         
+               return mouseMove * factor;
+            },
+            rotateMovement: function(mouseMove) {
+               const speed = pref.dragRotateSpeed;
+               const factor = 1.0/((10.1-speed)*8) * (Math.PI/180);
+               return mouseMove * factor;
+            },
+            scaleMovement: function(mouseMove) {
+               const speed = pref.dragScaleSpeed;
+               const dist = camera.distance;
+               const factor = (dist/((11-speed)*((11-speed)*900)));
+               return  mouseMove * factor;
+            },
             get origin() { return camera.origin; },
             set origin(org) { 
                if ( camera.origin[0] != org[0] || camera.origin[1] != org[1] || camera.origin[2] != org[2]) {
