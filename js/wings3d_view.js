@@ -633,12 +633,6 @@ function canvasHandleMouseDown(ev) {
          // ask view to select current hilite if any.
          selectStart();
       }
-   } else if (ev.button === 2) { // hack up 2019/07/25 to handle no contextmenu event in pointerLock - needs refactor
-      if (handler.mousemove) {
-         handler.mousemove.undo();
-         releaseHandlerMouseMove();
-         Renderer.needToRedraw();
-      }
    }
 };
 
@@ -669,6 +663,12 @@ function canvasHandleMouseUp(ev) {
          // disable mouse cursor
          //document.body.style.cursor = 'none';
       } 
+   } else if (ev.button === 2) { // hack up 2019/07/26 to handle no contextmenu event in pointerLock, - needs refactor
+      if (handler.mousemove) {   // firefox will generate contextmenu event if we put it on mouseDown.
+         handler.mousemove.undo();
+         releaseHandlerMouseMove();
+         Renderer.needToRedraw();
+      }
    }
 };
 

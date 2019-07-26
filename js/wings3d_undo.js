@@ -5,27 +5,6 @@
 
 // merge MouseMoveHandler to EditCommand
 class EditCommand {
-   _calibrateMovement(mouseMove, cameraView) {
-      // use the erlang Wings3d scaling code to be consistent.
-      const speed = cameraView.dragSpeed;
-      const dist = cameraView.distance;
-      const factor = (dist/((11-speed) * ((11-speed)*300))) * cameraView.fov / 60;
-
-      return mouseMove * factor;
-   }
-
-   _rotateMovement(mouseMove, cameraView) {
-      const speed = cameraView.dragRotateSpeed;
-      const factor = 1.0/((10.1-speed)*8) * (Math.PI/180);
-      return mouseMove * factor;
-   }
-
-   _scaleMovement(mouseMove, cameraView) {
-      const speed = cameraView.dragSpeed;
-      const dist = cameraView.distance;
-      const factor = (dist/((11-speed)*((11-speed)*900)));
-      return  mouseMove * factor;
-   }
 
    free() {}
 
