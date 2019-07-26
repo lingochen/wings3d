@@ -1024,8 +1024,8 @@ PreviewCage.prototype.moveSelection = function(snapshot, movement) {
 // rotate selection, with a center
 //
 PreviewCage.prototype.rotateSelection = function(snapshot, quatRotate, center) {
-   const translate = vec3.create();
-   const scale = vec3.fromValues(1, 1, 1);
+   const translate = [0, 0, 0];
+   const scale = [1, 1, 1];
    this.transformSelection(snapshot, (transform, origin) => {
       mat4.fromRotationTranslationScaleOrigin(transform, quatRotate, translate, scale, (center ? center : origin));   
     });
@@ -1035,11 +1035,14 @@ PreviewCage.prototype.rotateSelection = function(snapshot, quatRotate, center) {
 // scale selection, by moving vertices
 //
 PreviewCage.prototype.scaleSelection = function(snapshot, scale, axis) {
-   const scaleV = vec3.fromValues(axis[0] ? scale * axis[0] : 1, 
-                                  axis[1] ? scale * axis[1] : 1, 
-                                  axis[2] ? scale * axis[2] : 1);
-   this.transformSelection(snapshot, (transform, _origin) => {
-      mat4.fromScaling(transform, scaleV);   
+   const quatRotate = quat.create();
+   const translate = [0, 0, 0];
+   const scaleV = [axis[0] ? scale * axis[0] : 1, 
+                   axis[1] ? scale * axis[1] : 1, 
+                   axis[2] ? scale * axis[2] : 1];
+   this.transformSelection(snapshot, (transform, origin) => {
+      //mat4.fromScaling(transform, scaleV);   
+      mat4.fromRotationTranslationScaleOrigin(transform, quatRotate, translate, scaleV, origin);   
     });
 };
 
@@ -1050,13 +1053,15 @@ PreviewCage.prototype.transformSelection = function(snapshot, transformFn) {
    // construct the matrix
    const transform = mat4.create();
 
+   const pArry = new Util.Vec3View(snapshot.position);
    const vArry = snapshot.vertices[Symbol.iterator]();
    for (let group of snapshot.matrixGroup) {
       //mat4.fromRotationTranslationScaleOrigin(transform, quatRotation, translate, scale, group.center); // origin should not be modified by scale, glmatrix seems to get the order wrong.
       transformFn(transform, group.center);
       for (let index = 0; index < group.count; index++) {
          const vertex = vArry.next().value;
-         vec3.transformMat4(vertex, vertex, transform);
+         vec3.transformMat4(vertex, pArry, transform);
+         pArry.inc();
       }
    }
 
