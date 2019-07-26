@@ -158,6 +158,13 @@ function loadPref(form) {
    traverse(prop, (_obj, key, value)=> {
 
     });
+   // load camera pref
+   traverse(Camera.pref, (_obj, key, value)=> {
+      const data = form.querySelectorAll(`input[name=${key}]`);   // both range and number input
+      for (let datum of data) {
+         datum.value = value;
+      }
+    });
 };
 function storePref(form) {
    traverse(theme, (obj, key, _value) => {
