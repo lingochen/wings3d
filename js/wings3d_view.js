@@ -616,10 +616,10 @@ function selectFinish() {
 }
 
 function canvasHandleMouseDown(ev) {
-   if (ev.button == 0) {
+   if (ev.button === 0) {
       if (handler.camera !== null) {
          handler.camera.doIt();  
-         handler.camera = null;
+         releaseHandlerCamera();
          Wings3D.log(Wings3D.action.cameraModeExit, Camera.view);
          help('L:Select   M:Start Camera   R:Show Menu   [Alt]+R:Tweak menu');      
       } else if (handler.mousemove !== null) {
@@ -663,7 +663,7 @@ function canvasHandleMouseUp(ev) {
       if (handler.camera === null) {
          ev.stopImmediatePropagation();
          // let camera handle the mouse event until it quit.
-         handler.camera = Camera.getMouseMoveHandler();
+         attachHandlerCamera( Camera.getMouseMoveHandler() );
          // tell tutor step, we are in camera mode
          Wings3D.log(Wings3D.action.cameraModeEnter, Camera.view);
          help('L:Accept   M:Drag to Pan  R:Cancel/Restore to View   Move mouse to tumble');
@@ -671,9 +671,17 @@ function canvasHandleMouseUp(ev) {
          //document.body.style.cursor = 'none';
       } 
    } else if (ev.button === 2) { // hack up 2019/07/26 to handle no contextmenu event in pointerLock, - needs refactor
-      if (handler.mousemove) {   // firefox will generate contextmenu event if we put it on mouseDown.
+      if (handler.camera) {      // firefox will generate contextmenu event if we put it on mouseDown.
+         handler.camera.undo();
+         releaseHandlerCamera();
+         Wings3D.log(Wings3D.action.cameraModeExit, Camera.view);   // log action
+         help('L:Select   M:Start Camera   R:Show Menu   [Alt]+R:Tweak menu');
+      } else if (handler.mousemove) {
          handler.mousemove.undo();
          releaseHandlerMouseMove();
+         Renderer.needToRedraw();
+      } else {
+         handler.mouseSelect = null;   // no needs to undo because we havent doIt() yet.
          Renderer.needToRedraw();
       }
    }
@@ -719,28 +727,24 @@ function canvasHandleMouseMove(e) {
 
 // contextMenu, mouse right click.
 function canvasHandleContextMenu(ev) {
-   if (handler.camera || handler.mousemove || handler.mouseSelect) {
+   if (handler.mouseSelect) {
       // prevent propagation.
       ev.preventDefault();
       ev.stopImmediatePropagation();      // prevent document's contextmenu popup
-      if (handler.camera) {
-         handler.camera.undo();
-         handler.camera = null;
-         Wings3D.log(Wings3D.action.cameraModeExit, Camera.view);   // log action
-         help('L:Select   M:Start Camera   R:Show Menu   [Alt]+R:Tweak menu');
-      } else if (handler.mousemove) {
-         handler.mousemove.undo();
-         releaseHandlerMouseMove();
-         Renderer.needToRedraw();
-      } else {
-         handler.mouseSelect = null;   // no needs to undo because we havent doIt() yet.
-         Renderer.needToRedraw();
-      }
-      return true;
+      return true;                        // mouseUp will handle select event.
    }
    // let wings3d_contextmenu handle the event.
    return false;
 };
+
+function releaseHandlerCamera() {
+   handler.camera = null;
+   document.exitPointerLock();
+};
+function attachHandlerCamera(camera) {
+   gl.canvas.requestPointerLock();
+   handler.camera = camera;
+}
 
 function releaseHandlerMouseMove() {
    handler.mousemove = null;
