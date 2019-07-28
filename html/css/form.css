@@ -65,11 +65,13 @@ form {
 
 /* pref tabs */
 .centerModal {
+  z-index: 110;
   display: flex;
 /*  align-items: center; */
   justify-content: center;
 }
 .realCenterModal {
+  z-index: 110;
   display: flex;
   align-items: center; 
   justify-content: center;
