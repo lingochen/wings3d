@@ -29,7 +29,8 @@ ul.popup.menu > li {
   display: flex;
   position: relative;
 }
-ul.popup.menu > hr {
+ul.popup.menu  hr {
+  width: 100%;
   margin: 0em;
   border-width: 2px
 }

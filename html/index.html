@@ -1,14 +1,15 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+<title>Wings3D.net</title>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
    <link rel="icon" type="image/png" href="img/favicon-96x96.png" />
-   <link rel="stylesheet" href="styles.css?v=af6b55512d1fc7ec6a5982853901ca61" />
+   <link rel="stylesheet" href="styles.css?v=8aa2b957dbc4de70658c74ae92a08753" />
    <script src="./vendor/FileSaver.min.js?v=0cd1ebc44c182996e7d62f29b28dba9f" defer></script>
-   <script src="./vendor/gl-matrix-min.js?v=8d57dae6ce3862af598c7ccad3df15ad" defer></script>
+   <script src="./vendor/gl-matrix-min.js?v=8d57dae6ce3862af598c7ccad3df15ad"></script>
 
-   <script src="wings3d.bundle.js?v=6feb2da82d9770a28afc41e1fd051bfc" defer type="module"></script>
+   <script src="wings3d.bundle.js?v=cbeb076f3815d4a6bbc671dc845fadce" type="module"></script>
 
   <script>
     function help(text) {
@@ -81,25 +82,25 @@
           <li><a data-menuid="clearNew" onmouseover="help('Create a new, empty scene')" onmouseleave="help()">New</a></li>
           <li><a data-menuid="open" onmouseover="help('Open a previously saved scene')" onmouseleave="help()">Open...</a></li>
           <li class="not-implemented"><a onmouseover="help('Merge a previously saved scene into the current scene')" onmouseleave="help()">Merge...</a></li>
-          <hr/>
+          <li><hr /></li>
           <li><a data-menuid="save" onmouseover="help('Save the current scene')" onmouseleave="help()">Save</a></li>
           <li><a data-menuid="saveAs" onmouseover="help('Save the current scene under a new name')" onmouseleave="help()">Save As...</a></li>
           <li class="not-implemented"><a onmouseover="help('Save only the selected objects or faces')" onmouseleave="help()">Save Selected...</a></li>
           <li class="not-implemented"><a onmouseover="help('Generate new filename and save')" onmouseleave="help()">Save Incrementally</a></li>
           <li class="not-implemented"><a onmouseover="help('Include unused materials when saving a .wings file')" onmouseleave="help()">Save Unused Materials</a></li>
-          <hr/>
+          <li><hr /></li>
           <li class="not-implemented"><a onmouseover="help('Revert current scene to the saved contents')" onmouseleave="help()">Revert</a></li>
-          <hr/>
+          <li><hr /></li>
           <li class="dropside"><a data-menuid="importMenu">Import</a><ul data-menuid="fileImport" class="popup menu"> </ul></li>
           <li class="dropside"><a data-menuid="exportMenu">Export</a><ul data-menuid="fileExport" class="popup menu"> </ul></li>
           <li class="not-implemented"><a>Export Selected</a></li>
-          <hr/>
+          <li><hr /></li>
           <li class="not-implemented"><a onmouseover="help('Import an image file')" onmouseleave="help()">Import Image...</a></li>
-          <hr/>
+          <li><hr /></li>
           <li class="not-implemented"><a>Render</a></li>
-          <hr/>
+          <li><hr /></li>
           <li class="not-implemented"><a onmouseover="help('Install a plug-in')" onmouseleave="help()">Install Plug-In</a></li>
-          <hr/>
+          <li><hr /></li>
           <li class="not-implemented"><a onmouseover="help('Save a preference subset from your current settings')" onmouseleave="help()">Save Preference Subset</a></li>
           <li class="dropside"><a>Load Preference Subset</a>
             <ul class="popup menu">
@@ -115,18 +116,18 @@
         <a data-menuid="selectMenu">Select</a>
         <ul class="popup menu">
           <li><a onmouseover="help('Deselect selection')" onmouseleave="help()" data-menuid="deselect">Deselect space</a></li>
-          <hr>
+          <li><hr /></li>
           <li><a onmouseover="help('More selection')" onmouseleave="help()" data-menuid="more">More</a></li>
           <li><a onmouseover="help('Less selection')" onmouseleave="help()" data-menuid="less">Less</a></li>
           <li><a onmouseover="help('Similar selection')" onmouseleave="help()" data-menuid="similar">Similar</a></li>
           <li><a onmouseover="help('Adjacent Selection')" onmouseleave="help()" data-menuid='adjacent'>Adjacent</a></li>
           <li><a onmouseover="help('All selection')" onmouseleave="help()" data-menuid="all">All</a></li>
           <li><a onmouseover="help('Invert selection')" onmouseleave="help()" data-menuid="invert">Inverse</a></li>
-          <hr>
+          <li><hr /></li>
           <li class="dropside">
             <a data-menuid="edgeLoopMenu">Edge Loop</a>
             <ul class="popup menu">
-              <hr>
+              <li><hr /></li>
               <li><a data-menuid="edgeLoop1">Edge Loop</a></li>
               <li><a data-menuid="edgeRing1">Edge Ring</a></li>
               <li class="dropside">
@@ -173,93 +174,91 @@
               <li class="not-implemented"><a>a Car</a></li>
             </ul>
           </li>
-          <hr />
+          <li><hr /></li>
           <li><a  onmouseover="help('About Wings3d4Web')" data-menuid="about">About</a></li>
         </ul>
       </li>
-    <select id="selectLanguage">
+    <li><select id="selectLanguage">
       <option value='en'>English</option>
       <option value='zh_hant'>正體</option>
       <option value='zh_hans'>简体</option>
-    </select>
+    </select></li>
     </ul>
   </nav>
   <nav class="button-bar unselectable marginal" data-menuid="toolbar">
     <div class="button-group system-group">
      	<input id="openSidebarFor" type="checkbox">
       <label data-menuid="openSidebar" for="openSidebarFor" class="button">
-        <img src="../img/bluecube.png" class="iconImg sidebarImg">
+        <img src="../img/bluecube.png" class="iconImg sidebarImg" alt>
         <span data-i18n>Sidebar</span>
       </label>
       <label data-menuid="open" class="button">
-     	<input type="button">
-        <img src="../img/bluecube.png"  class="iconImg openImg">
+        <img src="../img/bluecube.png"  class="iconImg openImg" alt>
         <span>Open</span>
       </label>
       <label data-menuid="save" class="button">
-      	<input type="button">
-        <img src="../img/bluecube.png" class="iconImg saveImg">
+        <img src="../img/bluecube.png" class="iconImg saveImg" alt>
         <span>Save</span>
       </label>
       <label class="button" data-menuid="undoEdit">
-        <img src="../img/bluecube.png" class="iconImg undoImg">
+        <img src="../img/bluecube.png" class="iconImg undoImg" alt>
         <span data-i18n>Undo</span>
       </label>
       <label class="button" data-menuid="redoEdit">
-        <img src="../img/bluecube.png" class="iconImg redoImg">
+        <img src="../img/bluecube.png" class="iconImg redoImg" alt>
         <span data-i18n>Redo</span>
       </label>
     </div>
     <div class="button-group object-select">
       <input type="radio" name="toggleMode" id="toggleVertexModeFor">
       <label data-menuid="toggleVertexMode" class="button" for="toggleVertexModeFor">
-        <img src="../img/bluecube.png" class="iconImg vertexImg">
+        <img src="../img/bluecube.png" class="iconImg vertexImg" alt>
         <span data-i18n>Vertex</span>
       </label>
       <input type="radio" name="toggleMode" id="toggleEdgeModeFor">
       <label data-menuid="toggleEdgeMode" class="button" for="toggleEdgeModeFor">
-        <img src="../img/bluecube.png" class="iconImg edgeImg">
+        <img src="../img/bluecube.png" class="iconImg edgeImg" alt>
         <span data-i18n>Edge</span>
       </label>
       <input type="radio" name="toggleMode" id="toggleFaceModeFor">
       <label data-menuid="toggleFaceMode" class="button" for="toggleFaceModeFor">
-        <img src="../img/bluecube.png" class="iconImg faceImg">
+        <img src="../img/bluecube.png" class="iconImg faceImg" alt>
         <span data-i18n>Face</span>
       </label>
       <input type="radio" name="toggleMode" id="toggleBodyModeFor">
       <label data-menuid="toggleBodyMode" class="button" for="toggleBodyModeFor">
-        <img src="../img/bluecube.png" class="iconImg bodyImg">
+        <img src="../img/bluecube.png" class="iconImg bodyImg" alt>
         <span data-i18n>Body</span>
       </label>
       <input type="radio" name="toggleMode" id="toggleMultiModeFor" checked>
       <label data-menuid="toggleMultiMode" class="button" for="toggleMultiModeFor">
-        <img src="../img/bluecube.png" class="iconImg multiImg">
+        <img src="../img/bluecube.png" class="iconImg multiImg" alt>
         <span data-i18n>Multi</span>
       </label>
     </div>
     <div class="button-group set-pref">
-      <label data-menuid="preferenceButton" class="button" data-menuid="prefDialog">
-        <img src="../img/bluecube.png" class="iconImg prefImg">
+      <label data-menuid="preferenceButton" class="button">
+        <img src="../img/bluecube.png" class="iconImg prefImg" alt>
         <span data-i18n>Pref</span>
       </label>
       <input type="checkbox" id="toggleSmoothFor">
       <label data-menuid="toggleSmooth" for="toggleSmoothFor" class="button not-implemented">
-        <img src="../img/bluecube.png" class="iconImg smoothImg">
+        <img src="../img/bluecube.png" class="iconImg smoothImg" alt>
         <span data-i18n>Smooth</span>
       </label>
       <input type="checkbox" id="toggleOrthoFor">
       <label data-menuid="toggleOrtho" for="toggleOrthoFor" class="button">
-        <img src="../img/bluecube.png" class="iconImg perspectiveImg">
+        <img src="../img/bluecube.png" class="iconImg perspectiveImg" alt>
         <span data-i18n>Ortho</span>
       </label>
       <input type="checkbox" id="toggleGroundFor" checked>
-      <label data-menuid="toggleGround" for="toggleGroundFor" class="button" data-menuid="toggleGround">
-        <img src="../img/bluecube.png" class="iconImg groundplaneImg">
+      <label data-menuid="toggleGround" for="toggleGroundFor" class="button">
+        <img src="../img/bluecube.png" class="iconImg groundplaneImg" alt>
         <span data-i18n>Ground</span>
       </label>
       <input type="checkbox" id="toggleAxesFor" checked>
-      <label data-menuid="toggleAxes" for="toggleAxesFor" class="button" data-menuid="toggleAxes">
-        <img src="../img/bluecube.png" class="iconImg axesImg">
+      <label data-menuid="toggleAxes" for="toggleAxesFor" class="button">
+        <img src="../img/bluecube.png" class="iconImg axesImg" alt>
         <span data-i18n>Axes</span>
       </label>
     </div>
@@ -320,7 +319,7 @@
     <ul id ="geometryGraphText" class="popup menu">
       <li><a data-menuid="objectDuplicate">Duplicate</a></li>
       <li><a data-menuid="objectDelete">Delete</a></li>
-      <hr>
+      <li><hr /></li>
       <li><a data-menuid="createGroup">Create Folder</a></li>
     </ul>
     <ul id="geometryGraphWorld" class="popup menu">
@@ -332,22 +331,22 @@
     <ul id="importImageTextMenu" class="popup menu">
       <li><a data-menuid="showImage">Show</a></li>
       <li class="not-implemented"><a >Refresh</a></li>
-      <hr>
+      <li><hr /></li>
       <li><a data-menuid="deleteImage">Delete</a></li>
-      <hr>
+      <li><hr /></li>
       <li class="not-implemented"><a >Create Normal Map</a></li>
-      <hr>
+      <li><hr /></li>
       <li class="not-implemented"><a >Export...</a></li>
-      <hr>
+      <li><hr /></li>
       <li class="not-implemented"><a >Duplicate</a></li>
       <li class="not-implemented"><a>Rename</a></li>
     </ul>
     <ul id="materialMenu" class="popup menu">
       <li><a data-menuid="editMaterial">Edit Material...</a></li>
       <li><a data-menuid="assignMaterial">Assign to Selection</a></li>
-      <hr>
+      <li><hr /></li>
       <li><a data-menuid="selectMaterial">Select</a></li>
-      <hr>
+      <li><hr /></li>
       <li><a data-menuid="duplicateMaterial">Duplicate</a></li>
       <li><a data-menuid="deleteMaterial">Delete</a></li>
       <li><a data-menuid="renameMaterial">Rename</a></li>   
@@ -357,10 +356,10 @@
     </ul>
     <!-- Main contextMenu -->
     <ul id="create-context-menu" class="popup menu">
-      <li><a data-menuid="createCube" data-i18n>Cube</a><img data-menuid="createCubePref" class="smallIcon smallPref" src="" alt=""></li>
-      <hr/>
+      <li><a data-menuid="createCube" data-i18n>Cube</a><img data-menuid="createCubePref" class="smallIcon smallPref" src="data:," alt=""></li>
+      <li><hr /></li>
       <li><a data-menuid="createMaterial" data-i18n>Material...</a></li>
-      <hr>
+      <li><hr /></li>
       <li class="not-implemented"><a data-menuid="createPlane">Various Planes</a></li>
       <li class="not-implemented"><a data-menuid="createGrid">Grid</a></li>
     </ul>
@@ -402,7 +401,7 @@
         </ul>
       </li>
       <li><a data-menuid="edgeSlide">Slide</a></li>
-      <hr />
+      <li><hr /></li>
       <li class="dropside">
         <a data-menuid="edgeExtrudeMenu">Extrude</a>
         <ul class ="popup menu">
@@ -414,7 +413,7 @@
         </ul>
       </li>
       <li><a data-menuid="edgeCrease">Crease</a></li>
-      <hr />
+      <li><hr /></li>
       <li class="dropside">
         <a data-menuid="edgeFlatten">Flatten</a>
         <ul class ="popup menu">
@@ -423,7 +422,7 @@
           <li><a data-menuid="edgeFlattenZ">Z</a></li>
         </ul>
       </li>
-      <hr />
+      <li><hr /></li>
       <li class="dropside">
         <a data-menuid="cutMenu">Cut</a>
         <ul class="popup menu">
@@ -431,20 +430,20 @@
           <li><a data-menuid="cutLine3">3 Segments</a></li>
           <li><a data-menuid="cutLine4">4 Segments</a></li>
           <li><a data-menuid="cutLine5">5 Segments</a></li>
-          <hr>
+          <li><hr /></li>
           <li><a data-menuid="cutLine10">10 Segments</a></li>
-          <hr>
+          <li><hr /></li>
           <li><a data-menuid="cutAsk">Enter Number...</a></li>
-          <hr>
+          <li><hr /></li>
           <li class="not-implemented"><a data-menuid="cutArbitrary">Cut at arbitrary position</a></li>
         </ul>
       </li>
       <li><a data-menuid="cutAndConnect">Connect</a></li>
       <li><a data-menuid="edgeBevel">Bevel</a></li>
-      <hr>
+      <li><hr /></li>
       <li><a data-menuid="edgeDissolve">Dissolve</a></li>
       <li><a data-menuid="edgeCollapse">Collapse</a></li>
-      <hr>
+      <li><hr /></li>
       <li class="dropside">
         <a data-menuid="edgeHardness">Hardness</a>
         <ul class="popup menu">
@@ -453,9 +452,9 @@
           <li><a data-menuid="edgeInvert">Invert</a></li>
         </ul>
       </li>
-      <hr>
+      <li><hr /></li>
       <li><a data-menuid="edgeLoopCut">Loop Cut</a></li>
-      <hr>
+      <li><hr /></li>
       <li><a data-menuid="edgeCorner">Corner</a></li>
     </ul>
     <ul id="face-context-menu" class="context-menu popup menu">
@@ -495,7 +494,7 @@
           <li><a data-menuid="faceScaleRadialZ">Z</a></li>
         </ul>
       </li>
-      <hr>
+      <li><hr /></li>
       <li class="dropside">
         <a data-menuid="faceExtrudeMenu">Extrude</a>
         <ul class="popup menu">
@@ -506,7 +505,7 @@
           <li><a data-menuid="faceExtrudeZ">Z</a></li>
         </ul>
       </li>
-      <hr />
+      <li><hr /></li>
       <li class="dropside">
         <a data-menuid="faceFlatten">Flatten</a>
         <ul class ="popup menu">
@@ -516,26 +515,26 @@
           <li><a data-menuid="faceFlattenZ">Z</a></li>
         </ul>
       </li>
-      <hr />
+      <li><hr /></li>
       <li><a data-menuid="faceInset">Inset</a></li>
       <li><a data-menuid="faceIntrude">Intrude</a></li>
       <li><a data-menuid="faceBevel">Bevel</a></li>
       <li><a data-menuid="faceBridge">Bridge</a></li>
-      <hr />
+      <li><hr /></li>
       <li><a data-menuid="faceBump">Bump</a></li>
       <li><a data-menuid="faceLift">Lift</a></li>
       <li><a data-menuid="facePutOn">Put On</a></li>
-      <hr />
+      <li><hr /></li>
       <li><a data-menuid="faceMirror">Mirror</a></li>
       <li><a data-menuid="faceDissolve">Dissolve</a></li>
       <li><a data-menuid="faceCollapse">Collapse</a></li>
-      <hr>
+      <li><hr /></li>
       <li class="dropside">
         <a data-menuid="faceMaterialMenu" data-i18n>Material</a>
         <ul class="popup menu"></ul>
       </li>
       <li><input type="color" data-menuid="faceColor" style="opacity:0;width:100%;position:absolute;"/><a>Vertex Color</a></li>
-      <hr>
+      <li><hr /></li>
       <li class="dropside">
         <a data-menuid="facePlaneCut">Plane Cut</a>
         <ul class ="popup menu">
@@ -582,7 +581,7 @@
           <li><a data-menuid="vertexScaleRadialZ">Z</a></li>
         </ul>
       </li>
-      <hr />
+      <li><hr /></li>
       <li class="dropside">
         <a data-menuid="vertexExtrudeMenu">Extrude</a>
         <ul class="popup menu">
@@ -593,7 +592,7 @@
           <li><a data-menuid="vertexExtrudeZ">Z</a></li>
         </ul>
       </li>
-      <hr>
+      <li><hr /></li>
       <li class="dropside">
         <a data-menuid="vertexFlatten">Flatten</a>
         <ul class ="popup menu">
@@ -602,15 +601,15 @@
           <li><a data-menuid="vertexFlattenZ">Z</a></li>
         </ul>
       </li>
-      <hr />
+      <li><hr /></li>
       <li><a data-menuid="vertexConnect">Connect</a></li>
       <li><a data-menuid="vertexBevel">Bevel</a></li>
       <li><a data-menuid="vertexDissolve">Dissolve</a></li>
       <li><a data-menuid="vertexCollapse">Collapse</a></li>
       <li><a data-menuid="vertexWeld">Weld</a></li>
-      <hr>
+      <li><hr /></li>
       <li><input type="color" data-menuid="vertexColor" style="opacity:0;width:100%;position:absolute;"/><a>Vertex Color</a></li>
-      <hr>
+      <li><hr /></li>
     </ul>
     <ul id="body-context-menu" class="popup menu">
       <li class="dropside">
@@ -648,7 +647,7 @@
           <li><a data-menuid="bodyScaleRadialZ">Z</a></li>
         </ul>
       </li>
-      <hr>
+      <li><hr /></li>
       <li class="dropside">
         <a data-menuid="bodyFlipMenu">Flip...</a>
         <ul class ="popup menu">
@@ -657,12 +656,12 @@
           <li><a data-menuid="bodyFlipZ">Z</a></li>
         </ul>
       </li>
-      <hr>
+      <li><hr /></li>
       <li><a data-menuid="bodyInvert">Invert</a></li>
-      <hr>
+      <li><hr /></li>
       <li><a data-menuid="bodyCombine">Combine</a></li>
       <li><a data-menuid="bodySeparate">Separate</a></li>
-      <hr>
+      <li><hr /></li>
       <li><a data-menuid="bodyWeld">Weld</a></li>
       <li class="dropside">
         <a data-menuid="bodyPlaneCut">Plane Cut</a>
@@ -680,7 +679,7 @@
           <li><a data-menuid="bodySliceZ">Z</a></li>
         </ul>
       </li>
-      <hr>
+      <li><hr /></li>
       <li class="dropside">
         <a data-menuid="bodyDuplicateMoveMenu">Duplicate</a>
         <ul class="popup menu">
@@ -692,9 +691,9 @@
       </li>
       <li><a data-menuid="bodyDelete">Delete</a></li>
       <li><a data-menuid="bodyRename">Rename</a></li>
-      <hr>
+      <li><hr /></li>
       <li><input type="color" data-menuid="bodyColor" style="opacity:0;width:100%;position:absolute;"/><a>Vertex Color</a></li>
-      <hr>
+      <li><hr /></li>
     </ul>
   </nav>
   <!-- Start of various Dialog -->
@@ -770,7 +769,7 @@
           <input id="selectedWidth" name="selectedEdgeWidth" type="number">
           <label for="hardEdgeWidth" data-i18n>Hard Edge Width</label>
           <input id="hardEdgeWidth" name="hardEdgeWidth" type="number">
-          <label for="sofEdges"><span data-i18n>Soft Edges</span><input id="softEdges" name="unselectedEdgeColor" type="color"></label>
+          <label for="softEdges"><span data-i18n>Soft Edges</span><input id="softEdges" name="unselectedEdgeColor" type="color"></label>
           <label for="hardEdges"><span data-i18n>Hard Edges</span><input id="hardEdges" name="hardEdgeColor" type="color"></label>      
         </fieldset>
         <fieldset class="fieldPref">
@@ -789,7 +788,7 @@
           <input id="infoText" name="infoText" type="color">
           <label for="infoBackground" data-tooltip="infoBackground" data-i18n>Background</label>
           <input id="infoBackground" name="infoBackground" type="color">
-          <label for="infoVerbose" data-tooltip="infoVerbose"><input id="infoVerbose" name= infoVerbose" type="checkbox"><span data-i18n>Verbose</span></label>
+          <label for="infoVerbose" data-tooltip="infoVerbose"><input id="infoVerbose" name="infoVerbose" type="checkbox"><span data-i18n>Verbose</span></label>
         </fieldset>
         <fieldset  class="fieldPref">
           <legend data-i18n>Normals Display</legend>
@@ -798,7 +797,7 @@
           <label for="normalWidth" data-tooltip="normalWidth" data-i18n>Width</label>
           <input id="normalWidth" type="number">
           <label for="normalColor" data-tooltip="normalColor" data-i18n>Color</label>
-          <input id="normalcolor" type="color"> 
+          <input id="normalColor" type="color"> 
         </fieldset>
         <fieldset class="fieldPref">
           <legend data-tooltip data-i18n>Materials</legend>
@@ -808,7 +807,7 @@
         <fieldset class="horizontalPref">
           <legend data-tooltip data-i18n>Axes</legend>
           <div class="verticalPref">          
-            <label for="constrainAxesToGrid" data-tooltip="constrainAxesToGrid"><input id="constraiAxesToGrid" type="checkbox"><span data-i18n>Constrain Axes to Grid</span></label>
+            <label for="constrainAxesToGrid" data-tooltip="constrainAxesToGrid"><input id="constrainAxesToGrid" type="checkbox"><span data-i18n>Constrain Axes to Grid</span></label>
             <label for="showMiniAxis"><input id="showMiniAxis" name="showMiniAxis" type="checkbox"><span data-i18n>Show Mini Axis</span></label>
           </div>
           <div class="fieldPref">
@@ -857,7 +856,7 @@
           </select>
         </fieldset>
         <fieldset>
-          <legend datat-tooltip data-i18n>Rotation Speed</legend>
+          <legend data-tooltip data-i18n>Rotation Speed</legend>
           <input type="range" min="1" max="100" value="1" onchange="this.nextElementSibling.value=this.value" />
           <input id="rotationSpeed" type="number" min="1" max="100" value="1" step="1" onchange="this.previousElementSibling.value=this.value" />
         </fieldset>
@@ -905,15 +904,15 @@
         <fieldset class="verticalPref">
           <legend data-i18n>Colors</legend>
           <label class="setValue"><span data-i18n>Geometry Background</span><input name="geometryBackground" type="color"></label>
-          <hr>
+          <hr />
           <label class="setValue"><span data-i18n>Menubar Background</span><input name="menubarBackground" type="color"></label> 
           <label class="setValue"><span data-i18n>Menubar Text</span><input name="menubarText" type="color"></label>
-          <hr>
+          <hr />
           <label class="setValue"><span data-i18n>Menu Background</span><input name="menuBackground" type="color"></label>
           <label class="setValue"><span data-i18n>Menu Text</span><input name="menuText" type="color"></label>
           <label class="setValue"><span data-i18n>Menu Highlight</span><input name="menuHighlight" type="color"></label>
           <label class="setValue"><span data-i18n>Menu Highlight Text</span><input name="menuHighlightText" type="color"></label>
-          <hr>
+          <hr />
           <label class="setValue"><span data-i18n>Info Line Background</span><input name="infoLineBackground" type="color"></label>
           <label class="setValue"><span data-i18n>Info Line Text</span><input name="infoLineText" type="color"></label>
         </fieldset>
