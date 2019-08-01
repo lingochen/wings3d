@@ -279,7 +279,7 @@ class FaceMadsor extends Madsor {
       } else if (toMadsor instanceof VertexMadsor) {
          this.doAll(snapshots, PreviewCage.prototype.restoreFromFaceToVertexSelect);
       } else if (toMadsor instanceof BodyMadsor) {
-         this.doaAll(snapshots, PreviewCage.prototype.restoreFromFaceToBodySelect);
+         this.doAll(snapshots, PreviewCage.prototype.restoreFromFaceToBodySelect);
       } else {
          this.doAll(snapshots, PreviewCage.prototype.restoreFromFaceToMultiSelect);
       }
