@@ -430,8 +430,8 @@ class InsetFaceHandler extends MovePositionHandler {
    }
 
    //_updateMovement(ev) {  // change back when we all move to moveSelection
-   handleMouseMove(ev) {
-      let move = this._calibrateMovement(ev.movementX);
+   handleMouseMove(ev, cameraView) {
+      let move = cameraView.calibrateMovement(ev.movementX);
       if ((this.movement+move) > this.vertexLimit) {
          move = this.vertexLimit - this.movement;
       } else if ((this.movement+move) < 0) {

@@ -705,11 +705,10 @@ class MouseRotateAlongAxis extends EditCommand {
    }
 
    handleMouseMove(ev, cameraView) {
-      const move = cameraView.rotateMovement(ev.movementX);
+      this.movement += cameraView.rotateMovement(ev.movementX);
       const quatRotate = quat.create();
-      quat.setAxisAngle(quatRotate, this.axisVec3, move);
+      quat.setAxisAngle(quatRotate, this.axisVec3, this.movement);
       this.madsor.rotateSelection(this.snapshots, quatRotate, this.center);
-      this.movement += move;
    }
 
    doIt() {
