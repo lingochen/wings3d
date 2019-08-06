@@ -253,14 +253,12 @@ function runDialogCenter(formID, submitCallback, setup, _ev, reject) {
                _pvt.button = this;
                submit.removeEventListener('click', oked);
             });
-         } else if ('cancel'.localeCompare(submit.value, 'en', {'sensitivity': 'base'}) == 0) {
+         } else { // all else, no, cancel
             submit.addEventListener('click', function cancel(ev) {
                _pvt.submitSuccess = false;
                _pvt.button = this;
                submit.removeEventListener('click', cancel);
             });
-         } else {
-            console.log('submit ' + submit.value + ' type not supported');
          }
       }
       document.body.appendChild(overlay);
@@ -284,12 +282,17 @@ function runDialogCenter(formID, submitCallback, setup, _ev, reject) {
       });
    }
 };
+/**
+ * there is not reject, only resolve and return the pressed button, because cancel button is not an error. (2019-08-06)
+ * @param {*} formID 
+ * @param {*} setup 
+ */
 async function execDialog(formID, setup) {
    let promise = new Promise((resolve, reject) => {
       runDialogCenter(formID, function(form, button) {
          resolve([form, button]);
       }, setup, "ev", function(form, button){
-         reject([form, button]);
+         resolve([form, button]);
       });
     });
 

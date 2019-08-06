@@ -343,7 +343,7 @@ const currentMode = () => mode.current;
 //- End of editing Mode ----------
 
 //
-// world objects management
+// world objects management, world, bench, image, material,
 //
 const _environment = {
    world: new PreviewGroup,    // private var
@@ -412,13 +412,81 @@ function setObject(parent, objects) { // objects is array
    _environment.currentParent = parent;
 }
 //-- End of World objects management -------------------------
-//-- material, image, and light management
-const environment = { materials: [], images: [], lights: []};
 
-//-- End of material, image, and light management.
+
+
+// 
+// undo/redo handling ------------------------------------------------------------------------------
+//
+const undo = {queue: [], current: -1, isModified: false};
+// undo queueCombo, convenient functions
+function undoQueueCombo(editCommands) {
+   // wrap the array in a combo
+   const combo = new EditCommandCombo(editCommands);
+   undoQueue( combo );
+};
+// undo queue
+function undoQueue(editCommand) {
+   //if (!editCommand.doIt()) {  // move all check here.
+   //   return;
+   //}
+   // editCommand = new CheckPoint(_environment.draftBench, editCommand);      // debug purpose. 
+
+   while ( (undo.queue.length-1) > undo.current ) {
+      // remove branch not taken
+      const cmd = undo.queue.pop();
+      cmd.free();
+   }
+   // now push the new command back
+   undo.queue.push(editCommand);
+   undo.current++;
+   Renderer.needToRedraw();
+   undo.isModified = true;
+};
+
+function redoEdit() {
+   if ( (undo.queue.length-1) > undo.current) {
+      undo.queue[++undo.current].doIt(mode.current);
+      Renderer.needToRedraw();
+      undo.isModified = true;
+   }
+};
+
+function undoEdit() {
+   if (undo.current >= 0) {
+      const cmd = undo.queue[undo.current--];
+      cmd.undo(mode.current);
+      Renderer.needToRedraw();
+      undo.isModified = true;
+   }
+};
+
+function doCommand(command) {
+   if (command.doIt()) {
+      undoQueue(command);
+      return true;
+   } else {
+      // todo: pop messages, said command not workable.
+      return false;
+   }
+}
+
+function resetUndo() {
+   undo.isModified = false;
+   undo.current = -1;
+   undo.queue = [];
+};
+
+function resetModified() {
+   undo.isModified = false;
+}
+
+// -- end of undo/redo handling ----------------------------------------------------------------------------------
+
+
 
 //
-// mouse handling hilite
+// mouse handling hilite-------------------------------------------------------------
 //
 const hilite = {cage: null, edge: null, vertex: null, face: null, plane: null};
 let currentCage;
@@ -550,7 +618,7 @@ function setCurrent(edge, intersect, center) {
 
 
 //
-// mouse handling
+// mouse handling ---------------------------------------------------------------------
 //
 let lastPick = null;
 
@@ -778,61 +846,6 @@ function canvasHandleWheel(e) {
 };
 
 //-- end of mouse handling-----------------------------------------------
-
-// 
-// undo/redo handling
-//
-const undo = {queue: [], current: -1};
-// undo queueCombo, convenient functions
-function undoQueueCombo(editCommands) {
-   // wrap the array in a combo
-   const combo = new EditCommandCombo(editCommands);
-   undoQueue( combo );
-};
-// undo queue
-function undoQueue(editCommand) {
-   //if (!editCommand.doIt()) {  // move all check here.
-   //   return;
-   //}
-   // editCommand = new CheckPoint(_environment.draftBench, editCommand);      // debug purpose. 
-
-   while ( (undo.queue.length-1) > undo.current ) {
-      // remove branch not taken
-      const cmd = undo.queue.pop();
-      cmd.free();
-   }
-   // now push the new command back
-   undo.queue.push(editCommand);
-   undo.current++;
-   Renderer.needToRedraw();
-};
-
-function redoEdit() {
-   if ( (undo.queue.length-1) > undo.current) {
-      undo.queue[++undo.current].doIt(mode.current);
-      Renderer.needToRedraw();
-   }
-};
-
-function undoEdit() {
-   if (undo.current >= 0) {
-      const cmd = undo.queue[undo.current--];
-      cmd.undo(mode.current);
-      Renderer.needToRedraw();
-   }
-};
-
-function doCommand(command) {
-   if (command.doIt()) {
-      undoQueue(command);
-      return true;
-   } else {
-      // todo: pop messages, said command not workable.
-      return false;
-   }
-}
-
-// -- end of undo/redo handling ----------------------------------------------------------------------------------
 
 
 //
@@ -1210,14 +1223,21 @@ function init() {
    ImportExporter.setDefault(X3d);
    // clearNew
    async function clearNew(evt) {
-      if (_environment.world.numberOfCage() > 0) {
-         await OpenSave.save(evt, ()=>{return X3d.export(getWorld())}, X3d.extension(), 1);  // ask for save if new
-         // deselect all, delete all
-         OpenSave.reset();
-         mode.current.resetSelection();
-         _environment.world.empty();
-         Renderer.needToRedraw();
+      if (undo.isModified &&  (_environment.world.numberOfCage() > 0)) {
+         const [_form, answer] = await UI.execDialog('#askSaveDialog', null); // no, save, cancel
+         if (answer.value === "cancel") { // does nothing
+            return false; 
+         } else if (answer.value === "ok") {  // call save.
+            await OpenSave.save(evt, ()=>{return X3d.export(getWorld())}, X3d.extension(), 1);  // ask for save if new, and save to old if already does.
+         }
       }
+      // deselect all, delete all
+      OpenSave.reset();
+      mode.current.resetSelection();
+      _environment.world.empty();
+      resetUndo();
+      Renderer.needToRedraw();
+      return true;
    }
    // plug into import/export menu
    async function open(evt, loader, flag=0) {
@@ -1257,6 +1277,7 @@ function init() {
     });
    // "New", clear away old objects, but ask to save it first.
    UI.bindMenuItem(Wings3D.action.clearNew.name, function(evt) {
+      // clear 
       clearNew(evt);
     });
 

@@ -5,11 +5,11 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
    <link rel="icon" type="image/png" href="img/favicon-96x96.png" />
-   <link rel="stylesheet" href="styles.css?v=8aa2b957dbc4de70658c74ae92a08753" />
+   <link rel="stylesheet" href="styles.css?v=a84e768ee8a8d7e2b02f54f969b8cb04" />
    <script src="./vendor/FileSaver.min.js?v=0cd1ebc44c182996e7d62f29b28dba9f" defer></script>
    <script src="./vendor/gl-matrix-min.js?v=8d57dae6ce3862af598c7ccad3df15ad"></script>
 
-   <script src="wings3d.bundle.js?v=cbeb076f3815d4a6bbc671dc845fadce" type="module"></script>
+   <script src="wings3d.bundle.js?v=50264d6a5626e2f206f9650e93ecd129" type="module"></script>
 
   <script>
     function help(text) {
@@ -356,7 +356,7 @@
     </ul>
     <!-- Main contextMenu -->
     <ul id="create-context-menu" class="popup menu">
-      <li><a data-menuid="createCube" data-i18n>Cube</a><img data-menuid="createCubePref" class="smallIcon smallPref" src="data:," alt=""></li>
+      <li><a data-menuid="createCube" data-i18n>Cube</a><img data-menuid="createCubePref" class="smallIcon smallPref" src="" alt=""></li>
       <li><hr /></li>
       <li><a data-menuid="createMaterial" data-i18n>Material...</a></li>
       <li><hr /></li>
@@ -1018,6 +1018,15 @@
        <button type="submit" value="ok">Ok</button>
        <button type="submit" value="cancel">Cancel</button>
      </div>
+  </form>
+  <form id="askSaveDialog" class="dialog">
+    <h3><button type="submit" value="cancel" class="close">&times;</button></h3>
+    <p>Do you want to save your changes?</p>
+    <div>
+      <button type="submit" value="ok">Ok</button>
+      <button type="submit" value="cancel">Cancel</button>
+      <button type="submit" value="no">No</button>
+    </div>
   </form>
 </body>
 
