@@ -57,20 +57,19 @@ async function save(evt, storer, ext, flag=0) {
    }
       
    // now show dialog
-   try {
-      let save = _lastSave;
-      if ((flag > 0) || !save) {  // check if not saveAs && already saved.
-         const [_form, button] = await UI.execDialog('#cloudSaveDialog', null);
-         save = _save.get(button);  // get the save routine
+   let save = _lastSave;
+   if ((flag > 0) || !save) {  // check if not saveAs && already saved.
+      const [_form, button] = await UI.execDialog('#cloudSaveDialog', null);
+      if (button.value === 'cancel') {
+         return "";
       }
-      const ret = save(storer, ext, flag); // should we await?
-      if (flag < 2) {   // export() will not be reused.
-         _lastSave = save;
-      }
-      return ret;
-   } finally {
-      return null;   // not saved, so no filename.
+      save = _save.get(button);  // get the save routine
    }
+   const ret = save(storer, ext, flag); // should we await?
+   if (flag < 2) {   // export() will not be reused.
+      _lastSave = save;
+   }
+   return ret;
 };
  
 let cloudOpenDialog;
@@ -117,20 +116,19 @@ async function open(evt, loader, importFlag=0) {
    }
 
    // now show dialog
-   try {
-      const [_form, button] = await UI.execDialog('#cloudOpenDialog', null);
-      const [open, save] = _open.get(button);
-      const files = await open("");
-      for (let file of files) {
-         loader(file);
-      }
-      if (!importFlag) {   // import won't save fileName
-         _lastSave = save;
-      }
-      return true;
-   } finally {
-      return false; 
+   const [_form, button] = await UI.execDialog('#cloudOpenDialog', null);
+   if (button.value === "cancel") {
+      return false;
    }
+   const [open, save] = _open.get(button);
+   const files = await open("");
+   for (let file of files) {
+      loader(file);
+   }
+   if (!importFlag) {   // import won't save fileName
+      _lastSave = save;
+   }
+   return true;
 };
 
 
