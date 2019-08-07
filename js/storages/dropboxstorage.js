@@ -161,6 +161,9 @@ async function save(storer, ext, saveAs) {
    let filename;
    if ((saveAs > 0) || !openFileInfo) {  // not saved or open from dropbox, or force saveAs
       const files = await CloudStorage.contentSelectDialog(logo, readFolder, "", "untitled");
+      if (files.length === 0) {  // no saveName.
+         return "";
+      }
       filename = files[0]; // the selected filename
    }
    const blob = storer();  // get result 
@@ -248,6 +251,9 @@ async function open(path) {
    //try {
    const accessToken = await getAuth();
    const files = await CloudStorage.contentSelectDialog(logo, readFolder, path);
+   if (files.length === 0) {  // nothing opened.
+      return [];
+   }
 
    const ajaxOptions = {
             method: 'POST',
