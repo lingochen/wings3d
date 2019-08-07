@@ -150,8 +150,8 @@ async function contentSelectDialog(logo, readFolder, startingPath, saveAs) {
                if (this.submitButton.value === 'ok') {
                   const filepath = this.nav.dataset.filepath + "/" + this.nameInput.value;
                   this.resolve([filepath]); //[this.selected.dataset.filepath]);
-               } else if (this.submitButton.value === 'cancel') {
-                  this.reject('cancel');
+               } else { // all other button return [], no file.
+                  this.resolve([]);
                }
              },
             handleNav: function(evt) { // click

@@ -106,7 +106,7 @@ async function open(evt, loader, importFlag=0) {
                      if (fileInput.value.length) {
                         resolve(fileInput.files);
                      } else {
-                        reject([]);
+                        resolve([]);   // no file is not a failure.
                      }
                   });
                });
