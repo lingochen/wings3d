@@ -355,6 +355,7 @@ const _environment = {
    currentObjects: undefined,
    currentParent: undefined,
    fileName: "",              // save fileName. + path.
+   debug: false,
 };
 function addMaterial(material) {
    _environment.materialList.addMaterial(material);
@@ -406,11 +407,16 @@ function makeCombineIntoWorld(cageSelection) {
    combine.merge(cageSelection); // new cage + merged polygons.
    addToWorld(combine);
    return combine;
-}
+};
 function setObject(parent, objects) { // objects is array
    _environment.currentObjects = objects;
    _environment.currentParent = parent;
-}
+};
+function debugCheck() {
+   if (_environment.debug) {
+      _environment.draftBench.checkIntegrity();
+   }
+};
 //-- End of World objects management -------------------------
 
 
@@ -442,6 +448,7 @@ function undoQueue(editCommand) {
    undo.current++;
    Renderer.needToRedraw();
    undo.isModified = true;
+   debugCheck();
 };
 
 function redoEdit() {
@@ -449,6 +456,7 @@ function redoEdit() {
       undo.queue[++undo.current].doIt(mode.current);
       Renderer.needToRedraw();
       undo.isModified = true;
+      debugCheck();
    }
 };
 
@@ -458,6 +466,7 @@ function undoEdit() {
       cmd.undo(mode.current);
       Renderer.needToRedraw();
       undo.isModified = true;
+      debugCheck();
    }
 };
 
@@ -1279,6 +1288,16 @@ function init() {
    UI.bindMenuItem(Wings3D.action.clearNew.name, function(evt) {
       // clear 
       clearNew(evt);
+    });
+
+   // toggle debugging 
+   window.addEventListener('keyup', function(evt) {
+      if (evt.altKey && evt.ctrlKey && evt.keyCode == 74) { // ctrl + alt + j
+         _environment.debug = !_environment.debug;
+         if (_environment.debug) {
+            alert("In Debug Mode");
+         }
+      }
     });
 
    // handle redrawingLoop
