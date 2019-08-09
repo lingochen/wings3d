@@ -683,6 +683,20 @@ Vertex.prototype.getNormal = function(normal) {
    } while (current !== start);
    vec3.normalize(normal, normal);
 };
+/**
+ * check for vertices' health  
+ */
+Vertex.prototype.isOk = function() {
+   if (this.outEdge) {
+      let hEdge = this.outEdge;
+      do {
+         if (hEdge.idx > this.outEdge.idx) {
+            throw("Vertex's outEdge is not the smallest");
+         }
+         hEdge = hEdge.pair.next;
+      } while (hEdge !== this.outEdge);
+   }
+}
 
 
 
@@ -969,6 +983,29 @@ Polygon.prototype.update = function() {
    }
 };
 
+/**
+ * check halfEdge has the smallest id, and we can finish counting vertex in times.
+ */
+Polygon.prototype.isOk = function() {
+   if (this.halfEdge) {
+      let hEdge = this.halfEdge;
+      let count = 0;
+      do {
+         if (hEdge.idx > this.halfEdge.idx) {
+            throw "Polygon's halfEdge is not smallest";
+         }
+         ++count;
+         if (count > 1001) {
+            throw "Polygon has too many side";  // likely an error.           
+         }
+         hEdge = hEdge.next;
+      } while (hEdge !== this.halfEdge);
+      if (count !== this.numberOfVertex) {
+         throw "Polygon's Number of Vertex is not consistent"
+      }
+   }
+};
+
 
 /*let PolygonHole = function() {
    const ret = new Polygon();
@@ -1227,6 +1264,20 @@ MeshAllocator.prototype.updateAffected = function() {
    }
    // now cleanup.
    this.clearAffected();
+};
+/**
+ * check if all polygon, vertex are well formed.
+ */
+MeshAllocator.prototype.checkIntegrity = function() {
+   // check polygon first
+   for (let polygon of this.faces) {
+      polygon.isOk();
+   }
+
+   // check vertex next
+   for (let vertex of this.vertices) {
+      vertex.isOk();
+   }
 };
 
 
