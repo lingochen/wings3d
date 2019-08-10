@@ -512,13 +512,18 @@ Vertex.prototype.reorient = function() {
    let outEdge = this.outEdge;
    let current = this.outEdge;
    do {
-      if (current.index < outEdge.index) {
+      if (current.wingedEdge.index < outEdge.wingedEdge.index) {
          outEdge = current;
       }
       current = current.pair.next;
    } while (current !== this.outEdge);
    this.outEdge = outEdge;    // get the lowest index outEdge;
 };
+Vertex.prototype.orient = function(outEdge) {
+   if (!this.outEdge ||  (this.outEdge.wingedEdge.index > outEdge.wingedEdge.index)) {
+      this.outEdge = outEdge;
+   }
+}
 
 Vertex.prototype.isLive = function() {
    return (this.outEdge !== null);
@@ -622,8 +627,7 @@ Vertex.prototype.linkEdge = function(outHalf, inHalf) { // left, right of winged
    } else {
       var inEdge = this.findFreeInEdge();
       if (inEdge === null) {
-         console.log("Error: Vertex.linkEdge: complex vertex " + this.index);
-         return false;
+         throw("Error: Vertex.linkEdge: complex vertex " + this.index);
       }
       // else insert into circular list.
       var outEdge = inEdge.next;
@@ -631,6 +635,9 @@ Vertex.prototype.linkEdge = function(outHalf, inHalf) { // left, right of winged
       //fromHalf.prev = inEdge;
       inHalf.next = outEdge;
       //outEdge.prev = toHalf;
+      if (outHalf.wingedEdge.index < this.outEdge.wingedEdge.index) {   // check for minimal 
+         this.outEdge = outHalf;
+      }
    }
    // link edge successful.
    return true;
@@ -638,16 +645,16 @@ Vertex.prototype.linkEdge = function(outHalf, inHalf) { // left, right of winged
 
 Vertex.prototype.unlinkEdge = function(outHalf, inHalf)  {// left, right of winged edge
    const prev = outHalf.prev();
-//   if (prev === null) {
-//      console.log("bad prev");
-//      return;
-//   }
+   if (prev === null) {
+      throw("Error: Could not find Prev hEdge");
+   }
    if (this.outEdge === outHalf) {
       if (prev === inHalf) {
          this.outEdge = null;
          return;
       }
       this.outEdge = prev.pair;
+      this.reorient();
    }
    // remove from circular list.
    prev.next = inHalf.next;
@@ -1530,6 +1537,9 @@ WingedTopology.prototype._createEdge = function(begVert, endVert, delOutEdge) {
    const outEdge = this.alloc.allocEdge(begVert, endVert, delOutEdge);
    outEdge.wingedEdge.setGroup(this.guid);  // copy index.
    this.edges.add(outEdge.wingedEdge);
+   // align vertex.outEdge
+   begVert.orient(outEdge);
+   endVert.orient(outEdge.pair);
    return outEdge;
 };
 // recycled
@@ -1826,7 +1836,7 @@ WingedTopology.prototype.splitEdge = function(outEdge, pt, delOut) {
    const outPrev = outEdge.prev();
    const inNext = inEdge.next;
    const vOrigin = outEdge.origin;
-   const vOut = vOrigin.outEdge;
+   //const vOut = vOrigin.outEdge;
 
    //add the new edge
    const vertex = this.addVertex(pt);
@@ -1846,11 +1856,13 @@ WingedTopology.prototype.splitEdge = function(outEdge, pt, delOut) {
 
    // fix vertex
    outEdge.origin = vertex;
-   vertex.outEdge = newIn;
+   //vertex.outEdge = newIn;
+   vertex.orient(outEdge);
   
-   if (vOut === outEdge) {
+   if (vOrigin.outEdge === outEdge) {
       vOrigin.outEdge = newOut;
-   }
+      vOrigin.reorient();
+   } 
    this.addAffectedWEdge( outEdge.wingedEdge );     // edge changed.
    // return the newOut
    return newOut;
@@ -2523,6 +2535,7 @@ WingedTopology.prototype._collapseEdge = function(halfEdge) {
    if (toVertex.outEdge === pair) {
       toVertex.outEdge = next;
    }
+   toVertex.reorient();
 
    // delete stuff
    this._freeEdge(halfEdge);
@@ -2576,9 +2589,11 @@ WingedTopology.prototype._collapseLoop = function(halfEdge, collapsibleWings) {
    // fix vertex.outEdge;
    if (halfEdge.origin.outEdge === halfEdge) {
       halfEdge.origin.outEdge = nextPair;   // adjustOutgoing();
+      halfEdge.origin.reorient();
    }
    if (pair.origin.outEdge === pair) {
       pair.origin.outEdge = next;      // adjustOutgoingEdge();
+      pair.origin.reorient();
    }
 
    // fix face.halfEdge
@@ -2639,9 +2654,11 @@ WingedTopology.prototype._removeEdge = function(outEdge, inEdge) {
    //correct vertex.outEdge if needed.
    if (outEdge.origin.outEdge === outEdge) {
       outEdge.origin.outEdge = outPrev.pair;
+      outEdge.origin.reorient();
    }
    if (inEdge.origin.outEdge === inEdge) {
       inEdge.origin.outEdge = inPrev.pair;
+      inEdge.origin.reorient();
    }
    return {outPrev: outPrev, outNext: outNext, outEdge: outEdge}; // changed to restore outEdge
 }
@@ -2651,10 +2668,9 @@ WingedTopology.prototype.removeEdge = function(outEdge) {
    if (inEdge.face === null && outEdge.face !== null) {   // switch side
       inEdge = outEdge;
       outEdge = inEdge;
-      /*if (inEdge.face === null) {
-         console.log("error, both side of the edges are null faces");
-         return null;
-      }*/
+      if (inEdge.face === null) {
+         throw("error, both side of the edges are null faces");
+      }
    }
 
    //fix the halfedge relations
@@ -3084,7 +3100,6 @@ WingedTopology.prototype.extrudeEdge = function(startFenceHEdge, finishFenceHEdg
    let sFenceOut = startFenceHEdge;
    let current = startFenceHEdge.next;
    let next = current.next;
-   const pt = vec3.create();
    while (next !== finishFenceHEdge) {
       // lift destination corner vertex
       let fFenceIn = this.liftCornerEdge(current);   // at destination() of current
