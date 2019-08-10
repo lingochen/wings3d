@@ -378,7 +378,7 @@ HalfEdge.prototype.prev = function() {
    });
    if (ret === null) {
       // impossible condition, link list is broken
-      console.log("HalfEdge.prev: link list is broken, cannot find prev");
+      throw("HalfEdge.prev: link list is broken, cannot find prev");
    }
    return ret;
 };
@@ -690,7 +690,7 @@ Vertex.prototype.isOk = function() {
    if (this.outEdge) {
       let hEdge = this.outEdge;
       do {
-         if (hEdge.idx > this.outEdge.idx) {
+         if (hEdge.wingedEdge.index < this.outEdge.wingedEdge.index) {
             throw("Vertex's outEdge is not the smallest");
          }
          hEdge = hEdge.pair.next;
@@ -991,7 +991,7 @@ Polygon.prototype.isOk = function() {
       let hEdge = this.halfEdge;
       let count = 0;
       do {
-         if (hEdge.idx > this.halfEdge.idx) {
+         if (hEdge.wingedEdge.index < this.halfEdge.wingedEdge.index) {
             throw "Polygon's halfEdge is not smallest";
          }
          ++count;
@@ -1269,14 +1269,17 @@ MeshAllocator.prototype.updateAffected = function() {
  * check if all polygon, vertex are well formed.
  */
 MeshAllocator.prototype.checkIntegrity = function() {
-   // check polygon first
-   for (let polygon of this.faces) {
-      polygon.isOk();
-   }
-
-   // check vertex next
-   for (let vertex of this.vertices) {
-      vertex.isOk();
+   try {
+      // check polygon first
+      for (let polygon of this.faces) {
+         polygon.isOk();
+      }
+      // check vertex next,
+      for (let vertex of this.vertices) {
+         vertex.isOk();
+      }
+   } catch (e) {
+      alert(e);
    }
 };
 
