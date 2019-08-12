@@ -88,6 +88,15 @@ WingedEdge.prototype[Symbol.iterator] = function* () {
    yield this.right;
 };
 
+WingedEdge.prototype.isOk = function() {
+   if (this.left.origin && (this.left.origin.outEdge === null)) {
+      throw("origin's outEdge is null");
+   }
+   if (this.right.origin && (this.right.origin.outEdge === null)) {
+      throw ("destination's outEdge is null");
+   }
+}
+
 /**
  * return true if this wingedEdge is hardEdge.
  */
@@ -1282,6 +1291,10 @@ MeshAllocator.prototype.checkIntegrity = function() {
       for (let polygon of this.faces) {
          polygon.isOk();
       }
+      // check wEdge
+      for (let wEdge of this.edges) {
+         wEdge.isOk();
+      }
       // check vertex next,
       for (let vertex of this.vertices) {
          vertex.isOk();
@@ -1860,7 +1873,7 @@ WingedTopology.prototype.splitEdge = function(outEdge, pt, delOut) {
 
    // fix vertex
    outEdge.origin = vertex;
-   //vertex.outEdge = newIn;
+   vertex.outEdge = newIn;
    //vertex.orient(outEdge);
   
    if (vOrigin.outEdge === outEdge) {
