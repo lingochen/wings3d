@@ -627,7 +627,8 @@ Vertex.prototype.linkEdge = function(outHalf, inHalf) { // left, right of winged
    } else {
       var inEdge = this.findFreeInEdge();
       if (inEdge === null) {
-         throw("Error: Vertex.linkEdge: complex vertex " + this.index);
+         console.log("Error: Vertex.linkEdge: complex vertex " + this.index);
+         return false;
       }
       // else insert into circular list.
       var outEdge = inEdge.next;
@@ -654,7 +655,7 @@ Vertex.prototype.unlinkEdge = function(outHalf, inHalf)  {// left, right of wing
          return;
       }
       this.outEdge = prev.pair;
-      this.reorient();
+      //this.reorient();
    }
    // remove from circular list.
    prev.next = inHalf.next;
@@ -955,7 +956,6 @@ Polygon.prototype.update = function() {
       current.face = this;       // should be checking?
       let i = current.getIndex();       // every halfEdge form a triangle.
       //HalfEdge.triangleList.set(i*3, i);   // never changed.
-      //current.origin.reorient();
       ++this.numberOfVertex;
       if (current.getIndex() < halfEdge.getIndex()) {
          halfEdge = current;
@@ -1254,6 +1254,7 @@ MeshAllocator.prototype.updateAffected = function() {
                this.affected.faces.add(hEdge.face);
             }
          }
+         vertex.reorient();
       }
    }
    for (let wEdge of this.affected.edges) {
@@ -1499,10 +1500,12 @@ WingedTopology.prototype.addAffectedWEdge = function(wEdge) {
 
 WingedTopology.prototype.addAffectedFace = function(polygon) {
    this.alloc.addAffectedFace(polygon);
+   return this;
 };
 
 WingedTopology.prototype.addAffectedVertex = function(vertex) {
    this.alloc.addAffectedVertex(vertex);
+   return this;
 };
 
 WingedTopology.prototype.clearAffected = function() {
@@ -1538,8 +1541,9 @@ WingedTopology.prototype._createEdge = function(begVert, endVert, delOutEdge) {
    outEdge.wingedEdge.setGroup(this.guid);  // copy index.
    this.edges.add(outEdge.wingedEdge);
    // align vertex.outEdge
-   begVert.orient(outEdge);
-   endVert.orient(outEdge.pair);
+   this.addAffectedVertex(begVert).addAffectedVertex(endVert);
+   //begVert.orient(outEdge);
+   //endVert.orient(outEdge.pair);
    return outEdge;
 };
 // recycled
@@ -1857,11 +1861,10 @@ WingedTopology.prototype.splitEdge = function(outEdge, pt, delOut) {
    // fix vertex
    outEdge.origin = vertex;
    //vertex.outEdge = newIn;
-   vertex.orient(outEdge);
+   //vertex.orient(outEdge);
   
    if (vOrigin.outEdge === outEdge) {
       vOrigin.outEdge = newOut;
-      vOrigin.reorient();
    } 
    this.addAffectedWEdge( outEdge.wingedEdge );     // edge changed.
    // return the newOut
@@ -2381,6 +2384,7 @@ WingedTopology.prototype._liftLoop = function(edgeLoop) {
             if (inner.origin.outEdge === inner) {
                inner.origin.outEdge = edge1.outer;
             }
+            this.addAffectedVertex(inner.origin);
             inner.origin = edge1.inner.origin;
             inner = inner.pair.next;
          } while (inner !== edge1.inner);
@@ -2535,7 +2539,7 @@ WingedTopology.prototype._collapseEdge = function(halfEdge) {
    if (toVertex.outEdge === pair) {
       toVertex.outEdge = next;
    }
-   toVertex.reorient();
+   this.addAffectedVertex(toVertex);
 
    // delete stuff
    this._freeEdge(halfEdge);
@@ -2589,12 +2593,12 @@ WingedTopology.prototype._collapseLoop = function(halfEdge, collapsibleWings) {
    // fix vertex.outEdge;
    if (halfEdge.origin.outEdge === halfEdge) {
       halfEdge.origin.outEdge = nextPair;   // adjustOutgoing();
-      halfEdge.origin.reorient();
    }
+   this.addAffectedVertex(halfEdge.origin);
    if (pair.origin.outEdge === pair) {
       pair.origin.outEdge = next;      // adjustOutgoingEdge();
-      pair.origin.reorient();
    }
+   this.addAffectedVertex(pair.origin);
 
    // fix face.halfEdge
    if (polygon.halfEdge === pair) {
@@ -2654,11 +2658,11 @@ WingedTopology.prototype._removeEdge = function(outEdge, inEdge) {
    //correct vertex.outEdge if needed.
    if (outEdge.origin.outEdge === outEdge) {
       outEdge.origin.outEdge = outPrev.pair;
-      outEdge.origin.reorient();
+      this.addAffectedVertex(outEdge.origin);
    }
    if (inEdge.origin.outEdge === inEdge) {
       inEdge.origin.outEdge = inPrev.pair;
-      inEdge.origin.reorient();
+      this.addAffectedVertex(inEdge.origin);
    }
    return {outPrev: outPrev, outNext: outNext, outEdge: outEdge}; // changed to restore outEdge
 }
