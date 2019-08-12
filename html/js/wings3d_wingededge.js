@@ -89,11 +89,11 @@ WingedEdge.prototype[Symbol.iterator] = function* () {
 };
 
 WingedEdge.prototype.isOk = function() {
-   if (this.left.origin && (this.left.origin.outEdge === null)) {
-      throw("origin's outEdge is null");
+   if (!this.left.origin || !this.left.origin.outEdge) {
+      throw("leftEdge has problem");
    }
-   if (this.right.origin && (this.right.origin.outEdge === null)) {
-      throw ("destination's outEdge is null");
+   if (!this.right.origin || !this.right.origin.outEdge) {
+      throw ("rightEdge has problem");
    }
 }
 
@@ -712,6 +712,8 @@ Vertex.prototype.isOk = function() {
          }
          hEdge = hEdge.pair.next;
       } while (hEdge !== this.outEdge);
+   } else {
+      throw("outEdge should not be null");
    }
 }
 
@@ -1019,6 +1021,8 @@ Polygon.prototype.isOk = function() {
       if (count !== this.numberOfVertex) {
          throw "Polygon's Number of Vertex is not consistent"
       }
+   } else {
+      throw("halfEdge should not be null");
    }
 };
 
