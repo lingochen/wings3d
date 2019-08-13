@@ -89,10 +89,10 @@ WingedEdge.prototype[Symbol.iterator] = function* () {
 };
 
 WingedEdge.prototype.isOk = function() {
-   if (!this.left.origin || !this.left.origin.outEdge) {
+   if (this.left.origin && !this.left.origin.outEdge) {
       throw("leftEdge has problem");
    }
-   if (!this.right.origin || !this.right.origin.outEdge) {
+   if (this.right.origin && !this.right.origin.outEdge) {
       throw ("rightEdge has problem");
    }
 }
@@ -310,7 +310,8 @@ Object.defineProperties(HalfEdge.prototype, {
                }
                HalfEdge.triangleList.set(idx*3+1, index);  // point to next
              }
-          }}
+          }},
+   index: {get: function() {return this.wingedEdge.index;}},
 });
 
 HalfEdge.prototype.updateIndex = function() {
@@ -521,7 +522,7 @@ Vertex.prototype.reorient = function() {
    let outEdge = this.outEdge;
    let current = this.outEdge;
    do {
-      if (current.wingedEdge.index < outEdge.wingedEdge.index) {
+      if (current.index < outEdge.index) {
          outEdge = current;
       }
       current = current.pair.next;
@@ -529,7 +530,7 @@ Vertex.prototype.reorient = function() {
    this.outEdge = outEdge;    // get the lowest index outEdge;
 };
 Vertex.prototype.orient = function(outEdge) {
-   if (!this.outEdge ||  (this.outEdge.wingedEdge.index > outEdge.wingedEdge.index)) {
+   if (!this.outEdge ||  (this.outEdge.index > outEdge.index)) {
       this.outEdge = outEdge;
    }
 }
@@ -645,7 +646,7 @@ Vertex.prototype.linkEdge = function(outHalf, inHalf) { // left, right of winged
       //fromHalf.prev = inEdge;
       inHalf.next = outEdge;
       //outEdge.prev = toHalf;
-      if (outHalf.wingedEdge.index < this.outEdge.wingedEdge.index) {   // check for minimal 
+      if (outHalf.index < this.outEdge.index) {   // check for minimal 
          this.outEdge = outHalf;
       }
    }
@@ -707,13 +708,13 @@ Vertex.prototype.isOk = function() {
    if (this.outEdge) {
       let hEdge = this.outEdge;
       do {
-         if (hEdge.wingedEdge.index < this.outEdge.wingedEdge.index) {
+         if (hEdge.index < this.outEdge.index) {
             throw("Vertex's outEdge is not the smallest");
          }
          hEdge = hEdge.pair.next;
       } while (hEdge !== this.outEdge);
-   } else {
-      throw("outEdge should not be null");
+   } else { // check for free Vertex first
+      //throw("outEdge should not be null");
    }
 }
 
@@ -1009,7 +1010,7 @@ Polygon.prototype.isOk = function() {
       let hEdge = this.halfEdge;
       let count = 0;
       do {
-         if (hEdge.wingedEdge.index < this.halfEdge.wingedEdge.index) {
+         if (hEdge.index < this.halfEdge.index) {
             throw "Polygon's halfEdge is not smallest";
          }
          ++count;
@@ -1021,8 +1022,8 @@ Polygon.prototype.isOk = function() {
       if (count !== this.numberOfVertex) {
          throw "Polygon's Number of Vertex is not consistent"
       }
-   } else {
-      throw("halfEdge should not be null");
+   } else { // we have to check for freePolygon
+      //throw("halfEdge should not be null");
    }
 };
 
