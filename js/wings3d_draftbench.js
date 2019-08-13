@@ -19,7 +19,6 @@ import * as Util from './wings3d_util.js';
 import {BoundingSphere} from './wings3d_boundingvolume.js';
 import {MeshAllocator, WingedTopology, WingedEdge, HalfEdge, Polygon, Vertex} from './wings3d_wingededge.js';
 import {Material} from './wings3d_material.js';
-import {EditCommand} from './wings3d_undo.js';
 
 
 
@@ -374,90 +373,82 @@ DraftBench.prototype.drawPlane = (function() {
 })();
 
 
-class CheckPoint extends EditCommand { // do we really needs to inherited form EditCommand?
-   CheckPoint(draftBench, editCommand) {
-      this.command = editCommand;
-      this.draftBench = draftBench;
-      // map the (vertices, edges, faces) value.
-      this.vertices = [];
-      for (let vertex of draftBench.vertices) {
-         // outEdge index, need real pt?
-         if (vertex.isLive()) {
-            this.vertices.push( vertex.outEdge.wingedEdge.index );
-         } else {
-            this.vertices.push( -1 );
-         }
+/**
+ * return a snapshot of DraftBench's current state.
+ */
+DraftBench.prototype.checkPoint = function() {
+   // map the (vertices, edges, faces) value.
+   const vertices = [];
+   for (let vertex of this.vertices) {
+      // outEdge index, need real pt?
+      if (vertex.isLive()) {
+         vertices.push( vertex.outEdge.index );
+      } else {
+         vertices.push( -1 );
       }
-      this.edges = [];
-      for (let wEdge of draftBench.edges) {
-         // left->next index, right->next index, origin index, dest index.
-         if (wEdge.isLive()) {
-            this.edges.push( wEdge.left.next.index, wEdge.right.next.index, wEdge.left.origin.index, wEdge.right.origin.index);
-         } else {
-            this.edges.push( -1, -1, -1, -1 );
-         }
+   }
+   const edges = [];
+   for (let wEdge of this.edges) {
+      // left->next index, right->next index, origin index, dest index.
+      if (wEdge.isLive()) {
+         edges.push( wEdge.left.next.index, wEdge.right.next.index, wEdge.left.origin.index, wEdge.right.origin.index);
+      } else {
+         edges.push( -1, -1, -1, -1 );
       }
-      this.faces = [];
-      for (let polygon of draftBench.faces) {
-         // halfEdge index.
-         if (polygon.isLive()) {
-            this.faces.push( polygon.halfEdge.index );
-         } else {
-            this.faces.push( -1 );
+   }
+   const faces = [];
+   for (let polygon of this.faces) {
+      // halfEdge index.
+      if (polygon.isLive()) {
+         faces.push( polygon.halfEdge.index );
+      } else {
+         faces.push( -1 );
+      }
+   }
+   return {faces: faces, edges: edges, vertices: vertices};
+};
+
+/**
+ * given the checkPoint, check if it matches the current state of DraftBench.
+ */
+DraftBench.prototype.checkup = function(checkPoint) {
+   // now check draftBench and our saved value.
+   // use index because draftBench could have more faces(all dead) than our Saved one due to expansion.
+   for (let i = 0; i < checkPoint.faces.length; ++i) {   // check polygon first, most like to have problems
+      const polygon = this.faces[i];
+      if (polygon.isLive()) {
+         if (polygon.halfEdge.index != this.faces[i]) {
+            throw("CheckPoint failed. non matching polygon halfEdge");
+         }
+      } else {
+         if (checkPoint.faces[i] != -1) {
+            throw("CheckPoint failed. extra face");
          }
       }
    }
-
-   doIt() {
-      return this.command.doIt();
+   for (let i = 0; i < checkPoint.vertices.lenth; ++i ) {   // check vertex next because of simplicity.
+      const vertex = this.vertices[i];
+      if (vertex.isLive()) {
+         if (vertex.outEdge.index != this.vertices[i]) {
+            throw("CheckPoint failed. non-matching vertex outEdge");
+         }
+      } else {
+         if (checkPoint.vertices[i] != -1) {
+            throw("CheckPoint failed. extra vertex");
+         }
+      }
    }
-
-   undo() {
-      this.command.undo();
-      // now check draftBench and our saved value.
-      // use index because draftBench could have more faces(all dead) than our Saved one due to expansion.
-      for (let i = 0; i < this.faces.length; ++i) {   // check polygon first, most like to have problems
-         const polygon = this.draftBench.faces[i];
-         if (polygon.isLive()) {
-            if (polygon.halfEdge.index != this.faces[i]) {
-               geometryStatus("CheckPoint failed. non matching polygon halfEdge");
-               return;
-            }
-         } else {
-            if (this.faces[i] != -1) {
-               geometryStatus("CheckPoint failed. extra face");
-               return
-            }
+   // check wEdges
+   for (let i = 0; i < checkPoint.edges.length; i+=4) {
+      const wEdge = this.edges[i];
+      if (wEdge.isAlive()) {
+         if (wEdge.left.next.index != checkPoint.edges[i] || wEdge.right.next.index != checkPoint.edges[i+1] ||
+               wEdge.left.origin.index != checkPoint.edges[i+2] || wEdge.right.origin.index != checkPoint.edges[i+3]) {
+            throw("CheckPoint failed. non matching wEdge");
          }
-      }
-      for (let i = 0; i < this.vertices.lenth; ++i ) {   // check vertex next because of simplicity.
-         const vertex = this.draftBench.vertices[i];
-         if (vertex.isLive()) {
-            if (vertex.outEdge.wingedEdge.index != this.vertices[i]) {
-               geometryStatus("CheckPoint failed. non-matching vertex outEdge");
-               return;
-            }
-         } else {
-            if (this.vertices[i] != -1) {
-               geometryStatus("CheckPoint failed. extra vertex");
-               return;
-            }
-         }
-      }
-      // check edges
-      for (let i = 0; i < this.edges.length; i+=4) {
-         const wEdge = this.draftBench.edges[i];
-         if (wEdge.isAlive()) {
-            if (wEdge.left.next.index != this.edges[i] || wEdge.right.next.index != [i+1] ||
-                 wEdge.left.origin.index != this.edges[i+2] || wEdge.right.origin.index != this.edges[i+3]) {
-               geometryStatus("CheckPoint failed. non matching wEdge");
-               return;
-            }
-         } else {
-            if (this.edges[i] != -1) {
-               geometryStatus("CheckPoint failed. extra wEdge");
-               return;
-            }
+      } else {
+         if (checkPoint.edges[i] != -1) {
+            throw("CheckPoint failed. extra wEdge");
          }
       }
    }
@@ -465,6 +456,5 @@ class CheckPoint extends EditCommand { // do we really needs to inherited form E
 
 
 export {
-   DraftBench, 
-   CheckPoint
+   DraftBench
 };
