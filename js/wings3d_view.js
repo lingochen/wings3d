@@ -355,7 +355,7 @@ const _environment = {
    currentObjects: undefined,
    currentParent: undefined,
    fileName: "",              // save fileName. + path.
-   debug: false,
+   debug: {toggleOn: false, queue: []},
 };
 function addMaterial(material) {
    _environment.materialList.addMaterial(material);
@@ -412,9 +412,28 @@ function setObject(parent, objects) { // objects is array
    _environment.currentObjects = objects;
    _environment.currentParent = parent;
 };
-function debugCheck() {
-   if (_environment.debug) {
+function toggleDebug() {
+   _environment.debug.toggleOn = !_environment.debug.toggleOn;
+   if (_environment.debug.toggleOn) {  // turn on debug, now relq
+      alert("In Debug Mode");
+   } else { // off, release queue.
+      _environment.debug.queue = [];
+   }
+};
+function debugPush() {
+   if (_environment.debug.toggleOn) {
       _environment.draftBench.checkIntegrity();
+      _environment.debug.queue.push( _environment.draftBench.checkPoint() );
+   }
+};
+function debugPop() {
+   if (_environment.debug.toggleOn) {
+      _environment.draftBench.checkIntegrity();
+      _environment.debug.queue.pop();
+      if (_environment.debug.queue.length) {
+         const checkPoint = _environment.debug.queue[_environment.debug.queue.length-1];
+         _environment.draftBench.checkup(checkPoint);
+      }
    }
 };
 //-- End of World objects management -------------------------
@@ -448,7 +467,7 @@ function undoQueue(editCommand) {
    undo.current++;
    Renderer.needToRedraw();
    undo.isModified = true;
-   debugCheck();
+   debugPush();
 };
 
 function redoEdit() {
@@ -456,7 +475,7 @@ function redoEdit() {
       undo.queue[++undo.current].doIt(mode.current);
       Renderer.needToRedraw();
       undo.isModified = true;
-      debugCheck();
+      debugPush();
    }
 };
 
@@ -466,7 +485,7 @@ function undoEdit() {
       cmd.undo(mode.current);
       Renderer.needToRedraw();
       undo.isModified = true;
-      debugCheck();
+      debugPop();
    }
 };
 
@@ -1293,10 +1312,7 @@ function init() {
    // toggle debugging 
    window.addEventListener('keyup', function(evt) {
       if (evt.altKey && evt.ctrlKey && evt.keyCode == 74) { // ctrl + alt + j
-         _environment.debug = !_environment.debug;
-         if (_environment.debug) {
-            alert("In Debug Mode");
-         }
+         toggleDebug();
       }
     });
 
