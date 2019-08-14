@@ -2120,7 +2120,7 @@ PreviewCage.prototype.bumpFace = function() {
    function bumpEdge(next, prev) {
       let connectOut = self.geometry.insertEdge(next, prev);
       collapsibleWings.add(connectOut.wingedEdge);
-      dissolveEdges.add(connectOut.pair); // make sure it gone.
+      dissolveEdges.add(connectOut); // make sure it gone.
    };
    // split and connect the exterior edges.
    for (let loop of contours) {

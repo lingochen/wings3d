@@ -418,11 +418,11 @@ DraftBench.prototype.checkup = function(checkPoint) {
       const polygon = this.faces[i];
       if (polygon.isLive()) {
          if (polygon.halfEdge.index != checkPoint.faces[i]) {
-            throw("CheckPoint failed. non matching polygon halfEdge");
+            throw("CheckPoint failed: non matching polygon halfEdge");
          }
       } else {
          if (checkPoint.faces[i] !== -1) {
-            throw("CheckPoint failed. extra face");
+            throw("CheckPoint failed: unexpected face");
          }
       }
    }
@@ -430,11 +430,11 @@ DraftBench.prototype.checkup = function(checkPoint) {
       const vertex = this.vertices[i];
       if (vertex.isLive()) {
          if (vertex.outEdge.index != checkPoint.vertices[i]) {
-            throw("CheckPoint failed. non-matching vertex outEdge");
+            throw("CheckPoint failed: non-matching vertex outEdge");
          }
       } else {
          if (checkPoint.vertices[i] !== -1) {
-            throw("CheckPoint failed. extra vertex");
+            throw("CheckPoint failed: unexpected vertex");
          }
       }
    }
@@ -444,11 +444,11 @@ DraftBench.prototype.checkup = function(checkPoint) {
       if (wEdge.isLive()) {
          if (wEdge.left.next.index != checkPoint.edges[i] || wEdge.right.next.index != checkPoint.edges[i+1] ||
                wEdge.left.origin.index != checkPoint.edges[i+2] || wEdge.right.origin.index != checkPoint.edges[i+3]) {
-            throw("CheckPoint failed. non matching wEdge");
+            throw("CheckPoint failed: non matching wEdge");
          }
       } else {
          if (checkPoint.edges[i] !== -1) {
-            throw("CheckPoint failed. extra wEdge");
+            throw("CheckPoint failed: unexpected wEdge");
          }
       }
    }
