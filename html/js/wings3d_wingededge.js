@@ -89,10 +89,10 @@ WingedEdge.prototype[Symbol.iterator] = function* () {
 };
 
 WingedEdge.prototype.isOk = function() {
-   if (this.left.origin && !this.left.origin.outEdge) {
+   if (!this.left.origin || !this.left.origin.outEdge) {
       throw("leftEdge has problem");
    }
-   if (this.right.origin && !this.right.origin.outEdge) {
+   if (!this.right.origin || !this.right.origin.outEdge) {
       throw ("rightEdge has problem");
    }
 }
@@ -713,8 +713,8 @@ Vertex.prototype.isOk = function() {
          }
          hEdge = hEdge.pair.next;
       } while (hEdge !== this.outEdge);
-   } else { // check for free Vertex first
-      //throw("outEdge should not be null");
+   } else {
+      throw("outEdge should not be null");
    }
 }
 
@@ -1022,8 +1022,8 @@ Polygon.prototype.isOk = function() {
       if (count !== this.numberOfVertex) {
          throw "Polygon's Number of Vertex is not consistent"
       }
-   } else { // we have to check for freePolygon
-      //throw("halfEdge should not be null");
+   } else {
+      throw("halfEdge should not be null");
    }
 };
 
@@ -1287,10 +1287,26 @@ MeshAllocator.prototype.updateAffected = function() {
    // now cleanup.
    this.clearAffected();
 };
+
+
+
+// 
+// changed - so Vertex, WingedEdge, and Polygon is allocated from meshAllocator. So different 
+// Models on the same DraftBench can use the same Allocation. Merging becomes easier.
+//
+const WingedTopology = function(allocator) {
+   this.guid = WingedTopology.state.alloc();
+   this.alloc = allocator;
+   this.vertices = new Set;
+   this.faces = new Set;
+   this.edges = new Set;
+};
+WingedTopology.state = null;     // onOff, select, hilite state.
+
 /**
  * check if all polygon, vertex are well formed.
  */
-MeshAllocator.prototype.checkIntegrity = function() {
+WingedTopology.prototype.checkIntegrity = function() {
    try {
       // check polygon first
       for (let polygon of this.faces) {
@@ -1308,22 +1324,6 @@ MeshAllocator.prototype.checkIntegrity = function() {
       alert(e);
    }
 };
-
-
-// 
-// changed - so Vertex, WingedEdge, and Polygon is allocated from meshAllocator. So different 
-// Models on the same DraftBench can use the same Allocation. Merging becomes easier.
-//
-const WingedTopology = function(allocator) {
-   this.guid = WingedTopology.state.alloc();
-   this.alloc = allocator;
-   this.vertices = new Set;
-   this.faces = new Set;
-   this.edges = new Set;
-};
-WingedTopology.state = null;     // onOff, select, hilite state.
-
-
 
 WingedTopology.prototype.hide = function() {
    this.setState(true, 8);

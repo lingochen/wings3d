@@ -439,8 +439,8 @@ DraftBench.prototype.checkup = function(checkPoint) {
       }
    }
    // check wEdges
-   for (let i = 0; i < checkPoint.edges.length; i+=4) {
-      const wEdge = this.edges[i];
+   for (let i=0, j=0; i < checkPoint.edges.length; i+=4, j++) {
+      const wEdge = this.edges[j];
       if (wEdge.isLive()) {
          if (wEdge.left.next.index != checkPoint.edges[i] || wEdge.right.next.index != checkPoint.edges[i+1] ||
                wEdge.left.origin.index != checkPoint.edges[i+2] || wEdge.right.origin.index != checkPoint.edges[i+3]) {
