@@ -417,23 +417,23 @@ DraftBench.prototype.checkup = function(checkPoint) {
    for (let i = 0; i < checkPoint.faces.length; ++i) {   // check polygon first, most like to have problems
       const polygon = this.faces[i];
       if (polygon.isLive()) {
-         if (polygon.halfEdge.index != this.faces[i]) {
+         if (polygon.halfEdge.index != checkPoint.faces[i]) {
             throw("CheckPoint failed. non matching polygon halfEdge");
          }
       } else {
-         if (checkPoint.faces[i] != -1) {
+         if (checkPoint.faces[i] !== -1) {
             throw("CheckPoint failed. extra face");
          }
       }
    }
-   for (let i = 0; i < checkPoint.vertices.lenth; ++i ) {   // check vertex next because of simplicity.
+   for (let i = 0; i < checkPoint.vertices.length; ++i ) {   // check vertex next because of simplicity.
       const vertex = this.vertices[i];
       if (vertex.isLive()) {
-         if (vertex.outEdge.index != this.vertices[i]) {
+         if (vertex.outEdge.index != checkPoint.vertices[i]) {
             throw("CheckPoint failed. non-matching vertex outEdge");
          }
       } else {
-         if (checkPoint.vertices[i] != -1) {
+         if (checkPoint.vertices[i] !== -1) {
             throw("CheckPoint failed. extra vertex");
          }
       }
@@ -441,13 +441,13 @@ DraftBench.prototype.checkup = function(checkPoint) {
    // check wEdges
    for (let i = 0; i < checkPoint.edges.length; i+=4) {
       const wEdge = this.edges[i];
-      if (wEdge.isAlive()) {
+      if (wEdge.isLive()) {
          if (wEdge.left.next.index != checkPoint.edges[i] || wEdge.right.next.index != checkPoint.edges[i+1] ||
                wEdge.left.origin.index != checkPoint.edges[i+2] || wEdge.right.origin.index != checkPoint.edges[i+3]) {
             throw("CheckPoint failed. non matching wEdge");
          }
       } else {
-         if (checkPoint.edges[i] != -1) {
+         if (checkPoint.edges[i] !== -1) {
             throw("CheckPoint failed. extra wEdge");
          }
       }
