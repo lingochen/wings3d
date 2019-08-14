@@ -422,13 +422,13 @@ function toggleDebug() {
 };
 function debugPush() {
    if (_environment.debug.toggleOn) {
-      _environment.draftBench.checkIntegrity();
+      _environment.world.checkIntegrity();
       _environment.debug.queue.push( _environment.draftBench.checkPoint() );
    }
 };
 function debugPop() {
    if (_environment.debug.toggleOn) {
-      _environment.draftBench.checkIntegrity();
+      _environment.world.checkIntegrity();
       _environment.debug.queue.pop();
       if (_environment.debug.queue.length) {
          const checkPoint = _environment.debug.queue[_environment.debug.queue.length-1];

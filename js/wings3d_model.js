@@ -42,6 +42,12 @@ const PreviewGroup = function() {
  */
 PreviewGroup.nameSetters = [];
 
+PreviewGroup.prototype.checkIntegrity = function() {
+   for (let child of this.group) {
+      child.checkIntegrity();
+   }
+}
+
 /**
  * getter/setter for (name) attribute - no needs to create new functions for each object, safter but...
  */
@@ -191,6 +197,10 @@ const PreviewCage = function(bench) {
  * registration for handling setting of names.
  */
 PreviewCage.nameSetters = [];
+
+PreviewCage.prototype.checkIntegrity = function() {
+   this.geometry.checkIntegrity();
+};
 
 /**
  * getter/setter for (name) attribute - no needs to create new functions for each object, safter but...
