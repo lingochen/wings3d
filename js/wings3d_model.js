@@ -2274,7 +2274,7 @@ PreviewCage.prototype.dissolveConnect = function(connect) {
    // dissolve in reverse direction
    for (let i = insertEdges.length-1; i >= 0; --i) {
       const halfEdge = insertEdges[i];
-      this.geometry.removeEdge(halfEdge.pair);
+      this.geometry.removeEdge(halfEdge); // 2019-08-16 change it to halfEdge instead of halfEdge.pair
    }
 
    this._updatePreviewAll(oldSize, this.geometry.affected);
