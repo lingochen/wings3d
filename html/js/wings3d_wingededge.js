@@ -1090,7 +1090,7 @@ MeshAllocator.prototype.allocVertex = function(pt, delVertex) {
       _vert.set(pt); // copy value
       //_vert.index = this.vertices.length;
       this.vertices.push( _vert );
-      //this.affected.vertices.add( _vert );
+      this.affected.vertices.add( _vert );
       return _vert;
    }
 };
@@ -2881,8 +2881,7 @@ WingedTopology.prototype.removePolygon = function(polygon) {
 
 WingedTopology.prototype.dissolveVertex = function(vertex) {
    // now free the vertex.
-   const self = this;
-   const pt = new Float32Array(3);
+   const pt = [0, 0, 0];
    vec3.copy(pt, vertex);
    if (vertex.isIsolated()) {
       this._freeVertex(vertex);
@@ -2894,8 +2893,9 @@ WingedTopology.prototype.dissolveVertex = function(vertex) {
       let lastIn;
       // slide edge, move edge down like collapse edge, without the collapsing.
       let outEdge;    // outEdge for new Polygon
-      vertex.eachInEdge( function(inEdge) {
-         //inEdges.unshift( inEdge );
+      vertex.eachInEdge( (inEdge)=> {
+         //inEdges.unshift( inEdge )
+         this.addAffectedVertex(inEdge.origin);
          const nextOut = inEdge.next;
          outEdge = inEdge.pair;
          if (nextOut.face.halfEdge === nextOut) {
@@ -2915,6 +2915,7 @@ WingedTopology.prototype.dissolveVertex = function(vertex) {
       outEdge = vertex.outEdge;
       do {
          let inEdge = outEdge.pair;
+         this.addAffectedVertex(inEdge.origin);
          outEdge = outEdge.next;
          if (inEdge.next.next === inEdge) {  // 2 edge loop, not polygon, now collapse it.
             if (inEdge.pair === vertexOutEdge) {
@@ -2944,6 +2945,10 @@ WingedTopology.prototype.restoreDissolveVertex = function(undo) {
       let prevIn = undo.firstIn;
       do {
          let outEdge = inEdge.pair;
+         if (outEdge.origin.outEdge === outEdge) { // make sure find the new OutEdge if we are the OutEdge. 2019/08/16
+            outEdge.origin.outEdge = inEdge.next;
+         }
+         this.addAffectedVertex(outEdge.origin);
          outEdge.origin = vertex;
          let prevOut = prevIn.pair;
          prevOut.next = inEdge.next;
