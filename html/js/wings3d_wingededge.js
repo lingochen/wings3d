@@ -2624,8 +2624,7 @@ WingedTopology.prototype._collapseLoop = function(halfEdge, collapsibleWings) {
    }
 
    // delete stuff
-   const delPolygon = halfEdge.face;
-   this._freePolygon(halfEdge.face);
+   const delPolygon = this._freePolygon(halfEdge.face);
    this._freeEdge(halfEdge);
    
    // restoreLoop
@@ -2716,8 +2715,7 @@ WingedTopology.prototype.removeEdge = function(outEdge) {
    }
 
    if (delFace !== null) {    // guaranteed to be non-null, but maybe later use case will change, (yes, makeHole needs to be both-null. 2018-08-28)
-      this._freePolygon(delFace);
-      remove.delFace = delFace;
+      remove.delFace = this._freePolygon(delFace);
    }
    this._freeEdge(outEdge);
 
@@ -2866,7 +2864,7 @@ WingedTopology.prototype.removePolygon = function(polygon) {
       hEdge.face = null;
    }
    // put into freeList.
-   this._freePolygon(polygon);
+   return this._freePolygon(polygon);
 };
 /*function isCorner(outEdge) {
    const prev = outEdge.prev();
@@ -3311,7 +3309,7 @@ WingedTopology.prototype.makeHole = function(polygon) {
          ret.dissolveEdges.unshift( this.dissolveEdge(hEdge) );   // in any doubt, use dissolveEdge. I am stupid
       }
    }
-   this._freePolygon(polygon);
+   ret.face = this._freePolygon(polygon);
    return ret;
 };
 
@@ -3322,7 +3320,7 @@ WingedTopology.prototype.undoHole = function(hole) {
       }
       this.restoreDissolveEdge(dissolve);
    }
-   if (!hole.face.isLive()) {
+   if (!hole.face.polygon.isLive()) {
       return this._createPolygon(hole.hEdge, 4, Material.default, hole.face);
    } else {
       return hole.face;
