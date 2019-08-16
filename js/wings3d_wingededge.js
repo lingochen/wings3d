@@ -2527,6 +2527,9 @@ WingedTopology.prototype._collapseEdge = function(halfEdge) {
    // halfedge -> vertex
    let current = pairNext;
    while (current !== halfEdge) {
+      if (current.origin.outEdge === current) { // make sure current.origin.outEdge point to correct outEdge. 2019-08-17
+         current.origin.outEdge = current.pair.next;
+      }
       current.origin = toVertex;
       this.addAffectedWEdge(current.wingedEdge);
       current = current.pair.next;
