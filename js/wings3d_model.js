@@ -2026,8 +2026,7 @@ PreviewCage.prototype.extrudeFace = function(contours) {
       contours = {};
       contours.edgeLoops = WingedTopology.findContours(this.selectedSet); 
    }
-   contours.edgeLoops = this.geometry.liftContours(contours.edgeLoops);
-   contours.extrudeEdges = this.geometry.extrudeContours(contours.edgeLoops);
+   contours.extrudeEdges = this.geometry.liftAndExtrudeContours(contours.edgeLoops);
    //const edgeLoops = this.geometry.extrudePolygon(this.selectedSet);
    // add the new Faces. and new vertices to the preview
    this._updatePreviewAll(oldSize, this.geometry.affected);
@@ -2684,8 +2683,7 @@ PreviewCage.prototype.insetFace = function() {
    const contours = {};
    contours.edgeLoops = this.geometry.findInsetContours(this.selectedSet); 
    
-   contours.edgeLoops = this.geometry.liftContours(contours.edgeLoops);
-   contours.extrudeEdges = this.geometry.extrudeContours(contours.edgeLoops);
+   contours.extrudeEdges = this.geometry.liftAndExtrudeContours(contours.edgeLoops);
    // now get all the effected vertices, and moving direction.
    let vertexCount = 0;
    for (let polygon of this.selectedSet) {
@@ -3090,8 +3088,7 @@ PreviewCage.prototype.getSelectedFaceContours = function() {
 
 PreviewCage.prototype.liftFace = function(contours, hingeHEdge) {
    // extrude edges
-   contours.edgeLoops = this.geometry.liftContours(contours.edgeLoops);
-   contours.extrudeEdges = this.geometry.extrudeContours(contours.edgeLoops);
+   contours.extrudeEdges = this.geometry.liftAndExtrudeContours(contours.edgeLoops);
    
    this._updatePreviewAll();
    // collapse hEdgeHinge
