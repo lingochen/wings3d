@@ -2564,10 +2564,11 @@ WingedTopology.prototype._collapseEdge = function(halfEdge) {
 
    // delete stuff
    this._freeEdge(halfEdge);
+   const pt = [fromVertex[0], fromVertex[1], fromVertex[2]];
    this._freeVertex(fromVertex);
 
    // undo collapseEdge
-   return {hEdge: halfEdge, pairNext: pairNext, prev: prev, vertex: fromVertex};
+   return {hEdge: halfEdge, pairNext: pairNext, prev: prev, vertex: fromVertex, pt: pt};
 };
 
 // undo of  _collapseLoop.
@@ -2661,7 +2662,7 @@ WingedTopology.prototype.restoreCollapseEdge = function(undo) {
       this._restoreLoop(undo.leftLoop.next, undo.leftLoop.hEdge, undo.leftLoop.polygon);
    }
    // undo collapseEdge
-   this._liftEdge(undo.pairNext, undo.prev, this.addVertex(undo.vertex, undo.vertex), undo.hEdge);
+   this._liftEdge(undo.pairNext, undo.prev, this.addVertex(undo.pt, undo.vertex), undo.hEdge);
 };
 
 
