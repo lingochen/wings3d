@@ -2409,7 +2409,9 @@ PreviewCage.prototype.dissolveSelectedFace = function() {
    // the reemaining edges is the remove Edge.
    const substract = [];
    for (let edge of selectedEdges) {
-      substract.unshift( this.geometry.dissolveEdge(edge.left) );   // add in reverse order
+      if (edge.isLive()) { // check if not already dissolve due to collapse. 2019-08-17
+         substract.unshift( this.geometry.dissolveEdge(edge.left) );   // add in reverse order
+      }
    }
    // update the remaining selectedSet.
    const selectedFace = this.selectedSet;
