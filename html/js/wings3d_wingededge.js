@@ -2235,12 +2235,16 @@ WingedTopology.prototype.bevelVertex = function(vertices) {
 };
 
 
-
-WingedTopology.prototype.extrudeContours = function(edgeLoops) {
+/**
+ * we need to lift then extrude each contour together. lift all contours then extrude all contours
+ * has potential to introduce bugs in topology due to our implementation strategy.
+ */
+WingedTopology.prototype.liftAndExtrudeContours = function(edgeLoops) {
    // extrude face. connect(outer, inner) loop.
    let extrudeContours = [];
    for (let contour of edgeLoops) {
-      for (let edge of contour) {
+      this.liftContour(contour);          // lift edges from outerLoop to innerLoop.
+      for (let edge of contour) {         // extrude edge
          let polygon = [];
          polygon.push( edge.inner.origin.index );
          polygon.push( edge.outer.origin.index );
@@ -2468,15 +2472,6 @@ WingedTopology.prototype.restoreContour = function(edgeLoop) {
    return this._liftLoop(edgeLoop);
 };
 
-
-// lift edges from outerLoop to innerLoop.
-WingedTopology.prototype.liftContours = function(edgeLoops) {
-   for (let edgeLoop of edgeLoops) {
-      this.liftContour(edgeLoop);
-   }
-
-   return edgeLoops;
-};
 
 
 // insert a new edge, for undo purpose
