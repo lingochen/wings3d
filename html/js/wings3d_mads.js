@@ -701,7 +701,9 @@ class MouseRotateAlongAxis extends EditCommand {
       this.snapshots = madsor.snapshotTransformGroup();
       this.movement = 0.0;             // cumulative movement.
       this.axisVec3 = vec3.clone(axis);
-      this.center = center;
+      if (center) {
+         this.center = [center[0], center[1], center[2]];
+      }
    }
 
    handleMouseMove(ev, cameraView) {
