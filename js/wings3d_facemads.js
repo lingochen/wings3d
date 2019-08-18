@@ -531,7 +531,7 @@ class LiftFaceHandler extends EditSelectHandler {  // also moveable
    }
 
    undo() {
-      super.doIt();  // this really not needede.
+      super.undo();
       // collapseFace
       this.preview.collapseExtrudeEdge(this.lift);
    }
