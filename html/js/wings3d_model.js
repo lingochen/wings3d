@@ -540,7 +540,15 @@ PreviewCage.prototype._updatePreviewAll = function() {
 // body selection.
 PreviewCage.prototype.changeFromBodyToFaceSelect = function() {
    // do nothing, already selected or deselected.
-   return this.snapshotSelectionBody();
+   const snapshot = this.snapshotSelectionBody();
+   if (this.hasSelection()) {
+      this._resetSelectBody();
+      // select all face
+      for (let polygon of this.geometry.faces) {
+         this._setFaceSelectionOn(polygon);
+      }
+   }
+   return snapshot;
 };
 
 PreviewCage.prototype.changeFromBodyToEdgeSelect = function() {
