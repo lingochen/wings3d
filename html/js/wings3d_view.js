@@ -1060,8 +1060,6 @@ function init() {
       UI.runDialogCenter('#preferenceForm', storePref, loadPref);
     });
 
-   // bind createMaterial button.
-
    // bind geometryGraph
    _environment.geometryGraph = TreeView.getTreeView('#objectListLabel','#objectList', _environment.world);
    // selectObject

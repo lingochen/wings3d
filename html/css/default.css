@@ -61,7 +61,7 @@ body {
   position: relative;
   overflow: hidden;
 }
-canvas {
+#glcanvas {
   position: absolute;
   left: 0px;
   top: 0px;
