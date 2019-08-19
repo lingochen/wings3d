@@ -690,7 +690,7 @@ Vertex.prototype.numberOfEdge = function() {
 Vertex.prototype.getNormal = function(normal) {
    const start = this.outEdge;
    let current = start;
-   const a = vec3.create(), b = vec3.create(), temp = vec3.create();
+   const a = [0, 0, 0], b = [0, 0, 0], temp = [0, 0, 0];
    vec3.sub(a, current.destination(), current.origin);
    do {
       current = current.pair.next;
