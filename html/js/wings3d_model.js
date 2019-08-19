@@ -949,17 +949,25 @@ PreviewCage.prototype.changeFromMultiToVertexSelect = function() {
 PreviewCage.prototype.changeFromMultiToBodySelect = function() {
    return {}; // nothing todo
 };
-PreviewCage.prototype.restoreFromMultiToEdgeSelect = function(_snapshot) {
-   // nothing because guarantee nothing selected.
+PreviewCage.prototype.restoreFromMultiToEdgeSelect = function(snapshot) {
+   if (snapshot) {   // restore all edge from snapshot
+      this.restoreEdgeSelection(snapshot);
+   }
 };
-PreviewCage.prototype.restoreFromMultiToFaceSelect = function(_snapshot) {
-   // nothing because guarantee nothing selected.
+PreviewCage.prototype.restoreFromMultiToFaceSelect = function(snapshot) {
+   if (snapshot) {   // restore all face from snapshot
+      this.restoreFaceSelection(snapshot);
+   }
 };
-PreviewCage.prototype.restoreFromMultiToVertexSelect = function(_snapshot) {
-   // nothing because guarantee nothing selected.
+PreviewCage.prototype.restoreFromMultiToVertexSelect = function(snapshot) {
+   if (snapshot) {// reselect all vertex
+      this.restoreVertexSelection(snapshot);
+   }
 };
-PreviewCage.prototype.restoreFromMultiToBodySelect = function(_snapshot) {
-   // nothing because guarantee nothing selected.
+PreviewCage.prototype.restoreFromMultiToBodySelect = function(snapshot) {
+   if (snapshot) {   // select body
+      this.restoreBodySelection(snapshot);
+   }
 };
 
 
@@ -1251,6 +1259,7 @@ PreviewCage.prototype.snapshotEdgePositionAndNormal = function() {
       for (let poly of normal) {
          vec3.add(inputNormal, inputNormal, poly.normal);
       }
+      vec3.normalize(inputNormal, inputNormal);    // 2019-08-19
       i+=3;
    }
    return this.snapshotPosition(vertices, normalArray);
@@ -1798,7 +1807,7 @@ PreviewCage.prototype.extrudeEdge = function(creaseFlag = false) {
       }
    };
    // temp for accounting purpose.
-   const pt = vec3.create();
+   const pt = [0, 0, 0];
    let extrudeOut  = new Set;    // fFence
    let extrudeIn = new Set;       // sFence
    let fences = [];
