@@ -59,6 +59,10 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
             View.attachHandlerMouseMove(new MouseRotateAlongAxis(this, vec));
           });
       }
+      // rotate free
+      UI.bindMenuItem(mode + 'RotateFree', (ev) => {
+         View.attachHandlerMouseMove(new MouseRotateFree(this));
+       });
       // Bevel
       const bevel = {face: action.faceBevel, edge: action.edgeBevel, vertex: action.vertexBevel};
       if (bevel[mode]) {
@@ -711,6 +715,38 @@ class MouseRotateAlongAxis extends EditCommand {
       const quatRotate = quat.create();
       quat.setAxisAngle(quatRotate, this.axisVec3, this.movement);
       this.madsor.rotateSelection(this.snapshots, quatRotate, this.center);
+   }
+
+   doIt() {
+      const quatRotate = quat.create();
+      quat.setAxisAngle(quatRotate, this.axisVec3, this.movement);
+      this.madsor.rotateSelection(this.snapshots, quatRotate, this.center);
+   }
+
+   undo() {
+      this.madsor.restoreSelectionPosition(this.snapshots);
+   }
+}
+
+// rotate free handler, align to screen rotate.
+class MouseRotateFree extends EditCommand {
+   constructor(madsor, center) {
+      super();
+      this.madsor = madsor;
+      this.snapshots = madsor.snapshotTransformGroup();
+      this.quatRotate = [0, 0, 0, 1];     // cumulative rotate movement
+      if (center) {
+         this.center = [center[0], center[1], center[2]];
+      }
+   }
+
+   handleMouseMove(ev, cameraView) {
+      const movement = cameraView.rotateMovement(ev.movementX);
+      const quatRotate = [0,0,0,1];
+      let cam = cameraView.inverseCameraVectors();
+      quat.setAxisAngle(quatRotate, cam.z, movement);
+      quat.multiply(this.quatRotate, this.quatRotate, quatRotate);
+      this.madsor.rotateSelection(this.snapshots, this.quatRotate, this.center);
    }
 
    doIt() {
