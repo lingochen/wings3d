@@ -19,19 +19,12 @@ let currentLanguage = "en";
 let defaultMessages;
 let currentMessages;
 
-function getTemplate(key) {
-   let template = currentMessages.msgstr.get(key);
+function getTemplate(key, help="") {
+   let template = currentMessages.msgstr.get(key+help);
    if (!template && defaultMessages) {
-      return defaultMessages.msgstr.get(key);
+      return defaultMessages.msgstr.get(key+help);
    }
    return template;
-}
-function getTooltip(key) {
-   let title = currentMessages.tooltip.get(key);
-   if (!title && defaultMessages) {
-      return defaultMessages.tooltip.get(key);
-   }
-   return title;
 }
 function helpTooltip(ev) {
    const text = this.getAttribute("title");
@@ -39,21 +32,19 @@ function helpTooltip(ev) {
    help(helpText);
 }
 function setTooltip(elem, tooltip) {
-   let warning = true;
    // now prepare tooltips
-   let content = getTooltip(tooltip);
+   let content = getTemplate(tooltip, "-help");
    if (content) {
-      warning = false;
+      let contentM = getTemplate(tooltip, "-helpM");
+      let contentR = getTemplate(tooltip, "-helpR");
       let text = "";
-      if (Array.isArray(content)) {
-         if (content[0]) {
-            text += LMB + content[0];
+      if (contentM || contentR) {
+         text += LMB + content;
+         if (contentM) {
+            text += newLine + MMB + contentM;
          }
-         if (content[1]) {
-            text += newLine + MMB + content[1];
-         }
-         if (content[2]) {
-            text += newLine + RMB + content[2];
+         if (contentR) {
+            text += newLine + RMB + contentR;
          }
       } else { // must be string
          text = content;
