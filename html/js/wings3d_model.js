@@ -4053,6 +4053,8 @@ class CreatePreviewCageCommand extends EditCommand {
    constructor(previewCage) {
       super();
       this.previewCage = previewCage;
+      // copy geometry, and 
+
    }
 
    free() {
