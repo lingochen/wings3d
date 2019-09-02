@@ -100,8 +100,8 @@ function resetStaticElements(langObj) {
    }
 }
 
-function loadResource(language, successCallback){
-   ezFetch(`./resources/${language}.json`)
+function loadResource(language, ver, successCallback){
+   ezFetch(`./resources/${language}.json?v=${ver}`)
       .then(data => {
          resetStaticElements(data);
          if (successCallback) {
@@ -125,11 +125,11 @@ function getCurrentLocale() {
   * @param {country} The two-letter ISO conuntry code.
   * @param {successCallback} The function to be called when the language/locale has been loaded. 
   */
-function setCurrentLocale(language, country, successCallback) {
+function setCurrentLocale(language, ver, country, successCallback) {
    currentCountry = country || 'unknown';
    currentLanguage = language || 'unknown';
 
-   loadResource(currentLanguage, successCallback);
+   loadResource(currentLanguage, ver, successCallback);
 };
 
 /*
@@ -194,13 +194,17 @@ onReady(()=> {
          elem.setAttribute(tooltipAttrib, str);
       }
    }
-   // now set locale.
-   setCurrentLocale("en");
    // hookup to language select
    let selectLang = document.querySelector('#selectLanguage');
    if (selectLang) {
+      const defaultSelect = JSON.parse(selectLang.value);
+      setCurrentLocale(defaultSelect.lang, defaultSelect.ver); // default locale
       selectLang.addEventListener('change', function(ev) {
-         setCurrentLocale(selectLang.value); // change locale
+         const select = JSON.parse(selectLang.value);
+         setCurrentLocale(select.lang, select.ver); // change locale
        });
+   } else {
+      // now set locale.
+      setCurrentLocale("en");
    }
 });
