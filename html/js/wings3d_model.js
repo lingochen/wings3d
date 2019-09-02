@@ -679,7 +679,7 @@ PreviewCage.prototype._selectBodyAll = function() {
    return snapshot;
 }
 
-PreviewCage.prototype._selectBodyInvert = function() {
+PreviewCage.prototype._selectBodyInverse = function() {
    const snapshot = this.snapshotSelectionBody();
    this.selectBody();
    return snapshot;
@@ -817,7 +817,7 @@ PreviewCage.prototype._selectVertexAll = function() {
    return snapshot;
 };
 
-PreviewCage.prototype._selectVertexInvert = function() {
+PreviewCage.prototype._selectVertexInverse = function() {
    const snapshot = this.snapshotSelectionVertex();
 
    for (let vertex of this.geometry.vertices) {
@@ -1415,7 +1415,7 @@ PreviewCage.prototype._selectEdgeAll = function() {
    return snapshot;
 }
 
-PreviewCage.prototype._selectEdgeInvert = function() {
+PreviewCage.prototype._selectEdgeInverse = function() {
    const snapshot = this.snapshotSelectionEdge();
 
    for (let wingedEdge of this.geometry.edges) {
@@ -1637,7 +1637,7 @@ PreviewCage.prototype._selectFaceAll = function() {
    return snapshot;
 };
 
-PreviewCage.prototype._selectFaceInvert = function() {
+PreviewCage.prototype._selectFaceInverse = function() {
    const snapshot = this.snapshotSelectionFace();;
 
    for (let polygon of this.geometry.faces) {

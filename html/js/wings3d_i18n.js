@@ -63,7 +63,7 @@ function* entries(obj) {
 }
 function resetStaticElements(langObj) {
    // instantiated category
-   currentMessages = {msgstr: new Map, tooltip: new Map};   // provide empty default
+   currentMessages = {msgstr: new Map};            // provide empty default
    for (let [key, value] of entries(langObj)) {
       currentMessages[key] = new Map(entries(value));
    }

@@ -1002,7 +1002,7 @@ function init() {
                          {id: Wings3D.action.less, fn: 'lessSelection', hotKey: '-'},
                          {id: Wings3D.action.similar, fn: 'similarSelection', hotkey: 'i'},
                          {id: Wings3D.action.all, fn: 'allSelection', hotKey: 'a', meta: 'ctrl'}, 
-                         {id: Wings3D.action.invert, fn: 'invertSelection', hotKey: 'i', meta: 'ctrl+shift'},
+                         {id: Wings3D.action.inverse, fn: 'inverseSelection', hotKey: 'i', meta: 'ctrl+shift'},
                          {id: Wings3D.action.adjacent, fn: 'adjacentSelection'}
                         ];
    for (let select of selectionMenu) {
