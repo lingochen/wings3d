@@ -569,6 +569,10 @@ form fieldset input[type="number"] {
   margin: 0.5rem;
 }
 
+form a {
+  display: block;
+}
+
 form .fieldPref {
   display: grid;
   grid-template-columns: max-content max-content;
