@@ -1,6 +1,6 @@
 {
     "@metadata" : {
-        "last-updated" : "2019-09-02",
+        "last-updated" : "2019-09-04",
         "authors"      : "lingo",
         "locale"       : "en"
     },
@@ -500,6 +500,15 @@
         "toggleAxes-help"              : "Show the coordinate axes",
         "workmode"                     : "Workmode",
         "toggleSmooth-help"            : "Toggle flat/smooth shading",
-        "toggleOrtho-help"             : "Toggle between orthographic and perspective views"
+        "toggleOrtho-help"             : "Toggle between orthographic and perspective views",
+        "planeCut"                     : "Plane Cut",
+        "slice"                        : "Slice",
+        "corner"                       : "Corner",
+        "corner-help"                  : "Make corners from edge rings capped by a 3 and 5 sided face",
+        "sidebar"                      : "Sidebar",
+        "sidebar-help"                 : "",
+        "multi"                        : "Multi",
+        "multi-help"                   : "Back to no mode",
+        "interfaceIcons"               : "Interface Icons"
     }
 }

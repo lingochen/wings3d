@@ -1,6 +1,6 @@
 {
     "@metadata" : {
-        "last-updated" : "2019-09-02",
+        "last-updated" : "2019-09-05",
         "authors"      : "lingo",
         "locale"       : "zh_hant"
     },
@@ -361,7 +361,7 @@
         "numberEdges"                  : "邊數",
         "selectFaces"                  : "選擇面",
         "more"                         : "更多",
-        "less"                         : "減去",
+        "less"                         : "減少",
         "exactly"                      : "沒錯",
         "bodySelect"                   : "身體的選擇組",
         "edgeSelect"                   : "邊沿選擇組",
@@ -461,6 +461,15 @@
         "toggleAxes-help"              : "顯示坐標軸",
         "workmode"                     : "工作模式",
         "toggleSmooth-help"            : "切換平/平滑陰影",
-        "toggleOrtho-help"             : "正交之間切換的意見和觀點"
+        "toggleOrtho-help"             : "正交之間切換的意見和觀點",
+        "planeCut"                     : "平面剪切",
+        "slice"                        : "切片",
+        "corner"                       : "角",
+        "corner-help"                  : "請從角落邊緣環上限由 3 和 5 片面的面",
+        "sidebar"                      : "側欄",
+        "sidebar-help"                 : "打開/關閉 側邊視窗",
+        "multi"                        : "Multi",
+        "multi-help"                   : "取消所有選取",
+        "interfaceIcons"               : "界面圖示"
     }
 }
