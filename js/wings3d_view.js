@@ -1320,6 +1320,9 @@ function init() {
       requestAnimationFrame(updateFrame);
    };
    requestAnimationFrame(updateFrame);
+
+   // show start help
+   UI.runDialog('#start-help', "center");
 };
 
 
