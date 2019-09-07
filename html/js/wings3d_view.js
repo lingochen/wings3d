@@ -712,6 +712,7 @@ function selectFinish() {
 }
 
 function canvasHandleMouseDown(ev) {
+   ev.preventDefault();       // this prevent select text on infoLine because of canvas.
    if (ev.button === 0) {
       if (handler.camera !== null) {
          handler.camera.doIt();  
