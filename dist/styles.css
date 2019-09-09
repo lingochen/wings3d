@@ -165,7 +165,7 @@ ul.menu.bar > li {
 nav.menu li {
   background-color: var(--menuBackground);
 }
-nav.menu {
+nav.menu a {
   color: var(--menuText);
 }
 nav.menu.bar li {
