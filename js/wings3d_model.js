@@ -4053,8 +4053,6 @@ class CreatePreviewCageCommand extends EditCommand {
    constructor(previewCage) {
       super();
       this.previewCage = previewCage;
-      // copy geometry, and 
-
    }
 
    free() {
@@ -4062,11 +4060,18 @@ class CreatePreviewCageCommand extends EditCommand {
    }
 
    doIt() {
+      // check if we have been undone?
+      if (this.undoEmpty) {  // now copy all data back to cage
+         this.previewCage.emptyUndo(this.undoEmpty);
+         this.undoEmpty = null;    // release undo data
+      }
       View.addToWorld(this.previewCage);
    }
 
    undo() {
       View.removeFromWorld(this.previewCage);
+      // copy data to undo and free previewCage data.
+      this.undoEmpty = this.previewCage.empty();  //freeBuffer();
    }
 }
 
