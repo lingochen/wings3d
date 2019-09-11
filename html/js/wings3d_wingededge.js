@@ -463,7 +463,6 @@ Object.defineProperty(Vertex.prototype, 'valence', {
 Vertex.prototype.getRestore = function(ptView) {
    ptView.set(this); ptView.inc();
    return {vertex: this, outEdge: this.outEdge};
-
 };
 Vertex.prototype.setRestore = function(restore, ptView) {
    this.outEdge = restore.outEdge;
@@ -752,9 +751,6 @@ Polygon.color = null;
  */
 Polygon.prototype.getRestore = function() {
    return {polygon: this, halfEdge: this.halfEdge, material: this.material};  // all other data can be computed.
-};
-Polygon.prototype.setRestore = function(_restore) {   // recompute all other data.
-   this.update();
 };
 
 
@@ -1377,7 +1373,7 @@ WingedTopology.prototype.empty = function() {
    const pts = new Float32Array(this.vertices.size * 3);
    const ptView = new Vec3View(pts);
    for (let vertex of this.vertices) {
-      delVertices.push( {vertex: vertex, halfEdge: vertex.outEdge, pt: [vertex[0], vertex[1], vertex[2]]} );
+      delVertices.push( vertex.getRestore(ptView) );
       this.alloc.freeVertex(vertex);
    }
    this.vertices.clear();
@@ -1391,12 +1387,11 @@ WingedTopology.prototype.emptyUndo = function(restoreAll) {
    }
    const colorView = new Vec3View(restoreAll.colors);
    for (let wEdge of restoreAll.edges) {
-      this.addEdge(wEdge.left.origin, wEdge.right.origin, wEdge.left);
+      this._createEdge(wEdge.left.origin, wEdge.right.origin, wEdge.wEdge.left);
       wEdge.wEdge.setRestore(wEdge, colorView);
    }
-   for (let restore of restoreAll.faces) {
+   for (let restore of restoreAll.faces) {   // undo successfully
       this._createPolygon(restore.halfEdge, 4, restore.material, restore.polygon);
-      restore.polygon.setRestore(restore); 
    }
 };
 
