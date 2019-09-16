@@ -223,46 +223,54 @@ function runDialog(formID, ev, submitCallback, setup) {
    runDialogCenter(formID, submitCallback, setup, ev);
 };
 
-function runDialogCenter(formID, submitCallback, setup, _ev, reject) {
+let gOverlay;
+function runDialogCenter(formID, submitCallback, setup, _ev, notOk) {
    const form = document.querySelector(formID);
    if (form) {
-      const _pvt = {submitSuccess: false};
-      // create overlay
-      const overlay = document.createElement("div");
-      overlay.classList.add("overlay");
-      overlay.addEventListener('keydown', function(ev) { // prevent document handling hotkey.
-         ev.stopPropagation();
-       });
-      overlay.appendChild(form); 
+      // create overlay if not already
+      if (!gOverlay) {
+         gOverlay = document.createElement("div");
+         gOverlay.classList.add("overlay");
+         gOverlay.addEventListener('keydown', function(ev) { // prevent document handling hotkey.
+            ev.stopPropagation();
+         });
+      }
+ 
+      gOverlay.appendChild(form); 
       form.style.display = 'block';
       if (_ev) {
-         overlay.classList.add("realCenterModal");
+         gOverlay.classList.add("realCenterModal");
       } else {
-         overlay.classList.add("centerModal");
+         gOverlay.classList.add("centerModal");
       }
       form.reset();
       if (setup) {
          setup(form);
       }
+      document.body.appendChild(gOverlay);  
+
+      // handling event
+      const _pvt = {submitSuccess: false};
       // we need this because submit event won't tell which submit buttons we clicked.
       const submits = form.querySelectorAll('[type=submit]');
+      function handleOk(ev) {
+         _pvt.submitSuccess = true;
+         _pvt.button = this;
+      }
+      function handleCancel(ev) {
+         _pvt.submitSuccess = false;
+         _pvt.button = this;
+      }
+      const removeOk = [], removeCancel = [];
       for (let submit of submits) {
          if ('ok'.localeCompare(submit.value, 'en', {'sensitivity': 'base'}) == 0) {
-            submit.addEventListener('click', function oked(ev) {
-               _pvt.submitSuccess = true;
-               _pvt.button = this;
-               submit.removeEventListener('click', oked);
-            });
+            submit.addEventListener('click', handleOk);
+            removeOk.push(submit);
          } else { // all else, no, cancel
-            submit.addEventListener('click', function cancel(ev) {
-               _pvt.submitSuccess = false;
-               _pvt.button = this;
-               submit.removeEventListener('click', cancel);
-            });
+            submit.addEventListener('click', handleCancel);
+            removeCancel.push(submit);
          }
       }
-      document.body.appendChild(overlay);
-      
       // wait for handling event.
       form.addEventListener('submit', function submitted(ev) {
          // hide the dialog, prevent default.
@@ -270,13 +278,19 @@ function runDialogCenter(formID, submitCallback, setup, _ev, reject) {
          form.style.display = 'none';
          form.removeEventListener('submit', submitted);
          document.body.appendChild(form);
-         document.body.removeChild(overlay);
+         document.body.removeChild(gOverlay);
+         for (let submit of removeOk) {
+            submit.removeEventListener('click', handleOk);
+         }
+         for (let submit of removeCancel) {
+            submit.removeEventListener('click', handleCancel);
+         }
          // get form's input data.
          if (_pvt.submitSuccess) { 
             submitCallback(form, _pvt.button);     // ask function to extract element's value.
          } else {
-            if (reject) {
-               reject(form, _pvt.button);
+            if (notOk) {
+               notOk(form, _pvt.button);
             }
          }
       });
