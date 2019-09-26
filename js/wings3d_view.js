@@ -26,6 +26,7 @@ import * as TreeView from './wings3d_uitree.js';
 import { GenericEditCommand, ToggleCheckbox } from './wings3d_mads.js';
 import * as OpenSave from './wings3d_opensave.js'
 import { ImportExporter } from './wings3d_importexport.js';
+import { STLImportExporter } from './plugins/stl.js';
 
 
 // 
@@ -1246,6 +1247,7 @@ function init() {
 
    // import/export
    ImportExporter.addLoadStore( new WavefrontObjImportExporter() );
+   ImportExporter.addLoadStore( new STLImportExporter() );
    let X3d = new X3dImportExporter();
    ImportExporter.setDefault(X3d);
    // clearNew
