@@ -30,9 +30,10 @@ class STLImportExporter extends ImportExporter {
       const reader = new DataView(data);
       if (this._isBinary(reader)) {
          // binary .stl
-         let mesh = this._parseBinary(data);
-         if (mesh) {
-             this.objs.push(mesh);
+         const cage = this._parseBinary(reader);
+         if (cage) {
+            cage.name = 'stlmesh';  // probably should get it from filename?
+            this.objs.push(cage);
          }
       } else { // ASCII .stl, convert to string
          const decoder = new TextDecoder();  // default is 'utf-8'
@@ -47,7 +48,7 @@ class STLImportExporter extends ImportExporter {
                console.log(`Error in STL, solid ${meshName} != endsolid ${meshNameFromEnd}`);
             }
             // stl mesh name can be empty as well
-            let cage = this._parseASCII(matches[2]);
+            const cage = this._parseASCII(matches[2]);
             if (cage) {
                cage.name = meshName || "stlmesh";     // stl mesh name can be empty as well
                this.objs.push(cage);
@@ -95,16 +96,15 @@ class STLImportExporter extends ImportExporter {
       const indices = [0, 1, 2];
       let index = 0;
       // we are only interest in vertex, and since everything is triangle, we can just ignore facet, outerloop. we compute our own normal.
-      let vertexPattern = /vertex(?:\s+(.+))$/gm; // /vertex([\s\S]*?)/gm;
+      let vertexPattern = /vertex(?:\s+(.+))$/gm;
       let line;
       while (line = vertexPattern.exec(solidData)) {
          let vertex = line[1].match(/\S+/g).map(Number);   // get [x,y,z]
          let test = vertex.join();
          let pos = vertices.get(test);
          if (pos === undefined) {  // add to position if unique.
-            pos = vertices.size;
+            pos = this.obj.addVertex(vertex).index;   // z-up? todo: configurable options.
             vertices.set(test, pos);
-            this.obj.addVertex(vertex);   // z-up? todo: configurable options.
          }
          indices[index++] = pos;
          if (index >= 3) { // ok, now we have triangle
@@ -118,8 +118,38 @@ class STLImportExporter extends ImportExporter {
       return this.objView;
    }
 
-   _parseBinary(solidData) {
+   /**
+    * 
+    * @param {*} reader - pass in blobReader 
+    */
+   _parseBinary(reader) {
+      this.objView = View.putIntoWorld();
+      this.obj = this.objView.geometry;
 
+      const vertices = new Map;
+      const faces = reader.getUint32(80, true);
+      const dataOffset = 84;
+      const faceLength = 12 * 4 + 2;
+      let indices = [0, 0, 0];
+      for (let face = 0; face < faces; face++) {
+          let vertexStart = dataOffset + face * faceLength + 12;
+          for (let i = 0; i < 3; i++, vertexStart+=12) {
+             // z-up? todo: configurable options.
+            const vertex = [reader.getFloat32(vertexStart, true), reader.getFloat32(vertexStart + 4, true), reader.getFloat32(vertexStart + 8, true)];
+            const test = vertex.join();
+            let pos = vertices.get(test);
+            if (pos === undefined) {  // add to position if unique.
+               pos = this.obj.addVertex(vertex).index;
+               vertices.set(test, pos); 
+            }
+            indices[i] = pos;
+          }
+          this.obj.addPolygon(indices);
+      }
+      // ok, done. now return
+      this.obj.clearAffected();
+
+      return this.objView;
    }
 }
 
