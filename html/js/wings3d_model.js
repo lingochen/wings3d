@@ -855,7 +855,7 @@ PreviewCage.prototype.changeFromVertexToFaceSelect = function() {
    for (let vertex of oldSelected.vertices) { 
       // select all face that is connected to the vertex.
       vertex.eachOutEdge(function(edge) {
-         if (!self.selectedSet.has(edge.face)) {
+         if (edge.face && !self.selectedSet.has(edge.face)) {
             self.selectFace(edge.face);
          }
       });
@@ -1463,7 +1463,7 @@ PreviewCage.prototype.changeFromEdgeToFaceSelect = function() {
    for (let wingedEdge of oldSelected.wingedEdges) {
       // for each WingedEdge, select both it face.
       for (let halfEdge of wingedEdge) {
-         if (!this.selectedSet.has(halfEdge.face)) {
+         if (halfEdge.face && !this.selectedSet.has(halfEdge.face)) {
             this.selectFace(halfEdge.face);
          }
       }
