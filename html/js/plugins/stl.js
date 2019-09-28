@@ -64,14 +64,14 @@ class STLImportExporter extends ImportExporter {
     * https://stackoverflow.com/questions/26171521/verifying-that-an-stl-file-is-ascii-or-binary
     */
    _isBinary(reader) {
-      const check = "solid ";
+      /*const check = "solid ";
       let i = 0;
       for (; i < check.length; i++) {
          if (reader.getUint8(i) !== check[i]) {
             break; 
          }
-      }
-      if (i < check.length) { // yep, not ASCII 
+      }*/
+      //if (i < check.length) { // yep, not ASCII 
          // check if file size is correct for binary stl
          const faceSize = (32 / 8 * 3) + ((32 / 8 * 3) * 3) + (16 / 8);
          const nTriangles = reader.getUint32(80, true);
@@ -79,7 +79,7 @@ class STLImportExporter extends ImportExporter {
          if (80 + (32 / 8) + (nTriangles * faceSize) === fileLength) {
             return true;
          }
-      }
+      //}
       // not binary, let ASCII handle it.
       return false;
    }
@@ -100,6 +100,7 @@ class STLImportExporter extends ImportExporter {
       let line;
       while (line = vertexPattern.exec(solidData)) {
          let vertex = line[1].match(/\S+/g).map(Number);   // get [x,y,z]
+         // get all the line,
          let test = vertex.join();
          let pos = vertices.get(test);
          if (pos === undefined) {  // add to position if unique.
