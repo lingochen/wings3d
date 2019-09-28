@@ -61,7 +61,9 @@ const WingedEdge = function(orgVert, toVert, index) {
    HalfEdge.index.set(i+1, idx);
    HalfEdge.index.set(i+5, idx+1);
    HalfEdge.triangleList.set(idx*3, idx);
+   HalfEdge.triangleList.set(idx*3+2, idx);  // center point to self for null face
    HalfEdge.triangleList.set((idx+1)*3, idx+1);
+   HalfEdge.triangleList.set((idx+1)*3+2, idx+1);  // center point to self for null face
 };
 WingedEdge.index = null;   // (vertex, index, barycentric)
 WingedEdge.state = null;
@@ -730,7 +732,7 @@ const Polygon = function(startEdge, size, material=Material.default) {
    this.assignMaterial(material);
    this.update(); //this.computeNormal();
    this._setColor(HalfEdge.WHITE);
-   Polygon.centerIndex.alloc();                    // (vIdx, hIdx, face, group) (vIdx is negative number)
+   Polygon.centerIndex.alloc();                    // (vIdx, hIdx, face, group) (hIdx is negative number)
    const i = this.index * 4;
    Polygon.centerIndex.set(i, this.index);
    Polygon.centerIndex.set(i+1, -this.index - 1);  // fakeHalf edge is all -1
