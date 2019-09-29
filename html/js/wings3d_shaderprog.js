@@ -426,7 +426,7 @@ let wireframeLine = {   // http://codeflow.org/entries/2012/aug/02/easy-wirefram
 Wings3D.onReady(function() {
    const index2TexCoord = 
      `vec2 index2TexCoord(float index, float height) {
-         return vec2( mod(index, float(${gl.textureSize})) / float(${gl.textureSize}), (index/float(${gl.textureSize})) / height);
+         return vec2( mod(index, float(${gl.textureSize})) / float(${gl.textureSize}), floor(index/float(${gl.textureSize})) / height);
       }
    `;
    const materialIndex =

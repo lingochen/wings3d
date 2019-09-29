@@ -44,7 +44,7 @@ function createWebGLContext(canvasID, attrib) {
             return null;
          }
          // get textureSize
-         gl.textureSize = 1024; //gl.getParameter(gl.MAX_TEXTURE_SIZE);
+         gl.textureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
          console.log("WebGL 1 init with extension");
       } else {
          alert("Unable to initialize WebGL");
