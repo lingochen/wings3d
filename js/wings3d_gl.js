@@ -447,7 +447,7 @@ SamplerBuffer.prototype.bufferSubData = function(formatOffset, buffer, srcOffset
       width = formatLength;
       buffer = buffer.subarray(srcOffset, srcOffset+length);
    } else { // big rectangle.
-      buffer = buffer.subarray(yOffset*width, yEnd*width);
+      buffer = buffer.subarray(yOffset*width*this.formatChannel, yEnd*width*this.formatChannel);
    }
    // update subData rectangle.
    gl.bindTexture(gl.TEXTURE_2D, this.handle);
