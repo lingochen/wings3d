@@ -230,6 +230,10 @@ function renderMiniAxis(gl, inModelView) {
 // recompute groundplanegrid, given the size of grid. size is mutiple of GROUND_GRID_SIZE. default
 // GROUND_GRID_SIZE=1, so size=10, grid is 10x10.
 function computeGroundGrid(size, gridSize) {
+   let w = Math.min(gl.canvas.clientWidth, gl.canvas.clientHeight);
+   if (size*16 > w) {
+      gridSize *= (size*16) / w;
+   }
    var data = [];
    for (var xz= size; xz > 0; xz-=gridSize) {
       data = data.concat([xz, 0.0, size], [xz, 0.0, -size],
