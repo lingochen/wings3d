@@ -44,7 +44,7 @@ function createWebGLContext(canvasID, attrib) {
             return null;
          }
          // get textureSize
-         gl.textureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
+         gl.textureSize = 1024; //gl.getParameter(gl.MAX_TEXTURE_SIZE);
          console.log("WebGL 1 init with extension");
       } else {
          alert("Unable to initialize WebGL");
@@ -54,7 +54,8 @@ function createWebGLContext(canvasID, attrib) {
 //      console.log("WebGL 2 init successful");
 //   }
 
-
+   // set unpack alignment to 1; 2019-09-29: solve graphics problem.
+   gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
    // make sure webgl framebuffer size matched real canvas size.
    gl.resizeToDisplaySize = function() {
       var canvas = gl.canvas;
@@ -432,23 +433,28 @@ SamplerBuffer.prototype.bufferSubData = function(formatOffset, buffer, srcOffset
          end = Math.ceil(end/this.formatChannel) * this.formatChannel; 
          length = end - srcOffset;
       }
-      buffer = buffer.subarray(srcOffset, srcOffset+length);
    }
 
    // compute update rectangle.
    const formatLength = Math.ceil(length/this.formatChannel);
    const yOffset = Math.floor(formatOffset / gl.textureSize);
-   const yEnd = Math.floor((formatOffset+formatLength) / gl.textureSize);
-   const height = yEnd - yOffset + 1;
+   const yEnd = Math.ceil((formatOffset+formatLength) / gl.textureSize);
+   const height = yEnd - yOffset;
    let xOffset = 0;
    let width = gl.textureSize;
    if (height === 1) {  // optimize for 1 line.
       xOffset = formatOffset % gl.textureSize;
       width = formatLength;
+      buffer = buffer.subarray(srcOffset, srcOffset+length);
+   } else { // big rectangle.
+      buffer = buffer.subarray(yOffset*width, yEnd*width);
    }
    // update subData rectangle.
    gl.bindTexture(gl.TEXTURE_2D, this.handle);
    gl.texSubImage2D(gl.TEXTURE_2D, 0, xOffset, yOffset, width, height, this.format, this.type, buffer);
+   if (gl.getError() !== gl.NO_ERROR) {
+      console.log("error");
+   }
    // nomipmap
    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
