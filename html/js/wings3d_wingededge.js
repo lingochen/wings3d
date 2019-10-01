@@ -1352,6 +1352,24 @@ WingedTopology.prototype.setState = function(onOff, mask) {
    }
 };
 
+
+/**
+ * @param (stat) - {vertices, faces, edges, boundaryCount}. add up this.s count.
+ */
+WingedTopology.prototype.getStat = function(stat) {
+   for (let wEdge of this.edges) {
+      for (let hEdge of wEdge) {
+         if (hEdge.isBoundary()) {
+            ++stat.boundary;
+         }
+      }
+   }
+
+   stat.vertices += this.vertices.size;
+   stat.faces += this.faces.size;
+   stat.edges += this.edges.size;
+};
+
 /**
  * release all faces, edges, and vertices.
  * return all undo data so we can redo. 

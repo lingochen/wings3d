@@ -58,6 +58,12 @@ class ImportExporter {
          self._readAuxFiles();
          // finalized and update
          View.updateWorld();
+         // show import stat, # of vertex, edges, faces, and !!boundary edges!!
+         let stat = {vertices: 0, edges: 0, faces: 0, boundary: 0};
+         for (let cage of world) {
+            cage.geometry.getStat(stat);
+         }
+         geometryStatus(`${stat.vertices} vertices, ${stat.edges} edges, ${stat.faces} faces, ${stat.boundary} boundary`);
       }
 
       // non-blocking read.
