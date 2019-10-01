@@ -110,7 +110,9 @@ class STLImportExporter extends ImportExporter {
          indices[index++] = pos;
          if (index >= 3) { // ok, now we have triangle
             index = 0;
-            this.obj.addPolygon(indices);
+            if (!this.obj.addPolygon(indices)) {   // failed: non-manifold
+               this.non_manifold.push( indices.slice() );
+            }
          }
       }
       // ok, done. now return
@@ -133,9 +135,9 @@ class STLImportExporter extends ImportExporter {
       const faceLength = 12 * 4 + 2;
       let indices = [0, 0, 0];
       for (let face = 0; face < faces; face++) {
-          let vertexStart = dataOffset + face * faceLength + 12;
-          for (let i = 0; i < 3; i++, vertexStart+=12) {
-             // z-up? todo: configurable options.
+         let vertexStart = dataOffset + face * faceLength + 12;
+         for (let i = 0; i < 3; i++, vertexStart+=12) {
+            // z-up? todo: configurable options.
             const vertex = [reader.getFloat32(vertexStart, true), reader.getFloat32(vertexStart + 4, true), reader.getFloat32(vertexStart + 8, true)];
             const test = vertex.join();
             let pos = vertices.get(test);
@@ -144,8 +146,10 @@ class STLImportExporter extends ImportExporter {
                vertices.set(test, pos); 
             }
             indices[i] = pos;
-          }
-          this.obj.addPolygon(indices);
+         }
+         if (!this.obj.addPolygon(indices)) {
+            this.non_manifold.push( indices.slice() );
+         }
       }
       // ok, done. now return
       this.obj.clearAffected();

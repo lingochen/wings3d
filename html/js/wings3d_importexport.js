@@ -63,7 +63,7 @@ class ImportExporter {
          for (let cage of world) {
             cage.geometry.getStat(stat);
          }
-         geometryStatus(`${stat.vertices} vertices, ${stat.edges} edges, ${stat.faces} faces, ${stat.boundary} boundary`);
+         geometryStatus(`${stat.vertices} vertices, ${stat.edges} edges, ${stat.faces} faces, ${stat.boundary} boundary, ${self.non_manifold.length} non-manifold`);
       }
 
       // non-blocking read.
