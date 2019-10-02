@@ -100,6 +100,9 @@ class STLImportExporter extends ImportExporter {
       let line;
       while (line = vertexPattern.exec(solidData)) {
          let vertex = line[1].match(/\S+/g).map(Number);   // get [x,y,z]
+         let z = vertex[1];
+         vertex[1] = vertex[2];
+         vertex[2] = -z;
          // get all the line,
          let test = vertex.join();
          let pos = vertices.get(test);
@@ -138,7 +141,8 @@ class STLImportExporter extends ImportExporter {
          let vertexStart = dataOffset + face * faceLength + 12;
          for (let i = 0; i < 3; i++, vertexStart+=12) {
             // z-up? todo: configurable options.
-            const vertex = [reader.getFloat32(vertexStart, true), reader.getFloat32(vertexStart + 4, true), reader.getFloat32(vertexStart + 8, true)];
+            const vertex = [reader.getFloat32(vertexStart, true), reader.getFloat32(vertexStart + 8, true), -reader.getFloat32(vertexStart + 4, true)];
+            
             const test = vertex.join();
             let pos = vertices.get(test);
             if (pos === undefined) {  // add to position if unique.
