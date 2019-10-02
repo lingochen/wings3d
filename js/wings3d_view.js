@@ -876,6 +876,37 @@ function canvasHandleWheel(e) {
 };
 
 //-- end of mouse handling-----------------------------------------------
+//-- handle Camera pan by keyboard -------------------------------------
+
+function canvasHandleKeyDown(evt) {
+   if (evt.defaultPrevented) {
+      return;
+   }
+   switch (evt.key) {
+      case "Down": // IE/Edge specific value
+      case "ArrowDown":
+        Camera.keyPanDownArrow();
+        break;
+      case "Up": // IE/Edge specific value
+      case "ArrowUp":
+        Camera.keyPanUpArrow();
+        break;
+      case "Left": // IE/Edge specific value
+      case "ArrowLeft":
+        Camera.keyPanLeftArrow();
+        break;
+      case "Right": // IE/Edge specific value
+      case "ArrowRight":
+        Camera.keyPanRightArrow();
+        break;
+      default:
+        return; // Quit when this doesn't handle the key event.
+    }   
+
+   evt.preventDefault();
+};
+
+//-- end of camera handling ------------------------------------------
 
 
 //
@@ -1230,6 +1261,10 @@ function init() {
    gl.canvas.addEventListener("mouseleave", canvasHandleMouseLeave, false);
    gl.canvas.addEventListener("mousemove", canvasHandleMouseMove, false);
    gl.canvas.addEventListener("wheel", canvasHandleWheel, false);
+   // capture keydown
+   gl.canvas.addEventListener("mouseover", function(evt) { gl.canvas.focus(); });
+   gl.canvas.addEventListener("mouseout", function(evt) {gl.canvas.blur(); });
+   gl.canvas.addEventListener("keydown", canvasHandleKeyDown, false);
    // bind context-menu
    let createObjectContextMenu = {menu: document.querySelector('#create-context-menu')};
    gl.canvas.addEventListener("contextmenu", function(e) {
