@@ -270,7 +270,7 @@ class FaceMadsor extends Madsor {
          redoFn = View.restoreMultiMode;
          snapshots = this.snapshotSelected(PreviewCage.prototype.changeFromFaceToMultiSelect);
       }
-      View.undoQueue(new ToggleModeCommand(redoFn, View.restoreFaceMode, snapshots));
+      return new ToggleModeCommand(redoFn, View.restoreFaceMode, snapshots);
    }
 
    restoreMode(toMadsor, snapshots) {

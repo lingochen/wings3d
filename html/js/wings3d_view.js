@@ -240,49 +240,88 @@ function isMultiMode() {
    return mode.current === mode.multi;
 };
 function toggleVertexMode() {
-   // change current mode to 
-   if (mode.current !== mode.vertex) {
-      mode.current.toggleFunc(mode.vertex);
+   const cmd = _toggleVertexMode();
+   if (cmd) {
+      undoQueue(cmd);
+   }
+}
+function _toggleVertexMode() {
+   let cmd = null;
+   if (mode.current !== mode.vertex) { // change current mode to 
+      cmd = mode.current.toggleFunc(mode.vertex);
       mode.current = mode.vertex;
       toggleMode('Vertex');
       Renderer.needToRedraw();
    }
+   return cmd;
 };
 
 function toggleFaceMode() {
+   const cmd = _toggleFaceMode();
+   if (cmd) {
+      undoQueue(cmd);
+   }
+}
+function _toggleFaceMode() {
+   let cmd = null;
    if (mode.current !== mode.face) {
-      mode.current.toggleFunc(mode.face);
+      cmd = mode.current.toggleFunc(mode.face);
       mode.current = mode.face;
       toggleMode('Face');
       Renderer.needToRedraw();
    }
+   return cmd;
 };
 
 function toggleEdgeMode() {
+   const cmd = _toggleEdgeMode();
+   if (cmd) {
+      undoQueue(cmd);
+   }
+}
+function _toggleEdgeMode() {
+   let cmd = null;
    if (mode.current !== mode.edge) {
-      mode.current.toggleFunc(mode.edge);
+      cmd = mode.current.toggleFunc(mode.edge);
       mode.current = mode.edge;
       toggleMode('Edge');
       Renderer.needToRedraw();
    }
+   return cmd;
 };
 
 function toggleBodyMode() {
+   const cmd = _toggleBodyMode();
+   if (cmd) {
+      undoQueue(cmd);
+   }
+}
+function _toggleBodyMode() {
+   let cmd = null;
    if (mode.current !== mode.body) {
-      mode.current.toggleFunc(mode.body);
+      cmd = mode.current.toggleFunc(mode.body);
       mode.current = mode.body;
       toggleMode('Body');
       Renderer.needToRedraw();
    }
+   return cmd;
 };
 
 function toggleMultiMode() {
+   const cmd = _toggleMultiMode();
+   if (cmd) {
+      undoQueue(cmd);
+   }
+}
+function _toggleMultiMode() {
+   let cmd = null;
    if (mode.current !== mode.multi) {
-      mode.current.toggleFunc(mode.multi);
+      cmd = mode.current.toggleFunc(mode.multi);
       mode.current = mode.multi;
       toggleMode('Multi');
       Renderer.needToRedraw();
    }
+   return cmd;
 };
 
 function restoreVertexMode(snapshots) {
@@ -1371,10 +1410,15 @@ export {
    //world,   // we want iteration. can we share it?
    // function
    toggleVertexMode,
+   _toggleVertexMode,
    toggleFaceMode,
+   _toggleFaceMode,
    toggleEdgeMode,
+   _toggleEdgeMode,
    toggleBodyMode,
+   _toggleBodyMode,
    toggleMultiMode,
+   _toggleMultiMode,
    restoreVertexMode,
    restoreFaceMode,
    restoreEdgeMode,

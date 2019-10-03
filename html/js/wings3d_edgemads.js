@@ -7,7 +7,7 @@ import {Madsor, DragSelect, ToggleModeCommand, MoveAlongNormal, MoveBidirectionH
 import {FaceMadsor} from './wings3d_facemads.js';   // for switching
 import {BodyMadsor} from './wings3d_bodymads.js';
 import {VertexMadsor} from './wings3d_vertexmads.js';
-import {EditCommand, MoveableCommand} from './wings3d_undo.js';
+import {EditCommand, EditCommandCombo, MoveableCommand} from './wings3d_undo.js';
 import {PreviewCage} from './wings3d_model.js';
 import * as UI from './wings3d_ui.js';
 import * as View from './wings3d_view.js';
@@ -153,6 +153,21 @@ class EdgeMadsor extends Madsor {
             }
           });
       }
+      UI.bindMenuItem(action.edgeBoundary.name, (ev) => {
+         const cmd = View._toggleEdgeMode();
+         const boundary = new GenericEditCommand(this, this.edgeBoundary, null, this.undoDoSelection);
+         if (boundary.doIt()) {
+            if (cmd) {
+               View.undoQueue( new EditCommandCombo([cmd, boundary]));
+            } else {
+               View.undoQueue(boundary);
+            }
+         } else {
+            if (cmd) {
+               View.undoQueue(cmd);
+            }
+         }
+       });
    }
 
    // get selected Edge's vertex snapshot. for doing, and redo queue. 
@@ -231,6 +246,10 @@ class EdgeMadsor extends Madsor {
       return this.snapshotSelected(PreviewCage.prototype.cutEdge, numberOfSegments);
    }
 
+   edgeBoundary() {
+      return this.snapshotSelectable(PreviewCage.prototype.selectBoundaryEdge);
+   }
+
    edgeLoop(nth) {
       return this.snapshotSelected(PreviewCage.prototype.edgeLoop, nth);
    }
@@ -238,6 +257,7 @@ class EdgeMadsor extends Madsor {
    edgeRing(nth) {
       return this.snapshotSelected(PreviewCage.prototype.edgeRing, nth);
    }
+
    collapseEdge(snapshots) {  // undo of splitEdge.
       this.doAll(snapshots, PreviewCage.prototype.collapseSplitOrBevelEdge);
    }
@@ -326,7 +346,7 @@ class EdgeMadsor extends Madsor {
          redoFn = View.restoreMultiMode;
          snapshots = this.snapshotSelected(PreviewCage.prototype.changeFromEdgeToMultiSelect);   
       }
-      View.undoQueue(new ToggleModeCommand(redoFn, View.restoreEdgeMode, snapshots));
+      return new ToggleModeCommand(redoFn, View.restoreEdgeMode, snapshots);
    }
 
    restoreMode(toMadsor, snapshots) {
@@ -546,6 +566,7 @@ class EdgeCornerHandler extends MoveableCommand {
    }
 
 }
+
 
 export {
    EdgeMadsor,
