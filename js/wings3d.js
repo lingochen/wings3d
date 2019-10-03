@@ -310,6 +310,8 @@ const action = {
    edgeRing2: () => {notImplemented(this);},
    edgeRing3: () => {notImplemented(this);},
    edgeRingN: () => {notImplemented(this);},
+   byMenu: () => {notImplemented(this);},
+   edgeBoundary: () => {notImplemented(this);},
    //menu action
    bodyDelete: () => {notImplemented(this);},
    bodyRename: () => {notImplemented(this);},

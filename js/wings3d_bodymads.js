@@ -351,7 +351,7 @@ class BodyMadsor extends Madsor {
          redoFn = View.restoreMultiMode;
          snapshots = this.snapshotSelected(PreviewCage.prototype.changeFromBodyToMultiSelect);
       }
-      View.undoQueue(new ToggleModeCommand(redoFn, View.restoreBodyMode, snapshots));
+      return new ToggleModeCommand(redoFn, View.restoreBodyMode, snapshots);
    }
 
    restoreMode(toMadsor, snapshots) {

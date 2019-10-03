@@ -171,7 +171,7 @@ class VertexMadsor extends Madsor {
          redoFn = View.restoreMultiMode;
          snapshots = this.snapshotSelected(PreviewCage.prototype.changeFromVertexToMultiSelect);
       }
-      View.undoQueue( new ToggleModeCommand(redoFn, View.restoreVertexMode, snapshots) );
+      return new ToggleModeCommand(redoFn, View.restoreVertexMode, snapshots);
    }
 
 

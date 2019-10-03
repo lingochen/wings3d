@@ -1361,6 +1361,22 @@ PreviewCage.prototype.snapshotTransformVertexGroup = function() {
    return ret;
 };
 
+/**
+ * clear all selected edge, and select all edge that has boundary
+ */
+PreviewCage.prototype.selectBoundaryEdge = function() {
+   const snapshot = this._resetSelectEdge();
+   for (let wEdge of this.geometry.edges) {
+      for (let hEdge of wEdge) {
+         if (hEdge.isBoundary()) {
+            this.selectEdge(hEdge);
+            break;
+         }
+      }
+   }
+   return snapshot;
+};
+
 
 PreviewCage.prototype._resetSelectEdge = function() {
    const snapshot = this.snapshotSelectionEdge();
