@@ -1620,21 +1620,28 @@ WingedTopology.prototype.getExtent = function(min, max) {
 
 
 // return winged edge ptr because internal use only.
-WingedTopology.prototype.addEdge = function(begVert, endVert, delOutEdge) {
+WingedTopology.prototype.addEdge = function(begVert, endVert, prevHalf, nextHalf) {
    // what to do with loop edge?
    // what to do with parallel edge?
 
    // initialized data.
-   var edge = this._createEdge(begVert, endVert, delOutEdge).wingedEdge;
+   var edge = this._createEdge(begVert, endVert).wingedEdge;
 
    // Link outedge, splice if needed
-   if (!begVert.linkEdge(edge.left, edge.right)) {
+   if (prevHalf) {   // splice directly to prevHalf
+      edge.right.next = prevHalf.next;
+      prevHalf.next = edge.left;
+   } else if (!begVert.linkEdge(edge.left, edge.right)) {
       // release the edge
       this._freeEdge(edge.left);
       return null;
    }
    // Link inedge, splice if needed
-   if (!endVert.linkEdge(edge.right, edge.left)) {
+   /*if (nextHalf) {
+      const prev = nextHalf.prev();
+      edge.left.next = nextHalf
+      prev.next = edge.right;
+   } else*/ if (!endVert.linkEdge(edge.right, edge.left)) {
       begVert.unlinkEdge(edge.left, edge.right);
       // release the endge
       this._freeEdge(edge.right);
@@ -1645,23 +1652,26 @@ WingedTopology.prototype.addEdge = function(begVert, endVert, delOutEdge) {
    return edge.left;
 };
 
+/**
+ * search for free gap,
+ * http://kaba.hilvi.org/homepage/blog/halfedge/halfedge.htm
+ */
 WingedTopology.prototype.findFreeInEdge = function(inner_next, inner_prev) {
-   // inner_prev is guaranteed to be boundary, so if link correctly, should be 
+   const startingFrom = inner_next.pair;
+   const andBefore = inner_prev;
+   if (andBefore === startingFrom) {
+      console.log("WingedTopology.addFace.findFreeInEdge: patch re-linking failed");
+      return null;
+   }
 
-   // search a free gap, free gap will be between boundary_prev and boundary_next
-   var boundary_prev = inner_next.pair;
+   let current = startingFrom;
    do {
-      do {
-         boundary_prev = boundary_prev.next.pair;
-      } while (!boundary_prev.isBoundary());
+       if (current.isBoundary()) {
+           return current;
+       }
+       current = current.next.pair;
+   } while (current !== andBefore);
 
-      // ok ?
-      if (boundary_prev !== inner_prev) {
-         return boundary_prev;
-      }
-   } while (boundary_prev !== inner_next.pair);
-   
-   // check for bad connectivity. somewhere, there is no free inedge anywhere.
    console.log("WingedTopology.addFace.findFreeInEdge: patch re-linking failed");
    return null;
 };
@@ -1735,6 +1745,8 @@ WingedTopology.prototype._addPolygon = function(start, end, pts, material) {
       return -1;
    }
 
+   let prevHalf = null;
+   let nextHalf = null;
    var nextIndex = start;
    // builds WingEdge if not exist
    var halfLoop = [];
@@ -1744,13 +1756,14 @@ WingedTopology.prototype._addPolygon = function(start, end, pts, material) {
       nextIndex = i + 1;
       if (nextIndex === end) {
          nextIndex = start;
+         nextHalf = halfLoop[0];
       }
 
       var v0 = this.alloc.getVertices(pts[i]);
       var v1 = this.alloc.getVertices(pts[nextIndex]);
       var edge = this.findHalfEdge(v0, v1);
       if (edge === null) { // not found, create one
-         edge = this.addEdge(v0, v1);
+         edge = this.addEdge(v0, v1, prevHalf, nextHalf);
          if (edge === null) {
             this._unwindNewEdges(newEdges);
             return null;
@@ -1774,6 +1787,7 @@ WingedTopology.prototype._addPolygon = function(start, end, pts, material) {
          complex.add(edge.wingedEdge);
       }
 
+      prevHalf = edge;
       halfLoop.push( edge );
    }
 
