@@ -1659,18 +1659,15 @@ WingedTopology.prototype.addEdge = function(begVert, endVert, prevHalf, nextHalf
 WingedTopology.prototype.findFreeInEdge = function(inner_next, inner_prev) {
    const startingFrom = inner_next.pair;
    const andBefore = inner_prev;
-   if (andBefore === startingFrom) {
-      console.log("WingedTopology.addFace.findFreeInEdge: patch re-linking failed");
-      return null;
+   if (andBefore !== startingFrom) {
+      let current = startingFrom;
+      do {
+         if (current.isBoundary()) {
+            return current;
+         }
+         current = current.next.pair;
+      } while (current !== andBefore);
    }
-
-   let current = startingFrom;
-   do {
-       if (current.isBoundary()) {
-           return current;
-       }
-       current = current.next.pair;
-   } while (current !== andBefore);
 
    console.log("WingedTopology.addFace.findFreeInEdge: patch re-linking failed");
    return null;
