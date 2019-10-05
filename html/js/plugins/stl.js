@@ -3,8 +3,27 @@
 //
 //
 import {ImportExporter} from "../wings3d_importexport.js";
+import * as UI from "../wings3d_ui.js";
 import * as View from "../wings3d_view.js";
 
+function VerticesHelper(geometry, unify) {
+   if (unify) {
+      const vertices = new Map;
+      return (vertex) => {
+         let test = vertex.join();
+         let pos = vertices.get(test);
+         if (pos === undefined) {  // add to position if unique.
+            pos = geometry.addVertex(vertex).index;   // z-up? todo: configurable options.
+            vertices.set(test, pos);
+         }
+         return pos;
+      }
+   } else {
+      return (vertex) => {
+         return geometry.addVertex(vertex).index;
+      };
+   }
+}
 
 
 class STLImportExporter extends ImportExporter {
@@ -24,9 +43,26 @@ class STLImportExporter extends ImportExporter {
     * 
     * @param {*} data - arraybuffer
     */
-   _import(data) {   // 
-      this.objs = [];
+   async _import(data) {   //
+      // ask for unifying and z-up options first.
+      const [form, answer] = await UI.execDialog('#askStlDialog', (form)=>{
+         for (let [key, value] of Object.entries(STLImportExporter.options)) {
+            let element = form[key];
+            if (element) {
+               element.checked = value;
+            }
+         }
+       });
+      if (answer.value === "ok") {  // get setting.
+         for (let [key, _value] of Object.entries(STLImportExporter.options)) {
+            let element = form[key];
+            if (element) {
+               STLImportExporter.options[key] = element.checked;
+            }
+         }
+      }
 
+      this.objs = [];
       const reader = new DataView(data);
       if (this._isBinary(reader)) {
          // binary .stl
@@ -84,6 +120,14 @@ class STLImportExporter extends ImportExporter {
       return false;
    }
 
+   _addVertex(vertex) {
+      if (STLImportExporter.options.unify) {
+
+      } else {
+         return this.obj.addVertex(vertex).index;
+      }
+   }
+
    /**
     * 
     * @param {*} solidData - a PreviewCage of triangle soup.
@@ -92,7 +136,7 @@ class STLImportExporter extends ImportExporter {
       this.objView = View.putIntoWorld();
       this.obj = this.objView.geometry;
 
-      const vertices = new Map;
+      const addVertex = VerticesHelper(this.obj, STLImportExporter.options.unify);
       const indices = [0, 1, 2];
       let index = 0;
       // we are only interest in vertex, and since everything is triangle, we can just ignore facet, outerloop. we compute our own normal.
@@ -100,17 +144,13 @@ class STLImportExporter extends ImportExporter {
       let line;
       while (line = vertexPattern.exec(solidData)) {
          let vertex = line[1].match(/\S+/g).map(Number);   // get [x,y,z]
-         let z = vertex[1];
-         vertex[1] = vertex[2];
-         vertex[2] = -z;
-         // get all the line,
-         let test = vertex.join();
-         let pos = vertices.get(test);
-         if (pos === undefined) {  // add to position if unique.
-            pos = this.obj.addVertex(vertex).index;   // z-up? todo: configurable options.
-            vertices.set(test, pos);
+         if (STLImportExporter.options.zup) {
+            let z = vertex[1];
+            vertex[1] = vertex[2];
+            vertex[2] = -z;
          }
-         indices[index++] = pos;
+         // addVertex and build index 
+         indices[index++] = addVertex(vertex);
          if (index >= 3) { // ok, now we have triangle
             index = 0;
             if (!this.obj.addPolygon(indices)) {   // failed: non-manifold
@@ -132,24 +172,24 @@ class STLImportExporter extends ImportExporter {
       this.objView = View.putIntoWorld();
       this.obj = this.objView.geometry;
 
-      const vertices = new Map;
+      const addVertex = VerticesHelper(this.obj, STLImportExporter.options.unify);
       const faces = reader.getUint32(80, true);
       const dataOffset = 84;
       const faceLength = 12 * 4 + 2;
       let indices = [0, 0, 0];
+      const vertex = [0, 0, 0];
       for (let face = 0; face < faces; face++) {
          let vertexStart = dataOffset + face * faceLength + 12;
          for (let i = 0; i < 3; i++, vertexStart+=12) {
-            // z-up? todo: configurable options.
-            const vertex = [reader.getFloat32(vertexStart, true), reader.getFloat32(vertexStart + 8, true), -reader.getFloat32(vertexStart + 4, true)];
-            
-            const test = vertex.join();
-            let pos = vertices.get(test);
-            if (pos === undefined) {  // add to position if unique.
-               pos = this.obj.addVertex(vertex).index;
-               vertices.set(test, pos); 
+            vertex[0] = reader.getFloat32(vertexStart, true);
+            if (STLImportExporter.options.zup) {
+               vertex[1] = reader.getFloat32(vertexStart + 8, true);
+               vertex[2] = -reader.getFloat32(vertexStart + 4, true);
+            } else {
+               vertex[1] = reader.getFloat32(vertexStart + 4, true);
+               vertex[2] = reader.getFloat32(vertexStart + 8, true);
             }
-            indices[i] = pos;
+            indices[i] = addVertex(vertex);
          }
          if (!this.obj.addPolygon(indices)) {
             this.non_manifold.push( indices.slice() );
@@ -161,6 +201,7 @@ class STLImportExporter extends ImportExporter {
       return this.objView;
    }
 }
+STLImportExporter.options = {unify: true, zup: true};
 
 export {
    STLImportExporter
