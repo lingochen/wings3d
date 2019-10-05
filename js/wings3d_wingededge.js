@@ -1126,6 +1126,9 @@ MeshAllocator.prototype.allocEdge = function(begVert, endVert, delOutEdge) {
 // todo: ?binary search for delPolygon, then use splice. a win? for large freelist yes, but, I don't think it a common situation.
 MeshAllocator.prototype.allocPolygon = function(halfEdge, numberOfVertex, material, delPolygon) {
    let polygon;
+   if (!material) {
+      material = Material.default;
+   }
    if (this.free.faces.length > 0) {
       if (typeof delPolygon !== 'undefined') {
          const index = delPolygon.index;   // remove delOutEdge from freeEdges list
