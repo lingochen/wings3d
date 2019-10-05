@@ -125,7 +125,7 @@ Material.prototype.updateGUI = function() {
  * convert rgb to luminance
  */
 Material.luminance = function(rgb) {
-   return (rgb[0] * 0.2125) + (rgb[1] * 0.7154) + (rbg[2] * 0.0721);
+   return (rgb[0] * 0.2125) + (rgb[1] * 0.7154) + (rgb[2] * 0.0721);
 }
 
 /**
@@ -135,7 +135,7 @@ Material.luminance = function(rgb) {
  */
 Material.convertTraditionalToMetallicRoughness = function(material) {
 
-   const specularIntensity = luminance(material.specularMaterial);
+   const specularIntensity = Material.luminance(material.specularMaterial);
    let roughnessFactor = 1.0 - material.shininessMaterial;
    
    // Low specular intensity values should produce a rough material even if shininess is high.

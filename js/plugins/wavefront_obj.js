@@ -214,6 +214,7 @@ class WavefrontMtlImportExporter extends ImportExporter {
    constructor() {
       //super('Wavefront (.mtl)...', 'Wavefront (.mtl)...');
       super(null, null);
+      this.library = new Map;
    }
 
    extension() {
@@ -235,8 +236,16 @@ class WavefrontMtlImportExporter extends ImportExporter {
             let tag = line[0];
             this[tag](line);
          }
+         // now copy the library to catalog
+         for (let [name, material] of this.library) {
+            const pbr = this.catalog.get(name);
+            if (pbr) {
+               pbr.pbr = Material.convertTraditionalToMetallicRoughness(material);
+            }
+         }
+
          // done reading, return the object.
-         return {world: this.objs, material: this.material};    
+         return {}; //{world: this.objs, material: this.material};    
       } 
    }
 
@@ -246,14 +255,12 @@ class WavefrontMtlImportExporter extends ImportExporter {
     */
    newmtl(array) {
       const materialName = array[1];
-      this.currentMaterial = null;
-      if (this.catalog) {
-         this.currentMaterial = this.catalog.get(materialName); // get material by name.
-      }
-      if (!this.currentMaterial) {  // set, or reset material
-         this.currentMaterial = Material.create(materialName);
-         this.materialCatalog.set(materialName, this.currentMaterial);
-      }
+      this.currentMaterial = {diffuseMaterial: [0.78, 0.81, 0.69], //Util.hexToRGB("#C9CFB1"),    // color, old style to be deleted.
+                              ambientMaterial: [0.78, 0.81, 0.69], //Util.hexToRGB("#C9CFB1"),    // color
+                              specularMaterial: [0, 0, 0],   // color
+                              emissionMaterial: [0, 0, 0],   // color
+                             };
+      this.library.set(materialName, this.currentMaterial);
    }
 
    /**
@@ -266,11 +273,11 @@ class WavefrontMtlImportExporter extends ImportExporter {
    }
 
    Ka(ambient) {
-      this.currentMaterial.material.ambientMaterial = this._parseRGB(ambient);
+      this.currentMaterial.ambientMaterial = this._parseRGB(ambient);
    }
 
    Kd(diffuse) {
-      this.currentMaterial.setDiffuse(this._parseRGB(diffuse));
+      this.currentMaterial.diffuseMaterial = this._parseRGB(diffuse);
    }
 
    /**
@@ -278,7 +285,7 @@ class WavefrontMtlImportExporter extends ImportExporter {
     * @param {*} specular - rgb color is floating point.
     */
    Ks(specular) {
-      this.currentMaterial.material.specularMaterial = this._parseRGB(specular);
+      this.currentMaterial.specularMaterial = this._parseRGB(specular);
    }
 
    /**
@@ -287,7 +294,7 @@ class WavefrontMtlImportExporter extends ImportExporter {
     */
    Ns(exponent) {
       let shine = (parseFloat(exponent[1]) || 0.0) / 1000.0;
-      this.currentMaterial.material.shininessMaterial = Math.min(1.0, Math.max(0.0, shine))
+      this.currentMaterial.shininessMaterial = Math.min(1.0, Math.max(0.0, shine))
    }
 
    /**
@@ -295,7 +302,7 @@ class WavefrontMtlImportExporter extends ImportExporter {
     * @param {*} array 
     */
    d(opacity) {
-      this.currentMaterial.material.opacityMaterial = parseFloat(opacity[1]) || 1.0;
+      this.currentMaterial.opacityMaterial = parseFloat(opacity[1]) || 1.0;
    }
 
    /**
@@ -303,7 +310,7 @@ class WavefrontMtlImportExporter extends ImportExporter {
     * @param {*} array 
     */
    Tr(transparent) {
-      this.currentMaterial.material.opacityMaterial = 1 - (parseFloat(transparent[1]) || 0.0);
+      this.currentMaterial.opacityMaterial = 1 - (parseFloat(transparent[1]) || 0.0);
    }
 
    /**
