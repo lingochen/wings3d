@@ -36,9 +36,9 @@ class ImportExporter {
       const self = this;
       let reader = new FileReader;
       
-      reader.onload = function(ev) {
+      reader.onload = async function(ev) {
          const data = reader.result;
-         self._import(data);
+         await self._import(data);
          const world = self.objs;
          const cages = [];
          for (let cage of world) {
