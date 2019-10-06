@@ -184,7 +184,7 @@ WingedEdge.prototype.updateIndex = function(hEdge) {
    data[idx++] = this.index;
    data[idx++] = faceId;
    idx++;
-   data[idx++] = hEdge.next ? hEdge.next.destination().index : -1;
+   data[idx++] = hEdge.next ? (hEdge.next.destination() ? hEdge.next.destination().index : -1): -1;
    data[idx++] = (-this.index) - 1;    // -wEdge - 1. barycentric indication.
    data[idx]   =  faceId;
    
@@ -1189,6 +1189,8 @@ MeshAllocator.prototype.freeHEdge = function(edge) {
    // link together for a complete loop
    edge.next = pair;
    pair.next = edge;
+   edge.wingedEdge.updateIndex(edge);
+   pair.wingedEdge.updateIndex(pair);
    // assert !this.free.edges.has( edge.wingedEdge );
    //this.free.edges.push( edge.wingedEdge );
    this._insertFreeList(edge.wingedEdge.index, this.free.edges);
