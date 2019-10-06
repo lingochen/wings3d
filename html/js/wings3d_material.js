@@ -96,6 +96,12 @@ Material.prototype.setValues = function(inputDat) {
 };
 
 
+Material.prototype.setPBR = function(pbr) {
+   this.pbr = pbr;
+   this.setGPU();
+};
+
+
 Material.prototype.assigned = function() {
    ++this.usageCount;
    this.updateGUI();

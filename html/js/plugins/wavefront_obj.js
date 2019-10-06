@@ -240,7 +240,7 @@ class WavefrontMtlImportExporter extends ImportExporter {
          for (let [name, material] of this.library) {
             const pbr = this.catalog.get(name);
             if (pbr) {
-               pbr.pbr = Material.convertTraditionalToMetallicRoughness(material);
+               pbr.setPBR( Material.convertTraditionalToMetallicRoughness(material) );
             }
          }
 
