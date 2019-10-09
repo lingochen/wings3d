@@ -153,8 +153,11 @@ class STLImportExporter extends ImportExporter {
          indices[index++] = addVertex(vertex);
          if (index >= 3) { // ok, now we have triangle
             index = 0;
-            if (!this.obj.addPolygon(indices)) {   // failed: non-manifold
-               this.non_manifold.push( indices.slice() );
+            if (!this.obj.addPolygon(indices)) {   // failed: non-manifold, try reverse
+               [indices[0], indices[2]] = [indices[2], indices[0]];  // swap
+               if (!this.obj.addPolygon(indices)) {   // failed: non-manifold
+                  this.non_manifold.push( indices.slice() );
+               }
             }
          }
       }

@@ -153,6 +153,7 @@ class EdgeMadsor extends Madsor {
             }
           });
       }
+      // select boundary
       UI.bindMenuItem(action.edgeBoundary.name, (ev) => {
          const cmd = View._toggleEdgeMode();
          const boundary = new GenericEditCommand(this, this.edgeBoundary, null, this.undoDoSelection);
@@ -166,6 +167,13 @@ class EdgeMadsor extends Madsor {
             if (cmd) {
                View.undoQueue(cmd);
             }
+         }
+       });
+      // close crack. 
+      UI.bindMenuItem(action.closeCrack.name, (ev) => {
+         const close = new GenericEditCommand(this, this.closeCrack, null, this.undoCloseCrack);
+         if (close.doIt()) {
+            View.undoQueue(close);
          }
        });
    }
@@ -244,6 +252,10 @@ class EdgeMadsor extends Madsor {
 
    cut(numberOfSegments) {
       return this.snapshotSelected(PreviewCage.prototype.cutEdge, numberOfSegments);
+   }
+
+   closeCrack() {
+      return this.snapshotSelected(PreviewCage.prototype.closeCrack);
    }
 
    edgeBoundary() {

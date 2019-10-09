@@ -1361,6 +1361,74 @@ PreviewCage.prototype.snapshotTransformVertexGroup = function() {
    return ret;
 };
 
+
+/**
+ * get all selected boundary edges and check if the edges can be stich together.
+ */
+PreviewCage.prototype.closeCrack = function() {
+   const kTolerance = 0.001*2;
+   const rad2 = kTolerance*kTolerance;
+   function isOverlap(a, b) { // -1 meant no major axis intersection, 0 no intersection, 1 intersection
+      let x = b[0] - a[0];
+      x *= x;
+      if (x > rad2)  {
+         return -1;
+      }
+      let y = b[1] - a[1];
+      y *= y;
+      let z = b[2] - a[2];
+      z *= z;
+      if (rad2 > (x+y+z)) {
+         return 1;
+      }
+      return 0;   // no overlap
+   }
+
+   const snapshot = this._resetSelectEdge();
+   let vertices = new Set;
+   // min, max? and sort the maximum direction?
+   // check all selected edge is boundary edge then try to stitch.
+   for (let wEdge of snapshot.wingedEdges) {
+      if (wEdge.left.isBoundary() || wEdge.right.isBoundary()) {  // make sure it boundary
+         vertices.add(wEdge.left.origin);
+         vertices.add(wEdge.right.origin);
+      }
+   }
+   // sort
+   vertices = Array.from(vertices).sort(function(x,y) {
+      for (let i = 0; i < 3; ++i) { // todo: sort by major axis first
+         if (x[i] < y[i] ) {
+            return -1;
+         } else if (x[i] > y[i]) {
+            return 1;
+         }
+      }
+      return 0;// must be equal.
+    });
+   // prune and stitch
+   let target;
+   let merge = [];
+   while (target = vertices.pop()) {
+      // walk from back
+      for (let i = vertices.length-1; i >= 0; --i) {
+         let a = vertices[i];
+         let result = isOverlap(a, target);
+         if (result !== 0) {
+            if (result > 0) {
+               merge.push( this.geometry.stitchVertex(a, target) );
+               vertices.splice(i, 1);
+               continue;
+            }
+            // goto next pair.
+            break;
+         }
+      }
+   }
+
+   return snapshot;
+};
+
+
 /**
  * clear all selected edge, and select all edge that has boundary
  */

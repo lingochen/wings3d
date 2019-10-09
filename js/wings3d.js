@@ -312,6 +312,10 @@ const action = {
    edgeRingN: () => {notImplemented(this);},
    byMenu: () => {notImplemented(this);},
    edgeBoundary: () => {notImplemented(this);},
+   // tools menu
+   toolsMenu: () => {notImplemented(this);},
+   fixMeshMenu: () => {notImplemented(this);},
+   closeCrack: () => {notImplemented(this);},
    //menu action
    bodyDelete: () => {notImplemented(this);},
    bodyRename: () => {notImplemented(this);},

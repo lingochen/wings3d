@@ -156,8 +156,14 @@
           </li>
         </ul>
       </li>
-      <li>
-        <a data-i18n>Tools</a>
+      <li class="dropdown">
+        <a data-menuid="toolsMenu">Tools</a>
+        <ul class="popup menu">
+          <li class="dropside"><a data-menuid="fixMeshMenu">Fix Mesh</a>
+            <ul class="popup menu">
+            </ul>
+          </li>
+        </ul>
       </li>
       <li>
         <a data-i18n>Window</a>
@@ -465,6 +471,8 @@
       <li><a data-menuid="edgeLoopCut" data-i18n>Loop Cut</a></li>
       <li><hr /></li>
       <li><a data-menuid="edgeCorner" data-i18n>Corner</a></li>
+      <li><hr /></li>
+      <li><a data-menuid="closeCrack">Close Crack</a></li>
     </ul>
     <ul id="face-context-menu" class="context-menu popup menu">
       <li class="dropside">
