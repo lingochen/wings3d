@@ -632,6 +632,23 @@ Vertex.prototype.findFreeInEdge = function() {
    });
 };
 
+/**
+ * return all freeInEdge. There could be more than one.
+ */
+Vertex.prototype.findFreeInEdgeAll = function() {
+   const ret = [];
+   const start = this.outEdge;
+   let current = start;
+   do {
+      if (current.pair.isBoundary()) {
+         ret.push( current.pair );
+      }
+      current = current.pair.next;
+   } while (current !== start);
+   return ret;
+};
+
+
 Vertex.prototype.linkEdge = function(outHalf, inHalf) { // left, right of winged edge.
    if (this.outEdge === null) { // isolated vertex.
       this.outEdge = outHalf;
@@ -2194,6 +2211,54 @@ WingedTopology.prototype.bevelEdge = function(wingedEdges) {   // wingedEdges(se
    // we needs faces, we needs
    return ret;
 };
+
+
+/**
+ * stitchVertex together
+ */
+WingedTopology.prototype.stitchVertex = function(a, b) {
+   // find free In for a, b,
+   let aGroup = a.findFreeInEdgeAll();
+   let bGroup = b.findFreeInEdgeAll();
+   if (aGroup.length !== 1 || bGroup.length !== 1) {  // the 2 vertex must have boundary to be stitch together,
+      return null;   // currently we only handle one boundary.
+   }
+   let aIn = aGroup[0];
+   let bIn = bGroup[0];
+
+   // return null, if a-b is connected.
+
+
+   // lift a's edges to b
+   const undo = {};
+   let aOut = aIn.next;
+   let bOut = bIn.next;
+   const start = aIn;
+   let current = start;
+   do {
+      current.pair.origin = b;
+      current = current.next.pair;
+   } while (current !== start);
+   // stitch and release vertex a
+   bIn.next = aOut;
+   aIn.next = bOut;
+   undo.aIn = aIn;
+   undo.bIn = bIn;
+   b.reorient();
+   undo.vertex = a;
+   this._freeVertex(a);
+
+   // collapse edge if the polygon hole is less then 3 edge.
+   if (aIn.next.next === aIn) {
+      undo.leftLoop = this._collapseLoop(aIn.next);
+   }
+   if (bIn.next.next === bIn) {
+      undo.rightLoop = this._collapseLoop(bIn.next);
+   }
+
+   return undo;
+};
+
 
 //
 // bevel Vertex. create new edge between each vertex's outEdge, which is n. will create (n-1) vertex, and one face, for each 
