@@ -10,7 +10,7 @@
 */
 "use strict";
 import {LooseOctree, Plane} from './wings3d_boundingvolume.js';
-import {WingedTopology} from './wings3d_wingededge.js';
+import {WingedTopology, Vertex} from './wings3d_wingededge.js';
 import {Material} from './wings3d_material.js';
 import * as View from './wings3d_view.js';
 import * as Wings3D from './wings3d.js';
@@ -1363,26 +1363,127 @@ PreviewCage.prototype.snapshotTransformVertexGroup = function() {
 
 
 /**
- * get all selected boundary edges and check if the edges can be stich together.
+ * get all selected boundary edges and repolygon the boundary edge
  */
 PreviewCage.prototype.closeCrack = function() {
-   const kTolerance = 0.001*2;
-   const rad2 = kTolerance*kTolerance;
-   function isOverlap(a, b) { // -1 meant no major axis intersection, 0 no intersection, 1 intersection
-      let x = b[0] - a[0];
-      x *= x;
-      if (x > rad2)  {
-         return -1;
+   const snapshot = this._resetSelectEdge();
+   let vertices = new Set;
+   let borderPoly = new Set;
+   // min, max? and sort the maximum direction?
+   // check all selected edge is boundary edge then try to stitch.
+   for (let wEdge of snapshot.wingedEdges) {
+      vertices.add(wEdge.left.origin);
+      vertices.add(wEdge.right.origin);
+      if (!wEdge.left.isBoundary()) {
+         borderPoly.add( wEdge.left.face );
+      } else {
+         // wEdge.right.isBoundary()) {  // make sure it boundary, check?
+         borderPoly.add( wEdge.right.face );
       }
-      let y = b[1] - a[1];
-      y *= y;
-      let z = b[2] - a[2];
-      z *= z;
-      if (rad2 > (x+y+z)) {
-         return 1;
-      }
-      return 0;   // no overlap
    }
+   // sort
+   vertices = Array.from(vertices).sort(function(x,y) {
+      for (let i = 0; i < 3; ++i) { // todo: sort by major axis first
+         if (x[i] < y[i] ) {
+            return -1;
+         } else if (x[i] > y[i]) {
+            return 1;
+         }
+      }
+      return 0;// must be equal.
+    });
+
+   const merged = new Map;
+   const remap = [];
+   // merge and catalog vertices
+   let target;
+   while (target = vertices.pop()) {
+      const targetRemap = {pt: [target[0], target[1], target[2]], count: 1, vert: target};
+      remap.push( targetRemap );
+      //merged.set(target.index, target);
+      for (let i = vertices.length-1; i >= 0; --i) {
+         const a = vertices[i];
+         const result = Vertex.isOverlap(a, target)
+         if (result > 0) {
+            merged.set(a.index, targetRemap);
+            vec3.add(targetRemap.pt, targetRemap.pt, a); // prepare to average it
+            targetRemap.count++;
+            vertices.splice(i, 1);
+         } else if (result < 0) {
+            break;
+         }
+      }
+   }
+
+   const newMesh = [];
+   // get the new vertices Index for all the border polygon
+   for (let polygon of borderPoly) {
+      let index = [];
+      for (let outEdge of polygon.hEdges()) {
+         let target = merged.get(outEdge.origin.index);
+         if (target) {
+            index.push( target.vert.index );  // remap back 
+         } else {
+            index.push( outEdge.origin.index );
+         }
+      }
+      newMesh.push( index );
+   }
+   
+   const undo = {mesh: []};
+   // remove all border polygon,
+   undo.borderPolygon = this.makeHolesFromBB(borderPoly);
+
+   // adjust vertices and readd vertices if deleted
+   for (let i = 0; i < remap.length; ++i) {
+      const target = remap[i];
+      vec3.scale(target.pt, target.pt, 1/target.count);
+      if (!target.vert.isLive()) {
+         this.geometry.addVertex(target.pt, target.vert);
+      }
+   }
+   // now readd all border polygon with merged vertices
+   for (let poly of newMesh) {
+      let face = this.geometry.addPolygon(poly);
+      undo.mesh.push( face );
+   }
+
+   return undo;
+};
+/*PreviewCage.prototype.closeCrack = function() {
+   function getFreeInEdgeAll(vertex) {   // remove boundary that already overlap self.
+      const group = vertex.findFreeInEdgeAll();
+      const ret = [];
+      for (const inEdge of group) {   // check inEdge not overlap with outEdge
+         const outEdge = inEdge.next;
+         if (Vertex.isOverlap(inEdge.origin, outEdge.destination()) <= 0) {
+            ret.push(inEdge);
+         }
+      }
+      // split into free edge group.
+      if (ret.length > 1) {
+         const firstOut = ret[0].next;
+         for (let i = 0; i < ret.length; ++i) {
+            let j = (i+1)%ret.length;
+            if (j===0) {
+               ret[i].next = firstOut;
+            } else {
+               ret[i].next = ret[j].next;
+            }
+         }
+      }
+      return ret;
+   };
+   function restoreFreeEdgeAll(group) {
+      let target;
+      while (target = group.pop()) {
+         if (group.length > 0) {
+            let out = group[group.length-1].next;
+            group[group.length-1].next = target.next;
+            target.next = out;
+         }
+      }
+   };
 
    const snapshot = this._resetSelectEdge();
    let vertices = new Set;
@@ -1410,23 +1511,57 @@ PreviewCage.prototype.closeCrack = function() {
    let merge = [];
    while (target = vertices.pop()) {
       // walk from back
+      let bGroup = getFreeInEdgeAll(target); // split to free Edge group
       for (let i = vertices.length-1; i >= 0; --i) {
          let a = vertices[i];
-         let result = isOverlap(a, target);
+         let result = Vertex.isOverlap(a, target);
          if (result !== 0) {
             if (result > 0) {
-               merge.push( this.geometry.stitchVertex(a, target) );
-               vertices.splice(i, 1);
-               continue;
+               let aGroup = getFreeInEdgeAll(a);   // split to free edge group.
+               if (aGroup.length > 0 && bGroup.length > 0) {
+                  let undo = this.geometry.stitchVertex(aGroup, bGroup);
+                  if (undo) {
+                     merge.push( undo  );
+                  }
+               }
+               // restore aGroup's connection.
+               if (aGroup.length>0){
+                  restoreFreeEdgeAll(aGroup);
+                  a.reorient();
+               } else {
+                  vertices.splice(i, 1);
+               }
+               continue;   // try if anymore vertices to merge for target.
             }
-            // goto next pair.
+            // nay, looking for new vertices and restore vertex connection
+            restoreFreeEdgeAll(bGroup);
+            target.reorient();
             break;
          }
       }
+      // restore current bGroup connection.
+   }   
+   //this._updatePreviewAll();
+   // now collapse loop.
+   let count = 0;
+   for (let wEdge of snapshot.wingedEdges) {
+      if (wEdge.isLive()) {
+         if (wEdge.left.isBoundary()) {
+            if (wEdge.left.next.next === wEdge.left) {
+               this.geometry._collapseLoop(wEdge.left);
+               count++;
+            }
+         } else if (wEdge.right.isBoundary()) {
+            if (wEdge.right.next.next === wEdge.right) {
+               this.geometry._collapseLoop(wEdge.right);
+               count++;
+            }
+         }
+      }
    }
-
+   this._updatePreviewAll();
    return snapshot;
-};
+};*/
 
 
 /**
@@ -3668,7 +3803,9 @@ PreviewCage.prototype.makeHolesFromBB = function(selection) {
    const restore = [];
    for (let spherePolygon of selection) {
       this.selectedSet.delete(spherePolygon);              // remove from selection. also selection off(not done)?
-      restore.unshift( this.geometry.makeHole(spherePolygon) );  // restore has to be done in reverse
+      if (spherePolygon.isLive()) { // 2019-10-15, guard for dead polygon by previous makeHole.
+         restore.unshift( this.geometry.makeHole(spherePolygon) );  // restore has to be done in reverse
+      }
    }
    return restore;
 };
