@@ -421,6 +421,27 @@ const Vertex = function(index) {
 Vertex.index = null;  // (vIndex, state, group) - map together. (how about webgl2?)
 Vertex.position = null;
 
+/** 
+ *  -1 meant no major axis intersection, 0 no intersection, 1 intersection
+ */
+Vertex.isOverlap = function(a, b) {
+   const kTolerance = 0.001*2;
+   const rad2 = kTolerance*kTolerance;
+   
+   let x = b[0] - a[0];
+   x *= x;
+   if (x > rad2)  {
+      return -1;
+   }
+   let y = b[1] - a[1];
+   y *= y;
+   let z = b[2] - a[2];
+   z *= z;
+   if (rad2 > (x+y+z)) {
+      return 1;
+   }
+   return 0;   // no overlap
+}
 
 Object.defineProperty(Vertex.prototype, 'index', {
    get: function() {
@@ -558,8 +579,9 @@ Vertex.prototype.edgeRing = function* (start) {
    }
    let current = start;
    do {
+      let next = current.pair.next;
       yield current;
-      current = current.pair.next;
+      current = next;
    } while(current !== start);
 };
 
@@ -1622,6 +1644,7 @@ WingedTopology.prototype._freePolygon = function(polygon) {
       this.alloc.freePolygon(polygon);
       return delPolygon;   // could be reused, so we have to save polygon and it material.
    }
+   return polygon;
 };
 
 
@@ -2213,50 +2236,103 @@ WingedTopology.prototype.bevelEdge = function(wingedEdges) {   // wingedEdges(se
 };
 
 
+
 /**
- * stitchVertex together
+ * stitchVertex together, aGroup will attach to bGroup
+ * @{param} aGroup - 
  */
-WingedTopology.prototype.stitchVertex = function(a, b) {
-   // find free In for a, b,
-   let aGroup = a.findFreeInEdgeAll();
-   let bGroup = b.findFreeInEdgeAll();
-   if (aGroup.length !== 1 || bGroup.length !== 1) {  // the 2 vertex must have boundary to be stitch together,
-      return null;   // currently we only handle one boundary.
-   }
-   let aIn = aGroup[0];
-   let bIn = bGroup[0];
-
-   // return null, if a-b is connected.
-
-
+WingedTopology.prototype._simpleStitch = function(aIn, aOut, bIn, bOut) {
+   //const a = aOut.origin;
+   const b = bOut.origin;
+   
    // lift a's edges to b
-   const undo = {};
-   let aOut = aIn.next;
-   let bOut = bIn.next;
-   const start = aIn;
-   let current = start;
+   const end = aIn.next;
+   let current = aOut;
    do {
-      current.pair.origin = b;
-      current = current.next.pair;
-   } while (current !== start);
+      current.origin = b;
+      current = current.pair.next;
+   } while (current !== end);
    // stitch and release vertex a
    bIn.next = aOut;
    aIn.next = bOut;
-   undo.aIn = aIn;
-   undo.bIn = bIn;
-   b.reorient();
-   undo.vertex = a;
-   this._freeVertex(a);
-
-   // collapse edge if the polygon hole is less then 3 edge.
-   if (aIn.next.next === aIn) {
-      undo.leftLoop = this._collapseLoop(aIn.next);
+};
+WingedTopology.prototype.stitchVertex = function(aGroup, bGroup) {
+   const a = aGroup[0].destination();
+   if (a.index === 1093) {
+      console.log("impossible");
    }
-   if (bIn.next.next === bIn) {
-      undo.rightLoop = this._collapseLoop(bIn.next);
+   //const b = bGroup[0].destination();
+   const undo = {stitch: []};
+   // try to stich a to b
+   let count = 0;
+   let stitch = false;
+   for (let i = aGroup.length-1; i >= 0; --i) {
+      let aIn = aGroup[i];
+      let aOut = aIn.next;     // already separate out
+      let rightK = -1;            // aIn connect to bOut position
+      let connectJ = -1;
+      for (let j = 0; j < bGroup.length; ++j) { // check for overlap
+         const bIn = bGroup[j];
+         const bOut = bIn.next;
+         if (aIn !== bOut && bIn !== aOut) { // make sure a and b don't connect
+            if (rightK < 0) {
+               const right = Vertex.isOverlap(aOut.destination(), bIn.origin) > 0;
+               if (right) {   // great got it
+                  rightK = j; // 
+               }
+            }
+            const left = Vertex.isOverlap(aIn.origin, bOut.destination()) > 0;
+            if (left) {
+               this._simpleStitch(aIn, aOut, bIn, bOut); // break
+               stitch = true;
+               connectJ = j;
+               aGroup.splice(i, 1);  // remove detach polygons.
+               break;
+            }
+         }
+      }
+      // now try to find right connect
+      if (connectJ >= 0 && rightK < 0) {
+         for (let j = 0; j < bGroup.length; ++j) { // connect to bIn
+            const bIn = bGroup[j];
+            const bOut = bIn.next;
+            if (aIn !== bOut && bIn !== aOut) { // make sure a and b don't connect
+               if (Vertex.isOverlap(aOut.destination(), bIn.origin) > 0) {
+                  rightK = j;
+                  break;
+               }
+            }
+         }
+      }
+      if (rightK >= 0 && rightK !== connectJ) {  // do we need to stitch right?
+         const bIn = bGroup[rightK];
+         const bOut = bIn.next;
+         if (connectJ >= 0) { // remove bGroup to correct position since we form a big group.
+            aIn = bGroup[connectJ];
+            aOut = aIn.next
+            bGroup.splice(rightK, 1);
+         } else { // replace position.
+            bGroup[rightK] = aIn;
+         }
+         // stitch
+         this._simpleStitch(aIn, aOut, bIn, bOut);
+         stitch = true;
+      }
    }
-
-   return undo;
+   undo.count = count;
+   if (stitch) {
+      // final clean up.
+      //b.reorient();
+      undo.vertex = a;
+      if (aGroup.length > 0) {// reattch a to first group then reorient.
+         a.outEdge = aGroup[0];
+         //a.reorient();
+      } else { // empty, so safely delete.
+         this._freeVertex(a);
+      }
+      return undo;
+   }
+   return null;
 };
 
 
@@ -2691,13 +2767,14 @@ WingedTopology.prototype._collapseLoop = function(halfEdge, collapsibleWings) {
    }
    const next = halfEdge.next;
    const pair = halfEdge.pair;
+   const pairPrev = pair.prev();
    const nextPair = next.pair;
 
    // is it a loop ?//assert ((next_halfedge_handle(h1) == h0) && (h1 != o0));
 
    // fix halfEdge.next connectionh
    next.next = pair.next;
-   pair.prev().next = next;
+   pairPrev.next = next;
 
    // fix halfEdge.face
    let polygon = pair.face;
@@ -2714,7 +2791,7 @@ WingedTopology.prototype._collapseLoop = function(halfEdge, collapsibleWings) {
    this.addAffectedVertex(pair.origin);
 
    // fix face.halfEdge
-   if (polygon.halfEdge === pair) {
+   if (polygon && polygon.halfEdge === pair) {
       polygon.halfEdge = next;
    }
 
@@ -2724,6 +2801,39 @@ WingedTopology.prototype._collapseLoop = function(halfEdge, collapsibleWings) {
    
    // restoreLoop
    return {next: next, hEdge: halfEdge, polygon: delPolygon};
+};
+WingedTopology.prototype._collapseDangling = function(hEdge) {
+   const undo = {};
+   
+   const pair = hEdge.pair;
+   // this will be removed
+   undo.destination = pair.origin;
+   this._freeVertex(pair.origin);
+   
+   // check if origin is also due for removal.
+   if (pair.next === hEdge) {
+      undo.origin = hEdge.origin;
+      this._freeVertex(hEdge.origin);
+      if (hEdge.face) { // hEdge.face should equal pair.face. if not throw?
+         undo.face = this._freePolygon(undo.face);
+      }
+   } else { // reattach polygon if it
+      let face = hEdge.face;  // hEdge.face === pair.face. if not throw?
+      if (face && (face.outEdge === hEdge || face.outEdge === pair)) {
+         face.outEdge = pair.next;
+      }
+      // reattach next
+      if (hEdge.origin.outEdge === hEdge) {
+         hEdge.origin.outEdge = pair.next;
+      }
+      hEdge.prev().next = pair.next;  
+   }
+
+   // free edge at last
+   undo.hEdge = hEdge;
+   this._freeEdge(hEdge);
+
+   return undo;
 };
 
 
@@ -2738,9 +2848,19 @@ WingedTopology.prototype.collapseEdge = function(halfEdge, collapsibleWings) {
    // remove loops(2 side polygon)
    if (next.next.next === next) {
       undo.leftLoop = this._collapseLoop(next.next, collapsibleWings);
+      if (next.next === next.pair) {   // 2019-10-14, add cascade removal of edge, vertex and polygon.
+         undo.leftDangling = this._collapseDangling(next);
+      } else if (next.pair.next === next) {
+         undo.leftDangling = this._collapseDangling(next.pair);
+      }
    }
    if (pairNext.wingedEdge.isLive() && (pairNext.next.next === pairNext)) {   // add wingedEdge.isLive() to guard (--) edges.
-      undo.rightLoop = this._collapseLoop(pairNext, collapsibleWings);
+      undo.rightLoop = this._collapseLoop(pairNext.next, collapsibleWings);
+      if (pairNext.next === pairNext.pair) {   // 2019-10-14, add cascade removal of edge, vertex and polygon.
+         undo.rightDangling = this._collapseDangling(pairNext);
+      } else if (pairNext.pair.next === pairNext) {
+         undo.rightDangling = this._collapseDangling(pairNext.pair);
+      }
    }
    return undo;
 };
@@ -3397,14 +3517,25 @@ WingedTopology.prototype.flip = function(pivot, axis) {
 WingedTopology.prototype.makeHole = function(polygon) {
    // turn polygon into hole, 
    let ret = {hEdge: polygon.halfEdge, face: polygon, dissolveEdges: []};
+   for (let hEdge of polygon.hEdges()) {  // clean up face first
+      //hEdge.face = null;
+   }
+   if (polygon.index === 1051) {
+      console.log("break point");
+   }
    for (let hEdge of polygon.hEdges(true)) {
-      hEdge.face = null;
-      const pairEdge = hEdge.pair;
-      if (pairEdge.face === null) { 
-         ret.dissolveEdges.unshift( this.dissolveEdge(hEdge) );   // in any doubt, use dissolveEdge. I am stupid
+      if (hEdge.wingedEdge.isLive()) {
+         hEdge.face = null;
+         const pairEdge = hEdge.pair;
+         if (pairEdge.face === null) { 
+            ret.dissolveEdges.unshift( this.dissolveEdge(pairEdge) );   // in any doubt, use dissolveEdge. I am stupid
+         }
       }
    }
-   ret.face = this._freePolygon(polygon);
+   ret.face = polygon;
+   if (polygon.isLive()) { // dissolveEdge might free polygon first.
+      ret.face = this._freePolygon(polygon);
+   }
    return ret;
 };
 
