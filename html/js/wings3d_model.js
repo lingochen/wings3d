@@ -3798,16 +3798,44 @@ PreviewCage.prototype.getBodySelection = function(selection, extent) {
 };
 
 
-// make holes
+/**
+ * Make a group of holes.
+ * 12-10-15 - realized we cannot just makeHole one by one. Due to collapsing edges, polygon and edges will 
+ * change dynamically. So, we really should captures all the hEdges of polygon then dissolveEdges if necessary.
+ */
 PreviewCage.prototype.makeHolesFromBB = function(selection) {
-   const restore = [];
+
+   const dissolveEdges = [];
+   const dissolveFaces = [];
+   const holeEdges = [];
+   const holeFaces = [];
    for (let spherePolygon of selection) {
       this.selectedSet.delete(spherePolygon);              // remove from selection. also selection off(not done)?
-      if (spherePolygon.isLive()) { // 2019-10-15, guard for dead polygon by previous makeHole.
-         restore.unshift( this.geometry.makeHole(spherePolygon) );  // restore has to be done in reverse
+      for (let hEdge of spherePolygon.hEdges()) {
+         holeEdges.push( hEdge );
+      }
+      holeFaces.push( spherePolygon );
+   }
+
+   // hole edges 
+   for (let hEdge of holeEdges) {
+      if (hEdge.wingedEdge.isLive()) {
+         hEdge.face = null;
+         const pairEdge = hEdge.pair;
+         if (pairEdge.face === null) { 
+            dissolveEdges.unshift( this.geometry.dissolveEdge(pairEdge) );   // in any doubt, use dissolveEdge. I am stupid
+         }
       }
    }
-   return restore;
+
+   // release remaining polygon
+   for (let polygon of holeFaces) {
+      if (polygon.isLive()) {
+         dissolveFaces.push( this.geometry._freePolygon(polygon) );
+      }
+   }
+
+   return {faces: dissolveFaces, edges: dissolveEdges};
 };
 
 

@@ -2838,15 +2838,18 @@ WingedTopology.prototype._collapseDangling = function(hEdge) {
 
 
 WingedTopology.prototype.collapseEdge = function(halfEdge, collapsibleWings) {
-   const next = halfEdge.next;
+   let next = halfEdge.next;
    const pair = halfEdge.pair;
-   const pairNext = pair.next;
+   let pairNext = pair.next;
 
    // remove edge
    const undo = this._collapseEdge(halfEdge);
 
    // remove loops(2 side polygon)
    if (next.next.next === next) {
+      if (!next.pair.face) {  // 2019-10-17, yep both side null, priority collapse
+         next = next.next;
+      }
       undo.leftLoop = this._collapseLoop(next.next, collapsibleWings);
       if (next.next === next.pair) {   // 2019-10-14, add cascade removal of edge, vertex and polygon.
          undo.leftDangling = this._collapseDangling(next);
@@ -2855,6 +2858,9 @@ WingedTopology.prototype.collapseEdge = function(halfEdge, collapsibleWings) {
       }
    }
    if (pairNext.wingedEdge.isLive() && (pairNext.next.next === pairNext)) {   // add wingedEdge.isLive() to guard (--) edges.
+      if (!pairNext.pair.face) {  // 2019-10-17, yep both side null, priority collapse
+         pairNext = pairNext.next;
+      }
       undo.rightLoop = this._collapseLoop(pairNext.next, collapsibleWings);
       if (pairNext.next === pairNext.pair) {   // 2019-10-14, add cascade removal of edge, vertex and polygon.
          undo.rightDangling = this._collapseDangling(pairNext);
@@ -3517,12 +3523,6 @@ WingedTopology.prototype.flip = function(pivot, axis) {
 WingedTopology.prototype.makeHole = function(polygon) {
    // turn polygon into hole, 
    let ret = {hEdge: polygon.halfEdge, face: polygon, dissolveEdges: []};
-   for (let hEdge of polygon.hEdges()) {  // clean up face first
-      //hEdge.face = null;
-   }
-   if (polygon.index === 1051) {
-      console.log("break point");
-   }
    for (let hEdge of polygon.hEdges(true)) {
       if (hEdge.wingedEdge.isLive()) {
          hEdge.face = null;
