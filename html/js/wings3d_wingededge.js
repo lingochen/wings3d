@@ -894,26 +894,14 @@ Polygon.prototype.eachEdge = function(callbackFn) {
    } while (current !== begin);
 };
 
-Polygon.prototype.hEdges = function* (modify = false) {
-   if (modify) {
-      const unmodify = [];
-      let current = this.halfEdge; 
-      do {
-         unmodify.push(current);
-         current = current.next;
-      } while (current !== this.halfEdge);
-      for (let current of unmodify) {
-         yield current;
-      }
-   } else {
-      const begin = this.halfEdge;
-      let current = begin;
-      do {
-         let next = current.next;
-         yield current;
-         current = next;
-      } while (current !== begin);
-   }
+Polygon.prototype.hEdges = function* () {
+   const begin = this.halfEdge;
+   let current = begin;
+   do {
+      let next = current.next;
+      yield current;
+      current = next;
+   } while (current !== begin);
 }
 
 // adjacent face, along the edge
@@ -1644,7 +1632,7 @@ WingedTopology.prototype._freePolygon = function(polygon) {
       this.alloc.freePolygon(polygon);
       return delPolygon;   // could be reused, so we have to save polygon and it material.
    }
-   return polygon;
+   return null;
 };
 
 
@@ -3522,17 +3510,20 @@ WingedTopology.prototype.flip = function(pivot, axis) {
 
 WingedTopology.prototype.makeHole = function(polygon) {
    // turn polygon into hole, 
-   let ret = {hEdge: polygon.halfEdge, face: polygon, dissolveEdges: []};
-   for (let hEdge of polygon.hEdges(true)) {
+   let ret = {hEdge: polygon.halfEdge, face: {polygon: polygon}, dissolveEdges: []};
+   let hEdges = [];
+   for (let hEdge of polygon.hEdges()) {
+      hEdges.push( hEdge );
+      hEdge.face = null;
+   }
+   for (let hEdge of hEdges) {
       if (hEdge.wingedEdge.isLive()) {
-         hEdge.face = null;
          const pairEdge = hEdge.pair;
          if (pairEdge.face === null) { 
             ret.dissolveEdges.unshift( this.dissolveEdge(pairEdge) );   // in any doubt, use dissolveEdge. I am stupid
          }
       }
    }
-   ret.face = polygon;
    if (polygon.isLive()) { // dissolveEdge might free polygon first.
       ret.face = this._freePolygon(polygon);
    }
@@ -3547,9 +3538,9 @@ WingedTopology.prototype.undoHole = function(hole) {
       this.restoreDissolveEdge(dissolve);
    }
    if (!hole.face.polygon.isLive()) {
-      return this._createPolygon(hole.hEdge, 4, Material.default, hole.face);
+      return this._createPolygon(hole.hEdge, 4, hole.face.material, hole.face.polygon);
    } else {
-      return hole.face;
+      return hole.face.polygon;
    }
 };
 

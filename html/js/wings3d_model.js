@@ -1368,18 +1368,11 @@ PreviewCage.prototype.snapshotTransformVertexGroup = function() {
 PreviewCage.prototype.closeCrack = function() {
    const snapshot = this._resetSelectEdge();
    let vertices = new Set;
-   let borderPoly = new Set;
    // min, max? and sort the maximum direction?
    // check all selected edge is boundary edge then try to stitch.
    for (let wEdge of snapshot.wingedEdges) {
       vertices.add(wEdge.left.origin);
       vertices.add(wEdge.right.origin);
-      if (!wEdge.left.isBoundary()) {
-         borderPoly.add( wEdge.left.face );
-      } else {
-         // wEdge.right.isBoundary()) {  // make sure it boundary, check?
-         borderPoly.add( wEdge.right.face );
-      }
    }
    // sort
    vertices = Array.from(vertices).sort(function(x,y) {
@@ -1400,12 +1393,12 @@ PreviewCage.prototype.closeCrack = function() {
    while (target = vertices.pop()) {
       const targetRemap = {pt: [target[0], target[1], target[2]], count: 1, vert: target};
       remap.push( targetRemap );
-      //merged.set(target.index, target);
+      merged.set(target, targetRemap);
       for (let i = vertices.length-1; i >= 0; --i) {
          const a = vertices[i];
          const result = Vertex.isOverlap(a, target)
          if (result > 0) {
-            merged.set(a.index, targetRemap);
+            merged.set(a, targetRemap);
             vec3.add(targetRemap.pt, targetRemap.pt, a); // prepare to average it
             targetRemap.count++;
             vertices.splice(i, 1);
@@ -1415,12 +1408,24 @@ PreviewCage.prototype.closeCrack = function() {
       }
    }
 
+   // get borderPoly from weld vertices.
+   let borderPoly = new Set;
+   for (let [vertex, remap] of merged) {
+      if (remap.count > 1) {
+         for (let hEdge of vertex.edgeRing()) {
+            if (hEdge.face) {
+               borderPoly.add( hEdge.face );
+            }
+         }
+      }
+   }
+
    const newMesh = [];
    // get the new vertices Index for all the border polygon
    for (let polygon of borderPoly) {
       let index = [];
       for (let outEdge of polygon.hEdges()) {
-         let target = merged.get(outEdge.origin.index);
+         let target = merged.get(outEdge.origin);
          if (target) {
             index.push( target.vert.index );  // remap back 
          } else {
@@ -3799,43 +3804,18 @@ PreviewCage.prototype.getBodySelection = function(selection, extent) {
 
 
 /**
- * Make a group of holes.
- * 12-10-15 - realized we cannot just makeHole one by one. Due to collapsing edges, polygon and edges will 
- * change dynamically. So, we really should captures all the hEdges of polygon then dissolveEdges if necessary.
+ * Make a group of holes, one by one.
  */
 PreviewCage.prototype.makeHolesFromBB = function(selection) {
-
-   const dissolveEdges = [];
-   const dissolveFaces = [];
-   const holeEdges = [];
-   const holeFaces = [];
+  const restore = [];
    for (let spherePolygon of selection) {
       this.selectedSet.delete(spherePolygon);              // remove from selection. also selection off(not done)?
-      for (let hEdge of spherePolygon.hEdges()) {
-         holeEdges.push( hEdge );
-      }
-      holeFaces.push( spherePolygon );
-   }
-
-   // hole edges 
-   for (let hEdge of holeEdges) {
-      if (hEdge.wingedEdge.isLive()) {
-         hEdge.face = null;
-         const pairEdge = hEdge.pair;
-         if (pairEdge.face === null) { 
-            dissolveEdges.unshift( this.geometry.dissolveEdge(pairEdge) );   // in any doubt, use dissolveEdge. I am stupid
-         }
+      if (spherePolygon.isLive()) { // guard for complex interaction.
+         restore.push( this.geometry.makeHole(spherePolygon) );
       }
    }
 
-   // release remaining polygon
-   for (let polygon of holeFaces) {
-      if (polygon.isLive()) {
-         dissolveFaces.push( this.geometry._freePolygon(polygon) );
-      }
-   }
-
-   return {faces: dissolveFaces, edges: dissolveEdges};
+   return restore; 
 };
 
 
