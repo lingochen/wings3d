@@ -1363,6 +1363,23 @@ PreviewCage.prototype.snapshotTransformVertexGroup = function() {
 
 
 /**
+ * undo closeCrack. restore to original position.
+ * 
+ */
+PreviewCage.prototype.undoCloseCrack = function(undo) {
+   // first release newMesh
+   this.makeHolesFromBB(undo.mesh);
+
+   // restore borderPolygon
+   let count = 0;
+   for (let restore of undo.borderPolygon) {
+      ++count;
+      this.geometry.undoHole(restore);
+   }
+   this._updatePreviewAll();
+};
+
+/**
  * get all selected boundary edges and repolygon the boundary edge
  */
 PreviewCage.prototype.closeCrack = function() {
@@ -1436,8 +1453,8 @@ PreviewCage.prototype.closeCrack = function() {
    }
    
    const undo = {mesh: []};
-   // remove all border polygon,
-   undo.borderPolygon = this.makeHolesFromBB(borderPoly);
+   // remove all border polygon. restore from last to first.
+   undo.borderPolygon = this.makeHolesFromBB(borderPoly).reverse();
 
    // adjust vertices and readd vertices if deleted
    for (let i = 0; i < remap.length; ++i) {
@@ -1450,9 +1467,12 @@ PreviewCage.prototype.closeCrack = function() {
    // now readd all border polygon with merged vertices
    for (let poly of newMesh) {
       let face = this.geometry.addPolygon(poly);
-      undo.mesh.push( face );
+      if (face) { // how do we handle failure?
+         undo.mesh.push( face );
+      }
    }
 
+   this._updatePreviewAll();
    return undo;
 };
 /*PreviewCage.prototype.closeCrack = function() {
@@ -1567,6 +1587,7 @@ PreviewCage.prototype.closeCrack = function() {
    this._updatePreviewAll();
    return snapshot;
 };*/
+
 
 
 /**
