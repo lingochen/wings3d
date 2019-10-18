@@ -2745,7 +2745,7 @@ WingedTopology.prototype._restoreLoop = function(halfEdge, delEdge, delPolygon) 
    outEdge.face = newPolygon;    // unnecessary, already update.
 
    // fix face.outEdge
-   if (inEdge.face.halfEdge === halfEdge) {
+   if (inEdge.face && inEdge.face.halfEdge === halfEdge) {
       inEdge.face.halfEdge = inEdge;
    }
 };
@@ -2790,21 +2790,39 @@ WingedTopology.prototype._collapseLoop = function(halfEdge, collapsibleWings) {
    // restoreLoop
    return {next: next, hEdge: halfEdge, polygon: delPolygon};
 };
+WingedTopology.prototype._restoreDangling = function(undo) {
+   // restore destination pt
+   const destination = this.addVertex(undo.destination.pt , undo.destination.vertex);
+
+   let outEdge;
+   if (undo.origin) {   // restore origin 
+      const origin = this.addVertex(undo.origin.pt, undo.origin.vertex);
+      outEdge = this._createEdge(origin, destination, undo.hEdge);
+      origin.outEdge = outEdge;
+   } else { // restore to dangling point.
+      outEdge = this._createEdge(undo.next.origin, destination, undo.hEdge);
+      undo.prev.next = outEdge;
+      outEdge.pair.next = undo.next;
+   }
+   destination.outEdge = outEdge.pair;
+   outEdge.face = undo.face;
+   outEdge.pair.face = undo.pairFace;
+};
 WingedTopology.prototype._collapseDangling = function(hEdge) {
    const undo = {};
    
    const pair = hEdge.pair;
    // this will be removed
-   undo.destination = pair.origin;
+   const destination = pair.origin;
+   undo.destination = {vertex: destination, pt: [destination[0], destination[1], destination[2]]};
    this._freeVertex(pair.origin);
-   
+   undo.face = hEdge.face;    // both side should be same face?
+   undo.pairFace = hEdge.pair.face;
+
    // check if origin is also due for removal.
    if (pair.next === hEdge) {
-      undo.origin = hEdge.origin;
+      undo.origin = {vertex: hEdge.origin, pt: [hEdge.origin[0], hEdge.origin[1], hEdge.origin[2]]};
       this._freeVertex(hEdge.origin);
-      if (hEdge.face) { // hEdge.face should equal pair.face. if not throw?
-         undo.face = this._freePolygon(undo.face);
-      }
    } else { // reattach polygon if it
       let face = hEdge.face;  // hEdge.face === pair.face. if not throw?
       if (face && (face.outEdge === hEdge || face.outEdge === pair)) {
@@ -2814,7 +2832,10 @@ WingedTopology.prototype._collapseDangling = function(hEdge) {
       if (hEdge.origin.outEdge === hEdge) {
          hEdge.origin.outEdge = pair.next;
       }
-      hEdge.prev().next = pair.next;  
+      const prev = hEdge.prev();
+      undo.prev = prev;
+      prev.next = pair.next;
+      undo.next = pair.next;  
    }
 
    // free edge at last
@@ -2861,9 +2882,15 @@ WingedTopology.prototype.collapseEdge = function(halfEdge, collapsibleWings) {
 
 WingedTopology.prototype.restoreCollapseEdge = function(undo) {
    if (undo.rightLoop) {
+      if (undo.rightDangling) {
+         this._restoreDangling(undo.rightDangling);
+      }
       this._restoreLoop(undo.rightLoop.next, undo.rightLoop.hEdge, undo.rightLoop.polygon);
    }
    if (undo.leftLoop) {
+      if (undo.leftDangling) {
+         this._restoreDangling(undo.leftDangling);
+      }
       this._restoreLoop(undo.leftLoop.next, undo.leftLoop.hEdge, undo.leftLoop.polygon);
    }
    // undo collapseEdge
@@ -3532,8 +3559,8 @@ WingedTopology.prototype.makeHole = function(polygon) {
 
 WingedTopology.prototype.undoHole = function(hole) {
    for (let dissolve of hole.dissolveEdges) {
-      if (!hole.face.isLive()) {
-         dissolve.delFace = hole.face;
+      if (!hole.face.polygon.isLive()) {
+         dissolve.delFace = hole.face.polygon;
       }
       this.restoreDissolveEdge(dissolve);
    }

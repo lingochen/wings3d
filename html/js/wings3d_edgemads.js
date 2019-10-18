@@ -258,6 +258,10 @@ class EdgeMadsor extends Madsor {
       return this.snapshotSelected(PreviewCage.prototype.closeCrack);
    }
 
+   undoCloseCrack(snapshots) {
+      this.doAll(snapshots, PreviewCage.prototype.undoCloseCrack);
+   }
+
    edgeBoundary() {
       return this.snapshotSelectable(PreviewCage.prototype.selectBoundaryEdge);
    }
