@@ -1584,7 +1584,11 @@ WingedTopology.prototype.addAffectedEdgeAndFace = function(vertex) {
 WingedTopology.prototype._createPolygon = function(halfEdge, numberOfVertex, material, delPolygon) {
    let polygon;
    if (delPolygon) {
-      polygon = this.alloc.allocPolygon(halfEdge, numberOfVertex, delPolygon.material, delPolygon.polygon);
+      if (delPolygon.polygon.isLive()) {
+         polygon = delPolygon.polygon;
+      } else {
+         polygon = this.alloc.allocPolygon(halfEdge, numberOfVertex, delPolygon.material, delPolygon.polygon);
+      }
    } else {
       polygon = this.alloc.allocPolygon(halfEdge, numberOfVertex, material);
    }
@@ -1881,14 +1885,17 @@ WingedTopology.prototype.insertEdge = function(prevHalf, nextHalf, delOutEdge, d
    inEdge.next = nextPrev;
   
    //now set the face handles
-   const newPolygon = this._createPolygon(outEdge, 4, Material.default, delPolygon);  // todo: correct material, inEdge.face.material
+   let newPolygon = null;
+   if (delPolygon !== null) { // undefined will created a newPolygon
+      newPolygon = this._createPolygon(outEdge, 4, Material.default, delPolygon);  // todo: correct material, inEdge.face.material
+      let size = 0;
+      newPolygon.eachEdge( function(halfEdge) {
+         ++size;
+         halfEdge.face = newPolygon;
+      });
+      newPolygon.numberOfVertex = size;
+   }
    outEdge.face = newPolygon;
-   let size = 0;
-   newPolygon.eachEdge( function(halfEdge) {
-      ++size;
-      halfEdge.face = newPolygon;
-   });
-   newPolygon.numberOfVertex = size;
 
    // inEdge is oldPolygon
    inEdge.face = oldPolygon;
@@ -1897,7 +1904,7 @@ WingedTopology.prototype.insertEdge = function(prevHalf, nextHalf, delOutEdge, d
          //  pointed to one of the halfedges now assigned to newPolygon
          oldPolygon.halfEdge = inEdge;
       }
-      size = 0;
+      let size = 0;
       oldPolygon.eachEdge( function(halfEdge) {
          ++size;
       });
@@ -2740,7 +2747,10 @@ WingedTopology.prototype._restoreLoop = function(halfEdge, delEdge, delPolygon) 
 
    // fix face
    inEdge.face = halfEdge.face;
-   const newPolygon = this._createPolygon(outEdge, 2, Material.default, delPolygon);   // todo: delPolygon should handle it.
+   let newPolygon = null;
+   if (delPolygon !== null) {
+      newPolygon = this._createPolygon(outEdge, 2, Material.default, delPolygon);   // todo: delPolygon should handle it.
+   }
    halfEdge.face = newPolygon;   // unnecessary, already update
    outEdge.face = newPolygon;    // unnecessary, already update.
 
@@ -2934,7 +2944,7 @@ WingedTopology.prototype.removeEdge = function(outEdge) {
    const remove = this._removeEdge(outEdge, inEdge);
   
    //deal with the faces
-   const delFace = outEdge.face;    // the other side is boundary, after removal becomes boundary too.
+   remove.delFace = outEdge.face;    // the other side is boundary, after removal becomes boundary too.
    const face = inEdge.face;
 
    if (face !== null) {
@@ -2950,8 +2960,8 @@ WingedTopology.prototype.removeEdge = function(outEdge) {
       this.addAffectedFace(face);
    }
 
-   if (delFace !== null) {    // guaranteed to be non-null, but maybe later use case will change, (yes, makeHole needs to be both-null. 2018-08-28)
-      remove.delFace = this._freePolygon(delFace);
+   if (remove.delFace !== null) {    // (yes, makeHole needs to be both-null. 2018-08-28)
+      remove.delFace = this._freePolygon(remove.delFace);
    }
    this._freeEdge(outEdge);
 
@@ -3545,6 +3555,7 @@ WingedTopology.prototype.makeHole = function(polygon) {
    }
    for (let hEdge of hEdges) {
       if (hEdge.wingedEdge.isLive()) {
+         //hEdge.face = null;
          const pairEdge = hEdge.pair;
          if (pairEdge.face === null) { 
             ret.dissolveEdges.unshift( this.dissolveEdge(pairEdge) );   // in any doubt, use dissolveEdge. I am stupid
@@ -3559,13 +3570,12 @@ WingedTopology.prototype.makeHole = function(polygon) {
 
 WingedTopology.prototype.undoHole = function(hole) {
    for (let dissolve of hole.dissolveEdges) {
-      if (!hole.face.polygon.isLive()) {
-         dissolve.delFace = hole.face.polygon;
-      }
       this.restoreDissolveEdge(dissolve);
    }
    if (!hole.face.polygon.isLive()) {
-      return this._createPolygon(hole.hEdge, 4, hole.face.material, hole.face.polygon);
+      const polygon = this._createPolygon(hole.hEdge, 4, hole.face.material, hole.face);
+      this.addAffectedFace(polygon);
+      return polygon;
    } else {
       return hole.face.polygon;
    }

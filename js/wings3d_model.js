@@ -1371,9 +1371,7 @@ PreviewCage.prototype.undoCloseCrack = function(undo) {
    this.makeHolesFromBB(undo.mesh);
 
    // restore borderPolygon
-   let count = 0;
    for (let restore of undo.borderPolygon) {
-      ++count;
       this.geometry.undoHole(restore);
    }
    this._updatePreviewAll();
@@ -3836,6 +3834,7 @@ PreviewCage.prototype.makeHolesFromBB = function(selection) {
       }
    }
 
+   this._updatePreviewAll();
    return restore; 
 };
 
