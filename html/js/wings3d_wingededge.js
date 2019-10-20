@@ -1101,10 +1101,11 @@ MeshAllocator.prototype.allocVertex = function(pt, delVertex) {
       if (typeof delVertex === 'undefined') {
          vertex = this.vertices[this.free.vertices.pop()];
       } else {
-         const index = delVertex.index;   // remove delOutEdge from freeEdges list
-         this.free.vertices = this.free.vertices.filter(function(element) {
-            return element !== index;
-         });
+         const index = MeshAllocator._indexOfFreeList(delVertex.index, this.free.vertices);   // remove delOutEdge from freeEdges list
+         if (index < 0) { // not found in free list
+            throw("delVertex " + index + " not found in free list");
+         }                vertex = delVertex;
+         this.free.vertices.splice(index, 1);
          vertex = delVertex;
       }
       vertex.set(pt);
@@ -1125,10 +1126,11 @@ MeshAllocator.prototype.allocEdge = function(begVert, endVert, delOutEdge) {
    let outEdge;
    if (this.free.edges.length > 0) { // prefered recycle edge.
       if (typeof delOutEdge !== "undefined") {
-         const index = delOutEdge.wingedEdge.index;   // remove delOutEdge from freeEdges list
-         this.free.edges = this.free.edges.filter(function(element) {
-            return element !== index;
-         });
+         const index = MeshAllocator._indexOfFreeList(delOutEdge.wingedEdge.index, this.free.edges);   // remove delOutEdge from freeEdges list
+         if (index < 0) {
+            throw("delOutEdge " + delOutEdge.wingedEdge.index + " not found in free list");
+         }
+         this.free.edges.splice(index, 1);
          edge = delOutEdge.wingedEdge;
          outEdge = delOutEdge;
       } else {
@@ -1158,10 +1160,11 @@ MeshAllocator.prototype.allocPolygon = function(halfEdge, numberOfVertex, materi
    }
    if (this.free.faces.length > 0) {
       if (typeof delPolygon !== 'undefined') {
-         const index = delPolygon.index;   // remove delOutEdge from freeEdges list
-         this.free.faces = this.free.faces.filter(function(element) {
-            return element !== index;
-         });
+         const index = MeshAllocator._indexOfFreeList(delPolygon.index, this.free.faces);   // remove delOutEdge from freeEdges list
+         if (index < 0) {
+            throw("delPolygon " + delPolygon.index + " not found in free list");
+         }
+         this.free.faces.splice(index, 1);
          polygon = delPolygon;
       } else {
          polygon = this.faces[ this.free.faces.pop() ];
@@ -1180,6 +1183,24 @@ MeshAllocator.prototype.allocPolygon = function(halfEdge, numberOfVertex, materi
    return polygon;
 };
 
+// find the val, return the index of free list
+MeshAllocator._indexOfFreeList = function(val, array) {
+   let l = 0, r = array.length - 1;
+   while (l <= r) {
+      //let m = (l + r) >>> 1; /// equivalent to Math.floor((l + h) / 2) but faster
+      let m = l + ((r-l) >>> 1); // avoid overflow. 
+      let comparison = val - array[m];
+      if (comparison > 0) {
+         r = m - 1;
+      } else if (comparison < 0) {
+         l = m + 1;
+      } else { // yes found it
+         return m;
+      }
+   }
+   // should not happend, throw?
+   return -1;
+};
 // recycled
 // insert the index number in reverse order. smallest last.
 MeshAllocator.prototype._insertFreeList = function(val, array) {
