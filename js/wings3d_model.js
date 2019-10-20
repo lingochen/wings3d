@@ -393,9 +393,9 @@ PreviewCage.duplicate = function(originalCage) {
    }
    for (let polygon of originalCage.geometry.faces) {
       let index = [];
-      polygon.eachVertex( function(vertex) {
+      for (let vertex of polygon.eachVertex()) {
          index.push( indexMap.get(vertex.index) );
-      });
+      };
       geometry.addPolygon(index, polygon.material);
    }
    //geometry.clearAffected();
@@ -778,13 +778,12 @@ PreviewCage.prototype._resetSelectVertex = function() {
 PreviewCage.prototype._selectVertexMore = function() {
    const snapshot = this.snapshotSelectionVertex();
 
-   const self = this;
    for (let vertex of snapshot.vertices) {
-      vertex.eachInEdge( function(inEdge) {
-         if (!self.selectedSet.has(inEdge.origin)) {
-            self.selectVertex(inEdge.origin);
+      for (let inEdge of vertex.eachInEdge()) {
+         if (!this.selectedSet.has(inEdge.origin)) {
+            this.selectVertex(inEdge.origin);
          }
-      });
+      };
    }
 
    return snapshot;
@@ -1148,11 +1147,11 @@ PreviewCage.prototype.snapshotFacePosition = function() {
    var vertices = new Set;
    // first collect all the vertex
    for (let polygon of this.selectedSet) {
-      polygon.eachVertex( function(vertex) {
+      for (let vertex of polygon.eachVertex()) {
          if (!vertices.has(vertex)) {
             vertices.add(vertex);
          }
-      });
+      };
    }
    return this.snapshotPosition(vertices);
 };
@@ -1177,7 +1176,7 @@ PreviewCage.prototype.snapshotFacePositionAndNormal = function() {
    const polygonNormal = [0,0,0];
    // first collect all the vertex
    for (let polygon of this.selectedSet) {
-      polygon.eachVertex( function(vertex) {
+      for (let vertex of polygon.eachVertex()) {
          if (!vertices.has(vertex)) {
             vertices.add(vertex);
             const normal = [0,0,0];
@@ -1190,7 +1189,7 @@ PreviewCage.prototype.snapshotFacePositionAndNormal = function() {
                vec3.add(normal, normal, polygonNormal);
             } 
          }
-      });
+      };
    }
    // copy normal;
    const normalArray = new Float32Array(vertices.size*3);
@@ -1305,13 +1304,13 @@ PreviewCage.prototype.snapshotTransformFaceGroup = function() {
       let count = 0;
       vec3.set(center, 0, 0, 0);
       for (let face of group) {
-         face.eachVertex(function(vertex) {
+         for (let vertex of face.eachVertex()) {
             if (!vertices.has(vertex)){
                vertices.add(vertex);
                count++;
                vec3.add(center, center, vertex);
             }
-          });
+          };
       }
       vec3.scale(center, center, 1.0/count); // get the center
       // now construct the group
@@ -1946,11 +1945,11 @@ PreviewCage.prototype.changeFromFaceToVertexSelect = function() {
    var oldSelected = this._resetSelectFace();
    for (let polygon of oldSelected.selectedFaces) {
       // for eachFace, selected all it vertex.
-      polygon.eachVertex(function(vertex) {
+      for (let vertex of polygon.eachVertex()) {
          if (!self.selectedSet.has(vertex)) {
             self.selectVertex(vertex);
          }
-      });
+      };
    }
 
    return snapshot;

@@ -591,15 +591,15 @@ Vertex.prototype.edgeRing = function* (start) {
 };
 
 // utility functions for traversing all incident edge,
-Vertex.prototype.eachInEdge = function(callbackfn) {
+Vertex.prototype.eachInEdge = function *() {
    // i am in
    var start = this.outEdge;
    var edge = start;
    if (edge) {
       do { // ccw ordering
          const inEdge = edge.pair;
-         edge = edge.pair.next;   // my pair's next is outEdge. 
-         callbackfn(inEdge, this);
+         edge = edge.pair.next;   // my pair's next is outEdge.
+         yield inEdge;
       } while (edge && (edge !== start));
    }
 };
@@ -620,13 +620,13 @@ Vertex.prototype.findInEdge = function(callbackfn) {
 };
 
 // utility functions for traversing all direct out edge.
-Vertex.prototype.eachOutEdge = function(callbackfn) {
+Vertex.prototype.eachOutEdge = function *() {
    // i am in, so my pair is out.
    var start = this.outEdge;
    var edge = start;
    if (edge) {
       do {  // counter clockwise ordering
-         callbackfn(edge, this);
+         yield edge;
          edge = edge.pair.next;      // pair's next is outEdge too.
       } while (edge && (edge !== start));
    }
@@ -879,12 +879,12 @@ Polygon.prototype.buildIndex = function(data, index, center) {
    return index;
 }
 
-Polygon.prototype.eachVertex = function(callbackFn) {
+Polygon.prototype.eachVertex = function *() {
    // get every vertex of the face.
    var begin = this.halfEdge;
    var current = begin;
    do {
-      callbackFn(current.origin);
+      yield current.origin;
       current = current.next;
    } while (current !== begin);
 };
@@ -1308,13 +1308,12 @@ MeshAllocator.prototype.addAffectedVertex = function(vertex) {
 };
 MeshAllocator.prototype.addAffectedEdgeAndFace = function(vertex) {
    this.affected.vertices.add(vertex);
-   const self = this;
-   vertex.eachOutEdge( function(halfEdge) {
-      self.affected.edges.add(halfEdge.wingedEdge);
+   for (let halfEdge of vertex.eachOutEdge()) {
+      this.affected.edges.add(halfEdge.wingedEdge);
       if (halfEdge.face !== null) {
-         self.affected.faces.add(halfEdge.face);
+         this.affected.faces.add(halfEdge.face);
      }
-   });
+   };
 };
 MeshAllocator.prototype.updateAffected = function() {
    for (let vertex of this.affected.vertices) {
@@ -2486,15 +2485,15 @@ WingedTopology.findFaceGroup = function(selectedPolygon) {
    function processNeighbors(polygon) {
       processPolygon.delete(polygon);
       faceGroup.add(polygon);
-      polygon.eachVertex( (vertex) => {   // polygon sharing the same vertex will be group together
-         vertex.eachOutEdge( (outEdge) => {
+      for (let vertex of eachVertex()) {   // polygon sharing the same vertex will be group together
+         for (let outEdge of vertex.eachOutEdge()) {
             const face = outEdge.pair.face;
             if (processPolygon.has(face)) {
                // depth first search
                processNeighbors(face);
             }
-          });
-      });
+          };
+      };
    };
 
    let list = [];
@@ -3034,13 +3033,13 @@ WingedTopology.prototype.connectVertex = function(selectedVertex) {
    // first collect face from vertex.
    const selectedFace = new Map();
    for (let vertex of selectedVertex) {
-      vertex.eachOutEdge( function(edge) {
+      for (let edge of vertex.eachOutEdge()) {
          let val = 1;
          if (selectedFace.has(edge.face)) {
             val = selectedFace.get(edge.face) + 1;
          }
          selectedFace.set(edge.face, val);
-      });
+      };
    }
 
    // corner. 
@@ -3167,7 +3166,7 @@ WingedTopology.prototype.dissolveVertex = function(vertex) {
       let lastIn;
       // slide edge, move edge down like collapse edge, without the collapsing.
       let outEdge;    // outEdge for new Polygon
-      vertex.eachInEdge( (inEdge)=> {
+      for (let inEdge of vertex.eachInEdge()) {
          //inEdges.unshift( inEdge )
          this.addAffectedVertex(inEdge.origin);
          const nextOut = inEdge.next;
@@ -3181,7 +3180,7 @@ WingedTopology.prototype.dissolveVertex = function(vertex) {
          outEdge.origin = nextOut.pair.origin; // reassign new vertex
          count++;
          lastIn = inEdge;
-      });
+      };
       // remove loop edge.
       const polygon = this._createPolygon(outEdge, count, Material.default);  // todo: find the correct material
       const undoCollapseLoop = [];
