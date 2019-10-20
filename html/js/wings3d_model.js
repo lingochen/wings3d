@@ -1619,11 +1619,11 @@ PreviewCage.prototype._selectEdgeMore = function() {
 
    for (let wingedEdge of snapshot.wingedEdges) {
       for (let halfEdge of wingedEdge) {
-         halfEdge.eachEdge( (edge) => {
+         for (let edge of halfEdge.eachEdge()) {
             if (!this.selectedSet.has(edge.wingedEdge)) {
                this.selectEdge(edge);
             }
-         });
+         }
       }
    }
 

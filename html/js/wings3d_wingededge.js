@@ -351,11 +351,15 @@ HalfEdge.prototype.setVertexColor = function(color) {
    HalfEdge.color.set(i, color[2]);
 };
 
+HalfEdge.prototype.isLive = function() {
+   return this.wingedEdge.isLive();
+}
 
 // boundary edge if no assigned face.
 HalfEdge.prototype.isBoundary = function() {
    return this.face === null;
 };
+
 HalfEdge.prototype.isNotBoundary = function() {
    return this.face !== null;
 };
@@ -395,12 +399,13 @@ HalfEdge.prototype.prev = function() {
    return ret;
 };
 
-HalfEdge.prototype.eachEdge = function(callbackfn) {
+// similar to vertex's traverse each edge.
+HalfEdge.prototype.eachEdge = function *() {
    var start = this;
    var edge = start;
    if (edge) {
       do {  // counter clockwise ordering
-         callbackfn(edge);
+         yield edge;
          edge = edge.pair.next;
       } while (edge && (edge !== start));
    }
@@ -2891,10 +2896,12 @@ WingedTopology.prototype.collapseEdge = function(halfEdge, collapsibleWings) {
          next = next.next;
       }
       undo.leftLoop = this._collapseLoop(next.next, collapsibleWings);
-      if (next.next === next.pair) {   // 2019-10-14, add cascade removal of edge, vertex and polygon.
-         undo.leftDangling = this._collapseDangling(next);
-      } else if (next.pair.next === next) {
-         undo.leftDangling = this._collapseDangling(next.pair);
+      if (next.isLive()) { // 2019-10-20, add guard
+         if (next.next === next.pair) {   // 2019-10-14, add cascade removal of edge, vertex and polygon.
+            undo.leftDangling = this._collapseDangling(next);
+         } else if (next.pair.next === next) {
+            undo.leftDangling = this._collapseDangling(next.pair);
+         }
       }
    }
    if (pairNext.wingedEdge.isLive() && (pairNext.next.next === pairNext)) {   // add wingedEdge.isLive() to guard (--) edges.
@@ -2902,10 +2909,12 @@ WingedTopology.prototype.collapseEdge = function(halfEdge, collapsibleWings) {
          pairNext = pairNext.next;
       }
       undo.rightLoop = this._collapseLoop(pairNext.next, collapsibleWings);
-      if (pairNext.next === pairNext.pair) {   // 2019-10-14, add cascade removal of edge, vertex and polygon.
-         undo.rightDangling = this._collapseDangling(pairNext);
-      } else if (pairNext.pair.next === pairNext) {
-         undo.rightDangling = this._collapseDangling(pairNext.pair);
+      if (pairNext.isLive()) {   // 2019-10-20, add guard
+         if (pairNext.next === pairNext.pair) {   // 2019-10-14, add cascade removal of edge, vertex and polygon.
+            undo.rightDangling = this._collapseDangling(pairNext);
+         } else if (pairNext.pair.next === pairNext) {
+            undo.rightDangling = this._collapseDangling(pairNext.pair);
+         }
       }
    }
    return undo;
