@@ -29,7 +29,7 @@
 *
 */
 "use strict";
-import {Float32Buffer, ByteBuffer, Int32Buffer} from './wings3d_gl.js';
+import {Float32Buffer, ByteBuffer, Int32Buffer, TriangleIndexBuffer} from './wings3d_gl.js';
 import {BoundingSphere} from './wings3d_boundingvolume.js';
 import {Material} from './wings3d_material.js';
 import { Vec3View } from "./wings3d_util.js";
@@ -792,6 +792,7 @@ Polygon.state = null;         // state(selected, hilite). byte. 2 bytes should b
 Polygon.centerIndex = null;      // fake halfEdge. (vertex, noHalfEdge(-Number), Polygon, Group)
 Polygon.normal = null;        // normal per polygon.
 Polygon.color = null;
+Polygon.triangleIndex = null; // the drawing list
 /**
  * for undo/redo purpose.
  */
@@ -986,8 +987,40 @@ Polygon.prototype._setColor = function(color) {
 }
 
 
-// recompute numberOfVertex, normal and centroid and radius, and reorient.
+// compute centroid and radius, and reorient.
+Polygon.prototype.updatePosition = function() {
+   const begin = this.halfEdge;
+   let halfEdge = begin;
+   let current = begin;
+   // now get radius, after we have center, or we could compute min, max, and get distance to center.
+   this.radius = 0.0; 
+   const min = [current.origin[0], current.origin[0], current.origin[0]];
+   const max = [current.origin[0], current.origin[0], current.origin[0]];
+   do {
+      vec3.min(min, min, current.origin);
+      vec3.max(max, max, current.origin);
+      current = current.next;
+   } while (current !== begin);
+   this.radius = vec3.distance(max, min) / 2;
+   this.radius2 = this.radius*this.radius;
+   vec3.sub(max, max, min);
+   
+   // compute normal.
+   if (this.numberOfVertex > 2) {
+      this.computeNormal();
+   }
+};
+
+/**
+ * redo triangulation because change of topology.
+ * recompute numberOfVertex, triangulation, and reorient, and call updatePosition to compute normal and centroid and radius.
+ */
 Polygon.prototype.update = function() {
+   // redo triangulation if not already done 
+   if (this.triangulation) {  // to be refactored.
+
+   }
+
    const begin = this.halfEdge;
    let halfEdge = begin;
    let current = begin;
@@ -1002,30 +1035,18 @@ Polygon.prototype.update = function() {
       if (current.getIndex() < halfEdge.getIndex()) {
          halfEdge = current;
       }
-      if (this.numberOfVertex > 1001) {   // break;   
-         console.log("something is wrong with polygon link list");
-         return;
+      if (this.numberOfVertex > 10001) {   // break;   
+         throw("something is wrong with polygon link list");
       }
-      current.updateIndex();     // to be refactored.
+      current.updateIndex();     // Todo: to be refactored.
       current = current.next;
       //HalfEdge.triangleList.set(i*3+1, current.getIndex()); // next hEdge
       //HalfEdge.triangleList.set(i*3+2, (-this.index) - 1);    // centerFakehEdge.
    } while (current !== begin);
    vec3.scale(this, this, 1.0/this.numberOfVertex);     // set center.
-   // fake index?
-   // also check if index was modified?
-   // now get radius, after we have center, or we could compute min, max, and get distance to center.
-   this.radius = 0.0; 
-   let distance;
-   do {
-      distance = vec3.distance(this, current.origin);
-      if (distance > this.radius) {
-         this.radius = distance;
-      }
-      current = current.next;
-   } while (current !== begin);
-   this.radius2 = this.radius*this.radius;
-   this.halfEdge = halfEdge;              // the lowest index.
+
+
+   // now ask updatePosition to compute normal centroid and radius
    // compute normal.
    if (this.numberOfVertex > 2) {
       this.computeNormal();
@@ -1090,6 +1111,9 @@ const MeshAllocator = function(allocatedSize) {
    Polygon.state = new ByteBuffer(3);
    Polygon.normal = new Float32Buffer(3, allocatedSize);
    Polygon.color = new ByteBuffer(3);
+   
+   Polygon.triangleIndex = new TriangleIndexBuffer;
+
    // WingedTopology
    WingedTopology.state = new ByteBuffer(1);
    // data init
@@ -1177,7 +1201,7 @@ MeshAllocator.prototype.allocPolygon = function(halfEdge, numberOfVertex, materi
       polygon.assignMaterial(material);
       polygon.halfEdge = halfEdge;
       polygon.numberOfVertex = numberOfVertex;
-      polygon.update();
+      //polygon.update();
       polygon.show();            // make sure it visible.
       this.affected.faces.add( polygon );
    } else {

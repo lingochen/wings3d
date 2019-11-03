@@ -1049,8 +1049,39 @@ Uint32Buffer.prototype.byteSize = function() {
 }
 
 
+/**
+ * 
+ * @param {number} type - manage the buffer here.
+ */
+const TriangleIndexBuffer = function() {
+   this.freePool = [];
+   this.array = new Uint32Array(3); 
+};
+
+
+/**
+ * @param {number} size - return an array of given size for setting triangle index.
+ */
+TriangleIndexBuffer.prototype.alloc = function(size) {
+
+};
+
+TriangleIndexBuffer.prototype.free = function(indexArray) {
+
+};
+
+/**
+ * @param {array} indexArray - an array that from alloc
+ * @param {array} newVals - triangle index list correspond to the indexArray
+ */
+TriangleIndexBuffer.prototype.set = function(indexArray, newVals) {
+
+};
+
+
 export {
    createWebGLContext,
+   TriangleIndexBuffer,
    Float32Buffer,
    Int32Buffer,
    Uint32Buffer,
