@@ -523,6 +523,256 @@ PreviewCage.prototype.isWireMode = function() {
    return this.status.wireMode;
 }
 
+//-----------------------------------------------
+// material, color, texture, edge type.
+
+
+/**
+ * change selectedEdge's state
+ * @param {number} operand - 0=soft, 1=hard, 2=invert 
+ */
+PreviewCage.prototype.hardnessEdge = function(operand) {
+   let ret = {operand: operand, selection: []};
+
+   for (let wEdge of this.selectedSet) {
+      if (wEdge.setHardness(operand)) {   // check set successfully
+         ret.selection.push(wEdge);
+      }
+   }
+   // return ret
+   if (ret.selection.length > 0) {
+      return ret;
+   } else {
+      return null;
+   }
+};
+
+/**
+ * restore selection's edge state
+ * @param {number} operand - 0=soft, 1=hard, 2=invert
+ * @param {array} selection - the edges that needs to restore
+ */
+PreviewCage.prototype.undoHardnessEdge = function(result) {
+   let operand = result.operand;
+   if (operand === 0) { // soft restore to hard
+      operand = 1;
+   } else if (operand === 1) {   // hard restore to soft
+      operand = 0;
+   }
+   for (let wEdge of result.selection) {   // restore edges state
+      wEdge.setHardness(operand);
+   }
+};
+
+
+/**
+ * assign given material to the current selected Face
+ * @param {Material} - the material that will assigned to the selected set.
+ */
+PreviewCage.prototype.assignFaceMaterial = function(material) {
+   const savedMaterials = new Map;
+
+   for (let polygon of this.selectedSet) {   // don't need to sorted.
+      if (material !== polygon.material) {
+         let array = savedMaterials.get(polygon.material);
+         if (!array) {
+            savedMaterials.set(polygon.material, [polygon]);
+         } else {
+            array.push(polygon);
+         }
+         // now assign Material
+         polygon.assignMaterial(material);
+      }
+   }
+   if (savedMaterials.size > 0) {
+      return savedMaterials;
+   } else {
+      return undefined;
+   }
+};
+/**
+ * restore original material
+ * @param {map} - the original material to polygons array mapping
+ */
+PreviewCage.prototype.undoAssignFaceMaterial = function(savedMaterials) {
+   for (const [material, array] of savedMaterials.entries()) {
+      for (const polygon of array) {
+         polygon.assignMaterial(material);
+      }
+   }
+};
+
+
+/** 
+ * select polygon that has the input material.
+ * @param (Material) - checking material.
+*/
+PreviewCage.prototype.selectFaceMaterial = function(material) {
+   const snapshot = this._resetSelectFace();
+
+   for (let polygon of this.geometry.faces) {
+      if (polygon.material === material) {
+         this.selectFace(polygon);
+      }
+   }
+
+   return snapshot;
+};
+
+/**
+ * select line that has polygon with the same input material.
+ * @param (Material) - input checking material 
+ */
+PreviewCage.prototype.selectEdgeMaterial = function(material) {
+   const snapshot = this._resetSelectEdge();
+
+   for (let wEdge of this.geometry.edges) {
+      for (let hEdge of wEdge) {
+         if (hEdge.face && (hEdge.face.material === material)) {
+            this.selectEdge(hEdge);
+            break;
+         }
+      }
+   }
+
+   return snapshot;
+};
+
+/**
+ * select vertext that has adjacent polygon with the same input material
+ * @param (Material) - input checking material.
+ */
+PreviewCage.prototype.selectVertexMaterial = function(material) {
+   const snapshot = this._resetSelectVertex();
+
+   for (let vertex of this.geometry.vertices) {
+      for (let outEdge of vertex.edgeRing()) {
+         if (outEdge.face && (outEdge.face.material === material)) {
+            this.selectVertex(vertex);
+            break;
+         }
+      }
+   }
+
+   return snapshot;
+};
+
+/** 
+ * select body that contain polygon with the same input material
+*/
+PreviewCage.prototype.selectBodyMaterial = function(material) {
+   const snapshot = this._resetSelectBody();
+
+   for (let polygon of this.geometry.faces) {
+      if (polygon.material === material) {
+         this.selectBody();
+         break;
+      }
+   }
+
+   return snapshot;
+};
+
+
+/**
+ * 
+ */
+PreviewCage.prototype.setVertexColor = function(color) {
+   const overSize = this.selectedSet.size * 3 * 5;       // should be slight Overize;
+   const snapshot = {hEdges: [], vertexColor: new Util.Vec3View(new Uint8Array(overSize))};
+   const affected = new Set;
+
+   for (let vertex of this.selectedSet) {
+      for (let hEdge of vertex.edgeRing()) { // get all outEdge
+         // snapshot vertexColor
+         snapshot.hEdges.push( hEdge );
+         snapshot.vertexColor.alloc(Util.Vec3View.uint8resize);
+         hEdge.getVertexColor(snapshot.vertexColor);
+         snapshot.vertexColor.inc();
+         // set new color.
+         hEdge.setVertexColor(color);
+         affected.add(hEdge.face);
+      }
+   }
+   snapshot.vertexColor.reset();
+
+   // now recompute the affected face centroid.
+   for (let polygon of affected) {
+      polygon.updateCentroidColor();
+   }
+   return snapshot;
+};
+
+/**
+ * undo of setVertexColor
+ */
+PreviewCage.prototype.undoVertexColor = function(snapshot) {
+   const affected = new Set;
+
+   snapshot.vertexColor.reset();
+   for (let hEdge of snapshot.hEdges) {
+      hEdge.setVertexColor(snapshot.vertexColor);  // restore color
+      affected.add(hEdge.face);
+   }
+
+   // now restore affected face centroid
+   for (let polygon of affected) {
+      polygon.updateCentroidColor();
+   }
+};
+
+
+/**
+ * 
+ */
+PreviewCage.prototype.setFaceColor = function(color) {
+   const overSize = this.selectedSet.size * 3 * 5;       // should be slight Overize;
+   const snapshot = {hEdges: [], vertexColor: new Util.Vec3View(new Uint8Array(overSize))};
+
+   for (let polygon of this.selectedSet) {
+      for (let hEdge of polygon.hEdges()) {
+         // snapshot vertexColor
+         snapshot.hEdges.push( hEdge );
+         snapshot.vertexColor.alloc(Util.Vec3View.uint8resize);
+         hEdge.getVertexColor(snapshot.vertexColor);
+         snapshot.vertexColor.inc();
+         // set new color.
+         hEdge.setVertexColor(color);
+      }
+      polygon._setColor(color);
+   }
+
+   // let _setVertexColor do the work.
+   return snapshot;
+};
+
+
+/**
+ * 
+ */
+PreviewCage.prototype.setBodyColor = function(color) {
+   const overSize = this.geometry.edges.size * 3 * 2;       // should be slight Overize;
+   const snapshot = {hEdges: [], vertexColor: new Util.Vec3View(new Uint8Array(overSize))};
+
+   for (let polygon of this.geometry.faces) {
+      if (polygon.isLive()) {
+         for (let hEdge of polygon.hEdges()) {
+            // snapshot vertexColor
+            snapshot.hEdges.push( hEdge );
+            snapshot.vertexColor.alloc(Util.Vec3View.uint8resize);
+            hEdge.getVertexColor(snapshot.vertexColor);
+            snapshot.vertexColor.inc();
+            // set new color.
+            hEdge.setVertexColor(color);
+         }
+         polygon._setColor(color);
+      }
+   }
+
+   // let _setVertexColor do the work.
+   return snapshot;
+};
+
 
 PreviewCage.prototype._getGeometrySize = function() {
    return { face: this.geometry.faces.size,
@@ -535,6 +785,12 @@ PreviewCage.prototype._getGeometrySize = function() {
 PreviewCage.prototype._updatePreviewAll = function() {
    this.bench.updateAffected();
 };
+
+
+
+//------------------------------------------------
+// selection (body, face, edge, vertex) operation
+//
 
 
 // body selection.
@@ -589,8 +845,6 @@ PreviewCage.prototype.changeFromBodyToMultiSelect = function() {
 
    return snapshot;
 }
-
-
 
 // hack for calling restoerXXXSelection. double dispatch?
 PreviewCage.prototype.restoreSelection = function(snapshot, madsor) {
@@ -1007,584 +1261,6 @@ PreviewCage.prototype.selectEdge = function(selectEdge) {
    wingedEdge.selectEdge(onOff);
    return onOff;
 };
-
-PreviewCage.prototype.computeSnapshot = function(snapshot) {
-   // update all affected polygon(use sphere). copy and recompute vertex.
-   for (let polygon of snapshot.faces) {
-      polygon.update();
-   }
-};
-
-
-PreviewCage.prototype.restoreMoveSelection = function(snapshot) {
-   // restore to the snapshot position.
-   let i = 0;
-   for (let vertex of snapshot.vertices) {
-      vec3.copy(vertex, snapshot.position.subarray(i, i+3));
-      i += 3;
-   }
-
-   this.computeSnapshot(snapshot);
-};
-
-
-// 3-15 - add limit to movement.
-PreviewCage.prototype.moveSelection = function(snapshot, movement) {
-   // first move geometry's position
-   if (snapshot.direction) {
-      let i = 0; 
-      for (let vertex of snapshot.vertices) {
-         vec3.scaleAndAdd(vertex, vertex, snapshot.direction.subarray(i, i+3), movement);  // movement is magnitude
-         i+=3;
-      }
-   } else {
-      for (let vertex of snapshot.vertices) {
-         vec3.add(vertex, vertex, movement);
-      }
-   }
-   this.computeSnapshot(snapshot);
-};
-
-//
-// rotate selection, with a center
-//
-PreviewCage.prototype.rotateSelection = function(snapshot, quatRotate, center) {
-   const translate = [0, 0, 0];
-   const scale = [1, 1, 1];
-   this.transformSelection(snapshot, (transform, origin) => {
-      mat4.fromRotationTranslationScaleOrigin(transform, quatRotate, translate, scale, (center ? center : origin));   
-    });
-};
-
-//
-// scale selection, by moving vertices
-//
-PreviewCage.prototype.scaleSelection = function(snapshot, scale, axis) {
-   const quatRotate = quat.create();
-   const translate = [0, 0, 0];
-   const scaleV = [axis[0] ? scale * axis[0] : 1, 
-                   axis[1] ? scale * axis[1] : 1, 
-                   axis[2] ? scale * axis[2] : 1];
-   this.transformSelection(snapshot, (transform, origin) => {
-      //mat4.fromScaling(transform, scaleV);   
-      mat4.fromRotationTranslationScaleOrigin(transform, quatRotate, translate, scaleV, origin);   
-    });
-};
-
-//
-// transform selection,
-//
-PreviewCage.prototype.transformSelection = function(snapshot, transformFn) {
-   // construct the matrix
-   const transform = mat4.create();
-
-   const pArry = new Util.Vec3View(snapshot.position);
-   const vArry = snapshot.vertices[Symbol.iterator]();
-   for (let group of snapshot.matrixGroup) {
-      //mat4.fromRotationTranslationScaleOrigin(transform, quatRotation, translate, scale, group.center); // origin should not be modified by scale, glmatrix seems to get the order wrong.
-      transformFn(transform, group.center);
-      for (let index = 0; index < group.count; index++) {
-         const vertex = vArry.next().value;
-         vec3.transformMat4(vertex, pArry, transform);
-         pArry.inc();
-      }
-   }
-
-   this.computeSnapshot(snapshot);
-};
-
-
-PreviewCage.prototype.snapshotPositionAll = function() {
-   return this.snapshotPosition(this.geometry.vertices);
-};
-
-PreviewCage.prototype.snapshotPosition = function(vertices, normalArray) {
-   var ret = {
-      faces: new Set,
-      vertices: null,
-      wingedEdges: new Set,
-      position: null,
-      direction: normalArray,
-   };
-   ret.vertices = vertices;
-   // allocated save position data.
-   const length = vertices.length ? vertices.length : vertices.size; // could be array or set
-   ret.position = new Float32Array(length*3);
-   // use the vertex to collect the affected polygon and the affected edge.
-   let i = 0;
-   for (let vertex of ret.vertices) {
-      vertex.eachOutEdge(function(edge) {
-         if (edge.isNotBoundary() && !ret.faces.has(edge.face)) {
-            ret.faces.add(edge.face);
-         }
-         if (!ret.wingedEdges.has(edge.wingedEdge)) {
-            ret.wingedEdges.add(edge.wingedEdge);
-         }
-      });
-      // save position data
-      ret.position.set(vertex, i);
-      i += 3;
-   }
-   return ret;
-};
-
-PreviewCage.prototype.snapshotEdgePosition = function() {
-   var vertices = new Set;
-   // first collect all the vertex
-   for (let wingedEdge of this.selectedSet) {
-      for (let edge of wingedEdge) {
-         var vertex = edge.origin;
-         if (!vertices.has(vertex)) {
-            vertices.add(vertex);
-         }
-      }
-   }
-   return this.snapshotPosition(vertices);
-};
-
-
-PreviewCage.prototype.snapshotFacePosition = function() {
-   var vertices = new Set;
-   // first collect all the vertex
-   for (let polygon of this.selectedSet) {
-      for (let vertex of polygon.eachVertex()) {
-         if (!vertices.has(vertex)) {
-            vertices.add(vertex);
-         }
-      };
-   }
-   return this.snapshotPosition(vertices);
-};
-
-PreviewCage.prototype.snapshotVertexPosition = function() {
-   const vertices = new Set(this.selectedSet);
-   return this.snapshotPosition(vertices);
-};
-
-PreviewCage.prototype.snapshotBodyPosition = function() {
-   let vertices = new Set;
-   if (this.hasSelection()) {
-      vertices = new Set(this.geometry.vertices);
-   }
-   return this.snapshotPosition(vertices);
-};
-
-
-PreviewCage.prototype.snapshotFacePositionAndNormal = function() {
-   const vertices = new Set;
-   let normalMap = new Map;
-   const polygonNormal = [0,0,0];
-   // first collect all the vertex
-   for (let polygon of this.selectedSet) {
-      for (let vertex of polygon.eachVertex()) {
-         if (!vertices.has(vertex)) {
-            vertices.add(vertex);
-            const normal = [0,0,0];
-            polygon.getNormal(normal);
-            normalMap.set(vertex, normal);
-         } else {
-            const normal = normalMap.get(vertex);
-            polygon.getNormal(polygonNormal);
-            if (vec3.dot(normal, polygonNormal) < 0.999) {  // check for nearly same normal, or only added if hard edge?
-               vec3.add(normal, normal, polygonNormal);
-            } 
-         }
-      };
-   }
-   // copy normal;
-   const normalArray = new Float32Array(vertices.size*3);
-   let i = 0;
-   for (let [_vert, normal] of normalMap) {
-      normalArray[i++] = normal[0];
-      normalArray[i++] = normal[1];
-      normalArray[i++] = normal[2];
-   }
-   return this.snapshotPosition(vertices, normalArray);
-};
-
-PreviewCage.prototype.snapshotVertexPositionAndNormal = function() {
-   const vertices = new Set(this.selectedSet);
-   const array = new Float32Array(vertices.size*3);
-   array.fill(0.0);
-   // copy normal
-   let i = 0;
-   for (let vertex of vertices) {
-      let normal = array.subarray(i, i+3);
-      vertex.eachOutEdge( function(outEdge) {
-         if (outEdge.isNotBoundary()) {
-            vec3.add(normal, normal, outEdge.face.normal);
-         }
-      });
-      vec3.normalize(normal, normal);        // finally, we can safely normalized?
-      i +=3;
-   }
-
-   return this.snapshotPosition(vertices, array);
-};
-
-PreviewCage.prototype.snapshotEdgePositionAndNormal = function() {
-   const vertices = new Set;
-   const normalMap = new Map; 
-   // first collect all the vertex
-   const tempNorm = vec3.create();
-   for (let wingedEdge of this.selectedSet) {
-      const p0 = wingedEdge.left.face;
-      const p1 = wingedEdge.right.face;
-      //vec3.normalize(tempNorm, tempNorm);
-      for (let edge of wingedEdge) {
-         let vertex = edge.origin;
-         let normal;
-         if (!vertices.has(vertex)) {
-            vertices.add(vertex);
-            normal = new Set;
-            normalMap.set(vertex, normal);
-         } else {
-            normal = normalMap.get(vertex);
-         }
-         if (p0 !== null) {
-            normal.add( p0 );
-         }
-         if (p1 !== null) {
-            normal.add( p1 );
-         }
-      }
-   }
-   // copy normal
-   const normalArray = new Float32Array(vertices.size*3);
-   normalArray.fill(0.0);
-   let i = 0;
-   for (let [_vert, normal] of normalMap) {
-      let inputNormal = normalArray.subarray(i, i+3);
-      for (let poly of normal) {
-         vec3.add(inputNormal, inputNormal, poly.normal);
-      }
-      vec3.normalize(inputNormal, inputNormal);    // 2019-08-19
-      i+=3;
-   }
-   return this.snapshotPosition(vertices, normalArray);
-};
-
-PreviewCage.prototype.snapshotTransformEdgeGroup = function() {
-   const vertices = new Set;
-   const matrixGroup = [];
-   // array of edgeLoop. 
-   let edgeGroup = this.geometry.findEdgeGroup(this.selectedSet);
-   // compute center of loop, gather all the vertices, create the scaling matrix
-   for (let group of edgeGroup) {
-      let count = 0;
-      const center = vec3.create();
-      for (let wEdge of group) {
-         for (let vertex of wEdge.eachVertex()) {
-            if (!vertices.has(vertex)){
-               vertices.add(vertex);
-               count++;
-               vec3.add(center, center, vertex);
-            }
-          };
-      }
-      vec3.scale(center, center, 1.0/count); // get the center
-      // now construct the group
-      matrixGroup.push( {center: center, count: count});
-   }
-
-   // now construct all the effected data and save position.
-   const ret = this.snapshotPosition(vertices);
-   ret.matrixGroup = matrixGroup;
-   return ret;
-};
-
-PreviewCage.prototype.snapshotTransformFaceGroup = function() {
-   const vertices = new Set;
-   const matrixGroup = [];
-   // array of edgeLoop. 
-   let faceGroup = WingedTopology.findFaceGroup(this.getSelectedSorted());
-   // compute center of loop, gather all the vertices, create the scaling matrix
-   const center = vec3.create();
-   for (let group of faceGroup) {
-      let count = 0;
-      vec3.set(center, 0, 0, 0);
-      for (let face of group) {
-         for (let vertex of face.eachVertex()) {
-            if (!vertices.has(vertex)){
-               vertices.add(vertex);
-               count++;
-               vec3.add(center, center, vertex);
-            }
-          };
-      }
-      vec3.scale(center, center, 1.0/count); // get the center
-      // now construct the group
-      matrixGroup.push( {center: center, count: count});
-   }
-
-   // now construct all the effected data and save position.
-   const ret = this.snapshotPosition(vertices);
-   ret.matrixGroup = matrixGroup;
-   return ret;
-};
-
-PreviewCage.prototype.snapshotTransformBodyGroup = function() {
-   let vertices = new Set;
-   const center = vec3.create();
-   if (this.hasSelection()) {
-      for (let vertex of this.geometry.vertices) {
-         if (vertex.isLive()) {
-            vertices.add(vertex);
-            vec3.add(center, center, vertex);
-         }
-      }
-      vec3.scale(center, center, 1.0/vertices.size);
-   }
-
-   const ret = this.snapshotPosition(vertices);
-   ret.matrixGroup = [{center: center, count: vertices.size}];
-   return ret;
-};
-
-//
-// no separate group. needs to have 2 vertex to see rotation.
-//
-PreviewCage.prototype.snapshotTransformVertexGroup = function() {
-   let vertices = new Set;
-   const center = vec3.create();
-   if (this.hasSelection()) {
-      for (let vertex of this.selectedSet) {
-         vertices.add(vertex);
-         vec3.add(center, center, vertex);
-      }
-      vec3.scale(center, center, 1.0/vertices.size);
-   }
-
-   const ret = this.snapshotPosition(vertices);
-   ret.matrixGroup = [{center: center, count: vertices.size}];
-   return ret;
-};
-
-
-/**
- * undo closeCrack. restore to original position.
- * 
- */
-PreviewCage.prototype.undoCloseCrack = function(undo) {
-   // first release newMesh
-   this.makeHolesFromBB(undo.mesh);
-
-   // restore borderPolygon
-   for (let restore of undo.borderPolygon) {
-      this.geometry.undoHole(restore);
-   }
-   this._updatePreviewAll();
-};
-
-/**
- * get all selected boundary edges and repolygon the boundary edge
- */
-PreviewCage.prototype.closeCrack = function() {
-   const snapshot = this._resetSelectEdge();
-   let vertices = new Set;
-   // min, max? and sort the maximum direction?
-   // check all selected edge is boundary edge then try to stitch.
-   for (let wEdge of snapshot.wingedEdges) {
-      vertices.add(wEdge.left.origin);
-      vertices.add(wEdge.right.origin);
-   }
-   // sort
-   vertices = Array.from(vertices).sort(function(x,y) {
-      for (let i = 0; i < 3; ++i) { // todo: sort by major axis first
-         if (x[i] < y[i] ) {
-            return -1;
-         } else if (x[i] > y[i]) {
-            return 1;
-         }
-      }
-      return 0;// must be equal.
-    });
-
-   const merged = new Map;
-   const remap = [];
-   // merge and catalog vertices
-   let target;
-   while (target = vertices.pop()) {
-      const targetRemap = {pt: [target[0], target[1], target[2]], count: 1, vert: target};
-      remap.push( targetRemap );
-      merged.set(target, targetRemap);
-      for (let i = vertices.length-1; i >= 0; --i) {
-         const a = vertices[i];
-         const result = Vertex.isOverlap(a, target)
-         if (result > 0) {
-            merged.set(a, targetRemap);
-            vec3.add(targetRemap.pt, targetRemap.pt, a); // prepare to average it
-            targetRemap.count++;
-            vertices.splice(i, 1);
-         } else if (result < 0) {
-            break;
-         }
-      }
-   }
-
-   // get borderPoly from weld vertices.
-   let borderPoly = new Set;
-   for (let [vertex, remap] of merged) {
-      if (remap.count > 1) {
-         for (let hEdge of vertex.edgeRing()) {
-            if (hEdge.face) {
-               borderPoly.add( hEdge.face );
-            }
-         }
-      }
-   }
-
-   const newMesh = [];
-   // get the new vertices Index for all the border polygon
-   for (let polygon of borderPoly) {
-      let index = [];
-      for (let outEdge of polygon.hEdges()) {
-         let target = merged.get(outEdge.origin);
-         if (target) {
-            index.push( target.vert.index );  // remap back 
-         } else {
-            index.push( outEdge.origin.index );
-         }
-      }
-      newMesh.push( index );
-   }
-   
-   const undo = {mesh: []};
-   // remove all border polygon. restore from last to first.
-   undo.borderPolygon = this.makeHolesFromBB(borderPoly).reverse();
-
-   // adjust vertices and readd vertices if deleted
-   for (let i = 0; i < remap.length; ++i) {
-      const target = remap[i];
-      vec3.scale(target.pt, target.pt, 1/target.count);
-      if (!target.vert.isLive()) {
-         this.geometry.addVertex(target.pt, target.vert);
-      }
-   }
-   // now readd all border polygon with merged vertices
-   for (let poly of newMesh) {
-      let face = this.geometry.addPolygon(poly);
-      if (face) { // how do we handle failure?
-         undo.mesh.push( face );
-      }
-   }
-
-   this._updatePreviewAll();
-   return undo;
-};
-/*PreviewCage.prototype.closeCrack = function() {
-   function getFreeInEdgeAll(vertex) {   // remove boundary that already overlap self.
-      const group = vertex.findFreeInEdgeAll();
-      const ret = [];
-      for (const inEdge of group) {   // check inEdge not overlap with outEdge
-         const outEdge = inEdge.next;
-         if (Vertex.isOverlap(inEdge.origin, outEdge.destination()) <= 0) {
-            ret.push(inEdge);
-         }
-      }
-      // split into free edge group.
-      if (ret.length > 1) {
-         const firstOut = ret[0].next;
-         for (let i = 0; i < ret.length; ++i) {
-            let j = (i+1)%ret.length;
-            if (j===0) {
-               ret[i].next = firstOut;
-            } else {
-               ret[i].next = ret[j].next;
-            }
-         }
-      }
-      return ret;
-   };
-   function restoreFreeEdgeAll(group) {
-      let target;
-      while (target = group.pop()) {
-         if (group.length > 0) {
-            let out = group[group.length-1].next;
-            group[group.length-1].next = target.next;
-            target.next = out;
-         }
-      }
-   };
-
-   const snapshot = this._resetSelectEdge();
-   let vertices = new Set;
-   // min, max? and sort the maximum direction?
-   // check all selected edge is boundary edge then try to stitch.
-   for (let wEdge of snapshot.wingedEdges) {
-      if (wEdge.left.isBoundary() || wEdge.right.isBoundary()) {  // make sure it boundary
-         vertices.add(wEdge.left.origin);
-         vertices.add(wEdge.right.origin);
-      }
-   }
-   // sort
-   vertices = Array.from(vertices).sort(function(x,y) {
-      for (let i = 0; i < 3; ++i) { // todo: sort by major axis first
-         if (x[i] < y[i] ) {
-            return -1;
-         } else if (x[i] > y[i]) {
-            return 1;
-         }
-      }
-      return 0;// must be equal.
-    });
-   // prune and stitch
-   let target;
-   let merge = [];
-   while (target = vertices.pop()) {
-      // walk from back
-      let bGroup = getFreeInEdgeAll(target); // split to free Edge group
-      for (let i = vertices.length-1; i >= 0; --i) {
-         let a = vertices[i];
-         let result = Vertex.isOverlap(a, target);
-         if (result !== 0) {
-            if (result > 0) {
-               let aGroup = getFreeInEdgeAll(a);   // split to free edge group.
-               if (aGroup.length > 0 && bGroup.length > 0) {
-                  let undo = this.geometry.stitchVertex(aGroup, bGroup);
-                  if (undo) {
-                     merge.push( undo  );
-                  }
-               }
-               // restore aGroup's connection.
-               if (aGroup.length>0){
-                  restoreFreeEdgeAll(aGroup);
-                  a.reorient();
-               } else {
-                  vertices.splice(i, 1);
-               }
-               continue;   // try if anymore vertices to merge for target.
-            }
-            // nay, looking for new vertices and restore vertex connection
-            restoreFreeEdgeAll(bGroup);
-            target.reorient();
-            break;
-         }
-      }
-      // restore current bGroup connection.
-   }   
-   //this._updatePreviewAll();
-   // now collapse loop.
-   let count = 0;
-   for (let wEdge of snapshot.wingedEdges) {
-      if (wEdge.isLive()) {
-         if (wEdge.left.isBoundary()) {
-            if (wEdge.left.next.next === wEdge.left) {
-               this.geometry._collapseLoop(wEdge.left);
-               count++;
-            }
-         } else if (wEdge.right.isBoundary()) {
-            if (wEdge.right.next.next === wEdge.right) {
-               this.geometry._collapseLoop(wEdge.right);
-               count++;
-            }
-         }
-      }
-   }
-   this._updatePreviewAll();
-   return snapshot;
-};*/
-
 
 
 /**
@@ -2010,6 +1686,571 @@ PreviewCage.prototype.restoreFromFaceToBodySelect = function(snapshot) {
 PreviewCage.prototype.restoreFromFaceToMultiSelect = function(_snapshot) {
    this.changeFromFaceToMultiSelect();
 };
+
+
+//
+// iterated through selectedEdge, and expand it along the edges, edge loop only possible on 4 edges vertex
+//
+PreviewCage.prototype.edgeLoop = function(nth) {
+   let count = 0;
+   const selection = new Set(this.selectedSet);
+   const ret = [];
+   for (let wingedEdge of selection) {
+      // walk forward, then backward.
+      for (let hEdge of wingedEdge) {
+         const end = hEdge;
+         // walking along the loop
+         while (hEdge = hEdge.next.pair.next) { // next edge
+            if (this.selectedSet.has(hEdge.wingedEdge) || (hEdge.destination().numberOfEdge() !== 4) ) {
+               break;   // already at end, or non-4 edge vertex.
+            }
+            ++count;
+            if ((count % nth) === 0) {
+               this.selectEdge(hEdge);
+               ret.push(hEdge);
+            }
+         }
+      }
+   }
+   return ret;
+};
+
+//
+// iterated through selectedEdge, and expand it along 2 side of loop, edge Ring only possible on 4 edges face
+//
+PreviewCage.prototype.edgeRing = function(nth) {
+   let count = 0;
+   const selection = new Set(this.selectedSet);
+   const ret = [];
+   for (let wingedEdge of selection) {
+      // walk forward, then backward.
+      for (let hEdge of wingedEdge) {
+         const end = hEdge;
+         // walking along the loop
+         while (hEdge = hEdge.pair.next.next) { // next edge
+            if (this.selectedSet.has(hEdge.wingedEdge) || (hEdge.next.next.next.next !== hEdge) ) {
+               break;   // already at end, or non-4 edge face.
+            }
+            ++count;
+            if ((count % nth) === 0) {
+               this.selectEdge(hEdge);
+               ret.push(hEdge);
+            }
+         }
+      }
+   }
+   return ret;
+};
+
+
+//-----------------------------------------------------------------------------------------------------------
+//-- vertex movement. needs to update bb, normal, centroid
+//-
+
+PreviewCage.prototype.computeSnapshot = function(snapshot) {
+   // update all affected polygon(use sphere). copy and recompute vertex.
+   for (let polygon of snapshot.faces) {
+      polygon.update();
+   }
+};
+
+
+PreviewCage.prototype.restoreMoveSelection = function(snapshot) {
+   // restore to the snapshot position.
+   let i = 0;
+   for (let vertex of snapshot.vertices) {
+      vec3.copy(vertex, snapshot.position.subarray(i, i+3));
+      i += 3;
+   }
+
+   this.computeSnapshot(snapshot);
+};
+
+
+// 3-15 - add limit to movement.
+PreviewCage.prototype.moveSelection = function(snapshot, movement) {
+   // first move geometry's position
+   if (snapshot.direction) {
+      let i = 0; 
+      for (let vertex of snapshot.vertices) {
+         vec3.scaleAndAdd(vertex, vertex, snapshot.direction.subarray(i, i+3), movement);  // movement is magnitude
+         i+=3;
+      }
+   } else {
+      for (let vertex of snapshot.vertices) {
+         vec3.add(vertex, vertex, movement);
+      }
+   }
+   this.computeSnapshot(snapshot);
+};
+
+//
+// rotate selection, with a center
+//
+PreviewCage.prototype.rotateSelection = function(snapshot, quatRotate, center) {
+   const translate = [0, 0, 0];
+   const scale = [1, 1, 1];
+   this.transformSelection(snapshot, (transform, origin) => {
+      mat4.fromRotationTranslationScaleOrigin(transform, quatRotate, translate, scale, (center ? center : origin));   
+    });
+};
+
+//
+// scale selection, by moving vertices
+//
+PreviewCage.prototype.scaleSelection = function(snapshot, scale, axis) {
+   const quatRotate = quat.create();
+   const translate = [0, 0, 0];
+   const scaleV = [axis[0] ? scale * axis[0] : 1, 
+                   axis[1] ? scale * axis[1] : 1, 
+                   axis[2] ? scale * axis[2] : 1];
+   this.transformSelection(snapshot, (transform, origin) => {
+      //mat4.fromScaling(transform, scaleV);   
+      mat4.fromRotationTranslationScaleOrigin(transform, quatRotate, translate, scaleV, origin);   
+    });
+};
+
+//
+// transform selection,
+//
+PreviewCage.prototype.transformSelection = function(snapshot, transformFn) {
+   // construct the matrix
+   const transform = mat4.create();
+
+   const pArry = new Util.Vec3View(snapshot.position);
+   const vArry = snapshot.vertices[Symbol.iterator]();
+   for (let group of snapshot.matrixGroup) {
+      //mat4.fromRotationTranslationScaleOrigin(transform, quatRotation, translate, scale, group.center); // origin should not be modified by scale, glmatrix seems to get the order wrong.
+      transformFn(transform, group.center);
+      for (let index = 0; index < group.count; index++) {
+         const vertex = vArry.next().value;
+         vec3.transformMat4(vertex, pArry, transform);
+         pArry.inc();
+      }
+   }
+
+   this.computeSnapshot(snapshot);
+};
+
+
+PreviewCage.prototype.snapshotPositionAll = function() {
+   return this.snapshotPosition(this.geometry.vertices);
+};
+
+PreviewCage.prototype.snapshotPosition = function(vertices, normalArray) {
+   var ret = {
+      faces: new Set,
+      vertices: null,
+      wingedEdges: new Set,
+      position: null,
+      direction: normalArray,
+   };
+   ret.vertices = vertices;
+   // allocated save position data.
+   const length = vertices.length ? vertices.length : vertices.size; // could be array or set
+   ret.position = new Float32Array(length*3);
+   // use the vertex to collect the affected polygon and the affected edge.
+   let i = 0;
+   for (let vertex of ret.vertices) {
+      vertex.eachOutEdge(function(edge) {
+         if (edge.isNotBoundary() && !ret.faces.has(edge.face)) {
+            ret.faces.add(edge.face);
+         }
+         if (!ret.wingedEdges.has(edge.wingedEdge)) {
+            ret.wingedEdges.add(edge.wingedEdge);
+         }
+      });
+      // save position data
+      ret.position.set(vertex, i);
+      i += 3;
+   }
+   return ret;
+};
+
+PreviewCage.prototype.snapshotEdgePosition = function() {
+   var vertices = new Set;
+   // first collect all the vertex
+   for (let wingedEdge of this.selectedSet) {
+      for (let edge of wingedEdge) {
+         var vertex = edge.origin;
+         if (!vertices.has(vertex)) {
+            vertices.add(vertex);
+         }
+      }
+   }
+   return this.snapshotPosition(vertices);
+};
+
+
+PreviewCage.prototype.snapshotFacePosition = function() {
+   var vertices = new Set;
+   // first collect all the vertex
+   for (let polygon of this.selectedSet) {
+      for (let vertex of polygon.eachVertex()) {
+         if (!vertices.has(vertex)) {
+            vertices.add(vertex);
+         }
+      };
+   }
+   return this.snapshotPosition(vertices);
+};
+
+PreviewCage.prototype.snapshotVertexPosition = function() {
+   const vertices = new Set(this.selectedSet);
+   return this.snapshotPosition(vertices);
+};
+
+PreviewCage.prototype.snapshotBodyPosition = function() {
+   let vertices = new Set;
+   if (this.hasSelection()) {
+      vertices = new Set(this.geometry.vertices);
+   }
+   return this.snapshotPosition(vertices);
+};
+
+
+PreviewCage.prototype.snapshotFacePositionAndNormal = function() {
+   const vertices = new Set;
+   let normalMap = new Map;
+   const polygonNormal = [0,0,0];
+   // first collect all the vertex
+   for (let polygon of this.selectedSet) {
+      for (let vertex of polygon.eachVertex()) {
+         if (!vertices.has(vertex)) {
+            vertices.add(vertex);
+            const normal = [0,0,0];
+            polygon.getNormal(normal);
+            normalMap.set(vertex, normal);
+         } else {
+            const normal = normalMap.get(vertex);
+            polygon.getNormal(polygonNormal);
+            if (vec3.dot(normal, polygonNormal) < 0.999) {  // check for nearly same normal, or only added if hard edge?
+               vec3.add(normal, normal, polygonNormal);
+            } 
+         }
+      };
+   }
+   // copy normal;
+   const normalArray = new Float32Array(vertices.size*3);
+   let i = 0;
+   for (let [_vert, normal] of normalMap) {
+      normalArray[i++] = normal[0];
+      normalArray[i++] = normal[1];
+      normalArray[i++] = normal[2];
+   }
+   return this.snapshotPosition(vertices, normalArray);
+};
+
+PreviewCage.prototype.snapshotVertexPositionAndNormal = function() {
+   const vertices = new Set(this.selectedSet);
+   const array = new Float32Array(vertices.size*3);
+   array.fill(0.0);
+   // copy normal
+   let i = 0;
+   for (let vertex of vertices) {
+      let normal = array.subarray(i, i+3);
+      vertex.eachOutEdge( function(outEdge) {
+         if (outEdge.isNotBoundary()) {
+            vec3.add(normal, normal, outEdge.face.normal);
+         }
+      });
+      vec3.normalize(normal, normal);        // finally, we can safely normalized?
+      i +=3;
+   }
+
+   return this.snapshotPosition(vertices, array);
+};
+
+PreviewCage.prototype.snapshotEdgePositionAndNormal = function() {
+   const vertices = new Set;
+   const normalMap = new Map; 
+   // first collect all the vertex
+   const tempNorm = vec3.create();
+   for (let wingedEdge of this.selectedSet) {
+      const p0 = wingedEdge.left.face;
+      const p1 = wingedEdge.right.face;
+      //vec3.normalize(tempNorm, tempNorm);
+      for (let edge of wingedEdge) {
+         let vertex = edge.origin;
+         let normal;
+         if (!vertices.has(vertex)) {
+            vertices.add(vertex);
+            normal = new Set;
+            normalMap.set(vertex, normal);
+         } else {
+            normal = normalMap.get(vertex);
+         }
+         if (p0 !== null) {
+            normal.add( p0 );
+         }
+         if (p1 !== null) {
+            normal.add( p1 );
+         }
+      }
+   }
+   // copy normal
+   const normalArray = new Float32Array(vertices.size*3);
+   normalArray.fill(0.0);
+   let i = 0;
+   for (let [_vert, normal] of normalMap) {
+      let inputNormal = normalArray.subarray(i, i+3);
+      for (let poly of normal) {
+         vec3.add(inputNormal, inputNormal, poly.normal);
+      }
+      vec3.normalize(inputNormal, inputNormal);    // 2019-08-19
+      i+=3;
+   }
+   return this.snapshotPosition(vertices, normalArray);
+};
+
+PreviewCage.prototype.snapshotTransformEdgeGroup = function() {
+   const vertices = new Set;
+   const matrixGroup = [];
+   // array of edgeLoop. 
+   let edgeGroup = this.geometry.findEdgeGroup(this.selectedSet);
+   // compute center of loop, gather all the vertices, create the scaling matrix
+   for (let group of edgeGroup) {
+      let count = 0;
+      const center = vec3.create();
+      for (let wEdge of group) {
+         for (let vertex of wEdge.eachVertex()) {
+            if (!vertices.has(vertex)){
+               vertices.add(vertex);
+               count++;
+               vec3.add(center, center, vertex);
+            }
+          };
+      }
+      vec3.scale(center, center, 1.0/count); // get the center
+      // now construct the group
+      matrixGroup.push( {center: center, count: count});
+   }
+
+   // now construct all the effected data and save position.
+   const ret = this.snapshotPosition(vertices);
+   ret.matrixGroup = matrixGroup;
+   return ret;
+};
+
+PreviewCage.prototype.snapshotTransformFaceGroup = function() {
+   const vertices = new Set;
+   const matrixGroup = [];
+   // array of edgeLoop. 
+   let faceGroup = WingedTopology.findFaceGroup(this.getSelectedSorted());
+   // compute center of loop, gather all the vertices, create the scaling matrix
+   const center = vec3.create();
+   for (let group of faceGroup) {
+      let count = 0;
+      vec3.set(center, 0, 0, 0);
+      for (let face of group) {
+         for (let vertex of face.eachVertex()) {
+            if (!vertices.has(vertex)){
+               vertices.add(vertex);
+               count++;
+               vec3.add(center, center, vertex);
+            }
+          };
+      }
+      vec3.scale(center, center, 1.0/count); // get the center
+      // now construct the group
+      matrixGroup.push( {center: center, count: count});
+   }
+
+   // now construct all the effected data and save position.
+   const ret = this.snapshotPosition(vertices);
+   ret.matrixGroup = matrixGroup;
+   return ret;
+};
+
+PreviewCage.prototype.snapshotTransformBodyGroup = function() {
+   let vertices = new Set;
+   const center = vec3.create();
+   if (this.hasSelection()) {
+      for (let vertex of this.geometry.vertices) {
+         if (vertex.isLive()) {
+            vertices.add(vertex);
+            vec3.add(center, center, vertex);
+         }
+      }
+      vec3.scale(center, center, 1.0/vertices.size);
+   }
+
+   const ret = this.snapshotPosition(vertices);
+   ret.matrixGroup = [{center: center, count: vertices.size}];
+   return ret;
+};
+
+//
+// no separate group. needs to have 2 vertex to see rotation.
+//
+PreviewCage.prototype.snapshotTransformVertexGroup = function() {
+   let vertices = new Set;
+   const center = vec3.create();
+   if (this.hasSelection()) {
+      for (let vertex of this.selectedSet) {
+         vertices.add(vertex);
+         vec3.add(center, center, vertex);
+      }
+      vec3.scale(center, center, 1.0/vertices.size);
+   }
+
+   const ret = this.snapshotPosition(vertices);
+   ret.matrixGroup = [{center: center, count: vertices.size}];
+   return ret;
+};
+
+
+// the real workhorse.
+PreviewCage.prototype._putOn = function(target) {
+   let fromFace = this.selectedSet.values().next().value; // must be true
+
+   const center = fromFace.center;
+   const normal = vec3.create();
+   vec3.copy(normal, fromFace.normal);
+   vec3.negate(normal, normal);
+
+   const rotAxis = mat4.create();
+   Util.rotationFromToVec3(rotAxis, normal, target.normal);
+   
+   const transform = mat4.create();
+   mat4.fromTranslation(transform, target.center);
+   mat4.mul(transform, transform, rotAxis);
+   vec3.negate(center, center);
+   const centerTransform = mat4.create();
+   mat4.fromTranslation(centerTransform, center);
+   mat4.mul(transform, transform, centerTransform);
+
+   // now transform all vertex
+   for (let vertex of this.geometry.vertices) {
+      vec3.transformMat4(vertex, vertex, transform);
+      this.geometry.addAffectedVertex(vertex);
+      this.geometry.addAffectedEdgeAndFace(vertex);
+   }
+   // now transform all normal
+   for (let face of this.geometry.faces) {
+      vec3.transformMat4(face.normal, face.normal, rotAxis);
+   }
+
+   this._updatePreviewAll();
+};
+
+
+PreviewCage.prototype.putOnVertex = function(vertex) {
+   const normal = vec3.create();
+   vertex.getNormal(normal);
+
+   this._putOn({normal: normal, center: vertex});
+};
+
+PreviewCage.prototype.putOnEdge = function(hEdge) {
+   const normal = vec3.create();
+   hEdge.wingedEdge.getNormal(normal);
+   const center = vec3.create();
+   vec3.add(center, hEdge.origin, hEdge.destination());
+   vec3.scale(center, center, 0.5);
+
+   this._putOn({normal: normal, center: center});
+};
+
+PreviewCage.prototype.putOnFace = function(polygon) {   
+   this._putOn({normal: polygon.normal, center: polygon.center});
+};
+
+
+// flatten
+PreviewCage.prototype.flattenEdge = function(axis) {
+   // first snapshot original position
+   const ret = this.snapshotEdgePosition();
+
+   // project onto axis.
+   const center = vec3.create();
+   const vertices = new Set;
+   const edgeGroups = this.geometry.findEdgeGroup(this.getSelectedSorted());
+   for (let group of edgeGroups) {
+      // compute center of a plane
+      vertices.clear();
+      vec3.set(center, 0, 0, 0);
+      for (let wEdge of group) { // compute center.
+         for (let hEdge of wEdge) {
+            if (!vertices.has(hEdge.origin)) {
+               vec3.add(center, center, hEdge.origin);
+               vertices.add(hEdge.origin);
+               this.geometry.addAffectedEdgeAndFace(hEdge.origin);
+            }
+         }
+      }
+      vec3.scale(center, center, 1/vertices.size);
+      // now project all vertex to (axis, center) plane.
+      Util.projectVec3(vertices, axis, center);
+   }
+
+
+   this._updatePreviewAll();
+   return ret;
+};
+
+
+// add group normal if planeNormal not present.
+PreviewCage.prototype.flattenFace = function(planeNormal) {
+   // first snapshot original position.
+   const ret = this.snapshotFacePosition();
+
+   const faceGroups = WingedTopology.findFaceGroup(this.getSelectedSorted());
+   const center = vec3.create();
+   const vertices = new Set;
+   let normal = planeNormal;
+   if (!planeNormal) {
+      normal = vec3.create();
+   }
+   for (let group of faceGroups) {
+      vertices.clear();
+      vec3.set(center, 0, 0, 0);
+      for (let face of group) {
+         for (let hEdge of face.hEdges()) {
+            if (!vertices.has(hEdge.origin)) {
+               vertices.add(hEdge.origin);
+               vec3.add(center, center, hEdge.origin);
+               this.geometry.addAffectedEdgeAndFace(hEdge.origin);
+            }
+         }
+         if (!planeNormal) {
+            vec3.add(normal, normal, face.normal);
+         }
+      }
+      vec3.scale(center, center, 1/vertices.size);
+      if (!planeNormal) {
+         vec3.normalize(normal, normal);
+      }
+      Util.projectVec3(vertices, normal, center);
+   }
+
+   this._updatePreviewAll();
+   return ret;
+};
+
+
+PreviewCage.prototype.flattenVertex = function(planeNormal) {
+   if (this.selectedSet.size > 1) { // needs at least 2 vertex to get a center.
+      const selectedVertices = this.getSelectedSorted();
+      const ret = this.snapshotVertexPosition();
+
+      const center = vec3.create();
+      for (let vertex of selectedVertices) {
+         vec3.add(center, center, vertex);
+         this.geometry.addAffectedEdgeAndFace(vertex);
+      }
+      vec3.scale(center, center, 1/selectedVertices.length);
+      Util.projectVec3(selectedVertices, planeNormal, center);
+
+      this._updatePreviewAll();
+
+      return ret;
+   }
+   return null;
+};
+
+//--------------------------------------------------------------------------------------------------
+// topology changing --
 
 
 PreviewCage.prototype.extractFace = function() {
@@ -2841,59 +3082,7 @@ PreviewCage.prototype.bevelVertex = function() {
    //};
 };
 
-//
-// iterated through selectedEdge, and expand it along the edges, edge loop only possible on 4 edges vertex
-//
-PreviewCage.prototype.edgeLoop = function(nth) {
-   let count = 0;
-   const selection = new Set(this.selectedSet);
-   const ret = [];
-   for (let wingedEdge of selection) {
-      // walk forward, then backward.
-      for (let hEdge of wingedEdge) {
-         const end = hEdge;
-         // walking along the loop
-         while (hEdge = hEdge.next.pair.next) { // next edge
-            if (this.selectedSet.has(hEdge.wingedEdge) || (hEdge.destination().numberOfEdge() !== 4) ) {
-               break;   // already at end, or non-4 edge vertex.
-            }
-            ++count;
-            if ((count % nth) === 0) {
-               this.selectEdge(hEdge);
-               ret.push(hEdge);
-            }
-         }
-      }
-   }
-   return ret;
-};
 
-//
-// iterated through selectedEdge, and expand it along 2 side of loop, edge Ring only possible on 4 edges face
-//
-PreviewCage.prototype.edgeRing = function(nth) {
-   let count = 0;
-   const selection = new Set(this.selectedSet);
-   const ret = [];
-   for (let wingedEdge of selection) {
-      // walk forward, then backward.
-      for (let hEdge of wingedEdge) {
-         const end = hEdge;
-         // walking along the loop
-         while (hEdge = hEdge.pair.next.next) { // next edge
-            if (this.selectedSet.has(hEdge.wingedEdge) || (hEdge.next.next.next.next !== hEdge) ) {
-               break;   // already at end, or non-4 edge face.
-            }
-            ++count;
-            if ((count % nth) === 0) {
-               this.selectEdge(hEdge);
-               ret.push(hEdge);
-            }
-         }
-      }
-   }
-   return ret;
-};
 
 // bridge, and unbridge
 PreviewCage.prototype.bridge = function(targetFace, sourceFace) {
@@ -3273,63 +3462,6 @@ PreviewCage.prototype.undoLoopCut = function(undo) {
 };
 
 
-// the real workhorse.
-PreviewCage.prototype._putOn = function(target) {
-   let fromFace = this.selectedSet.values().next().value; // must be true
-
-   const center = fromFace.center;
-   const normal = vec3.create();
-   vec3.copy(normal, fromFace.normal);
-   vec3.negate(normal, normal);
-
-   const rotAxis = mat4.create();
-   Util.rotationFromToVec3(rotAxis, normal, target.normal);
-   
-   const transform = mat4.create();
-   mat4.fromTranslation(transform, target.center);
-   mat4.mul(transform, transform, rotAxis);
-   vec3.negate(center, center);
-   const centerTransform = mat4.create();
-   mat4.fromTranslation(centerTransform, center);
-   mat4.mul(transform, transform, centerTransform);
-
-   // now transform all vertex
-   for (let vertex of this.geometry.vertices) {
-      vec3.transformMat4(vertex, vertex, transform);
-      this.geometry.addAffectedVertex(vertex);
-      this.geometry.addAffectedEdgeAndFace(vertex);
-   }
-   // now transform all normal
-   for (let face of this.geometry.faces) {
-      vec3.transformMat4(face.normal, face.normal, rotAxis);
-   }
-
-   this._updatePreviewAll();
-};
-
-
-PreviewCage.prototype.putOnVertex = function(vertex) {
-   const normal = vec3.create();
-   vertex.getNormal(normal);
-
-   this._putOn({normal: normal, center: vertex});
-};
-
-PreviewCage.prototype.putOnEdge = function(hEdge) {
-   const normal = vec3.create();
-   hEdge.wingedEdge.getNormal(normal);
-   const center = vec3.create();
-   vec3.add(center, hEdge.origin, hEdge.destination());
-   vec3.scale(center, center, 0.5);
-
-   this._putOn({normal: normal, center: center});
-};
-
-PreviewCage.prototype.putOnFace = function(polygon) {   
-   this._putOn({normal: polygon.normal, center: polygon.center});
-};
-
-
 PreviewCage.prototype.getSelectedFaceContours = function() {
    let contours = {};
    contours.edgeLoops = WingedTopology.findContours(this.selectedSet);
@@ -3621,99 +3753,6 @@ PreviewCage.prototype.positiveDirection = function(snapshot) {
 };
 PreviewCage.prototype.negativeDirection = function(snapshot) {
    snapshot.direction = snapshot.directionNegative;
-};
-
-
-// flatten
-PreviewCage.prototype.flattenEdge = function(axis) {
-   // first snapshot original position
-   const ret = this.snapshotEdgePosition();
-
-   // project onto axis.
-   const center = vec3.create();
-   const vertices = new Set;
-   const edgeGroups = this.geometry.findEdgeGroup(this.getSelectedSorted());
-   for (let group of edgeGroups) {
-      // compute center of a plane
-      vertices.clear();
-      vec3.set(center, 0, 0, 0);
-      for (let wEdge of group) { // compute center.
-         for (let hEdge of wEdge) {
-            if (!vertices.has(hEdge.origin)) {
-               vec3.add(center, center, hEdge.origin);
-               vertices.add(hEdge.origin);
-               this.geometry.addAffectedEdgeAndFace(hEdge.origin);
-            }
-         }
-      }
-      vec3.scale(center, center, 1/vertices.size);
-      // now project all vertex to (axis, center) plane.
-      Util.projectVec3(vertices, axis, center);
-   }
-
-
-   this._updatePreviewAll();
-   return ret;
-};
-
-
-// add group normal if planeNormal not present.
-PreviewCage.prototype.flattenFace = function(planeNormal) {
-   // first snapshot original position.
-   const ret = this.snapshotFacePosition();
-
-   const faceGroups = WingedTopology.findFaceGroup(this.getSelectedSorted());
-   const center = vec3.create();
-   const vertices = new Set;
-   let normal = planeNormal;
-   if (!planeNormal) {
-      normal = vec3.create();
-   }
-   for (let group of faceGroups) {
-      vertices.clear();
-      vec3.set(center, 0, 0, 0);
-      for (let face of group) {
-         for (let hEdge of face.hEdges()) {
-            if (!vertices.has(hEdge.origin)) {
-               vertices.add(hEdge.origin);
-               vec3.add(center, center, hEdge.origin);
-               this.geometry.addAffectedEdgeAndFace(hEdge.origin);
-            }
-         }
-         if (!planeNormal) {
-            vec3.add(normal, normal, face.normal);
-         }
-      }
-      vec3.scale(center, center, 1/vertices.size);
-      if (!planeNormal) {
-         vec3.normalize(normal, normal);
-      }
-      Util.projectVec3(vertices, normal, center);
-   }
-
-   this._updatePreviewAll();
-   return ret;
-};
-
-
-PreviewCage.prototype.flattenVertex = function(planeNormal) {
-   if (this.selectedSet.size > 1) { // needs at least 2 vertex to get a center.
-      const selectedVertices = this.getSelectedSorted();
-      const ret = this.snapshotVertexPosition();
-
-      const center = vec3.create();
-      for (let vertex of selectedVertices) {
-         vec3.add(center, center, vertex);
-         this.geometry.addAffectedEdgeAndFace(vertex);
-      }
-      vec3.scale(center, center, 1/selectedVertices.length);
-      Util.projectVec3(selectedVertices, planeNormal, center);
-
-      this._updatePreviewAll();
-
-      return ret;
-   }
-   return null;
 };
 
 
@@ -4047,251 +4086,231 @@ PreviewCage.undoWeldBody = function(weldContours) {
    }
 };
 
-/**
- * change selectedEdge's state
- * @param {number} operand - 0=soft, 1=hard, 2=invert 
- */
-PreviewCage.prototype.hardnessEdge = function(operand) {
-   let ret = {operand: operand, selection: []};
 
-   for (let wEdge of this.selectedSet) {
-      if (wEdge.setHardness(operand)) {   // check set successfully
-         ret.selection.push(wEdge);
-      }
+/**
+ * undo closeCrack. restore to original position.
+ * 
+ */
+PreviewCage.prototype.undoCloseCrack = function(undo) {
+   // first release newMesh
+   this.makeHolesFromBB(undo.mesh);
+
+   // restore borderPolygon
+   for (let restore of undo.borderPolygon) {
+      this.geometry.undoHole(restore);
    }
-   // return ret
-   if (ret.selection.length > 0) {
-      return ret;
-   } else {
-      return null;
-   }
+   this._updatePreviewAll();
 };
 
 /**
- * restore selection's edge state
- * @param {number} operand - 0=soft, 1=hard, 2=invert
- * @param {array} selection - the edges that needs to restore
+ * get all selected boundary edges and repolygon the boundary edge
  */
-PreviewCage.prototype.undoHardnessEdge = function(result) {
-   let operand = result.operand;
-   if (operand === 0) { // soft restore to hard
-      operand = 1;
-   } else if (operand === 1) {   // hard restore to soft
-      operand = 0;
-   }
-   for (let wEdge of result.selection) {   // restore edges state
-      wEdge.setHardness(operand);
-   }
-};
-
-
-/**
- * assign given material to the current selected Face
- * @param {Material} - the material that will assigned to the selected set.
- */
-PreviewCage.prototype.assignFaceMaterial = function(material) {
-   const savedMaterials = new Map;
-
-   for (let polygon of this.selectedSet) {   // don't need to sorted.
-      if (material !== polygon.material) {
-         let array = savedMaterials.get(polygon.material);
-         if (!array) {
-            savedMaterials.set(polygon.material, [polygon]);
-         } else {
-            array.push(polygon);
-         }
-         // now assign Material
-         polygon.assignMaterial(material);
-      }
-   }
-   if (savedMaterials.size > 0) {
-      return savedMaterials;
-   } else {
-      return undefined;
-   }
-};
-/**
- * restore original material
- * @param {map} - the original material to polygons array mapping
- */
-PreviewCage.prototype.undoAssignFaceMaterial = function(savedMaterials) {
-   for (const [material, array] of savedMaterials.entries()) {
-      for (const polygon of array) {
-         polygon.assignMaterial(material);
-      }
-   }
-};
-
-
-/** 
- * select polygon that has the input material.
- * @param (Material) - checking material.
-*/
-PreviewCage.prototype.selectFaceMaterial = function(material) {
-   const snapshot = this._resetSelectFace();
-
-   for (let polygon of this.geometry.faces) {
-      if (polygon.material === material) {
-         this.selectFace(polygon);
-      }
-   }
-
-   return snapshot;
-};
-
-/**
- * select line that has polygon with the same input material.
- * @param (Material) - input checking material 
- */
-PreviewCage.prototype.selectEdgeMaterial = function(material) {
+PreviewCage.prototype.closeCrack = function() {
    const snapshot = this._resetSelectEdge();
+   let vertices = new Set;
+   // min, max? and sort the maximum direction?
+   // check all selected edge is boundary edge then try to stitch.
+   for (let wEdge of snapshot.wingedEdges) {
+      vertices.add(wEdge.left.origin);
+      vertices.add(wEdge.right.origin);
+   }
+   // sort
+   vertices = Array.from(vertices).sort(function(x,y) {
+      for (let i = 0; i < 3; ++i) { // todo: sort by major axis first
+         if (x[i] < y[i] ) {
+            return -1;
+         } else if (x[i] > y[i]) {
+            return 1;
+         }
+      }
+      return 0;// must be equal.
+    });
 
-   for (let wEdge of this.geometry.edges) {
-      for (let hEdge of wEdge) {
-         if (hEdge.face && (hEdge.face.material === material)) {
-            this.selectEdge(hEdge);
+   const merged = new Map;
+   const remap = [];
+   // merge and catalog vertices
+   let target;
+   while (target = vertices.pop()) {
+      const targetRemap = {pt: [target[0], target[1], target[2]], count: 1, vert: target};
+      remap.push( targetRemap );
+      merged.set(target, targetRemap);
+      for (let i = vertices.length-1; i >= 0; --i) {
+         const a = vertices[i];
+         const result = Vertex.isOverlap(a, target)
+         if (result > 0) {
+            merged.set(a, targetRemap);
+            vec3.add(targetRemap.pt, targetRemap.pt, a); // prepare to average it
+            targetRemap.count++;
+            vertices.splice(i, 1);
+         } else if (result < 0) {
             break;
          }
       }
    }
 
-   return snapshot;
+   // get borderPoly from weld vertices.
+   let borderPoly = new Set;
+   for (let [vertex, remap] of merged) {
+      if (remap.count > 1) {
+         for (let hEdge of vertex.edgeRing()) {
+            if (hEdge.face) {
+               borderPoly.add( hEdge.face );
+            }
+         }
+      }
+   }
+
+   const newMesh = [];
+   // get the new vertices Index for all the border polygon
+   for (let polygon of borderPoly) {
+      let index = [];
+      for (let outEdge of polygon.hEdges()) {
+         let target = merged.get(outEdge.origin);
+         if (target) {
+            index.push( target.vert.index );  // remap back 
+         } else {
+            index.push( outEdge.origin.index );
+         }
+      }
+      newMesh.push( index );
+   }
+   
+   const undo = {mesh: []};
+   // remove all border polygon. restore from last to first.
+   undo.borderPolygon = this.makeHolesFromBB(borderPoly).reverse();
+
+   // adjust vertices and readd vertices if deleted
+   for (let i = 0; i < remap.length; ++i) {
+      const target = remap[i];
+      vec3.scale(target.pt, target.pt, 1/target.count);
+      if (!target.vert.isLive()) {
+         this.geometry.addVertex(target.pt, target.vert);
+      }
+   }
+   // now readd all border polygon with merged vertices
+   for (let poly of newMesh) {
+      let face = this.geometry.addPolygon(poly);
+      if (face) { // how do we handle failure?
+         undo.mesh.push( face );
+      }
+   }
+
+   this._updatePreviewAll();
+   return undo;
 };
+/*PreviewCage.prototype.closeCrack = function() {
+   function getFreeInEdgeAll(vertex) {   // remove boundary that already overlap self.
+      const group = vertex.findFreeInEdgeAll();
+      const ret = [];
+      for (const inEdge of group) {   // check inEdge not overlap with outEdge
+         const outEdge = inEdge.next;
+         if (Vertex.isOverlap(inEdge.origin, outEdge.destination()) <= 0) {
+            ret.push(inEdge);
+         }
+      }
+      // split into free edge group.
+      if (ret.length > 1) {
+         const firstOut = ret[0].next;
+         for (let i = 0; i < ret.length; ++i) {
+            let j = (i+1)%ret.length;
+            if (j===0) {
+               ret[i].next = firstOut;
+            } else {
+               ret[i].next = ret[j].next;
+            }
+         }
+      }
+      return ret;
+   };
+   function restoreFreeEdgeAll(group) {
+      let target;
+      while (target = group.pop()) {
+         if (group.length > 0) {
+            let out = group[group.length-1].next;
+            group[group.length-1].next = target.next;
+            target.next = out;
+         }
+      }
+   };
 
-/**
- * select vertext that has adjacent polygon with the same input material
- * @param (Material) - input checking material.
- */
-PreviewCage.prototype.selectVertexMaterial = function(material) {
-   const snapshot = this._resetSelectVertex();
-
-   for (let vertex of this.geometry.vertices) {
-      for (let outEdge of vertex.edgeRing()) {
-         if (outEdge.face && (outEdge.face.material === material)) {
-            this.selectVertex(vertex);
+   const snapshot = this._resetSelectEdge();
+   let vertices = new Set;
+   // min, max? and sort the maximum direction?
+   // check all selected edge is boundary edge then try to stitch.
+   for (let wEdge of snapshot.wingedEdges) {
+      if (wEdge.left.isBoundary() || wEdge.right.isBoundary()) {  // make sure it boundary
+         vertices.add(wEdge.left.origin);
+         vertices.add(wEdge.right.origin);
+      }
+   }
+   // sort
+   vertices = Array.from(vertices).sort(function(x,y) {
+      for (let i = 0; i < 3; ++i) { // todo: sort by major axis first
+         if (x[i] < y[i] ) {
+            return -1;
+         } else if (x[i] > y[i]) {
+            return 1;
+         }
+      }
+      return 0;// must be equal.
+    });
+   // prune and stitch
+   let target;
+   let merge = [];
+   while (target = vertices.pop()) {
+      // walk from back
+      let bGroup = getFreeInEdgeAll(target); // split to free Edge group
+      for (let i = vertices.length-1; i >= 0; --i) {
+         let a = vertices[i];
+         let result = Vertex.isOverlap(a, target);
+         if (result !== 0) {
+            if (result > 0) {
+               let aGroup = getFreeInEdgeAll(a);   // split to free edge group.
+               if (aGroup.length > 0 && bGroup.length > 0) {
+                  let undo = this.geometry.stitchVertex(aGroup, bGroup);
+                  if (undo) {
+                     merge.push( undo  );
+                  }
+               }
+               // restore aGroup's connection.
+               if (aGroup.length>0){
+                  restoreFreeEdgeAll(aGroup);
+                  a.reorient();
+               } else {
+                  vertices.splice(i, 1);
+               }
+               continue;   // try if anymore vertices to merge for target.
+            }
+            // nay, looking for new vertices and restore vertex connection
+            restoreFreeEdgeAll(bGroup);
+            target.reorient();
             break;
          }
       }
-   }
-
-   return snapshot;
-};
-
-/** 
- * select body that contain polygon with the same input material
-*/
-PreviewCage.prototype.selectBodyMaterial = function(material) {
-   const snapshot = this._resetSelectBody();
-
-   for (let polygon of this.geometry.faces) {
-      if (polygon.material === material) {
-         this.selectBody();
-         break;
-      }
-   }
-
-   return snapshot;
-};
-
-
-/**
- * 
- */
-PreviewCage.prototype.setVertexColor = function(color) {
-   const overSize = this.selectedSet.size * 3 * 5;       // should be slight Overize;
-   const snapshot = {hEdges: [], vertexColor: new Util.Vec3View(new Uint8Array(overSize))};
-   const affected = new Set;
-
-   for (let vertex of this.selectedSet) {
-      for (let hEdge of vertex.edgeRing()) { // get all outEdge
-         // snapshot vertexColor
-         snapshot.hEdges.push( hEdge );
-         snapshot.vertexColor.alloc(Util.Vec3View.uint8resize);
-         hEdge.getVertexColor(snapshot.vertexColor);
-         snapshot.vertexColor.inc();
-         // set new color.
-         hEdge.setVertexColor(color);
-         affected.add(hEdge.face);
-      }
-   }
-   snapshot.vertexColor.reset();
-
-   // now recompute the affected face centroid.
-   for (let polygon of affected) {
-      polygon.updateCentroidColor();
-   }
-   return snapshot;
-};
-
-/**
- * undo of setVertexColor
- */
-PreviewCage.prototype.undoVertexColor = function(snapshot) {
-   const affected = new Set;
-
-   snapshot.vertexColor.reset();
-   for (let hEdge of snapshot.hEdges) {
-      hEdge.setVertexColor(snapshot.vertexColor);  // restore color
-      affected.add(hEdge.face);
-   }
-
-   // now restore affected face centroid
-   for (let polygon of affected) {
-      polygon.updateCentroidColor();
-   }
-};
-
-
-/**
- * 
- */
-PreviewCage.prototype.setFaceColor = function(color) {
-   const overSize = this.selectedSet.size * 3 * 5;       // should be slight Overize;
-   const snapshot = {hEdges: [], vertexColor: new Util.Vec3View(new Uint8Array(overSize))};
-
-   for (let polygon of this.selectedSet) {
-      for (let hEdge of polygon.hEdges()) {
-         // snapshot vertexColor
-         snapshot.hEdges.push( hEdge );
-         snapshot.vertexColor.alloc(Util.Vec3View.uint8resize);
-         hEdge.getVertexColor(snapshot.vertexColor);
-         snapshot.vertexColor.inc();
-         // set new color.
-         hEdge.setVertexColor(color);
-      }
-      polygon._setColor(color);
-   }
-
-   // let _setVertexColor do the work.
-   return snapshot;
-};
-
-
-/**
- * 
- */
-PreviewCage.prototype.setBodyColor = function(color) {
-   const overSize = this.geometry.edges.size * 3 * 2;       // should be slight Overize;
-   const snapshot = {hEdges: [], vertexColor: new Util.Vec3View(new Uint8Array(overSize))};
-
-   for (let polygon of this.geometry.faces) {
-      if (polygon.isLive()) {
-         for (let hEdge of polygon.hEdges()) {
-            // snapshot vertexColor
-            snapshot.hEdges.push( hEdge );
-            snapshot.vertexColor.alloc(Util.Vec3View.uint8resize);
-            hEdge.getVertexColor(snapshot.vertexColor);
-            snapshot.vertexColor.inc();
-            // set new color.
-            hEdge.setVertexColor(color);
+      // restore current bGroup connection.
+   }   
+   //this._updatePreviewAll();
+   // now collapse loop.
+   let count = 0;
+   for (let wEdge of snapshot.wingedEdges) {
+      if (wEdge.isLive()) {
+         if (wEdge.left.isBoundary()) {
+            if (wEdge.left.next.next === wEdge.left) {
+               this.geometry._collapseLoop(wEdge.left);
+               count++;
+            }
+         } else if (wEdge.right.isBoundary()) {
+            if (wEdge.right.next.next === wEdge.right) {
+               this.geometry._collapseLoop(wEdge.right);
+               count++;
+            }
          }
-         polygon._setColor(color);
       }
    }
-
-   // let _setVertexColor do the work.
+   this._updatePreviewAll();
    return snapshot;
-};
+};*/
+
 
 //----------------------------------------------------------------------------------------------------------
 
