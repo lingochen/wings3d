@@ -9,7 +9,7 @@ import {Polygon, Vertex, WingedEdge, HalfEdge} from './wings3d_wingededge.js';
 
 /**
  * 
- * @param {*} polygon 
+ * @param {Polygon} polygon - polygon object 
  */
 function flattenPolygon(polygon) {
    const flatten = {uv:[], hEdges:[]};
