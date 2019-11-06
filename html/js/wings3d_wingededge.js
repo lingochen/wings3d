@@ -1046,10 +1046,10 @@ Polygon.prototype.update = function() {
    vec3.scale(this, this, 1.0/this.numberOfVertex);     // set center.
 
 
-   // now ask updatePosition to compute normal centroid and radius
-   // compute normal.
+   // now ask updatePosition to compute normal centroid and radius and compute normal.
    if (this.numberOfVertex > 2) {
-      this.computeNormal();
+      this.updatePosition();
+      // this.computeNormal();
    }
 };
 
@@ -2247,11 +2247,10 @@ WingedTopology.prototype.bevelEdge = function(wingedEdges) {   // wingedEdges(se
    ret.vertexLimit = Number.MAX_SAFE_INTEGER;       // magnitude
    ret.position = new Float32Array(ret.vertices.length*3);     // saved the original position
    ret.direction = new Float32Array(ret.vertices.length*3);    // also add direction.
-   let i = 0;
-   const pt = vec3.create();  // temporary
+   const position = new Vec3View(ret.position);
+   const direction = new Vec3View(ret.direction);
+   const pt = [0, 0, 0];  // temporary
    for (let vertex of ret.vertices) {
-      const position = ret.position.subarray(i, i+3);
-      const direction = ret.direction.subarray(i, i+3);
       const hEdges = vertexLimit.get(vertex);
       let avg = 1.0;
       if (twoEdgeVertexHack.has(vertex)) {
@@ -2272,7 +2271,8 @@ WingedTopology.prototype.bevelEdge = function(wingedEdges) {   // wingedEdges(se
       if (avg == 0.4) {
          vec3.normalize(direction, direction);
       }
-      i+=3;
+      position.inc();
+      direction.inc();
    }
 
    // we needs faces, we needs
@@ -2431,10 +2431,9 @@ WingedTopology.prototype.bevelVertex = function(vertices) {
    ret.vertexLimit = Number.MAX_SAFE_INTEGER;       // magnitude
    ret.position = new Float32Array(ret.vertices.length*3);     // saved the original position
    ret.direction = new Float32Array(ret.vertices.length*3);    // also add direction.
-   let i = 0;
+   const position = new Vec3View(ret.position);
+   const direction = new Vec3View(ret.direction);
    for (let vertex of ret.vertices) {
-      const position = ret.position.subarray(i, i+3);
-      const direction = ret.direction.subarray(i, i+3);
       vec3.copy(position, vertex);
       vec3.sub(direction, vertex.outEdge.destination(), position);
       if (slideHEdges.has(vertex.outEdge.pair)) {  // half length because we are sharing the expansion.
@@ -2443,7 +2442,8 @@ WingedTopology.prototype.bevelVertex = function(vertices) {
          ret.vertexLimit = Math.min(vec3.length(direction), ret.vertexLimit);  // the full length.
       }
       vec3.normalize(direction, direction);
-      i += 3;
+      position.inc();
+      direction.inc();
    }
 
    // results
