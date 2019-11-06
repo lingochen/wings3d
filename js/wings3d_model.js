@@ -1757,10 +1757,10 @@ PreviewCage.prototype.computeSnapshot = function(snapshot) {
 
 PreviewCage.prototype.restoreMoveSelection = function(snapshot) {
    // restore to the snapshot position.
-   let i = 0;
+   let i = new Util.Vec3View(snapshot.position);
    for (let vertex of snapshot.vertices) {
-      vec3.copy(vertex, snapshot.position.subarray(i, i+3));
-      i += 3;
+      vec3.copy(vertex, i);
+      i.inc();
    }
 
    this.computeSnapshot(snapshot);
@@ -1771,10 +1771,10 @@ PreviewCage.prototype.restoreMoveSelection = function(snapshot) {
 PreviewCage.prototype.moveSelection = function(snapshot, movement) {
    // first move geometry's position
    if (snapshot.direction) {
-      let i = 0; 
+      let i = new Util.Vec3View(snapshot.direction);
       for (let vertex of snapshot.vertices) {
-         vec3.scaleAndAdd(vertex, vertex, snapshot.direction.subarray(i, i+3), movement);  // movement is magnitude
-         i+=3;
+         vec3.scaleAndAdd(vertex, vertex, i, movement);  // movement is magnitude
+         i.inc();
       }
    } else {
       for (let vertex of snapshot.vertices) {
@@ -1946,16 +1946,15 @@ PreviewCage.prototype.snapshotVertexPositionAndNormal = function() {
    const array = new Float32Array(vertices.size*3);
    array.fill(0.0);
    // copy normal
-   let i = 0;
+   const normal = new Util.Vec3View(array);
    for (let vertex of vertices) {
-      let normal = array.subarray(i, i+3);
       vertex.eachOutEdge( function(outEdge) {
          if (outEdge.isNotBoundary()) {
             vec3.add(normal, normal, outEdge.face.normal);
          }
       });
       vec3.normalize(normal, normal);        // finally, we can safely normalized?
-      i +=3;
+      normal.inc();
    }
 
    return this.snapshotPosition(vertices, array);
@@ -1990,15 +1989,13 @@ PreviewCage.prototype.snapshotEdgePositionAndNormal = function() {
    }
    // copy normal
    const normalArray = new Float32Array(vertices.size*3);
-   normalArray.fill(0.0);
-   let i = 0;
+   const inputNormal = new Util.Vec3View(normalArray);
    for (let [_vert, normal] of normalMap) {
-      let inputNormal = normalArray.subarray(i, i+3);
       for (let poly of normal) {
          vec3.add(inputNormal, inputNormal, poly.normal);
       }
       vec3.normalize(inputNormal, inputNormal);    // 2019-08-19
-      i+=3;
+      inputNormal.inc();
    }
    return this.snapshotPosition(vertices, normalArray);
 };
@@ -3142,9 +3139,10 @@ PreviewCage.prototype.insetFace = function() {
    contours.faces = new Set;
    contours.wingedEdges = new Set;
    contours.position = new Float32Array(vertexCount*3);     // saved the original position
+   const position = new Util.Vec3View(contours.position);
    contours.direction = new Float32Array(vertexCount*3);    // also add direction.
+   const direction = new Util.Vec3View(contours.direction);
    contours.vertexLimit = Number.MAX_SAFE_INTEGER;  // really should call moveLimit.
-   let count = 0;
    for (let polygon of this.selectedSet) {
       let prev = null;
       contours.faces.add(polygon);
@@ -3153,10 +3151,8 @@ PreviewCage.prototype.insetFace = function() {
          contours.faces.add(hEdge.pair.face);
          contours.wingedEdges.add( hEdge.wingedEdge );
          contours.wingedEdges.add( hEdge.pair.next.wingedEdge );  // the extrude edge 
-         let position = contours.position.subarray(count, count+3);
-         let direction = contours.direction.subarray(count, count+3);
-         count += 3;
          vec3.copy(position, hEdge.origin);
+         position.inc();
          if (!prev) {
             prev = hEdge.prev();
          }
@@ -3169,6 +3165,7 @@ PreviewCage.prototype.insetFace = function() {
             contours.vertexLimit = len;
          }
          vec3.normalize(direction, direction);
+         direction.inc();
          // 
          prev = hEdge;
       }
@@ -3646,13 +3643,12 @@ PreviewCage.prototype.cornerEdge = function() {
       }
    }
    // compute direction, and copy position.
-   let count = 0;
    let direction = new Float32Array(dissolveEdges.length*3);
+   const dir = new Util.Vec3View(direction);
    for (let connect of dissolveEdges) {
-      const dir = direction.subarray(count, count+3);
       vec3.sub(dir, connect.origin, connect.destination());
       vec3.normalize(dir, dir);
-      count += 3;
+      dir.inc();
    }
    const ret = this.snapshotPosition(vertices, direction);
    this._updatePreviewAll();
@@ -3727,19 +3723,19 @@ PreviewCage.prototype.slideEdge = function() {
    }
 
    // copy to array and normalize.
-   let count = 0;
    const retVertices = [];
    const positiveDir = new Float32Array(vertices.size*3);
+   const positive = new Util.Vec3View(positiveDir);
    const negativeDir = new Float32Array(vertices.size*3);
+   const negative = new Util.Vec3View(negativeDir);
    for (const [vertex, dir] of vertices) {
       retVertices.push( vertex );
-      const positive = positiveDir.subarray(count, count+3);
       vec3.copy(positive, dir.positive);
       vec3.normalize(positive, positive);
-      const negative = negativeDir.subarray(count, count+3);
+      positive.inc();
       vec3.copy(negative, dir.negative);
       vec3.normalize(negative, negative);
-      count += 3;
+      negative.inc();
    }
 
    const ret = this.snapshotPosition(retVertices, positiveDir);
