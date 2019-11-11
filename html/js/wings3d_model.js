@@ -783,7 +783,7 @@ PreviewCage.prototype._getGeometrySize = function() {
 
 
 PreviewCage.prototype._updatePreviewAll = function() {
-   this.bench.updateAffected();
+   //this.bench.updateAffected();
 };
 
 
@@ -1102,16 +1102,15 @@ PreviewCage.prototype._selectVertexSimilar = function() {
 PreviewCage.prototype.changeFromVertexToFaceSelect = function() {
    const snapshot = this.snapshotSelectionVertex();
 
-   var self = this;
    var oldSelected = this._resetSelectVertex();
    //
    for (let vertex of oldSelected.vertices) { 
       // select all face that is connected to the vertex.
-      vertex.eachOutEdge(function(edge) {
-         if (edge.face && !self.selectedSet.has(edge.face)) {
-            self.selectFace(edge.face);
+      for (let outEdge of vertex.eachOutEdge()) {
+         if (outEdge.face && !this.selectedSet.has(outEdge.face)) {
+            this.selectFace(outEdge.face);
          }
-      });
+      };
    }
 
    return snapshot;
@@ -1120,16 +1119,15 @@ PreviewCage.prototype.changeFromVertexToFaceSelect = function() {
 PreviewCage.prototype.changeFromVertexToEdgeSelect = function() {
    const snapshot = this.snapshotSelectionVertex();
 
-   var self = this;
    var oldSelected = this._resetSelectVertex();
    //
    for (let vertex of oldSelected.vertices) { 
       // select all edge that is connected to the vertex.
-      vertex.eachOutEdge(function(edge) {
-         if (!self.selectedSet.has(edge.wingedEdge)) {
-            self.selectEdge(edge);
+      for (let outEdge of vertex.eachOutEdge()) {
+         if (!this.selectedSet.has(outEdge.wingedEdge)) {
+            this.selectEdge(outEdge);
          }
-      });
+      }
    }
 
    return snapshot;
@@ -1749,9 +1747,9 @@ PreviewCage.prototype.edgeRing = function(nth) {
 
 PreviewCage.prototype.computeSnapshot = function(snapshot) {
    // update all affected polygon(use sphere). copy and recompute vertex.
-   for (let polygon of snapshot.faces) {
+   /*for (let polygon of snapshot.faces) {
       polygon.update();
-   }
+   }*/
 };
 
 
@@ -1852,14 +1850,14 @@ PreviewCage.prototype.snapshotPosition = function(vertices, normalArray) {
    // use the vertex to collect the affected polygon and the affected edge.
    let i = 0;
    for (let vertex of ret.vertices) {
-      vertex.eachOutEdge(function(edge) {
-         if (edge.isNotBoundary() && !ret.faces.has(edge.face)) {
-            ret.faces.add(edge.face);
+      for (let outEdge of vertex.eachOutEdge()) {
+         if (outEdge.isNotBoundary() && !ret.faces.has(outEdge.face)) {
+            ret.faces.add(outEdge.face);
          }
-         if (!ret.wingedEdges.has(edge.wingedEdge)) {
-            ret.wingedEdges.add(edge.wingedEdge);
+         if (!ret.wingedEdges.has(outEdge.wingedEdge)) {
+            ret.wingedEdges.add(outEdge.wingedEdge);
          }
-      });
+      }
       // save position data
       ret.position.set(vertex, i);
       i += 3;
@@ -1944,15 +1942,14 @@ PreviewCage.prototype.snapshotFacePositionAndNormal = function() {
 PreviewCage.prototype.snapshotVertexPositionAndNormal = function() {
    const vertices = new Set(this.selectedSet);
    const array = new Float32Array(vertices.size*3);
-   array.fill(0.0);
    // copy normal
    const normal = new Util.Vec3View(array);
    for (let vertex of vertices) {
-      vertex.eachOutEdge( function(outEdge) {
+      for (let outEdge of vertex.eachOutEdge()) {
          if (outEdge.isNotBoundary()) {
             vec3.add(normal, normal, outEdge.face.normal);
          }
-      });
+      }
       vec3.normalize(normal, normal);        // finally, we can safely normalized?
       normal.inc();
    }
@@ -2094,6 +2091,17 @@ PreviewCage.prototype.snapshotTransformVertexGroup = function() {
    const ret = this.snapshotPosition(vertices);
    ret.matrixGroup = [{center: center, count: vertices.size}];
    return ret;
+};
+
+
+/**
+ * update all affected faces. snapshot.faces contains all affected faces.
+ * also update edge and vertex's normal?
+ */
+PreviewCage.prototype.updatePosition = function(snapshot) {
+   for (let face of snapshot.faces) {
+      face.updatePosition();
+   }
 };
 
 
@@ -2543,9 +2551,9 @@ PreviewCage.prototype.collapseExtrudeEdge = function(undo) {
    const affectedPolygon = new Set;
    const oldSize = this._getGeometrySize();
    for (let edge of edges) {
-      edge.origin.eachOutEdge( function(edge) {
-         affectedPolygon.add(edge.face);
-      });
+      for (let outEdge of edge.origin.eachOutEdge()) {
+         affectedPolygon.add(outEdge.face);
+      }
       this.geometry.collapseEdge(edge);
    }
    // recompute the smaller size

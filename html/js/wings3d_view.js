@@ -755,12 +755,13 @@ function canvasHandleMouseDown(ev) {
    ev.preventDefault();       // this prevent select text on infoLine because of canvas.
    if (ev.button === 0) {
       if (handler.camera !== null) {
-         handler.camera.doIt();  
+         handler.camera.commit();
          releaseHandlerCamera();
          Wings3D.log(Wings3D.action.cameraModeExit, Camera.view);
          help('L:Select   M:Start Camera   R:Show Menu   [Alt]+R:Tweak menu');      
       } else if (handler.mousemove !== null) {
-         undoQueue( handler.mousemove );  // put on queue, commit()?
+         handler.mousemove.commit();      // yes commit. do the commit thing.
+         undoQueue( handler.mousemove );  // put on queue
          releaseHandlerMouseMove(); // handler.mousemove = null;
       } else if (handler.mouseSelect !== null) {
          if (handler.mouseSelect.select(hilite)) {
@@ -809,12 +810,12 @@ function canvasHandleMouseUp(ev) {
       } 
    } else if (ev.button === 2) { // hack up 2019/07/26 to handle no contextmenu event in pointerLock, - needs refactor
       if (handler.camera) {      // firefox will generate contextmenu event if we put it on mouseDown.
-         handler.camera.undo();
+         handler.camera.rescind();
          releaseHandlerCamera();
          Wings3D.log(Wings3D.action.cameraModeExit, Camera.view);   // log action
          help('L:Select   M:Start Camera   R:Show Menu   [Alt]+R:Tweak menu');
       } else if (handler.mousemove) {
-         handler.mousemove.undo();
+         handler.mousemove.rescind();
          releaseHandlerMouseMove();
          Renderer.needToRedraw();
       } else {
