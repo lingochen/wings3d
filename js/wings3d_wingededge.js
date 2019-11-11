@@ -987,7 +987,7 @@ Polygon.prototype._setColor = function(color) {
 }
 
 
-// compute centroid and radius, and reorient.
+// compute centroid and radius, and normal
 Polygon.prototype.updatePosition = function() {
    const begin = this.halfEdge;
    let halfEdge = begin;
