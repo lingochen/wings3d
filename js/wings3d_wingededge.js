@@ -990,20 +990,21 @@ Polygon.prototype._setColor = function(color) {
 // compute centroid and radius, and normal
 Polygon.prototype.updatePosition = function() {
    const begin = this.halfEdge;
-   let halfEdge = begin;
    let current = begin;
    // now get radius, after we have center, or we could compute min, max, and get distance to center.
-   this.radius = 0.0; 
-   const min = [current.origin[0], current.origin[0], current.origin[0]];
-   const max = [current.origin[0], current.origin[0], current.origin[0]];
+   const min = [current.origin[0], current.origin[1], current.origin[2]];
+   const max = [current.origin[0], current.origin[1], current.origin[2]];
    do {
       vec3.min(min, min, current.origin);
       vec3.max(max, max, current.origin);
       current = current.next;
    } while (current !== begin);
-   this.radius = vec3.distance(max, min) / 2;
-   this.radius2 = this.radius*this.radius;
-   vec3.sub(max, max, min);
+   let sphere = {center: [0, 0, 0], radius: 0};
+   vec3.sub(sphere.center, max, min);
+   vec3.scale(sphere.center, sphere.center, 0.5);
+   sphere.radius = Math.hypot(sphere.center[0], sphere.center[1], sphere.center[2]);
+   vec3.add(sphere.center, sphere.center, min);
+   this.setSphere(sphere);
    
    // compute normal.
    if (this.numberOfVertex > 2) {
