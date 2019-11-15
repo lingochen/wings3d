@@ -18,29 +18,30 @@ class EditCommand {
 class MouseMoveHandler extends EditCommand {
 
    //handleMouseMove(ev) {}
-
-/*   
+ 
    commit() {
-      this._commit();
+      throw("unimplemented");
       // enable mouse cursor
-      document.body.style.cursor = 'auto';
+      //document.body.style.cursor = 'auto';
    } 
-*/
    rescind() {
-      this.undo();   // usually the same as undo
+      throw("unimplemented");   // actually not the same.
    }
 }
 
 // delegate mouse movement to MouseMoveHandler
 class MoveableCommand extends EditCommand {
-
-/* commit() {
-      this._commit();
-      // enable mouse cursor
-      document.body.style.cursor = 'auto';
-   } */
+   
+   commit() {
+      if (this.moveHandler) {
+         this.moveHandler.commit();
+         //document.body.style.cursor = 'auto';
+      }
+   }
    rescind() {
-      this.undo();   // usually the same as undo
+      if (this.moveHandler) {
+         this.moveHandler.rescind();
+      }
    }
 
    isMoveable() {

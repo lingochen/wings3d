@@ -582,11 +582,13 @@ class PutOnCommand extends EditSelectHandler {
       } else {
          return false;  // should not happened.
       }
+      this.preview.updatePosition(this.snapshot);  // update body
       return true;
    }
 
    undo() {
       this.preview.restoreMoveSelection(this.snapshot);
+      this.preview.updatePosition(this.snapshot);
    }
 }
 

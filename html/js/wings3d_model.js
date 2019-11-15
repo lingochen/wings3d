@@ -1741,18 +1741,6 @@ PreviewCage.prototype.edgeRing = function(nth) {
 };
 
 
-//-----------------------------------------------------------------------------------------------------------
-//-- vertex movement. needs to update bb, normal, centroid
-//-
-
-PreviewCage.prototype.computeSnapshot = function(snapshot) {
-   // update all affected polygon(use sphere). copy and recompute vertex.
-   /*for (let polygon of snapshot.faces) {
-      polygon.update();
-   }*/
-};
-
-
 PreviewCage.prototype.restoreMoveSelection = function(snapshot) {
    // restore to the snapshot position.
    let i = new Util.Vec3View(snapshot.position);
@@ -1760,8 +1748,6 @@ PreviewCage.prototype.restoreMoveSelection = function(snapshot) {
       vec3.copy(vertex, i);
       i.inc();
    }
-
-   this.computeSnapshot(snapshot);
 };
 
 
@@ -1779,7 +1765,6 @@ PreviewCage.prototype.moveSelection = function(snapshot, movement) {
          vec3.add(vertex, vertex, movement);
       }
    }
-   this.computeSnapshot(snapshot);
 };
 
 //
@@ -1826,8 +1811,6 @@ PreviewCage.prototype.transformSelection = function(snapshot, transformFn) {
          pArry.inc();
       }
    }
-
-   this.computeSnapshot(snapshot);
 };
 
 
@@ -2128,15 +2111,14 @@ PreviewCage.prototype._putOn = function(target) {
    // now transform all vertex
    for (let vertex of this.geometry.vertices) {
       vec3.transformMat4(vertex, vertex, transform);
-      this.geometry.addAffectedVertex(vertex);
-      this.geometry.addAffectedEdgeAndFace(vertex);
-   }
-   // now transform all normal
-   for (let face of this.geometry.faces) {
-      vec3.transformMat4(face.normal, face.normal, rotAxis);
    }
 
-   this._updatePreviewAll();
+   // recompute bb, normal...
+   for (let face of this.geometry.faces) {
+      //vec3.transformMat4(face.normal, face.normal, rotAxis);
+      face.updatePosition();
+   }
+   // this._updatePreviewAll();
 };
 
 

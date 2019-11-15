@@ -117,10 +117,6 @@ class BodyMadsor extends Madsor {
       return this.snapshotSelected(PreviewCage.prototype.snapshotTransformBodyGroup);
    }
 
-   updatePosition(snapshots) {
-      this.doAll(snapshots, PreviewCage.prototype.updateBodyPositions);
-   }
-
    combine(cageSelection) {
       if (cageSelection === undefined) {
          cageSelection = [];
