@@ -786,6 +786,15 @@ PreviewCage.prototype._updatePreviewAll = function() {
    //this.bench.updateAffected();
 };
 
+/**
+ * param {array/set} faces - updatePosition for all containers.
+ */
+PreviewCage.prototype._updatePosition = function(faces) {
+   for (let polygon of faces) {
+      polygon.updatePosition();
+   }
+};
+
 
 
 //------------------------------------------------
@@ -1741,6 +1750,10 @@ PreviewCage.prototype.edgeRing = function(nth) {
 };
 
 
+//-----------------------------------------------------------------------------------------------------
+// move selection functions
+//
+
 PreviewCage.prototype.restoreMoveSelection = function(snapshot) {
    // restore to the snapshot position.
    let i = new Util.Vec3View(snapshot.position);
@@ -2114,11 +2127,7 @@ PreviewCage.prototype._putOn = function(target) {
    }
 
    // recompute bb, normal...
-   for (let face of this.geometry.faces) {
-      //vec3.transformMat4(face.normal, face.normal, rotAxis);
-      face.updatePosition();
-   }
-   // this._updatePreviewAll();
+   this._updatePosition(this.geometry.faces);   //vec3.transformMat4(face.normal, face.normal, rotAxis);
 };
 
 
@@ -2162,7 +2171,7 @@ PreviewCage.prototype.flattenEdge = function(axis) {
             if (!vertices.has(hEdge.origin)) {
                vec3.add(center, center, hEdge.origin);
                vertices.add(hEdge.origin);
-               this.geometry.addAffectedEdgeAndFace(hEdge.origin);
+               //this.geometry.addAffectedEdgeAndFace(hEdge.origin);
             }
          }
       }
@@ -2171,8 +2180,7 @@ PreviewCage.prototype.flattenEdge = function(axis) {
       Util.projectVec3(vertices, axis, center);
    }
 
-
-   this._updatePreviewAll();
+   this._updatePosition(ret.faces);
    return ret;
 };
 
@@ -2197,7 +2205,7 @@ PreviewCage.prototype.flattenFace = function(planeNormal) {
             if (!vertices.has(hEdge.origin)) {
                vertices.add(hEdge.origin);
                vec3.add(center, center, hEdge.origin);
-               this.geometry.addAffectedEdgeAndFace(hEdge.origin);
+               //this.geometry.addAffectedEdgeAndFace(hEdge.origin);
             }
          }
          if (!planeNormal) {
@@ -2211,7 +2219,7 @@ PreviewCage.prototype.flattenFace = function(planeNormal) {
       Util.projectVec3(vertices, normal, center);
    }
 
-   this._updatePreviewAll();
+   this._updatePosition(ret.faces);
    return ret;
 };
 
@@ -2224,17 +2232,17 @@ PreviewCage.prototype.flattenVertex = function(planeNormal) {
       const center = vec3.create();
       for (let vertex of selectedVertices) {
          vec3.add(center, center, vertex);
-         this.geometry.addAffectedEdgeAndFace(vertex);
+         //this.geometry.addAffectedEdgeAndFace(vertex);
       }
       vec3.scale(center, center, 1/selectedVertices.length);
       Util.projectVec3(selectedVertices, planeNormal, center);
 
-      this._updatePreviewAll();
-
+      this._updatePosition(ret.faces);
       return ret;
    }
    return null;
 };
+
 
 //--------------------------------------------------------------------------------------------------
 // topology changing --
