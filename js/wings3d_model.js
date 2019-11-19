@@ -2471,14 +2471,14 @@ PreviewCage.prototype.undoExtrudeEdge = function(extrude) {
 };
 
 
-//
-// extrudeVertex - add 1/4 vertex to every edge then connect all together.
+/** 
+   extrudeVertex - add 1/4 vertex to every edge then connect all together.
+   use geometry: splitEdge, insertEdge.
+ */
 PreviewCage.prototype.extrudeVertex = function() {
-   const oldSize = this._getGeometrySize();
-
    const splitEdges = [];
    const extrudeLoops = [];
-   const pt = vec3.create();
+   const pt = [0, 0, 0];
    for (let vertex of this.selectedSet) {
       let firstHalf;
       let prevHalf = null;
@@ -2503,13 +2503,14 @@ PreviewCage.prototype.extrudeVertex = function() {
       extrudeLoops.push( outConnect );
    }
 
-   this._updatePreviewAll(oldSize, this.geometry.affected);
+   this.updateAffected();
 
    return {insertEdges: extrudeLoops, splitEdges: splitEdges};
 };
+/**
+ * use: removeEdge? collapseEdge?
+ */
 PreviewCage.prototype.undoExtrudeVertex = function(extrude) {
-   const oldSize = this._getGeometrySize();
-
    for (let hEdge of extrude.insertEdges) {
       this.geometry.removeEdge(hEdge);
    }
@@ -2517,7 +2518,7 @@ PreviewCage.prototype.undoExtrudeVertex = function(extrude) {
       this.geometry.collapseEdge(hEdge.pair);
    }
  
-   this._updatePreviewAll(oldSize, this.geometry.affected);
+   this.updateAffected();
 }
 
 
