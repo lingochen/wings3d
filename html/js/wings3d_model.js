@@ -2557,7 +2557,7 @@ PreviewCage.prototype.collapseExtrudeEdge = function(undo) {
    }
    // recompute the smaller size
    this.updateAffected();
-   
+
    // reselect face
    const oldSelected = this._resetSelectFace();
    for (let polygon of oldSelected.selectedFaces) {
@@ -2601,9 +2601,11 @@ PreviewCage.prototype.findExtFaceContours = function() {
 };
 
 
+/**
+ * 
+ * use: insertEdge, splitEdge, insertFan
+ */
 PreviewCage.prototype.bumpFace = function() {
-   const oldSize = this._getGeometrySize();
-
    // find contourEdge
    const result = this.findExtFaceContours();
    const contours = result.contourLoops;
@@ -2698,8 +2700,8 @@ PreviewCage.prototype.bumpFace = function() {
       }
    }
 
- 
-   this._updatePreviewAll(oldSize, this.geometry.affected);
+   // compute update.
+   this.updateAffected();
 
    return {liftEdges: liftEdges, collapsibleWings: collapsibleWings, dissolveEdges: dissolveEdges};
 };
