@@ -437,6 +437,9 @@ function getWorld() {
    return _environment.world.getCage();
 }
 function updateWorld() {
+   for (let cage of _environment.world.getCage()) {
+      cage.updateAffected();
+   }
    Renderer.needToRedraw();
 };
 function makeCombineIntoWorld(cageSelection) {

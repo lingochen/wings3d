@@ -165,6 +165,7 @@ class MeshAllocatorProxy { // we could use Proxy, but ....
    addAffectedWEdge(wEdge) {this.preview.bench.addAffectedWEdge(wEdge);}
    addAffectedFace(polygon) {this.preview.bench.addAffectedFace(polygon);}
    addAffectedVertex(vertex) {this.preview.bench.addAffectedVertex(vertex);}
+   addAffectedVertexFace(vertex) {this.preview.bench.addAffectedVertexFace(vertex);}
 }
 
 
@@ -453,6 +454,7 @@ PreviewCage.prototype.detachFace = function(detachFaces, number) {
 
 
 PreviewCage.prototype.setVisible = function(on) {
+   //this.bench.updateAffected();
    if (on) {
       if (!this.status.visible) {
          this.status.visible = true;
@@ -784,6 +786,10 @@ PreviewCage.prototype._getGeometrySize = function() {
 
 PreviewCage.prototype._updatePreviewAll = function() {
    //this.bench.updateAffected();
+};
+
+PreviewCage.prototype.updateAffected = function() {
+   this.bench.updateAffected();
 };
 
 /**
@@ -2270,9 +2276,11 @@ PreviewCage.prototype.creaseEdge = function() {
 // extrudeEdge - add 1/5 vertex to non-selected next/prev hEdges.
 // or to extrude corner if next/prev hEdges are selected. 
 // creaseFlag = crease endCap is different.
+//
+// use geometry functions.
+//    lifeCornerEdge, extrudeEdge, splitEdge, _liftDanglingEdge, extrudeEdge, insertEdge
+//
 PreviewCage.prototype.extrudeEdge = function(creaseFlag = false) {
-   const oldSize = this._getGeometrySize();
-
    // return value
    let collapsibleWings = new Set;
    let liftEdges = [];
@@ -2438,14 +2446,15 @@ PreviewCage.prototype.extrudeEdge = function(creaseFlag = false) {
          hOut = hIn.pair;  // move to current
       } while (true);   // walk until we hit the other pair
    }
-   
-   this._updatePreviewAll(oldSize, this.geometry.affected);
+
+   this.updateAffected();  // update all affected polygon.
 
    return {collapsibleWings: collapsibleWings, liftEdges: liftEdges};
 };
+/**
+ * use: dissolvEdge, collapseEdge
+ */
 PreviewCage.prototype.undoExtrudeEdge = function(extrude) {
-   const oldSize = this._getGeometrySize();
-
    if (extrude.dissolveEdges) {
       for (let hEdge of extrude.dissolveEdges) {
          if (hEdge.wingedEdge.isLive()) {
@@ -2458,7 +2467,7 @@ PreviewCage.prototype.undoExtrudeEdge = function(extrude) {
       this.geometry.collapseEdge(hEdge, extrude.collapsibleWings);
    }
  
-   this._updatePreviewAll(oldSize, this.geometry.affected);
+   this.updateAffected();
 };
 
 
@@ -2805,7 +2814,7 @@ PreviewCage.prototype.reinsertDissolveEdge = function(dissolveEdges) {
 PreviewCage.prototype.collapseSelectedEdge = function() {
    const restoreVertex = [];
    const collapseEdges = [];
-   const oldSize = this._getGeometrySize();
+
    const selected = new Map();
    for (let edge of this.selectedSet) {
       let undo = null;
@@ -2841,22 +2850,22 @@ PreviewCage.prototype.collapseSelectedEdge = function() {
    for (let [vertex, pt] of selected) {
       selectedVertex.push( vertex );
       // save and move the position
-      const savePt = new Float32Array(3);
+      const savePt = [0, 0, 0];
       vec3.copy(savePt, vertex);
       restoreVertex.push({vertex: vertex, savePt: savePt});
       vec3.add(pt.pt, pt.pt, savePt);
       vec3.scale(pt.pt, pt.pt, 1.0/(pt.count+1)); 
       vertex.set(pt.pt);
-      this.geometry.addAffectedEdgeAndFace(vertex);
+      this.geometry.addAffectedVertexFace(vertex);
    }
    // after deletion of
-   this._updatePreviewAll(oldSize, this.geometry.affected);
+   this.updateAffected();
+
    return { collapse: {edges: collapseEdges, vertices: restoreVertex}, vertices: selectedVertex };
 };
 
 PreviewCage.prototype.restoreCollapseEdge = function(data) {
    const collapse = data.collapse;
-   const oldSize = this._getGeometrySize();
    // walk form last to first.
    this.selectedSet.clear();
 
@@ -2873,10 +2882,10 @@ PreviewCage.prototype.restoreCollapseEdge = function(data) {
    const restoreVertex = collapse.vertices;
    for (let restore of restoreVertex) {   // restore position
       restore.vertex.set(restore.savePt);
-      this.geometry.addAffectedEdgeAndFace(restore.vertex);
+      this.geometry.addAffectedVertexFace(restore.vertex);
    }
    // 
-   this._updatePreviewAll(oldSize, this.geometry.affected);
+   this.updateAffected();
 };
 
 
