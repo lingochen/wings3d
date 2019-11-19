@@ -2522,10 +2522,11 @@ PreviewCage.prototype.undoExtrudeVertex = function(extrude) {
 }
 
 
-//
-// extrudeFace - will create a list of 
+/** 
+   extrudeFace - will create a list of
+   use: lifAndExtrudeContours. 
+*/
 PreviewCage.prototype.extrudeFace = function(contours) {
-   const oldSize = this._getGeometrySize();
    // array of edgeLoop. 
    if (!contours) {
       contours = {};
@@ -2534,7 +2535,7 @@ PreviewCage.prototype.extrudeFace = function(contours) {
    contours.extrudeEdges = this.geometry.liftAndExtrudeContours(contours.edgeLoops);
    //const edgeLoops = this.geometry.extrudePolygon(this.selectedSet);
    // add the new Faces. and new vertices to the preview
-   this._updatePreviewAll(oldSize, this.geometry.affected);
+   this.updateAffected();
    // reselect face
    const oldSelected = this._resetSelectFace();
    for (let polygon of oldSelected.selectedFaces) {
@@ -2545,30 +2546,22 @@ PreviewCage.prototype.extrudeFace = function(contours) {
 };
 
 
-// collapse list of edges
+/** 
+ *  collapse list of edges
+ * use - collapseEdge
+ */
 PreviewCage.prototype.collapseExtrudeEdge = function(undo) {
    const edges = undo.extrudeEdges;
-   const affectedPolygon = new Set;
-   const oldSize = this._getGeometrySize();
    for (let edge of edges) {
-      for (let outEdge of edge.origin.eachOutEdge()) {
-         affectedPolygon.add(outEdge.face);
-      }
       this.geometry.collapseEdge(edge);
    }
    // recompute the smaller size
-   this._updatePreviewAll(oldSize,  this.geometry.affected);
+   this.updateAffected();
+   
    // reselect face
    const oldSelected = this._resetSelectFace();
    for (let polygon of oldSelected.selectedFaces) {
       this.selectFace(polygon);
-   }
-
-   // update all affected polygon(use sphere). recompute centroid.
-   for (let polygon of affectedPolygon) {
-      if (polygon.isLive()) {
-         polygon.update();
-      }
    }
 };
 
