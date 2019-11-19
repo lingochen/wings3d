@@ -774,7 +774,7 @@ const Polygon = function(startEdge, size, material=Material.default) {
    this.halfEdge = startEdge;
    this.numberOfVertex = size;      // how many vertex in the polygon
    this.assignMaterial(material);
-   this.update(); //this.computeNormal();
+   //this.update(); //this should init right?
    this._setColor(HalfEdge.WHITE);
    Polygon.centerIndex.alloc();                    // (vIdx, hIdx, face, group) (hIdx is negative number)
    const i = this.index * 4;
@@ -1204,7 +1204,7 @@ MeshAllocator.prototype.allocPolygon = function(halfEdge, numberOfVertex, materi
       polygon.numberOfVertex = numberOfVertex;
       //polygon.update();
       polygon.show();            // make sure it visible.
-      this.affected.faces.add( polygon );
+      //this.affected.faces.add( polygon );
    } else {
       polygon = new Polygon(halfEdge, numberOfVertex, material);
       polygon.index = this.faces.length;
@@ -1337,27 +1337,35 @@ MeshAllocator.prototype.addAffectedEdgeAndFace = function(vertex) {
       this.affected.edges.add(halfEdge.wingedEdge);
       if (halfEdge.face !== null) {
          this.affected.faces.add(halfEdge.face);
-     }
-   };
+      }
+   }
 };
+MeshAllocator.prototype.addAffectedVertexFace = function(vertex) {
+   this.affected.vertices.add(vertex);
+   for (let halfEdge of vertex.eachOutEdge()) {
+      if (halfEdge.face !== null) {
+         this.affected.faces.add(halfEdge.face);
+      }
+   }
+}
 MeshAllocator.prototype.updateAffected = function() {
    for (let vertex of this.affected.vertices) {
       if (vertex.isLive()) {
-         for (let hEdge of vertex.edgeRing()) {
+         /*for (let hEdge of vertex.edgeRing()) {
             if (hEdge.face) {
                this.affected.faces.add(hEdge.face);
             }
-         }
+         }*/
          vertex.reorient();
       }
    }
-   for (let wEdge of this.affected.edges) {
+   /*for (let wEdge of this.affected.edges) {
       for (let hEdge of wEdge) {
          if (hEdge.face) {
             this.affected.faces.add(hEdge.face);
          }
       }
-   }
+   }*/
 
    for (let polygon of this.affected.faces) {
       if (polygon.isLive()) {
@@ -1631,6 +1639,10 @@ WingedTopology.prototype.addAffectedEdgeAndFace = function(vertex) {
    this.alloc.addAffectedEdgeAndFace(vertex);
 };
 
+WingedTopology.prototype.addAffectedVertexFace = function(vertex) {
+   this.alloc.addAffectedVertexFace(vertex);
+}
+
 WingedTopology.prototype._createPolygon = function(halfEdge, numberOfVertex, material, delPolygon) {
    let polygon;
    if (delPolygon) {
@@ -1644,6 +1656,7 @@ WingedTopology.prototype._createPolygon = function(halfEdge, numberOfVertex, mat
    }
    polygon.setGroup(this.guid);
    this.faces.add(polygon);
+   this.addAffectedFace(polygon);
    return polygon;
 };
 
@@ -1989,8 +2002,10 @@ WingedTopology.prototype.splitEdge = function(outEdge, pt, delOut) {
   
    newOut.face = outEdge.face;
    newOut.face.numberOfVertex++;
+   this.addAffectedFace(newOut.face);
    newIn.face = inEdge.face;
    newIn.face.numberOfVertex++;
+   this.addAffectedFace(newIn.face);
 
    // fix vertex
    outEdge.origin = vertex;
@@ -2000,7 +2015,7 @@ WingedTopology.prototype.splitEdge = function(outEdge, pt, delOut) {
    if (vOrigin.outEdge === outEdge) {
       vOrigin.outEdge = newOut;
    } 
-   this.addAffectedWEdge( outEdge.wingedEdge );     // edge changed.
+   //this.addAffectedWEdge( outEdge.wingedEdge );     // edge changed.
    // return the newOut
    return newOut;
 };
@@ -2709,19 +2724,20 @@ WingedTopology.prototype._liftEdge = function(outLeft, inRight, fromVertex, delE
          currentOut.origin.outEdge = endOut; // or inEdge a safer choice? 
       }
       currentOut.origin = fromVertex;
-      this.addAffectedWEdge( currentOut.wingedEdge );
+      //this.addAffectedWEdge( currentOut.wingedEdge );
       currentOut = currentOut.pair.next;
    } while (currentOut !== outEdge);
    outEdge.face = inRight.face;
    if (outEdge.face) {
       outEdge.face.numberOfVertex++;
-      this.addAffectedFace(outEdge.face);
+      //this.addAffectedFace(outEdge.face);
    }
    inEdge.face = outLeft.face;
    if (inEdge.face) {
       inEdge.face.numberOfVertex++;
-      this.addAffectedFace(inEdge.face);
+      //this.addAffectedFace(inEdge.face);
    }
+   this.addAffectedVertexFace(fromVertex);
 }
 
 
@@ -2736,6 +2752,8 @@ WingedTopology.prototype._collapseEdge = function(halfEdge) {
    const fromVertex = halfEdge.origin;
    const toVertex = pair.origin;
 
+   this.addAffectedVertex(toVertex);
+   this.addAffectedVertexFace(fromVertex);
    // halfedge -> vertex
    let current = pairNext;
    while (current !== halfEdge) {
@@ -2743,7 +2761,7 @@ WingedTopology.prototype._collapseEdge = function(halfEdge) {
          current.origin.outEdge = current.pair.next;
       }
       current.origin = toVertex;
-      this.addAffectedWEdge(current.wingedEdge);
+      //this.addAffectedWEdge(current.wingedEdge);
       current = current.pair.next;
    }
 
@@ -2758,7 +2776,7 @@ WingedTopology.prototype._collapseEdge = function(halfEdge) {
          face.halfEdge = next;
       }
       face.numberOfVertex--;
-      this.addAffectedFace(face);
+      //this.addAffectedFace(face);
    }
    face = pair.face;
    if (face) {
@@ -2766,13 +2784,12 @@ WingedTopology.prototype._collapseEdge = function(halfEdge) {
          face.halfEdge = pairNext;
       }
       face.numberOfVertex--;
-      this.addAffectedFace(face);
+      //this.addAffectedFace(face);
    }
    // adjust vertex
    if (toVertex.outEdge === pair) {
       toVertex.outEdge = next;
    }
-   this.addAffectedVertex(toVertex);
 
    // delete stuff
    this._freeEdge(halfEdge);
@@ -2833,10 +2850,12 @@ WingedTopology.prototype._collapseLoop = function(halfEdge, collapsibleWings) {
       halfEdge.origin.outEdge = nextPair;   // adjustOutgoing();
    }
    this.addAffectedVertex(halfEdge.origin);
+   //this.addAffectedFace(halfEdge.face);
    if (pair.origin.outEdge === pair) {
       pair.origin.outEdge = next;      // adjustOutgoingEdge();
    }
    this.addAffectedVertex(pair.origin);
+   this.addAffectedFace(pair.face);
 
    // fix face.halfEdge
    if (polygon && polygon.halfEdge === pair) {
@@ -3365,7 +3384,8 @@ WingedTopology.prototype._liftDanglingEdge = function(hEdge, destVert) {
    destVert.outEdge = danglingOut.pair;
    hEdge.next = danglingOut;
    danglingOut.pair.next = next;
-   danglingOut.face = danglingOut.pair.face = hEdge.face;   // assigned face, but don't update number of vertex.
+   danglingOut.face = danglingOut.pair.face = hEdge.face;   // assigned face, but don't update number of vertex yet.
+   this.addAffectedFace(danglingOut.face);
    return danglingOut;
 };
 //
@@ -3506,7 +3526,7 @@ WingedTopology.prototype.slideToNext = function(inEdge) {
       outEdge.origin.outEdge = next;  // we will be no longer using origin;
    }
    outEdge.origin = inEdge.next.origin;
-   this.addAffectedWEdge(outEdge.wingedEdge);
+   //this.addAffectedWEdge(outEdge.wingedEdge);
 
    // reassign face.
    if (next.face.halfEdge === next) {
