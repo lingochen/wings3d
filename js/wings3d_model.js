@@ -2896,14 +2896,17 @@ PreviewCage.prototype.restoreCollapseEdge = function(data) {
 };
 
 
+/**
+ * 
+ * use: dissolveEdge
+ */
 PreviewCage.prototype.dissolveSelectedFace = function() {
-   const oldSize = this._getGeometrySize();
    const selectedEdges = new Set;
    // the all the selectedFace's edge.
    for (let polygon of this.selectedSet) {
-      polygon.eachEdge( function(outEdge) {
+      for (let outEdge of polygon.hEdges()) {
          selectedEdges.add(outEdge.wingedEdge);
-      });
+      };
    }
    // get the outline edge
    const contourLoops = WingedTopology.findContours(this.selectedSet);
@@ -2933,12 +2936,15 @@ PreviewCage.prototype.dissolveSelectedFace = function() {
    }
    this.selectedSet = selectedSet;
    // update previewBox.
-   this._updatePreviewAll(oldSize, this.geometry.affected);
+   this.updateAffected();
    // return undo function
    return {edges: substract, selection: selectedFace};
 };
+/**
+ * 
+ * use: restoreDissolveEdge
+ */
 PreviewCage.prototype.undoDissolveFace = function(dissolve) {
-   const oldSize = this._getGeometrySize();
    for (let undoDissolve of dissolve.edges) {
       this.geometry.restoreDissolveEdge(undoDissolve);
    }
@@ -2948,7 +2954,7 @@ PreviewCage.prototype.undoDissolveFace = function(dissolve) {
       this.selectFace(polygon);
    }
    // update previewBox.
-   this._updatePreviewAll(oldSize, this.geometry.affected);
+   this.updateAffected();
 }
 
 
