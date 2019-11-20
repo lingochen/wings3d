@@ -2707,10 +2707,13 @@ PreviewCage.prototype.bumpFace = function() {
 };
 
 
+/**
+ * 
+ * use: splitEdge
+ */
 PreviewCage.prototype.cutEdge = function(numberOfSegments) {
    const edges = this.selectedSet;
 
-   const oldSize = this._getGeometrySize();
    const vertices = [];
    const splitEdges = [];              // added edges list
    // cut edge by numberOfCuts
@@ -2727,25 +2730,22 @@ PreviewCage.prototype.cutEdge = function(numberOfSegments) {
          vertices.push( edge.origin );
          splitEdges.push( newEdge.pair );
       }
-      // update previewEdge position.
-      //this._updatePreviewEdge(edge, true);
    }
       // after deletion of faces and edges. update
-   this._updatePreviewAll(oldSize, this.geometry.affected);
+   this.updateAffected();
    // returns created vertices.
    return {vertices: vertices, halfEdges: splitEdges};
 };
 
 // collapse list of edges, pair with CutEdge, bevelEdge.
 PreviewCage.prototype.collapseSplitOrBevelEdge = function(collapse) {
-   const oldSize = this._getGeometrySize();
    for (let halfEdge of collapse.halfEdges) {
       if (halfEdge.wingedEdge.isLive()) { // checked for already collapse edge
          this.geometry.collapseEdge(halfEdge, collapse.collapsibleWings);
       }
    }
-   // recompute the smaller size
-   this._updatePreviewAll(oldSize, this.geometry.affected);
+   // recompute polygon and edge
+   this.updateAffected();
 };
 
 
