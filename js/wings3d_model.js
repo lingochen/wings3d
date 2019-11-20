@@ -2737,7 +2737,10 @@ PreviewCage.prototype.cutEdge = function(numberOfSegments) {
    return {vertices: vertices, halfEdges: splitEdges};
 };
 
-// collapse list of edges, pair with CutEdge, bevelEdge.
+/** 
+ * collapse list of edges, pair with CutEdge, bevelEdge.
+ * use: collapseEdge 
+ */
 PreviewCage.prototype.collapseSplitOrBevelEdge = function(collapse) {
    for (let halfEdge of collapse.halfEdges) {
       if (halfEdge.wingedEdge.isLive()) { // checked for already collapse edge
@@ -2749,11 +2752,11 @@ PreviewCage.prototype.collapseSplitOrBevelEdge = function(collapse) {
 };
 
 
-// connect selected Vertex,
-PreviewCage.prototype.connectVertex = function() {
-   const oldSize = this._getGeometrySize();
-   
-   //this.geometry.clearAffected();
+/** 
+ *  connect selected Vertex,
+ * use: connectVertex.
+*/
+PreviewCage.prototype.connectVertex = function() {   
    const edgeList = this.geometry.connectVertex(this.selectedSet);
    const wingedEdgeList = [];
    for (let edge of edgeList) {
@@ -2761,14 +2764,18 @@ PreviewCage.prototype.connectVertex = function() {
    }
 
    // updatePreviewbox
-   this._updatePreviewAll(oldSize, this.geometry.affected);
+   this.updateAffected();
 
    return {halfEdges: edgeList, wingedEdges: wingedEdgeList};
 };
-// pair with connectVertex.
+/** 
+ * pair with connectVertex.
+ * 
+ * use: removeEdge
+*/ 
+
 PreviewCage.prototype.dissolveConnect = function(connect) {
    const insertEdges = connect.halfEdges;
-   const oldSize = this._getGeometrySize();
 
    // dissolve in reverse direction
    for (let i = insertEdges.length-1; i >= 0; --i) {
@@ -2776,7 +2783,7 @@ PreviewCage.prototype.dissolveConnect = function(connect) {
       this.geometry.removeEdge(halfEdge); // 2019-08-16 change it to halfEdge instead of halfEdge.pair
    }
 
-   this._updatePreviewAll(oldSize, this.geometry.affected);
+   this.updateAffected();
 };
 
 
