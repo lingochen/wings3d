@@ -2787,10 +2787,12 @@ PreviewCage.prototype.dissolveConnect = function(connect) {
 };
 
 
-//
+/**
+ * 
+ * use: dissolveEdge
+ */
 PreviewCage.prototype.dissolveSelectedEdge = function() {
    const dissolveEdges = [];
-   const oldSize = this._getGeometrySize();
    for (let edge of this.selectedSet) {
       let undo = this.geometry.dissolveEdge(edge.left);
       let dissolve = { halfEdge: edge.left, undo: undo};
@@ -2798,19 +2800,21 @@ PreviewCage.prototype.dissolveSelectedEdge = function() {
    }
    this.selectedSet.clear();
    // after deletion of faces and edges. update
-   this._updatePreviewAll(oldSize, this.geometry.affected);
+   this.updateAffected();
    // return affected.
    return dissolveEdges;
 };
+/**
+ * use: restoreDissolveEdge
+ */
 PreviewCage.prototype.reinsertDissolveEdge = function(dissolveEdges) {
-   const oldSize = this._getGeometrySize();
    // walk form last to first.
    for (let i = (dissolveEdges.length-1); i >= 0; --i) {
       let dissolve = dissolveEdges[i];
       this.geometry.restoreDissolveEdge(dissolve.undo);
       this.selectEdge(dissolve.halfEdge);
    }
-   this._updatePreviewAll(oldSize, this.geometry.affected);
+   this.updateAffected();
 };
 
 
@@ -2821,26 +2825,26 @@ PreviewCage.prototype.collapseSelectedEdge = function() {
    const selected = new Map();
    for (let edge of this.selectedSet) {
       let undo = null;
-      if (edge.isLive()){
-      let vertex = edge.left.origin;
-      let pt;
-      if (selected.has(vertex)) {
-         pt = selected.get(vertex);
-         selected.delete(vertex);   // going to be freed, so we can safely remove it.
-         vec3.add(pt.pt, pt.pt, vertex);
-         pt.count++;
-      } else {
-         pt = {pt: new Float32Array(3), count: 1};
-         vec3.copy(pt.pt, vertex);
-      }
-      let keep = edge.right.origin;
-      if (selected.has(keep)) {
-         const keepPt = selected.get(keep);
-         vec3.add(keepPt.pt, pt.pt, keepPt.pt);
-         keepPt.count += pt.count;
-      } else {
-         selected.set(keep, pt);
-      }
+      if (edge.isLive()) {
+         let vertex = edge.left.origin;
+         let pt;
+         if (selected.has(vertex)) {
+            pt = selected.get(vertex);
+            selected.delete(vertex);   // going to be freed, so we can safely remove it.
+            vec3.add(pt.pt, pt.pt, vertex);
+            pt.count++;
+         } else {
+            pt = {pt: new Float32Array(3), count: 1};
+            vec3.copy(pt.pt, vertex);
+         }
+         let keep = edge.right.origin;
+         if (selected.has(keep)) {
+            const keepPt = selected.get(keep);
+            vec3.add(keepPt.pt, pt.pt, keepPt.pt);
+            keepPt.count += pt.count;
+         } else {
+            selected.set(keep, pt);
+         }
          undo = this.geometry.collapseEdge(edge.left);
       }
       let collapse = {halfEdge: edge.left, undo: undo};
