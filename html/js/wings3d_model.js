@@ -2974,9 +2974,11 @@ PreviewCage.prototype.undoCollapseFace = function(collapse) {
    this._resetSelectEdge();
 };
 
-
+/**
+ * 
+ * use: dissolveVertex
+ */
 PreviewCage.prototype.dissolveSelectedVertex = function() {
-   const oldSize = this._getGeometrySize();
    const undoArray = {array: [], selectedFaces: []};
    for (let vertex of this.selectedSet) {
       let result = this.geometry.dissolveVertex(vertex);
@@ -2985,17 +2987,20 @@ PreviewCage.prototype.dissolveSelectedVertex = function() {
    }
    this._resetSelectVertex();
    // update previewBox.
-   this._updatePreviewAll(oldSize, this.geometry.affected);
+   this.updateAffected();
    return undoArray;
 };
+/**
+ * 
+ * use: restoreDissolveVertex.
+ */
 PreviewCage.prototype.undoDissolveVertex = function(undoArray) {
-   const oldSize = this._getGeometrySize();
    for (let undo of undoArray.array) {
       this.geometry.restoreDissolveVertex(undo);
       this.selectVertex(undo.vertex);
    }
    // update previewBox.
-   this._updatePreviewAll(oldSize, this.geometry.affected);
+   this.updateAffected();
 };
 
 
