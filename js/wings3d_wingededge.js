@@ -3204,7 +3204,7 @@ WingedTopology.prototype.dissolveVertex = function(vertex) {
       this._freeVertex(vertex);
       return {pt: pt, vertex: vertex};
    } else {
-      this.addAffectedEdgeAndFace(vertex);
+      this.addAffectedVertexFace(vertex);
       let count = 0;
       const firstIn = vertex.outEdge.pair;
       let lastIn;
@@ -3280,7 +3280,7 @@ WingedTopology.prototype.restoreDissolveVertex = function(undo) {
       // free polygon
       this._freePolygon(undo.polygon);
       // selected vertex
-      this.addAffectedEdgeAndFace(vertex);
+      this.addAffectedVertexFace(vertex);
    } else { // isolated vertex
       this.addVertex(undo.pt, undo.vertex);
    }
