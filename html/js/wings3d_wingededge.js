@@ -2040,9 +2040,9 @@ WingedTopology.prototype.doubleEdge = function(inEdge) {
       newIn.face.halfEdge = newIn;
    }
    this.addAffectedFace(newIn.face);
-   this._createPolygon(newOut, 2, Material.default); // will automatically assigned face. todo: outEdge.face.material?
-//   newOut.face = newPolygon;
-//   inEdge.face = newPolygon;
+   const newPolygon = this._createPolygon(newOut, 2, Material.default); // todo: outEdge.face.material?
+   newOut.face = newPolygon;
+   inEdge.face = newPolygon;
 
    return newOut;
 };
@@ -2056,6 +2056,8 @@ WingedTopology.prototype.simpleSplit = function(inEdge) {
    // outEdge.pair.next have to wait 
    outEdge.face = inEdge.face;
    outEdge.face.numberOfVertex++;
+   this.addAffectedFace(inEdge.face);
+   this.addAffectedFace(inEdge.pair.face);
 
    return outEdge; 
 };

@@ -3006,11 +3006,13 @@ PreviewCage.prototype.undoDissolveVertex = function(undoArray) {
 
 // Bevelling of edge.
 PreviewCage.prototype.bevelEdge = function() {
-   const oldSize = this._getGeometrySize();
    const wingedEdges = this.selectedSet;
 
    // bevelEdge
    const result = this.geometry.bevelEdge(wingedEdges);       // input edge will take the new vertex as origin.
+   // add the new Faces, new edges and new vertices to the preview
+   this.updateAffected();
+   
    // get all effected wingedEdge
    result.wingedEdges = new Set;
    result.faces = new Set;
@@ -3021,9 +3023,6 @@ PreviewCage.prototype.bevelEdge = function() {
       }
    };
 
-   // add the new Faces, new edges and new vertices to the preview
-   this._updatePreviewAll(oldSize, this.geometry.affected);
-   // update vertices created vertices.
    return result;
    //let ret = {
    //   faces: [],
@@ -3039,7 +3038,6 @@ PreviewCage.prototype.bevelEdge = function() {
 // bevel face, same as edge but with differnt hilite faces
 //
 PreviewCage.prototype.bevelFace = function() {
-   const oldSize = this._getGeometrySize();
    const faces = this.selectedSet;
 
    let wingedEdges = new Set;
@@ -3050,6 +3048,9 @@ PreviewCage.prototype.bevelFace = function() {
    }
    // bevelEdge
    const result = this.geometry.bevelEdge(wingedEdges);       // input edge will take the new vertex as origin.
+   // add the new Faces, new edges and new vertices to the preview
+   this.updateAffected();
+
    // get all effected wingedEdge
    result.wingedEdges = new Set;
    result.faces = new Set;
@@ -3059,9 +3060,6 @@ PreviewCage.prototype.bevelFace = function() {
          result.faces.add( hEdge.face );
       }
    };
-
-   // add the new Faces, new edges and new vertices to the preview
-   this._updatePreviewAll(oldSize, this.geometry.affected);
    // reselect faces again. because polygon's edges were changed.
    const oldSelected = this._resetSelectFace();
    for (let polygon of oldSelected.selectedFaces) {
@@ -3074,12 +3072,14 @@ PreviewCage.prototype.bevelFace = function() {
 // bevel vertex
 //
 PreviewCage.prototype.bevelVertex = function() {
-   const oldSize = this._getGeometrySize();
    const vertices = this.selectedSet;
 
    // bevelVertex
    const result = this.geometry.bevelVertex(vertices);       // input vertices, out new vertex, edges, and faces.
-   // get all effected wingedEdge
+   // add the new Faces, new edges and new vertices to the preview
+   this.updateAffected();
+   
+    // get all effected wingedEdge
    result.wingedEdges = new Set;
    result.faces = new Set;
    for (let vertex of result.vertices) {
@@ -3089,8 +3089,6 @@ PreviewCage.prototype.bevelVertex = function() {
       }
    };
 
-   // add the new Faces, new edges and new vertices to the preview
-   this._updatePreviewAll(oldSize, this.geometry.affected);
    // update vertices created vertices.
    return result;
    //let ret = {
