@@ -3363,7 +3363,7 @@ WingedTopology.prototype.undoBridgeFace = function(bridge) {
 //
 // insetFace.
 //
-WingedTopology.prototype.findInsetContours = function(polygonSet) {
+WingedTopology.findInsetContours = function(polygonSet) {
    // find contour.
    const edgeLoops = [];
    for (let polygon of polygonSet) {
