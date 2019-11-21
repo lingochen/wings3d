@@ -1169,7 +1169,7 @@ MeshAllocator.prototype.allocEdge = function(begVert, endVert, delOutEdge) {
       }
       outEdge.origin = begVert;
       outEdge.pair.origin = endVert;
-      this.affected.edges.add( edge );
+      //this.affected.edges.add( edge );
    } else {
       // initialized data.
       edge = new WingedEdge(begVert, endVert, this.edges.length);
@@ -1272,7 +1272,7 @@ MeshAllocator.prototype.freeHEdge = function(edge) {
    // assert !this.free.edges.has( edge.wingedEdge );
    //this.free.edges.push( edge.wingedEdge );
    this._insertFreeList(edge.wingedEdge.index, this.free.edges);
-   this.affected.edges.add( edge.wingedEdge );
+   //this.affected.edges.add( edge.wingedEdge );
 };
 
 MeshAllocator.prototype.freePolygon = function(polygon) {
@@ -1319,26 +1319,13 @@ MeshAllocator.prototype.getVertices = function(index) {
 // update for affected (vertex, edge, and polygon)
 MeshAllocator.prototype.clearAffected = function() {
    this.affected.vertices.clear();
-   this.affected.edges.clear();
    this.affected.faces.clear();
-};
-MeshAllocator.prototype.addAffectedWEdge = function(wEdge) {
-   this.affected.edges.add(wEdge);
 };
 MeshAllocator.prototype.addAffectedFace = function(polygon) {
    this.affected.faces.add(polygon);
 };
 MeshAllocator.prototype.addAffectedVertex = function(vertex) {
    this.affected.vertices.add(vertex);
-};
-MeshAllocator.prototype.addAffectedEdgeAndFace = function(vertex) {
-   this.affected.vertices.add(vertex);
-   for (let halfEdge of vertex.eachOutEdge()) {
-      this.affected.edges.add(halfEdge.wingedEdge);
-      if (halfEdge.face !== null) {
-         this.affected.faces.add(halfEdge.face);
-      }
-   }
 };
 MeshAllocator.prototype.addAffectedVertexFace = function(vertex) {
    this.affected.vertices.add(vertex);
@@ -1351,21 +1338,9 @@ MeshAllocator.prototype.addAffectedVertexFace = function(vertex) {
 MeshAllocator.prototype.updateAffected = function() {
    for (let vertex of this.affected.vertices) {
       if (vertex.isLive()) {
-         /*for (let hEdge of vertex.edgeRing()) {
-            if (hEdge.face) {
-               this.affected.faces.add(hEdge.face);
-            }
-         }*/
          vertex.reorient();
       }
    }
-   /*for (let wEdge of this.affected.edges) {
-      for (let hEdge of wEdge) {
-         if (hEdge.face) {
-            this.affected.faces.add(hEdge.face);
-         }
-      }
-   }*/
 
    for (let polygon of this.affected.faces) {
       if (polygon.isLive()) {
@@ -1617,10 +1592,6 @@ WingedTopology.prototype.sanityCheck = function() {
    return sanity;
 };
 
-WingedTopology.prototype.addAffectedWEdge = function(wEdge) {
-   this.alloc.addAffectedWEdge(wEdge);
-};
-
 WingedTopology.prototype.addAffectedFace = function(polygon) {
    this.alloc.addAffectedFace(polygon);
    return this;
@@ -1633,10 +1604,6 @@ WingedTopology.prototype.addAffectedVertex = function(vertex) {
 
 WingedTopology.prototype.clearAffected = function() {
    this.alloc.clearAffected();
-};
-
-WingedTopology.prototype.addAffectedEdgeAndFace = function(vertex) {
-   this.alloc.addAffectedEdgeAndFace(vertex);
 };
 
 WingedTopology.prototype.addAffectedVertexFace = function(vertex) {

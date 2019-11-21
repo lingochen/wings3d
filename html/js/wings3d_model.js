@@ -161,8 +161,6 @@ class MeshAllocatorProxy { // we could use Proxy, but ....
 
    clearAffected() { this.preview.bench.clearAffected(); }
 
-   addAffectedEdgeAndFace(...args) { this.preview.bench.addAffectedEdgeAndFace(...args); }
-   addAffectedWEdge(wEdge) {this.preview.bench.addAffectedWEdge(wEdge);}
    addAffectedFace(polygon) {this.preview.bench.addAffectedFace(polygon);}
    addAffectedVertex(vertex) {this.preview.bench.addAffectedVertex(vertex);}
    addAffectedVertexFace(vertex) {this.preview.bench.addAffectedVertexFace(vertex);}
@@ -2172,7 +2170,7 @@ PreviewCage.prototype.flattenEdge = function(axis) {
             if (!vertices.has(hEdge.origin)) {
                vec3.add(center, center, hEdge.origin);
                vertices.add(hEdge.origin);
-               //this.geometry.addAffectedEdgeAndFace(hEdge.origin);
+               //this.geometry.addAffectedVertexFace(hEdge.origin);
             }
          }
       }
@@ -2206,7 +2204,7 @@ PreviewCage.prototype.flattenFace = function(planeNormal) {
             if (!vertices.has(hEdge.origin)) {
                vertices.add(hEdge.origin);
                vec3.add(center, center, hEdge.origin);
-               //this.geometry.addAffectedEdgeAndFace(hEdge.origin);
+               //this.geometry.addAffectedVertexFace(hEdge.origin);
             }
          }
          if (!planeNormal) {
@@ -2233,7 +2231,7 @@ PreviewCage.prototype.flattenVertex = function(planeNormal) {
       const center = vec3.create();
       for (let vertex of selectedVertices) {
          vec3.add(center, center, vertex);
-         //this.geometry.addAffectedEdgeAndFace(vertex);
+         //this.geometry.addAffectedVertexFace(vertex);
       }
       vec3.scale(center, center, 1/selectedVertices.length);
       Util.projectVec3(selectedVertices, planeNormal, center);
