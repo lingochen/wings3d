@@ -3616,8 +3616,8 @@ WingedTopology.prototype.flip = function(pivot, axis) {
    const axisX2 = pivot[axis] * 2;
    for (let vertex of this.vertices) {
       vertex[axis] = axisX2 - vertex[axis];        // == center[axis] - (vertex[axis]-center[ais])
-         this.addAffectedEdgeAndFace(vertex);      // optimiztion: addAllAffected() functions.
-      }
+      this.addAffectedVertexFace(vertex);      // optimiztion: addAllAffected() functions.
+   }
 };
 
 

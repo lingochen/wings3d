@@ -400,7 +400,7 @@ PreviewCage.duplicate = function(originalCage) {
       geometry.addPolygon(index, polygon.material);
    }
    //geometry.clearAffected();
-   previewCage._updatePreviewAll();
+   previewCage.updateAffected();
    // new PreviewCage, and new name
    previewCage.name = originalCage.name + "_copy1";
 
@@ -781,11 +781,6 @@ PreviewCage.prototype._getGeometrySize = function() {
             edge: this.geometry.edges.size,
             vertex: this.geometry.vertices.size
           };
-};
-
-
-PreviewCage.prototype._updatePreviewAll = function() {
-   //this.bench.updateAffected();
 };
 
 PreviewCage.prototype.updateAffected = function() {
@@ -3580,8 +3575,6 @@ PreviewCage.prototype.mirrorFace = function() {
       newGroups.push( newPolygons );
    }
 
-         
-   this._updatePreviewAll();  // temp Fix: needs to update Preview before holeSelectedFace
    // now we can safely create new polygons to connect everything together
    const mirrorGroups = [];
    for (let i = 0; i < selectedPolygons.length; ++i) {
@@ -3596,7 +3589,7 @@ PreviewCage.prototype.mirrorFace = function() {
       mirrorGroups.push( {holed: holed, newMirrors: newMirrors} );
    }
 
-   this._updatePreviewAll();
+   this.updateAffected();
 
    return {mirrorGroups: mirrorGroups, protectVertex: protectVertex, protectWEdge: protectWEdge};
 }
@@ -3623,7 +3616,7 @@ PreviewCage.prototype.undoMirrorFace = function(undoMirror) {
       // restore hole
       this.undoHoleSelectedFace([undo.holed]);
    }
-   this._updatePreviewAll();
+   this.updateAffected();
 };
 
 
@@ -3676,7 +3669,7 @@ PreviewCage.prototype.cornerEdge = function() {
       dir.inc();
    }
    const ret = this.snapshotPosition(vertices, direction);
-   this._updatePreviewAll();
+   this.updateAffected();
    // reselect splitEdges
    for (let hEdge of splitEdges) {
       this.selectEdge(hEdge);
@@ -3698,7 +3691,7 @@ PreviewCage.prototype.undoCornerEdge = function(undo) {
       this.selectEdge(hEdge);
       this.geometry.collapseEdge(hEdge);
    }
-   this._updatePreviewAll();
+   this.updateAffected();
 }
 
 PreviewCage.prototype.slideEdge = function() {
@@ -3831,7 +3824,7 @@ PreviewCage.prototype._planeCutFace = function(cutPlanes) {
          }
       }
    }
-   this._updatePreviewAll();  // update drawing buffer.
+   this.updateAffected();  // update drawing buffer.
    return {selectedFaces: this.selectedSet, vertices: selectedVertex, halfEdges: splitEdges};
 };
 
@@ -3893,7 +3886,7 @@ PreviewCage.prototype.makeHolesFromBB = function(selection) {
       }
    }
 
-   this._updatePreviewAll();
+   this.updateAffected();
    return restore; 
 };
 
@@ -4067,7 +4060,7 @@ PreviewCage.weldHole = function(merged) {
    const result = [];
    for (let [cage, holes] of holesOfCages) {
       result.push( [cage, cage.makeHolesFromBB(holes)] );
-      cage._updatePreviewAll();
+      cage.updateAffected();
    }
    return result;
 };
@@ -4076,7 +4069,7 @@ PreviewCage.undoWeldHole = function(weldHoles) {
       for (let restore of holes) {
          cage.geometry.undoHole(restore);
       }
-      cage._updatePreviewAll();
+      cage.updateAffected();
    }
 };
 
@@ -4086,7 +4079,7 @@ PreviewCage.weldBody = function(combines, weldContours) {
    for (let {combine, edgeLoop} of weldContours.edgeLoops) {
       const cage = combines.get(combine);
       cage.combine.geometry.weldContour(edgeLoop);
-      cage.combine._updatePreviewAll();
+      cage.combine.updateAffected();
       // compute snapshot
       cage.preview = cage.combine;  // smuglling snapshot. should we rename (combine to preview)?
       if (!cage.snapshot) {
@@ -4103,7 +4096,7 @@ PreviewCage.weldBody = function(combines, weldContours) {
 PreviewCage.undoWeldBody = function(weldContours) {
    for (let [cage, edgeLoop] of weldContours) {
       cage.geometry.restoreContour(edgeLoop);   // liftContour will restore innerLoop for us
-      cage._updatePreviewAll();
+      cage.updateAffected();
    }
 };
 
@@ -4120,7 +4113,7 @@ PreviewCage.prototype.undoCloseCrack = function(undo) {
    for (let restore of undo.borderPolygon) {
       this.geometry.undoHole(restore);
    }
-   this._updatePreviewAll();
+   this.updateAffected();
 };
 
 /**
@@ -4216,7 +4209,7 @@ PreviewCage.prototype.closeCrack = function() {
       }
    }
 
-   this._updatePreviewAll();
+   this.updateAffected();
    return undo;
 };
 /*PreviewCage.prototype.closeCrack = function() {
@@ -4310,7 +4303,7 @@ PreviewCage.prototype.closeCrack = function() {
       }
       // restore current bGroup connection.
    }   
-   //this._updatePreviewAll();
+   //this.updateAffected();
    // now collapse loop.
    let count = 0;
    for (let wEdge of snapshot.wingedEdges) {
@@ -4328,7 +4321,7 @@ PreviewCage.prototype.closeCrack = function() {
          }
       }
    }
-   this._updatePreviewAll();
+   this.updateAffected();
    return snapshot;
 };*/
 
