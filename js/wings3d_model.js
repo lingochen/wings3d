@@ -774,11 +774,10 @@ PreviewCage.prototype.setBodyColor = function(color) {
 };
 
 
-PreviewCage.prototype._getGeometrySize = function() {
-   return { face: this.geometry.faces.size,
-            edge: this.geometry.edges.size,
-            vertex: this.geometry.vertices.size
-          };
+PreviewCage.prototype._getGeometryMetric = function() {
+   return this.geometry.faces.size   +
+          this.geometry.edges.size*2 +
+          this.geometry.vertices.size*3;
 };
 
 PreviewCage.prototype.updateAffected = function() {

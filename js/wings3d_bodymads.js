@@ -296,15 +296,13 @@ class BodyMadsor extends Madsor {
       // first compute selected body's metric
       const snapshot = new Set;
       for (let cage of this.selectedCage()) {
-         const size = cage._getGeometrySize();
-         const metric = size.vertex*3 + size.edge*2 + size.face;
+         const metric = cage._getGeometryMetric();
          snapshot.add(metric);
       }
       const restore = [];
       // now check if some of the unselected bodys match selected body.
       for (let cage of this.notSelectedCage()) {
-         const size = cage._getGeometrySize();
-         const metric = size.vertex*3 + size.edge*2 + size.face;
+         const metric = cage._getGeometryMetric();
          if (snapshot.has(metric)) {
             cage.selectBody();
             restore.push(cage);
