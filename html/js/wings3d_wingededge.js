@@ -2527,7 +2527,7 @@ WingedTopology.findFaceGroup = function(selectedPolygon) {
    function processNeighbors(polygon) {
       processPolygon.delete(polygon);
       faceGroup.add(polygon);
-      for (let vertex of eachVertex()) {   // polygon sharing the same vertex will be group together
+      for (let vertex of polygon.eachVertex()) {   // polygon sharing the same vertex will be group together
          for (let outEdge of vertex.eachOutEdge()) {
             const face = outEdge.pair.face;
             if (processPolygon.has(face)) {

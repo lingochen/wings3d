@@ -712,7 +712,7 @@ class ScaleHandler extends MovePositionHandler {
 
 
 // movement handler.
-class MouseRotateAlongAxis extends EditCommand {
+class MouseRotateAlongAxis extends MovePositionHandler { // EditCommand {
    constructor(madsor, axis, center) {   // axis directly
       super();
       this.madsor = madsor;
@@ -743,7 +743,7 @@ class MouseRotateAlongAxis extends EditCommand {
 }
 
 // rotate free handler, align to screen rotate.
-class MouseRotateFree extends EditCommand {
+class MouseRotateFree extends MovePositionHandler { // EditCommand {
    constructor(madsor, center) {
       super();
       this.madsor = madsor;

@@ -3502,8 +3502,8 @@ PreviewCage.prototype.getSelectedFaceContours = function() {
 PreviewCage.prototype.liftFace = function(contours, hingeHEdge) {
    // extrude edges
    contours.extrudeEdges = this.geometry.liftAndExtrudeContours(contours.edgeLoops);
-   
-   this._updatePreviewAll();
+   this.updateAffected();
+
    // collapse hEdgeHinge
    const length = contours.extrudeEdges.length
    for (let i = 0; i < length; ++i) {
@@ -3522,7 +3522,7 @@ PreviewCage.prototype.liftFace = function(contours, hingeHEdge) {
    }
 
    // reselect face, due to rendering requirement
-   this._updatePreviewAll();
+   this.updateAffected();
    // reselect face
    const oldSelected = this._resetSelectFace();
    for (let polygon of oldSelected.selectedFaces) {
