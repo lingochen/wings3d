@@ -3104,7 +3104,10 @@ PreviewCage.prototype.bevelVertex = function() {
 
 
 
-// bridge, and unbridge
+/**
+ * bridge, and unbridge
+ * use: bridgeFace
+ */
 PreviewCage.prototype.bridge = function(targetFace, sourceFace) {
    if (this.selectedSet.size === 2) {  // make sure. it really target, source
       for (let polygon of targetFace.oneRing()) {  // make sure they are not neighbor
@@ -3112,8 +3115,6 @@ PreviewCage.prototype.bridge = function(targetFace, sourceFace) {
             return null;
          }
       }
-
-      const oldSize = this._getGeometrySize();
 
       const deltaCenter = vec3.create();
       //vec3.sub(deltaCenter, targetSphere.center, sourceSphere.center);   // what if we don't move the center, would it work better? so far, no
@@ -3124,32 +3125,32 @@ PreviewCage.prototype.bridge = function(targetFace, sourceFace) {
 
 
       // update previewBox.
-      this._updatePreviewAll(oldSize, this.geometry.affected);  
+      this.updateAffected();
       return result;
    }
    // should not happened, throw?
    return null;
 };
+/**
+ * use: undoBridgeFace
+ */
 PreviewCage.prototype.undoBridge = function(bridge) {
    if (bridge) {
-      const oldSize = this._getGeometrySize();
-
       this.geometry.undoBridgeFace(bridge);
 
       // update previewBox.
-      this._updatePreviewAll(oldSize, this.geometry.affected);  
+      this.updateAffected();
    }
 };
 
-// 
-// Inset face, reuse extrude face code.
-//
+/**
+ * Inset face, reuse extrude face code.
+ * use: findInsetContours, liftAndExtrudeContours
+*/
 PreviewCage.prototype.insetFace = function() {
-   const oldSize = this._getGeometrySize();
-
    // array of edgeLoop.
    const contours = {};
-   contours.edgeLoops = this.geometry.findInsetContours(this.selectedSet); 
+   contours.edgeLoops = WingedTopology.findInsetContours(this.selectedSet); 
    
    contours.extrudeEdges = this.geometry.liftAndExtrudeContours(contours.edgeLoops);
    // now get all the effected vertices, and moving direction.
@@ -3195,7 +3196,7 @@ PreviewCage.prototype.insetFace = function() {
    }
 
    // add the new Faces. and new vertices to the preview
-   this._updatePreviewAll(oldSize, this.geometry.affected);
+   this.updateAffected();
    // reselect face, or it won't show up. a limitation.
    const oldSelected = this._resetSelectFace();
    for (let polygon of oldSelected.selectedFaces) {
