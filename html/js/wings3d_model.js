@@ -3248,11 +3248,12 @@ PreviewCage.prototype.weldableVertex = function(vertex) {
    return false;
 };
 
+
 PreviewCage.prototype.weldVertex = function(halfEdge) {
    this.selectVertex(halfEdge.origin);
    this.selectVertex(halfEdge.destination());   // select the weld Vertex as new Selection.
    let ret = this.geometry.collapseEdge(halfEdge);
-   this._updatePreviewAll();
+   this.updateAffected();
    return ret;
 };
 
@@ -3260,7 +3261,7 @@ PreviewCage.prototype.undoWeldVertex = function(undo) {
    this.geometry.restoreCollapseEdge(undo);
    this.selectVertex(undo.hEdge.destination())  // unselect
    this.selectVertex(undo.hEdge.origin);
-   this._updatePreviewAll();
+   this.updateAffected();
 };
 
 
@@ -3313,7 +3314,7 @@ PreviewCage.prototype.intrudeFace = function() {
    }
 
    // now holed the remaining selected Face
-   this._updatePreviewAll();  // temp Fix: needs to update Preview before holeSelectedFace
+   this.updateAffected();  // temp Fix: needs to update Preview before holeSelectedFace
    ret.holed = this.holeSelectedFace();
    // select all newly created polygon
    for (let polygon of newPolygons) {
@@ -3327,7 +3328,7 @@ PreviewCage.prototype.intrudeFace = function() {
       ret.connect.push( this.geometry.addPolygon(loop, Material.default) );   // todo: copy the connection polygon
    }
 
-   this._updatePreviewAll();
+   this.updateAffected();
    // return restoration params.
    return ret;
 };
