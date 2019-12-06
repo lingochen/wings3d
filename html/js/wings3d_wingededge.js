@@ -31,6 +31,7 @@
 "use strict";
 import {Float32Buffer, ByteBuffer, Int32Buffer, TriangleIndexBuffer} from './wings3d_gl.js';
 import {BoundingSphere} from './wings3d_boundingvolume.js';
+import {triangulateNaive, triangulate} from './wings3d_triangulate.js';
 import {Material} from './wings3d_material.js';
 import { Vec3View } from "./wings3d_util.js";
 
@@ -67,6 +68,7 @@ const WingedEdge = function(orgVert, toVert, index) {
 };
 WingedEdge.index = null;   // (vertex, index, barycentric)
 WingedEdge.state = null;
+//WingedEdge.zero = new WingedEdge(null, null, 0);
 /**
  * 
  */
@@ -271,7 +273,7 @@ HalfEdge.color = null;
 HalfEdge.WHITE = [255, 255, 255];
 // HalfEdge.texCoord = null;  
 // HalfEdge.texCoord1 = null;
-HalfEdge.triangleList = null; // Polygon.index = (HalfEdge.totalSize * 3) - (hEdge, hEdge, fakeCenterToDo)
+HalfEdge.triangleList = null; // Polygon.index = (HalfEdge.totalSize * 3) - (hEdge, hEdge, apex)
 //HalfEdge.edgeIndex = null;    // HalfEdge index = (HalfEdge.totalSize *3) - (hEdge, hEdge, hEdge) - draw center.
 //HalfEdge.barycentric = null;  // clutch for webgl1
 Object.defineProperties(HalfEdge.prototype, {
@@ -315,6 +317,22 @@ Object.defineProperties(HalfEdge.prototype, {
           }},
    index: {get: function() {return this.wingedEdge.index;}},
 });
+
+HalfEdge.prototype.setTriangle = function(apex) {
+   const idx = this.getIndex();
+   HalfEdge.triangleList.set(idx*3+2, apex.getIndex());  // draw tirangle
+   // set triangle
+   //const i = this.wingedEdge.getIndex(this) * 4;
+   //let pt =  apex.origin;
+   //HalfEdge.index.set(i+2, pt.index);           // draw triangle
+};
+HalfEdge.prototype.setEdgeTriangle = function(apex) {    // edge only
+   const idx = this.getIndex();
+   HalfEdge.triangleList.set(idx*3+2, idx);              // no-draw triangle, point to self
+   // set no-draw triangle
+   //const i = this.wingedEdge.getIndex(this) * 4;
+   //HalfEdge.index.set(i+2, -1);                          // no-draw triangle
+};
 
 HalfEdge.prototype.updateIndex = function() {
    this.wingedEdge.updateIndex(this);
@@ -1016,41 +1034,57 @@ Polygon.prototype.updatePosition = function() {
  * redo triangulation because change of topology.
  * recompute numberOfVertex, triangulation, and reorient, and call updatePosition to compute normal and centroid and radius.
  */
-Polygon.prototype.update = function() {
-   // redo triangulation if not already done 
-   if (this.triangulation) {  // to be refactored.
+Polygon.prototype.updateIncipient = function() {
+   this._update();
 
+   if (this.triangulation) {  // redo full triangulation
+      this.triangulation = triangulate(this);
+   } else { // really incipient, so use naive triangulation.
+      this.triangulation = triangulateNaive(this);
    }
+};
 
+Polygon.prototype.updateFull = function() {
+   this._update();
+   // redo triangulation.
+   this.triangulation = triangulate(this);
+};
+
+Polygon.prototype._update = function() {
+   // reorient, assign triangle to edge, and compute position, size.
    const begin = this.halfEdge;
-   let halfEdge = begin;
-   let current = begin;
+   let current = this.halfEdge;
    this.numberOfVertex = 0;
-   this[0] = this[1] = this[2] = 0.0;  // reset center
+   //this[0] = this[1] = this[2] = 0.0;  // reset center
+   // now get radius, after we have center, or we could compute min, max, and get distance to center.
+   const min = [current.origin[0], current.origin[1], current.origin[2]];
+   const max = [current.origin[0], current.origin[1], current.origin[2]];
    do {
-      vec3.add(this, this, current.origin);
-      current.face = this;       // should be checking?
-      let i = current.getIndex();       // every halfEdge form a triangle.
-      //HalfEdge.triangleList.set(i*3, i);   // never changed.
-      ++this.numberOfVertex;
-      if (current.getIndex() < halfEdge.getIndex()) {
-         halfEdge = current;
-      }
-      if (this.numberOfVertex > 10001) {   // break;   
-         throw("something is wrong with polygon link list");
+      //vec3.add(this, this, current.origin);
+      vec3.min(min, min, current.origin);
+      vec3.max(max, max, current.origin);
+      if (current.getIndex() < this.halfEdge.getIndex()) {
+         this.halfEdge = current;
       }
       current.updateIndex();     // Todo: to be refactored.
+      if (++this.numberOfVertex > 10001) {   // break;   
+         throw("something is wrong with polygon link list");
+      }
+      if (current.face !== this) {
+         throw("impossible face polygon");
+      }
       current = current.next;
-      //HalfEdge.triangleList.set(i*3+1, current.getIndex()); // next hEdge
-      //HalfEdge.triangleList.set(i*3+2, (-this.index) - 1);    // centerFakehEdge.
    } while (current !== begin);
-   vec3.scale(this, this, 1.0/this.numberOfVertex);     // set center.
+   // compute bounding box, and 
+   let sphere = {center: [0, 0, 0], radius: 0};
+   sphere.radius = vec3.distance(max, min) / 2.0;
+   vec3.lerp(sphere.center, min, max, 0.5);
+   this.setSphere(sphere);
 
 
    // now ask updatePosition to compute normal centroid and radius and compute normal.
    if (this.numberOfVertex > 2) {
-      this.updatePosition();
-      // this.computeNormal();
+      this.computeNormal();
    }
 };
 
@@ -1344,7 +1378,7 @@ MeshAllocator.prototype.updateAffected = function() {
 
    for (let polygon of this.affected.faces) {
       if (polygon.isLive()) {
-         polygon.update();
+         polygon.updateFull();
       }
    }
    // now cleanup.

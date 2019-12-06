@@ -32,7 +32,7 @@ function flattenPolygon(polygon) {
  * 
  * @param {Polygon} polygon 
  */
-function triangulate(polygon) {
+function _triangulate(polygon) {
    if (polygon.numberOfVertex < 5) {
       let hEdge = polygon.halfEdge;
       let hEdgeN2 = hEdge.next.next;
@@ -50,7 +50,33 @@ function triangulate(polygon) {
 
 };
 
+function triangulate(polygon) {
+   return triangulateNaive(polygon);
+};
+
+/**
+ * setup edge triangle, using simplest, but not always good form.
+ * 
+ * @param {Polygon} polygon 
+ */
+function triangulateNaive(polygon) {
+   const triangles = [];
+
+   const begin = polygon.halfEdge;
+   let current = polygon.halfEdge.next;
+   do {
+      triangles.push(begin.index, current.index, current.next.index);
+      current.setTriangle(begin);         // add 1 edge and 1 triangle
+      current = current.next;
+   } while (current.next !== begin);
+   current.setEdgeTriangle(begin.next);   // add last edge but no triangle
+   begin.setEdgeTriangle(current);        // add beginning edge but no triangle
+   
+   return triangles
+};
+
 
 export {
    triangulate,
+   triangulateNaive,
 }
