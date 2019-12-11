@@ -193,7 +193,36 @@ WingedEdge.prototype.updateIndex = function(hEdge) {
    if (idx > WingedEdge.index.alteredMax) {
       WingedEdge.index.alteredMax = idx;
    }
-}
+};
+
+WingedEdge.prototype.updateApex = function(hEdge, apex) {
+   const data = WingedEdge.index.buffer;
+   let idx = this.index * 24;    // 24 = 4*3*2;
+   if (this.right === hEdge) {
+      idx += 12;
+   }
+
+   if (idx < WingedEdge.index.alteredMin) {
+      WingedEdge.index.alteredMin = idx;
+   }  
+
+   const faceId = hEdge.face ? hEdge.face.index : -1;
+   data[idx++] = hEdge.origin ? hEdge.origin.index : -1;   // vertexId
+   data[idx++] = this.index;           // wEdge
+   data[idx++] = faceId;               // face
+   idx++;                              // body
+   data[idx++] = hEdge.destination() ? hEdge.destination().index : -1;
+   data[idx++] = this.index;
+   data[idx++] = faceId;
+   idx++;
+   data[idx++] = apex.origin ? apex.origin.index : -1;
+   data[idx++] = (-this.index) - 1;    // -wEdge - 1. barycentric indication.
+   data[idx]   =  faceId;
+   
+   if (idx > WingedEdge.index.alteredMax) {
+      WingedEdge.index.alteredMax = idx;
+   }
+};
 
 WingedEdge.prototype.isLive = function() {
    return (this.left.origin !== null) && (this.right.origin !== null);
@@ -321,17 +350,16 @@ Object.defineProperties(HalfEdge.prototype, {
 HalfEdge.prototype.setTriangle = function(apex) {
    const idx = this.getIndex();
    HalfEdge.triangleList.set(idx*3+2, apex.getIndex());  // draw tirangle
-   // set triangle
-   //const i = this.wingedEdge.getIndex(this) * 4;
-   //let pt =  apex.origin;
-   //HalfEdge.index.set(i+2, pt.index);           // draw triangle
+   this.updateApex(apex);  // set draw edge
 };
 HalfEdge.prototype.setEdgeTriangle = function(apex) {    // edge only
    const idx = this.getIndex();
    HalfEdge.triangleList.set(idx*3+2, idx);              // no-draw triangle, point to self
-   // set no-draw triangle
-   //const i = this.wingedEdge.getIndex(this) * 4;
-   //HalfEdge.index.set(i+2, -1);                          // no-draw triangle
+   this.updateApex(apex);                                // setup edge drawing
+};
+
+HalfEdge.prototype.updateApex = function(apex) {
+   this.wingedEdge.updateApex(this, apex);
 };
 
 HalfEdge.prototype.updateIndex = function() {
@@ -1066,7 +1094,7 @@ Polygon.prototype._update = function() {
       if (current.getIndex() < this.halfEdge.getIndex()) {
          this.halfEdge = current;
       }
-      current.updateIndex();     // Todo: to be refactored.
+      //current.updateIndex();     // Todo: to be refactored.
       if (++this.numberOfVertex > 10001) {   // break;   
          throw("something is wrong with polygon link list");
       }
