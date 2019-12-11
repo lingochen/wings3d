@@ -166,35 +166,6 @@ WingedEdge.prototype.getIndex = function(hEdge) {
  * @param {number} idx - start index
  * @return {number} - current index position.
  */
-WingedEdge.prototype.updateIndex = function(hEdge) {
-   const data = WingedEdge.index.buffer;
-   let idx = this.index * 24;    // 24 = 4*3*2;
-   if (this.right === hEdge) {
-      idx += 12;
-   }
-
-   if (idx < WingedEdge.index.alteredMin) {
-      WingedEdge.index.alteredMin = idx;
-   }  
-
-   const faceId = hEdge.face ? hEdge.face.index : -1;
-   data[idx++] = hEdge.origin ? hEdge.origin.index : -1;   // vertexId
-   data[idx++] = this.index;           // wEdge
-   data[idx++] = faceId;               // face
-   idx++;                              // body
-   data[idx++] = hEdge.destination() ? hEdge.destination().index : -1;
-   data[idx++] = this.index;
-   data[idx++] = faceId;
-   idx++;
-   data[idx++] = hEdge.next ? (hEdge.next.destination() ? hEdge.next.destination().index : -1): -1;
-   data[idx++] = (-this.index) - 1;    // -wEdge - 1. barycentric indication.
-   data[idx]   =  faceId;
-   
-   if (idx > WingedEdge.index.alteredMax) {
-      WingedEdge.index.alteredMax = idx;
-   }
-};
-
 WingedEdge.prototype.updateApex = function(hEdge, apex) {
    const data = WingedEdge.index.buffer;
    let idx = this.index * 24;    // 24 = 4*3*2;
@@ -215,7 +186,7 @@ WingedEdge.prototype.updateApex = function(hEdge, apex) {
    data[idx++] = this.index;
    data[idx++] = faceId;
    idx++;
-   data[idx++] = apex.origin ? apex.origin.index : -1;
+   data[idx++] = apex ? apex.origin.index : -1;
    data[idx++] = (-this.index) - 1;    // -wEdge - 1. barycentric indication.
    data[idx]   =  faceId;
    
@@ -360,10 +331,6 @@ HalfEdge.prototype.setEdgeTriangle = function(apex) {    // edge only
 
 HalfEdge.prototype.updateApex = function(apex) {
    this.wingedEdge.updateApex(this, apex);
-};
-
-HalfEdge.prototype.updateIndex = function() {
-   this.wingedEdge.updateIndex(this);
 };
 
 HalfEdge.prototype.getIndex = function() {
@@ -1094,7 +1061,6 @@ Polygon.prototype._update = function() {
       if (current.getIndex() < this.halfEdge.getIndex()) {
          this.halfEdge = current;
       }
-      //current.updateIndex();     // Todo: to be refactored.
       if (++this.numberOfVertex > 10001) {   // break;   
          throw("something is wrong with polygon link list");
       }
@@ -1329,8 +1295,8 @@ MeshAllocator.prototype.freeHEdge = function(edge) {
    // link together for a complete loop
    edge.next = pair;
    pair.next = edge;
-   edge.wingedEdge.updateIndex(edge);
-   pair.wingedEdge.updateIndex(pair);
+   edge.updateApex(null);
+   pair.updateApex(null);
    // assert !this.free.edges.has( edge.wingedEdge );
    //this.free.edges.push( edge.wingedEdge );
    this._insertFreeList(edge.wingedEdge.index, this.free.edges);
