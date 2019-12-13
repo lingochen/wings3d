@@ -56,19 +56,18 @@ const WingedEdge = function(orgVert, toVert, index) {
    // update vertex color
    this.left.setVertexColor(HalfEdge.WHITE);
    this.right.setVertexColor(HalfEdge.WHITE);
-   // update HalfEdge.index.
-   const i = this.index * 2 * 4;
-   const idx = this.index * 2;
+   // update HalfEdge.index. offset start at 1
+   const idx = 1 + this.index * 2;
+   const i = idx * 4;
    HalfEdge.index.set(i+1, idx);
    HalfEdge.index.set(i+5, idx+1);
-   HalfEdge.triangleList.set(idx*3, idx);
-   HalfEdge.triangleList.set(idx*3+2, idx);  // center point to self for null face
-   HalfEdge.triangleList.set((idx+1)*3, idx+1);
-   HalfEdge.triangleList.set((idx+1)*3+2, idx+1);  // center point to self for null face
+   HalfEdge.triangleList.set((idx-1)*3, idx);
+   HalfEdge.triangleList.set((idx-1)*3+2, idx);  // center point to self for null face
+   HalfEdge.triangleList.set(idx*3, idx+1);
+   HalfEdge.triangleList.set(idx*3+2, idx+1);  // center point to self for null face
 };
 WingedEdge.index = null;   // (vertex, index, barycentric)
 WingedEdge.state = null;
-//WingedEdge.zero = new WingedEdge(null, null, 0);
 /**
  * 
  */
@@ -151,14 +150,18 @@ WingedEdge.prototype.setGroup = function(topologyIndex) {
       WingedEdge.index.set(i, topologyIndex);
    }
    // update HalfEdge.index.
-   i = this.index * 2 * 4;
+   i = (1 + this.index * 2) * 4;
    HalfEdge.index.set(i+3, topologyIndex);
    HalfEdge.index.set(i+7, topologyIndex);
 };
 
+/**
+ * offset to start at 1. Zeroth HalfEdge is used as Null.
+ */
 WingedEdge.prototype.getIndex = function(hEdge) {
-   return (this.index*2) + ((hEdge === this.left) ? 0 : 1);
-}
+   return 1 + (this.index*2) + ((hEdge === this.right) ? 1 : 0);
+};
+
 
 /**
  * buildup drawingLine using triangle, assume this wingedEdge is lived.
@@ -274,7 +277,6 @@ HalfEdge.WHITE = [255, 255, 255];
 // HalfEdge.texCoord = null;  
 // HalfEdge.texCoord1 = null;
 HalfEdge.triangleList = null; // Polygon.index = (HalfEdge.totalSize * 3) - (hEdge, hEdge, apex)
-//HalfEdge.edgeIndex = null;    // HalfEdge index = (HalfEdge.totalSize *3) - (hEdge, hEdge, hEdge) - draw center.
 //HalfEdge.barycentric = null;  // clutch for webgl1
 Object.defineProperties(HalfEdge.prototype, {
    origin: {get: function() {return this._origin;},
@@ -282,7 +284,7 @@ Object.defineProperties(HalfEdge.prototype, {
                if (this._origin !== pt) {
                   this._origin = pt;
                   // update index
-                  let i = this.wingedEdge.getIndex(this) * 4;
+                  let i = this.getIndex(this) * 4;
                   const idx = pt ? pt.index : -1;
                   HalfEdge.index.set(i, idx);
                }
@@ -292,14 +294,14 @@ Object.defineProperties(HalfEdge.prototype, {
             if (this._face !== polygon) {
                this._face = polygon;
                // update index
-               const i = this.wingedEdge.getIndex(this) * 4;
                const idx = this.getIndex();
+               const i = idx * 4;
                if (polygon) {
                   HalfEdge.index.set(i+2, polygon.index);
-                  HalfEdge.triangleList.set(idx*3+2, -polygon.index - 1);    // centerFakehEdge.
+                  HalfEdge.triangleList.set((idx-1)*3+2, -polygon.index - 1);    // centerFakehEdge.
                } else {
                   HalfEdge.index.set(i+2, -1);              // negative number indicate null polygon.
-                  HalfEdge.triangleList.set(idx*3+2, idx);           // null face. point back to self.
+                  HalfEdge.triangleList.set((idx-1)*3+2, idx);           // null face. point back to self.
                }
             }
           } },
@@ -312,7 +314,7 @@ Object.defineProperties(HalfEdge.prototype, {
                if (hEdge) {
                   index = hEdge.getIndex();
                }
-               HalfEdge.triangleList.set(idx*3+1, index);  // point to next
+               HalfEdge.triangleList.set((idx-1)*3+1, index);  // point to next
              }
           }},
    index: {get: function() {return this.wingedEdge.index;}},
@@ -320,12 +322,12 @@ Object.defineProperties(HalfEdge.prototype, {
 
 HalfEdge.prototype.setTriangle = function(apex) {
    const idx = this.getIndex();
-   HalfEdge.triangleList.set(idx*3+2, apex.getIndex());  // draw tirangle
+   HalfEdge.triangleList.set((idx-1)*3+2, apex.getIndex());  // draw tirangle
    this.updateApex(apex);  // set draw edge
 };
 HalfEdge.prototype.setEdgeTriangle = function(apex) {    // edge only
    const idx = this.getIndex();
-   HalfEdge.triangleList.set(idx*3+2, idx);              // no-draw triangle, point to self
+   HalfEdge.triangleList.set((idx-1)*3+2, idx);          // non-drawing triangle, point to self. TODO: setup everything as Zeroth edge.
    this.updateApex(apex);                                // setup edge drawing
 };
 
@@ -1125,9 +1127,11 @@ const MeshAllocator = function(allocatedSize) {
    Material.dead = Material.create("dead");
    // wEdge
    WingedEdge.index = new Float32Buffer(24);           // drawing index.
-   WingedEdge.state = new ByteBuffer(1),    // unsigned byte state
+   WingedEdge.state = new ByteBuffer(1);     // unsigned byte state
    // HalfEdge
-   HalfEdge.index = new Float32Buffer(4);   // (vIdx, hIdx, pIdx, gIdx)
+   HalfEdge.index = new Float32Buffer(4);    // (vIdx, hIdx, pIdx, gIdx)
+   HalfEdge.index.alloc();                   // Zeroth HalfEdge is used as Null(-1).
+   HalfEdge.index.set(0, -1); HalfEdge.index.set(1, 0); HalfEdge.index.set(2, -1); HalfEdge.index.set(3, -1);
    HalfEdge.triangleList = new Int32Buffer(3);     // (hEdge0, hEdge1, hEdge2)
    HalfEdge.color = new ByteBuffer(3);
    // Vertex

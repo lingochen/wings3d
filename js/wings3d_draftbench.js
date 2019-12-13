@@ -247,7 +247,7 @@ DraftBench.prototype.draw = function(gl, madsor) {
       this.preview.shaderData.updateSampler("materialColor", Material.color);
 
       // update index if needed,
-      this.preview.shaderData.updateIndex("triangleList", HalfEdge.triangleList, HalfEdge.index.usedSize/4, gl.STATIC_DRAW);
+      this.preview.shaderData.updateIndex("triangleList", HalfEdge.triangleList, HalfEdge.index.usedSize/4 - 1, gl.STATIC_DRAW);
 
       // bind polygonIndex
       gl.bindAttribute(this.preview.shaderData, ['polygonIndex']);
