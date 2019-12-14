@@ -162,7 +162,7 @@ class STLImportExporter extends ImportExporter {
          }
       }
       // ok, done. now return
-      this.obj.clearAffected();
+      this.obj.updateAffected();
 
       return this.objView;
    }
@@ -199,7 +199,7 @@ class STLImportExporter extends ImportExporter {
          }
       }
       // ok, done. now return
-      this.obj.clearAffected();
+      this.obj.updateAffected();
 
       return this.objView;
    }
