@@ -1639,8 +1639,8 @@ WingedTopology.prototype.addAffectedVertex = function(vertex) {
    return this;
 };
 
-WingedTopology.prototype.clearAffected = function() {
-   this.alloc.clearAffected();
+WingedTopology.prototype.updateAffected = function() {
+   this.alloc.updateAffected();
 };
 
 WingedTopology.prototype.addAffectedVertexFace = function(vertex) {

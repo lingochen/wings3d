@@ -159,7 +159,7 @@ class MeshAllocatorProxy { // we could use Proxy, but ....
 
    getVertices(index) { return this.preview.bench.getVertices(index); }
 
-   clearAffected() { this.preview.bench.clearAffected(); }
+   updateAffected() { this.preview.bench.updateAffected(); }
 
    addAffectedFace(polygon) {this.preview.bench.addAffectedFace(polygon);}
    addAffectedVertex(vertex) {this.preview.bench.addAffectedVertex(vertex);}
