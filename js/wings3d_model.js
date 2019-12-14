@@ -224,6 +224,7 @@ PreviewCage.prototype.empty = function() {
 
 PreviewCage.prototype.emptyUndo = function(restore) {
    this.geometry.emptyUndo(restore);
+   this.geometry.updateAffected();
 };
 
 

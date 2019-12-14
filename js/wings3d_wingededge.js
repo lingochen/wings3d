@@ -1513,7 +1513,12 @@ WingedTopology.prototype.emptyUndo = function(restoreAll) {
       wEdge.wEdge.setRestore(wEdge, colorView);
    }
    for (let restore of restoreAll.faces) {   // undo successfully
-      this._createPolygon(restore.halfEdge, 4, restore.material, restore);
+      const face = this._createPolygon(restore.halfEdge, 4, restore.material, restore);
+      let current = face.halfEdge;
+      do {  // reassign back face for restored wEdge.
+         current.face = face;
+         current = current.next;
+      } while (current != face.halfEdge);
    }
 };
 
