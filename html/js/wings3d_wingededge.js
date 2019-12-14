@@ -298,10 +298,10 @@ Object.defineProperties(HalfEdge.prototype, {
                const i = idx * 4;
                if (polygon) {
                   HalfEdge.index.set(i+2, polygon.index);
-                  HalfEdge.triangleList.set((idx-1)*3+2, -polygon.index - 1);    // centerFakehEdge.
+                  //HalfEdge.triangleList.set((idx-1)*3+2, -polygon.index - 1);    // centerFakehEdge.
                } else {
                   HalfEdge.index.set(i+2, -1);              // negative number indicate null polygon.
-                  HalfEdge.triangleList.set((idx-1)*3+2, idx);           // null face. point back to self.
+                  //HalfEdge.triangleList.set((idx-1)*3+2, idx);           // null face. point back to self.
                }
             }
           } },
@@ -309,12 +309,12 @@ Object.defineProperties(HalfEdge.prototype, {
           set: function(hEdge) {
              if (this._next !== hEdge) {
                this._next = hEdge;
-               const idx = this.getIndex();
+               /*const idx = this.getIndex();
                let index = idx;
                if (hEdge) {
                   index = hEdge.getIndex();
                }
-               HalfEdge.triangleList.set((idx-1)*3+1, index);  // point to next
+               HalfEdge.triangleList.set((idx-1)*3+1, index);  // point to next*/
              }
           }},
    index: {get: function() {return this.wingedEdge.index;}},
@@ -322,12 +322,17 @@ Object.defineProperties(HalfEdge.prototype, {
 
 HalfEdge.prototype.setTriangle = function(apex) {
    const idx = this.getIndex();
-   HalfEdge.triangleList.set((idx-1)*3+2, apex.getIndex());  // draw tirangle
+   const i = (idx-1)*3;
+   HalfEdge.triangleList.set(i, idx);                       // draw tirangle
+   HalfEdge.triangleList.set(i+1, this.next.getIndex());
+   HalfEdge.triangleList.set(i+2, apex.getIndex());  // draw tirangle
    this.updateApex(apex);  // set draw edge
 };
 HalfEdge.prototype.setEdgeTriangle = function(apex) {    // edge only
-   const idx = this.getIndex();
-   HalfEdge.triangleList.set((idx-1)*3+2, idx);          // non-drawing triangle, point to self. TODO: setup everything as Zeroth edge.
+   const idx = (this.getIndex()-1)*3;
+   HalfEdge.triangleList.set(idx, 0);                    // non-drawing triangle
+   HalfEdge.triangleList.set(idx+1, 0);                  // non-drawing triangle
+   HalfEdge.triangleList.set(idx+2, 0);                  // non-drawing triangle
    this.updateApex(apex);                                // setup edge drawing
 };
 
@@ -1299,8 +1304,8 @@ MeshAllocator.prototype.freeHEdge = function(edge) {
    // link together for a complete loop
    edge.next = pair;
    pair.next = edge;
-   edge.updateApex(null);
-   pair.updateApex(null);
+   edge.setEdgeTriangle(null);
+   pair.setEdgeTriangle(null);
    // assert !this.free.edges.has( edge.wingedEdge );
    //this.free.edges.push( edge.wingedEdge );
    this._insertFreeList(edge.wingedEdge.index, this.free.edges);
@@ -1508,7 +1513,7 @@ WingedTopology.prototype.emptyUndo = function(restoreAll) {
       wEdge.wEdge.setRestore(wEdge, colorView);
    }
    for (let restore of restoreAll.faces) {   // undo successfully
-      this._createPolygon(restore.halfEdge, 4, restore.material, restore.polygon);
+      this._createPolygon(restore.halfEdge, 4, restore.material, restore);
    }
 };
 
