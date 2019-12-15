@@ -1006,6 +1006,16 @@ Polygon.prototype._setColor = function(color) {
    Polygon.color.set(i+2, color[2]);
 }
 
+/**
+ * used by undo functions.
+ */
+Polygon.prototype._assignFace = function() {
+   let current = this.halfEdge;
+   do {  // reassign back face for restored wEdge.
+      current.face = this;
+      current = current.next;
+   } while (current != this.halfEdge);
+};
 
 // compute centroid and radius, and normal
 Polygon.prototype.updatePosition = function() {
@@ -1514,11 +1524,7 @@ WingedTopology.prototype.emptyUndo = function(restoreAll) {
    }
    for (let restore of restoreAll.faces) {   // undo successfully
       const face = this._createPolygon(restore.halfEdge, 4, restore.material, restore);
-      let current = face.halfEdge;
-      do {  // reassign back face for restored wEdge.
-         current.face = face;
-         current = current.next;
-      } while (current != face.halfEdge);
+      face._assignFace();
    }
 };
 
@@ -3659,6 +3665,7 @@ WingedTopology.prototype.undoHole = function(hole) {
    }
    if (!hole.face.polygon.isLive()) {
       const polygon = this._createPolygon(hole.hEdge, 4, hole.face.material, hole.face);
+      polygon._assignFace();
       this.addAffectedFace(polygon);
       return polygon;
    } else {
