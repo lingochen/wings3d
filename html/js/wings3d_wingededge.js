@@ -790,18 +790,10 @@ const Polygon = function(startEdge, size, material=Material.default) {
    BoundingSphere.call(this);
    this.index = Polygon.state.alloc()/3;
    Polygon.normal.alloc();
-   Polygon.color.alloc();
    this.halfEdge = startEdge;
    this.numberOfVertex = size;      // how many vertex in the polygon
    this.assignMaterial(material);
    //this.update(); //this should init right?
-   this._setColor(HalfEdge.WHITE);
-   Polygon.centerIndex.alloc();                    // (vIdx, hIdx, face, group) (hIdx is negative number)
-   const i = this.index * 4;
-   Polygon.centerIndex.set(i, this.index);
-   Polygon.centerIndex.set(i+1, -this.index - 1);  // fakeHalf edge is all -1
-   Polygon.centerIndex.set(i+2, this.index);
-   Polygon.centerIndex.set(i+3, -1);
 };
 Polygon.prototype = Object.create(BoundingSphere.prototype);
 Object.defineProperty(Polygon.prototype, 'constructor', { 
@@ -809,9 +801,7 @@ Object.defineProperty(Polygon.prototype, 'constructor', {
    enumerable: false, // so that it does not appear in 'for in' loop
    writable: true });
 Polygon.state = null;         // state(selected, hilite). byte. 2 bytes should be enough for material.
-Polygon.centerIndex = null;      // fake halfEdge. (vertex, noHalfEdge(-Number), Polygon, Group)
 Polygon.normal = null;        // normal per polygon.
-Polygon.color = null;
 Polygon.triangleIndex = null; // the drawing list
 /**
  * for undo/redo purpose.
@@ -846,10 +836,6 @@ Polygon.prototype.setState = function(onOff, mask) {
    } else {
       return Polygon.state.set(index, state & (~mask));
    }
-};
-
-Polygon.prototype.setGroup = function(idx) {
-   Polygon.centerIndex.set(this.index*4 + 3, idx);
 };
 
 /**
@@ -983,28 +969,6 @@ Polygon.prototype.computeNormal = (function() {
    };
 }());
 
-
-/**
- * recompute centroid color
- */
-Polygon.prototype.updateCentroidColor = function() {
-   const color = [0, 0, 0];
-   const accu = [0, 0, 0];
-   let current = this.halfEdge;
-   do {
-      current.getVertexColor(color);
-      vec3.add(accu, accu, color);
-      current = current.next;
-   } while (current !== this.halfEdge);
-   vec3.scale(accu, accu, 1.0/this.numberOfVertex);
-   this._setColor(accu);
-}
-Polygon.prototype._setColor = function(color) {
-   const i = this.index * 3;
-   Polygon.color.set(i, color[0]);      // copy over the color
-   Polygon.color.set(i+1, color[1]);
-   Polygon.color.set(i+2, color[2]);
-}
 
 /**
  * used by undo functions.
@@ -1155,10 +1119,8 @@ const MeshAllocator = function(allocatedSize) {
    // polygon
    BoundingSphere.center = new Float32Buffer(3, allocatedSize);
    //Polygon.index = new Float32Buffer(4);
-   Polygon.centerIndex = new Float32Buffer(4);  // (vIdx, hIdx, pIdx, gIdx)
    Polygon.state = new ByteBuffer(3);
    Polygon.normal = new Float32Buffer(3, allocatedSize);
-   Polygon.color = new ByteBuffer(3);
    
    Polygon.triangleIndex = new TriangleIndexBuffer;
 
@@ -1382,16 +1344,28 @@ MeshAllocator.prototype.addAffectedVertexFace = function(vertex) {
       }
    }
 }
-MeshAllocator.prototype.updateAffected = function() {
+MeshAllocator.prototype.updateAffectedVertex = function() {
    for (let vertex of this.affected.vertices) {
       if (vertex.isLive()) {
          vertex.reorient();
       }
    }
-
+};
+MeshAllocator.prototype.updateAffected = function() {
+   this.updateAffectedVertex();
    for (let polygon of this.affected.faces) {
       if (polygon.isLive()) {
          polygon.updateFull();
+      }
+   }
+   // now cleanup.
+   this.clearAffected();
+};
+MeshAllocator.prototype.updateAffectedIncipient = function() {
+   this.updateAffectedVertex();
+   for (let polygon of this.affected.faces) {
+      if (polygon.isLive()) {
+         polygon.updateIncipient();
       }
    }
    // now cleanup.
@@ -1654,9 +1628,13 @@ WingedTopology.prototype.updateAffected = function() {
    this.alloc.updateAffected();
 };
 
+WingedTopology.prototype.updateAffectedIncipient = function() {
+   this.alloc.updateAffectedIncipient();
+};
+
 WingedTopology.prototype.addAffectedVertexFace = function(vertex) {
    this.alloc.addAffectedVertexFace(vertex);
-}
+};
 
 WingedTopology.prototype._createPolygon = function(halfEdge, numberOfVertex, material, delPolygon) {
    let polygon;
@@ -1669,7 +1647,6 @@ WingedTopology.prototype._createPolygon = function(halfEdge, numberOfVertex, mat
    } else {
       polygon = this.alloc.allocPolygon(halfEdge, numberOfVertex, material);
    }
-   polygon.setGroup(this.guid);
    this.faces.add(polygon);
    this.addAffectedFace(polygon);
    return polygon;

@@ -559,38 +559,6 @@ ShaderData.prototype.updateAttribute = function(name, bufferObj) {
       bufferObj._resetCounter();
    }
 };
-ShaderData.prototype.updateAttributeEx = function(name, bufferOne, bufferTwo) {
-   const attrb = this.attribute[name];
-   if (attrb) {
-      if (bufferOne.isLengthAltered() || bufferTwo.isLengthAltered()) {
-         // resize all, and upload all
-         gl.bindBuffer(gl.ARRAY_BUFFER, attrb.handle);
-         gl.bufferData(gl.ARRAY_BUFFER, bufferOne.byteLength()+bufferTwo.byteLength(), attrb.usage); // resize
-         gl.bufferSubData(gl.ARRAY_BUFFER, 0, bufferOne.getBuffer());
-         gl.bufferSubData(gl.ARRAY_BUFFER, bufferOne.byteLength(), bufferTwo.getBuffer());
-         // reset length
-         bufferOne._resetLength();
-         bufferTwo._resetLength();
-      } else {
-         if (bufferOne.isAltered()) {
-            gl.bindBuffer(gl.ARRAY_BUFFER, attrb.handle);
-            const data = bufferOne.getChanged();
-            gl.bufferSubData(gl.ARRAY_BUFFER, data.byteOffset, data.array);
-         }
-         if (bufferTwo.isAltered()) {
-            if (!bufferOne.isAltered()) {
-               gl.bindBuffer(gl.ARRAY_BUFFER, attrb.handle);
-            }
-            const data = bufferTwo.getChanged();
-            gl.bufferSubData(gl.ARRAY_BUFFER, bufferOne.byteLength() + data.byteOffset, data.array);
-         }
-      } 
-      bufferOne._resetCounter();
-      bufferTwo._resetCounter();
-   } else {
-      console.log("Shader Attribute: " + name + " not initialized");
-   }
-};
 
 /** 
  * index is used for drawElement

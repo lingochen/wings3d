@@ -47,21 +47,17 @@ vertex: (index2TexCoord, materialIndex) =>
    // (vertex, halfEdge, face, group) index/ HalfEdge
    attribute highp vec4 polygonIndex;
 
-   // positionTexture, centroidTexture, stateTexture, materialTexture, vertexColorTexture, 
+   // positionTexture, stateTexture, materialTexture, vertexColorTexture, 
    uniform highp sampler2D positionBuffer;
-   uniform highp sampler2D centerBuffer;
    uniform sampler2D groupState;
    uniform sampler2D faceState;
    uniform sampler2D materialColor;
    uniform sampler2D edgeVertexColor;
-   uniform sampler2D centerVertexColor;
    uniform float positionBufferHeight;
-   uniform float centerBufferHeight;
    uniform float faceStateHeight;
    uniform float groupStateHeight;
    uniform float materialColorHeight;
    uniform float edgeVertexColorHeight;
-   uniform float centerVertexColorHeight;
 
 
    varying vec4 color;                    // color of material * vertex 
@@ -103,14 +99,8 @@ vertex: (index2TexCoord, materialIndex) =>
                }
                color = mix(stateColor, color, 0.5);
             }
-            vec3 pos, vertexColor;
-            if (polygonIndex.y >= 0.0) {
-               pos = texture2D(positionBuffer, index2TexCoord(polygonIndex.x, positionBufferHeight)).xyz;
-               vertexColor = texture2D(edgeVertexColor, index2TexCoord(polygonIndex.y, edgeVertexColorHeight)).rgb;
-            } else {
-               pos = texture2D(centerBuffer, index2TexCoord(polygonIndex.x, centerBufferHeight)).xyz;
-               vertexColor = texture2D(centerVertexColor, index2TexCoord(polygonIndex.x, centerVertexColorHeight)).rgb;
-            }
+            vec3 pos = texture2D(positionBuffer, index2TexCoord(polygonIndex.x, positionBufferHeight)).xyz;
+            vec3 vertexColor = texture2D(edgeVertexColor, index2TexCoord(polygonIndex.y, edgeVertexColorHeight)).rgb;
             gl_Position = projection * worldView * vec4(pos, 1.0);
             // modulate vertexColor;
             color = color * vec4(vertexColor, 1.0);
