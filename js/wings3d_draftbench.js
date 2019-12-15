@@ -227,17 +227,14 @@ DraftBench.prototype.isModified = function() {
 DraftBench.prototype.draw = function(gl, madsor) {
    try {
       // update polygon(including center) index if needed.
-      this.preview.shaderData.updateAttributeEx("polygonIndex", HalfEdge.index, Polygon.centerIndex);
+      this.preview.shaderData.updateAttribute("polygonIndex", HalfEdge.index);
       
 
       // update positionBuffer texture if modified
       this.preview.shaderData.updateSampler("positionBuffer", Vertex.position); // this.position === Vertex.position
-      // update centroid if needed
-      this.preview.shaderData.updateSampler("centerBuffer", BoundingSphere.center);
 
       // update vertex color if needed (it per hEdge)
       this.preview.shaderData.updateSampler("edgeVertexColor", HalfEdge.color);
-      this.preview.shaderData.updateSampler("centerVertexColor", Polygon.color);
 
       // update polygon, group state if needed
       this.preview.shaderData.updateSampler("faceState", Polygon.state);
@@ -255,8 +252,7 @@ DraftBench.prototype.draw = function(gl, madsor) {
       // bindUniform all
       gl.bindUniform(this.preview.shaderData, ['faceColor', 'faceState', 'faceStateHeight', 'groupState', 'groupStateHeight',
                                                'materialColor', 'materialColorHeight', "edgeVertexColor", "edgeVertexColorHeight",
-                                               "centerVertexColor", "centerVertexColorHeight",
-                                               'positionBuffer', 'positionBufferHeight', 'centerBuffer', 'centerBufferHeight']);
+                                               'positionBuffer', 'positionBufferHeight']);
 
       gl.bindIndex(this.preview.shaderData, 'triangleList');
       gl.drawElements(gl.TRIANGLES, HalfEdge.triangleList.usedSize, gl.UNSIGNED_INT, 0);                                       

@@ -160,6 +160,7 @@ class MeshAllocatorProxy { // we could use Proxy, but ....
    getVertices(index) { return this.preview.bench.getVertices(index); }
 
    updateAffected() { this.preview.bench.updateAffected(); }
+   updateAffectedIncipient() { this.preview.bench.updateAffectedIncipient(); }
 
    addAffectedFace(polygon) {this.preview.bench.addAffectedFace(polygon);}
    addAffectedVertex(vertex) {this.preview.bench.addAffectedVertex(vertex);}
@@ -697,10 +698,6 @@ PreviewCage.prototype.setVertexColor = function(color) {
    }
    snapshot.vertexColor.reset();
 
-   // now recompute the affected face centroid.
-   for (let polygon of affected) {
-      polygon.updateCentroidColor();
-   }
    return snapshot;
 };
 
@@ -714,11 +711,6 @@ PreviewCage.prototype.undoVertexColor = function(snapshot) {
    for (let hEdge of snapshot.hEdges) {
       hEdge.setVertexColor(snapshot.vertexColor);  // restore color
       affected.add(hEdge.face);
-   }
-
-   // now restore affected face centroid
-   for (let polygon of affected) {
-      polygon.updateCentroidColor();
    }
 };
 
@@ -783,6 +775,10 @@ PreviewCage.prototype._getGeometryMetric = function() {
 
 PreviewCage.prototype.updateAffected = function() {
    this.bench.updateAffected();
+};
+
+PreviewCage.prototype.updateAffectedIncipient = function() {
+   this.bench.updateAffectedIncipient();
 };
 
 /**
