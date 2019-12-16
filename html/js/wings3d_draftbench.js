@@ -44,7 +44,6 @@ const DraftBench = function(theme, prop, materialList, defaultSize = 2048) {  //
    this.preview.shaderData.createSampler("faceState", 2, 3, gl.UNSIGNED_BYTE);
    this.preview.shaderData.createSampler("groupState", 3, 1, gl.UNSIGNED_BYTE);
    this.preview.shaderData.createSampler('positionBuffer', 0, 3, gl.FLOAT);
-   this.preview.shaderData.createSampler('centerBuffer', 1, 3, gl.FLOAT);
    this.preview.shaderData.createIndex('triangleList');
    this.setTheme(theme, prop);
 
@@ -55,7 +54,6 @@ const DraftBench = function(theme, prop, materialList, defaultSize = 2048) {  //
    this.preview.shaderData.createAttribute('indexBuffer', layoutVec4, gl.STATIC_DRAW);
    this.preview.shaderData.createSampler("edgeState", 1, 1, gl.UNSIGNED_BYTE);
    this.preview.shaderData.createSampler("edgeVertexColor", 5, 3, gl.UNSIGNED_BYTE);
-   this.preview.shaderData.createSampler("centerVertexColor", 6, 3, gl.UNSIGNED_BYTE);
 
    // previewVertex
    this.preview.shaderData.createAttribute('vertexIndex', layoutVec, gl.DYNAMIC_DRAW);
