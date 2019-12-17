@@ -2477,7 +2477,8 @@ WingedTopology.prototype.liftAndExtrudeContours = function(edgeLoops) {
          polygon.push( edge.outer.destination().index );
          polygon.push( edge.inner.destination().index );
          this.addPolygon( polygon,  edge.inner.face.material); // todo: inner material, but should be be outer.pair.face?
-         extrudeContours.push( this.findHalfEdge(edge.inner.origin, edge.outer.origin) );
+         const hEdge = this.findHalfEdge(edge.inner.origin, edge.outer.origin);
+         extrudeContours.push( hEdge );
       }
    }
 
@@ -2929,7 +2930,7 @@ WingedTopology.prototype.collapseEdge = function(halfEdge, collapsibleWings) {
 
    // remove loops(2 side polygon)
    if (next.next.next === next) {
-      if (!next.pair.face) {  // 2019-10-17, yep both side null, priority collapse
+      if (!next.pair.face && next.next.pair.face) {  // 2019-10-17, yep both side null, priority collapse. 2019-12-17: better selection
          next = next.next;
       }
       undo.leftLoop = this._collapseLoop(next.next, collapsibleWings);
@@ -2942,10 +2943,10 @@ WingedTopology.prototype.collapseEdge = function(halfEdge, collapsibleWings) {
       }
    }
    if (pairNext.wingedEdge.isLive() && (pairNext.next.next === pairNext)) {   // add wingedEdge.isLive() to guard (--) edges.
-      if (!pairNext.pair.face) {  // 2019-10-17, yep both side null, priority collapse
+      if (pairNext.face && !pairNext.next.pair.face) {  // 2019-10-17, yep both side null, priority collapse. 2019-12-17: better selection.
          pairNext = pairNext.next;
       }
-      undo.rightLoop = this._collapseLoop(pairNext.next, collapsibleWings);
+      undo.rightLoop = this._collapseLoop(pairNext, collapsibleWings);  // 2019-12-17: pairNext.next bad choice to collapse edge create ith extrude and inset
       if (pairNext.isLive()) {   // 2019-10-20, add guard
          if (pairNext.next === pairNext.pair) {   // 2019-10-14, add cascade removal of edge, vertex and polygon.
             undo.rightDangling = this._collapseDangling(pairNext);
