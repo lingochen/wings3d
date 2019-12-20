@@ -176,10 +176,13 @@ class MeshAllocatorProxy { // we could use Proxy, but ....
 const PreviewCage = function(bench, controlMesh) {
    this.parent = null;
    this.uuid = Util.get_uuidv4();
-   this.geometry = new WingedTopology(new MeshAllocatorProxy(this));
+   if (!controlMesh) {
+      controlMesh = new WingedTopology(new MeshAllocatorProxy(this));
+   }
+   this.geometry = controlMesh;
    this.bench = bench;
    this.guiStatus = {};
-   this.status = {locked: false, visible: true, wireMode: false};
+   this.status = {locked: false, visible: false, wireMode: false};
 
    // index
    this.edge = {size: 0, index: null};
@@ -411,8 +414,9 @@ PreviewCage.duplicate = function(originalCage) {
 PreviewCage.prototype.merge = function(mergeSelection) {
    // copy geometry.
    this.geometry.merge(function* (){for (let cage of mergeSelection) {yield cage.geometry;}});
-   // copy selection
-   this.selectedSet = new Set(function* (){for (let cage of mergeSelection) {yield* cage.selectedSet;}}());
+   // selectBody
+   this.selectBody();
+   //this.selectedSet = new Set(function* (){for (let cage of mergeSelection) {yield* cage.selectedSet;}}());
    // clear out all ?
 /*   for (let cage of mergeSelection) {
       cage.geometry.faces = new Set;
@@ -428,8 +432,7 @@ PreviewCage.prototype.separate = function() {
    if (separateGeometry) {
       let sep = 0;
       for (let geometry of separateGeometry) {
-         const cage = new PreviewCage(this.bench);
-         cage.geometry = geometry;     // copy back
+         const cage = new PreviewCage(this.bench, geometry);
          if (sep > 0) {
             cage.name = this.name + "_sep" + sep.toString();
          } else {
