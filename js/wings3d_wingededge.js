@@ -1513,8 +1513,22 @@ WingedTopology.prototype.free = function() {
 // merge - should we check alloc is the same?
 WingedTopology.prototype.merge = function(geometryGenerator) {
    const self = this;
-   this.vertices = new Set(function* () {yield* self.vertices; for (let geometry of geometryGenerator()) {yield* geometry.vertices;}}());
-   this.edges = new Set(function* () {yield* self.edges; for (let geometry of geometryGenerator()) {yield* geometry.edges;}}());
+   this.vertices = new Set(function* () { yield* self.vertices; 
+                                          for (let geometry of geometryGenerator()) {
+                                             for (let vertex of geometry.vertices) {
+                                                vertex.setGroup(self.guid);
+                                                yield vertex;
+                                             }
+                                          }
+                                        }());
+   this.edges = new Set(function* () { yield* self.edges; 
+                                       for (let geometry of geometryGenerator()) {
+                                          for (let wEdge of geometry.edges) {
+                                             wEdge.setGroup(self.guid);
+                                             yield wEdge;
+                                          }
+                                       }
+                                     }());
    this.faces = new Set(function* () {yield* self.faces; for (let geometry of geometryGenerator()) {yield* geometry.faces;}}());
 };
 
@@ -1553,9 +1567,9 @@ WingedTopology.prototype.separateOut = function() {
          for (let polygon of mesh.faces) {
             for (let hEdge of polygon.hEdges()) {
                mesh.vertices.add( hEdge.origin );
-               hEdge.origin.setGroup(mesh);
+               hEdge.origin.setGroup(mesh.guid);
                mesh.edges.add( hEdge.wingedEdge );
-               hEdge.wingedEdge.setGroup(mesh);
+               hEdge.wingedEdge.setGroup(mesh.guid);
             }
          }
       }
