@@ -1553,7 +1553,9 @@ WingedTopology.prototype.separateOut = function() {
          for (let polygon of mesh.faces) {
             for (let hEdge of polygon.hEdges()) {
                mesh.vertices.add( hEdge.origin );
+               hEdge.origin.setGroup(mesh);
                mesh.edges.add( hEdge.wingedEdge );
+               hEdge.wingedEdge.setGroup(mesh);
             }
          }
       }

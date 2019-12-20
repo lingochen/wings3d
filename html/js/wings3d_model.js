@@ -173,7 +173,7 @@ class MeshAllocatorProxy { // we could use Proxy, but ....
  * 
  * @param {DraftBench} bench - drawing workbench. 
  */
-const PreviewCage = function(bench) {
+const PreviewCage = function(bench, controlMesh) {
    this.parent = null;
    this.uuid = Util.get_uuidv4();
    this.geometry = new WingedTopology(new MeshAllocatorProxy(this));
@@ -425,17 +425,19 @@ PreviewCage.prototype.merge = function(mergeSelection) {
 PreviewCage.prototype.separate = function() {
    const separatePreview = [];
    const separateGeometry = this.geometry.separateOut();
-   let sep = 0;
-   for (let geometry of separateGeometry) {
-      const cage = new PreviewCage(this.bench);
-      cage.geometry = geometry;     // copy back
-      if (sep > 0) {
-         cage.name = this.name + "_sep" + sep.toString();
-      } else {
-         cage.name = this.name;
+   if (separateGeometry) {
+      let sep = 0;
+      for (let geometry of separateGeometry) {
+         const cage = new PreviewCage(this.bench);
+         cage.geometry = geometry;     // copy back
+         if (sep > 0) {
+            cage.name = this.name + "_sep" + sep.toString();
+         } else {
+            cage.name = this.name;
+         }
+         sep++;
+         separatePreview.push(cage);
       }
-      sep++;
-      separatePreview.push(cage);
    }
    return separatePreview;    // snapshot.
 };
