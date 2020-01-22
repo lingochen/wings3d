@@ -1,6 +1,6 @@
 {
     "@metadata" : {
-        "last-updated" : "2019-09-04",
+        "last-updated" : "2020-01-22",
         "authors"      : "lingo",
         "locale"       : "en"
     },
@@ -274,6 +274,7 @@
         "chooseName-help"              : "Matching objects to be renamed. *'s may be used as wildcards",
         "geometryGraph#"               : "Geometry Graph #",
         "objects"                      : "Objects",
+        "objectInfo"                   : "Object \"${this.name}\" has ${this.polygonSize} polygons, ${this.edgeSize} edges, ${this.vertexSize} vertices.",
         "materialProperties:"          : "Material Properties: ",
         "baseColor"                    : "Base Color",
         "emission"                     : "Emission",
@@ -420,7 +421,8 @@
         "deselect-help"                : "Clear the selection",
         "similar"                      : "Similar",
         "edgeLoop"                     : "Edge Loop",
-        "edgeLoop-help"                : "Expand edge selection to loop; convert face selection to selected border edges",
+        "edgeEdgeLoop-help"            : "Expand edge selection to loop; ",
+        "faceEdgeLoop-help"            : "convert face selection to selected border edges",
         "edgeLoopRegion"               : "Edge Loop to Region",
         "edgeLoopRegion-help"          : "Select all faces on one side of an edge loop",
         "edgeRing"                     : "Edge Ring",
@@ -506,9 +508,9 @@
         "corner"                       : "Corner",
         "corner-help"                  : "Make corners from edge rings capped by a 3 and 5 sided face",
         "sidebar"                      : "Sidebar",
-        "sidebar-help"                 : "",
+        "sidebar-help"                 : "Open/Close sidebar",
         "multi"                        : "Multi",
-        "multi-help"                   : "Back to no mode",
+        "multi-help"                   : "Deselect all, return to empty selection",
         "interfaceIcons"               : "Interface Icons"
     }
 }

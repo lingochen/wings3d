@@ -957,7 +957,7 @@ PreviewCage.prototype.selectBody = function() {
    } else {
       this.selectedSet.add(this.geometry);
       this.geometry.setSelect(true);
-      geometryStatus(i18n("body_status", {name: this.name, polygonSize: this.geometry.faces.size, edgeSize: this.geometry.edges.size, vertexSize: this.geometry.vertices.size}));
+      geometryStatus(i18n("objectInfo", {name: this.name, polygonSize: this.geometry.faces.size, edgeSize: this.geometry.edges.size, vertexSize: this.geometry.vertices.size}));
    }
    return this.hasSelection();
 };
