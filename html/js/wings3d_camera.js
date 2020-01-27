@@ -28,6 +28,12 @@ class CameraMouseMoveHandler extends MouseMoveHandler {
       }
    }
 
+   commit() {}
+
+   rescind() {
+      this.undo();
+   }
+
    doIt() {
       // no redo, undo for now
       //debugLog("exitCameraMode", {ok: this.camera});

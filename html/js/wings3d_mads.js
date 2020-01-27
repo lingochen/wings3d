@@ -295,6 +295,10 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       return false;
    }
 
+   updatePosition(snapshots) {   // update affected polygon's bounding box and normal
+      this.doAll(snapshots, PreviewCage.prototype.updatePosition);
+   }
+
    restoreMoveSelection(snapshots) {
       this.doAll(snapshots, PreviewCage.prototype.restoreMoveSelection);
    }
@@ -522,6 +526,14 @@ class MovePositionHandler extends MouseMoveHandler {
       this.movement = movement;
    }
 
+   commit() {
+      this.madsor.updatePosition(this.snapshots);
+   }
+
+   rescind() {
+      this.madsor.restoreSelectionPosition(this.snapshots);
+   }
+
    isDoable() {
       return (this.snapshots.length > 0);
    }
@@ -530,6 +542,7 @@ class MovePositionHandler extends MouseMoveHandler {
       if (this.snapshots.length > 0) {
          //if (this.movement !== 0) {
             this._transformSelection(this.movement);
+            this.madsor.updatePosition(this.snapshots);
          //}
          return true;
       }
@@ -538,6 +551,7 @@ class MovePositionHandler extends MouseMoveHandler {
 
    undo() {
       this.madsor.restoreSelectionPosition(this.snapshots);
+      this.madsor.updatePosition(this.snapshots);
    }
 
    handleMouseMove(ev, cameraView) {
@@ -698,7 +712,7 @@ class ScaleHandler extends MovePositionHandler {
 
 
 // movement handler.
-class MouseRotateAlongAxis extends EditCommand {
+class MouseRotateAlongAxis extends MovePositionHandler { // EditCommand {
    constructor(madsor, axis, center) {   // axis directly
       super();
       this.madsor = madsor;
@@ -729,7 +743,7 @@ class MouseRotateAlongAxis extends EditCommand {
 }
 
 // rotate free handler, align to screen rotate.
-class MouseRotateFree extends EditCommand {
+class MouseRotateFree extends MovePositionHandler { // EditCommand {
    constructor(madsor, center) {
       super();
       this.madsor = madsor;

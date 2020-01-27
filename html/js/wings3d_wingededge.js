@@ -29,8 +29,9 @@
 *
 */
 "use strict";
-import {Float32Buffer, ByteBuffer, Int32Buffer} from './wings3d_gl.js';
+import {Float32Buffer, ByteBuffer, Int32Buffer, TriangleIndexBuffer} from './wings3d_gl.js';
 import {BoundingSphere} from './wings3d_boundingvolume.js';
+import {triangulateNaive, triangulate} from './wings3d_triangulate.js';
 import {Material} from './wings3d_material.js';
 import { Vec3View } from "./wings3d_util.js";
 
@@ -55,15 +56,15 @@ const WingedEdge = function(orgVert, toVert, index) {
    // update vertex color
    this.left.setVertexColor(HalfEdge.WHITE);
    this.right.setVertexColor(HalfEdge.WHITE);
-   // update HalfEdge.index.
-   const i = this.index * 2 * 4;
-   const idx = this.index * 2;
+   // update HalfEdge.index. offset start at 1
+   const idx = 1 + this.index * 2;
+   const i = idx * 4;
    HalfEdge.index.set(i+1, idx);
    HalfEdge.index.set(i+5, idx+1);
-   HalfEdge.triangleList.set(idx*3, idx);
-   HalfEdge.triangleList.set(idx*3+2, idx);  // center point to self for null face
-   HalfEdge.triangleList.set((idx+1)*3, idx+1);
-   HalfEdge.triangleList.set((idx+1)*3+2, idx+1);  // center point to self for null face
+   HalfEdge.triangleList.set((idx-1)*3, idx);
+   HalfEdge.triangleList.set((idx-1)*3+2, idx);  // center point to self for null face
+   HalfEdge.triangleList.set(idx*3, idx+1);
+   HalfEdge.triangleList.set(idx*3+2, idx+1);  // center point to self for null face
 };
 WingedEdge.index = null;   // (vertex, index, barycentric)
 WingedEdge.state = null;
@@ -149,14 +150,18 @@ WingedEdge.prototype.setGroup = function(topologyIndex) {
       WingedEdge.index.set(i, topologyIndex);
    }
    // update HalfEdge.index.
-   i = this.index * 2 * 4;
+   i = (1 + this.index * 2) * 4;
    HalfEdge.index.set(i+3, topologyIndex);
    HalfEdge.index.set(i+7, topologyIndex);
 };
 
+/**
+ * offset to start at 1. Zeroth HalfEdge is used as Null.
+ */
 WingedEdge.prototype.getIndex = function(hEdge) {
-   return (this.index*2) + ((hEdge === this.left) ? 0 : 1);
-}
+   return 1 + (this.index*2) + ((hEdge === this.right) ? 1 : 0);
+};
+
 
 /**
  * buildup drawingLine using triangle, assume this wingedEdge is lived.
@@ -164,7 +169,7 @@ WingedEdge.prototype.getIndex = function(hEdge) {
  * @param {number} idx - start index
  * @return {number} - current index position.
  */
-WingedEdge.prototype.updateIndex = function(hEdge) {
+WingedEdge.prototype.updateApex = function(hEdge, apex) {
    const data = WingedEdge.index.buffer;
    let idx = this.index * 24;    // 24 = 4*3*2;
    if (this.right === hEdge) {
@@ -184,14 +189,14 @@ WingedEdge.prototype.updateIndex = function(hEdge) {
    data[idx++] = this.index;
    data[idx++] = faceId;
    idx++;
-   data[idx++] = hEdge.next ? (hEdge.next.destination() ? hEdge.next.destination().index : -1): -1;
+   data[idx++] = apex ? apex.origin.index : -1;
    data[idx++] = (-this.index) - 1;    // -wEdge - 1. barycentric indication.
    data[idx]   =  faceId;
    
    if (idx > WingedEdge.index.alteredMax) {
       WingedEdge.index.alteredMax = idx;
    }
-}
+};
 
 WingedEdge.prototype.isLive = function() {
    return (this.left.origin !== null) && (this.right.origin !== null);
@@ -271,8 +276,7 @@ HalfEdge.color = null;
 HalfEdge.WHITE = [255, 255, 255];
 // HalfEdge.texCoord = null;  
 // HalfEdge.texCoord1 = null;
-HalfEdge.triangleList = null; // Polygon.index = (HalfEdge.totalSize * 3) - (hEdge, hEdge, fakeCenterToDo)
-//HalfEdge.edgeIndex = null;    // HalfEdge index = (HalfEdge.totalSize *3) - (hEdge, hEdge, hEdge) - draw center.
+HalfEdge.triangleList = null; // Polygon.index = (HalfEdge.totalSize * 3) - (hEdge, hEdge, apex)
 //HalfEdge.barycentric = null;  // clutch for webgl1
 Object.defineProperties(HalfEdge.prototype, {
    origin: {get: function() {return this._origin;},
@@ -280,7 +284,7 @@ Object.defineProperties(HalfEdge.prototype, {
                if (this._origin !== pt) {
                   this._origin = pt;
                   // update index
-                  let i = this.wingedEdge.getIndex(this) * 4;
+                  let i = this.getIndex(this) * 4;
                   const idx = pt ? pt.index : -1;
                   HalfEdge.index.set(i, idx);
                }
@@ -290,14 +294,14 @@ Object.defineProperties(HalfEdge.prototype, {
             if (this._face !== polygon) {
                this._face = polygon;
                // update index
-               const i = this.wingedEdge.getIndex(this) * 4;
                const idx = this.getIndex();
+               const i = idx * 4;
                if (polygon) {
                   HalfEdge.index.set(i+2, polygon.index);
-                  HalfEdge.triangleList.set(idx*3+2, -polygon.index - 1);    // centerFakehEdge.
+                  //HalfEdge.triangleList.set((idx-1)*3+2, -polygon.index - 1);    // centerFakehEdge.
                } else {
                   HalfEdge.index.set(i+2, -1);              // negative number indicate null polygon.
-                  HalfEdge.triangleList.set(idx*3+2, idx);           // null face. point back to self.
+                  //HalfEdge.triangleList.set((idx-1)*3+2, idx);           // null face. point back to self.
                }
             }
           } },
@@ -305,19 +309,35 @@ Object.defineProperties(HalfEdge.prototype, {
           set: function(hEdge) {
              if (this._next !== hEdge) {
                this._next = hEdge;
-               const idx = this.getIndex();
+               /*const idx = this.getIndex();
                let index = idx;
                if (hEdge) {
                   index = hEdge.getIndex();
                }
-               HalfEdge.triangleList.set(idx*3+1, index);  // point to next
+               HalfEdge.triangleList.set((idx-1)*3+1, index);  // point to next*/
              }
           }},
    index: {get: function() {return this.wingedEdge.index;}},
 });
 
-HalfEdge.prototype.updateIndex = function() {
-   this.wingedEdge.updateIndex(this);
+HalfEdge.prototype.setTriangle = function(apex) {
+   const idx = this.getIndex();
+   const i = (idx-1)*3;
+   HalfEdge.triangleList.set(i, idx);                       // draw tirangle
+   HalfEdge.triangleList.set(i+1, this.next.getIndex());
+   HalfEdge.triangleList.set(i+2, apex.getIndex());  // draw tirangle
+   this.updateApex(apex);  // set draw edge
+};
+HalfEdge.prototype.setEdgeTriangle = function(apex) {    // edge only
+   const idx = (this.getIndex()-1)*3;
+   HalfEdge.triangleList.set(idx, 0);                    // non-drawing triangle
+   HalfEdge.triangleList.set(idx+1, 0);                  // non-drawing triangle
+   HalfEdge.triangleList.set(idx+2, 0);                  // non-drawing triangle
+   this.updateApex(apex);                                // setup edge drawing
+};
+
+HalfEdge.prototype.updateApex = function(apex) {
+   this.wingedEdge.updateApex(this, apex);
 };
 
 HalfEdge.prototype.getIndex = function() {
@@ -351,11 +371,15 @@ HalfEdge.prototype.setVertexColor = function(color) {
    HalfEdge.color.set(i, color[2]);
 };
 
+HalfEdge.prototype.isLive = function() {
+   return this.wingedEdge.isLive();
+}
 
 // boundary edge if no assigned face.
 HalfEdge.prototype.isBoundary = function() {
    return this.face === null;
 };
+
 HalfEdge.prototype.isNotBoundary = function() {
    return this.face !== null;
 };
@@ -395,12 +419,13 @@ HalfEdge.prototype.prev = function() {
    return ret;
 };
 
-HalfEdge.prototype.eachEdge = function(callbackfn) {
+// similar to vertex's traverse each edge.
+HalfEdge.prototype.eachEdge = function *() {
    var start = this;
    var edge = start;
    if (edge) {
       do {  // counter clockwise ordering
-         callbackfn(edge);
+         yield edge;
          edge = edge.pair.next;
       } while (edge && (edge !== start));
    }
@@ -421,6 +446,27 @@ const Vertex = function(index) {
 Vertex.index = null;  // (vIndex, state, group) - map together. (how about webgl2?)
 Vertex.position = null;
 
+/** 
+ *  -1 meant no major axis intersection, 0 no intersection, 1 intersection
+ */
+Vertex.isOverlap = function(a, b) {
+   const kTolerance = 0.001*2;
+   const rad2 = kTolerance*kTolerance;
+   
+   let x = b[0] - a[0];
+   x *= x;
+   if (x > rad2)  {
+      return -1;
+   }
+   let y = b[1] - a[1];
+   y *= y;
+   let z = b[2] - a[2];
+   z *= z;
+   if (rad2 > (x+y+z)) {
+      return 1;
+   }
+   return 0;   // no overlap
+}
 
 Object.defineProperty(Vertex.prototype, 'index', {
    get: function() {
@@ -558,21 +604,22 @@ Vertex.prototype.edgeRing = function* (start) {
    }
    let current = start;
    do {
+      let next = current.pair.next;
       yield current;
-      current = current.pair.next;
+      current = next;
    } while(current !== start);
 };
 
 // utility functions for traversing all incident edge,
-Vertex.prototype.eachInEdge = function(callbackfn) {
+Vertex.prototype.eachInEdge = function *() {
    // i am in
    var start = this.outEdge;
    var edge = start;
    if (edge) {
       do { // ccw ordering
          const inEdge = edge.pair;
-         edge = edge.pair.next;   // my pair's next is outEdge. 
-         callbackfn(inEdge, this);
+         edge = edge.pair.next;   // my pair's next is outEdge.
+         yield inEdge;
       } while (edge && (edge !== start));
    }
 };
@@ -593,13 +640,13 @@ Vertex.prototype.findInEdge = function(callbackfn) {
 };
 
 // utility functions for traversing all direct out edge.
-Vertex.prototype.eachOutEdge = function(callbackfn) {
+Vertex.prototype.eachOutEdge = function *() {
    // i am in, so my pair is out.
    var start = this.outEdge;
    var edge = start;
    if (edge) {
       do {  // counter clockwise ordering
-         callbackfn(edge, this);
+         yield edge;
          edge = edge.pair.next;      // pair's next is outEdge too.
       } while (edge && (edge !== start));
    }
@@ -743,18 +790,10 @@ const Polygon = function(startEdge, size, material=Material.default) {
    BoundingSphere.call(this);
    this.index = Polygon.state.alloc()/3;
    Polygon.normal.alloc();
-   Polygon.color.alloc();
    this.halfEdge = startEdge;
    this.numberOfVertex = size;      // how many vertex in the polygon
    this.assignMaterial(material);
-   this.update(); //this.computeNormal();
-   this._setColor(HalfEdge.WHITE);
-   Polygon.centerIndex.alloc();                    // (vIdx, hIdx, face, group) (hIdx is negative number)
-   const i = this.index * 4;
-   Polygon.centerIndex.set(i, this.index);
-   Polygon.centerIndex.set(i+1, -this.index - 1);  // fakeHalf edge is all -1
-   Polygon.centerIndex.set(i+2, this.index);
-   Polygon.centerIndex.set(i+3, -1);
+   //this.update(); //this should init right?
 };
 Polygon.prototype = Object.create(BoundingSphere.prototype);
 Object.defineProperty(Polygon.prototype, 'constructor', { 
@@ -762,9 +801,8 @@ Object.defineProperty(Polygon.prototype, 'constructor', {
    enumerable: false, // so that it does not appear in 'for in' loop
    writable: true });
 Polygon.state = null;         // state(selected, hilite). byte. 2 bytes should be enough for material.
-Polygon.centerIndex = null;      // fake halfEdge. (vertex, noHalfEdge(-Number), Polygon, Group)
 Polygon.normal = null;        // normal per polygon.
-Polygon.color = null;
+Polygon.triangleIndex = null; // the drawing list
 /**
  * for undo/redo purpose.
  */
@@ -798,10 +836,6 @@ Polygon.prototype.setState = function(onOff, mask) {
    } else {
       return Polygon.state.set(index, state & (~mask));
    }
-};
-
-Polygon.prototype.setGroup = function(idx) {
-   Polygon.centerIndex.set(this.index*4 + 3, idx);
 };
 
 /**
@@ -852,12 +886,12 @@ Polygon.prototype.buildIndex = function(data, index, center) {
    return index;
 }
 
-Polygon.prototype.eachVertex = function(callbackFn) {
+Polygon.prototype.eachVertex = function *() {
    // get every vertex of the face.
    var begin = this.halfEdge;
    var current = begin;
    do {
-      callbackFn(current.origin);
+      yield current.origin;
       current = current.next;
    } while (current !== begin);
 };
@@ -872,26 +906,14 @@ Polygon.prototype.eachEdge = function(callbackFn) {
    } while (current !== begin);
 };
 
-Polygon.prototype.hEdges = function* (modify = false) {
-   if (modify) {
-      const unmodify = [];
-      let current = this.halfEdge; 
-      do {
-         unmodify.push(current);
-         current = current.next;
-      } while (current !== this.halfEdge);
-      for (let current of unmodify) {
-         yield current;
-      }
-   } else {
-      const begin = this.halfEdge;
-      let current = begin;
-      do {
-         let next = current.next;
-         yield current;
-         current = next;
-      } while (current !== begin);
-   }
+Polygon.prototype.hEdges = function* () {
+   const begin = this.halfEdge;
+   let current = begin;
+   do {
+      let next = current.next;
+      yield current;
+      current = next;
+   } while (current !== begin);
 }
 
 // adjacent face, along the edge
@@ -949,69 +971,93 @@ Polygon.prototype.computeNormal = (function() {
 
 
 /**
- * recompute centroid color
+ * used by undo functions.
  */
-Polygon.prototype.updateCentroidColor = function() {
-   const color = [0, 0, 0];
-   const accu = [0, 0, 0];
+Polygon.prototype._assignFace = function() {
    let current = this.halfEdge;
-   do {
-      current.getVertexColor(color);
-      vec3.add(accu, accu, color);
+   do {  // reassign back face for restored wEdge.
+      current.face = this;
       current = current.next;
-   } while (current !== this.halfEdge);
-   vec3.scale(accu, accu, 1.0/this.numberOfVertex);
-   this._setColor(accu);
-}
-Polygon.prototype._setColor = function(color) {
-   const i = this.index * 3;
-   Polygon.color.set(i, color[0]);      // copy over the color
-   Polygon.color.set(i+1, color[1]);
-   Polygon.color.set(i+2, color[2]);
-}
+   } while (current != this.halfEdge);
+};
 
-
-// recompute numberOfVertex, normal and centroid and radius, and reorient.
-Polygon.prototype.update = function() {
+// compute centroid and radius, and normal
+Polygon.prototype.updatePosition = function() {
    const begin = this.halfEdge;
-   let halfEdge = begin;
    let current = begin;
-   this.numberOfVertex = 0;
-   this[0] = this[1] = this[2] = 0.0;  // reset center
-   do {
-      vec3.add(this, this, current.origin);
-      current.face = this;       // should be checking?
-      let i = current.getIndex();       // every halfEdge form a triangle.
-      //HalfEdge.triangleList.set(i*3, i);   // never changed.
-      ++this.numberOfVertex;
-      if (current.getIndex() < halfEdge.getIndex()) {
-         halfEdge = current;
-      }
-      if (this.numberOfVertex > 1001) {   // break;   
-         console.log("something is wrong with polygon link list");
-         return;
-      }
-      current.updateIndex();     // to be refactored.
-      current = current.next;
-      //HalfEdge.triangleList.set(i*3+1, current.getIndex()); // next hEdge
-      //HalfEdge.triangleList.set(i*3+2, (-this.index) - 1);    // centerFakehEdge.
-   } while (current !== begin);
-   vec3.scale(this, this, 1.0/this.numberOfVertex);     // set center.
-   // fake index?
-   // also check if index was modified?
    // now get radius, after we have center, or we could compute min, max, and get distance to center.
-   this.radius = 0.0; 
-   let distance;
+   const min = [current.origin[0], current.origin[1], current.origin[2]];
+   const max = [current.origin[0], current.origin[1], current.origin[2]];
    do {
-      distance = vec3.distance(this, current.origin);
-      if (distance > this.radius) {
-         this.radius = distance;
+      vec3.min(min, min, current.origin);
+      vec3.max(max, max, current.origin);
+      current = current.next;
+   } while (current !== begin);
+   let sphere = {center: [0, 0, 0], radius: 0};
+   vec3.sub(sphere.center, max, min);
+   vec3.scale(sphere.center, sphere.center, 0.5);
+   sphere.radius = Math.hypot(sphere.center[0], sphere.center[1], sphere.center[2]);
+   vec3.add(sphere.center, sphere.center, min);
+   this.setSphere(sphere);
+   
+   // compute normal.
+   if (this.numberOfVertex > 2) {
+      this.computeNormal();
+   }
+};
+
+/**
+ * redo triangulation because change of topology.
+ * recompute numberOfVertex, triangulation, and reorient, and call updatePosition to compute normal and centroid and radius.
+ */
+Polygon.prototype.updateIncipient = function() {
+   this._update();
+
+   if (this.triangulation) {  // redo full triangulation
+      this.triangulation = triangulate(this);
+   } else { // really incipient, so use naive triangulation.
+      this.triangulation = triangulateNaive(this);
+   }
+};
+
+Polygon.prototype.updateFull = function() {
+   this._update();
+   // redo triangulation.
+   this.triangulation = triangulate(this);
+};
+
+Polygon.prototype._update = function() {
+   // reorient, assign triangle to edge, and compute position, size.
+   const begin = this.halfEdge;
+   let current = this.halfEdge;
+   this.numberOfVertex = 0;
+   //this[0] = this[1] = this[2] = 0.0;  // reset center
+   // now get radius, after we have center, or we could compute min, max, and get distance to center.
+   const min = [current.origin[0], current.origin[1], current.origin[2]];
+   const max = [current.origin[0], current.origin[1], current.origin[2]];
+   do {
+      //vec3.add(this, this, current.origin);
+      vec3.min(min, min, current.origin);
+      vec3.max(max, max, current.origin);
+      if (current.getIndex() < this.halfEdge.getIndex()) {
+         this.halfEdge = current;
+      }
+      if (++this.numberOfVertex > 10001) {   // break;   
+         throw("something is wrong with polygon link list");
+      }
+      if (current.face !== this) {
+         throw("impossible face polygon");
       }
       current = current.next;
    } while (current !== begin);
-   this.radius2 = this.radius*this.radius;
-   this.halfEdge = halfEdge;              // the lowest index.
-   // compute normal.
+   // compute bounding box, and 
+   let sphere = {center: [0, 0, 0], radius: 0};
+   sphere.radius = vec3.distance(max, min) / 2.0;
+   vec3.lerp(sphere.center, min, max, 0.5);
+   this.setSphere(sphere);
+
+
+   // now ask updatePosition to compute normal centroid and radius and compute normal.
    if (this.numberOfVertex > 2) {
       this.computeNormal();
    }
@@ -1060,9 +1106,11 @@ const MeshAllocator = function(allocatedSize) {
    Material.dead = Material.create("dead");
    // wEdge
    WingedEdge.index = new Float32Buffer(24);           // drawing index.
-   WingedEdge.state = new ByteBuffer(1),    // unsigned byte state
+   WingedEdge.state = new ByteBuffer(1);     // unsigned byte state
    // HalfEdge
-   HalfEdge.index = new Float32Buffer(4);   // (vIdx, hIdx, pIdx, gIdx)
+   HalfEdge.index = new Float32Buffer(4);    // (vIdx, hIdx, pIdx, gIdx)
+   HalfEdge.index.alloc();                   // Zeroth HalfEdge is used as Null(-1).
+   HalfEdge.index.set(0, -1); HalfEdge.index.set(1, 0); HalfEdge.index.set(2, -1); HalfEdge.index.set(3, -1);
    HalfEdge.triangleList = new Int32Buffer(3);     // (hEdge0, hEdge1, hEdge2)
    HalfEdge.color = new ByteBuffer(3);
    // Vertex
@@ -1071,10 +1119,11 @@ const MeshAllocator = function(allocatedSize) {
    // polygon
    BoundingSphere.center = new Float32Buffer(3, allocatedSize);
    //Polygon.index = new Float32Buffer(4);
-   Polygon.centerIndex = new Float32Buffer(4);  // (vIdx, hIdx, pIdx, gIdx)
    Polygon.state = new ByteBuffer(3);
    Polygon.normal = new Float32Buffer(3, allocatedSize);
-   Polygon.color = new ByteBuffer(3);
+   
+   Polygon.triangleIndex = new TriangleIndexBuffer;
+
    // WingedTopology
    WingedTopology.state = new ByteBuffer(1);
    // data init
@@ -1091,10 +1140,11 @@ MeshAllocator.prototype.allocVertex = function(pt, delVertex) {
       if (typeof delVertex === 'undefined') {
          vertex = this.vertices[this.free.vertices.pop()];
       } else {
-         const index = delVertex.index;   // remove delOutEdge from freeEdges list
-         this.free.vertices = this.free.vertices.filter(function(element) {
-            return element !== index;
-         });
+         const index = MeshAllocator._indexOfFreeList(delVertex.index, this.free.vertices);   // remove delOutEdge from freeEdges list
+         if (index < 0) { // not found in free list
+            throw("delVertex " + index + " not found in free list");
+         }                vertex = delVertex;
+         this.free.vertices.splice(index, 1);
          vertex = delVertex;
       }
       vertex.set(pt);
@@ -1115,10 +1165,11 @@ MeshAllocator.prototype.allocEdge = function(begVert, endVert, delOutEdge) {
    let outEdge;
    if (this.free.edges.length > 0) { // prefered recycle edge.
       if (typeof delOutEdge !== "undefined") {
-         const index = delOutEdge.wingedEdge.index;   // remove delOutEdge from freeEdges list
-         this.free.edges = this.free.edges.filter(function(element) {
-            return element !== index;
-         });
+         const index = MeshAllocator._indexOfFreeList(delOutEdge.wingedEdge.index, this.free.edges);   // remove delOutEdge from freeEdges list
+         if (index < 0) {
+            throw("delOutEdge " + delOutEdge.wingedEdge.index + " not found in free list");
+         }
+         this.free.edges.splice(index, 1);
          edge = delOutEdge.wingedEdge;
          outEdge = delOutEdge;
       } else {
@@ -1127,7 +1178,7 @@ MeshAllocator.prototype.allocEdge = function(begVert, endVert, delOutEdge) {
       }
       outEdge.origin = begVert;
       outEdge.pair.origin = endVert;
-      this.affected.edges.add( edge );
+      //this.affected.edges.add( edge );
    } else {
       // initialized data.
       edge = new WingedEdge(begVert, endVert, this.edges.length);
@@ -1148,10 +1199,11 @@ MeshAllocator.prototype.allocPolygon = function(halfEdge, numberOfVertex, materi
    }
    if (this.free.faces.length > 0) {
       if (typeof delPolygon !== 'undefined') {
-         const index = delPolygon.index;   // remove delOutEdge from freeEdges list
-         this.free.faces = this.free.faces.filter(function(element) {
-            return element !== index;
-         });
+         const index = MeshAllocator._indexOfFreeList(delPolygon.index, this.free.faces);   // remove delOutEdge from freeEdges list
+         if (index < 0) {
+            throw("delPolygon " + delPolygon.index + " not found in free list");
+         }
+         this.free.faces.splice(index, 1);
          polygon = delPolygon;
       } else {
          polygon = this.faces[ this.free.faces.pop() ];
@@ -1159,9 +1211,9 @@ MeshAllocator.prototype.allocPolygon = function(halfEdge, numberOfVertex, materi
       polygon.assignMaterial(material);
       polygon.halfEdge = halfEdge;
       polygon.numberOfVertex = numberOfVertex;
-      polygon.update();
+      //polygon.update();
       polygon.show();            // make sure it visible.
-      this.affected.faces.add( polygon );
+      //this.affected.faces.add( polygon );
    } else {
       polygon = new Polygon(halfEdge, numberOfVertex, material);
       polygon.index = this.faces.length;
@@ -1170,6 +1222,24 @@ MeshAllocator.prototype.allocPolygon = function(halfEdge, numberOfVertex, materi
    return polygon;
 };
 
+// find the val, return the index of free list
+MeshAllocator._indexOfFreeList = function(val, array) {
+   let l = 0, r = array.length - 1;
+   while (l <= r) {
+      //let m = (l + r) >>> 1; /// equivalent to Math.floor((l + h) / 2) but faster
+      let m = l + ((r-l) >>> 1); // avoid overflow. 
+      let comparison = val - array[m];
+      if (comparison > 0) {
+         r = m - 1;
+      } else if (comparison < 0) {
+         l = m + 1;
+      } else { // yes found it
+         return m;
+      }
+   }
+   // should not happend, throw?
+   return -1;
+};
 // recycled
 // insert the index number in reverse order. smallest last.
 MeshAllocator.prototype._insertFreeList = function(val, array) {
@@ -1206,12 +1276,12 @@ MeshAllocator.prototype.freeHEdge = function(edge) {
    // link together for a complete loop
    edge.next = pair;
    pair.next = edge;
-   edge.wingedEdge.updateIndex(edge);
-   pair.wingedEdge.updateIndex(pair);
+   edge.setEdgeTriangle(null);
+   pair.setEdgeTriangle(null);
    // assert !this.free.edges.has( edge.wingedEdge );
    //this.free.edges.push( edge.wingedEdge );
    this._insertFreeList(edge.wingedEdge.index, this.free.edges);
-   this.affected.edges.add( edge.wingedEdge );
+   //this.affected.edges.add( edge.wingedEdge );
 };
 
 MeshAllocator.prototype.freePolygon = function(polygon) {
@@ -1258,11 +1328,7 @@ MeshAllocator.prototype.getVertices = function(index) {
 // update for affected (vertex, edge, and polygon)
 MeshAllocator.prototype.clearAffected = function() {
    this.affected.vertices.clear();
-   this.affected.edges.clear();
    this.affected.faces.clear();
-};
-MeshAllocator.prototype.addAffectedWEdge = function(wEdge) {
-   this.affected.edges.add(wEdge);
 };
 MeshAllocator.prototype.addAffectedFace = function(polygon) {
    this.affected.faces.add(polygon);
@@ -1270,38 +1336,36 @@ MeshAllocator.prototype.addAffectedFace = function(polygon) {
 MeshAllocator.prototype.addAffectedVertex = function(vertex) {
    this.affected.vertices.add(vertex);
 };
-MeshAllocator.prototype.addAffectedEdgeAndFace = function(vertex) {
+MeshAllocator.prototype.addAffectedVertexFace = function(vertex) {
    this.affected.vertices.add(vertex);
-   const self = this;
-   vertex.eachOutEdge( function(halfEdge) {
-      self.affected.edges.add(halfEdge.wingedEdge);
+   for (let halfEdge of vertex.eachOutEdge()) {
       if (halfEdge.face !== null) {
-         self.affected.faces.add(halfEdge.face);
-     }
-   });
-};
-MeshAllocator.prototype.updateAffected = function() {
+         this.affected.faces.add(halfEdge.face);
+      }
+   }
+}
+MeshAllocator.prototype.updateAffectedVertex = function() {
    for (let vertex of this.affected.vertices) {
       if (vertex.isLive()) {
-         for (let hEdge of vertex.edgeRing()) {
-            if (hEdge.face) {
-               this.affected.faces.add(hEdge.face);
-            }
-         }
          vertex.reorient();
       }
    }
-   for (let wEdge of this.affected.edges) {
-      for (let hEdge of wEdge) {
-         if (hEdge.face) {
-            this.affected.faces.add(hEdge.face);
-         }
-      }
-   }
-
+};
+MeshAllocator.prototype.updateAffected = function() {
+   this.updateAffectedVertex();
    for (let polygon of this.affected.faces) {
       if (polygon.isLive()) {
-         polygon.update();
+         polygon.updateFull();
+      }
+   }
+   // now cleanup.
+   this.clearAffected();
+};
+MeshAllocator.prototype.updateAffectedIncipient = function() {
+   this.updateAffectedVertex();
+   for (let polygon of this.affected.faces) {
+      if (polygon.isLive()) {
+         polygon.updateIncipient();
       }
    }
    // now cleanup.
@@ -1433,7 +1497,8 @@ WingedTopology.prototype.emptyUndo = function(restoreAll) {
       wEdge.wEdge.setRestore(wEdge, colorView);
    }
    for (let restore of restoreAll.faces) {   // undo successfully
-      this._createPolygon(restore.halfEdge, 4, restore.material, restore.polygon);
+      const face = this._createPolygon(restore.halfEdge, 4, restore.material, restore);
+      face._assignFace();
    }
 };
 
@@ -1448,8 +1513,22 @@ WingedTopology.prototype.free = function() {
 // merge - should we check alloc is the same?
 WingedTopology.prototype.merge = function(geometryGenerator) {
    const self = this;
-   this.vertices = new Set(function* () {yield* self.vertices; for (let geometry of geometryGenerator()) {yield* geometry.vertices;}}());
-   this.edges = new Set(function* () {yield* self.edges; for (let geometry of geometryGenerator()) {yield* geometry.edges;}}());
+   this.vertices = new Set(function* () { yield* self.vertices; 
+                                          for (let geometry of geometryGenerator()) {
+                                             for (let vertex of geometry.vertices) {
+                                                vertex.setGroup(self.guid);
+                                                yield vertex;
+                                             }
+                                          }
+                                        }());
+   this.edges = new Set(function* () { yield* self.edges; 
+                                       for (let geometry of geometryGenerator()) {
+                                          for (let wEdge of geometry.edges) {
+                                             wEdge.setGroup(self.guid);
+                                             yield wEdge;
+                                          }
+                                       }
+                                     }());
    this.faces = new Set(function* () {yield* self.faces; for (let geometry of geometryGenerator()) {yield* geometry.faces;}}());
 };
 
@@ -1488,7 +1567,9 @@ WingedTopology.prototype.separateOut = function() {
          for (let polygon of mesh.faces) {
             for (let hEdge of polygon.hEdges()) {
                mesh.vertices.add( hEdge.origin );
+               hEdge.origin.setGroup(mesh.guid);
                mesh.edges.add( hEdge.wingedEdge );
+               hEdge.wingedEdge.setGroup(mesh.guid);
             }
          }
       }
@@ -1549,10 +1630,6 @@ WingedTopology.prototype.sanityCheck = function() {
    return sanity;
 };
 
-WingedTopology.prototype.addAffectedWEdge = function(wEdge) {
-   this.alloc.addAffectedWEdge(wEdge);
-};
-
 WingedTopology.prototype.addAffectedFace = function(polygon) {
    this.alloc.addAffectedFace(polygon);
    return this;
@@ -1563,23 +1640,31 @@ WingedTopology.prototype.addAffectedVertex = function(vertex) {
    return this;
 };
 
-WingedTopology.prototype.clearAffected = function() {
-   this.alloc.clearAffected();
+WingedTopology.prototype.updateAffected = function() {
+   this.alloc.updateAffected();
 };
 
-WingedTopology.prototype.addAffectedEdgeAndFace = function(vertex) {
-   this.alloc.addAffectedEdgeAndFace(vertex);
+WingedTopology.prototype.updateAffectedIncipient = function() {
+   this.alloc.updateAffectedIncipient();
+};
+
+WingedTopology.prototype.addAffectedVertexFace = function(vertex) {
+   this.alloc.addAffectedVertexFace(vertex);
 };
 
 WingedTopology.prototype._createPolygon = function(halfEdge, numberOfVertex, material, delPolygon) {
    let polygon;
    if (delPolygon) {
-      polygon = this.alloc.allocPolygon(halfEdge, numberOfVertex, delPolygon.material, delPolygon.polygon);
+      if (delPolygon.polygon.isLive()) {
+         polygon = delPolygon.polygon;
+      } else {
+         polygon = this.alloc.allocPolygon(halfEdge, numberOfVertex, delPolygon.material, delPolygon.polygon);
+      }
    } else {
       polygon = this.alloc.allocPolygon(halfEdge, numberOfVertex, material);
    }
-   polygon.setGroup(this.guid);
    this.faces.add(polygon);
+   this.addAffectedFace(polygon);
    return polygon;
 };
 
@@ -1622,6 +1707,7 @@ WingedTopology.prototype._freePolygon = function(polygon) {
       this.alloc.freePolygon(polygon);
       return delPolygon;   // could be reused, so we have to save polygon and it material.
    }
+   return null;
 };
 
 
@@ -1870,14 +1956,17 @@ WingedTopology.prototype.insertEdge = function(prevHalf, nextHalf, delOutEdge, d
    inEdge.next = nextPrev;
   
    //now set the face handles
-   const newPolygon = this._createPolygon(outEdge, 4, Material.default, delPolygon);  // todo: correct material, inEdge.face.material
+   let newPolygon = null;
+   if (delPolygon !== null) { // undefined will created a newPolygon
+      newPolygon = this._createPolygon(outEdge, 4, Material.default, delPolygon);  // todo: correct material, inEdge.face.material
+      let size = 0;
+      newPolygon.eachEdge( function(halfEdge) {
+         ++size;
+         halfEdge.face = newPolygon;
+      });
+      newPolygon.numberOfVertex = size;
+   }
    outEdge.face = newPolygon;
-   let size = 0;
-   newPolygon.eachEdge( function(halfEdge) {
-      ++size;
-      halfEdge.face = newPolygon;
-   });
-   newPolygon.numberOfVertex = size;
 
    // inEdge is oldPolygon
    inEdge.face = oldPolygon;
@@ -1886,7 +1975,7 @@ WingedTopology.prototype.insertEdge = function(prevHalf, nextHalf, delOutEdge, d
          //  pointed to one of the halfedges now assigned to newPolygon
          oldPolygon.halfEdge = inEdge;
       }
-      size = 0;
+      let size = 0;
       oldPolygon.eachEdge( function(halfEdge) {
          ++size;
       });
@@ -1921,8 +2010,10 @@ WingedTopology.prototype.splitEdge = function(outEdge, pt, delOut) {
   
    newOut.face = outEdge.face;
    newOut.face.numberOfVertex++;
+   this.addAffectedFace(newOut.face);
    newIn.face = inEdge.face;
    newIn.face.numberOfVertex++;
+   this.addAffectedFace(newIn.face);
 
    // fix vertex
    outEdge.origin = vertex;
@@ -1932,7 +2023,7 @@ WingedTopology.prototype.splitEdge = function(outEdge, pt, delOut) {
    if (vOrigin.outEdge === outEdge) {
       vOrigin.outEdge = newOut;
    } 
-   this.addAffectedWEdge( outEdge.wingedEdge );     // edge changed.
+   //this.addAffectedWEdge( outEdge.wingedEdge );     // edge changed.
    // return the newOut
    return newOut;
 };
@@ -1957,9 +2048,9 @@ WingedTopology.prototype.doubleEdge = function(inEdge) {
       newIn.face.halfEdge = newIn;
    }
    this.addAffectedFace(newIn.face);
-   this._createPolygon(newOut, 2, Material.default); // will automatically assigned face. todo: outEdge.face.material?
-//   newOut.face = newPolygon;
-//   inEdge.face = newPolygon;
+   const newPolygon = this._createPolygon(newOut, 2, Material.default); // todo: outEdge.face.material?
+   newOut.face = newPolygon;
+   inEdge.face = newPolygon;
 
    return newOut;
 };
@@ -1973,6 +2064,8 @@ WingedTopology.prototype.simpleSplit = function(inEdge) {
    // outEdge.pair.next have to wait 
    outEdge.face = inEdge.face;
    outEdge.face.numberOfVertex++;
+   this.addAffectedFace(inEdge.face);
+   this.addAffectedFace(inEdge.pair.face);
 
    return outEdge; 
 };
@@ -2180,11 +2273,10 @@ WingedTopology.prototype.bevelEdge = function(wingedEdges) {   // wingedEdges(se
    ret.vertexLimit = Number.MAX_SAFE_INTEGER;       // magnitude
    ret.position = new Float32Array(ret.vertices.length*3);     // saved the original position
    ret.direction = new Float32Array(ret.vertices.length*3);    // also add direction.
-   let i = 0;
-   const pt = vec3.create();  // temporary
+   const position = new Vec3View(ret.position);
+   const direction = new Vec3View(ret.direction);
+   const pt = [0, 0, 0];  // temporary
    for (let vertex of ret.vertices) {
-      const position = ret.position.subarray(i, i+3);
-      const direction = ret.direction.subarray(i, i+3);
       const hEdges = vertexLimit.get(vertex);
       let avg = 1.0;
       if (twoEdgeVertexHack.has(vertex)) {
@@ -2205,7 +2297,8 @@ WingedTopology.prototype.bevelEdge = function(wingedEdges) {   // wingedEdges(se
       if (avg == 0.4) {
          vec3.normalize(direction, direction);
       }
-      i+=3;
+      position.inc();
+      direction.inc();
    }
 
    // we needs faces, we needs
@@ -2213,50 +2306,103 @@ WingedTopology.prototype.bevelEdge = function(wingedEdges) {   // wingedEdges(se
 };
 
 
+
 /**
- * stitchVertex together
+ * stitchVertex together, aGroup will attach to bGroup
+ * @{param} aGroup - 
  */
-WingedTopology.prototype.stitchVertex = function(a, b) {
-   // find free In for a, b,
-   let aGroup = a.findFreeInEdgeAll();
-   let bGroup = b.findFreeInEdgeAll();
-   if (aGroup.length !== 1 || bGroup.length !== 1) {  // the 2 vertex must have boundary to be stitch together,
-      return null;   // currently we only handle one boundary.
-   }
-   let aIn = aGroup[0];
-   let bIn = bGroup[0];
-
-   // return null, if a-b is connected.
-
-
+WingedTopology.prototype._simpleStitch = function(aIn, aOut, bIn, bOut) {
+   //const a = aOut.origin;
+   const b = bOut.origin;
+   
    // lift a's edges to b
-   const undo = {};
-   let aOut = aIn.next;
-   let bOut = bIn.next;
-   const start = aIn;
-   let current = start;
+   const end = aIn.next;
+   let current = aOut;
    do {
-      current.pair.origin = b;
-      current = current.next.pair;
-   } while (current !== start);
+      current.origin = b;
+      current = current.pair.next;
+   } while (current !== end);
    // stitch and release vertex a
    bIn.next = aOut;
    aIn.next = bOut;
-   undo.aIn = aIn;
-   undo.bIn = bIn;
-   b.reorient();
-   undo.vertex = a;
-   this._freeVertex(a);
-
-   // collapse edge if the polygon hole is less then 3 edge.
-   if (aIn.next.next === aIn) {
-      undo.leftLoop = this._collapseLoop(aIn.next);
+};
+WingedTopology.prototype.stitchVertex = function(aGroup, bGroup) {
+   const a = aGroup[0].destination();
+   if (a.index === 1093) {
+      console.log("impossible");
    }
-   if (bIn.next.next === bIn) {
-      undo.rightLoop = this._collapseLoop(bIn.next);
+   //const b = bGroup[0].destination();
+   const undo = {stitch: []};
+   // try to stich a to b
+   let count = 0;
+   let stitch = false;
+   for (let i = aGroup.length-1; i >= 0; --i) {
+      let aIn = aGroup[i];
+      let aOut = aIn.next;     // already separate out
+      let rightK = -1;            // aIn connect to bOut position
+      let connectJ = -1;
+      for (let j = 0; j < bGroup.length; ++j) { // check for overlap
+         const bIn = bGroup[j];
+         const bOut = bIn.next;
+         if (aIn !== bOut && bIn !== aOut) { // make sure a and b don't connect
+            if (rightK < 0) {
+               const right = Vertex.isOverlap(aOut.destination(), bIn.origin) > 0;
+               if (right) {   // great got it
+                  rightK = j; // 
+               }
+            }
+            const left = Vertex.isOverlap(aIn.origin, bOut.destination()) > 0;
+            if (left) {
+               this._simpleStitch(aIn, aOut, bIn, bOut); // break
+               stitch = true;
+               connectJ = j;
+               aGroup.splice(i, 1);  // remove detach polygons.
+               break;
+            }
+         }
+      }
+      // now try to find right connect
+      if (connectJ >= 0 && rightK < 0) {
+         for (let j = 0; j < bGroup.length; ++j) { // connect to bIn
+            const bIn = bGroup[j];
+            const bOut = bIn.next;
+            if (aIn !== bOut && bIn !== aOut) { // make sure a and b don't connect
+               if (Vertex.isOverlap(aOut.destination(), bIn.origin) > 0) {
+                  rightK = j;
+                  break;
+               }
+            }
+         }
+      }
+      if (rightK >= 0 && rightK !== connectJ) {  // do we need to stitch right?
+         const bIn = bGroup[rightK];
+         const bOut = bIn.next;
+         if (connectJ >= 0) { // remove bGroup to correct position since we form a big group.
+            aIn = bGroup[connectJ];
+            aOut = aIn.next
+            bGroup.splice(rightK, 1);
+         } else { // replace position.
+            bGroup[rightK] = aIn;
+         }
+         // stitch
+         this._simpleStitch(aIn, aOut, bIn, bOut);
+         stitch = true;
+      }
    }
-
-   return undo;
+   undo.count = count;
+   if (stitch) {
+      // final clean up.
+      //b.reorient();
+      undo.vertex = a;
+      if (aGroup.length > 0) {// reattch a to first group then reorient.
+         a.outEdge = aGroup[0];
+         //a.reorient();
+      } else { // empty, so safely delete.
+         this._freeVertex(a);
+      }
+      return undo;
+   }
+   return null;
 };
 
 
@@ -2311,10 +2457,9 @@ WingedTopology.prototype.bevelVertex = function(vertices) {
    ret.vertexLimit = Number.MAX_SAFE_INTEGER;       // magnitude
    ret.position = new Float32Array(ret.vertices.length*3);     // saved the original position
    ret.direction = new Float32Array(ret.vertices.length*3);    // also add direction.
-   let i = 0;
+   const position = new Vec3View(ret.position);
+   const direction = new Vec3View(ret.direction);
    for (let vertex of ret.vertices) {
-      const position = ret.position.subarray(i, i+3);
-      const direction = ret.direction.subarray(i, i+3);
       vec3.copy(position, vertex);
       vec3.sub(direction, vertex.outEdge.destination(), position);
       if (slideHEdges.has(vertex.outEdge.pair)) {  // half length because we are sharing the expansion.
@@ -2323,7 +2468,8 @@ WingedTopology.prototype.bevelVertex = function(vertices) {
          ret.vertexLimit = Math.min(vec3.length(direction), ret.vertexLimit);  // the full length.
       }
       vec3.normalize(direction, direction);
-      i += 3;
+      position.inc();
+      direction.inc();
    }
 
    // results
@@ -2347,7 +2493,8 @@ WingedTopology.prototype.liftAndExtrudeContours = function(edgeLoops) {
          polygon.push( edge.outer.destination().index );
          polygon.push( edge.inner.destination().index );
          this.addPolygon( polygon,  edge.inner.face.material); // todo: inner material, but should be be outer.pair.face?
-         extrudeContours.push( this.findHalfEdge(edge.inner.origin, edge.outer.origin) );
+         const hEdge = this.findHalfEdge(edge.inner.origin, edge.outer.origin);
+         extrudeContours.push( hEdge );
       }
    }
 
@@ -2389,15 +2536,15 @@ WingedTopology.findFaceGroup = function(selectedPolygon) {
    function processNeighbors(polygon) {
       processPolygon.delete(polygon);
       faceGroup.add(polygon);
-      polygon.eachVertex( (vertex) => {   // polygon sharing the same vertex will be group together
-         vertex.eachOutEdge( (outEdge) => {
+      for (let vertex of polygon.eachVertex()) {   // polygon sharing the same vertex will be group together
+         for (let outEdge of vertex.eachOutEdge()) {
             const face = outEdge.pair.face;
             if (processPolygon.has(face)) {
                // depth first search
                processNeighbors(face);
             }
-          });
-      });
+          };
+      };
    };
 
    let list = [];
@@ -2588,19 +2735,20 @@ WingedTopology.prototype._liftEdge = function(outLeft, inRight, fromVertex, delE
          currentOut.origin.outEdge = endOut; // or inEdge a safer choice? 
       }
       currentOut.origin = fromVertex;
-      this.addAffectedWEdge( currentOut.wingedEdge );
+      //this.addAffectedWEdge( currentOut.wingedEdge );
       currentOut = currentOut.pair.next;
    } while (currentOut !== outEdge);
    outEdge.face = inRight.face;
    if (outEdge.face) {
       outEdge.face.numberOfVertex++;
-      this.addAffectedFace(outEdge.face);
+      //this.addAffectedFace(outEdge.face);
    }
    inEdge.face = outLeft.face;
    if (inEdge.face) {
       inEdge.face.numberOfVertex++;
-      this.addAffectedFace(inEdge.face);
+      //this.addAffectedFace(inEdge.face);
    }
+   this.addAffectedVertexFace(fromVertex);
 }
 
 
@@ -2615,6 +2763,8 @@ WingedTopology.prototype._collapseEdge = function(halfEdge) {
    const fromVertex = halfEdge.origin;
    const toVertex = pair.origin;
 
+   this.addAffectedVertex(toVertex);
+   this.addAffectedVertexFace(fromVertex);
    // halfedge -> vertex
    let current = pairNext;
    while (current !== halfEdge) {
@@ -2622,7 +2772,7 @@ WingedTopology.prototype._collapseEdge = function(halfEdge) {
          current.origin.outEdge = current.pair.next;
       }
       current.origin = toVertex;
-      this.addAffectedWEdge(current.wingedEdge);
+      //this.addAffectedWEdge(current.wingedEdge);
       current = current.pair.next;
    }
 
@@ -2637,7 +2787,7 @@ WingedTopology.prototype._collapseEdge = function(halfEdge) {
          face.halfEdge = next;
       }
       face.numberOfVertex--;
-      this.addAffectedFace(face);
+      //this.addAffectedFace(face);
    }
    face = pair.face;
    if (face) {
@@ -2645,13 +2795,12 @@ WingedTopology.prototype._collapseEdge = function(halfEdge) {
          face.halfEdge = pairNext;
       }
       face.numberOfVertex--;
-      this.addAffectedFace(face);
+      //this.addAffectedFace(face);
    }
    // adjust vertex
    if (toVertex.outEdge === pair) {
       toVertex.outEdge = next;
    }
-   this.addAffectedVertex(toVertex);
 
    // delete stuff
    this._freeEdge(halfEdge);
@@ -2676,12 +2825,15 @@ WingedTopology.prototype._restoreLoop = function(halfEdge, delEdge, delPolygon) 
 
    // fix face
    inEdge.face = halfEdge.face;
-   const newPolygon = this._createPolygon(outEdge, 2, Material.default, delPolygon);   // todo: delPolygon should handle it.
+   let newPolygon = null;
+   if (delPolygon !== null) {
+      newPolygon = this._createPolygon(outEdge, 2, Material.default, delPolygon);   // todo: delPolygon should handle it.
+   }
    halfEdge.face = newPolygon;   // unnecessary, already update
    outEdge.face = newPolygon;    // unnecessary, already update.
 
    // fix face.outEdge
-   if (inEdge.face.halfEdge === halfEdge) {
+   if (inEdge.face && inEdge.face.halfEdge === halfEdge) {
       inEdge.face.halfEdge = inEdge;
    }
 };
@@ -2691,13 +2843,14 @@ WingedTopology.prototype._collapseLoop = function(halfEdge, collapsibleWings) {
    }
    const next = halfEdge.next;
    const pair = halfEdge.pair;
+   const pairPrev = pair.prev();
    const nextPair = next.pair;
 
    // is it a loop ?//assert ((next_halfedge_handle(h1) == h0) && (h1 != o0));
 
    // fix halfEdge.next connectionh
    next.next = pair.next;
-   pair.prev().next = next;
+   pairPrev.next = next;
 
    // fix halfEdge.face
    let polygon = pair.face;
@@ -2708,13 +2861,15 @@ WingedTopology.prototype._collapseLoop = function(halfEdge, collapsibleWings) {
       halfEdge.origin.outEdge = nextPair;   // adjustOutgoing();
    }
    this.addAffectedVertex(halfEdge.origin);
+   //this.addAffectedFace(halfEdge.face);
    if (pair.origin.outEdge === pair) {
       pair.origin.outEdge = next;      // adjustOutgoingEdge();
    }
    this.addAffectedVertex(pair.origin);
+   this.addAffectedFace(pair.face);
 
    // fix face.halfEdge
-   if (polygon.halfEdge === pair) {
+   if (polygon && polygon.halfEdge === pair) {
       polygon.halfEdge = next;
    }
 
@@ -2725,31 +2880,111 @@ WingedTopology.prototype._collapseLoop = function(halfEdge, collapsibleWings) {
    // restoreLoop
    return {next: next, hEdge: halfEdge, polygon: delPolygon};
 };
+WingedTopology.prototype._restoreDangling = function(undo) {
+   // restore destination pt
+   const destination = this.addVertex(undo.destination.pt , undo.destination.vertex);
+
+   let outEdge;
+   if (undo.origin) {   // restore origin 
+      const origin = this.addVertex(undo.origin.pt, undo.origin.vertex);
+      outEdge = this._createEdge(origin, destination, undo.hEdge);
+      origin.outEdge = outEdge;
+   } else { // restore to dangling point.
+      outEdge = this._createEdge(undo.next.origin, destination, undo.hEdge);
+      undo.prev.next = outEdge;
+      outEdge.pair.next = undo.next;
+   }
+   destination.outEdge = outEdge.pair;
+   outEdge.face = undo.face;
+   outEdge.pair.face = undo.pairFace;
+};
+WingedTopology.prototype._collapseDangling = function(hEdge) {
+   const undo = {};
+   
+   const pair = hEdge.pair;
+   // this will be removed
+   const destination = pair.origin;
+   undo.destination = {vertex: destination, pt: [destination[0], destination[1], destination[2]]};
+   this._freeVertex(pair.origin);
+   undo.face = hEdge.face;    // both side should be same face?
+   undo.pairFace = hEdge.pair.face;
+
+   // check if origin is also due for removal.
+   if (pair.next === hEdge) {
+      undo.origin = {vertex: hEdge.origin, pt: [hEdge.origin[0], hEdge.origin[1], hEdge.origin[2]]};
+      this._freeVertex(hEdge.origin);
+   } else { // reattach polygon if it
+      let face = hEdge.face;  // hEdge.face === pair.face. if not throw?
+      if (face && (face.outEdge === hEdge || face.outEdge === pair)) {
+         face.outEdge = pair.next;
+      }
+      // reattach next
+      if (hEdge.origin.outEdge === hEdge) {
+         hEdge.origin.outEdge = pair.next;
+      }
+      const prev = hEdge.prev();
+      undo.prev = prev;
+      prev.next = pair.next;
+      undo.next = pair.next;  
+   }
+
+   // free edge at last
+   undo.hEdge = hEdge;
+   this._freeEdge(hEdge);
+
+   return undo;
+};
 
 
 WingedTopology.prototype.collapseEdge = function(halfEdge, collapsibleWings) {
-   const next = halfEdge.next;
+   let next = halfEdge.next;
    const pair = halfEdge.pair;
-   const pairNext = pair.next;
+   let pairNext = pair.next;
 
    // remove edge
    const undo = this._collapseEdge(halfEdge);
 
    // remove loops(2 side polygon)
    if (next.next.next === next) {
+      if (!next.pair.face && next.next.pair.face) {  // 2019-10-17, yep both side null, priority collapse. 2019-12-17: better selection
+         next = next.next;
+      }
       undo.leftLoop = this._collapseLoop(next.next, collapsibleWings);
+      if (next.isLive()) { // 2019-10-20, add guard
+         if (next.next === next.pair) {   // 2019-10-14, add cascade removal of edge, vertex and polygon.
+            undo.leftDangling = this._collapseDangling(next);
+         } else if (next.pair.next === next) {
+            undo.leftDangling = this._collapseDangling(next.pair);
+         }
+      }
    }
    if (pairNext.wingedEdge.isLive() && (pairNext.next.next === pairNext)) {   // add wingedEdge.isLive() to guard (--) edges.
-      undo.rightLoop = this._collapseLoop(pairNext, collapsibleWings);
+      if (pairNext.face && !pairNext.next.pair.face) {  // 2019-10-17, yep both side null, priority collapse. 2019-12-17: better selection.
+         pairNext = pairNext.next;
+      }
+      undo.rightLoop = this._collapseLoop(pairNext, collapsibleWings);  // 2019-12-17: pairNext.next bad choice to collapse edge create ith extrude and inset
+      if (pairNext.isLive()) {   // 2019-10-20, add guard
+         if (pairNext.next === pairNext.pair) {   // 2019-10-14, add cascade removal of edge, vertex and polygon.
+            undo.rightDangling = this._collapseDangling(pairNext);
+         } else if (pairNext.pair.next === pairNext) {
+            undo.rightDangling = this._collapseDangling(pairNext.pair);
+         }
+      }
    }
    return undo;
 };
 
 WingedTopology.prototype.restoreCollapseEdge = function(undo) {
    if (undo.rightLoop) {
+      if (undo.rightDangling) {
+         this._restoreDangling(undo.rightDangling);
+      }
       this._restoreLoop(undo.rightLoop.next, undo.rightLoop.hEdge, undo.rightLoop.polygon);
    }
    if (undo.leftLoop) {
+      if (undo.leftDangling) {
+         this._restoreDangling(undo.leftDangling);
+      }
       this._restoreLoop(undo.leftLoop.next, undo.leftLoop.hEdge, undo.leftLoop.polygon);
    }
    // undo collapseEdge
@@ -2793,7 +3028,7 @@ WingedTopology.prototype.removeEdge = function(outEdge) {
    const remove = this._removeEdge(outEdge, inEdge);
   
    //deal with the faces
-   const delFace = outEdge.face;    // the other side is boundary, after removal becomes boundary too.
+   remove.delFace = outEdge.face;    // the other side is boundary, after removal becomes boundary too.
    const face = inEdge.face;
 
    if (face !== null) {
@@ -2809,8 +3044,8 @@ WingedTopology.prototype.removeEdge = function(outEdge) {
       this.addAffectedFace(face);
    }
 
-   if (delFace !== null) {    // guaranteed to be non-null, but maybe later use case will change, (yes, makeHole needs to be both-null. 2018-08-28)
-      remove.delFace = this._freePolygon(delFace);
+   if (remove.delFace !== null) {    // (yes, makeHole needs to be both-null. 2018-08-28)
+      remove.delFace = this._freePolygon(remove.delFace);
    }
    this._freeEdge(outEdge);
 
@@ -2853,13 +3088,13 @@ WingedTopology.prototype.connectVertex = function(selectedVertex) {
    // first collect face from vertex.
    const selectedFace = new Map();
    for (let vertex of selectedVertex) {
-      vertex.eachOutEdge( function(edge) {
+      for (let edge of vertex.eachOutEdge()) {
          let val = 1;
          if (selectedFace.has(edge.face)) {
             val = selectedFace.get(edge.face) + 1;
          }
          selectedFace.set(edge.face, val);
-      });
+      };
    }
 
    // corner. 
@@ -2980,13 +3215,13 @@ WingedTopology.prototype.dissolveVertex = function(vertex) {
       this._freeVertex(vertex);
       return {pt: pt, vertex: vertex};
    } else {
-      this.addAffectedEdgeAndFace(vertex);
+      this.addAffectedVertexFace(vertex);
       let count = 0;
       const firstIn = vertex.outEdge.pair;
       let lastIn;
       // slide edge, move edge down like collapse edge, without the collapsing.
       let outEdge;    // outEdge for new Polygon
-      vertex.eachInEdge( (inEdge)=> {
+      for (let inEdge of vertex.eachInEdge()) {
          //inEdges.unshift( inEdge )
          this.addAffectedVertex(inEdge.origin);
          const nextOut = inEdge.next;
@@ -3000,7 +3235,7 @@ WingedTopology.prototype.dissolveVertex = function(vertex) {
          outEdge.origin = nextOut.pair.origin; // reassign new vertex
          count++;
          lastIn = inEdge;
-      });
+      };
       // remove loop edge.
       const polygon = this._createPolygon(outEdge, count, Material.default);  // todo: find the correct material
       const undoCollapseLoop = [];
@@ -3056,7 +3291,7 @@ WingedTopology.prototype.restoreDissolveVertex = function(undo) {
       // free polygon
       this._freePolygon(undo.polygon);
       // selected vertex
-      this.addAffectedEdgeAndFace(vertex);
+      this.addAffectedVertexFace(vertex);
    } else { // isolated vertex
       this.addVertex(undo.pt, undo.vertex);
    }
@@ -3137,7 +3372,7 @@ WingedTopology.prototype.undoBridgeFace = function(bridge) {
 //
 // insetFace.
 //
-WingedTopology.prototype.findInsetContours = function(polygonSet) {
+WingedTopology.findInsetContours = function(polygonSet) {
    // find contour.
    const edgeLoops = [];
    for (let polygon of polygonSet) {
@@ -3160,7 +3395,8 @@ WingedTopology.prototype._liftDanglingEdge = function(hEdge, destVert) {
    destVert.outEdge = danglingOut.pair;
    hEdge.next = danglingOut;
    danglingOut.pair.next = next;
-   danglingOut.face = danglingOut.pair.face = hEdge.face;   // assigned face, but don't update number of vertex.
+   danglingOut.face = danglingOut.pair.face = hEdge.face;   // assigned face, but don't update number of vertex yet.
+   this.addAffectedFace(danglingOut.face);
    return danglingOut;
 };
 //
@@ -3301,7 +3537,7 @@ WingedTopology.prototype.slideToNext = function(inEdge) {
       outEdge.origin.outEdge = next;  // we will be no longer using origin;
    }
    outEdge.origin = inEdge.next.origin;
-   this.addAffectedWEdge(outEdge.wingedEdge);
+   //this.addAffectedWEdge(outEdge.wingedEdge);
 
    // reassign face.
    if (next.face.halfEdge === next) {
@@ -3389,36 +3625,45 @@ WingedTopology.prototype.flip = function(pivot, axis) {
    const axisX2 = pivot[axis] * 2;
    for (let vertex of this.vertices) {
       vertex[axis] = axisX2 - vertex[axis];        // == center[axis] - (vertex[axis]-center[ais])
-         this.addAffectedEdgeAndFace(vertex);      // optimiztion: addAllAffected() functions.
-      }
+      this.addAffectedVertexFace(vertex);      // optimiztion: addAllAffected() functions.
+   }
 };
 
 
 WingedTopology.prototype.makeHole = function(polygon) {
    // turn polygon into hole, 
-   let ret = {hEdge: polygon.halfEdge, face: polygon, dissolveEdges: []};
-   for (let hEdge of polygon.hEdges(true)) {
+   let ret = {hEdge: polygon.halfEdge, face: {polygon: polygon}, dissolveEdges: []};
+   let hEdges = [];
+   for (let hEdge of polygon.hEdges()) {
+      hEdges.push( hEdge );
       hEdge.face = null;
-      const pairEdge = hEdge.pair;
-      if (pairEdge.face === null) { 
-         ret.dissolveEdges.unshift( this.dissolveEdge(hEdge) );   // in any doubt, use dissolveEdge. I am stupid
+   }
+   for (let hEdge of hEdges) {
+      if (hEdge.wingedEdge.isLive()) {
+         //hEdge.face = null;
+         const pairEdge = hEdge.pair;
+         if (pairEdge.face === null) { 
+            ret.dissolveEdges.unshift( this.dissolveEdge(pairEdge) );   // in any doubt, use dissolveEdge. I am stupid
+         }
       }
    }
-   ret.face = this._freePolygon(polygon);
+   if (polygon.isLive()) { // dissolveEdge might free polygon first.
+      ret.face = this._freePolygon(polygon);
+   }
    return ret;
 };
 
 WingedTopology.prototype.undoHole = function(hole) {
    for (let dissolve of hole.dissolveEdges) {
-      if (!hole.face.isLive()) {
-         dissolve.delFace = hole.face;
-      }
       this.restoreDissolveEdge(dissolve);
    }
    if (!hole.face.polygon.isLive()) {
-      return this._createPolygon(hole.hEdge, 4, Material.default, hole.face);
+      const polygon = this._createPolygon(hole.hEdge, 4, hole.face.material, hole.face);
+      polygon._assignFace();
+      this.addAffectedFace(polygon);
+      return polygon;
    } else {
-      return hole.face;
+      return hole.face.polygon;
    }
 };
 
