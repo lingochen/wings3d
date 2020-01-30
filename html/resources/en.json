@@ -643,6 +643,7 @@
       "slice": "Slice",
       "corner": "Corner",
       "corner-help": "Make corners from edge rings capped by a 3 and 5 sided face",
+      "vertexWeld-help": "Weld selected vertex to another (sharing common edge)",
       "sidebar": "Sidebar",
       "sidebar-help": "Open/Close sidebar",
       "multi": "Multi",
