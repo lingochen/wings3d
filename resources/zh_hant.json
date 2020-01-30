@@ -642,6 +642,7 @@
       "planeCut": "平面切割",
       "slice": "切片",
       "corner": "角",
-      "corner-help": "從被3和5邊面封蓋的並排環形邊製作角"
+      "corner-help": "從被3和5邊面封蓋的並排環形邊製作角",
+      "vertexWeld-help": "將選定的頂點焊接到另一個（共享公共邊線）"
    }
 }
