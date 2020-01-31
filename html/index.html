@@ -859,9 +859,9 @@
         <fieldset>
           <legend data-tooltip data-i18n>Mouse Buttons</legend>
           <select id="mouseButton">
-            <option selected value="3">Three</option>
-            <option value="2">Two</option>
-            <option value="1">One</option>
+            <option selected value="3" data-i18n>Three</option>
+            <option value="2" data-i18n>Two</option>
+            <option value="1" data-i18n>One</option>
           </select>
         </fieldset>
         <fieldset>
@@ -907,7 +907,7 @@
             <input id="scrollPanSpeed" name="wheelConditional" type="number" min="1" max="100" value="1" step="1" onchange="this.previousElementSibling.value=this.value" />
           </fieldset>
           <fieldset name="dragConditional">
-            <legend data-i18>Rotation Step in Degrees</legend>
+            <legend data-i18n>Rotation Step in Degrees</legend>
             <input name="wheelConditional" type="range" min="1" max="100" value="1" onchange="this.nextElementSibling.value=this.value" />
             <input id="scrollRotateStepDegree" name="wheelConditional" type="number" min="1" max="100" value="1" step="1" onchange="this.previousElementSibling.value=this.value" />
           </fieldset>
@@ -938,7 +938,7 @@
           <label><select id="iconSet">
             <option selected value="blue">Blue Cube</option>
           </select></label>
-          <label><input id="showToolbar" type="checkbox"><span>Show Toolbar</span></label>
+          <label><input id="showToolbar" type="checkbox"><span data-i18n>Show Toolbar</span></label>
           <fieldset> 
             <legend data-i18n>Toolbar Icons</legend>
           </fieldset>
