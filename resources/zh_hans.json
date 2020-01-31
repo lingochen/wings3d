@@ -194,6 +194,7 @@
       "twoFaceRegionsSelected": "必须选定两个面域的面。",
       "faceNotNeighbor": "面不能相邻。",
       "cloneOnSelection": "选择放置克隆的目标元素",
+      "faceLift-help": "抬升，围绕边线或顶点旋转面",
       "intrude": "挤入",
       "faceIntrude-help": "挖出物体的内部，并使选定的面变成洞面",
       "faceBevel-help": "磨圆选定的面",
@@ -203,7 +204,7 @@
       "faceBump-help": "创建选定面的凹凸",
       "lift": "抬升",
       "putOn": "放上",
-      "putOn-help": "移动和旋转物体，选定的面对齐到另一个元素",
+      "facePutOn-help": "移动和旋转物体，选定的面对齐到另一个元素",
       "putOn-helpR": "克隆物体到一个或多个元素",
       "mirror": "镜像",
       "faceMirror-help": "从选定的面镜像物体并合并",
@@ -307,7 +308,7 @@
       "metallic": "金属度",
       "roughness": "糙度",
       "failedLoad": "无法载入",
-      "assignMaterialToSelection": "指定现有材质到选定物体",
+      "faceMaterialMenu-help": "指定现有材质到选定物体",
       "createAndAssignMaterial": "创建和指定新材质",
       "material": "材质",
       "newMaterial": "新材质",
@@ -646,8 +647,13 @@
       "toggleOrtho-help": "在正交视图和透视视图之间切换",
       "planeCut": "平面切割",
       "slice": "切片",
+      "facePlaneCutX-help": "绕X轴切割面",
+      "facePlaneCutY-help": "绕Y轴切割面",
+      "facePlaneCutZ-help": "绕Z轴切割面",
+      "facePlaneCut-help": "围绕标准轴切割",
       "corner": "角",
       "edgeCorner-help": "从被3和5边面封盖的并排环形边制作角",
-      "vertexWeld-help": "将选定的顶点焊接到另一个（共享公共边线）"
+      "vertexWeld-help": "将选定的顶点焊接到另一个（共享公共边线）",
+      "faceInset-help": "在每个选定的面内插入面"
    }
 }
