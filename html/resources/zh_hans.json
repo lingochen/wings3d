@@ -1,6 +1,6 @@
 {
    "meta": {
-      "last-updated": "2020-01-30",
+      "last-updated": "2020-01-31",
       "author": "lingo",
       "locale": "zh_hans"
    },
@@ -148,11 +148,15 @@
       "aimZoom": "瞄准相机的缩放",
       "badDissolve": "融并会形成严重不良的面。",
       "segments": "段",
-      "cutNSegments": "切成<N>段",
+      "cutAsk-help": "切成<N>段",
       "enterNumber...": "输入数字...",
       "cut": "切割",
-      "cutInto": "切割成",
-      "equalEdge": "等长的边线",
+      "cutMenu-help": "切割 子菜单",
+      "cutLine2-help": "切割成2等长的边线",
+      "cutLine3-help": "切割成3等长的边线",
+      "cutLine4-help": "切割成4等长的边线",
+      "cutLine5-help": "切割成5等长的边线",
+      "cutLine10-help": "切割成10等长的边线",
       "cutEqual": "切割成等长的边线",
       "cutatarbitraryposition": "切割在任意位置",
       "cutError": "切割任意位置只能选一个边线，。",
@@ -169,6 +173,7 @@
       "collapse": "收拢",
       "edgeCollapse-help": "删除边线，用顶点取代",
       "hardness": "软硬度",
+      "edgeHardness-help": "软硬度 子菜单",
       "soft": "软",
       "hard": "硬",
       "loopCut": "环形切割",
@@ -642,7 +647,7 @@
       "planeCut": "平面切割",
       "slice": "切片",
       "corner": "角",
-      "corner-help": "从被3和5边面封盖的并排环形边制作角",
+      "edgeCorner-help": "从被3和5边面封盖的并排环形边制作角",
       "vertexWeld-help": "将选定的顶点焊接到另一个（共享公共边线）"
    }
 }
