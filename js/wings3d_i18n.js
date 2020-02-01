@@ -5,6 +5,7 @@
 */
 
 import {ezFetch, onReady} from './wings3d.js';
+import { BodyMadsor } from './wings3d_bodymads.js';
 
 
 const i18nAttrib = "data-i18n";
@@ -26,11 +27,6 @@ function getTemplate(key, help="") {
    }
    return template;
 }
-function helpTooltip(ev) {
-   const text = this.getAttribute("title");
-   const helpText = text.replace(newLine, "    ");
-   help(helpText);
-}
 function setTooltip(elem, tooltip) {
    // now prepare tooltips
    let content = getTemplate(tooltip, "-help");
@@ -49,10 +45,9 @@ function setTooltip(elem, tooltip) {
       } else { // must be string
          text = content;
       }
-      elem.setAttribute("title", text);   // use title tooltip directly
-      // should we register/unregister mouseover event?
-      elem.removeEventListener("mouseover", helpTooltip);
-      elem.addEventListener("mouseover", helpTooltip);
+      elem.setAttribute("title", text);   // use title tooltip directl
+   } else {
+      elem.setAttribute("title", "");  // set title to nothing
    }
 }
 
@@ -207,4 +202,12 @@ onReady(()=> {
       // now set locale.
       setCurrentLocale("en");
    }
+   // hookup help message handler for title tooltip
+   document.body.addEventListener("mouseover", function(ev) {
+      const text = ev.target.getAttribute("title");
+      if (text !== null) {
+         const helpText = text.replace(newLine, "    ");
+         help(helpText);
+      }
+    });
 });
