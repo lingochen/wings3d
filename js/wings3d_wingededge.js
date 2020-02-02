@@ -3251,7 +3251,7 @@ WingedTopology.prototype.dissolveVertex = function(vertex) {
             }
             undoCollapseLoop.unshift( this._collapseLoop(inEdge) );   // collapse inward
          } else {
-            //inEdge.pair.face = polygon;      // already assigned in _createPolygon.
+            inEdge.pair.face = polygon;      // assigned polygon, 2020-02-01. _createPolygon don't assigned polygon
          }
       } while (outEdge !== vertexOutEdge);
       // free vertex
