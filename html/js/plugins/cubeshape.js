@@ -179,6 +179,7 @@ document.addEventListener('DOMContentLoaded', function() {
          _pvt.previewCage.name = "Cube" + (_pvt.creationCount+1);
          Wings3D.log("createCube", _pvt.previewCage);
          _pvt.previewCage = null;
+         _pvt.resetCubeParams();
          _pvt.creationCount++;
    };
 
@@ -355,6 +356,7 @@ document.addEventListener('DOMContentLoaded', function() {
       // position form.
       UI.positionDom(form, mousePosition);
       _pvt.previewCage = null;
+      _pvt.resetCubeParams();
       // reset dialog value.
       form.reset();
       // get sphere value.

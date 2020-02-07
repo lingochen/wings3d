@@ -4336,6 +4336,7 @@ class CreatePreviewCageCommand extends EditCommand {
    }
 
    free() {
+      View.removeFromWorld(this.previewCage);
       this.previewCage.freeBuffer();
    }
 
