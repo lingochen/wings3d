@@ -543,9 +543,12 @@ function doCommand(command) {
 }
 
 function resetUndo() {
+   while ( undo.queue.length ) {   // clear undo queue
+      const cmd = undo.queue.pop();
+      cmd.free();
+   }
    undo.isModified = false;
    undo.current = -1;
-   undo.queue = [];
 };
 
 function resetModified() {
@@ -1340,9 +1343,9 @@ function init() {
       }
       // deselect all, delete all
       OpenSave.reset();
+      resetUndo();
       mode.current.resetSelection();
       _environment.world.empty();
-      resetUndo();
       Renderer.needToRedraw();
       return true;
    }
