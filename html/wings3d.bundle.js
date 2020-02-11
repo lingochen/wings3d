@@ -9,6 +9,7 @@ import './js/wings3d_interact.js';
 import * as Wings3D from "./js/wings3d.js"
 import './js/wings3d_ui.js';
 import './js/wings3d_i18n.js';
+import './js/wings3d_primitive.js';
 
 // plugins
 import "./js/plugins/cubeshape.js";
