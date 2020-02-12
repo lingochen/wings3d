@@ -271,6 +271,7 @@ const action = {
    createCubePref: () =>{notImplemented(this);},
    createMaterial: () => {notImplemented(this);},
    createCone: () => {notImplemented(this);},
+   createConePref: () => {notImplemented(this);},
    // outliner/geometory
    toggleObjectSelect: () => {notImplemented(this);},
    toggleObjectVisibility: () =>{notImplemented(this);},
