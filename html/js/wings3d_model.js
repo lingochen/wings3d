@@ -262,7 +262,7 @@ PreviewCage.prototype.freeBuffer = function() {
 PreviewCage.prototype.initBVH = function() {
    const faceSet = this.geometry.faces;
 
-   let max, min;
+   let max = [0, 0, 0], min = [0, 0, 0];
    const center = vec3.create();
    // first compute midPoint.
    const spheres = [];
