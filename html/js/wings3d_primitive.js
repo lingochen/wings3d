@@ -84,8 +84,11 @@ function numberInput(name, value, handler) {
 }
 
 function makePrimitive(evt, name, maker, ...theDoms) {
-   const form = htmlToElement('<form></form>', ['reset', function(_evt){maker.reset();}], ['submit', function(evt){maker.confirm(); document.body.removeChild(form);}]);
-   form.appendChild(htmlToElement('<span class="close">&times;</span>', ['click', function(evt){maker.cancel(); document.body.removeChild(form);}]));
+   const form = htmlToElement('<form class="dialog verticalPref"></form>', 
+                              ['reset', function(_evt){maker.reset();}], 
+                              ['submit', function(evt){evt.preventDefault(); maker.confirm(); document.body.removeChild(form);}]);
+   form.appendChild(htmlToElement('<span class="close">&times;</span>', 
+                              ['click', function(evt){maker.cancel(); document.body.removeChild(form);}]));
    form.appendChild(htmlToElement(`<h3>${name}</h3>`));
    
    // now add theDoms
@@ -158,21 +161,47 @@ class PrimitiveMaker {
       this.cancel();   // remove object first if any
       
       View.createIntoWorld((cage)=> {
-
-         // get rotation
-         let angleQ = quat.create();
-         quat.fromEuler(angleQ, this.rotation[0], this.rotation[1], this.rotation[2]);
-         const transform = mat4.create();
-         mat4.fromRotationTranslation(transform, angleQ, this.translation);
-
          this.cage = cage;
-         this.makeShape(cage.geometry, Material.defaultMaterial, transform, this.ground, this.options);
+         this.originY = this.makeShape(cage.geometry, Material.defaultMaterial, this.options);
+         
+         // transform.
+         this.snapshot = cage.snapshotTransformBodyGroup(true);
+         this.transform();         
        });
    }
 
+   transform(restore) { // rotate and translate 
+      let update = false;
+      if (restore) {
+         this.cage.restoreMoveSelection(restore);
+         update = true;
+      }
+      // compute transform
+      let angleQ = quat.create();
+      quat.fromEuler(angleQ, this.rotation[0], this.rotation[1], this.rotation[2]);
+      const transform = mat4.create();
+      mat4.fromRotationTranslation(transform, angleQ, this.translation);
+      if (this.ground) {
+         transform[13] = -this.originY;   // move origin to (y=0)
+      }
+
+      // transform cage, if not identity.
+      const identMat4 = mat4.create();
+      mat4.identity(identMat4);
+      if (!mat4.exactEquals(identMat4, transform)) {
+         this.cage.transformSelection(this.snapshot, (working, _center)=> {
+            mat4.copy(working, transform);
+          });
+          update = true;
+      }
+      if (update) {
+         this.cage.updatePosition(this.snapshot);
+      }
+    }
+
    putOnGround(checked) {
       this.ground = checked;
-      this.make();
+      this.transform(this.snapshot);
    }
 
    reset() {
@@ -185,12 +214,12 @@ class PrimitiveMaker {
 
    rotate(index, value) {
       this.rotation[index] = value;
-      this.make();
+      this.transform(this.snapshot);
    }
 
    translate(index, value) {
       this.translation[index] = value;
-      this.make();
+      this.transform(this.snapshot);
    }
 
    update(option, value) {
@@ -202,12 +231,10 @@ PrimitiveMaker.creationCount = 0;
 
 
 
-function makeCone(mesh, material, transform, ground, options) {
+function makeCone(mesh, material, options) {
    let centerY = -(options.height/2);
-   if (ground) {
-      centerY = 0;
-   }
-   return Shape.makeCone(mesh, material, transform, options.sections, options.height, centerY, options.r1, options.r2);
+   Shape.makeCone(mesh, material, options.sections, options.height, centerY, options.r1, options.r2);
+   return centerY;
 };
 
 

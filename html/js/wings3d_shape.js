@@ -35,13 +35,14 @@ function* ellipse(number, centerY, r1, r2) {
  * 
  * @param {PreviewCage} mesh
  * @param {Material} defaultMaterial
+ * @param {mat4} transform - matrix
  * @param {int} sections - # of cone sections
  * @param {real} height - height of cone
  * @param {real} centerY - y start location
  * @param {real} r1 - x axis
  * @param {real} r2 - z axis
  */
-function makeCone(mesh, defaultMaterial, transform, sections, height, centerY, r1, r2) {
+function makeCone(mesh, defaultMaterial, sections, height, centerY, r1, r2) {
    if ( (sections < 3) || (height < 0) || (r1 < 0) || (r2 < 0) ) {
       return false;
    }
@@ -49,7 +50,6 @@ function makeCone(mesh, defaultMaterial, transform, sections, height, centerY, r
    // add base ellipse vertex
    const vertices = [];
    for (let vertex of ellipse(sections, centerY, r1, r2)) {
-      vec3.transformMat4(vertex, vertex, transform);
       vertices.push( mesh.addVertex(vertex).index );      
    }
 
@@ -58,7 +58,6 @@ function makeCone(mesh, defaultMaterial, transform, sections, height, centerY, r
    
    // add top vertex then cone section face
    let apex = [0, centerY+height, 0];
-   vec3.transformMat4(apex, apex, transform);
    const section = [mesh.addVertex(apex).index, 0, vertices[vertices.length-1]];
    for (let i = 0; i < vertices.length; ++i) {
       section[1] = vertices[i];
