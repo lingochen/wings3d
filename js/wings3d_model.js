@@ -2052,10 +2052,10 @@ PreviewCage.prototype.snapshotTransformFaceGroup = function() {
    return ret;
 };
 
-PreviewCage.prototype.snapshotTransformBodyGroup = function() {
+PreviewCage.prototype.snapshotTransformBodyGroup = function(override = false) {
    let vertices = new Set;
    const center = vec3.create();
-   if (this.hasSelection()) {
+   if (this.hasSelection() || override) {
       for (let vertex of this.geometry.vertices) {
          if (vertex.isLive()) {
             vertices.add(vertex);
