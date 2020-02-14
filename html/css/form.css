@@ -158,16 +158,25 @@ form .fieldPref {
 .fieldPref label.right { 
   text-align:right; 
 }
-form .verticalPref {
+form .verticalPref, .verticalPref {
   display: flex;
   flex-direction: column;
   padding: 0.5rem;
 }
-form .horizontalPref {
+form .horizontalPref, .horizontalPref {
   display: flex;
   flex-direction: row;
   padding: 0.5rem;
   flex-wrap: nowrap;
+}
+.horizontalPref.alignCenter {
+  align-items: center;
+}
+.draggable {
+  cursor: grab;
+}
+.draggable.dragging {
+  cursor: grabbing;
 }
 input[name$="Conditional"]:not(:checked) ~ fieldset input[name$="Conditional"],
 input[name$="Conditional"]:not(:checked) ~ label input[name$="Conditional"] {
