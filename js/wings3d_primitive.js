@@ -16,34 +16,37 @@ import * as Shape from './wings3d_shape.js';
  * @param {String} HTML representing a single element
  * @return {Element}
  */
-function htmlToElement(html, ...handlers) {
+const htmlToElement = (function() {
    const template = document.createElement('template');
-   //html = html.trim(); // Never return a text node of whitespace as the result
-   template.innerHTML = html;
-   const element = template.content.firstChild;
-   handlers.map(function(handler){
-      element.addEventListener(handler[0], handler[1]);
-    });
 
-   return element;
-}
-/**
-* @param {String} HTML representing any number of sibling elements
-* @return {NodeList} 
-*/
-function htmlToElements(html) {
-   const template = document.createElement('template');
-   template.innerHTML = html;
-   return template.content.childNodes;
-}
+   return function(html, ...handlers) {
+      //html = html.trim(); // Never return a text node of whitespace as the result
+      template.innerHTML = html;
+      const element = template.content.firstChild;
+      handlers.map(function(handler){
+         element.addEventListener(handler[0], handler[1]);
+       });
 
-function tag(tagName, ...theElems) {
-   const ret = document.createElement(tagName);
+      return element;
+   };
+})();
+
+function tag(html, ...theElems) {
+   
+   const ret = htmlToElement(html);
 
    theElems.map((element)=>{
       ret.appendChild(element);
     });
    return ret;
+}
+
+function listener(element, ...handlers) {
+   for (let [event, listener] of handlers) {
+      element.addEventListener(event, handler);
+    }
+
+   return element;
 }
 
 function hr() {
@@ -68,7 +71,7 @@ function labelCheckbox(name, value, handler) {
    label.appendChild(input);
    label.appendChild(document.createTextNode(name));
    return label;
-}
+};
 
 function numberInput(name, value, handler) {
    const label = document.createElement("label");
@@ -81,15 +84,51 @@ function numberInput(name, value, handler) {
 
    label.appendChild(input);
    return label;
-}
+};
+
+function draggable(container, dragItem) {
+   let currentX;
+   let currentY;
+
+   dragItem.addEventListener("mousedown", dragStart, false);
+   dragItem.addEventListener("mouseup", dragEnd, false);
+   dragItem.classList.add("draggable");
+
+   function dragStart(e) {
+      currentX = e.clientX;
+      currentY = e.clientY;
+      document.body.addEventListener("mousemove", drag, false);   // if on dragItem, mouse could move out of focus.
+      dragItem.classList.add("dragging");
+   }
+
+   function dragEnd(e) {
+      dragItem.classList.remove("dragging");
+      document.body.removeEventListener("mousemove", drag);
+   }
+
+   function drag(e) {
+      e.preventDefault();
+     
+      container.style.top = (container.offsetTop + e.clientY - currentY) + "px";
+      container.style.left = (container.offsetLeft + e.clientX - currentX) + "px";
+
+      currentX = e.clientX;
+      currentY = e.clientY;
+   }
+};
+
+
+
 
 function makePrimitive(evt, name, maker, ...theDoms) {
-   const form = htmlToElement('<form class="dialog verticalPref"></form>', 
+   const form = htmlToElement('<form class="dialog"></form>', 
                               ['reset', function(_evt){maker.reset();}], 
                               ['submit', function(evt){evt.preventDefault(); maker.confirm(); document.body.removeChild(form);}]);
-   form.appendChild(htmlToElement('<span class="close">&times;</span>', 
-                              ['click', function(evt){maker.cancel(); document.body.removeChild(form);}]));
-   form.appendChild(htmlToElement(`<h3>${name}</h3>`));
+   let header;
+   form.appendChild(header = tag(`<h3>${name}</h3>`,
+                               htmlToElement('<span class="close">&times;</span>', 
+                              ['click', function(evt){maker.cancel(); document.body.removeChild(form);}]))
+                               );
    
    // now add theDoms
    theDoms.map((element)=>{
@@ -99,29 +138,31 @@ function makePrimitive(evt, name, maker, ...theDoms) {
    // add common putOn
    let translateY;
    form.appendChild( 
-      tag('fieldset',
-         htmlToElement('<label>Rotate</label>'),
-         tag('span', numberInput('X', {value: 0, step: 1, name: 'rotate_x'}, function(evt) {maker.rotate(0, evt.target.value);}), 
-            numberInput('Y', {value: 0, step: 1, name: 'rotate_y'}, function(evt) {maker.rotate(1, evt.target.value);}), 
-            numberInput('Z', {value: 0, step: 1, name: 'rotate_z'}, function(evt) {maker.rotate(2, evt.target.value);})),
-         htmlToElement('<label>Move</label>'),
-         tag('span', numberInput('X', {value: 0, step: 1, name: 'translate_x'}, function(evt) {maker.translate(0, evt.target.value);}), 
-            translateY = numberInput('Y', {value: 0, step: 1, name: 'translate_y'}, function(evt) {maker.translate(1, evt.target.value);}), 
-            numberInput('Z', {value: 0, step: 1, name: 'translate_z'}, function(evt) {maker.translate(2, evt.target.value);})),
-         tag('div', labelCheckbox('Put on Ground', {name: 'ground'}, function(evt){
+      tag('<fieldset">',
+         tag('<div class="horizontalPref alignCenter">',
+            htmlToElement('<label>Rotate</label>'),
+            tag('<span class="verticalPref">', numberInput('X', {value: 0, step: 1, name: 'rotate_x'}, function(evt) {maker.rotate(0, evt.target.value);}), 
+               numberInput('Y', {value: 0, step: 1, name: 'rotate_y'}, function(evt) {maker.rotate(1, evt.target.value);}), 
+               numberInput('Z', {value: 0, step: 1, name: 'rotate_z'}, function(evt) {maker.rotate(2, evt.target.value);})),
+            htmlToElement('<label>Move</label>'),
+            tag('<span class="verticalPref">', numberInput('X', {value: 0, step: 1, name: 'translate_x'}, function(evt) {maker.translate(0, evt.target.value);}), 
+               translateY = numberInput('Y', {value: 0, step: 1, name: 'translate_y'}, function(evt) {maker.translate(1, evt.target.value);}), 
+               numberInput('Z', {value: 0, step: 1, name: 'translate_z'}, function(evt) {maker.translate(2, evt.target.value);}))),
+         labelCheckbox('Put on Ground', {name: 'ground'}, function(evt){
             const checked = evt.target.checked;
             translateY.disabled = checked;         // no translateY when we are attach to the ground.
             maker.putOnGround(checked);
           }))
-       ) 
     );
 
    // now add ok, reset button
-   form.appendChild(htmlToElement('<button type="reset" value="Reset">Reset</button>'));
-   form.appendChild(htmlToElement('<button type="submit" value="Ok">Ok</button>'));
+   form.appendChild(tag('<div>', htmlToElement('<button type="reset" value="Reset">Reset</button>'), 
+                               htmlToElement('<button type="submit" value="Ok">Ok</button>')
+                       ));
 
-   // display dialog, shown at the mouse location.
-   form.style.display = 'block';
+   draggable(form, header);
+   // display dialog, shown at the mouse location.   
+   form.style.display = 'flex';
    UI.positionDom(form, UI.getPosition(evt));
    document.body.appendChild(form);
 };
