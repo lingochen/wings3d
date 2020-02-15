@@ -74,8 +74,7 @@ function labelCheckbox(name, value, handler) {
 };
 
 function numberInput(name, value, handler) {
-   const label = document.createElement("label");
-   label.textContent = name;
+   const label = htmlToElement(`<label><span>${name}</span></label>`)
    let attribute = "";
    for (let [key, val] of Object.entries(value)) {
       attribute += ` ${key}='${val}'`;
@@ -97,7 +96,7 @@ function draggable(container, dragItem) {
    function dragStart(e) {
       currentX = e.clientX;
       currentY = e.clientY;
-      document.body.addEventListener("mousemove", drag, false);   // if on dragItem, mouse could move out of focus.
+      document.body.addEventListener("mousemove", drag, false);   // if attach to dragItem, mousemove could move out of focus.
       dragItem.classList.add("dragging");
    }
 
@@ -121,19 +120,17 @@ function draggable(container, dragItem) {
 
 
 function makePrimitive(evt, name, maker, ...theDoms) {
-   const form = htmlToElement('<form class="dialog"></form>', 
+   const form = htmlToElement('<form class="dialog small"></form>', 
                               ['reset', function(_evt){maker.reset();}], 
                               ['submit', function(evt){evt.preventDefault(); maker.confirm(); document.body.removeChild(form);}]);
    let header;
-   form.appendChild(header = tag(`<h3>${name}</h3>`,
+   form.appendChild(header = tag(`<h3 class="primitiveHeader">${name}</h3>`,
                                htmlToElement('<span class="close">&times;</span>', 
                               ['click', function(evt){maker.cancel(); document.body.removeChild(form);}]))
                                );
-   
-   // now add theDoms
-   theDoms.map((element)=>{
-      form.appendChild(element);
-    });
+   if (theDoms) {
+      form.appendChild( tag('<div class="primitiveOptions"></div', ...theDoms) );
+   }
 
    // add common putOn
    let translateY;
