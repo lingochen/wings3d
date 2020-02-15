@@ -41,6 +41,10 @@ div.wrap {
   max-width: 100vw;
 }
 
+.dialog.small {
+  min-width: 100px;
+}
+
 .dialog input[type=number] {
    width: 60px;
 }
@@ -177,6 +181,20 @@ form .horizontalPref, .horizontalPref {
 }
 .draggable.dragging {
   cursor: grabbing;
+}
+.primitiveOptions {
+  display: table;
+}
+.primitiveOptions > label {
+  display: table-row;
+}
+.primitiveOptions > label > span {
+  display: table-cell;
+  width: 10%;
+  white-space:nowrap;
+}
+.primitiveOptions > label > input {
+  display: table-cell;
 }
 input[name$="Conditional"]:not(:checked) ~ fieldset input[name$="Conditional"],
 input[name$="Conditional"]:not(:checked) ~ label input[name$="Conditional"] {
