@@ -243,7 +243,6 @@ const action = {
    cameraModeExit: () => {notImplemented(this);},
    cameraZoom: () => {notImplemented(this);},
    contextMenu: () => {notImplemented(this);},
-   createCubeDialog: () => {notImplemented(this);},
    // fileMenu
    fileMenu: () => {notImplemented(this);},
    importMenu: () => {notImplemented(this);},
@@ -272,6 +271,8 @@ const action = {
    createMaterial: () => {notImplemented(this);},
    createCone: () => {notImplemented(this);},
    createConePref: () => {notImplemented(this);},
+   createCylinder: () => {notImplemented(this);},
+   createCylinderPref: () => {notImplemented(this);},
    // outliner/geometory
    toggleObjectSelect: () => {notImplemented(this);},
    toggleObjectVisibility: () =>{notImplemented(this);},

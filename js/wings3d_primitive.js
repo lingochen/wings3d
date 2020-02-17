@@ -293,6 +293,12 @@ function makeCube(mesh, material, options) {
    return originY;
 };
 
+function makeCylinder(mesh, material, options) {
+   let centerY = -(options.height/2);
+   Shape.makeCylinder(mesh, material, options.sections, options.height, centerY, options.bottomR1, options.bottomR2, options.topR1, options.topR2);
+   return centerY;
+};
+
 
 /**
  * bind menu
@@ -364,6 +370,14 @@ Wings3D.onReady(function() {
     UI.bindMenuItemRMB(id, handleCube);
     // preference optional dialog
     UI.bindMenuItem(Wings3D.action.createCubePref.name, handleCube);
+
+    // cylinder
+    id = Wings3D.action.createCylinder.name;
+    UI.bindMenuItem(id, function(_evt){
+       const maker = new PrimitiveMaker("Cylinder", makeCylinder, {sections: 16, height: 2, bottomR1: 1, bottomR2: 1, topR1: 1, topR2: 1});
+       maker.make();
+       maker.confirm();
+     });
 });
 
 export {
