@@ -23,9 +23,11 @@ const htmlToElement = (function() {
       //html = html.trim(); // Never return a text node of whitespace as the result
       template.innerHTML = html;
       const element = template.content.firstChild;
-      handlers.map(function(handler){
-         element.addEventListener(handler[0], handler[1]);
-       });
+      if (handlers) {
+         handlers.map(function(handler){
+            element.addEventListener(handler[0], handler[1]);
+          });
+      }
 
       return element;
    };
@@ -54,9 +56,15 @@ function hr() {
 }
 
 function sliderInput(name, value, handler) {
-   const slider =  document.createElement("input");
-
-   slider.addEventListener('change', handler);
+   let attribute = "";
+   for (let [key, val] of Object.entries(value)) {
+      attribute += ` ${key}='${val}'`;
+   }
+   const slider = tag("<fieldset>",
+      htmlToElement('<legend>Number of Cuts</legend>'),
+      htmlToElement(`<input type='range' name=${name}${attribute} onchange="this.nextElementSibling.value=this.value">`, ['change', handler]),
+      htmlToElement(`<input type='number' name=${name}${attribute} onchange="this.previousElementSibling.value=this.value">`, ['change', handler])  
+   );
    return slider;
 }
 
@@ -129,7 +137,9 @@ function makePrimitive(evt, name, maker, ...theDoms) {
                               ['click', function(evt){maker.cancel(); document.body.removeChild(form);}]))
                                );
    if (theDoms) {
-      form.appendChild( tag('<div class="primitiveOptions"></div', ...theDoms) );
+      for (let dom of theDoms) {
+         form.appendChild(dom);
+      }
    }
 
    // add common putOn
@@ -275,12 +285,20 @@ function makeCone(mesh, material, options) {
    return centerY;
 };
 
+function makeCube(mesh, material, options) {
+   let originX = -(options.sizeX/2);
+   let originY = -(options.sizeY/2);
+   let originZ = -(options.sizeZ/2);
+   Shape.makeCube(mesh, material, originX, originY, originZ, options.sizeX, options.sizeY, options.sizeZ, options.cut);
+   return originY;
+};
+
 
 /**
  * bind menu
  */
 Wings3D.onReady(function() {
-   const id = Wings3D.action.createCone.name;
+   let id = Wings3D.action.createCone.name;
    UI.bindMenuItem(id, function(ev) {
       const maker = new PrimitiveMaker("Cone", makeCone, {sections: 16, height: 2, r1: 1, r2: 1});
       maker.make();
@@ -291,24 +309,61 @@ Wings3D.onReady(function() {
       const maker = new PrimitiveMaker("Cone", makeCone, {sections: 16, height: 2, r1: 1, r2: 1});
       maker.make();
       makePrimitive(evt, "Cone Options Dialog", maker, 
-         numberInput("Sections", {min: 3, value: 16, step: 1}, function(evt) {
-            maker.update("sections", Number(evt.target.value));
-          }),
-         numberInput("Height", {min: 0, value: 2}, function(evt) {
-            maker.update("height", Number(evt.target.value));
-          }),
-         numberInput("X Diameter", {min: 0, value: 2}, function(evt) {
-            maker.update("r1", Number(evt.target.value)/2);
-          }),
-         numberInput("Z Diameter", {min: 0, value: 2}, function(evt) {
-            maker.update("r2", Number(evt.target.value)/2);
-          })
-         );
+         tag('<div class="primitiveOptions"></div>',
+            numberInput("Sections", {min: 3, value: 16, step: 1}, function(evt) {
+               maker.update("sections", Number(evt.target.value));
+            }),
+            numberInput("Height", {min: 0, value: 2}, function(evt) {
+               maker.update("height", Number(evt.target.value));
+            }),
+            numberInput("X Diameter", {min: 0, value: 2}, function(evt) {
+               maker.update("r1", Number(evt.target.value)/2);
+            }),
+            numberInput("Z Diameter", {min: 0, value: 2}, function(evt) {
+               maker.update("r2", Number(evt.target.value)/2);
+            }))
+       );
     }
 
    UI.bindMenuItemRMB(id, handleCone);
    // preference optional dialog
-   UI.bindMenuItem(Wings3D.action.createConePref.name, handleCone);   
+   UI.bindMenuItem(Wings3D.action.createConePref.name, handleCone);
+
+   // Cube
+   id = Wings3D.action.createCube.name;
+   UI.bindMenuItem(id, function(_evt){
+      const maker = new PrimitiveMaker("Cube", makeCube, {sizeX: 2, sizeY: 2, sizeZ: 2, cut: 1});
+      maker.make();
+      maker.confirm();
+    });
+
+    const handleCube = function(evt) {
+      const maker = new PrimitiveMaker("Cube", makeCube, {sizeX: 2, sizeY: 2, sizeZ: 2, cut: 1});
+      maker.make();
+      makePrimitive(evt, "Cube Options Dialog", maker, 
+         sliderInput("numberOfCuts", {min: 1, max: 20, value:1, step:1}, function(evt){
+            maker.update("cut", Number(evt.target.value));
+          }),
+         tag('<div class="primitiveOptions"></div>',
+            numberInput("X", {min: 0, value: 2}, function(evt) {
+               maker.update("sizeX", Number(evt.target.value));
+            }),
+            numberInput("Y", {min: 0, value: 2}, function(evt) {
+               maker.update("sizeY", Number(evt.target.value));
+            }),
+            numberInput("Z", {min: 0, value: 2}, function(evt) {
+               maker.update("sizeZ", Number(evt.target.value));
+            })),
+            tag(`<fieldset>
+               <legend>Spherize</legend>
+               <label><input type='radio' name='sphere' value='true' disabled>Yes</label>
+               <label><input type='radio' name='sphere' value='false' checked disabled>No<label>
+             </fieldset>`)
+       );
+    }
+    UI.bindMenuItemRMB(id, handleCube);
+    // preference optional dialog
+    UI.bindMenuItem(Wings3D.action.createCubePref.name, handleCube);
 });
 
 export {
