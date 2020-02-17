@@ -176,7 +176,40 @@ function makeCube(mesh, defaultMaterial, originX, originY, originZ, sizeX, sizeY
 };
 
 
+function makeCylinder(mesh, defaultMaterial, sections, height, centerY,  bottomR1, bottomR2, topR1, topR2) {
+   // add base ellipse vertex
+   const bottom = [];
+   for (let vertex of ellipse(sections, centerY, bottomR1, bottomR2)) {
+      bottom.push( mesh.addVertex(vertex).index );      
+   }
+   // add base face 
+   mesh.addPolygon( bottom, defaultMaterial );
+
+   // add top ellipse vertex
+   const top = [];
+   for (let vertex of ellipse(sections, centerY+height, topR1, topR2)) {
+      top.push( mesh.addVertex(vertex).index );      
+   }
+
+   // add cylinder sections.
+   const section = [bottom[sections-1], top[sections-1], 0, 0];
+   for (let i = 0; i < sections; ++i) {
+      section[2] = top[i];
+      section[3] = bottom[i];
+      mesh.addPolygon( section, defaultMaterial );
+      section[0] = section[3];
+      section[1] = section[2];
+   }
+
+   // add top face 
+   mesh.addPolygon( top.reverse(), defaultMaterial );
+
+   return true;
+};
+
+
 export {
    makeCone,
-   makeCube
+   makeCube,
+   makeCylinder
 }
