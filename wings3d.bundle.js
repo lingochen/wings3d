@@ -12,7 +12,6 @@ import './js/wings3d_i18n.js';
 import './js/wings3d_primitive.js';
 
 // plugins
-import "./js/plugins/cubeshape.js";
 import "./js/plugins/wavefront_obj.js";
 
 

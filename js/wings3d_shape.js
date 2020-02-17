@@ -69,6 +69,114 @@ function makeCone(mesh, defaultMaterial, sections, height, centerY, r1, r2) {
 };
 
 
+function makeCube(mesh, defaultMaterial, originX, originY, originZ, sizeX, sizeY, sizeZ, numberOfCut) {
+   const map = {};
+   function addVertexUnique(pt) {
+      var x = pt[0], y = pt[1], z = pt[2];
+      var key = x.toFixed(6) + "," + y.toFixed(6) + "," + z.toFixed(6); // convert to fixed decimal, so no needs for (x-x1<epsilon)
+      if (!map.hasOwnProperty(key)) {
+         map[key] = mesh.addVertex(pt);
+      }
+      return map[key].index;
+   }
+   function makeFaces(getVertexFN) {
+      var offset = 0;
+      var vertexIndex = [];
+      var polygon = [];
+      for (let up = 0; up <= numberOfCut; ++up) {
+         for (let rt = 0; rt <= numberOfCut; ++rt) { // add vertex and get vertices index.
+            vertexIndex.push( addVertexUnique(getVertexFN(up, rt)) );
+         }
+         if (up > 0) {   // add polygon faces, ccw order
+            for (let i = 0 ; i<numberOfCut; ++i) {
+               polygon.push( vertexIndex[offset+i] );
+               polygon.push( vertexIndex[offset+i+1] );
+               polygon.push( vertexIndex[offset+i+1+numberOfCut+1] );
+               polygon.push( vertexIndex[offset+i+numberOfCut+1] );
+               mesh.addPolygon(polygon, defaultMaterial);
+               polygon.length = 0;
+            }
+            offset += numberOfCut+1;  // done, add offset 
+         }
+      }
+   }
+
+   // setup start, end
+   const org = vec3.fromValues( originX, originY, originZ);
+   const x = vec3.fromValues(sizeX, 0.0, 0.0);
+   const y = vec3.fromValues(0.0, sizeY, 0.0);
+   const z = vec3.fromValues(0.0, 0.0, sizeZ);
+   
+   const dest = vec3.create();
+   // creating step size for each cut
+   const stepX = [], stepY = [], stepZ = [];
+   for (let i = 0; i <= numberOfCut; ++i) {
+      const cut = i / numberOfCut;
+      const xStep = vec3.create();
+      vec3.scale(xStep, x, cut);
+      stepX.push( xStep );
+      const yStep = vec3.create();
+      vec3.scale(yStep, y, cut);
+      stepY.push( yStep );
+      const zStep = vec3.create();
+      vec3.scale(zStep, z, cut);
+      stepZ.push( zStep );
+   }
+
+   // right face (x-, -y+, -z)
+   vec3.add(dest, org, x);
+   makeFaces(function(up, rt) {
+      return vec3.fromValues(dest[0]-stepX[rt][0]+stepY[up][0], 
+                             dest[1]-stepX[rt][1]+stepY[up][1], 
+                             dest[2]-stepX[rt][2]+stepY[up][2]);
+   });
+
+   // bottom face (x-, -y, -z+)
+   makeFaces(function(up, rt){
+      return [dest[0]-stepX[up][0]+stepZ[rt][0],
+              dest[1]-stepX[up][1]+stepZ[rt][1], 
+              dest[2]-stepX[up][2]+stepZ[rt][2]];
+   });
+
+   // front faces vertex (x, -y+, z-)
+   //vec3.add(dest, org, x);
+   vec3.add(dest, dest, z);
+   makeFaces(function(up, rt) {
+      return [dest[0]+stepY[up][0]-stepZ[rt][0], 
+              dest[1]+stepY[up][1]-stepZ[rt][1], 
+              dest[2]+stepY[up][2]-stepZ[rt][2]];
+   });
+
+   // left face (-x+, -y+, z)
+   vec3.add(dest, org, z);
+   makeFaces(function(up, rt) {
+      return [dest[0]+stepX[rt][0]+stepY[up][0], 
+              dest[1]+stepX[rt][1]+stepY[up][1], 
+              dest[2]+stepX[rt][2]+stepY[up][2]]; 
+   });
+
+   // back face (-x, -y+, -z+)
+   makeFaces(function(up, rt){
+      return [org[0]+stepY[up][0]+stepZ[rt][0], 
+              org[1]+stepY[up][1]+stepZ[rt][1], 
+              org[2]+stepY[up][2]+stepZ[rt][2]];
+   });
+
+   // top face (x-, y, z-)
+   vec3.add(dest, org, x);
+   vec3.add(dest, dest, y);
+   vec3.add(dest, dest, z);
+   makeFaces(function(up, rt){
+      return [dest[0]-stepX[up][0]-stepZ[rt][0], 
+              dest[1]-stepX[up][1]-stepZ[rt][1], 
+              dest[2]-stepX[up][2]-stepZ[rt][2]];
+   });
+
+   return true;
+};
+
+
 export {
-   makeCone
+   makeCone,
+   makeCube
 }
