@@ -181,7 +181,7 @@ class PrimitiveMaker {
       this.name = name;
       this.cage = null;
       this.makeShape = maker;
-      this.options = options;
+      this.options = Object.assign({}, options);
       this.rotation = [0, 0, 0];
       this.translation = [0, 0, 0];
       this.ground = false;
@@ -305,14 +305,15 @@ function makeCylinder(mesh, material, options) {
  */
 Wings3D.onReady(function() {
    let id = Wings3D.action.createCone.name;
+   const coneOptions = {sections: 16, height: 2, r1: 1, r2: 1};
    UI.bindMenuItem(id, function(ev) {
-      const maker = new PrimitiveMaker("Cone", makeCone, {sections: 16, height: 2, r1: 1, r2: 1});
+      const maker = new PrimitiveMaker("Cone", makeCone, coneOptions);
       maker.make();
       maker.confirm();
     });
 
    const handleCone = function(evt) {
-      const maker = new PrimitiveMaker("Cone", makeCone, {sections: 16, height: 2, r1: 1, r2: 1});
+      const maker = new PrimitiveMaker("Cone", makeCone, coneOptions);
       maker.make();
       makePrimitive(evt, "Cone Options Dialog", maker, 
          tag('<div class="primitiveOptions"></div>',
@@ -337,14 +338,15 @@ Wings3D.onReady(function() {
 
    // Cube
    id = Wings3D.action.createCube.name;
+   const cubeOptions = {sizeX: 2, sizeY: 2, sizeZ: 2, cut: 1};
    UI.bindMenuItem(id, function(_evt){
-      const maker = new PrimitiveMaker("Cube", makeCube, {sizeX: 2, sizeY: 2, sizeZ: 2, cut: 1});
+      const maker = new PrimitiveMaker("Cube", makeCube, cubeOptions);
       maker.make();
       maker.confirm();
     });
 
     const handleCube = function(evt) {
-      const maker = new PrimitiveMaker("Cube", makeCube, {sizeX: 2, sizeY: 2, sizeZ: 2, cut: 1});
+      const maker = new PrimitiveMaker("Cube", makeCube, cubeOptions);
       maker.make();
       makePrimitive(evt, "Cube Options Dialog", maker, 
          sliderInput("numberOfCuts", {min: 1, max: 20, value:1, step:1}, function(evt){
@@ -372,12 +374,42 @@ Wings3D.onReady(function() {
     UI.bindMenuItem(Wings3D.action.createCubePref.name, handleCube);
 
     // cylinder
-    id = Wings3D.action.createCylinder.name;
-    UI.bindMenuItem(id, function(_evt){
-       const maker = new PrimitiveMaker("Cylinder", makeCylinder, {sections: 16, height: 2, bottomR1: 1, bottomR2: 1, topR1: 1, topR2: 1});
-       maker.make();
-       maker.confirm();
-     });
+   id = Wings3D.action.createCylinder.name;
+   const cylinderOptions = {sections: 16, height: 2, bottomR1: 1, bottomR2: 1, topR1: 1, topR2: 1};
+   UI.bindMenuItem(id, function(_evt){
+      const maker = new PrimitiveMaker("Cylinder", makeCylinder, cylinderOptions);
+      maker.make();
+      maker.confirm();
+    });
+   const handleCylinder = function(evt) {
+      const maker = new PrimitiveMaker("Cylinder", makeCylinder, cylinderOptions);
+      maker.make();
+      makePrimitive(evt, "Cylinder Options Dialog", maker, 
+         tag('<div class="primitiveOptions cylinder"></div>',
+            numberInput("Sections", {min: 3, value: 16, step: 1}, function(evt) {
+               maker.update("sections", Number(evt.target.value));
+            }),
+            numberInput("Height", {min: 0, value: 2}, function(evt) {
+               maker.update("height", Number(evt.target.value));
+            }),
+            numberInput("Top X Radius", {min: 0, value: 1}, function(evt) {
+               maker.update("topR1", Number(evt.target.value));
+            }),
+            numberInput("Top Z Radius", {min: 0, value: 1}, function(evt) {
+               maker.update("topR2", Number(evt.target.value));
+            }),
+            numberInput("Bottom X Radius", {min: 0, value: 1}, function(evt) {
+               maker.update("bottomR1", Number(evt.target.value));
+            }),
+            numberInput("Bottom Z Radius", {min: 0, value: 1}, function(evt) {
+               maker.update("bottomR2", Number(evt.target.value));
+            })
+          )
+       );
+   }
+   UI.bindMenuItemRMB(id, handleCylinder);
+   // preference optional dialog
+   UI.bindMenuItem(Wings3D.action.createCylinderPref.name, handleCylinder);
 });
 
 export {
