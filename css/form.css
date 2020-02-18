@@ -196,6 +196,15 @@ form .horizontalPref, .horizontalPref {
 .primitiveOptions > label > input {
   display: table-cell;
 }
+.primitiveOptions.cylinder {
+  border-collapse: collapse;
+}
+.primitiveOptions.cylinder > label:nth-child(2n+3) { /* overlapped, how to solved it? */
+  border-top: 2px solid black;
+}
+.primitiveOptions.cylinder > label:nth-child(even) {
+  border-bottom: 10px solid white;
+}
 input[name$="Conditional"]:not(:checked) ~ fieldset input[name$="Conditional"],
 input[name$="Conditional"]:not(:checked) ~ label input[name$="Conditional"] {
   visibility: hidden;
