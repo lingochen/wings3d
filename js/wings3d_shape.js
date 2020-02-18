@@ -252,12 +252,49 @@ function makeSphere(mesh, defaultMaterial, sections, slices, radialX, radialY) {
    }
 
    return true;
-}
+};
+
+
+function makeTorus(mesh, defaultMaterial, sections, slices, r1, r2, r) {
+   function addPolygon(lastLayer, layer) {
+      const section =  [lastLayer[lastLayer.length-1], layer[layer.length-1], -1, -1];
+      for (let j = 0; j < layer.length; ++j) {
+         section[2] = layer[j];
+         section[3] = lastLayer[j];
+         mesh.addPolygon(section, defaultMaterial);
+         section[0] = section[3];
+         section[1] = section[2];
+      }
+   };
+
+   let delta = 2*Math.PI/slices;    // 360 degree.
+
+   let lastLayer, firstLayer;
+   for (let i = 0; i < slices; ++i) {
+      let pos = -Math.cos(i*delta) * r; // we want bottom to top instead of top to bottom
+      let rad = Math.sin(i*delta) * r;
+      let layer = [];
+      for (let vertex of ellipse(sections, pos, r1+rad, r2+rad)) {
+         layer.push( mesh.addVertex(vertex).index );
+      }
+      if (lastLayer) {  // add quad between current and last layer. bottom to out to top to in to bottom.
+         addPolygon(lastLayer, layer);
+      } else {
+         firstLayer = layer;
+      }
+      lastLayer = layer;
+   }
+   // add quad between last layer and first layer
+   addPolygon(lastLayer, firstLayer);
+
+   return true;
+};
 
 
 export {
    makeCone,
    makeCube,
    makeCylinder,
-   makeSphere
+   makeSphere,
+   makeTorus
 }

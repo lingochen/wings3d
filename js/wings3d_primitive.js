@@ -299,10 +299,18 @@ function makeCylinder(mesh, material, options) {
    return centerY;
 };
 
+
 function makeSphere(mesh, material, options) { 
    Shape.makeSphere(mesh, material, options.sections, options.slices, options.radialX, options.radialY);
    return -options.radialX;
 };
+
+
+function makeTorus(mesh, material, options) { 
+   Shape.makeTorus(mesh, material, options.sections, options.slices, options.r1, options.r2, options.rMinor);
+   return -options.r1;
+};
+
 
 /**
  * bind menu
@@ -445,6 +453,15 @@ Wings3D.onReady(function() {
     UI.bindMenuItemRMB(id, handleSphere);
     // preference optional dialog
     UI.bindMenuItem(Wings3D.action.createSpherePref.name, handleSphere);
+
+    // torus
+    id = Wings3D.action.createTorus.name;
+    const torusOptions = {sections: 16, slices: 8, r1: 1, r2: 1, rMinor: 0.25};
+    UI.bindMenuItem(id, function(_evt){
+       const maker = new PrimitiveMaker("Torus", makeTorus, torusOptions);
+       maker.make();
+       maker.confirm();
+     });  
 });
 
 export {
