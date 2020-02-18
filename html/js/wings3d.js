@@ -275,6 +275,8 @@ const action = {
    createCylinderPref: () => {notImplemented(this);},
    createSphere: () => {notImplemented(this);},
    createSpherePref: () => {notImplemented(this);},
+   createTorus: () => {notImplemented(this);},
+   createTorusPref: () => {notImplemented(this);},
    // outliner/geometory
    toggleObjectSelect: () => {notImplemented(this);},
    toggleObjectVisibility: () =>{notImplemented(this);},
