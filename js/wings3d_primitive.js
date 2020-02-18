@@ -461,7 +461,33 @@ Wings3D.onReady(function() {
        const maker = new PrimitiveMaker("Torus", makeTorus, torusOptions);
        maker.make();
        maker.confirm();
-     });  
+     });
+   const handleTorus = function(evt) {
+      const maker = new PrimitiveMaker("Torus", makeTorus, torusOptions);
+      maker.make();
+      makePrimitive(evt, "Torus Options Dialog", maker, 
+         tag('<div class="primitiveOptions"></div>',
+            numberInput("Sections", {min: 3, value: 16, step: 1}, function(evt) {
+               maker.update("sections", Number(evt.target.value));
+            }),
+            numberInput("Slices", {min: 3, value: 8}, function(evt) {
+               maker.update("slices", Number(evt.target.value));
+            }),
+            numberInput("Major X Radius", {min: 0, value: 2}, function(evt) {
+               maker.update("r1", Number(evt.target.value));
+            }),
+            numberInput("Major Y Radius", {min: 0, value: 2}, function(evt) {
+               maker.update("r2", Number(evt.target.value));
+            }),
+            numberInput("Minor Radius", {min: 0, value: 0.25, step: 0.25}, function(evt) {
+               maker.update("rMinor", Number(evt.target.value));
+            })
+         )
+       );
+    }
+    UI.bindMenuItemRMB(id, handleTorus);
+    // preference optional dialog
+    UI.bindMenuItem(Wings3D.action.createTorusPref.name, handleTorus);
 });
 
 export {
