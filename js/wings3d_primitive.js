@@ -299,10 +299,9 @@ function makeCylinder(mesh, material, options) {
    return centerY;
 };
 
-function makeSphere(mesh, material, options) {
-   let centerY = -(options.radialX/2);
-   Shape.makeSphere(mesh, material, options.sections, options.slices, options.radialX/2, options.radialY/2);
-   return centerY;
+function makeSphere(mesh, material, options) { 
+   Shape.makeSphere(mesh, material, options.sections, options.slices, options.radialX, options.radialY);
+   return -options.radialX;
 };
 
 /**
@@ -418,12 +417,34 @@ Wings3D.onReady(function() {
 
    // sphere
    id = Wings3D.action.createSphere.name;
-   const sphereOptions = {sections: 16, slices: 8, radialX: 2, radialY: 2};
+   const sphereOptions = {sections: 16, slices: 8, radialX: 1, radialY: 1};
    UI.bindMenuItem(id, function(_evt){
       const maker = new PrimitiveMaker("Sphere", makeSphere, sphereOptions);
       maker.make();
       maker.confirm();
-    });   
+    });  
+   const handleSphere = function(evt) {
+      const maker = new PrimitiveMaker("Sphere", makeSphere, sphereOptions);
+      maker.make();
+      makePrimitive(evt, "Sphere Options Dialog", maker, 
+         tag('<div class="primitiveOptions"></div>',
+            numberInput("Sections", {min: 3, value: 16, step: 1}, function(evt) {
+               maker.update("sections", Number(evt.target.value));
+            }),
+            numberInput("Slices", {min: 3, value: 8}, function(evt) {
+               maker.update("slices", Number(evt.target.value));
+            }),
+            numberInput("X Radial", {min: 0, value: 2}, function(evt) {
+               maker.update("radialX", Number(evt.target.value)/2);
+            }),
+            numberInput("Y Radial", {min: 0, value: 2}, function(evt) {
+               maker.update("radialY", Number(evt.target.value)/2);
+            }))
+       );
+    }
+    UI.bindMenuItemRMB(id, handleSphere);
+    // preference optional dialog
+    UI.bindMenuItem(Wings3D.action.createSpherePref.name, handleSphere);
 });
 
 export {
