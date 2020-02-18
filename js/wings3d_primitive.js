@@ -299,6 +299,11 @@ function makeCylinder(mesh, material, options) {
    return centerY;
 };
 
+function makeSphere(mesh, material, options) {
+   let centerY = -(options.radialX/2);
+   Shape.makeSphere(mesh, material, options.sections, options.slices, options.radialX/2, options.radialY/2);
+   return centerY;
+};
 
 /**
  * bind menu
@@ -410,6 +415,15 @@ Wings3D.onReady(function() {
    UI.bindMenuItemRMB(id, handleCylinder);
    // preference optional dialog
    UI.bindMenuItem(Wings3D.action.createCylinderPref.name, handleCylinder);
+
+   // sphere
+   id = Wings3D.action.createSphere.name;
+   const sphereOptions = {sections: 16, slices: 8, radialX: 2, radialY: 2};
+   UI.bindMenuItem(id, function(_evt){
+      const maker = new PrimitiveMaker("Sphere", makeSphere, sphereOptions);
+      maker.make();
+      maker.confirm();
+    });   
 });
 
 export {

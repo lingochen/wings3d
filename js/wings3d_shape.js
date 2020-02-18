@@ -12,7 +12,7 @@
  * @param {*} r 
  */
 function* circle(number, centerY, r) {
-   yield ellipse(number, centerY, r, r);
+   yield* ellipse(number, centerY, r, r);
 };
 
 /**
@@ -208,8 +208,56 @@ function makeCylinder(mesh, defaultMaterial, sections, height, centerY,  bottomR
 };
 
 
+function makeSphere(mesh, defaultMaterial, sections, slices, radialX, radialY) {
+   // add bottom vertex
+   let bottom = mesh.addVertex([0, -radialX, 0]).index;
+
+   let delta = Math.PI/slices;
+   // add layer sections of ellipse
+   let lastLayer;
+   for (let i = 1; i < slices; i++) {
+      let pos = -Math.cos(i*delta); // we want bottom to top instead of top to bottom
+      let rad = Math.sin(i*delta);
+      let layer = [];
+      for (let vertex of circle(sections, pos*radialX, rad*radialY)) {
+         layer.push( mesh.addVertex(vertex).index );
+      }
+      if (!lastLayer) {  // bottom triangles
+         const section = [bottom, layer[layer.length-1], -1];
+         for (let vertex of layer) {
+            section[2] = vertex;
+            mesh.addPolygon(section, defaultMaterial);
+            section[1] = vertex;
+         }
+      } else { // normal quad
+         const section = [lastLayer[lastLayer.length-1], layer[layer.length-1], -1, -1];
+         for (let j = 0; j < layer.length; ++j) {
+            section[2] = layer[j];
+            section[3] = lastLayer[j];
+            mesh.addPolygon(section, defaultMaterial);
+            section[0] = section[3];
+            section[1] = section[2];
+         }
+      }
+      lastLayer = layer;
+   }
+
+   // add top vertex and triangles
+   let top = mesh.addVertex([0, radialX, 0]).index;
+   const section = [lastLayer[lastLayer.length-1], top, -1];
+   for (let vertex of lastLayer) {
+      section[2] = vertex;
+      mesh.addPolygon(section, defaultMaterial);
+      section[0] = vertex;
+   }
+
+   return true;
+}
+
+
 export {
    makeCone,
    makeCube,
-   makeCylinder
+   makeCylinder,
+   makeSphere
 }
