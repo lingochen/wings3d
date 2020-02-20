@@ -291,10 +291,73 @@ function makeTorus(mesh, defaultMaterial, sections, slices, r1, r2, r) {
 };
 
 
+function makePlane(mesh, defaultMaterial, resolution, size, thickness) {
+   let sizeX2 = size * 2;
+   let startX = -size;
+   let startY = -thickness;
+   let startZ = -size;
+   function planeGrid() {
+      let base = [];
+      for (let i = 0; i < resolution; i++) {
+         let x = i / (resolution-1) * sizeX2;
+         x += startX;
+         let plane = [];
+         for (let j = 0; j < resolution; j++)   {
+            let z = j / (resolution-1) * sizeX2;
+            z += startZ;
+            plane.push( mesh.addVertex([x, startY, z]).index );
+         }
+         base.push(plane);
+      }
+      return base;
+   }
+   // bottom grid
+   let bottom = planeGrid();
+   for (let i = 1; i < resolution; ++i) {
+      for (let j = 1; j < resolution; ++j) {
+         const face = [bottom[i-1][j-1], bottom[i][j-1], bottom[i][j], bottom[i-1][j]];
+         mesh.addPolygon(face, defaultMaterial);
+      }
+   }
+   
+   // top grid
+   startY = thickness;
+   let top = planeGrid();
+   for (let i = 1; i < resolution; ++i) {
+      for (let j = 1; j < resolution; ++j) {
+         const face = [top[i-1][j-1], top[i-1][j], top[i][j], top[i][j-1]];
+         mesh.addPolygon(face, defaultMaterial);
+      }
+   }
+
+   // left, right, front, back
+   let end = resolution-1;
+   for (let i = 1; i < resolution; ++i) {
+      let face = [bottom[i-1][0], top[i-1][0], top[i][0], bottom[i][0]];
+      mesh.addPolygon(face, defaultMaterial);
+   }
+   for (let i = 1; i < resolution; ++i) {
+      let face = [bottom[i][end], top[i][end], top[i-1][end], bottom[i-1][end]];
+      mesh.addPolygon(face, defaultMaterial);
+   }
+   for (let i = 1; i < resolution; ++i) {
+      let face = [bottom[0][i], top[0][i], top[0][i-1], bottom[0][i-1]];
+      mesh.addPolygon(face, defaultMaterial);
+   }
+   for (let i = 1; i < resolution; ++i) {
+      let face = [bottom[end][i-1], top[end][i-1], top[end][i], bottom[end][i]];
+      mesh.addPolygon(face, defaultMaterial);
+   }
+
+   return true;
+};
+
+
 export {
    makeCone,
    makeCube,
    makeCylinder,
+   makePlane,
    makeSphere,
    makeTorus
 }

@@ -312,6 +312,12 @@ function makeTorus(mesh, material, options) {
 };
 
 
+function makePlane(mesh, material, options) {
+   Shape.makePlane(mesh, material, options.resolution, options.size, options.thickness);
+   return -options.thickness;
+}
+
+
 /**
  * bind menu
  */
@@ -488,6 +494,15 @@ Wings3D.onReady(function() {
     UI.bindMenuItemRMB(id, handleTorus);
     // preference optional dialog
     UI.bindMenuItem(Wings3D.action.createTorusPref.name, handleTorus);
+
+    // plane
+    id = Wings3D.action.createPlane.name;
+    const planeOptions = {resolution: 40, size: 2, thickness: 0.2};
+    UI.bindMenuItem(id, function(_evt){
+       const maker = new PrimitiveMaker("Plane", makePlane, planeOptions);
+       maker.make();
+       maker.confirm();
+     });    
 });
 
 export {
