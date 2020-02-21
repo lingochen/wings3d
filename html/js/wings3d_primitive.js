@@ -456,18 +456,18 @@ Wings3D.onReady(function() {
             }))
        );
     }
-    UI.bindMenuItemRMB(id, handleSphere);
-    // preference optional dialog
-    UI.bindMenuItem(Wings3D.action.createSpherePref.name, handleSphere);
+   UI.bindMenuItemRMB(id, handleSphere);
+   // preference optional dialog
+   UI.bindMenuItem(Wings3D.action.createSpherePref.name, handleSphere);
 
-    // torus
-    id = Wings3D.action.createTorus.name;
-    const torusOptions = {sections: 16, slices: 8, r1: 1, r2: 1, rMinor: 0.25};
-    UI.bindMenuItem(id, function(_evt){
-       const maker = new PrimitiveMaker("Torus", makeTorus, torusOptions);
-       maker.make();
-       maker.confirm();
-     });
+   // torus
+   id = Wings3D.action.createTorus.name;
+   const torusOptions = {sections: 16, slices: 8, r1: 1, r2: 1, rMinor: 0.25};
+   UI.bindMenuItem(id, function(_evt){
+      const maker = new PrimitiveMaker("Torus", makeTorus, torusOptions);
+      maker.make();
+      maker.confirm();
+    });
    const handleTorus = function(evt) {
       const maker = new PrimitiveMaker("Torus", makeTorus, torusOptions);
       maker.make();
@@ -491,18 +491,37 @@ Wings3D.onReady(function() {
          )
        );
     }
-    UI.bindMenuItemRMB(id, handleTorus);
-    // preference optional dialog
-    UI.bindMenuItem(Wings3D.action.createTorusPref.name, handleTorus);
+   UI.bindMenuItemRMB(id, handleTorus);
+   // preference optional dialog
+   UI.bindMenuItem(Wings3D.action.createTorusPref.name, handleTorus);
 
-    // plane
-    id = Wings3D.action.createPlane.name;
-    const planeOptions = {resolution: 40, size: 2, thickness: 0.2};
-    UI.bindMenuItem(id, function(_evt){
-       const maker = new PrimitiveMaker("Plane", makePlane, planeOptions);
-       maker.make();
-       maker.confirm();
-     });    
+   // plane
+   id = Wings3D.action.createPlane.name;
+   const planeOptions = {resolution: 40, size: 2, thickness: 0.2};
+   UI.bindMenuItem(id, function(_evt){
+      const maker = new PrimitiveMaker("Plane", makePlane, planeOptions);
+      maker.make();
+      maker.confirm();
+    });   
+   const handlePlane = function(evt) {
+      const maker = new PrimitiveMaker("Plane", makePlane, planeOptions);
+      maker.make();
+      makePrimitive(evt, "Plane Options Dialog", maker, 
+         tag('<div class="primitiveOptions"></div>',
+            numberInput("Resolution", {min: 3, value: 40, step: 1}, function(evt) {
+               maker.update("resolution", Number(evt.target.value));
+            }),
+            numberInput("Size", {min: 0, value: 2}, function(evt) {
+               maker.update("size", Number(evt.target.value));
+            }),
+            numberInput("Thickness", {min: 0, value: 0.2, step: 0.2}, function(evt) {
+               maker.update("thickness", Number(evt.target.value));
+            }))
+       );
+    }    
+    UI.bindMenuItemRMB(id, handlePlane);
+    // preference optional dialog
+    UI.bindMenuItem(Wings3D.action.createPlanePref.name, handlePlane);
 });
 
 export {
