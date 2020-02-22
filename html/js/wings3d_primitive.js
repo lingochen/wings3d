@@ -317,6 +317,11 @@ function makePlane(mesh, material, options) {
    return -options.thickness;
 }
 
+function makeSpiral(mesh, material, options) {
+   Shape.makeSpiral(mesh, material, options.segments, options.sections, options.loops);
+   return -1;
+};
+
 
 /**
  * bind menu
@@ -522,6 +527,16 @@ Wings3D.onReady(function() {
     UI.bindMenuItemRMB(id, handlePlane);
     // preference optional dialog
     UI.bindMenuItem(Wings3D.action.createPlanePref.name, handlePlane);
+
+
+   // plane
+   id = Wings3D.action.createSpiral.name;
+   const spiralOptions = {loops: 2, segments: 16, sections: 8};
+   UI.bindMenuItem(id, function(_evt){
+      const maker = new PrimitiveMaker("Spiral", makeSpiral, spiralOptions);
+      maker.make();
+      maker.confirm();
+    }); 
 });
 
 export {

@@ -17,7 +17,7 @@ function* circle(number, centerY, r) {
 
 /**
  * helper generator function
- * @param {int} number 
+ * @param {int} number - number of section
  * @param {real} centerY 
  * @param {real} r1 
  * @param {real} r2 
@@ -29,6 +29,22 @@ function* ellipse(number, centerY, r1, r2) {
       yield [r1*Math.cos(rad), centerY, r2*Math.sin(rad)];
    }
 };
+
+
+/**
+ * we have to follow original's implementation, but we could have better options.
+ * @param {*} sides - number of points along spiral
+ * @param {*} centerY - y position
+ * @param {*} r - distance from origin (x,z)
+ * @param {*} d - distance 
+ * @param {*} coils - number of loops.
+ */
+function* spiral(sides, centerY, r, d, coils) {
+   const delta = Math.PI*2 / sides;
+   for (let i = 0; i < (coils*sides); ++i) {
+      yield [(r+i*d)*Math.cos(i*delta), centerY, (r+i*d)*Math.sin(i*delta)];
+   }   
+}
 
 
 /**
@@ -353,11 +369,53 @@ function makePlane(mesh, defaultMaterial, resolution, size, thickness) {
 };
 
 
+function makeSpiral(mesh, defaultMaterial, sides, sections, coils) {
+
+   sections *= 2;
+   const delta = Math.PI*2 / sections;
+   let circles = [];
+   for (let i = 0; i < sections; ++i ) {
+      let layer = [];
+      let y = 0.25 * Math.sin(i*delta);
+      let rads = 0.75 + 0.25 * Math.cos(i*delta);
+      for (let vertex of spiral(sides, y, rads, 0.05, coils)) {
+         layer.push( mesh.addVertex(vertex).index );
+      }
+      circles.push( layer );
+   }
+
+   // add spiral faces
+   const begin = [], end = [];
+   let last = circles[circles.length-1];
+   for (let layer of circles) {
+      const section =  [last[0], layer[0], -1, -1];
+      for (let j = 1; j < layer.length; ++j) {
+         section[2] = layer[j];
+         section[3] = last[j];
+         mesh.addPolygon(section, defaultMaterial);
+         section[0] = section[3];
+         section[1] = section[2];
+      }
+      last = layer;
+      begin.push( layer[0] );
+      end.push( layer[layer.length-1] );
+   }
+
+   // add begin, end circle.
+   mesh.addPolygon(begin.reverse(), defaultMaterial);
+   mesh.addPolygon(end, defaultMaterial);
+
+
+   return true;
+}
+
+
 export {
    makeCone,
    makeCube,
    makeCylinder,
    makePlane,
+   makeSpiral,
    makeSphere,
    makeTorus
 }
