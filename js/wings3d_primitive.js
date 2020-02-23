@@ -318,7 +318,7 @@ function makePlane(mesh, material, options) {
 }
 
 function makeSpiral(mesh, material, options) {
-   Shape.makeSpiral(mesh, material, options.segments, options.sections, options.loops);
+   Shape.makeSpiral(mesh, material, options.segments, options.sections*2, options.loops);
    return -1;
 };
 
@@ -536,7 +536,26 @@ Wings3D.onReady(function() {
       const maker = new PrimitiveMaker("Spiral", makeSpiral, spiralOptions);
       maker.make();
       maker.confirm();
-    }); 
+    });
+   const handleSpiral = function(evt) {
+      const maker = new PrimitiveMaker("Spiral", makeSpiral, spiralOptions);
+      maker.make();
+      makePrimitive(evt, "Spiral Options Dialog", maker, 
+         tag('<div class="primitiveOptions"></div>',
+            numberInput("Loops", {min: 1, max: 32, value: 2}, function(evt) {
+               maker.update("loops", Number(evt.target.value));
+            }),
+            numberInput("Segments", {min: 3, max: 128, value: 16}, function(evt) {
+               maker.update("segments", Number(evt.target.value));
+            }),
+            numberInput("Sections", {min: 2, max: 64, value: 8}, function(evt) {
+               maker.update("sections", Number(evt.target.value));
+            }))
+       );
+    }    
+   UI.bindMenuItemRMB(id, handleSpiral);
+   // preference optional dialog
+   UI.bindMenuItem(Wings3D.action.createSpiralPref.name, handleSpiral);
 });
 
 export {

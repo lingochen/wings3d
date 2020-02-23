@@ -370,8 +370,6 @@ function makePlane(mesh, defaultMaterial, resolution, size, thickness) {
 
 
 function makeSpiral(mesh, defaultMaterial, sides, sections, coils) {
-
-   sections *= 2;
    const delta = Math.PI*2 / sections;
    let circles = [];
    for (let i = 0; i < sections; ++i ) {
