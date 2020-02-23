@@ -278,6 +278,25 @@ class PrimitiveMaker {
 PrimitiveMaker.creationCount = 0;
 
 
+function bindMenuPrimitive(name, makeFn, options, optionsDom) {
+   let id = Wings3D.action['create'+name].name;
+   UI.bindMenuItem(id, function(ev) {
+      const maker = new PrimitiveMaker(name, makeFn, options);
+      maker.make();
+      maker.confirm();
+    });
+
+   const handleFn = function(evt) {
+      const maker = new PrimitiveMaker(name, makeFn, options);
+      maker.make();
+      makePrimitive(evt, name + " Options Dialog", maker, ...optionsDom(maker)); 
+    }
+   UI.bindMenuItemRMB(id, handleFn);
+   // preference optional dialog
+   UI.bindMenuItem(Wings3D.action['create'+name+'Pref'].name, handleFn);
+};
+
+
 
 function makeCone(mesh, material, options) {
    let centerY = -(options.height/2);
@@ -332,22 +351,8 @@ function makeSpring(mesh, material, options) {
  * bind menu
  */
 Wings3D.onReady(function() {
-
-
-
-   let id = Wings3D.action.createCone.name;
-   const coneOptions = {sections: 16, height: 2, r1: 1, r2: 1};
-   UI.bindMenuItem(id, function(ev) {
-      const maker = new PrimitiveMaker("Cone", makeCone, coneOptions);
-      maker.make();
-      maker.confirm();
-    });
-
-   const handleCone = function(evt) {
-      const maker = new PrimitiveMaker("Cone", makeCone, coneOptions);
-      maker.make();
-      makePrimitive(evt, "Cone Options Dialog", maker, 
-         tag('<div class="primitiveOptions"></div>',
+   bindMenuPrimitive("Cone", makeCone, {sections: 16, height: 2, r1: 1, r2: 1}, maker =>        
+      [tag('<div class="primitiveOptions"></div>',
             numberInput("Sections", {min: 3, value: 16, step: 1}, function(evt) {
                maker.update("sections", Number(evt.target.value));
             }),
@@ -358,28 +363,13 @@ Wings3D.onReady(function() {
                maker.update("r1", Number(evt.target.value)/2);
             }),
             numberInput("Z Diameter", {min: 0, value: 2}, function(evt) {
-               maker.update("r2", Number(evt.target.value)/2);
-            }))
-       );
-    }
-   UI.bindMenuItemRMB(id, handleCone);
-   // preference optional dialog
-   UI.bindMenuItem(Wings3D.action.createConePref.name, handleCone);
+            maker.update("r2", Number(evt.target.value)/2);
+         }))]
+   );
 
    // Cube
-   id = Wings3D.action.createCube.name;
-   const cubeOptions = {sizeX: 2, sizeY: 2, sizeZ: 2, cut: 1};
-   UI.bindMenuItem(id, function(_evt){
-      const maker = new PrimitiveMaker("Cube", makeCube, cubeOptions);
-      maker.make();
-      maker.confirm();
-    });
-
-    const handleCube = function(evt) {
-      const maker = new PrimitiveMaker("Cube", makeCube, cubeOptions);
-      maker.make();
-      makePrimitive(evt, "Cube Options Dialog", maker, 
-         sliderInput("numberOfCuts", {min: 1, max: 20, value:1, step:1}, function(evt){
+   bindMenuPrimitive("Cube", makeCube,{sizeX: 2, sizeY: 2, sizeZ: 2, cut: 1}, maker=>
+         [sliderInput("numberOfCuts", {min: 1, max: 20, value:1, step:1}, function(evt){
             maker.update("cut", Number(evt.target.value));
           }),
          tag('<div class="primitiveOptions"></div>',
@@ -396,26 +386,12 @@ Wings3D.onReady(function() {
                <legend>Spherize</legend>
                <label><input type='radio' name='sphere' value='true' disabled>Yes</label>
                <label><input type='radio' name='sphere' value='false' checked disabled>No<label>
-             </fieldset>`)
-       );
-    }
-    UI.bindMenuItemRMB(id, handleCube);
-    // preference optional dialog
-    UI.bindMenuItem(Wings3D.action.createCubePref.name, handleCube);
+             </fieldset>`)]
+   );
 
-    // cylinder
-   id = Wings3D.action.createCylinder.name;
-   const cylinderOptions = {sections: 16, height: 2, bottomR1: 1, bottomR2: 1, topR1: 1, topR2: 1};
-   UI.bindMenuItem(id, function(_evt){
-      const maker = new PrimitiveMaker("Cylinder", makeCylinder, cylinderOptions);
-      maker.make();
-      maker.confirm();
-    });
-   const handleCylinder = function(evt) {
-      const maker = new PrimitiveMaker("Cylinder", makeCylinder, cylinderOptions);
-      maker.make();
-      makePrimitive(evt, "Cylinder Options Dialog", maker, 
-         tag('<div class="primitiveOptions cylinder"></div>',
+   // cylinder
+   bindMenuPrimitive("Cylinder", makeCylinder, {sections: 16, height: 2, bottomR1: 1, bottomR2: 1, topR1: 1, topR2: 1}, maker=>
+         [tag('<div class="primitiveOptions cylinder"></div>',
             numberInput("Sections", {min: 3, value: 16, step: 1}, function(evt) {
                maker.update("sections", Number(evt.target.value));
             }),
@@ -434,26 +410,12 @@ Wings3D.onReady(function() {
             numberInput("Bottom Z Radius", {min: 0, value: 1}, function(evt) {
                maker.update("bottomR2", Number(evt.target.value));
             })
-          )
-       );
-   }
-   UI.bindMenuItemRMB(id, handleCylinder);
-   // preference optional dialog
-   UI.bindMenuItem(Wings3D.action.createCylinderPref.name, handleCylinder);
+          )]
+   );
 
    // sphere
-   id = Wings3D.action.createSphere.name;
-   const sphereOptions = {sections: 16, slices: 8, radialX: 1, radialY: 1};
-   UI.bindMenuItem(id, function(_evt){
-      const maker = new PrimitiveMaker("Sphere", makeSphere, sphereOptions);
-      maker.make();
-      maker.confirm();
-    });  
-   const handleSphere = function(evt) {
-      const maker = new PrimitiveMaker("Sphere", makeSphere, sphereOptions);
-      maker.make();
-      makePrimitive(evt, "Sphere Options Dialog", maker, 
-         tag('<div class="primitiveOptions"></div>',
+   bindMenuPrimitive("Sphere", makeSphere, {sections: 16, slices: 8, radialX: 1, radialY: 1}, maker=>
+         [tag('<div class="primitiveOptions"></div>',
             numberInput("Sections", {min: 3, value: 16, step: 1}, function(evt) {
                maker.update("sections", Number(evt.target.value));
             }),
@@ -465,26 +427,12 @@ Wings3D.onReady(function() {
             }),
             numberInput("Y Radial", {min: 0, value: 2}, function(evt) {
                maker.update("radialY", Number(evt.target.value)/2);
-            }))
-       );
-    }
-   UI.bindMenuItemRMB(id, handleSphere);
-   // preference optional dialog
-   UI.bindMenuItem(Wings3D.action.createSpherePref.name, handleSphere);
+            }))]
+   );
 
    // torus
-   id = Wings3D.action.createTorus.name;
-   const torusOptions = {sections: 16, slices: 8, r1: 1, r2: 1, rMinor: 0.25};
-   UI.bindMenuItem(id, function(_evt){
-      const maker = new PrimitiveMaker("Torus", makeTorus, torusOptions);
-      maker.make();
-      maker.confirm();
-    });
-   const handleTorus = function(evt) {
-      const maker = new PrimitiveMaker("Torus", makeTorus, torusOptions);
-      maker.make();
-      makePrimitive(evt, "Torus Options Dialog", maker, 
-         tag('<div class="primitiveOptions"></div>',
+   bindMenuPrimitive("Torus", makeTorus,{sections: 16, slices: 8, r1: 1, r2: 1, rMinor: 0.25}, maker=>
+         [tag('<div class="primitiveOptions"></div>',
             numberInput("Sections", {min: 3, value: 16, step: 1}, function(evt) {
                maker.update("sections", Number(evt.target.value));
             }),
@@ -500,26 +448,12 @@ Wings3D.onReady(function() {
             numberInput("Minor Radius", {min: 0, value: 0.25, step: 0.25}, function(evt) {
                maker.update("rMinor", Number(evt.target.value));
             })
-         )
-       );
-    }
-   UI.bindMenuItemRMB(id, handleTorus);
-   // preference optional dialog
-   UI.bindMenuItem(Wings3D.action.createTorusPref.name, handleTorus);
+         )]
+   );
 
    // plane
-   id = Wings3D.action.createPlane.name;
-   const planeOptions = {resolution: 40, size: 2, thickness: 0.2};
-   UI.bindMenuItem(id, function(_evt){
-      const maker = new PrimitiveMaker("Plane", makePlane, planeOptions);
-      maker.make();
-      maker.confirm();
-    });   
-   const handlePlane = function(evt) {
-      const maker = new PrimitiveMaker("Plane", makePlane, planeOptions);
-      maker.make();
-      makePrimitive(evt, "Plane Options Dialog", maker, 
-         tag('<div class="primitiveOptions"></div>',
+   bindMenuPrimitive("Plane", makePlane, {resolution: 40, size: 2, thickness: 0.2}, maker=>
+         [tag('<div class="primitiveOptions"></div>',
             numberInput("Resolution", {min: 3, value: 40, step: 1}, function(evt) {
                maker.update("resolution", Number(evt.target.value));
             }),
@@ -528,27 +462,12 @@ Wings3D.onReady(function() {
             }),
             numberInput("Thickness", {min: 0, value: 0.2, step: 0.2}, function(evt) {
                maker.update("thickness", Number(evt.target.value));
-            }))
-       );
-    }    
-    UI.bindMenuItemRMB(id, handlePlane);
-    // preference optional dialog
-    UI.bindMenuItem(Wings3D.action.createPlanePref.name, handlePlane);
-
+            }))]
+   );
 
    // spiral
-   id = Wings3D.action.createSpiral.name;
-   const spiralOptions = {loops: 2, segments: 16, sections: 8};
-   UI.bindMenuItem(id, function(_evt){
-      const maker = new PrimitiveMaker("Spiral", makeSpiral, spiralOptions);
-      maker.make();
-      maker.confirm();
-    });
-   const handleSpiral = function(evt) {
-      const maker = new PrimitiveMaker("Spiral", makeSpiral, spiralOptions);
-      maker.make();
-      makePrimitive(evt, "Spiral Options Dialog", maker, 
-         tag('<div class="primitiveOptions"></div>',
+   bindMenuPrimitive("Spiral", makeSpiral, {loops: 2, segments: 16, sections: 8}, maker=>
+         [tag('<div class="primitiveOptions"></div>',
             numberInput("Loops", {min: 1, max: 32, value: 2}, function(evt) {
                maker.update("loops", Number(evt.target.value));
             }),
@@ -557,27 +476,12 @@ Wings3D.onReady(function() {
             }),
             numberInput("Sections", {min: 2, max: 64, value: 8}, function(evt) {
                maker.update("sections", Number(evt.target.value));
-            }))
-       );
-    }    
-   UI.bindMenuItemRMB(id, handleSpiral);
-   // preference optional dialog
-   UI.bindMenuItem(Wings3D.action.createSpiralPref.name, handleSpiral);
-
+            }))]
+   );
 
    // spring.
-   id = Wings3D.action.createSpring.name;
-   const springOptions = {loops: 2, segments: 16, sections: 8};
-   UI.bindMenuItem(id, function(_evt){
-      const maker = new PrimitiveMaker("Spring", makeSpring, springOptions);
-      maker.make();
-      maker.confirm();
-    });
-   const handleSpring = function(evt) {
-      const maker = new PrimitiveMaker("Spring", makeSpring, springOptions);
-      maker.make();
-      makePrimitive(evt, "Spring Options Dialog", maker, 
-         tag('<div class="primitiveOptions"></div>',
+   bindMenuPrimitive("Spring", makeSpring, {loops: 2, segments: 16, sections: 8}, maker=>
+         [tag('<div class="primitiveOptions"></div>',
             numberInput("Loops", {min: 1, max: 32, value: 2}, function(evt) {
                maker.update("loops", Number(evt.target.value));
             }),
@@ -586,14 +490,12 @@ Wings3D.onReady(function() {
             }),
             numberInput("Sections", {min: 2, max: 64, value: 8}, function(evt) {
                maker.update("sections", Number(evt.target.value));
-            }))
-       );
-    }    
-   UI.bindMenuItemRMB(id, handleSpring);
-   // preference optional dialog
-   UI.bindMenuItem(Wings3D.action.createSpringPref.name, handleSpring);
+            }))]
+   );
+
+   
 });
 
 export {
-   makePrimitive
+   bindMenuPrimitive
 }
