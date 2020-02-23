@@ -323,10 +323,18 @@ function makeSpiral(mesh, material, options) {
 };
 
 
+function makeSpring(mesh, material, options) {
+   Shape.makeSpring(mesh, material, options.segments, options.sections*2, options.loops);
+   return -1;
+};
+
 /**
  * bind menu
  */
 Wings3D.onReady(function() {
+
+
+
    let id = Wings3D.action.createCone.name;
    const coneOptions = {sections: 16, height: 2, r1: 1, r2: 1};
    UI.bindMenuItem(id, function(ev) {
@@ -354,7 +362,6 @@ Wings3D.onReady(function() {
             }))
        );
     }
-
    UI.bindMenuItemRMB(id, handleCone);
    // preference optional dialog
    UI.bindMenuItem(Wings3D.action.createConePref.name, handleCone);
@@ -529,7 +536,7 @@ Wings3D.onReady(function() {
     UI.bindMenuItem(Wings3D.action.createPlanePref.name, handlePlane);
 
 
-   // plane
+   // spiral
    id = Wings3D.action.createSpiral.name;
    const spiralOptions = {loops: 2, segments: 16, sections: 8};
    UI.bindMenuItem(id, function(_evt){
@@ -556,6 +563,35 @@ Wings3D.onReady(function() {
    UI.bindMenuItemRMB(id, handleSpiral);
    // preference optional dialog
    UI.bindMenuItem(Wings3D.action.createSpiralPref.name, handleSpiral);
+
+
+   // spring.
+   id = Wings3D.action.createSpring.name;
+   const springOptions = {loops: 2, segments: 16, sections: 8};
+   UI.bindMenuItem(id, function(_evt){
+      const maker = new PrimitiveMaker("Spring", makeSpring, springOptions);
+      maker.make();
+      maker.confirm();
+    });
+   const handleSpring = function(evt) {
+      const maker = new PrimitiveMaker("Spring", makeSpring, springOptions);
+      maker.make();
+      makePrimitive(evt, "Spring Options Dialog", maker, 
+         tag('<div class="primitiveOptions"></div>',
+            numberInput("Loops", {min: 1, max: 32, value: 2}, function(evt) {
+               maker.update("loops", Number(evt.target.value));
+            }),
+            numberInput("Segments", {min: 3, max: 128, value: 16}, function(evt) {
+               maker.update("segments", Number(evt.target.value));
+            }),
+            numberInput("Sections", {min: 2, max: 64, value: 8}, function(evt) {
+               maker.update("sections", Number(evt.target.value));
+            }))
+       );
+    }    
+   UI.bindMenuItemRMB(id, handleSpring);
+   // preference optional dialog
+   UI.bindMenuItem(Wings3D.action.createSpringPref.name, handleSpring);
 });
 
 export {

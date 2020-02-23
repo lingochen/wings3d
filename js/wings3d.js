@@ -281,6 +281,8 @@ const action = {
    createPlanePref: () => {notImplemented(this);},
    createSpiral: () => {notImplemented(this);},
    createSpiralPref: () => {notImplemented(this);},
+   createSpring: () => {notImplemented(this);},
+   createSpringPref: () => {notImplemented(this);},
    // outliner/geometory
    toggleObjectSelect: () => {notImplemented(this);},
    toggleObjectVisibility: () =>{notImplemented(this);},

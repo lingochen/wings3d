@@ -35,11 +35,11 @@ function* ellipse(number, centerY, r1, r2) {
  * we have to follow original's implementation, but we could have better options.
  * @param {*} sides - number of points along spiral
  * @param {*} centerY - y position
- * @param {*} r - distance from origin (x,z)
+ * @param {*} r - distance from origin (x,z), radius
  * @param {*} d - distance 
  * @param {*} coils - number of loops.
  */
-function* spiral(sides, centerY, r, d, coils) {
+function* genSpiral(sides, centerY, r, d, coils) {
    const delta = Math.PI*2 / sides;
    for (let i = 0; i < (coils*sides); ++i) {
       yield [(r+i*d)*Math.cos(i*delta), centerY, (r+i*d)*Math.sin(i*delta)];
@@ -47,6 +47,14 @@ function* spiral(sides, centerY, r, d, coils) {
 }
 
 
+
+
+function* genSpring(sides, centerY, r, d, coils) {
+   const delta = Math.PI*2 / sides;
+   for (let i = 0; i < (coils*sides); ++i) {
+      yield [r*Math.cos(i*delta), centerY+i*d, r*Math.sin(i*delta)];
+   }
+}
 /**
  * 
  * @param {PreviewCage} mesh
@@ -369,14 +377,14 @@ function makePlane(mesh, defaultMaterial, resolution, size, thickness) {
 };
 
 
-function makeSpiral(mesh, defaultMaterial, sides, sections, coils) {
+function makeSpiralSpring(mesh, defaultMaterial, sides, sections, coils, genFunc) {
    const delta = Math.PI*2 / sections;
    let circles = [];
    for (let i = 0; i < sections; ++i ) {
       let layer = [];
       let y = 0.25 * Math.sin(i*delta);
       let rads = 0.75 + 0.25 * Math.cos(i*delta);
-      for (let vertex of spiral(sides, y, rads, 0.05, coils)) {
+      for (let vertex of genFunc(sides, y, rads, 0.05, coils)) {
          layer.push( mesh.addVertex(vertex).index );
       }
       circles.push( layer );
@@ -408,6 +416,15 @@ function makeSpiral(mesh, defaultMaterial, sides, sections, coils) {
 }
 
 
+function makeSpiral(mesh, defaultMaterial, sides, sections, coils) {
+   return makeSpiralSpring(mesh, defaultMaterial, sides, sections, coils, genSpiral);
+};
+
+
+function makeSpring(mesh, defaultMaterial, sides, sections, coils) {
+   return makeSpiralSpring(mesh, defaultMaterial, sides, sections, coils, genSpring);
+};
+
 export {
    makeCone,
    makeCube,
@@ -415,5 +432,6 @@ export {
    makePlane,
    makeSpiral,
    makeSphere,
+   makeSpring,
    makeTorus
 }
