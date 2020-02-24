@@ -347,6 +347,30 @@ function makeSpring(mesh, material, options) {
    return -1;
 };
 
+
+function makeTetrahedron(mesh, material, options) {
+   return Shape.makeTetrahedron(mesh, material, options.length);
+};
+
+
+function makeOctahedron(mesh, material, options) {
+   return Shape.makeOctahedron(mesh, material, options.height);
+};
+
+
+function makeOctotoad(mesh, material, options) {
+   return Shape.makeOctotoad(mesh, material, options.height);
+};
+
+
+function makeDodecahedron(mesh, material, options) {
+   return Shape.makeDodecahedron(mesh, material, options.length);
+};
+
+
+function makeIcosahedron(mesh, material, options) {
+   return Shape.makeIcosahedron(mesh, material, options.length);
+};
 /**
  * bind menu
  */
@@ -493,7 +517,45 @@ Wings3D.onReady(function() {
             }))]
    );
 
-   
+   // tetrahedron
+   bindMenuPrimitive("Tetrahedron", makeTetrahedron, {length: 2}, maker=>
+         [tag('<div class="primitiveOptions"></div>',
+            numberInput("Length", {min: 0, value: 2.0}, function(evt) {
+            maker.update("length", Number(evt.target.value));
+         }))]  
+   );
+
+   // Octahedron
+   bindMenuPrimitive("Octahedron", makeOctahedron, {height: 2}, maker=>
+         [tag('<div class="primitiveOptions"></div>',
+            numberInput("Height", {min: 0, value: 2.0}, function(evt) {
+            maker.update("height", Number(evt.target.value));
+         }))]  
+   );
+
+   // octotoad
+   bindMenuPrimitive("Octotoad", makeOctotoad, {height: 2}, maker=>
+      [tag('<div class="primitiveOptions"></div>',
+         numberInput("Height", {min: 0, value: 2.0}, function(evt) {
+         maker.update("height", Number(evt.target.value));
+      }))]  
+   );
+
+   // octotoad
+   bindMenuPrimitive("Dodecahedron", makeDodecahedron, {length: 1}, maker=>
+      [tag('<div class="primitiveOptions"></div>',
+         numberInput("Edge Length", {min: 0, value: 1.0, step:'any'}, function(evt) {
+         maker.update("length", Number(evt.target.value));
+      }))]  
+   );
+
+   // octotoad
+   bindMenuPrimitive("Icosahedron", makeIcosahedron, {length: 1}, maker=>
+      [tag('<div class="primitiveOptions"></div>',
+         numberInput("Edge Length", {min: 0, value: 1.0, step:'any'}, function(evt) {
+         maker.update("length", Number(evt.target.value));
+      }))]  
+   );
 });
 
 export {
