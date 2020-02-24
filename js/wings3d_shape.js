@@ -425,13 +425,155 @@ function makeSpring(mesh, defaultMaterial, sides, sections, coils) {
    return makeSpiralSpring(mesh, defaultMaterial, sides, sections, coils, genSpring);
 };
 
+
+function makeTetrahedron(mesh, defaultMaterial, length) {
+   const xi = length/2.0;
+   const hp = Math.sqrt(3.0);
+   const li = xi * hp;
+   const zi = xi / hp;
+   const yi = length * Math.sqrt(2.0/3.0);
+   const yf = yi / 3.0;
+   const pts = [[0, yi-yf, 0], [0, -yf, li-zi], [-xi, -yf, -zi], [xi, -yf, -zi]];
+   const idx = [];
+   for (let pt of pts) {
+      idx.push( mesh.addVertex(pt).index );
+   }
+
+   // add 4 faces
+   mesh.addPolygon([idx[2], idx[1], idx[0]], defaultMaterial);
+   mesh.addPolygon([idx[1], idx[2], idx[3]], defaultMaterial);
+   mesh.addPolygon([idx[1], idx[3], idx[0]], defaultMaterial);
+   mesh.addPolygon([idx[3], idx[2], idx[0]], defaultMaterial);
+
+   return -yf;
+};
+
+
+function makeOctahedron(mesh, defaultMaterial, len) {
+   const idx = [];
+   for (let pt of [[len,0,0],[-len,0,0],[0,len,0],[0,-len,0],[0,0,len],[0,0,-len]]) {
+      idx.push( mesh.addVertex(pt).index );
+   }
+
+   // add faces
+   for (let tri of [[2,4,0],[4,2,1],[4,3,0],[3,4,1],[5,2,0],[2,5,1],[3,5,0],[5,3,1]]) {
+      mesh.addPolygon([idx[tri[0]], idx[tri[1]], idx[tri[2]]], defaultMaterial);
+   }
+
+   return -len;
+};
+
+
+function makeOctotoad(mesh, defaultMaterial, len) {
+   const scale = len / 2.0;
+   const third = 1 / 3.0;
+   const pts = [[1.0,third,third],[1.0,third,-third],[1.0,-third,third],[1.0,-third,-third],
+	   [-1.0,third,third],[-1.0,third,-third],[-1.0,-third,third],[-1.0,-third,-third],
+	   [third,1.0,third],[third,1.0,-third],[third,-1.0,third],[third,-1.0,-third],
+	   [third,third,1.0],[third,third,-1.0],[third,-third,1.0],[third,-third,-1.0],
+	   [-third,1.0,third],[-third,1.0,-third],[-third,-1.0,third],[-third,-1.0,-third],
+      [-third,third,1.0],[-third,third,-1.0],[-third,-third,1.0],[-third,-third,-1.0]];
+   const idx = [];
+   for (let pt of pts) {
+      idx.push( mesh.addVertex( [pt[0]*scale, pt[1]*scale, pt[2]*scale] ).index );
+   }
+
+   const faces = [[2,3,1,0],[7,6,4,5],[9,8,0,1],[10,11,3,2],[12,0,8],[12,14,2,0],[13,9,1],[14,10,2],
+      [15,3,11],[15,13,1,3],[16,17,5,4],[16,20,12,8],[17,16,8,9],[18,19,11,10],[19,18,6,7],[19,23,15,11],
+      [20,16,4],[20,22,14,12],[21,5,17],[21,17,9,13],[21,23,7,5],[22,6,18],[22,18,10,14],[22,20,4,6],
+      [23,19,7],[23,21,13,15]];
+   for (let polygon of faces) {
+      mesh.addPolygon( polygon.map(i=> idx[i]), defaultMaterial);
+   }
+
+   return scale * -1;
+};
+
+
+function makeDodecahedron(mesh, defaultMaterial, len) {
+   const pn = Math.sqrt(5.0);
+   const phi = (1.0 + pn)/2.0;
+   const li = len/2.0 * phi;
+   const ap = Math.sqrt(2.0 / (3.0 + pn));
+   const alpha = li*ap;
+   const beta = li*(1.0 + Math.sqrt(6.0 / (3.0 + pn) - 2.0 + 2.0 * ap));
+   const pts = [[-alpha,0,beta],[alpha,0,beta],[-li,-li,-li],[-li,-li,li],
+	   [-li,li,-li],[-li,li,li],[li,-li,-li],
+	   [li,-li,li],[li,li,-li],
+	   [li,li,li],[beta,alpha,0.0],[beta,-alpha,0.0],[-beta,alpha,0.0],
+	   [-beta,-alpha,0.0],[-alpha,0.0,-beta],[alpha,0.0,-beta],
+	   [0.0,beta,alpha],[0.0,beta,-alpha],[0.0,-beta,alpha],
+      [0.0,-beta,-alpha]];
+   const idx = [];
+   for (let pt of pts) {
+      idx.push( mesh.addVertex(pt).index );
+   }
+
+   // add face
+   const faces = [[0,1,9,16,5],[1,0,3,18,7],[1,7,11,10,9],[11,7,18,19,6],
+               [8,17,16,9,10],[2,14,15,6,19],[2,13,12,4,14],[2,19,18,3,13],
+               [3,0,5,12,13],[6,15,8,10,11],[4,17,8,15,14],[4,12,5,16,17]];
+   for (let polygon of faces) {
+      mesh.addPolygon( polygon.map(i=> idx[i]), defaultMaterial );
+   }
+
+   return -beta;
+};
+
+
+function makeIcosahedron(mesh, defaultMaterial, len) {
+   const  t2 = Math.PI/10.0;
+   const  t4 = 2.0 * t2;
+   const ct4 = Math.cos(t4);
+   const  r  = (len/2.0) / Math.sin(t4);
+   const  h  = ct4 * r;
+   const  cx = r * Math.cos(t2);
+   const  cy = r * Math.sin(t2);
+   const  h1 = Math.sqrt(len * len - r * r);
+   const  h2 = Math.abs(r) * Math.sqrt(1.0 + 2.0*ct4);
+   const  z2 = (h2 - h1) / 2.0;
+   const  z1 = z2 + h1;
+   const pts =[[0.0,  z1, 0.0],
+      [r,    z2, 0.0	],
+      [cy,   z2, cx	],
+      [-h,   z2, len/2.0	],
+      [-h,   z2, -len/2.0	],
+      [cy,   z2, -cx 	],
+      [-r,  -z2, 0.0	],
+      [-cy, -z2, -cx	],
+      [ h,  -z2, -len/2.0	],
+      [ h,  -z2, len/2.0	],
+      [-cy, -z2, cx	],
+      [0.0, -z1, 0.0	]];
+   const idx = [];
+   for (let pt of pts) {
+      idx.push( mesh.addVertex(pt).index );
+   }
+
+   const faces = [[0,2,1],[0,3,2],[0,4,3],[0,5,4],[0,1,5],
+      [4,7,6],[2,9,1],[5,8,7],[3,10,2],[9,8,1],
+      [4,6,3],[10,9,2],[7,4,5],[6,10,3],[1,8,5],
+      [11,10,6],[11,6,7],[11,7,8],[11,8,9],[11,9,10]];
+   for (let tri of faces) {
+      mesh.addPolygon( [idx[tri[0]], idx[tri[1]], idx[tri[2]]], defaultMaterial );
+   }
+
+   return -z1;
+};
+
+
 export {
    makeCone,
    makeCube,
    makeCylinder,
+   makeDodecahedron,
+   makeIcosahedron,
+   makeOctahedron,
+   makeOctotoad,
    makePlane,
    makeSpiral,
    makeSphere,
    makeSpring,
+   makeTetrahedron,
    makeTorus
 }
