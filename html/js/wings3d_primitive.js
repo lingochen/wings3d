@@ -6,6 +6,7 @@
 import * as UI from './wings3d_ui.js';
 import * as Wings3D from './wings3d.js';
 import * as View from './wings3d_view.js';
+import {i18nElement, i18nSetup} from './wings3d_i18n.js';
 import {Material} from './wings3d_material.js';
 import {CreatePreviewCageCommand} from './wings3d_model.js';
 import * as Shape from './wings3d_shape.js';
@@ -132,7 +133,7 @@ function makePrimitive(evt, name, maker, ...theDoms) {
                               ['reset', function(_evt){maker.reset();}], 
                               ['submit', function(evt){evt.preventDefault(); maker.confirm(); document.body.removeChild(form);}]);
    let header;
-   form.appendChild(header = tag(`<h3 class="primitiveHeader">${name}</h3>`,
+   form.appendChild(header = tag(`<h3 class="primitiveHeader"><span data-i18n>${name}</span></h3>`,
                                htmlToElement('<span class="close">&times;</span>', 
                               ['click', function(evt){maker.cancel(); document.body.removeChild(form);}]))
                                );
@@ -168,6 +169,7 @@ function makePrimitive(evt, name, maker, ...theDoms) {
                        ));
 
    draggable(form, header);
+   i18nElement(i18nSetup(form));
    // display dialog, shown at the mouse location.   
    form.style.display = 'flex';
    UI.positionDom(form, UI.getPosition(evt));
@@ -289,7 +291,7 @@ function bindMenuPrimitive(name, makeFn, options, optionsDom) {
    const handleFn = function(evt) {
       const maker = new PrimitiveMaker(name, makeFn, options);
       maker.make();
-      makePrimitive(evt, name + " Options Dialog", maker, ...optionsDom(maker)); 
+      makePrimitive(evt, name + " Options", maker, ...optionsDom(maker)); 
     }
    UI.bindMenuItemRMB(id, handleFn);
    // preference optional dialog
@@ -506,13 +508,13 @@ Wings3D.onReady(function() {
    // spring.
    bindMenuPrimitive("Spring", makeSpring, {loops: 2, segments: 16, sections: 8}, maker=>
          [tag('<div class="primitiveOptions"></div>',
-            numberInput("Loops", {min: 1, max: 32, value: 2}, function(evt) {
+            numberInput("Loops", {min: 1, max: 32, value: 2, step:1}, function(evt) {
                maker.update("loops", Number(evt.target.value));
             }),
-            numberInput("Segments", {min: 3, max: 128, value: 16}, function(evt) {
+            numberInput("Segments", {min: 3, max: 128, value: 16, step:1}, function(evt) {
                maker.update("segments", Number(evt.target.value));
             }),
-            numberInput("Sections", {min: 2, max: 64, value: 8}, function(evt) {
+            numberInput("Sections", {min: 2, max: 64, value: 8, step:1}, function(evt) {
                maker.update("sections", Number(evt.target.value));
             }))]
    );
@@ -520,7 +522,7 @@ Wings3D.onReady(function() {
    // tetrahedron
    bindMenuPrimitive("Tetrahedron", makeTetrahedron, {length: 2}, maker=>
          [tag('<div class="primitiveOptions"></div>',
-            numberInput("Length", {min: 0, value: 2.0}, function(evt) {
+            numberInput("Length", {min: 0, value: 2.0, step:'any'}, function(evt) {
             maker.update("length", Number(evt.target.value));
          }))]  
    );
@@ -528,7 +530,7 @@ Wings3D.onReady(function() {
    // Octahedron
    bindMenuPrimitive("Octahedron", makeOctahedron, {height: 2}, maker=>
          [tag('<div class="primitiveOptions"></div>',
-            numberInput("Height", {min: 0, value: 2.0}, function(evt) {
+            numberInput("Height", {min: 0, value: 2.0, step:'any'}, function(evt) {
             maker.update("height", Number(evt.target.value));
          }))]  
    );
@@ -536,7 +538,7 @@ Wings3D.onReady(function() {
    // octotoad
    bindMenuPrimitive("Octotoad", makeOctotoad, {height: 2}, maker=>
       [tag('<div class="primitiveOptions"></div>',
-         numberInput("Height", {min: 0, value: 2.0}, function(evt) {
+         numberInput("Height", {min: 0, value: 2.0, step:'any'}, function(evt) {
          maker.update("height", Number(evt.target.value));
       }))]  
    );

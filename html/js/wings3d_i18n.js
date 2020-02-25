@@ -67,32 +67,7 @@ function resetStaticElements(langObj) {
    }
    
    // set the resources staticElement
-   //console.log(langJson);
-   let allDom = document.querySelectorAll(`[${i18nAttrib}]`);
-   for (let elem of allDom) {
-      let warning = true;
-      let key = elem.getAttribute(i18nAttrib);
-      let content = getTemplate(key);
-      if (content) {
-         elem.textContent = content;
-         warning = false;
-      } 
-      if (warning) {
-         console.log(`Warning: ${key} has no translation`);
-      }
-   }
-   // set tooltip.
-   allDom = document.querySelectorAll(`[${menuIdAttrib}]`);
-   for (let elem of allDom) {
-      let tooltip = elem.getAttribute(menuIdAttrib);
-      setTooltip(elem, tooltip);
-   }
-   // set tooltip for data-tooltip
-   allDom = document.querySelectorAll(`[${tooltipAttrib}]`);
-   for (let elem of allDom) {
-      let tooltip = elem.getAttribute(tooltipAttrib);
-      setTooltip(elem, tooltip);
-   }
+   i18nElement(document);                          // translate all document.
 }
 
 function loadResource(language, ver, successCallback){
@@ -157,17 +132,39 @@ function i18n(key, templateVars) {
 };
 
 
- 
-export {
-   i18n,          // translate service
-   setCurrentLocale,
-   getCurrentLocale,
+function i18nElement(element) {
+   //console.log(langJson);
+   let allDom = element.querySelectorAll(`[${i18nAttrib}]`);
+   for (let elem of allDom) {
+      let warning = true;
+      let key = elem.getAttribute(i18nAttrib);
+      let content = getTemplate(key);
+      if (content) {
+         elem.textContent = content;
+         warning = false;
+      } 
+      if (warning) {
+         console.log(`Warning: ${key} has no translation`);
+      }
+   }
+   // set tooltip.
+   allDom = element.querySelectorAll(`[${menuIdAttrib}]`);
+   for (let elem of allDom) {
+      let tooltip = elem.getAttribute(menuIdAttrib);
+      setTooltip(elem, tooltip);
+   }
+   // set tooltip for data-tooltip
+   allDom = element.querySelectorAll(`[${tooltipAttrib}]`);
+   for (let elem of allDom) {
+      let tooltip = elem.getAttribute(tooltipAttrib);
+      setTooltip(elem, tooltip);
+   }
 };
 
-// init
-onReady(()=> {
+
+function i18nSetup(element) {
    // init i18n-data with textContent.
-   let allDom = document.querySelectorAll(`[${i18nAttrib}]`);
+   let allDom = element.querySelectorAll(`[${i18nAttrib}]`);
    for (let elem of allDom) {
       let i18n = elem.getAttribute(i18nAttrib);
       if (!i18n) { // not empty string
@@ -180,7 +177,7 @@ onReady(()=> {
       }
    }
    // init tooltip - 
-   allDom = document.querySelectorAll(`[${tooltipAttrib}=""]`);
+   allDom = element.querySelectorAll(`[${tooltipAttrib}=""]`);
    for (let elem of allDom) {
       let str = elem.getAttribute(tooltipAttrib);
       if (!str) { // empty tooltip, needs to setup again.
@@ -189,6 +186,14 @@ onReady(()=> {
          elem.setAttribute(tooltipAttrib, str);
       }
    }
+
+   return element;
+};
+
+// init
+onReady(()=> {
+   i18nSetup(document);
+
    // hookup to language select
    let selectLang = document.querySelector('#selectLanguage');
    if (selectLang) {
@@ -211,3 +216,13 @@ onReady(()=> {
       }
     });
 });
+
+
+ 
+export {
+   i18n,          // translate service
+   i18nElement,
+   i18nSetup,
+   setCurrentLocale,
+   getCurrentLocale,
+};

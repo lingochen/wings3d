@@ -465,6 +465,10 @@ div.wrap {
   max-width: 100vw;
 }
 
+.dialog.small {
+  min-width: 100px;
+}
+
 .dialog input[type=number] {
    width: 60px;
 }
@@ -582,16 +586,48 @@ form .fieldPref {
 .fieldPref label.right { 
   text-align:right; 
 }
-form .verticalPref {
+form .verticalPref, .verticalPref {
   display: flex;
   flex-direction: column;
   padding: 0.5rem;
 }
-form .horizontalPref {
+form .horizontalPref, .horizontalPref {
   display: flex;
   flex-direction: row;
   padding: 0.5rem;
   flex-wrap: nowrap;
+}
+.horizontalPref.alignCenter {
+  align-items: center;
+}
+.draggable {
+  cursor: grab;
+}
+.draggable.dragging {
+  cursor: grabbing;
+}
+.primitiveOptions {
+  display: table;
+}
+.primitiveOptions > label {
+  display: table-row;
+}
+.primitiveOptions > label > span {
+  display: table-cell;
+  width: 10%;
+  white-space:nowrap;
+}
+.primitiveOptions > label > input {
+  display: table-cell;
+}
+.primitiveOptions.cylinder {
+  border-collapse: collapse;
+}
+.primitiveOptions.cylinder > label:nth-child(2n+3) { /* overlapped, how to solved it? */
+  border-top: 2px solid black;
+}
+.primitiveOptions.cylinder > label:nth-child(even) {
+  border-bottom: 10px solid white;
 }
 input[name$="Conditional"]:not(:checked) ~ fieldset input[name$="Conditional"],
 input[name$="Conditional"]:not(:checked) ~ label input[name$="Conditional"] {
