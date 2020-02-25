@@ -62,7 +62,7 @@ function sliderInput(name, value, handler) {
       attribute += ` ${key}='${val}'`;
    }
    const slider = tag("<fieldset>",
-      htmlToElement('<legend>Number of Cuts</legend>'),
+      htmlToElement('<legend data-i18n>Number of Cuts</legend>'),
       htmlToElement(`<input type='range' name=${name}${attribute} onchange="this.nextElementSibling.value=this.value">`, ['change', handler]),
       htmlToElement(`<input type='number' name=${name}${attribute} onchange="this.previousElementSibling.value=this.value">`, ['change', handler])  
    );
@@ -78,12 +78,13 @@ function labelCheckbox(name, value, handler) {
    const input = htmlToElement(`<input type='checkbox'${attribute}>`, ['change', handler]);
 
    label.appendChild(input);
-   label.appendChild(document.createTextNode(name));
+   label.appendChild(htmlToElement(`<span data-i18n>${name}</span>`));
    return label;
 };
 
-function numberInput(name, value, handler) {
-   const label = htmlToElement(`<label><span>${name}</span></label>`)
+function numberInput(name, value, handler, isTranslate=true) {
+   let i18nDat = isTranslate ? 'data-i18n' : '';
+   const label = htmlToElement(`<label><span ${i18nDat}>${name}</span></label>`)
    let attribute = "";
    for (let [key, val] of Object.entries(value)) {
       attribute += ` ${key}='${val}'`;
@@ -148,14 +149,14 @@ function makePrimitive(evt, name, maker, ...theDoms) {
    form.appendChild( 
       tag('<fieldset">',
          tag('<div class="horizontalPref alignCenter">',
-            htmlToElement('<label>Rotate</label>'),
-            tag('<span class="verticalPref">', numberInput('X', {value: 0, step: 1, name: 'rotate_x'}, function(evt) {maker.rotate(0, evt.target.value);}), 
-               numberInput('Y', {value: 0, step: 1, name: 'rotate_y'}, function(evt) {maker.rotate(1, evt.target.value);}), 
-               numberInput('Z', {value: 0, step: 1, name: 'rotate_z'}, function(evt) {maker.rotate(2, evt.target.value);})),
-            htmlToElement('<label>Move</label>'),
-            tag('<span class="verticalPref">', numberInput('X', {value: 0, step: 1, name: 'translate_x'}, function(evt) {maker.translate(0, evt.target.value);}), 
-               translateY = numberInput('Y', {value: 0, step: 1, name: 'translate_y'}, function(evt) {maker.translate(1, evt.target.value);}), 
-               numberInput('Z', {value: 0, step: 1, name: 'translate_z'}, function(evt) {maker.translate(2, evt.target.value);}))),
+            htmlToElement('<label data-i18n>Rotate</label>'),
+            tag('<span class="verticalPref">', numberInput('X', {value: 0, step: 1, name: 'rotate_x'}, function(evt) {maker.rotate(0, evt.target.value);}, false), 
+               numberInput('Y', {value: 0, step: 1, name: 'rotate_y'}, function(evt) {maker.rotate(1, evt.target.value);}, false), 
+               numberInput('Z', {value: 0, step: 1, name: 'rotate_z'}, function(evt) {maker.rotate(2, evt.target.value);}, false)),
+            htmlToElement('<label data-i18n>Move</label>'),
+            tag('<span class="verticalPref">', numberInput('X', {value: 0, step: 1, name: 'translate_x'}, function(evt) {maker.translate(0, evt.target.value);}, false), 
+               translateY = numberInput('Y', {value: 0, step: 1, name: 'translate_y'}, function(evt) {maker.translate(1, evt.target.value);}, false), 
+               numberInput('Z', {value: 0, step: 1, name: 'translate_z'}, function(evt) {maker.translate(2, evt.target.value);}, false))),
          labelCheckbox('Put on Ground', {name: 'ground'}, function(evt){
             const checked = evt.target.checked;
             translateY.disabled = checked;         // no translateY when we are attach to the ground.
@@ -329,7 +330,7 @@ function makeSphere(mesh, material, options) {
 
 function makeTorus(mesh, material, options) { 
    Shape.makeTorus(mesh, material, options.sections, options.slices, options.r1, options.r2, options.rMinor);
-   return -options.r1;
+   return -options.rMinor;
 };
 
 
@@ -401,17 +402,17 @@ Wings3D.onReady(function() {
          tag('<div class="primitiveOptions"></div>',
             numberInput("X", {min: 0, value: 2}, function(evt) {
                maker.update("sizeX", Number(evt.target.value));
-            }),
+            }, false),
             numberInput("Y", {min: 0, value: 2}, function(evt) {
                maker.update("sizeY", Number(evt.target.value));
-            }),
+            }, false),
             numberInput("Z", {min: 0, value: 2}, function(evt) {
                maker.update("sizeZ", Number(evt.target.value));
-            })),
+            }, false)),
             tag(`<fieldset>
-               <legend>Spherize</legend>
-               <label><input type='radio' name='sphere' value='true' disabled>Yes</label>
-               <label><input type='radio' name='sphere' value='false' checked disabled>No<label>
+               <legend data-i18n>Spherize</legend>
+               <label><input type='radio' name='sphere' value='true' disabled><span data-i18n>Yes</span></label>
+               <label><input type='radio' name='sphere' value='false' checked disabled><span data-i18n>No</span></label>
              </fieldset>`)]
    );
 
@@ -468,7 +469,7 @@ Wings3D.onReady(function() {
             numberInput("Major X Radius", {min: 0, value: 2}, function(evt) {
                maker.update("r1", Number(evt.target.value));
             }),
-            numberInput("Major Y Radius", {min: 0, value: 2}, function(evt) {
+            numberInput("Major Z Radius", {min: 0, value: 2}, function(evt) {
                maker.update("r2", Number(evt.target.value));
             }),
             numberInput("Minor Radius", {min: 0, value: 0.25, step: 0.25}, function(evt) {
