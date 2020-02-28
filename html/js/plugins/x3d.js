@@ -199,7 +199,7 @@ class X3dImportExporter extends ImportExporter {
    Shape(shape, current) {
       // check existence of PreviewCage
       if (!current.cage) {
-         current.cage = View.newCage();
+         current.cage = View.putIntoWorld();
          current.coords = new Map;
       }
       for (const node of shape.children) {
