@@ -185,7 +185,7 @@ const PreviewCage = function(bench, controlMesh) {
    this.status = {locked: false, visible: false, wireMode: false};
 
    // index
-   this.edge = {size: 0, index: null};
+   //this.edge = {size: 0, index: null};
 
    // selecte(Vertex,Edge,Face)here
    this.selectedSet = new Set;

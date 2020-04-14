@@ -27,6 +27,7 @@ import { GenericEditCommand, ToggleCheckbox } from './wings3d_mads.js';
 import * as OpenSave from './wings3d_opensave.js'
 import { ImportExporter } from './wings3d_importexport.js';
 import { STLImportExporter } from './plugins/stl.js';
+import { GLTFImportExporter } from './plugins/gltf.js';
 
 
 // 
@@ -399,7 +400,17 @@ const _environment = {
 };
 function addMaterial(material) {
    _environment.materialList.addMaterial(material);
-}
+};
+function createGroup(name) {
+   const ret = new PreviewGroup();
+   ret.name = name;
+   return ret;
+};
+function createCage(name) {
+   const model = new PreviewCage(_environment.draftBench);
+   model.name = name;
+   return model;
+};
 function createIntoWorld(process) {
    const model = new PreviewCage(_environment.draftBench);
    process(model);
@@ -1333,6 +1344,7 @@ function init() {
    // import/export
    ImportExporter.addLoadStore( new WavefrontObjImportExporter() );
    ImportExporter.addLoadStore( new STLImportExporter() );
+   ImportExporter.addLoadStore( new GLTFImportExporter() );
    let X3d = new X3dImportExporter();
    ImportExporter.setDefault(X3d);
    // clearNew
@@ -1446,6 +1458,8 @@ export {
    makeCombineIntoWorld,
    setObject,
    addMaterial,
+   createGroup,
+   createCage,
    createIntoWorld,
    // mouse handler
    //rayPick,
