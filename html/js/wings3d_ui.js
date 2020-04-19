@@ -318,14 +318,10 @@ async function execDialog(formID, setup) {
 function openFile(fn) {
    const fileInput = document.querySelector('#importFile');    // <input id="importFile" style="display:none;" type='file'>
    if (fileInput) {
+      fileInput.value = "";   // reset value
       fileInput.click();
       fileInput.addEventListener('change', function ok(ev) {
-         let fileList = this.files;    // = ev.target.files;
-         for (let file of fileList) {
-            fn(file);
-         }
-         // reset value
-         fileInput.value = "";
+         fn(fileInput.files);    // = ev.target.files;
       });
    }
 };
