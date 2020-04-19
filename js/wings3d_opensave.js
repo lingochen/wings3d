@@ -90,29 +90,16 @@ async function open(evt, loader, importFlag=0) {
          _open.set(button, Dropbox.setupOpenButton(button));
       }
       // setup local file open
-      const fileInput = document.querySelector('#importFile');    // <input id="importFile" style="display:none;" type='file'>
-      if (fileInput) {  // hidden open file dialog
-         const button = document.getElementById('localOpen');
-         if (button) {
-            let fileList;
-            button.addEventListener('click', function(evt){
-               fileInput.value = "";   // clear first.
-               fileInput.click();      // open file dialog inside click;.
-             });
-            _open.set(button, [async function(fileName) {
+      button = document.getElementById('localOpen');
+      if (button) {
+         _open.set(button, [async function(fileName) {
                return new Promise((resolve, reject)=>{
-                  window.addEventListener('focus', function localOpen(_ev) {  // we use window.onfocus instead of fileInput.onchange is because of cancel event.
-                     window.removeEventListener('focus', localOpen);
-                     if (fileInput.value.length) {
-                        resolve(fileInput.files);
-                     } else {
-                        resolve([]);   // no file is not a failure.
-                     }
-                  });
+                  UI.openFile((files)=> {
+                     resolve(files);
+                   });
                });
             }, null]);
-         }
-      }
+       }
    }
 
    // now show dialog
