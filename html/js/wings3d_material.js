@@ -153,7 +153,7 @@ Material.convertTraditionalToMetallicRoughness = function(material) {
            metal: 0.0,
            roughness: roughnessFactor,
            emission: material.emissionMaterial,
-           opacity: material.opacityMaterial,
+           opacity: material.opacityMaterial || 1.0,
           };
 }
 

@@ -94,33 +94,22 @@ class WavefrontObjImportExporter extends ImportExporter {
    /**
     * reading auxiliary files, material, images.
     * nice asynchronous file reading.
-    * https://stackoverflow.com/questions/50485929/read-multiple-files-with-javascript-and-wait-for-result
     */
    _readAuxFiles() {
-      const superReadAuxFiles = super._readAuxFiles.bind(this);
-
-      UI.openMultipleFiles(this.mtl, (fileNameMap)=>{
-         let promises = [];
-         for (let [name, file] of fileNameMap) {
-             let filePromise = new Promise(resolve => {
-                 let reader = new FileReader();
-                 reader.readAsText(file);
-                 reader.onload = () => resolve(reader.result);
+      for (let mtl of this.mtl) {   // read all material.
+         UI.openFileAsync(mtl[0]).then((files)=>{
+            let reader = new FileReader();
+            reader.readAsText(files[0]);
+            return new Promise((resolve, reject)=>{
+               reader.onload = () => resolve(reader.result);
              });
-             promises.push(filePromise);
-         }
-
-         Promise.all(promises).then(fileContents => {
-            // parse mtl
+          }).then((fileContent)=>{
             let reader = new WavefrontMtlImportExporter;
             reader.setMaterialCatalog(this.materialCatalog);
-            for (let content of fileContents) {
-               reader._import(content);
-            }
-            // load Images if any
-            superReadAuxFiles();
+            reader._import(fileContent);
           });
-       });
+      }
+      super._readAuxFiles();  // load image if any
    }
 
    _reset() {

@@ -314,59 +314,79 @@ async function execDialog(formID, setup) {
 }
 
 
+function openFileAsync(filename) {
+   return new Promise((resolve, reject)=>{
+      openFile((files)=> {
+         resolve(files);
+       }, filename);
+    });
+}
+
 // fileInput helper
-function openFile(fn) {
-   const fileInput = document.querySelector('#importFile');    // <input id="importFile" style="display:none;" type='file'>
-   if (fileInput) {
-      fileInput.value = "";   // reset value
-      fileInput.click();
-      fileInput.addEventListener('change', function ok(ev) {
-         fn(fileInput.files);    // = ev.target.files;
-      });
+function openFile(fn, filename) {
+   if (filename) {
+      openLinkedFile(fn, filename);
+   } else {
+      const fileInput = document.querySelector('#importFile');    // <input id="importFile" style="display:none;" type='file'>
+      if (fileInput) {
+         fileInput.value = "";   // reset value
+         fileInput.click();
+         fileInput.addEventListener('change', function ok(ev) {
+            fn(Array.from(fileInput.files));    // = ev.target.files;
+         });
+      }
    }
 };
 
-const multipleFile = {input: undefined, ul: undefined};
-// multiple files input helper.
-function openMultipleFiles(fileNameMap, callBack) {
-   multipleFile.list = [];          // reset
-   if (!multipleFile.input) {       // init
+const multiFilesForm = {form: undefined, input: undefined, ul: undefined, close: undefined, fileNames: new Map};
+function openLinkedFile(callBack, filename) {
+   if (!multiFilesForm.form) {   // init
       const form = document.forms['importFileListForm'];
       if (form) {
+         multiFilesForm.form = form;
          const fileInput = form['fileListInput'];  // access the file input directly. bad form?
          if (fileInput) {
             fileInput.addEventListener('change', function(_ev) {
-               // check fileNameMap
+               // callback if the file of filename is selected.
                for (let file of fileInput.files) {
-                  if (fileNameMap.has(file.name)) {
-                     fileNameMap.set(file.name, file);
-                     form.querySelector(`input[name="${file.name}"]`).checked = true;
+                  if (multiFilesForm.fileNames.has(file.name)) {
+                     const [li, callBackFn] = multiFilesForm.fileNames.get(file.name);
+                     // remove the selected filename and callBack.
+                     multiFilesForm.ul.removeChild(li);
+                     callBackFn([file]);
+                     multiFilesForm.fileNames.delete(file.name);
                   }
                }
-               fileInput.value = null;    // now clear, and keep moving
+               if (multiFilesForm.fileNames.size === 0) {   // now close
+                  multiFilesForm.close.click();
+               }
              });
-            multipleFile.input = fileInput;
-            multipleFile.ul = form.getElementsByTagName('ul');
-            if (multipleFile.ul) {
-               multipleFile.ul = multipleFile.ul[0];
-            }
+            multiFilesForm.input = fileInput;
+            multiFilesForm.ul = form.querySelector('ul');
+            multiFilesForm.close = form.querySelector('button');
          }
       }
    }
-   runDialog('#importFileListForm', null, (form)=>{ // callback
-      if (multipleFile.ul) {
-         multipleFile.ul.innerHTML = "";
-      }
-      callBack(fileNameMap);
-    }, (form)=>{  // setup, add missing files to
-      if (multipleFile.ul) {
-         for (let [name, _file] of fileNameMap) {
-            const li = document.createRange().createContextualFragment(`<li><input type="checkbox" name="${name}" disabled>${name}</li>`);
-            multipleFile.ul.appendChild(li);
-         }
-      }
-    });
-};
+
+   // runDialog if not already run.
+   if (multiFilesForm.fileNames.size === 0) {
+      // reset everything first, remove all .multiFilesForm.form.reset();
+      multiFilesForm.input.value = null;
+      // now run
+      runDialog('#importFileListForm', null, ()=>{
+         multiFilesForm.fileNames.clear();
+         multiFilesForm.ul.innerHTML = "";
+       });
+   }
+
+   // add to ul lists.
+   if (multiFilesForm.ul) {
+      const li = document.createElement('li');
+      li.textContent = filename;
+      multiFilesForm.ul.appendChild(li);
+      multiFilesForm.fileNames.set(filename, [li, callBack]);
+   }
+}
 
 
 let styleSheet = (function(){
@@ -572,8 +592,8 @@ export {
    runDialog,
    runDialogCenter,
    execDialog,
+   openFileAsync,
    openFile,
-   openMultipleFiles,
    showContextMenu,
    showPopup,
    queuePopupMenu,
