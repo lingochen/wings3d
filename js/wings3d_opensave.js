@@ -92,13 +92,7 @@ async function open(evt, loader, importFlag=0) {
       // setup local file open
       button = document.getElementById('localOpen');
       if (button) {
-         _open.set(button, [async function(fileName) {
-               return new Promise((resolve, reject)=>{
-                  UI.openFile((files)=> {
-                     resolve(files);
-                   });
-               });
-            }, null]);
+         _open.set(button, [UI.openFileAsync, null]);
        }
    }
 
