@@ -1,5 +1,5 @@
 /**
- * wrapping up cloudStorage. 
+ * wrapping up cloudStorage and local storage
  * 
  */
 
@@ -31,7 +31,7 @@ let _lastSave;
 function reset() {
    _lastSave = null;
 }
-async function save(evt, storer, ext, flag=0) {
+async function getSaveFn(evt, flag) {
    // popup windows 
    if (!cloudSaveDialog) {
       cloudSaveDialog = document.getElementById('cloudSaveDialog');
@@ -49,8 +49,7 @@ async function save(evt, storer, ext, flag=0) {
       // setup local file store
       button = document.getElementById('localSave');
       if (button) {
-         _save.set(button, function(storer, ext, flag) {
-            const blob = storer();
+         _save.set(button, function(blob, ext, _flag) {
             window.saveAs(blob, "untitled." + ext);                // local file save, should give user a chance to give a name
          });
       }
@@ -65,16 +64,15 @@ async function save(evt, storer, ext, flag=0) {
       }
       save = _save.get(button);  // get the save routine
    }
-   const ret = save(storer, ext, flag); // should we await?
    if (flag < 2) {   // export() will not be reused.
       _lastSave = save;
    }
-   return ret;
+   return (storeObj, ext)=>{save(storeObj, ext, flag)};
 };
  
 let cloudOpenDialog;
 let _open = new Map;
-async function open(evt, loader, importFlag=0) {
+async function getOpenFn(evt, importFlag=0) {
    // popup windows 
    if (!cloudOpenDialog) {
       cloudOpenDialog = document.getElementById('cloudOpenDialog');
@@ -102,19 +100,15 @@ async function open(evt, loader, importFlag=0) {
       return false;
    }
    const [open, save] = _open.get(button);
-   const files = await open("");
-   for (let file of files) {
-      loader(file);
-   }
    if (!importFlag) {   // import won't save fileName
       _lastSave = save;
    }
-   return true;
+   return open;
 };
 
 
 export {
-   save,
-   open,
+   getOpenFn,
+   getSaveFn,
    reset,
 }

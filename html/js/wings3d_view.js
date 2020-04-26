@@ -1356,7 +1356,7 @@ function init() {
          if (answer.value === "cancel") { // does nothing
             return false; 
          } else if (answer.value === "ok") {  // call save.
-            await OpenSave.save(evt, ()=>{return X3d.export(getWorld())}, X3d.extension(), 1);  // ask for save if new, and save to old if already does.
+            await X3d.export(await OpenSave.getSaveFn(evt, 1), getWorld());   // ask for save if new, and save to old if already doe
          }
       }
       // deselect all, delete all
@@ -1370,11 +1370,11 @@ function init() {
    // plug into import/export menu
    async function open(evt, loader, flag=0) {
       await clearNew(evt);
-      OpenSave.open(evt, (file)=>{loader.import(file);}, flag);
+      loader.import(await OpenSave.getOpenFn(evt, flag));
    }
-   function save(evt, saver, flag=0) {
+   async function save(evt, saver, flag=0) {
       if (_environment.world.numberOfCage() > 0) {
-         OpenSave.save(evt, ()=>{return saver.export(getWorld())}, saver.extension(), flag);
+         saver.export(await OpenSave.getSaveFn(evt, flag), getWorld());
       }
    }
    for (let loadStore of ImportExporter.LOADSTORE) {

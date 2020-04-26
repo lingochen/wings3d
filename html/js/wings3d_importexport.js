@@ -24,54 +24,46 @@ class ImportExporter {
       }
    }
 
-   export(world,) {
+   async export(saveAsync, world) {
       this._reset();    // init before save.
       const blob = this._export(world);
-      return blob;
+      saveAsync(blob, this.extension());
       //return {blob: blob, filename: filename + '.' + this.extension()};
    }
 
-   import(file) {
-      this._reset(); // init before import
-      const self = this;
-      let reader = new FileReader;
+   import(loadAsync) {
+      this.loadAsync = loadAsync;
       
-      reader.onload = async function(ev) {
-         const data = reader.result;
-         await self._import(data);
-         const world = self.objs;
-         const cages = [];
-         for (let cage of world) {
-            cages.push( new CreatePreviewCageCommand(cage) );
+      loadAsync().then((files)=>{
+         this._reset();
+         return this._import(files[0]);
+       }).then((objs)=>{  // put into world.
+         if (objs) {
+            let cages = [];
+            for (let cage of objs.world) {
+               cages.push( new CreatePreviewCageCommand(cage) );
+            }
+            if (cages.length > 1) {
+               // combo
+               View.undoQueueCombo( cages );
+            } else if (cages.length > 0) {
+               View.undoQueue(cages[0]);
+            }
+            // put materialCatalog to UItree
+            //for (let [_name, material] of self.materialCatalog) {
+            //   View.addMaterial(material);
+            //}
+            // finalized and update
+            View.updateWorld();
+            // show import stat, # of vertex, edges, faces, and !!boundary edges!!
+            let stat = {vertices: 0, edges: 0, faces: 0, boundary: 0};
+            for (let cage of objs.world) {
+               cage.geometry.getStat(stat);
+            }
+            geometryStatus(`${stat.vertices} vertices, ${stat.edges} edges, ${stat.faces} faces, ${stat.boundary} boundary, ${this.non_manifold.length} non-manifold`);
+         
          }
-         if (cages.length > 1) {
-            // combo
-            View.undoQueueCombo( cages );
-         } else if (cages.length > 0) {
-            View.undoQueue(cages[0]);
-         }
-         // put materialCatalog to UItree
-         for (let [_name, material] of self.materialCatalog) {
-            View.addMaterial(material);
-         }
-         // read associate Material/Images, if needed.
-         self._readAuxFiles();
-         // finalized and update
-         View.updateWorld();
-         // show import stat, # of vertex, edges, faces, and !!boundary edges!!
-         let stat = {vertices: 0, edges: 0, faces: 0, boundary: 0};
-         for (let cage of world) {
-            cage.geometry.getStat(stat);
-         }
-         geometryStatus(`${stat.vertices} vertices, ${stat.edges} edges, ${stat.faces} faces, ${stat.boundary} boundary, ${self.non_manifold.length} non-manifold`);
-      }
-
-      // non-blocking read.
-      if (this.readAsText()) {   // to be implemented by subclass, either As binary or Text
-         reader.readAsText(file);
-      } else {
-         reader.readAsArrayBuffer(file);
-      }
+       });  // catch error.
    }
 
    /**
