@@ -133,9 +133,10 @@ class X3dImportExporter extends ImportExporter {
 
    /**
     * 
-    * @param {*} text - file content as text.
+    * @param {File} file - file.
     */
-   _import(text) {
+   async _import(file) {
+      const text = await file.text();
       const parser = new DOMParser();
       const xmlDoc = parser.parseFromString(text, "application/xml");
       // extract start from Scene?, or just querySelectAll("Scene > Group")? for now, no transform or subgroup.

@@ -11,6 +11,7 @@ import * as UI from '../wings3d_ui.js';
 class WavefrontObjImportExporter extends ImportExporter {
    constructor() {
       super(['Wavefront', 'obj'], ['Wavefront', 'obj']);
+      this.mtl = new Map;
    }
 
    extension() {
@@ -72,7 +73,8 @@ class WavefrontObjImportExporter extends ImportExporter {
       return blob;
    }
 
-   _import(objText) {
+   async _import(blob) {
+      const objText = await blob.text();
       // break the objText to lines we needs.
       const linesMatch = objText.match(/^([vfogs]|vt|usemtl|mtllib)(?:\s+(.+))$/gm);   //objText.match(/^v((?:\s+)[\d|\.|\+|\-|e|E]+){3}$/gm);
 
@@ -86,9 +88,12 @@ class WavefrontObjImportExporter extends ImportExporter {
                console.log("unexpected tag: " + tag); // should not happened
             }
          }
+         this._readAuxFiles();
+
          // done reading, return the object.
          return {world: this.objs, material: this.material};
       }
+      return null;
    }
 
    /**
@@ -97,16 +102,11 @@ class WavefrontObjImportExporter extends ImportExporter {
     */
    _readAuxFiles() {
       for (let mtl of this.mtl) {   // read all material.
-         UI.openFileAsync(mtl[0]).then((files)=>{
-            let reader = new FileReader();
-            reader.readAsText(files[0]);
-            return new Promise((resolve, reject)=>{
-               reader.onload = () => resolve(reader.result);
-             });
-          }).then((fileContent)=>{
+
+         this.loadAsync(mtl[0]).then((files)=>{
             let reader = new WavefrontMtlImportExporter;
             reader.setMaterialCatalog(this.materialCatalog);
-            reader._import(fileContent);
+            reader._import(files[0]);
           });
       }
       super._readAuxFiles();  // load image if any
@@ -114,7 +114,7 @@ class WavefrontObjImportExporter extends ImportExporter {
 
    _reset() {
       super._reset();
-      this.mtl = new Map;
+      this.mtl.clear();
    }
 
    o(objName) {
@@ -122,7 +122,7 @@ class WavefrontObjImportExporter extends ImportExporter {
       this.obj = this.objView.geometry;
       this.objs.push( this.objView );
 
-      this.obj.clearAffected();
+      //this.obj.clearAffected();
       // assignedName
       this.objView.name = objName;
    }
@@ -214,8 +214,9 @@ class WavefrontMtlImportExporter extends ImportExporter {
       this.catalog = catalog;
    }
 
-   _import(mtlText) {
+   async _import(blob) {
       this._reset();
+      const mtlText = await blob.text();
       // break the objText to lines we needs.
       const linesMatch = mtlText.match(/^(newmtl|Ka|Kd|Ks|Ns|Tr|d|illum)(?:\s+(.+))$/gm);   //objText.match(/^v((?:\s+)[\d|\.|\+|\-|e|E]+){3}$/gm);
 

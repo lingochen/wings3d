@@ -41,9 +41,10 @@ class STLImportExporter extends ImportExporter {
 
    /**
     * 
-    * @param {*} data - arraybuffer
+    * @param {File} file - File Objects
     */
-   async _import(data) {   //
+   async _import(file) {   //
+      const data = file.arrayBuffer(); // get promise.
       // ask for unifying and z-up options first.
       const [form, answer] = await UI.execDialog('#askStlDialog', (form)=>{
          for (let [key, value] of Object.entries(STLImportExporter.options)) {
@@ -63,7 +64,7 @@ class STLImportExporter extends ImportExporter {
       }
 
       this.objs = [];
-      const reader = new DataView(data);
+      const reader = new DataView(await data);
       if (this._isBinary(reader)) {
          // binary .stl
          const cage = this._parseBinary(reader);
