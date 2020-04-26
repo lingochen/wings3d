@@ -584,6 +584,20 @@ const ezFetch = (function() {
  }
 }());
 
+// Blob.text polyfill. for Safari, as of (2020/04/26) not support yet.
+if (typeof Blob.prototype.text !== "function") {
+   Blob.prototype.text = function() {
+      return new Response(this).text();
+   };
+}
+
+// Blob.arrayBuffer polyfill. for Safari, as of (2020/04/26) not support yet.
+if (typeof Blob.prototype.arrayBuffer !== "function") {
+   Blob.prototype.arrayBuffer = function() {
+      return new Response(this).arrayBuffer();
+   };
+}
+
 export {
    onReady,
    start,
