@@ -244,7 +244,7 @@ const defaults = {
 	headers: {
       'Content-Type': 'application/x-www-form-urlencoded'
    },
-   responseType: '',
+   responseType: 'arraybuffer',
    timeout: null,
    withCredentials: false
 };
@@ -351,6 +351,30 @@ function getOptions() {
 };
 
 
+class CloudFile {
+   constructor(fileData) {
+      this.file = fileData;
+   }
+
+   arrayBuffer() {
+      return this.download()
+      .then(res=>{
+         return res.data;
+      });
+   }
+
+   text() {
+      return this.download()
+         .then(res=>{
+            // The decode() method takes a DataView as a parameter, which is a wrapper on top of the ArrayBuffer.
+            const dataView = new DataView(res.data);
+            // The TextDecoder interface is documented at http://encoding.spec.whatwg.org/#interface-textdecoder
+            const decoder = new TextDecoder('utf-8');
+            return decoder.decode(dataView);   
+         });
+   }
+};
+
 
 
 export {
@@ -359,4 +383,5 @@ export {
    ezAjax,
    parseToJson,
    contentSelectDialog,
+   CloudFile,
 }

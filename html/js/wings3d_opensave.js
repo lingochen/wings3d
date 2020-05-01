@@ -6,6 +6,7 @@
 import * as UI from './wings3d_ui.js';
 import * as CloudStorage from './storages/cloudstorage.js';
 import * as Dropbox from './storages/dropboxstorage.js';
+import * as OneDrive from './storages/onedrivestorage.js';
 
 function setOptions() {
    let options = {
@@ -86,6 +87,10 @@ async function getOpenFn(evt, importFlag=0) {
       let button = document.getElementById('dropboxOpen');
       if (button) {
          _open.set(button, Dropbox.setupOpenButton(button));
+      }
+      button = document.getElementById('onedriveOpen');
+      if (button) {
+         _open.set(button, OneDrive.setupOpenButton(button));
       }
       // setup local file open
       button = document.getElementById('localOpen');
