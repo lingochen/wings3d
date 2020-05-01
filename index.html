@@ -7,6 +7,7 @@
    <link rel="icon" type="image/png" href="img/favicon-96x96.png" />
    <link rel="stylesheet" href="styles.css?v=d8ee998c34ce08ea0ae6b47f933c1350" />
    <script src="./vendor/FileSaver.min.js?v=0cd1ebc44c182996e7d62f29b28dba9f" defer></script>
+   <script type="text/javascript" src="https://js.live.net/v7.2/OneDrive.js" defer async></script>
    <script src="./vendor/gl-matrix-min.js?v=8d57dae6ce3862af598c7ccad3df15ad"></script>
 
    <script src="wings3d.bundle.js?v=9db53008feff31d0ca124b8ff6d1baa4" type="module"></script>
@@ -1033,6 +1034,7 @@
   </form>
   <form id="cloudOpenDialog" class="dialog cloudForm">
      <h3> Open from <button type="submit" value="cancel" class="close">&times;</button></h3>
+     <button type="submit" value="ok" id="onedriveOpen" data-app-key="6acd185a-104b-4928-b06f-700380de2ce8"><img class="home" alt="OneDrive"><span>Open from OneDrive</span></button>
      <button type="submit" value="ok" id="dropboxOpen" data-app-key="p6wfhvtsa2hd9nh"><img class="home" alt="Dropbox"><span>Open from Dropbox</span></button>
      <button type="submit" value="ok" id="localOpen"> <span>Open from Local</span></button>
   </form>
