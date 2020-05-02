@@ -35,8 +35,8 @@ class STLImportExporter extends ImportExporter {
       return "stl";
    }
 
-   readAsText() {
-      return false;
+   extensionFilter() {
+      return ".stl";
    }
 
    /**

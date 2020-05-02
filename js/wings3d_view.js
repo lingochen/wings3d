@@ -1356,7 +1356,8 @@ function init() {
          if (answer.value === "cancel") { // does nothing
             return false; 
          } else if (answer.value === "ok") {  // call save.
-            await X3d.export(await OpenSave.getSaveFn(evt, 1), getWorld());   // ask for save if new, and save to old if already doe
+            await X3d.export(await OpenSave.getSaveFn(evt, 1), getWorld());
+            OpenSave.setWorkingFiles({main: null, linked: new Map});
          }
       }
       // deselect all, delete all
@@ -1370,11 +1371,18 @@ function init() {
    // plug into import/export menu
    async function open(evt, loader, flag=0) {
       await clearNew(evt);
-      loader.import(await OpenSave.getOpenFn(evt, flag));
+      OpenSave.setFilter(loader.extensionFilter());
+      loader.import(await OpenSave.getOpenFn(evt, flag))
+       .then(files=>{
+         OpenSave.setWorkingFiles(files);
+        });
    }
    async function save(evt, saver, flag=0) {
       if (_environment.world.numberOfCage() > 0) {
-         saver.export(await OpenSave.getSaveFn(evt, flag), getWorld());
+         saver.export(await OpenSave.getSaveFn(evt, flag), getWorld())
+         .then(files=>{
+            OpenSave.setWorkingFiles(files); 
+           });
       }
    }
    for (let loadStore of ImportExporter.LOADSTORE) {

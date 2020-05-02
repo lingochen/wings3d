@@ -18,8 +18,8 @@ class X3dImportExporter extends ImportExporter {
       return "x3d";
    }
 
-   readAsText() {
-      return true;
+   extensionFilter() {
+      return ".x3d";
    }
 
    _reset() {

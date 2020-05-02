@@ -46,8 +46,8 @@ class GLTFImportExporter extends ImportExporter {
       return "gltf";
    }
 
-   readAsText() {
-      return true;
+   extensionFilter() {
+      return ".gltf,.glb";
    }
 
    _reset() {
@@ -157,7 +157,7 @@ class GLTFImportExporter extends ImportExporter {
     * @param {*} material 
     */
    materials(material) {
-      const ret = new Material(material.name || "NoName");
+      const ret = Material.create(material.name || "NoName");
       const metal = material.pbrMetallicRoughness;
       if (metal) {
          const pbr = {};

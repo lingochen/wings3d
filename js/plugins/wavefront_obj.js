@@ -11,15 +11,19 @@ import * as UI from '../wings3d_ui.js';
 class WavefrontObjImportExporter extends ImportExporter {
    constructor() {
       super(['Wavefront', 'obj'], ['Wavefront', 'obj']);
-      this.mtl = new Map;
    }
 
    extension() {
       return "obj";
    }
 
-   readAsText() {
-      return true;
+   extensionFilter() {
+      return ".obj";
+   }
+
+   _reset() {
+      super._reset();
+      this.mtl = new Map;
    }
 
    /**
@@ -73,8 +77,8 @@ class WavefrontObjImportExporter extends ImportExporter {
       return blob;
    }
 
-   async _import(blob) {
-      const objText = await blob.text();
+   async _import(file) {
+      const objText = await file.text();
       // break the objText to lines we needs.
       const linesMatch = objText.match(/^([vfogs]|vt|usemtl|mtllib)(?:\s+(.+))$/gm);   //objText.match(/^v((?:\s+)[\d|\.|\+|\-|e|E]+){3}$/gm);
 
@@ -88,8 +92,8 @@ class WavefrontObjImportExporter extends ImportExporter {
                console.log("unexpected tag: " + tag); // should not happened
             }
          }
+         this.workingFiles.main = file;
          this._readAuxFiles();
-
          // done reading, return the object.
          return {world: this.objs, material: this.material};
       }
@@ -101,20 +105,18 @@ class WavefrontObjImportExporter extends ImportExporter {
     * nice asynchronous file reading.
     */
    _readAuxFiles() {
-      for (let mtl of this.mtl) {   // read all material.
+      const linkedFiles = this.workingFiles.linked;
+      const materialCatalog = this.materialCatalog;
 
+      for (let mtl of this.mtl) {   // read all material.
          this.loadAsync(mtl[0]).then((files)=>{
             let reader = new WavefrontMtlImportExporter;
-            reader.setMaterialCatalog(this.materialCatalog);
+            reader.setMaterialCatalog(materialCatalog);
             reader._import(files[0]);
+            linkedFiles.set(mtl[0], files[0]);
           });
       }
       super._readAuxFiles();  // load image if any
-   }
-
-   _reset() {
-      super._reset();
-      this.mtl.clear();
    }
 
    o(objName) {
