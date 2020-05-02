@@ -1,6 +1,6 @@
 /** 
  * https://hawramani.com/how-to-get-a-demo-of-the-onedrive-file-picker-javascript-sdk-to-work-on-a-local-development-server/
- * setup server.
+ * setup local server.
  * 
  * https://github.com/OneDrive/onedrive-texteditor-js
  * show us how to use FilePicker, get accessToken, and use REST api 
@@ -24,6 +24,24 @@ class OneDriveFile extends CloudStorage.CloudFile {
    upload(reponseType, data) {
 
    }
+};
+
+
+function saveAuth(files) {
+   if (!window.localStorage.getItem(ACCESSTOKEN)) {
+      window.localStorage.setItem(ACCESSTOKEN, files.accessToken);
+      window.localStorage.setItem(APIENDPOINT, files.apiEndpoint);
+   }
+};
+
+function getAuth(advanced) {
+   const accessToken = window.localStorage.getItem(ACCESSTOKEN);
+   if (accessToken) {
+      advanced.accessToken = accessToken;
+      advanced.apiEndpoint = window.localStorage.getItem(APIENDPOINT);
+      return true;
+   }
+   return false;
 };
 
 
@@ -82,7 +100,8 @@ function setupSaveButton(button) {
 
 
 /**
- * open any file given path and filename.
+ * given filename.
+ * return return promise that return CloudFile.
  */
 function open(filename) {
 
@@ -91,23 +110,24 @@ function open(filename) {
 
 
 /**
- * let user select file.
+ * let user select file, or supply filename
  */
-function pick(ext="") {
-   //openOptions.advanced.filter = ext;
-   // accesstoken, and apiEndpoint if exists;
+function pick(filename) {
+   if (filename) {
+      return open(filename);
+   }
+
+   // get options.
+   //openOptions.advanced.filter = CloudStorage.getOptions().filter;
 
    // convert to object
    return new Promise((resolve, reject)=> {
       openOptions.success = (files)=>{
-         if (!window.localStorage.getItem(ACCESSTOKEN)) {
-            window.localStorage.setItem(ACCESSTOKEN, files.accessToken);
-            window.localStorage.setItem(APIENDPOINT, files.apiEndpoint);
-         }
-         console.debug(files);
+         saveAuth(files);
          resolve(files.value.map(fileValue=>{return new OneDriveFile(fileValue);}));
       };
       openOptions.cancel = ()=> {
+         // could we get auth token?
          reject("cancel");
       }
       openOptions.error = (error)=> {
@@ -124,13 +144,9 @@ function setupOpenButton(button) {
       // get clientID from button.
       openOptions.clientId = button.getAttribute('data-app-key');
       button.querySelector('.home').src = LOGO;
-      const accessToken = window.localStorage.getItem(ACCESSTOKEN);
-      if (accessToken) {
-         openOptions.advanced.accessToken = accessToken;
-         openOptions.advanced.apiEndpoint = window.localStorage.getItem(APIENDPOINT);
-      }
+      getAuth(openOptions.advanced);
       // return handling code.
-      return [pick, null, open];
+      return [pick, null];
    }
    return null;
 };

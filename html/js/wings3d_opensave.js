@@ -8,6 +8,17 @@ import * as CloudStorage from './storages/cloudstorage.js';
 import * as Dropbox from './storages/dropboxstorage.js';
 import * as OneDrive from './storages/onedrivestorage.js';
 
+
+let _workingFiles = {main:null, linked:new Map};
+function setWorkingFiles(working) {
+   _workingFiles = working;
+};
+
+
+function setFilter(extensions) {
+   CloudStorage.setOptions({filter: extensions});
+}
+
 function setOptions() {
    let options = {
       success: function(file) {  
@@ -116,4 +127,6 @@ export {
    getOpenFn,
    getSaveFn,
    reset,
+   setFilter,
+   setWorkingFiles,
 }

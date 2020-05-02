@@ -25,17 +25,21 @@ class ImportExporter {
    }
 
    async export(saveAsync, world) {
+      this.saveAsync = saveAsync;
+
       this._reset();    // init before save.
       const blob = this._export(world);
-      saveAsync(blob, this.extension());
+      this.workingFiles.main = saveAsync(blob, this.extension());
+
       //return {blob: blob, filename: filename + '.' + this.extension()};
    }
 
-   import(loadAsync) {
+   async import(loadAsync) {
       this.loadAsync = loadAsync;
       
-      loadAsync().then((files)=>{
+      return loadAsync().then((files)=>{
          this._reset();
+         this.files = files;
          return this._import(files[0]);
        }).then((objs)=>{  // put into world.
          if (objs) {
@@ -50,9 +54,9 @@ class ImportExporter {
                View.undoQueue(cages[0]);
             }
             // put materialCatalog to UItree
-            //for (let [_name, material] of self.materialCatalog) {
-            //   View.addMaterial(material);
-            //}
+            for (let [_name, material] of this.materialCatalog) {
+               View.addMaterial(material);
+            }
             // finalized and update
             View.updateWorld();
             // show import stat, # of vertex, edges, faces, and !!boundary edges!!
@@ -61,8 +65,10 @@ class ImportExporter {
                cage.geometry.getStat(stat);
             }
             geometryStatus(`${stat.vertices} vertices, ${stat.edges} edges, ${stat.faces} faces, ${stat.boundary} boundary, ${this.non_manifold.length} non-manifold`);
-         
          }
+         const workingFiles = this.workingFiles;
+         this._reset();
+         return Promise.resolve(workingFiles);
        });  // catch error.
    }
 
@@ -83,6 +89,8 @@ class ImportExporter {
       this.polygonCount = 0;
       this.vertexCount = 0;
       this.non_manifold = [];
+      this.files = [];
+      this.workingFiles = {main: null, linked: new Map};
    }
 
 
