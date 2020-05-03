@@ -323,9 +323,9 @@ function openFileAsync(filename) {
 }
 
 // fileInput helper
-function openFile(fn, filename) {
-   if (filename) {
-      openLinkedFile(fn, filename);
+function openFile(fn, fileItem) {
+   if (fileItem) {
+      openLinkedFile(fn, fileItem);
    } else {
       const fileInput = document.querySelector('#importFile');    // <input id="importFile" style="display:none;" type='file'>
       if (fileInput) {
@@ -339,7 +339,7 @@ function openFile(fn, filename) {
 };
 
 const multiFilesForm = {form: undefined, input: undefined, ul: undefined, close: undefined, fileNames: new Map};
-function openLinkedFile(callBack, filename) {
+function openLinkedFile(callBack, fileItem) {
    if (!multiFilesForm.form) {   // init
       const form = document.forms['importFileListForm'];
       if (form) {
@@ -382,9 +382,9 @@ function openLinkedFile(callBack, filename) {
    // add to ul lists.
    if (multiFilesForm.ul) {
       const li = document.createElement('li');
-      li.textContent = filename;
+      li.textContent = fileItem.filename;
       multiFilesForm.ul.appendChild(li);
-      multiFilesForm.fileNames.set(filename, [li, callBack]);
+      multiFilesForm.fileNames.set(fileItem.filename, [li, callBack]);
    }
 }
 
