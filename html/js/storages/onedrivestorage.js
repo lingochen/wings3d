@@ -24,6 +24,10 @@ class OneDriveFile extends CloudStorage.CloudFile {
    upload(reponseType, data) {
 
    }
+
+   get path() {
+      return this.file.parentReference.path;
+   }
 };
 
 
@@ -100,21 +104,34 @@ function setupSaveButton(button) {
 
 
 /**
- * given filename.
- * return return promise that return CloudFile.
+ * given fileItem {selected: , filename: }
+ * return promise that return CloudFile. the promise use graph api to access file directly.
  */
-function open(filename) {
+function open(fileItem) {
+   const path = fileItem.selected.path;  // /drive/root:/path
+   
+   const apiEndPoint = window.localStorage.getItem(APIENDPOINT);
+   const url = `${apiEndPoint}/me/${path}/${fileItem.filename}`;   // /me/drive/root:/path/to/file
+   //const url = `${apiEndPoint}/me/drive/items/${id}:/${fileItem.filename}`;  // /me/drive/items:/{item-id}:/path/to/file
 
-
+   const options = {
+      method: "GET",
+      responseType: 'json',
+      headers: { Authorization: "Bearer " + window.localStorage.getItem(ACCESSTOKEN) }, 
+   };
+   return CloudStorage.ezAjax(url, options)
+         .then(res=>{
+            return [new OneDriveFile(res.data)];
+         });
 }
 
 
 /**
  * let user select file, or supply filename
  */
-function pick(filename) {
-   if (filename) {
-      return open(filename);
+function pick(fileItem) {
+   if (fileItem) {
+      return open(fileItem);
    }
 
    // get options.

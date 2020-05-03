@@ -109,7 +109,7 @@ class WavefrontObjImportExporter extends ImportExporter {
       const materialCatalog = this.materialCatalog;
 
       for (let mtl of this.mtl) {   // read all material.
-         this.loadAsync(mtl[0]).then((files)=>{
+         this.loadAsync({selected: this.workingFiles.main, filename: mtl[0]}).then((files)=>{
             let reader = new WavefrontMtlImportExporter;
             reader.setMaterialCatalog(materialCatalog);
             reader._import(files[0]);
