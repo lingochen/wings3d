@@ -14,6 +14,43 @@ import * as CloudStorage from "./cloudstorage.js";
 
 
 
+class DropboxFile extends CloudStorage.CloudFile {
+   constructor(fileData) {
+      super(fileData);
+   }
+
+   async download() {
+      const options = CloudStorage.getOptions();
+      const accessToken = await getAuth();
+      const ajaxOptions = {
+         method: 'POST',
+         responseType: 'arraybuffer',
+         headers: {
+           Authorization: `Bearer ${accessToken}`,
+           'Dropbox-API-Arg': JSON.stringify({path: this.file}),   // open one file only, 
+         },
+       };
+      return CloudStorage.ezAjax('https://content.dropboxapi.com/2/files/download', ajaxOptions, options.progress, options.cancel)
+         .then(res=> {
+            // save JSON in the Dropbox-API-Result response header.
+            this.fileInfo = JSON.parse(res.xhr.getResponseHeader('Dropbox-API-Result'));
+            return res;
+         });
+   }
+
+   async upload(reponseType, data) {
+
+   }
+
+   get path() {
+      return this.file.substring(0, this.file.lastIndexOf('/'));
+      //return this.file; // drop filename
+   }
+};
+
+
+
+
 let clientID;
 let dropboxToken;
 let openFileInfo;     // saved, or opened fileInfo from last called
@@ -132,6 +169,7 @@ async function readFolder( path ) {
 
 
 
+
 /*
  * Write the given text to a file in the user's Dropbox.  Fails if the user
  * has not yet logged in, or if the given path does not point to a file, or
@@ -231,6 +269,35 @@ const logo = 'data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/200
  * Fails if the given path does not point to a file.
  * The path should be provided as an array.
  */
+async function open(fileItem) {
+   const path = fileItem.selected.path;  // selected file path + filename.
+   //const url = `${path}/${fileItem.filename}`;
+   const url = path + '/' + fileItem.filename;
+
+   // get_metadata, if exists then return DropboxFile.
+   const accessToken = await getAuth();
+   const options = CloudStorage.getOptions();
+   const ajaxOptions = {
+      method: 'POST',
+      responseType: '',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json"
+      },
+      data: JSON.stringify({
+         'path': url,
+         'include_media_info': false,
+         'include_deleted': false,
+         'include_has_explicit_shared_members': false
+      })
+    };
+   return CloudStorage.ezAjax('https://api.dropboxapi.com/2/files/get_metadata', ajaxOptions, options.progress, options.cancel)
+      .then(res=> {
+         return [new DropboxFile(JSON.parse(res.data).path_display)];   // dropbox is case insensative.
+      });
+};
+
+
 /**
  * model after dropbox chooser
  * @param {*} options
@@ -245,33 +312,18 @@ const logo = 'data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/200
     cancel: function() {},
 };
  */
-async function open(path) {
-   const options = CloudStorage.getOptions();
-   
-   //try {
-   const accessToken = await getAuth();
-   const files = await CloudStorage.contentSelectDialog(logo, readFolder, path);
-   if (files.length === 0) {  // nothing opened.
-      return [];
+async function pick(fileItem) {
+   if (fileItem) {
+      return open(fileItem);
    }
 
-   const ajaxOptions = {
-            method: 'POST',
-            responseType: 'arraybuffer',
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-              'Dropbox-API-Arg': JSON.stringify({path: files[0]}),   // open one file only, 
-            },
-          };
-   const dataBuffer = await CloudStorage.ezAjax('https://content.dropboxapi.com/2/files/download', ajaxOptions, options.progress, options.cancel)
-   
-   // save JSON in the Dropbox-API-Result response header.
-   openFileInfo = JSON.parse(dataBuffer.xhr.getResponseHeader('Dropbox-API-Result'));
-   
-
-   const blob = new File([dataBuffer.data], files[0], {type: "application/octet-stream"});
-
-   return [blob]; // return blob in an array
+   // now ask picker to selected a file.
+   await getAuth();
+   const files = await CloudStorage.contentSelectDialog(logo, readFolder, "");
+   if (files.length === 0) {  // nothing opened.
+      return [];
+   } 
+   return [new DropboxFile(files[0])];
 };
 
 function setupOpenButton(button) {
@@ -281,7 +333,7 @@ function setupOpenButton(button) {
       button.querySelector('.home').src = logo;
 
       // return handling code.
-      return [open, save];
+      return [pick, save];
    }
    return null;
 };
