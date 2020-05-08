@@ -9,9 +9,10 @@ import * as Dropbox from './storages/dropboxstorage.js';
 import * as OneDrive from './storages/onedrivestorage.js';
 
 
-let _workingFiles = {main:null, linked:new Map};
+let _workingFiles = {selected:null, linked:new Map};
 function setWorkingFiles(working) {
    _workingFiles = working;
+   _lastSave = _workingSave;  // now we are sure open successfully.
 };
 
 
@@ -40,16 +41,16 @@ function setOptions() {
 let cloudSaveDialog;
 let _save = new Map;
 let _lastSave;
+let _workingSave;
 function reset() {
-   _lastSave = null;
+   _lastSave = _workingSave = null;
 }
-async function getSaveFn(evt, flag) {
+async function save(evt, flag) {
    // popup windows 
    if (!cloudSaveDialog) {
       cloudSaveDialog = document.getElementById('cloudSaveDialog');
       if (!cloudSaveDialog) {
-         alert('Error: no SaveDialog');
-         return false;
+         throw new Error('Error: no SaveDialog');
       }
       // first, setOptions
       setOptions();
@@ -72,7 +73,7 @@ async function getSaveFn(evt, flag) {
    if ((flag > 0) || !save) {  // check if not saveAs && already saved.
       const [_form, button] = await UI.execDialog('#cloudSaveDialog', null);
       if (button.value === 'cancel') {
-         return "";
+         throw new Error('cancel');
       }
       save = _save.get(button);  // get the save routine
    }
@@ -82,15 +83,16 @@ async function getSaveFn(evt, flag) {
    return (storeObj, ext)=>{save(storeObj, ext, flag)};
 };
  
+
+
 let cloudOpenDialog;
 let _open = new Map;
-async function getOpenFn(evt, importFlag=0) {
+async function open(evt) {
    // popup windows 
    if (!cloudOpenDialog) {
       cloudOpenDialog = document.getElementById('cloudOpenDialog');
       if (!cloudOpenDialog) {
-         alert('Error: no OpenDialog');
-         return false;
+         throw new Error('no OpenDialog');
       }
       // first, setOptions
       setOptions();
@@ -113,20 +115,19 @@ async function getOpenFn(evt, importFlag=0) {
    // now show dialog
    const [_form, button] = await UI.execDialog('#cloudOpenDialog', null);
    if (button.value === "cancel") {
-      return false;
+      throw new Error('cancel');
    }
    const [open, save] = _open.get(button);
-   if (!importFlag) {   // import won't save fileName
-      _lastSave = save;
-   }
+   _workingSave = save;
    return open;
 };
 
 
 export {
-   getOpenFn,
-   getSaveFn,
    reset,
    setFilter,
    setWorkingFiles,
+   save,
+   //saveAs,
+   open,
 }

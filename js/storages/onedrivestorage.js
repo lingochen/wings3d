@@ -76,17 +76,20 @@ const openOptions = {
 };
 
 
+async function saveAs(blob, ext) {
 
+};
+
+
+async function save(blob, filename) {
+
+};
 
 
 /**
  * map to FilePicker
  * @param {*} options - same as save options.
  */
-
-
-
-
 function setupSaveButton(button) {
    if (button) {
       // get clientID from button.

@@ -1353,11 +1353,18 @@ function init() {
    async function clearNew(evt) {
       if (undo.isModified &&  (_environment.world.numberOfCage() > 0)) {
          const [_form, answer] = await UI.execDialog('#askSaveDialog', null); // no, save, cancel
-         if (answer.value === "cancel") { // does nothing
-            return false; 
-         } else if (answer.value === "ok") {  // call save.
-            await X3d.export(await OpenSave.getSaveFn(evt, 1), getWorld());
-            OpenSave.setWorkingFiles({main: null, linked: new Map});
+         let isCancel = answer.value === "cancel";
+         if (answer.value === "ok") {  // call save.
+            OpenSave.setFilter(X3d.extensionFilter());
+            await OpenSave.save(evt).then((file, saver)=>{
+               return X3d.export(file, saver, getWorld());
+            }).catch(error=>{
+               isCancel = true;
+               console.log(error);
+            });
+         }
+         if (isCancel) {
+            return false;
          }
       }
       // deselect all, delete all
@@ -1369,19 +1376,40 @@ function init() {
       return true;
    }
    // plug into import/export menu
-   async function open(evt, loader, flag=0) {
-      await clearNew(evt);
-      OpenSave.setFilter(loader.extensionFilter());
-      loader.import(await OpenSave.getOpenFn(evt, flag))
-       .then(files=>{
-         OpenSave.setWorkingFiles(files);
-        });
+   async function open(evt, loader) {
+      let cleared = await clearNew();
+      if (cleared) {
+         OpenSave.setFilter(loader.extensionFilter());
+         OpenSave.open(evt).then((file, loadAsync)=>{
+            return loader.import(file, loadAsync);
+          }).then(working=> {
+            OpenSave.setWorkingFiles(working);
+          }).catch(error=>{
+            console.log(error);
+          });
+      }
    }
-   async function save(evt, saver, flag=0) {
+   async function merge(evt, loader) {
+      OpenSave.setFilter(loader.extensionFilter());
+      OpenSave.open(evt).then((file, loadAsync)=>{
+         return loader.import(file, loadAsync);
+       }).catch(error=>{
+         console.log(error);
+       });
+   }
+   async function save(evt, saver) {
       if (_environment.world.numberOfCage() > 0) {
          saver.export(await OpenSave.getSaveFn(evt, flag), getWorld())
          .then(files=>{
-            OpenSave.setWorkingFiles(files); 
+
+           });
+      }
+   }
+   async function saveAs(evt, saver) {
+      if (_environment.world.numberOfCage() > 0) {
+         saver.export(await OpenSave.getSaveFn(evt, flag), getWorld())
+         .then(files=>{
+
            });
       }
    }
@@ -1390,7 +1418,7 @@ function init() {
          const importMenuText = loadStore.importMenuText;
          // first get import Submenu.
          UI.addMenuItem('fileImport', 'import' + importMenuText.name, `${importMenuText.name} (.${importMenuText.ext})...`, function(evt) {
-               open(evt, loadStore, 1);
+               merge(evt, loadStore);
             });
       }
       if (loadStore.exportMenuText) {
@@ -1405,7 +1433,7 @@ function init() {
       save(evt, X3d);
     });
    UI.bindMenuItem(Wings3D.action.saveAs.name, function(evt) {
-      save(evt, X3d, 1);
+      saveAs(evt, X3d);
     });
    // Open handling, remember to save first. then new.
    UI.bindMenuItem(Wings3D.action.open.name, function(evt) {
