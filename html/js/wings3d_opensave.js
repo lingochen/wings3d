@@ -67,7 +67,7 @@ async function saveAs(_evt) {
    if (!cloudSaveDialog) {
       cloudSaveDialog = document.getElementById('cloudSaveDialog');
       if (!cloudSaveDialog) {
-         throw new Error('Error: no SaveDialog');
+         throw new Error('No Save Dialog');
       }
       // first, setOptions
       setOptions();
@@ -96,7 +96,7 @@ async function saveAs(_evt) {
    // show save storage selection dialog
    const [_form, button] = await UI.execDialog('#cloudSaveDialog', null);
    if (button.value === 'cancel') {
-      throw new Error('cancel');
+      throw new Error('No storage selected');
    }
    let [saveAsFn, saveFn] = _save.get(button);  // get the save routine
    _workingSave.saveFn = saveFn;
@@ -132,7 +132,7 @@ async function open(_evt) {
    if (!cloudOpenDialog) {
       cloudOpenDialog = document.getElementById('cloudOpenDialog');
       if (!cloudOpenDialog) {
-         throw new Error('no OpenDialog');
+         throw new Error('No OpenDialog');
       }
       // first, setOptions
       setOptions();
@@ -155,7 +155,7 @@ async function open(_evt) {
    // now show dialog
    const [_form, button] = await UI.execDialog('#cloudOpenDialog', null);
    if (button.value === "cancel") {
-      throw new Error('cancel');
+      throw new Error('No storage selected');
    }
    const [pick, open, saveFn] = _open.get(button);
    _workingSave.saveFn = saveFn;

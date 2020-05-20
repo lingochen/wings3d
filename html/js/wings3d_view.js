@@ -1341,7 +1341,6 @@ function init() {
          UI.showContextMenu(contextMenu.menu);
       }
    }, false);   
-   //console.log("Workspace init successful");
 
    // import/export
    ImportExporter.addLoadStore( new WavefrontObjImportExporter() );
@@ -1360,7 +1359,7 @@ function init() {
                return X3d.export(file, saver, getWorld());
             }).catch(error=>{
                isCancel = true;
-               console.log(error);
+               alert(error);
             });
          }
          if (isCancel) {
@@ -1385,7 +1384,7 @@ function init() {
           }).then(working=> {
             OpenSave.setWorkingFiles(working);
           }).catch(error=>{
-            console.log(error);
+            alert(error);
           });
       }
    }
@@ -1394,7 +1393,7 @@ function init() {
       OpenSave.open(evt).then(([files, loadAsync])=>{
          return loader.import(files, loadAsync);
        }).catch(error=>{
-         console.log(error);
+         alert(error);
        });
    }
    async function save(evt, saver) {
@@ -1403,7 +1402,7 @@ function init() {
          OpenSave.save(evt).then(([file, saveAsync])=>{
             return saver.export(getWorld(), file, saveAsync);
           }).catch(error=>{
-            console.log(error);
+            alert(error);
           });
          
       }
@@ -1418,7 +1417,7 @@ function init() {
                OpenSave.setWorkingFiles(workingFiles);
              }
           }).catch(error=>{
-            console.log(error);
+            alert(error);
           });
       }
    }
