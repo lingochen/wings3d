@@ -27,7 +27,7 @@ class DropboxFile extends CloudStorage.CloudFile {
          responseType: 'arraybuffer',
          headers: {
            Authorization: `Bearer ${accessToken}`,
-           'Dropbox-API-Arg': JSON.stringify({path: this.file}),   // open one file only, 
+           'Dropbox-API-Arg': JSON.stringify({path: this.file.path}),   // open one file only, 
          },
        };
       return CloudStorage.ezAjax('https://content.dropboxapi.com/2/files/download', ajaxOptions, options.progress, options.cancel)
@@ -38,13 +38,44 @@ class DropboxFile extends CloudStorage.CloudFile {
          });
    }
 
-   async upload(reponseType, data) {
+   async upload(data, contentType) {
+      const options = CloudStorage.getOptions();
+      const accessToken = await getAuth();
+   
+      const ajaxOptions = {
+         method: 'POST',
+         headers: {
+            Authorization: 'Bearer ' + accessToken,
+            'Content-Type': contentType, //'application/octet-stream',
+            'Dropbox-API-Arg': JSON.stringify({
+               path: this.file.path,                   // path : '/' + fullPath.join( '/' ),
+               mode: 'overwrite',                     // 'overwrite', shorthand for {'.tag': 'add' };
+               autorename: false,
+               mute: false
+            }),
+         },
+         data: data,                            
+      };
 
+      return CloudStorage.ezAjax('https://content.dropboxapi.com/2/files/upload', ajaxOptions, options.progress, options.cancel)
+         .then( result => {
+            // save result
+            let info = JSON.parse(result.xhr.response); //.getResponseHeader('Dropbox-API-Result'));
+            if (saveAs < 2) {    // update only if not export
+               openFileInfo = info;
+            }
+            // return filename
+            return info.name;
+         }); 
    }
 
    get path() {
-      return this.file.substring(0, this.file.lastIndexOf('/'));
+      return this.file.path.substring(0, this.file.lastIndexOf('/'));
       //return this.file; // drop filename
+   }
+
+   get name() {
+      return this.file.name;
    }
 };
 
@@ -150,10 +181,10 @@ async function readFolder( path ) {
                      const folders = [], files = [];
                      for (let entry of data.entries) {
                         if (entry['.tag'] === 'folder') {
-                           folders.push( {isFile: false, name : entry.name, path: entry.path_lower, pathDisplay: entry.path_display} );
+                           folders.push( {isFile: false, id: entry.id, name: entry.name, path: entry.path_display} );   // dropbox path is case insensative
                         } else {
                            let date = new Date(entry.client_modified);
-                           files.push( {isFile: true, name : entry.name, path: entry.path_lower, pathDisplay: entry.path_display,
+                           files.push( {isFile: true, id: entry.id, name: entry.name, path: entry.path_display,
                                         modified: date, size: entry.size} );
                         }
                      }
@@ -168,6 +199,12 @@ async function readFolder( path ) {
 }
 
 
+/**
+ * get file descriptor using filename.
+ */
+async function save(filename) {
+
+};
 
 
 /*
@@ -191,20 +228,14 @@ async function readFolder( path ) {
  * } 
  * @param {file} fileObject - single fileObject to save.
  */
-async function save(storer, ext, saveAs) {
-   const options = CloudStorage.getOptions();
+async function saveAs(fileInfo) {
+   await getAuth();
+   return CloudStorage.contentSelectDialog(logo, readFolder, fileInfo)
+      .then(file=>{
+         return new DropboxFile(file);
+      });
 
-   const accessToken = await getAuth();
-
-   let filename;
-   if ((saveAs > 0) || !openFileInfo) {  // not saved or open from dropbox, or force saveAs
-      const files = await CloudStorage.contentSelectDialog(logo, readFolder, "", "untitled");
-      if (files.length === 0) {  // no saveName.
-         return "";
-      }
-      filename = files[0]; // the selected filename
-   }
-   const blob = storer();  // get result 
+/*   const blob = storer();  // get result 
    if (filename) {   // add extension if not == the supply ext.
       const pieces = filename.split('.');
       if (ext.localeCompare(pieces[pieces.length-1]) !== 0) {
@@ -214,31 +245,7 @@ async function save(storer, ext, saveAs) {
       filename = openFileInfo.path_display;
    }
 
-   const ajaxOptions = {
-         method: 'POST',
-         headers: {
-            Authorization: 'Bearer ' + accessToken,
-            'Content-Type': 'application/octet-stream',
-            'Dropbox-API-Arg': JSON.stringify({
-               path: filename,                  // path : '/' + fullPath.join( '/' ),
-               mode: 'overwrite',                     // 'overwrite', shorthand for {'.tag': 'add' };
-               autorename: false,
-               mute: false
-            }),
-         },
-         data: blob,                            
-      };
-
-   return CloudStorage.ezAjax('https://content.dropboxapi.com/2/files/upload', ajaxOptions, options.progress, options.cancel)
-         .then( result => {
-            // save result
-            let info = JSON.parse(result.xhr.response); //.getResponseHeader('Dropbox-API-Result'));
-            if (saveAs < 2) {    // update only if not export
-               openFileInfo = info;
-            }
-            // return filename
-            return info.name;
-         });
+*/
 };
 
 
@@ -254,7 +261,7 @@ function setupSaveButton(button) {
       button.querySelector('.home').src = logo;
 
       // return handling code.
-      return save;
+      return [saveAs, save];
    }
    return null;
 };
@@ -293,7 +300,8 @@ async function open(fileItem) {
     };
    return CloudStorage.ezAjax('https://api.dropboxapi.com/2/files/get_metadata', ajaxOptions, options.progress, options.cancel)
       .then(res=> {
-         return [new DropboxFile(JSON.parse(res.data).path_display)];   // dropbox is case insensative.
+         const fileInfo = JSON.parse(res.data);
+         return [new DropboxFile(fileInfo)];   
       });
 };
 
@@ -312,18 +320,13 @@ async function open(fileItem) {
     cancel: function() {},
 };
  */
-async function pick(fileItem) {
-   if (fileItem) {
-      return open(fileItem);
-   }
-
+async function pick(filter) {
    // now ask picker to selected a file.
    await getAuth();
-   const files = await CloudStorage.contentSelectDialog(logo, readFolder, "");
-   if (files.length === 0) {  // nothing opened.
-      return [];
-   } 
-   return [new DropboxFile(files[0])];
+   return CloudStorage.contentSelectDialog(logo, readFolder, {path:"", ext: filter})
+      .then(file=>{
+         return [new DropboxFile(file)];
+      });
 };
 
 function setupOpenButton(button) {
@@ -333,7 +336,7 @@ function setupOpenButton(button) {
       button.querySelector('.home').src = logo;
 
       // return handling code.
-      return [pick, save];
+      return [pick, open, save];
    }
    return null;
 };

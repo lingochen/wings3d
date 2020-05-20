@@ -75,13 +75,54 @@ const openOptions = {
    error: function(error) { /* error handler */ }
 };
 
-
-async function saveAs(blob, ext) {
-
+const gSaveOptions = {
+   clientId: 0,
+   action: "query",
+   advanced: {
+      // Request additional parameters when we save the file
+      queryParameters: "select=*,name,size,parentReference",
+      // redirectURI
+      redirectUri: window.location.protocol + "//" + window.location.host  + '/onedrive-redirect.html'
+   },
 };
 
 
-async function save(blob, filename) {
+/**
+ * open filepicker to selected the fileItem to save. Not saving at this time. 
+ */
+async function saveAs(filename) {
+
+   return new Promise((resolve, reject)=>{
+      let options = Object.assign({ // Build the picker options to query for a folder where the file should be saved.
+         success: (selection)=>{
+            // The return here is the folder where we need to upload the item
+            let folder = selection.value[0]; 
+                
+            // Store the access token from the file picker, so we don't need to get a new one
+            gSaveOptions.accessToken = selection.accessToken;
+
+            resolve(new OneDriveFile( { 
+               id: null,
+               name: filename,
+               parentReference: {
+                  driveId: folder.parentReference.driveId,
+                  id: folder.id
+               }
+            }));
+         },
+         error: (e)=>{ reject( new Error("An error occurred while saving the file: " + e, e) ); }
+      }, gSaveOptions);
+
+      // Launch the picker
+      OneDrive.save(options);
+    });
+};
+
+
+/**
+ * given a filename, return a fileItem with the given name.
+ */
+async function save(filename) {
 
 };
 
@@ -93,14 +134,11 @@ async function save(blob, filename) {
 function setupSaveButton(button) {
    if (button) {
       // get clientID from button.
-      const clientID = button.getAttribute('data-app-key');
-      if (clientID) {
-         odStorage.applicationID = clientID;
-      }
+      gSaveOptions.clientId = button.getAttribute('data-app-key');
       button.querySelector('.home').src = LOGO;
 
       // return handling code.
-      return save;
+      return [saveAs, save];
    }
    return null;
 };

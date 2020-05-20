@@ -1379,9 +1379,9 @@ function init() {
    async function open(evt, loader) {
       let cleared = await clearNew();
       if (cleared) {
-         OpenSave.setFilter(loader.extensionFilter());
-         OpenSave.open(evt).then((file, loadAsync)=>{
-            return loader.import(file, loadAsync);
+         OpenSave.setFilter(loader.extension());
+         OpenSave.open(evt).then(([files, loadAsync])=>{
+            return loader.import(files, loadAsync);
           }).then(working=> {
             OpenSave.setWorkingFiles(working);
           }).catch(error=>{
@@ -1390,27 +1390,36 @@ function init() {
       }
    }
    async function merge(evt, loader) {
-      OpenSave.setFilter(loader.extensionFilter());
-      OpenSave.open(evt).then((file, loadAsync)=>{
-         return loader.import(file, loadAsync);
+      OpenSave.setFilter(loader.extension());
+      OpenSave.open(evt).then(([files, loadAsync])=>{
+         return loader.import(files, loadAsync);
        }).catch(error=>{
          console.log(error);
        });
    }
    async function save(evt, saver) {
       if (_environment.world.numberOfCage() > 0) {
-         saver.export(await OpenSave.getSaveFn(evt, flag), getWorld())
-         .then(files=>{
-
-           });
+         OpenSave.setFilter(saver.extension());
+         OpenSave.save(evt).then(([file, saveAsync])=>{
+            return saver.export(getWorld(), file, saveAsync);
+          }).catch(error=>{
+            console.log(error);
+          });
+         
       }
    }
-   async function saveAs(evt, saver) {
+   async function saveAs(evt, saver, isExport=false) {
       if (_environment.world.numberOfCage() > 0) {
-         saver.export(await OpenSave.getSaveFn(evt, flag), getWorld())
-         .then(files=>{
-
-           });
+         OpenSave.setFilter(saver.extension());
+         OpenSave.saveAs(evt).then(([file, saveAsync])=>{
+            return saver.export(getWorld(), file, saveAsync);
+          }).then(workingFiles=>{
+             if (!isExport) { // saved the workingFiles
+               OpenSave.setWorkingFiles(workingFiles);
+             }
+          }).catch(error=>{
+            console.log(error);
+          });
       }
    }
    for (let loadStore of ImportExporter.LOADSTORE) {

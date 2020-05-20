@@ -47,7 +47,7 @@ const folderSVG = 'data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.or
  * @param {string} path to query. 
  */
 let contentDialog;
-async function contentSelectDialog(logo, readFolder, startingPath, saveAs) {
+async function contentSelectDialog(logo, readFolder, fileInfo) {
    return new Promise( function(resolve, reject) {
       if (!contentDialog) {
          const main = document.getElementById('contentPicker');
@@ -67,7 +67,11 @@ async function contentSelectDialog(logo, readFolder, startingPath, saveAs) {
          if (!nameInput) {
             reject("no fileSelected input");
          }
-         contentDialog = {main: main, nav: nav, filePane: filePane, selected: null, nameInput: nameInput, resolve: null, reject: null, logoClass: "",
+         const extLabel = main.querySelector('.fileExt');
+         if (!extLabel) {
+            reject("no fileExt label");
+         }
+         contentDialog = {main: main, nav: nav, filePane: filePane, selected: null, nameInput: nameInput, ext: extLabel, resolve: null, reject: null, logoClass: "",
             updateNav: function(path) {   // 
                const newPath = path.split('/');
                let oldPath = this.nav.querySelectorAll("a");
@@ -109,6 +113,7 @@ async function contentSelectDialog(logo, readFolder, startingPath, saveAs) {
                      const input = label.querySelector('input');
                      input.dataset.filepath = item.path;
                      input.dataset.filename = item.name;
+                     input.fileInfo = item;
                      // get span, before, after.
                      let span = label.querySelectorAll('span');
                      span[0].textContent = item.name;
@@ -142,18 +147,6 @@ async function contentSelectDialog(logo, readFolder, startingPath, saveAs) {
                   updateLabel(labelItems[i], fileItems[i]);
                }
             },
-            handleSubmit: function(evt) {
-               evt.preventDefault();
-               contentDialog.main.style.display = 'none';
-               document.body.removeChild(contentDialog.main.parentNode);
-               document.body.appendChild(contentDialog.main);
-               if (this.submitButton.value === 'ok') {
-                  const filepath = this.nav.dataset.filepath + "/" + this.nameInput.value;
-                  this.resolve([filepath]); //[this.selected.dataset.filepath]);
-               } else { // all other button return [], no file.
-                  this.resolve([]);
-               }
-             },
             handleNav: function(evt) { // click
                evt.stopPropagation();
                let target;
@@ -168,25 +161,58 @@ async function contentSelectDialog(logo, readFolder, startingPath, saveAs) {
                if (evt.target.matches('input')) {
                   if (evt.target.classList.contains('folder')) {  // we click on folder
                      this.updateFolder(evt.target.dataset.filepath);
-                  } else { // click select file. click again to deselected.
+                  } else { // click select file
                      if (this.selected && (this.selected !== evt.target)) {
                         this.selected.parentNode.classList.toggle('selected');
                      }
                      evt.target.parentNode.classList.toggle('selected');
-                     if (evt.target.checked) {
-                        this.selected = evt.target;
-                        this.nameInput.value = this.selected.dataset.filename;
-                     } else { // disabled ok button
-                        this.main.querySelectorAll('[type="submit"][value="ok"]').forEach((ok)=>{ ok.disabled=true; });
-                     }
+                     this.selected = evt.target;
+                     this.nameInput.value = this.selected.dataset.filename;
                   }
                 }
              },
+            handleSaveAs: function(evt) { // user input something, now enabled input
+               evt.stopPropagation();
+               // deselect current selected
+               if (this.selected) {
+                  this.selected.checked = false;
+                  this.selected.parentNode.classList.toggle('selected');
+                  this.selected = null;
+               }
+               // make sure we enabled button
+               this.main.querySelectorAll('[type="submit"][value="ok"]').forEach((ok)=>{ ok.disabled=false; });
+             },
+            handleSubmit: function(evt) {
+               evt.preventDefault();
+               contentDialog.main.style.display = 'none';
+               document.body.removeChild(contentDialog.main.parentNode);
+               document.body.appendChild(contentDialog.main);
+               this.reset();
+               if (this.submitButton.value === 'ok') {
+                  if (this.selected) {
+                     const fileInfo = this.selected.fileInfo;
+                     this.selected = null;
+                     this.resolve(fileInfo);
+                  } else { // it saveAs from nameInput
+                     const name = this.nameInput.value + '.' + this.ext.textContent;
+                     this.resolve({isFolder: false, path: this.nav.dataset.filepath + '/' + name, name: name});
+                  }
+               } else { // all other button return [], no file.
+                  this.reject(new Error("No file selected"));
+               }
+             },
+            reset: function() {
+               while (this.filePane.firstChild) {
+                  this.filePane.removeChild(this.filePane.lastChild);
+               }
+            },
           };
          // eventHandler
          contentDialog.filePane.addEventListener('change', (evt)=>{contentDialog.handleFileItems(evt);});
          contentDialog.nav.addEventListener('click', (evt)=>{contentDialog.handleNav(evt);});
          contentDialog.main.addEventListener('submit', (evt)=>{contentDialog.handleSubmit(evt);});
+         contentDialog.nameInput.addEventListener('change', (evt)=>{contentDialog.handleSaveAs(evt)});
+         contentDialog.nameInput.addEventListener('keypress', (evt)=>{contentDialog.handleSaveAs(evt)});
          for (let button of contentDialog.main.querySelectorAll('[type=submit]')) {
             button.addEventListener('click', (evt)=> {
                evt.stopPropagation();
@@ -194,24 +220,14 @@ async function contentSelectDialog(logo, readFolder, startingPath, saveAs) {
              });
          }
       }
-      // update to current (resolve, reject, readFolder) functions.
+      // update to current (resolve, reject, readFolder) functions.'
       contentDialog.resolve = resolve;
-      contentDialog.reject = reject;
+      contentDialog.reject  = reject;
       contentDialog.readFolder = readFolder;
-      // title (open, or save), nameInput(readonly, or editable)
-      if (typeof(saveAs) === 'undefined') {  // open for no saveAs
-         contentDialog.main.querySelector(".title").textContent = "Open";
-         contentDialog.nameInput.value = "";
-         contentDialog.nameInput.disabled = true;
-      } else { // use the saveAs "string"
-         contentDialog.main.querySelector(".title").textContent = "SaveAs";
-         contentDialog.nameInput.value = saveAs;
-         contentDialog.nameInput.disbled = false;
-      }
       // logo
       contentDialog.nav.querySelector(".home").src = logo;
       // startingPath first
-      contentDialog.updateFolder(startingPath);
+      contentDialog.updateFolder(fileInfo.path);
       // show dialog 
       const overlay = document.createElement("div");
       overlay.classList.add("overlay");
@@ -222,6 +238,17 @@ async function contentSelectDialog(logo, readFolder, startingPath, saveAs) {
       contentDialog.main.style.display = 'block';
       overlay.classList.add("realCenterModal");
       contentDialog.main.reset();
+      // title (open, or save), nameInput(readonly, or editable)
+      if (typeof(fileInfo.name) === 'undefined') {  // open for no saveAs
+         contentDialog.main.querySelector(".title").textContent = "Open";
+         contentDialog.nameInput.value = "";
+         contentDialog.nameInput.disabled = true;
+      } else { // use the saveAs "string"
+         contentDialog.main.querySelector(".title").textContent = "SaveAs";
+         contentDialog.nameInput.value = fileInfo.name;
+         contentDialog.nameInput.disabled = false;
+         contentDialog.ext.textContent = fileInfo.ext;
+      }
       // show
       document.body.appendChild(overlay);
     });
@@ -372,6 +399,14 @@ class CloudFile {
             const decoder = new TextDecoder('utf-8');
             return decoder.decode(dataView);   
          });
+   }
+
+   uploadBlob(blob) {
+      if (blob.type.indexOf('text')) {
+         this.upload(blob, '');
+      } else {
+         this.upload(blob, 'arraybuffer');
+      }
    }
 };
 

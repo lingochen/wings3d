@@ -1029,6 +1029,7 @@
 <!-- Save Load -->
   <form id="cloudSaveDialog" class="dialog cloudForm">
      <h3><span data-i18n>Save As</span> <button type="submit" value="cancel" class="close">&times;</button></h3>
+     <button type="submit" value="ok" id="onedriveSave" data-app-key="6acd185a-104b-4928-b06f-700380de2ce8"><img class="home" alt="OneDrive"><span>Save to OneDrive</span></button>     
      <button type="submit" value="ok" id="dropboxSave" data-app-key="p6wfhvtsa2hd9nh"><img class="home" alt="Dropbox"><span>Save to Dropbox</span></button>
      <button type="submit" value="ok" id="localSave"> <span>Save to Local</span></button>
   </form>
@@ -1044,7 +1045,10 @@
      <ul class="breadcrumb"><li><a><img class="home" alt="Home"></a></li></ul>
      <fieldset class="filePicker">
      </fieldset>
-     <input class="fileSelected" type="text" name="selected" value="">
+     <label>
+       <input class="fileSelected" type="text" name="selected" value="">
+       <span class="fileExt">EXT</span11>
+     </label>
      <div>
        <button type="submit" value="ok">Ok</button>
        <button type="submit" value="cancel">Cancel</button>
