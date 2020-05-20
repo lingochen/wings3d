@@ -89,7 +89,7 @@ class ImportExporter {
       this.vertexCount = 0;
       this.non_manifold = [];
       this.files = [];
-      this.workingFiles = {main: null, linked: new Map};
+      this.workingFiles = {selected: null, linked: new Map};
    }
 
 
