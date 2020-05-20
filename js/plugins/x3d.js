@@ -32,7 +32,7 @@ class X3dImportExporter extends ImportExporter {
     * 
     * @param {*} world - generator for iteration.
     */
-   _export(world) {
+   async _export(world) {
       const parser = new DOMParser();
       const xml = parser.parseFromString(`<?xml version="1.0" encoding="utf-8"?>
          <!DOCTYPE X3D PUBLIC "ISO//Web3D//DTD X3D 3.3//EN" "http://www.web3d.org/specifications/x3d-3.3.dtd">
