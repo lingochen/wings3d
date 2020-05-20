@@ -24,24 +24,23 @@ class ImportExporter {
       }
    }
 
-   async export(saveAsync, world) {
+   async export(world, file, saveAsync) {
       this.saveAsync = saveAsync;
 
       this._reset();    // init before save.
-      const blob = this._export(world);
-      this.workingFiles.main = saveAsync(blob, this.extension());
-
-      //return {blob: blob, filename: filename + '.' + this.extension()};
+      this.workingFiles.selected = file;
+      return this._export(world).then(blob=>{
+         file.uploadBlob(blob);
+         return this.workingFiles;
+      });
    }
 
-   async import(loadAsync) {
+   async import(files, loadAsync) {
       this.loadAsync = loadAsync;
-      
-      return loadAsync().then((files)=>{
-         this._reset();
-         this.files = files;
-         return this._import(files[0]);
-       }).then((objs)=>{  // put into world.
+      this._reset();
+      this.files = files;
+
+      return this._import(files[0]).then((objs)=>{  // put into world.
          if (objs) {
             let cages = [];
             for (let cage of objs.world) {

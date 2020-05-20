@@ -9,7 +9,23 @@ import * as Dropbox from './storages/dropboxstorage.js';
 import * as OneDrive from './storages/onedrivestorage.js';
 
 
+
+
+class LocalFile extends CloudStorage.CloudFile {
+   constructor(fileData) {
+      super(fileData);
+   }
+
+   async upload(blob, _contentType) {
+      const filename = this.file.name + '.' + this.file.ext;
+      window.saveAs(blob, filename);
+   }
+};
+
+
+
 let _workingFiles = {selected:null, linked:new Map};
+let gFilter = "";
 function setWorkingFiles(working) {
    _workingFiles = working;
    _lastSave = _workingSave;  // now we are sure open successfully.
@@ -17,6 +33,7 @@ function setWorkingFiles(working) {
 
 
 function setFilter(extensions) {
+   gFilter = extensions;
    CloudStorage.setOptions({filter: extensions});
 }
 
@@ -40,12 +57,12 @@ function setOptions() {
 
 let cloudSaveDialog;
 let _save = new Map;
-let _lastSave;
-let _workingSave;
+let _lastSave = {};
+let _workingSave = {};
 function reset() {
-   _lastSave = _workingSave = null;
+   _lastSave = _workingSave = {};
 }
-async function save(evt, flag) {
+async function saveAs(_evt) {
    // popup windows 
    if (!cloudSaveDialog) {
       cloudSaveDialog = document.getElementById('cloudSaveDialog');
@@ -59,35 +76,58 @@ async function save(evt, flag) {
       if (button) {
          _save.set(button, Dropbox.setupSaveButton(button));
       }
+      button = document.getElementById('onedriveSave');
+      if (button) {
+         _save.set(button, OneDrive.setupSaveButton(button));
+      }
       // setup local file store
       button = document.getElementById('localSave');
       if (button) {
-         _save.set(button, function(blob, ext, _flag) {
-            window.saveAs(blob, "untitled." + ext);                // local file save, should give user a chance to give a name
-         });
+         _save.set(button, [async function(fileInfo) {   // saveAs
+            
+            return new LocalFile(fileInfo);
+           }, async function(fileInfo) {                 // save
+
+           }]                
+          );
       }
    }
       
-   // now show dialog
-   let save = _lastSave;
-   if ((flag > 0) || !save) {  // check if not saveAs && already saved.
-      const [_form, button] = await UI.execDialog('#cloudSaveDialog', null);
-      if (button.value === 'cancel') {
-         throw new Error('cancel');
-      }
-      save = _save.get(button);  // get the save routine
+   // show save storage selection dialog
+   const [_form, button] = await UI.execDialog('#cloudSaveDialog', null);
+   if (button.value === 'cancel') {
+      throw new Error('cancel');
    }
-   if (flag < 2) {   // export() will not be reused.
-      _lastSave = save;
+   let [saveAsFn, saveFn] = _save.get(button);  // get the save routine
+   _workingSave.saveFn = saveFn;
+   
+   // now get saveAs filename if possible
+   const fileInfo = {path: "", name: "default", ext: gFilter};
+   if (_lastSave.selected) {
+      fileInfo.name = _lastSave.selected.name().split('.').shift;
+      fileInfo.path = _lastSave.selected.path();
    }
-   return (storeObj, ext)=>{save(storeObj, ext, flag)};
+   // run the selected Storage's saveAs function.
+   return saveAsFn(fileInfo).then(file=>{
+      return [file, saveFn];
+    });
+};
+/**
+ * 
+ */
+async function save(_evt) {
+   if (_lastSave.selected) {
+      return [_lastSave.selected, _lastSave.saveFn];
+   } else {
+      return saveAs(_evt);
+   }
 };
  
 
 
 let cloudOpenDialog;
 let _open = new Map;
-async function open(evt) {
+async function open(_evt) {
    // popup windows 
    if (!cloudOpenDialog) {
       cloudOpenDialog = document.getElementById('cloudOpenDialog');
@@ -108,7 +148,7 @@ async function open(evt) {
       // setup local file open
       button = document.getElementById('localOpen');
       if (button) {
-         _open.set(button, [UI.openFileAsync, null]);
+         _open.set(button, [UI.openFileAsync, UI.openLinkedFileAsync, save]);
        }
    }
 
@@ -117,9 +157,11 @@ async function open(evt) {
    if (button.value === "cancel") {
       throw new Error('cancel');
    }
-   const [open, save] = _open.get(button);
-   _workingSave = save;
-   return open;
+   const [pick, open, saveFn] = _open.get(button);
+   _workingSave.saveFn = saveFn;
+   return pick(gFilter).then(files=>{
+      return [files, open];
+    });
 };
 
 
@@ -128,6 +170,6 @@ export {
    setFilter,
    setWorkingFiles,
    save,
-   //saveAs,
+   saveAs,
    open,
 }
