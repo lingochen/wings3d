@@ -314,30 +314,36 @@ async function execDialog(formID, setup) {
 }
 
 
-function openFileAsync(filename) {
+function openFileAsync() {
    return new Promise((resolve, reject)=>{
       openFile((files)=> {
          resolve(files);
-       }, filename);
+       }, (error)=> {
+         reject(error);
+       });
     });
 }
 
 // fileInput helper
-function openFile(fn, fileItem) {
-   if (fileItem) {
-      openLinkedFile(fn, fileItem);
-   } else {
-      const fileInput = document.querySelector('#importFile');    // <input id="importFile" style="display:none;" type='file'>
-      if (fileInput) {
-         fileInput.value = "";   // reset value
-         fileInput.click();
-         fileInput.addEventListener('change', function ok(ev) {
-            fn(Array.from(fileInput.files));    // = ev.target.files;
-         });
-      }
+function openFile(fn, reject) {
+   const fileInput = document.querySelector('#importFile');    // <input id="importFile" style="display:none;" type='file'>
+   if (fileInput) {
+      fileInput.value = "";   // reset value
+      fileInput.click();
+      fileInput.addEventListener('change', function ok(ev) {
+         fn(Array.from(fileInput.files));    // = ev.target.files;
+       });
    }
 };
 
+
+function openLinkedFileAsync(filename) {
+   return new Promise((resolve, reject)=>{
+      openLinkedFile((files)=> {
+         resolve(files);
+       }, filename);
+    });
+}
 const multiFilesForm = {form: undefined, input: undefined, ul: undefined, close: undefined, fileNames: new Map};
 function openLinkedFile(callBack, fileItem) {
    if (!multiFilesForm.form) {   // init
@@ -594,6 +600,7 @@ export {
    execDialog,
    openFileAsync,
    openFile,
+   openLinkedFileAsync,
    showContextMenu,
    showPopup,
    queuePopupMenu,
