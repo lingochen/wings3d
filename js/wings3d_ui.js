@@ -346,7 +346,7 @@ function openLinkedFileAsync(filename) {
     });
 }
 const multiFilesForm = {form: undefined, input: undefined, ul: undefined, close: undefined, fileNames: new Map};
-function openLinkedFile(callBack, fileItem) {
+function openLinkedFile(callBack, filename) {
    if (!multiFilesForm.form) {   // init
       const form = document.forms['importFileListForm'];
       if (form) {
@@ -389,9 +389,9 @@ function openLinkedFile(callBack, fileItem) {
    // add to ul lists.
    if (multiFilesForm.ul) {
       const li = document.createElement('li');
-      li.textContent = fileItem.filename;
+      li.textContent = filename;
       multiFilesForm.ul.appendChild(li);
-      multiFilesForm.fileNames.set(fileItem.filename, [li, callBack]);
+      multiFilesForm.fileNames.set(filename, [li, callBack]);
    }
 }
 
