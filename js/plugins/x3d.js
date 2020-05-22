@@ -18,10 +18,6 @@ class X3dImportExporter extends ImportExporter {
       return "x3d";
    }
 
-   extensionFilter() {
-      return ".x3d";
-   }
-
    _reset() {
       super._reset();
       this.def = new Map;

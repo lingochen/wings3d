@@ -23,20 +23,6 @@ class LocalFile extends CloudStorage.CloudFile {
 };
 
 
-
-let _workingFiles = {selected:null, linked:new Map};
-let gFilter = "";
-function setWorkingFiles(working) {
-   _workingFiles = working;
-   _lastSave = _workingSave;  // now we are sure open successfully.
-};
-
-
-function setFilter(extensions) {
-   gFilter = extensions;
-   CloudStorage.setOptions({filter: extensions});
-}
-
 function setOptions() {
    let options = {
       success: function(file) {  
@@ -60,9 +46,16 @@ let _save = new Map;
 let _lastSave = {};
 let _workingSave = {};
 function reset() {
-   _lastSave = _workingSave = {};
+   _lastSave = {};
+   _workingSave = {};
 }
-async function saveAs(_evt) {
+function setWorkingFiles(working) {
+   _lastSave = Object.assign(_workingSave, working);
+   _workingSave = {};
+};
+
+
+async function saveAs(extension) {
    // popup windows 
    if (!cloudSaveDialog) {
       cloudSaveDialog = document.getElementById('cloudSaveDialog');
@@ -86,7 +79,7 @@ async function saveAs(_evt) {
          _save.set(button, [async function(fileInfo) {   // saveAs
             
             return new LocalFile(fileInfo);
-           }, async function(fileInfo) {                 // save
+           }, async function(filename) {                 // save
 
            }]                
           );
@@ -102,7 +95,7 @@ async function saveAs(_evt) {
    _workingSave.saveFn = saveFn;
    
    // now get saveAs filename if possible
-   const fileInfo = {path: "", name: "default", ext: gFilter};
+   const fileInfo = {path: "", name: "default", ext: extension};
    if (_lastSave.selected) {
       fileInfo.name = _lastSave.selected.name().split('.').shift;
       fileInfo.path = _lastSave.selected.path();
@@ -115,11 +108,11 @@ async function saveAs(_evt) {
 /**
  * 
  */
-async function save(_evt) {
+async function save(extension) {
    if (_lastSave.selected) {
       return [_lastSave.selected, _lastSave.saveFn];
    } else {
-      return saveAs(_evt);
+      return saveAs(extension);
    }
 };
  
@@ -127,7 +120,7 @@ async function save(_evt) {
 
 let cloudOpenDialog;
 let _open = new Map;
-async function open(_evt) {
+async function open(extension) {
    // popup windows 
    if (!cloudOpenDialog) {
       cloudOpenDialog = document.getElementById('cloudOpenDialog');
@@ -149,7 +142,7 @@ async function open(_evt) {
       button = document.getElementById('localOpen');
       if (button) {
          _open.set(button, [UI.openFileAsync, UI.openLinkedFileAsync, save]);
-       }
+      }
    }
 
    // now show dialog
@@ -159,7 +152,7 @@ async function open(_evt) {
    }
    const [pick, open, saveFn] = _open.get(button);
    _workingSave.saveFn = saveFn;
-   return pick(gFilter).then(files=>{
+   return pick(extension).then(files=>{
       return [files, open];
     });
 };
@@ -167,7 +160,6 @@ async function open(_evt) {
 
 export {
    reset,
-   setFilter,
    setWorkingFiles,
    save,
    saveAs,

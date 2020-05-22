@@ -314,9 +314,9 @@ async function execDialog(formID, setup) {
 }
 
 
-function openFileAsync() {
+function openFileAsync(extension) {
    return new Promise((resolve, reject)=>{
-      openFile((files)=> {
+      openFile(extension, (files)=> {
          resolve(files);
        }, (error)=> {
          reject(error);
@@ -325,9 +325,10 @@ function openFileAsync() {
 }
 
 // fileInput helper
-function openFile(fn, reject) {
+function openFile(extension, fn, reject) {
    const fileInput = document.querySelector('#importFile');    // <input id="importFile" style="display:none;" type='file'>
    if (fileInput) {
+      fileInput.accept = extension;
       fileInput.value = "";   // reset value
       fileInput.click();
       fileInput.addEventListener('change', function ok(ev) {

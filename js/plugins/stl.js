@@ -35,10 +35,6 @@ class STLImportExporter extends ImportExporter {
       return "stl";
    }
 
-   extensionFilter() {
-      return ".stl";
-   }
-
    /**
     * 
     * @param {File} file - File Objects
