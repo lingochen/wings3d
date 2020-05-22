@@ -17,10 +17,6 @@ class WavefrontObjImportExporter extends ImportExporter {
       return "obj";
    }
 
-   extensionFilter() {
-      return ".obj";
-   }
-
    _reset() {
       super._reset();
       this.mtl = new Map;

@@ -24,6 +24,10 @@ class ImportExporter {
       }
    }
 
+   extensionFilter() {
+      return '.' + this.extension();
+   }
+
    async export(world, file, saveAsync) {
       this.saveAsync = saveAsync;
 

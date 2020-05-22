@@ -1354,8 +1354,7 @@ function init() {
          const [_form, answer] = await UI.execDialog('#askSaveDialog', null); // no, save, cancel
          let isCancel = answer.value === "cancel";
          if (answer.value === "ok") {  // call save.
-            OpenSave.setFilter(X3d.extensionFilter());
-            await OpenSave.save(evt).then((file, saver)=>{
+            await OpenSave.save(X3d.extensionFilter()).then((file, saver)=>{
                return X3d.export(file, saver, getWorld());
             }).catch(error=>{
                isCancel = true;
@@ -1378,8 +1377,7 @@ function init() {
    async function open(evt, loader) {
       let cleared = await clearNew();
       if (cleared) {
-         OpenSave.setFilter(loader.extension());
-         OpenSave.open(evt).then(([files, loadAsync])=>{
+         OpenSave.open(loader.extensionFilter()).then(([files, loadAsync])=>{
             return loader.import(files, loadAsync);
           }).then(working=> {
             OpenSave.setWorkingFiles(working);
@@ -1389,8 +1387,7 @@ function init() {
       }
    }
    async function merge(evt, loader) {
-      OpenSave.setFilter(loader.extension());
-      OpenSave.open(evt).then(([files, loadAsync])=>{
+      OpenSave.open(loader.extensionFilter()).then(([files, loadAsync])=>{
          return loader.import(files, loadAsync);
        }).catch(error=>{
          alert(error);
@@ -1398,8 +1395,7 @@ function init() {
    }
    async function save(evt, saver) {
       if (_environment.world.numberOfCage() > 0) {
-         OpenSave.setFilter(saver.extension());
-         OpenSave.save(evt).then(([file, saveAsync])=>{
+         OpenSave.save(saver.extensionFilter()).then(([file, saveAsync])=>{
             return saver.export(getWorld(), file, saveAsync);
           }).catch(error=>{
             alert(error);
@@ -1409,8 +1405,7 @@ function init() {
    }
    async function saveAs(evt, saver, isExport=false) {
       if (_environment.world.numberOfCage() > 0) {
-         OpenSave.setFilter(saver.extension());
-         OpenSave.saveAs(evt).then(([file, saveAsync])=>{
+         OpenSave.saveAs(saver.extensionFilter()).then(([file, saveAsync])=>{
             return saver.export(getWorld(), file, saveAsync);
           }).then(workingFiles=>{
              if (!isExport) { // saved the workingFiles
