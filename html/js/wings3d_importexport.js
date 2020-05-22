@@ -43,6 +43,7 @@ class ImportExporter {
       this.loadAsync = loadAsync;
       this._reset();
       this.files = files;
+      this.workingFiles.selected = files[0];
 
       return this._import(files[0]).then((objs)=>{  // put into world.
          if (objs) {
