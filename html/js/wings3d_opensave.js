@@ -16,10 +16,30 @@ class LocalFile extends CloudStorage.CloudFile {
       super(fileData);
    }
 
-   async upload(blob, _contentType) {
-      const filename = this.file.name + '.' + this.file.ext;
-      window.saveAs(blob, filename);
+   async arrayBuffer() {
+      return this.file.arrayBuffer();
    }
+
+   async text() {
+      return this.file.text();
+   }
+
+   async upload(blob, _contentType) {
+      window.saveAs(blob, this.file.name);
+   }
+
+   get path() {
+      return this.file.path;
+   }
+
+   get name() {
+      return this.file.name;
+   }
+};
+
+
+async function localSaveAsync(filename) {   // given a filename
+   return new LocalFile({path: "", name: filename});
 };
 
 
@@ -79,9 +99,7 @@ async function saveAs(extension) {
          _save.set(button, [async function(fileInfo) {   // saveAs
             
             return new LocalFile(fileInfo);
-           }, async function(filename) {                 // save
-
-           }]                
+           }, localSaveAsync]                
           );
       }
    }
@@ -95,10 +113,11 @@ async function saveAs(extension) {
    _workingSave.saveFn = saveFn;
    
    // now get saveAs filename if possible
-   const fileInfo = {path: "", name: "default", ext: extension};
+   const fileInfo = {path: "", name: "untitled" + extension};
    if (_lastSave.selected) {
-      fileInfo.name = _lastSave.selected.name().split('.').shift;
-      fileInfo.path = _lastSave.selected.path();
+      let [name, _ext] = CloudStorage.getFilenameAndExtension(_lastSave.selected.name);
+      fileInfo.name = name + extension;
+      fileInfo.path = _lastSave.selected.path;
    }
    // run the selected Storage's saveAs function.
    return saveAsFn(fileInfo).then(file=>{
@@ -141,7 +160,19 @@ async function open(extension) {
       // setup local file open
       button = document.getElementById('localOpen');
       if (button) {
-         _open.set(button, [UI.openFileAsync, UI.openLinkedFileAsync, save]);
+         _open.set(button, [async (ext)=>{
+                              return UI.openFileAsync(ext)
+                                 .then(files=>{
+                                    return files.map(file=>{return new LocalFile(file);});
+                                 });
+                              }, 
+                            async (filename)=>{
+                               return UI.openLinkedFileAsync(filename)
+                               .then(files=>{
+                                  return files.map(file=>{return new LocalFile(file);});
+                               });
+                              }, 
+                            localSaveAsync]);
       }
    }
 

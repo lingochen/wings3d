@@ -32,6 +32,18 @@ function formatBytes(bytes, decimals = 1) {
    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
 
+function getFilenameAndExtension(pathfilename) {
+   const filenameextension = pathfilename.replace(/^.*[\\\/]/, '');
+   const index = filenameextension.lastIndexOf('.');
+   let ext = "";
+   let filename = filenameextension;
+   if (index >= 0) {
+      filename = filenameextension.substring(0, index);
+      ext = filenameextension.substring(index+1, filenameextension.length);
+   }
+   return [filename, ext];
+};
+
 
 /**
  * simple folder Icon
@@ -419,4 +431,5 @@ export {
    parseToJson,
    contentSelectDialog,
    CloudFile,
+   getFilenameAndExtension,
 }
