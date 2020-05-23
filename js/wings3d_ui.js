@@ -314,7 +314,7 @@ async function execDialog(formID, setup) {
 }
 
 
-function openFileAsync(extension) {
+async function openFileAsync(extension) {
    return new Promise((resolve, reject)=>{
       openFile(extension, (files)=> {
          resolve(files);
