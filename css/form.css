@@ -291,6 +291,9 @@ label.fileItem img {
 label.fileItem img[src] {
   visibility: inherit;
 }
+label.fileItem img[src="#"] {
+  visibility: hidden;
+}
 
 label.fileItem .filename {
   flex-grow: 3;
