@@ -179,7 +179,8 @@ async function contentSelectDialog(logo, readFolder, fileInfo) {
                      }
                      evt.target.parentNode.classList.toggle('selected');
                      this.selected = evt.target;
-                     this.nameInput.value = this.selected.dataset.filename;
+                     const [name, _ext] = getFilenameAndExtension(this.selected.dataset.filename);
+                     this.nameInput.value = name;
                   }
                 }
              },
@@ -205,8 +206,8 @@ async function contentSelectDialog(logo, readFolder, fileInfo) {
                      const fileInfo = this.selected.fileInfo;
                      this.selected = null;
                      this.resolve(fileInfo);
-                  } else { // it saveAs from nameInput
-                     const name = this.nameInput.value + '.' + this.ext.textContent;
+                  } else { // it saveAs from nameInput, needs to create new file
+                     const name = this.nameInput.value + this.ext.textContent;
                      this.resolve({isFolder: false, path: this.nav.dataset.filepath + '/' + name, name: name});
                   }
                } else { // all other button return [], no file.
@@ -250,6 +251,7 @@ async function contentSelectDialog(logo, readFolder, fileInfo) {
       contentDialog.main.style.display = 'block';
       overlay.classList.add("realCenterModal");
       contentDialog.main.reset();
+      contentDialog.ext.textContent = fileInfo.ext;
       // title (open, or save), nameInput(readonly, or editable)
       if (typeof(fileInfo.name) === 'undefined') {  // open for no saveAs
          contentDialog.main.querySelector(".title").textContent = "Open";
@@ -259,7 +261,6 @@ async function contentSelectDialog(logo, readFolder, fileInfo) {
          contentDialog.main.querySelector(".title").textContent = "SaveAs";
          contentDialog.nameInput.value = fileInfo.name;
          contentDialog.nameInput.disabled = false;
-         contentDialog.ext.textContent = fileInfo.ext;
       }
       // show
       document.body.appendChild(overlay);
