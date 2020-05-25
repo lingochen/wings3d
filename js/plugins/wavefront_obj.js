@@ -17,6 +17,10 @@ class WavefrontObjImportExporter extends ImportExporter {
       return "obj";
    }
 
+   fileTypes() {
+      return ['obj'];
+   }
+
    _reset() {
       super._reset();
       this.mtl = new Map;
@@ -205,6 +209,10 @@ class WavefrontMtlImportExporter extends ImportExporter {
 
    extension() {
       return "mtl";
+   }
+
+   fileTypes() {
+      return ['mtl'];
    }
 
    setMaterialCatalog(catalog) {

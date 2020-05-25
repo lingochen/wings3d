@@ -44,6 +44,31 @@ function getFilenameAndExtension(pathfilename) {
    return [filename, ext];
 };
 
+function getFileTypesString(filetypes) {
+   let ret = "";
+   for (let type of filetypes) {
+      if (ret.length > 0) {
+         ret =  ret + ', .' + type;
+      } else {
+         ret = '.' + type;
+      }
+   }
+   return ret;
+};
+
+function getFileTypesRegex(filetypes) {
+   let regex = "";
+   for(let type of filetypes) {
+      if (regex.length > 0) {
+         regex = regex + '|' + type;
+      } else {
+         regex = type;
+      }
+   }
+
+   return new RegExp(`\.(${regex})$`, "i");
+}
+
 
 /**
  * simple folder Icon
@@ -142,7 +167,7 @@ async function contentSelectDialog(logo, readFolder, fileInfo) {
                      }
                      //span[0].setAttribute('data-before', '');  // folder, or not
                };
-               const {fileItems, cursor} = await this.readFolder(newPath);
+               const {fileItems, cursor} = await this.readFolder(newPath, this.fileTypes);
                let labelItems = this.filePane.querySelectorAll("label");
                let addition = fileItems.length - labelItems.length;
                if (addition > 0) {
@@ -179,8 +204,7 @@ async function contentSelectDialog(logo, readFolder, fileInfo) {
                      }
                      evt.target.parentNode.classList.toggle('selected');
                      this.selected = evt.target;
-                     const [name, _ext] = getFilenameAndExtension(this.selected.dataset.filename);
-                     this.nameInput.value = name;
+                     this.nameInput.value = this.selected.dataset.filename;
                   }
                 }
              },
@@ -207,7 +231,7 @@ async function contentSelectDialog(logo, readFolder, fileInfo) {
                      this.selected = null;
                      this.resolve(fileInfo);
                   } else { // it saveAs from nameInput, needs to create new file
-                     const name = this.nameInput.value + this.ext.textContent;
+                     const name = this.nameInput.value;
                      this.resolve({isFolder: false, path: this.nav.dataset.filepath + '/' + name, name: name});
                   }
                } else { // all other button return [], no file.
@@ -240,6 +264,7 @@ async function contentSelectDialog(logo, readFolder, fileInfo) {
       // logo
       contentDialog.nav.querySelector(".home").src = logo;
       // startingPath first
+      contentDialog.fileTypes = fileInfo.ext;
       contentDialog.updateFolder(fileInfo.path);
       // show dialog 
       const overlay = document.createElement("div");
@@ -251,7 +276,7 @@ async function contentSelectDialog(logo, readFolder, fileInfo) {
       contentDialog.main.style.display = 'block';
       overlay.classList.add("realCenterModal");
       contentDialog.main.reset();
-      contentDialog.ext.textContent = fileInfo.ext;
+      contentDialog.ext.textContent = getFileTypesString( fileInfo.ext );
       // title (open, or save), nameInput(readonly, or editable)
       if (typeof(fileInfo.name) === 'undefined') {  // open for no saveAs
          contentDialog.main.querySelector(".title").textContent = "Open";
@@ -433,4 +458,6 @@ export {
    contentSelectDialog,
    CloudFile,
    getFilenameAndExtension,
+   getFileTypesString,
+   getFileTypesRegex,
 }
