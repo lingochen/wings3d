@@ -133,12 +133,12 @@ async function contentSelectDialog(logo, readFolder, fileInfo) {
                         label.querySelector('img').src = '#';
                         input.classList.remove('folder');
                         span[1].textContent = formatBytes(item.size);                  // file size.
-                        span[1].setAttribute('data-after', item.modified.toLocaleString('en-US', {year: '2-digit', month: 'short', day: 'numeric' }));      // modified date
+                        span[2].textContent = item.modified.toLocaleString('en-US', {year: '2-digit', month: 'short', day: 'numeric' });      // modified date
                      } else {
                         label.querySelector('img').src = folderSVG;
                         input.classList.add('folder');
                         span[1].textContent = "";
-                        span[1].setAttribute('data-after', "");
+                        span[2].textContent = "";
                      }
                      //span[0].setAttribute('data-before', '');  // folder, or not
                };
@@ -146,7 +146,7 @@ async function contentSelectDialog(logo, readFolder, fileInfo) {
                let labelItems = this.filePane.querySelectorAll("label");
                let addition = fileItems.length - labelItems.length;
                if (addition > 0) {
-                  const aFrag = document.createRange().createContextualFragment('<label class="fileItem"><input type="radio" name="selectFile"><img><span class="filename"></span><span class="sizeDate"></span></label>'.repeat(addition));
+                  const aFrag = document.createRange().createContextualFragment('<label class="fileItem"><input type="radio" name="selectFile"><img><span class="filename"></span><span class="size"></span><span class="date"></span></label>'.repeat(addition));
                   this.filePane.appendChild(aFrag);
                   labelItems = this.filePane.querySelectorAll("label");
                } else if (addition < 0) {
