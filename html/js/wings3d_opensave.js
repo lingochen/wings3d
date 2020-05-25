@@ -139,7 +139,7 @@ async function save(extension) {
 
 let cloudOpenDialog;
 let _open = new Map;
-async function open(extension) {
+async function open(fileTypes) {
    // popup windows 
    if (!cloudOpenDialog) {
       cloudOpenDialog = document.getElementById('cloudOpenDialog');
@@ -160,8 +160,8 @@ async function open(extension) {
       // setup local file open
       button = document.getElementById('localOpen');
       if (button) {
-         _open.set(button, [async (ext)=>{
-                              return UI.openFileAsync(ext)
+         _open.set(button, [async (fileTypes)=>{
+                              return UI.openFileAsync(CloudStorage.getFileTypesString(fileTypes))
                                  .then(files=>{
                                     return files.map(file=>{return new LocalFile(file);});
                                  });
@@ -183,7 +183,7 @@ async function open(extension) {
    }
    const [pick, open, saveFn] = _open.get(button);
    _workingSave.saveFn = saveFn;
-   return pick(extension).then(files=>{
+   return pick(fileTypes).then(files=>{
       return [files, open];
     });
 };

@@ -46,8 +46,8 @@ class GLTFImportExporter extends ImportExporter {
       return "gltf";
    }
 
-   extensionFilter() {
-      return ".gltf,.glb";
+   fileTypes() {
+      return ['gltf', 'glb'];
    }
 
    _reset() {

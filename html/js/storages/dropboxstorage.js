@@ -153,9 +153,10 @@ function getAuth() {
 /** 
  * Reads the contents of a folder in the user's Dropbox.  Fails if the given path does not point to a folder.
  * @params {string} - path as in '/test/dir/etc'
+ * @params {array} - file types string. ie ['gltf', 'glb']
  * The data sent back is an array of objects with  attributes,
  */
-async function readFolder( path ) {
+async function readFolder(path, fileTypes) {
    const accessToken = await getAuth();
 
    const ajaxOptions = {
@@ -174,7 +175,8 @@ async function readFolder( path ) {
                                  }),
          };
 
-
+   const filter = CloudStorage.getFileTypesRegex(fileTypes);
+   console.log(filter);
    const fileItems = await CloudStorage.ezAjax('https://api.dropboxapi.com/2/files/list_folder', ajaxOptions)
                   .then(res => CloudStorage.parseToJson(res))
                   .then(([_res, data]) => {
@@ -184,8 +186,10 @@ async function readFolder( path ) {
                            folders.push( {isFile: false, id: entry.id, name: entry.name, path: entry.path_display} );   // dropbox path is case insensative
                         } else {
                            let date = new Date(entry.client_modified);
-                           files.push( {isFile: true, id: entry.id, name: entry.name, path: entry.path_display,
-                                        modified: date, size: entry.size} );
+                           if (entry.name.match(filter)) {
+                              files.push( {isFile: true, id: entry.id, name: entry.name, path: entry.path_display,
+                                          modified: date, size: entry.size} );
+                           }
                         }
                      }
                      let cursor;
@@ -320,10 +324,10 @@ async function open(fileItem) {
     cancel: function() {},
 };
  */
-async function pick(filter) {
+async function pick(fileTypes) {
    // now ask picker to selected a file.
    await getAuth();
-   return CloudStorage.contentSelectDialog(logo, readFolder, {path:"", ext: filter})
+   return CloudStorage.contentSelectDialog(logo, readFolder, {path:"", ext: fileTypes})
       .then(file=>{
          return [new DropboxFile(file)];
       });

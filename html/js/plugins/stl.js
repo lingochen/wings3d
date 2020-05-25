@@ -35,6 +35,10 @@ class STLImportExporter extends ImportExporter {
       return "stl";
    }
 
+   fileTypes() {
+      return ['stl'];
+   }
+
    /**
     * 
     * @param {File} file - File Objects
