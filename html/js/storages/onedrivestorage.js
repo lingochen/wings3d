@@ -170,11 +170,7 @@ function open(fileItem) {
 /**
  * let user select file, or supply filename
  */
-function pick(fileItem) {
-   if (fileItem) {
-      return open(fileItem);
-   }
-
+function pick(ext) {
    // get options.
    //openOptions.advanced.filter = CloudStorage.getOptions().filter;
 
