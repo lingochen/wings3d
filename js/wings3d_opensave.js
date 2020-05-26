@@ -113,10 +113,10 @@ async function saveAs(extension) {
    _workingSave.saveFn = saveFn;
    
    // now get saveAs filename if possible
-   const fileInfo = {path: "", name: "untitled" + extension};
+   const fileInfo = {path: "", name: "untitled" + '.' + extension, ext: [extension]};
    if (_lastSave.selected) {
       let [name, _ext] = CloudStorage.getFilenameAndExtension(_lastSave.selected.name);
-      fileInfo.name = name + extension;
+      fileInfo.name = name + '.' + extension;
       fileInfo.path = _lastSave.selected.path;
    }
    // run the selected Storage's saveAs function.
