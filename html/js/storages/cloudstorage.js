@@ -25,7 +25,7 @@ function formatBytes(bytes, decimals = 1) {
 
    const k = 1024;
    const dm = decimals < 0 ? 0 : decimals;
-   const sizes = ['bytes', 'kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+   const sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
 
    const i = Math.floor(Math.log(bytes) / Math.log(k));
 
@@ -230,16 +230,21 @@ async function contentSelectDialog(logo, readFolder, fileInfo) {
                      const fileInfo = this.selected.fileInfo;
                      this.selected = null;
                      this.resolve(fileInfo);
-                  } else { // it saveAs from nameInput, needs to create new file
-                     const name = this.nameInput.value;
-                     this.resolve({isFolder: false, path: this.nav.dataset.filepath + '/' + name, name: name});
+                  } else { // it saveAs from nameInput's value
+                     let [name, ext] = getFilenameAndExtension(this.nameInput.value);
+                     if (name.length > 0) {
+                        if (ext.length === 0) {
+                           ext = this.fileTypes[0];
+                        }
+                        const filename = name + '.' + ext;
+                        this.resolve({isFolder: false, path: this.nav.dataset.filepath + '/' + filename, name: filename});
+                     }
                   }
-               } else { // all other button return [], no file.
-                  this.reject(new Error("No file selected"));
-               }
+               } 
+               this.reject(new Error("No file selected"));
              },
             reset: function() {
-               while (this.filePane.firstChild) {
+               while (this.filePane.firstChild) {  // clean pane
                   this.filePane.removeChild(this.filePane.lastChild);
                }
             },
@@ -305,11 +310,11 @@ const defaults = {
 	method: 'GET',
    username: null,
 	password: null,
-	data: null,
+   data: null,
 	headers: {
       'Content-Type': 'application/x-www-form-urlencoded'
    },
-   responseType: 'arraybuffer',
+   responseType: '',
    timeout: null,
    withCredentials: false
 };
@@ -439,11 +444,11 @@ class CloudFile {
          });
    }
 
-   uploadBlob(blob) {
-      if (blob.type.indexOf('text')) {
-         this.upload(blob, '');
+   async uploadBlob(blob) {
+      if (blob.type.indexOf('text') >= 0) {
+         this.upload(blob, 'text/plain; charset=dropbox-cor s-hack');
       } else {
-         this.upload(blob, 'arraybuffer');
+         this.upload(blob, 'application/octet-stream');
       }
    }
 };

@@ -38,7 +38,7 @@ class DropboxFile extends CloudStorage.CloudFile {
          });
    }
 
-   async upload(data, contentType) {
+   async upload(data, _contentType) {
       const options = CloudStorage.getOptions();
       const accessToken = await getAuth();
    
@@ -46,7 +46,7 @@ class DropboxFile extends CloudStorage.CloudFile {
          method: 'POST',
          headers: {
             Authorization: 'Bearer ' + accessToken,
-            'Content-Type': contentType, //'application/octet-stream',
+            'Content-Type': 'application/octet-stream',
             'Dropbox-API-Arg': JSON.stringify({
                path: this.file.path,                   // path : '/' + fullPath.join( '/' ),
                mode: 'overwrite',                     // 'overwrite', shorthand for {'.tag': 'add' };
@@ -61,10 +61,7 @@ class DropboxFile extends CloudStorage.CloudFile {
          .then( result => {
             // save result
             let info = JSON.parse(result.xhr.response); //.getResponseHeader('Dropbox-API-Result'));
-            if (saveAs < 2) {    // update only if not export
-               openFileInfo = info;
-            }
-            // return filename
+            this.file = info; // update
             return info.name;
          }); 
    }
@@ -84,7 +81,6 @@ class DropboxFile extends CloudStorage.CloudFile {
 
 let clientID;
 let dropboxToken;
-let openFileInfo;     // saved, or opened fileInfo from last called
 /*
  * Opens a new tab/window in the browser showing the Dropbox login page for
  * the app.  If the user logs in successfully, then the success callback will be called, and all
