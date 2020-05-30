@@ -70,6 +70,73 @@ function getFileTypesRegex(filetypes) {
 }
 
 
+function isExpired(expireTime) {
+   const expired = new Date(expireTime);
+   return (expired < new Date);
+};
+
+
+function getExpireTime(elapseSeconds) {
+   const t = new Date;
+   t.setSeconds(t.getSeconds() + elapseSeconds);
+   return t;
+};
+
+
+
+/*
+ * Opens a new tab/window in the browser showing the XXXX login page(popupFn) for
+ * the app.  If the user logs in successfully, then the success callback will be called, and all
+ * requisite data stored inside this object for use by the other functions
+ * defined below to access the user's Dropbox.  Upon successful login, the
+ * login window is also closed, bringing the user back to the page in which
+ * this script was run (your app).
+ *
+ * Note that this requires a "redirect.html"`page to be present as defined in the 
+ * "dropbox/onedrive/yandex" system.
+ */
+function getAuth(popupWin, authUrl) {
+   return new Promise(function (resolve, reject) {
+      const loginWin = popupWin();
+      if (!loginWin) {
+         reject( new Error("open window failed, popup blocked?") );
+      } else {
+         let eventHandler;
+         loginWin.focus();
+         loginWin.location.href = authUrl(); // switch to oauth2 url. Cannot popup directly to oauth2 url (blocked popup) in promise even inside click event.
+         // wait for accessToken
+         window.addEventListener('message', eventHandler = function(evt) {
+            const message = evt.data;
+            if ( !( message instanceof Array ) ) {
+               return;
+            }
+            const command = message.shift();
+            if ( command === 'oauth2Login' ) {
+               loginWin.close();
+               const accountData = message.shift();
+               if ( accountData.access_token ) {
+                  resolve(accountData);
+               } else { // no authorization.
+                  reject( new Error(accountData) );
+               }
+               window.removeEventListener('message', eventHandler);   // cleanup
+            }
+         });
+
+         // check for closed Window without authorization. (unload event don't work after redirect)
+         const timer = setInterval(function() { 
+            if (loginWin.closed) {
+               clearInterval(timer);
+               window.removeEventListener('message', eventHandler);   // now cleanup
+               reject( new Error("Authorization failed") );
+            }
+         }, 1000);
+      }
+   });
+}
+
+
+
 /**
  * simple folder Icon
  */
@@ -237,7 +304,7 @@ async function contentSelectDialog(logo, readFolder, fileInfo) {
                            ext = this.fileTypes[0];
                         }
                         const filename = name + '.' + ext;
-                        this.resolve({isFolder: false, path: this.nav.dataset.filepath + '/' + filename, name: filename});
+                        this.resolve({isFile: true, path: this.nav.dataset.filepath + '/' + filename, name: filename});
                      }
                   }
                } 
@@ -460,9 +527,12 @@ export {
    getOptions,
    ezAjax,
    parseToJson,
+   getAuth,
    contentSelectDialog,
    CloudFile,
    getFilenameAndExtension,
    getFileTypesString,
    getFileTypesRegex,
+   isExpired,
+   getExpireTime,
 }

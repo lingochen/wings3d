@@ -1,6 +1,7 @@
 /** 
- * https://hawramani.com/how-to-get-a-demo-of-the-onedrive-file-picker-javascript-sdk-to-work-on-a-local-development-server/
- * setup local server.
+ * https://github.com/OneDrive/onedrive-explorer-js
+ * rewrite. giveup filepicker since it useless for saving.
+ * follow dropboxstorage example, auth() then use cloudstorage's filepicker to open/save.
  * 
  * https://github.com/OneDrive/onedrive-texteditor-js
  * show us how to use FilePicker, get accessToken, and use REST api 
@@ -16,37 +17,155 @@ class OneDriveFile extends CloudStorage.CloudFile {
    }
 
    download() {
+      const options = {
+         responseType: "arraybuffer",
+      };
       // Retrieve the contents of the file and load it into our editor
-      const downloadLink = this.file["@microsoft.graph.downloadUrl"];
-      return CloudStorage.ezAjax(downloadLink);
+      let downloadLink = this.file["@microsoft.graph.downloadUrl"];
+      return CloudStorage.ezAjax(downloadLink, options);
    }
 
    upload(reponseType, data) {
 
    }
 
-   get path() {
-      return this.file.parentReference.path;
+   get isFile() {
+      return (this.file.folder === undefined);
+   }
+
+   get modified() {
+      return new Date(this.file.lastModifiedDateTime);
+   }
+
+   get name() {
+      return this.file.name;
+   }
+
+   static rootPath(fileData) {
+      let path = `${fileData.parentReference.path}/${fileData.name}`;
+      return path.split(":").pop(); // full path, but without the "/drive/root:" part.
+   }
+
+   get path() {   // full path
+      return OneDriveFile.rootPath(this.file);
+   }
+
+   get size() {
+      return this.file.size;
    }
 };
 
 
-function saveAuth(files) {
-   if (!window.localStorage.getItem(ACCESSTOKEN)) {
-      window.localStorage.setItem(ACCESSTOKEN, files.accessToken);
-      window.localStorage.setItem(APIENDPOINT, files.apiEndpoint);
+
+
+const gAppInfo = {
+   "clientId": "",
+   "redirectUri": window.location.protocol + "//" + window.location.host  + '/onedrive-redirect.html',
+   "scopes": "user.read files.readWrite files.readWrite.all", // sites.readWrite.all",
+   "authServiceUri": "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
+   "graphApiRoot": "https://graph.microsoft.com/v1.0/",
+ };
+function getAuthUrl() {
+   // get auth url   
+   let url =
+     gAppInfo.authServiceUri +
+     "?client_id=" + gAppInfo.clientId +
+     "&response_type=token" +
+     "&redirect_uri=" + encodeURIComponent(gAppInfo.redirectUri);
+ 
+   if (gAppInfo.scopes)
+      url = url + "&scope=" + encodeURIComponent(gAppInfo.scopes);
+   if (gAppInfo.resourceUri)
+      url = url + "&resource=" + encodeURIComponent(gAppInfo.resourceUri);
+
+   return url;
+}
+function popup() {
+   // setup window
+   let width = 525,
+      height = 525,
+      screenX = window.screenX,
+      screenY = window.screenY,
+      outerWidth = window.outerWidth,
+      outerHeight = window.outerHeight;
+
+   let left = screenX + Math.max(outerWidth - width, 0) / 2;
+   let top = screenY + Math.max(outerHeight - height, 0) / 2;
+
+   let features = ["width=" + width,"height=" + height,"top=" + top,"left=" + left,
+               "alwaysRaised=1","status=no","resizable=yes","toolbar=no","menubar=no","scrollbars=yes"];
+   
+   return window.open("", "_blank", features.join(","));
+ };
+
+
+async function getAuth() {
+   let account;
+   if (account = window.localStorage.getItem(ACCESSTOKEN)) {   // check if already in localStorage.
+      account = JSON.parse(account);
+      if (!CloudStorage.isExpired(account.expires_in)) {
+         return account;
+      }
    }
+   // otherwise get new token
+   return CloudStorage.getAuth(popup, getAuthUrl)
+          .then(account=>{ // expire_in is second, adds up
+               account.expires_in = CloudStorage.getExpireTime(account.expires_in);
+               window.localStorage.setItem(ACCESSTOKEN, JSON.stringify(account));
+               return Promise.resolve(account);
+          });
 };
 
-function getAuth(advanced) {
-   const accessToken = window.localStorage.getItem(ACCESSTOKEN);
-   if (accessToken) {
-      advanced.accessToken = accessToken;
-      advanced.apiEndpoint = window.localStorage.getItem(APIENDPOINT);
-      return true;
+
+/** 
+ * Reads the contents of a folder in the user's Dropbox.  Fails if the given path does not point to a folder.
+ * @params {string} - path as in '/test/dir/etc'
+ * @params {array} - file types string. ie ['gltf', 'glb']
+ * The data sent back is an array of objects with  attributes,
+ */
+async function readFolder(path, fileTypes) {
+   const account = await getAuth();
+
+   const ajaxOptions = {
+           method: 'GET',
+           responseType: 'json',
+           headers: {
+              Authorization: `Bearer ${account.access_token}`,
+              'Content-Type': "application/json;odata.metadata=none",
+           },
+           data: {},
+         };
+
+   // build readFolder url
+   let url = gAppInfo.graphApiRoot + "me/drive/root/children";
+   if (path) {
+      url =  gAppInfo.graphApiRoot + "me/drive/root:" + path + ":/children";
    }
-   return false;
-};
+
+   const filter = CloudStorage.getFileTypesRegex(fileTypes);
+   let query = "";
+
+   const fileItems = await CloudStorage.ezAjax(url, ajaxOptions)
+                  .then(res => CloudStorage.parseToJson(res))
+                  .then(([_res, data]) => {
+                     const folders = [], files = [];
+                     for (let entry of data.value) {
+                        if (entry.folder) {
+                           folders.push( new OneDriveFile(entry) );
+                        } else {
+                           files.push( new OneDriveFile(entry) );
+                        }
+                     }
+                     let cursor;
+                     /*if (data.entries.has_more) {
+                        cursor = data.entries.cursor;
+                     } */
+                     // order by folders then files. continuation cursor if needed.
+                     return {fileItems: folders.concat(files), cursor: cursor};
+                   });
+   return fileItems;
+}
+
 
 
 /**
@@ -54,7 +173,6 @@ function getAuth(advanced) {
  */
 const LOGO = 'data:image/svg+xml;charset=UTF-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1030.04 659.922"><g><path fill="%230364B8" d="M622.292,445.338l212.613-203.327C790.741,69.804,615.338-33.996,443.13,10.168   C365.58,30.056,298.224,78.13,254.209,145.005C257.5,144.922,622.292,445.338,622.292,445.338z"/><path fill="%230078D4" d="M392.776,183.283l-0.01,0.035c-40.626-25.162-87.479-38.462-135.267-38.397   c-1.104,0-2.189,0.07-3.291,0.083C112.064,146.765-1.74,263.423,0.02,405.567c0.638,51.562,16.749,101.743,46.244,144.04   l318.528-39.894l244.209-196.915L392.776,183.283z"/><path fill="%231490DF" d="M834.905,242.012c-4.674-0.312-9.371-0.528-14.123-0.528c-28.523-0.028-56.749,5.798-82.93,17.117   l-0.006-0.022l-128.844,54.22l142.041,175.456l253.934,61.728c54.799-101.732,16.752-228.625-84.98-283.424   c-26.287-14.16-55.301-22.529-85.091-24.546V242.012z"/><path fill="%2328A8EA" d="M46.264,549.607C94.359,618.756,173.27,659.966,257.5,659.922h563.281   c76.946,0.022,147.691-42.202,184.195-109.937L609.001,312.798L46.264,549.607z"/></g></svg>';
 const ACCESSTOKEN="onedriveAccessToken";
-const APIENDPOINT="onedriveApiEndpoint";
 
 const openOptions = {
    clientId: 0,            // application ID
@@ -78,9 +196,10 @@ const openOptions = {
 const gSaveOptions = {
    clientId: 0,
    action: "query",
+
    advanced: {
       // Request additional parameters when we save the file
-      queryParameters: "select=*,name,size,parentReference",
+      queryParameters: "select=id,name,size,parentReference",
       // redirectURI
       redirectUri: window.location.protocol + "//" + window.location.host  + '/onedrive-redirect.html'
    },
@@ -135,6 +254,7 @@ function setupSaveButton(button) {
    if (button) {
       // get clientID from button.
       gSaveOptions.clientId = button.getAttribute('data-app-key');
+      gAppInfo.clientId = gSaveOptions.clientId;
       button.querySelector('.home').src = LOGO;
 
       // return handling code.
@@ -162,7 +282,7 @@ function open(fileItem) {
    };
    return CloudStorage.ezAjax(url, options)
          .then(res=>{
-            return [new OneDriveFile(res.data)];
+            return [res.data];
          });
 }
 
@@ -170,25 +290,16 @@ function open(fileItem) {
 /**
  * let user select file, or supply filename
  */
-function pick(ext) {
-   // get options.
-   //openOptions.advanced.filter = CloudStorage.getOptions().filter;
+async function pick(fileTypes) {
+   // now ask picker to selected a file.
+   return getAuth()
+      .then(account=>{
+         return CloudStorage.contentSelectDialog(LOGO, readFolder, {path:"", ext: fileTypes})
+            .then(file=>{
+               return [file];
+            });
+      });
 
-   // convert to object
-   return new Promise((resolve, reject)=> {
-      openOptions.success = (files)=>{
-         saveAuth(files);
-         resolve(files.value.map(fileValue=>{return new OneDriveFile(fileValue);}));
-      };
-      openOptions.cancel = ()=> {
-         // could we get auth token?
-         reject("cancel");
-      }
-      openOptions.error = (error)=> {
-         reject(error);
-      }
-      OneDrive.open(openOptions);
-   });
 };
 
 
@@ -197,10 +308,11 @@ function setupOpenButton(button) {
    if (button) {
       // get clientID from button.
       openOptions.clientId = button.getAttribute('data-app-key');
+      gAppInfo.clientId = openOptions.clientId;
       button.querySelector('.home').src = LOGO;
-      getAuth(openOptions.advanced);
+      //getAuth(openOptions.advanced);
       // return handling code.
-      return [pick, null];
+      return [pick, open, save];
    }
    return null;
 };
