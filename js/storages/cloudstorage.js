@@ -72,13 +72,14 @@ function getFileTypesRegex(filetypes) {
 
 function isExpired(expireTime) {
    const expired = new Date(expireTime);
-   return (expired < new Date);
+   const current = new Date;
+   return (expired < current);
 };
 
 
 function getExpireTime(elapseSeconds) {
    const t = new Date;
-   t.setSeconds(t.getSeconds() + elapseSeconds);
+   t.setTime(t.getTime() + elapseSeconds * 1000);
    return t;
 };
 
