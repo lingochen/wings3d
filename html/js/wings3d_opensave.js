@@ -28,8 +28,8 @@ class LocalFile extends CloudStorage.CloudFile {
       window.saveAs(blob, this.file.name);
    }
 
-   get path() {
-      return this.file.path;
+   get directory() { // we cannot access local file's directory info.
+      return '/';
    }
 
    get name() {
