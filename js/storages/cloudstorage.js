@@ -178,6 +178,7 @@ async function contentSelectDialog(logo, readFolder, fileInfo) {
          }
          contentDialog = {main: main, nav: nav, filePane: filePane, selected: null, nameInput: nameInput, ext: extLabel, resolve: null, reject: null, logoClass: "",
             updateNav: function(path) {   // 
+               setOptions({currentDirectory: path});
                const newPath = path.split('/');
                let oldPath = this.nav.querySelectorAll("a");
                let addition = newPath.length - oldPath.length;
@@ -518,6 +519,10 @@ class CloudFile {
       } else {
          this.upload(blob, 'application/octet-stream');
       }
+   }
+
+   get path() {
+      return `${this.directory}/${this.name}`;
    }
 };
 

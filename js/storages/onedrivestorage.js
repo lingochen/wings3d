@@ -43,11 +43,11 @@ class OneDriveFile extends CloudStorage.CloudFile {
 
    static rootPath(fileData) {
       let path = `${fileData.parentReference.path}/${fileData.name}`;
-      return path.split(":").pop(); // full path, but without the "/drive/root:" part.
+      return path.split(":").pop(); 
    }
 
-   get path() {   // full path
-      return OneDriveFile.rootPath(this.file);
+   get directory() {
+      return this.file.parentReference.path.split(":").pop();  // full directory, but without the "/drive/root:" part.
    }
 
    get size() {
@@ -124,45 +124,48 @@ async function getAuth() {
  * The data sent back is an array of objects with  attributes,
  */
 async function readFolder(path, fileTypes) {
-   const account = await getAuth();
+   return getAuth()
+      .then(account=> {
+         const ajaxOptions = {
+            method: 'GET',
+            responseType: 'json',
+            headers: {
+               Authorization: `Bearer ${account.access_token}`,
+               'Content-Type': "application/json;odata.metadata=none",
+            },
+            data: {},
+          };
+ 
+         // build readFolder url
+         let url = gAppInfo.graphApiRoot + "me/drive/root/children";
+         if (path) {
+            url =  gAppInfo.graphApiRoot + "me/drive/root:" + path + ":/children";
+         }
+ 
+         const filter = CloudStorage.getFileTypesRegex(fileTypes);
+         let query = "";
+ 
+         return CloudStorage.ezAjax(url, ajaxOptions)
+            .then(res => CloudStorage.parseToJson(res))
+            .then(([_res, data]) => {
+               const folders = [], files = [];
+               for (let entry of data.value) {
+                  if (entry.folder) {
+                     folders.push( new OneDriveFile(entry) );
+                  } else {
+                     files.push( new OneDriveFile(entry) );
+                  }
+               }
+               let cursor;
+               /*if (data.entries.has_more) {
+                  cursor = data.entries.cursor;
+               } */
+               // order by folders then files. continuation cursor if needed.
+               return {fileItems: folders.concat(files), cursor: cursor};
+            });
+       });
 
-   const ajaxOptions = {
-           method: 'GET',
-           responseType: 'json',
-           headers: {
-              Authorization: `Bearer ${account.access_token}`,
-              'Content-Type': "application/json;odata.metadata=none",
-           },
-           data: {},
-         };
 
-   // build readFolder url
-   let url = gAppInfo.graphApiRoot + "me/drive/root/children";
-   if (path) {
-      url =  gAppInfo.graphApiRoot + "me/drive/root:" + path + ":/children";
-   }
-
-   const filter = CloudStorage.getFileTypesRegex(fileTypes);
-   let query = "";
-
-   const fileItems = await CloudStorage.ezAjax(url, ajaxOptions)
-                  .then(res => CloudStorage.parseToJson(res))
-                  .then(([_res, data]) => {
-                     const folders = [], files = [];
-                     for (let entry of data.value) {
-                        if (entry.folder) {
-                           folders.push( new OneDriveFile(entry) );
-                        } else {
-                           files.push( new OneDriveFile(entry) );
-                        }
-                     }
-                     let cursor;
-                     /*if (data.entries.has_more) {
-                        cursor = data.entries.cursor;
-                     } */
-                     // order by folders then files. continuation cursor if needed.
-                     return {fileItems: folders.concat(files), cursor: cursor};
-                   });
    return fileItems;
 }
 
@@ -265,25 +268,28 @@ function setupSaveButton(button) {
 
 
 /**
- * given fileItem {selected: , filename: }
- * return promise that return CloudFile. the promise use graph api to access file directly.
+ * given filename (including path).
+ * return promise that return OneDriveFile. the promise use graph api to access file directly.
  */
-function open(fileItem) {
-   const path = fileItem.selected.path;  // /drive/root:/path
-   
-   const apiEndPoint = window.localStorage.getItem(APIENDPOINT);
-   const url = `${apiEndPoint}/me/${path}/${fileItem.filename}`;   // /me/drive/root:/path/to/file
-   //const url = `${apiEndPoint}/me/drive/items/${id}:/${fileItem.filename}`;  // /me/drive/items:/{item-id}:/path/to/file
-
-   const options = {
-      method: "GET",
-      responseType: 'json',
-      headers: { Authorization: "Bearer " + window.localStorage.getItem(ACCESSTOKEN) }, 
-   };
-   return CloudStorage.ezAjax(url, options)
-         .then(res=>{
-            return [res.data];
-         });
+function open(filename) {
+   return getAuth()
+      .then(account=> {
+         if (filename && filename[0] !== '/') {
+            const dir = CloudStorage.getOptions().currentDirectory;
+            filename = `${dir}/${filename}`;
+         }
+         const url = `${gAppInfo.graphApiRoot}/me/drive/root:${filename}`; // /me/drive/root:/path/to/file
+      
+         const options = {
+            method: "GET",
+            responseType: 'json',
+            headers: { Authorization: "Bearer " + account.access_token }, 
+         };
+         return CloudStorage.ezAjax(url, options)
+               .then(res=>{
+                  return [new OneDriveFile(res.data)];
+               });
+      });
 }
 
 
@@ -293,7 +299,7 @@ function open(fileItem) {
 async function pick(fileTypes) {
    // now ask picker to selected a file.
    return getAuth()
-      .then(account=>{
+      .then(_account=>{
          return CloudStorage.contentSelectDialog(LOGO, readFolder, {path:"", ext: fileTypes})
             .then(file=>{
                return [file];
