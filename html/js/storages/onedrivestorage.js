@@ -142,9 +142,9 @@ async function readFolder(path, fileTypes) {
             url =  gAppInfo.graphApiRoot + "me/drive/root:" + path + ":/children";
          }
  
-         const filter = CloudStorage.getFileTypesRegex(fileTypes);
-         let query = "";
+         //let query = `?$filter=name eq '.${fileTypes}'`;
  
+         const filter = CloudStorage.getFileTypesRegex(fileTypes);
          return CloudStorage.ezAjax(url, ajaxOptions)
             .then(res => CloudStorage.parseToJson(res))
             .then(([_res, data]) => {
@@ -153,7 +153,9 @@ async function readFolder(path, fileTypes) {
                   if (entry.folder) {
                      folders.push( new OneDriveFile(entry) );
                   } else {
-                     files.push( new OneDriveFile(entry) );
+                     if (entry.name.match(filter)) {  // todo: how to get graph api to filter filename's extension?
+                        files.push( new OneDriveFile(entry) );
+                     }
                   }
                }
                let cursor;
@@ -163,10 +165,7 @@ async function readFolder(path, fileTypes) {
                // order by folders then files. continuation cursor if needed.
                return {fileItems: folders.concat(files), cursor: cursor};
             });
-       });
-
-
-   return fileItems;
+      });
 }
 
 
