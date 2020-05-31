@@ -17,9 +17,6 @@ to the originating window/tab.
 <html>
     <head>
       <meta charset="utf-8"/>
-        <!-- Import the Dropbox SDK. -->
-        <script type="text/javascript" src='https://unpkg.com/dropbox/dist/Dropbox-sdk.min.js'>
-        </script>
         <!--
         Define the scripts that take all of the actions described at the top
         of this document.  Note that most of this code is inspired by or
@@ -30,30 +27,6 @@ to the originating window/tab.
         https://github.com/dropbox/dropbox-sdk-js/blob/master/examples/javascript/auth/index.html
         -->
         <script>
-            /*
-             * Listen for the message from the originating window/tab that
-             * gives us the client ID of the app that wants access to the
-             * user's Dropbox.  Upon receiving such a message, load the
-             * Dropbox login page for that app.
-             *
-             * Note that we ask the Dropbox login page to redirect, after
-             * login, to THIS same URL.  So you will need, in the settings
-             * for your Dropbox app, to premit the following URL as
-             * acceptable for redirection.
-             *     http://your.server.name/path/to/dropbox-login.html
-             * If you are testing on localhost, ensure that you're testing
-             * via a web server (such as Python's SimpleHTTPServer) rather
-             * than with file:// URLs, and Dropbox will let you add the
-             * following URL to your app settings.
-             *     http://localhost:port/path/to/dropbox-login.html
-             */
-            window.addEventListener( 'message', function ( event ) {
-                if ( event.data[0] === 'setClientID' ) {
-                    var D = new Dropbox.Dropbox( { clientId: event.data[1] } ); // <-- error in original file.
-                    window.location.href =
-                        D.getAuthenticationUrl( window.location.href );
-                }
-            } );
             /*
              * The following utility function parses a query string of the
              * form `?key1=value1&key2=value2&...&keyN=valueN` into a JSON
@@ -103,7 +76,7 @@ to the originating window/tab.
              */
             var hashData = parseQueryString( window.location.hash );
             if ( hashData.access_token || hashData.error )
-                window.opener.postMessage(JSON.stringify( [ 'dialogLogin', hashData ] ), '*' );
+                window.opener.postMessage([ 'oauth2Login', hashData ], '*' );
         </script>
     </head>
     <body>

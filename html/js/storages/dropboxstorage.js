@@ -21,49 +21,54 @@ class DropboxFile extends CloudStorage.CloudFile {
 
    async download() {
       const options = CloudStorage.getOptions();
-      const accessToken = await getAuth();
-      const ajaxOptions = {
-         method: 'POST',
-         responseType: 'arraybuffer',
-         headers: {
-           Authorization: `Bearer ${accessToken}`,
-           'Dropbox-API-Arg': JSON.stringify({path: this.file.path_display}),   // open one file only, 
-         },
-       };
-      return CloudStorage.ezAjax('https://content.dropboxapi.com/2/files/download', ajaxOptions, options.progress, options.cancel)
-         .then(res=> {
-            // save JSON in the Dropbox-API-Result response header.
-            this.file = JSON.parse(res.xhr.getResponseHeader('Dropbox-API-Result'));
-            return res;
+      return getAuth() 
+         .then(account=>{
+            const ajaxOptions = {
+               method: 'POST',
+               responseType: 'arraybuffer',
+               headers: {
+                 Authorization: `Bearer ${account.access_token}`,
+                 'Dropbox-API-Arg': JSON.stringify({path: this.file.path_display}),   // open one file only, 
+               },
+             };
+            return CloudStorage.ezAjax('https://content.dropboxapi.com/2/files/download', ajaxOptions, options.progress, options.cancel)
+               .then(res=> {
+                  // save JSON in the Dropbox-API-Result response header.
+                  this.file = JSON.parse(res.xhr.getResponseHeader('Dropbox-API-Result'));
+                  return res;
+               });
          });
+
    }
 
    async upload(data, _contentType) {
-      const options = CloudStorage.getOptions();
-      const accessToken = await getAuth();
-   
-      const ajaxOptions = {
-         method: 'POST',
-         headers: {
-            Authorization: 'Bearer ' + accessToken,
-            'Content-Type': 'application/octet-stream',
-            'Dropbox-API-Arg': JSON.stringify({
-               path: this.file.path_display,           // path : '/' + fullPath.join( '/' ),
-               mode: 'overwrite',                      // 'overwrite', shorthand for {'.tag': 'add' };
-               autorename: false,
-               mute: false
-            }),
-         },
-         data: data,                            
-      };
-
-      return CloudStorage.ezAjax('https://content.dropboxapi.com/2/files/upload', ajaxOptions, options.progress, options.cancel)
-         .then( result => {
-            // save result
-            let info = JSON.parse(result.xhr.response); //.getResponseHeader('Dropbox-API-Result'));
-            this.file = info; // update
-            return info.name;
-         }); 
+      return getAuth()
+         .then(account=>{
+            const options = CloudStorage.getOptions();
+         
+            const ajaxOptions = {
+               method: 'POST',
+               headers: {
+                  Authorization: `Bearer ${account.access_token}`,
+                  'Content-Type': 'application/octet-stream',
+                  'Dropbox-API-Arg': JSON.stringify({
+                     path: this.file.path_display,           // path : '/' + fullPath.join( '/' ),
+                     mode: 'overwrite',                      // 'overwrite', shorthand for {'.tag': 'add' };
+                     autorename: false,
+                     mute: false
+                  }),
+               },
+               data: data,                            
+            };
+      
+            return CloudStorage.ezAjax('https://content.dropboxapi.com/2/files/upload', ajaxOptions, options.progress, options.cancel)
+               .then( result => {
+                  // save result
+                  let info = JSON.parse(result.xhr.response); //.getResponseHeader('Dropbox-API-Result'));
+                  this.file = info; // update
+                  return info.name;
+               }); 
+         });
    }
 
   
@@ -89,10 +94,34 @@ class DropboxFile extends CloudStorage.CloudFile {
 };
 
 
+  /**
+   * Copy from Dropbox js SDK.
+   * Get a URL that can be used to authenticate users for the Dropbox API.
+   * @arg {String} [state] - State that will be returned in the redirect URL to help
+   * prevent cross site scripting attacks.
+   */
+function getAuthenticationUrl() {
+   if (!clientID) {
+      throw new Error('A client id is required. You can set the client id using .setClientId().');
+   }
+
+   const baseUrl = 'https://www.dropbox.com/oauth2/authorize';
+   const redirectUri = window.location.protocol + "//" + window.location.host  + '/dropbox-login.html';
+
+   const authUrl = `${baseUrl}?response_type=token&client_id=${clientID}&redirect_uri=${redirectUri}`;
+   return authUrl;
+}
+
+function createLoginWin() {
+   const h = 780, w = 580;
+   const y = window.top.outerHeight / 2 + window.top.screenY - (h / 2);
+   const x = window.top.outerWidth / 2 + window.top.screenX - (w / 2);
+   const loginWindow = window.open("", '_blank', `alwaysRaised=1, toolbar=0, menubar=0, status=0, height=${h}, width=${w}, top=${y}, left=${x}`);
+   return loginWindow;
+};
 
 
 let clientID;
-let dropboxToken;
 /*
  * Opens a new tab/window in the browser showing the Dropbox login page for
  * the app.  If the user logs in successfully, then the success callback will be called, and all
@@ -106,55 +135,19 @@ let dropboxToken;
  * this code from a CDN, you will at least need to download that login page
  * and place it in your project's web space.
  */
-function getAuth() {
-   return new Promise(function (resolve, reject) {
-      if (dropboxToken) {
-         resolve(dropboxToken);
-      } else if (dropboxToken = window.localStorage.getItem("dropboxAccessToken")) {   // check if already in localStorage.
-         resolve(dropboxToken);
-      } else {
-         const h = 780, w = 580;
-         const y = window.top.outerHeight / 2 + window.top.screenY - (h / 2);
-         const x = window.top.outerWidth / 2 + window.top.screenX - (w / 2);
-         const url = window.location.protocol + "//" + window.location.host  + '/dropbox-login.html';// + "/" + window.location.pathname;
-         const loginWindow = window.open( url, '_blank', `alwaysRaised=1, toolbar=0, menubar=0, status=0, height=${h}, width=${w}, top=${y}, left=${x}`);
-         if (!loginWindow) {
-            reject("open window failed, popup blocked?");
-         } else {
-            let eventHandler;
-         window.addEventListener('message', eventHandler = function(evt) {
-            try {
-               const message = JSON.parse( evt.data );
-               if ( !( message instanceof Array ) ) return;
-               const command = message.shift();
-               if ( command === 'dialogLogin' ) {
-                  loginWindow.close();
-                  const accountData = message.shift();
-                  if ( accountData.access_token ) {
-                     dropboxToken = accountData.access_token;
-                     window.localStorage.setItem("dropboxAccessToken", dropboxToken);
-                     resolve(dropboxToken);
-                  } else {
-                     reject( accountData );
-                  }
-                  window.removeEventListener('message', eventHandler);   // cleanup
-               }
-            } catch ( e ) { }
-         });
+async function getAuth() {
+   let account;
+   if (account = window.localStorage.getItem("dropboxAccessToken")) {   // check if already in localStorage.
+      account = JSON.parse(account);
+      return account;
+   }
 
-         loginWindow.addEventListener('load', () => {
-            loginWindow.postMessage( ['setClientID', clientID], '*');
-         });
-
-         /*loginWindow.addEventListener('unload', () => {  // do cleanup if close without authorization
-            if (!dropboxToken) {
-               window.removeEventListener('message', eventHandler);   // now cleanup
-               reject( "Authorization failed" );
-            }
-         });*/
-         }
-      }
-   });
+   // otherwise get new token
+   return CloudStorage.getAuth(createLoginWin, getAuthenticationUrl)
+      .then(account=>{ // expire_in is second, adds up
+           window.localStorage.setItem("dropboxAccessToken", JSON.stringify(account));
+           return account;
+      });
 }
 
 
@@ -166,12 +159,12 @@ function getAuth() {
  */
 async function readFolder(path, fileTypes) {
    return getAuth()
-      .then(accessToken=>{
+      .then(account=>{
          const ajaxOptions = {
             method: 'POST',
             responseType: 'json',
             headers: {
-               Authorization: `Bearer ${accessToken}`,
+               Authorization: `Bearer ${account.access_token}`,
                'Content-Type': 'application/json',
             },
             data: JSON.stringify({"path": path,
@@ -287,7 +280,7 @@ const logo = 'data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/200
  */
 async function open(filename) {
    return getAuth()
-      .then(accessToken=>{
+      .then(account=>{
          if (filename && filename[0] !== '/') {
             const dir = CloudStorage.getOptions().currentDirectory;
             filename = `${dir}/${filename}`;
@@ -299,11 +292,11 @@ async function open(filename) {
             method: 'POST',
             responseType: '',
             headers: {
-              Authorization: `Bearer ${accessToken}`,
+              Authorization: `Bearer ${account.access_token}`,
               "Content-Type": "application/json"
             },
             data: JSON.stringify({
-               'path': url,
+               'path': filename,
                'include_media_info': false,
                'include_deleted': false,
                'include_has_explicit_shared_members': false
@@ -336,7 +329,7 @@ async function open(filename) {
 async function pick(fileTypes) {
    // now ask picker to selected a file.
    return getAuth()
-      .then(_accessToken=>{
+      .then(_account=>{
          return CloudStorage.contentSelectDialog(logo, readFolder, {path:"", ext: fileTypes})
          .then(file=>{
             return [file];
