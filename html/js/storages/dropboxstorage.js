@@ -27,13 +27,13 @@ class DropboxFile extends CloudStorage.CloudFile {
          responseType: 'arraybuffer',
          headers: {
            Authorization: `Bearer ${accessToken}`,
-           'Dropbox-API-Arg': JSON.stringify({path: this.file.path}),   // open one file only, 
+           'Dropbox-API-Arg': JSON.stringify({path: this.file.path_display}),   // open one file only, 
          },
        };
       return CloudStorage.ezAjax('https://content.dropboxapi.com/2/files/download', ajaxOptions, options.progress, options.cancel)
          .then(res=> {
             // save JSON in the Dropbox-API-Result response header.
-            this.fileInfo = JSON.parse(res.xhr.getResponseHeader('Dropbox-API-Result'));
+            this.file = JSON.parse(res.xhr.getResponseHeader('Dropbox-API-Result'));
             return res;
          });
    }
@@ -48,8 +48,8 @@ class DropboxFile extends CloudStorage.CloudFile {
             Authorization: 'Bearer ' + accessToken,
             'Content-Type': 'application/octet-stream',
             'Dropbox-API-Arg': JSON.stringify({
-               path: this.file.path,                   // path : '/' + fullPath.join( '/' ),
-               mode: 'overwrite',                     // 'overwrite', shorthand for {'.tag': 'add' };
+               path: this.file.path_display,           // path : '/' + fullPath.join( '/' ),
+               mode: 'overwrite',                      // 'overwrite', shorthand for {'.tag': 'add' };
                autorename: false,
                mute: false
             }),
@@ -66,9 +66,21 @@ class DropboxFile extends CloudStorage.CloudFile {
          }); 
    }
 
-   get path() {
-      return this.file.path.substring(0, this.file.lastIndexOf('/'));
-      //return this.file; // drop filename
+  
+   get isFile() {
+      return !(this.file['.tag'] === 'folder');
+   }
+
+   get modified() {
+      return new Date(this.file.client_modified);;
+   }
+
+   get size() {
+      return this.file.size;
+   }   
+
+   get directory() {
+      return this.file.path_display.substring(0, this.file.path_display.lastIndexOf('/'));
    }
 
    get name() {
@@ -153,49 +165,46 @@ function getAuth() {
  * The data sent back is an array of objects with  attributes,
  */
 async function readFolder(path, fileTypes) {
-   const accessToken = await getAuth();
-
-   const ajaxOptions = {
-           method: 'POST',
-           responseType: 'json',
-           headers: {
-              Authorization: `Bearer ${accessToken}`,
-              'Content-Type': 'application/json',
-           },
-           data: JSON.stringify({"path": path,
-                                 "recursive": false,
-                                 "include_deleted": false,
-                                 "include_has_explicit_shared_members": false,
-                                 "include_mounted_folders": true,
-                                 "include_non_downloadable_files": true
-                                 }),
-         };
-
-   const filter = CloudStorage.getFileTypesRegex(fileTypes);
-   console.log(filter);
-   const fileItems = await CloudStorage.ezAjax('https://api.dropboxapi.com/2/files/list_folder', ajaxOptions)
-                  .then(res => CloudStorage.parseToJson(res))
-                  .then(([_res, data]) => {
-                     const folders = [], files = [];
-                     for (let entry of data.entries) {
-                        if (entry['.tag'] === 'folder') {
-                           folders.push( {isFile: false, id: entry.id, name: entry.name, path: entry.path_display} );   // dropbox path is case insensative
-                        } else {
-                           let date = new Date(entry.client_modified);
-                           if (entry.name.match(filter)) {
-                              files.push( {isFile: true, id: entry.id, name: entry.name, path: entry.path_display,
-                                          modified: date, size: entry.size} );
-                           }
-                        }
+   return getAuth()
+      .then(accessToken=>{
+         const ajaxOptions = {
+            method: 'POST',
+            responseType: 'json',
+            headers: {
+               Authorization: `Bearer ${accessToken}`,
+               'Content-Type': 'application/json',
+            },
+            data: JSON.stringify({"path": path,
+                                  "recursive": false,
+                                  "include_deleted": false,
+                                  "include_has_explicit_shared_members": false,
+                                  "include_mounted_folders": true,
+                                  "include_non_downloadable_files": true
+                                  }),
+          };
+ 
+         const filter = CloudStorage.getFileTypesRegex(fileTypes);
+         return CloudStorage.ezAjax('https://api.dropboxapi.com/2/files/list_folder', ajaxOptions)
+            .then(res => CloudStorage.parseToJson(res))
+            .then(([_res, data]) => {
+               const folders = [], files = [];
+               for (let entry of data.entries) {
+                  if (entry['.tag'] === 'folder') {
+                     folders.push( new DropboxFile(entry) );
+                  } else {
+                     if (entry.name.match(filter)) {
+                        files.push( new DropboxFile(entry)  );
                      }
-                     let cursor;
-                     if (data.entries.has_more) {
-                        cursor = data.entries.cursor;
-                     }
-                     // order by folders then files. continuation cursor if needed.
-                     return {fileItems: folders.concat(files), cursor: cursor};
-                   });
-   return fileItems;
+                  }
+               }
+               let cursor;
+               if (data.entries.has_more) {
+                  cursor = data.entries.cursor;
+               }
+               // order by folders then files. continuation cursor if needed.
+               return {fileItems: folders.concat(files), cursor: cursor};
+            });
+      });
 }
 
 
@@ -276,33 +285,37 @@ const logo = 'data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/200
  * Fails if the given path does not point to a file.
  * The path should be provided as an array.
  */
-async function open(fileItem) {
-   const path = fileItem.selected.path;  // selected file path + filename.
-   //const url = `${path}/${fileItem.filename}`;
-   const url = path + '/' + fileItem.filename;
-
-   // get_metadata, if exists then return DropboxFile.
-   const accessToken = await getAuth();
-   const options = CloudStorage.getOptions();
-   const ajaxOptions = {
-      method: 'POST',
-      responseType: '',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json"
-      },
-      data: JSON.stringify({
-         'path': url,
-         'include_media_info': false,
-         'include_deleted': false,
-         'include_has_explicit_shared_members': false
+async function open(filename) {
+   return getAuth()
+      .then(accessToken=>{
+         if (filename && filename[0] !== '/') {
+            const dir = CloudStorage.getOptions().currentDirectory;
+            filename = `${dir}/${filename}`;
+         }
+      
+         // get_metadata, if exists then return DropboxFile.
+         const options = CloudStorage.getOptions();
+         const ajaxOptions = {
+            method: 'POST',
+            responseType: '',
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              "Content-Type": "application/json"
+            },
+            data: JSON.stringify({
+               'path': url,
+               'include_media_info': false,
+               'include_deleted': false,
+               'include_has_explicit_shared_members': false
+            })
+          };
+         return CloudStorage.ezAjax('https://api.dropboxapi.com/2/files/get_metadata', ajaxOptions, options.progress, options.cancel)
+            .then(res=> {
+               const fileInfo = JSON.parse(res.data);
+               return [new DropboxFile(fileInfo)];   
+            });
       })
-    };
-   return CloudStorage.ezAjax('https://api.dropboxapi.com/2/files/get_metadata', ajaxOptions, options.progress, options.cancel)
-      .then(res=> {
-         const fileInfo = JSON.parse(res.data);
-         return [new DropboxFile(fileInfo)];   
-      });
+
 };
 
 
@@ -322,12 +335,15 @@ async function open(fileItem) {
  */
 async function pick(fileTypes) {
    // now ask picker to selected a file.
-   await getAuth();
-   return CloudStorage.contentSelectDialog(logo, readFolder, {path:"", ext: fileTypes})
-      .then(file=>{
-         return [new DropboxFile(file)];
+   return getAuth()
+      .then(_accessToken=>{
+         return CloudStorage.contentSelectDialog(logo, readFolder, {path:"", ext: fileTypes})
+         .then(file=>{
+            return [file];
+         });
       });
 };
+
 
 function setupOpenButton(button) {
    if (button) {
