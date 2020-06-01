@@ -306,7 +306,7 @@ async function contentSelectDialog(logo, readFolder, fileInfo) {
                            ext = this.fileTypes[0];
                         }
                         const filename = name + '.' + ext;
-                        this.resolve({isFile: true, path: this.nav.dataset.filepath + '/' + filename, name: filename});
+                        this.resolve({isFile: true, directory: this.nav.dataset.filepath, name: filename});
                      }
                   }
                } 
