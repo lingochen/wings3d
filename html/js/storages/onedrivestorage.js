@@ -25,8 +25,29 @@ class OneDriveFile extends CloudStorage.CloudFile {
       return CloudStorage.ezAjax(downloadLink, options);
    }
 
-   upload(reponseType, data) {
-
+   upload(data, contentType) {
+      return getAuth()
+         .then(account=>{
+            let url;
+            // generate url
+            if (this.file.parentReference) {
+               url = `${gAppInfo.graphApiRoot}me/drive/items/${this.file.id}/content`;
+            } else {
+               url = `${gAppInfo.graphApiRoot}me/drive/root:${this.file.directory}/${this.file.name}:/content`;
+            }
+      
+            const options = {
+               method: 'PUT',
+               'Content-Type': "text/plain",
+               processData: false,
+               responseType: 'json',
+               headers: {
+                  Authorization: `Bearer ${account.access_token}`,
+               },
+               data: data,
+            }
+            return CloudStorage.ezAjax(url, options);
+         });
    }
 
    get isFile() {
@@ -176,51 +197,6 @@ async function readFolder(path, fileTypes) {
 const LOGO = 'data:image/svg+xml;charset=UTF-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1030.04 659.922"><g><path fill="%230364B8" d="M622.292,445.338l212.613-203.327C790.741,69.804,615.338-33.996,443.13,10.168   C365.58,30.056,298.224,78.13,254.209,145.005C257.5,144.922,622.292,445.338,622.292,445.338z"/><path fill="%230078D4" d="M392.776,183.283l-0.01,0.035c-40.626-25.162-87.479-38.462-135.267-38.397   c-1.104,0-2.189,0.07-3.291,0.083C112.064,146.765-1.74,263.423,0.02,405.567c0.638,51.562,16.749,101.743,46.244,144.04   l318.528-39.894l244.209-196.915L392.776,183.283z"/><path fill="%231490DF" d="M834.905,242.012c-4.674-0.312-9.371-0.528-14.123-0.528c-28.523-0.028-56.749,5.798-82.93,17.117   l-0.006-0.022l-128.844,54.22l142.041,175.456l253.934,61.728c54.799-101.732,16.752-228.625-84.98-283.424   c-26.287-14.16-55.301-22.529-85.091-24.546V242.012z"/><path fill="%2328A8EA" d="M46.264,549.607C94.359,618.756,173.27,659.966,257.5,659.922h563.281   c76.946,0.022,147.691-42.202,184.195-109.937L609.001,312.798L46.264,549.607z"/></g></svg>';
 const ACCESSTOKEN="onedriveAccessToken";
 
-const gSaveOptions = {
-   clientId: 0,
-   action: "query",
-
-   advanced: {
-      // Request additional parameters when we save the file
-      queryParameters: "select=id,name,size,parentReference",
-      // redirectURI
-      redirectUri: window.location.protocol + "//" + window.location.host  + '/onedrive-redirect.html'
-   },
-};
-
-
-/**
- * filename is the suggested name. 
- */
-async function saveAs(filename) {
-
-
-   return new Promise((resolve, reject)=>{
-      let options = Object.assign({ // Build the picker options to query for a folder where the file should be saved.
-         success: (selection)=>{
-            // The return here is the folder where we need to upload the item
-            let folder = selection.value[0]; 
-                
-            // Store the access token from the file picker, so we don't need to get a new one
-            gSaveOptions.accessToken = selection.accessToken;
-
-            resolve(new OneDriveFile( { 
-               id: null,
-               name: filename,
-               parentReference: {
-                  driveId: folder.parentReference.driveId,
-                  id: folder.id
-               }
-            }));
-         },
-         error: (e)=>{ reject( new Error("An error occurred while saving the file: " + e, e) ); }
-      }, gSaveOptions);
-
-      // Launch the picker
-      OneDrive.save(options);
-    });
-};
-
 
 /**
  * given a filename, return a fileItem with the given name.
@@ -231,14 +207,31 @@ async function save(filename) {
 
 
 /**
+ * filename is the suggested name. 
+ */
+async function saveAs(fileInfo) {
+   return getAuth()
+      .then(_account=>{
+         return CloudStorage.contentSelectDialog(LOGO, readFolder, fileInfo)
+            .then(file=>{
+               if (file instanceof OneDriveFile) {  // select an existing file to save
+                  return file;
+               } else { // yes definitely saveAs a new name.
+                  return new OneDriveFile(file);
+               }
+            });
+      });
+};
+
+
+/**
  * map to FilePicker
  * @param {*} options - same as save options.
  */
 function setupSaveButton(button) {
    if (button) {
       // get clientID from button.
-      gSaveOptions.clientId = button.getAttribute('data-app-key');
-      gAppInfo.clientId = gSaveOptions.clientId;
+      gAppInfo.clientId = button.getAttribute('data-app-key');
       button.querySelector('.home').src = LOGO;
 
       // return handling code.

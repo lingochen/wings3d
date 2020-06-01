@@ -231,23 +231,18 @@ async function save(filename) {
  * @param {file} fileObject - single fileObject to save.
  */
 async function saveAs(fileInfo) {
-   await getAuth();
-   return CloudStorage.contentSelectDialog(logo, readFolder, fileInfo)
-      .then(file=>{
-         return new DropboxFile(file);
+   return getAuth()
+      .then(_account=>{
+         return CloudStorage.contentSelectDialog(logo, readFolder, fileInfo)
+            .then(file=>{
+               if (file instanceof DropboxFile) {  // select an existing file to save
+                  return file;
+               } else { // yes definitely saveAs a new name.
+                  file.path_display = file.directory + '/' + file.name;
+                  return new DropboxFile(file);
+               }
+            });
       });
-
-/*   const blob = storer();  // get result 
-   if (filename) {   // add extension if not == the supply ext.
-      const pieces = filename.split('.');
-      if (ext.localeCompare(pieces[pieces.length-1]) !== 0) {
-         filename = filename + "." + ext;       // not the same "ext"
-      }
-   } else { // get it from openFileInfo
-      filename = openFileInfo.path_display;
-   }
-
-*/
 };
 
 
