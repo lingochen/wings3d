@@ -46,7 +46,11 @@ class OneDriveFile extends CloudStorage.CloudFile {
                },
                data: data,
             }
-            return CloudStorage.ezAjax(url, options);
+            return CloudStorage.ezAjax(url, options)
+               .then(result=>{   
+                  this.file = result.data; // update DriveItem.
+                  return this.file.name;
+               });
          });
    }
 
