@@ -266,6 +266,7 @@ async function contentSelectDialog(logo, readFolder, fileInfo) {
                evt.stopPropagation();
                if (evt.target.matches('input')) {
                   if (evt.target.classList.contains('folder')) {  // we click on folder
+                     evt.target.checked = false;
                      this.updateFolder(evt.target.dataset.filepath);
                   } else { // click select file
                      if (this.selected && (this.selected !== evt.target)) {
