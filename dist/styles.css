@@ -573,9 +573,7 @@ form fieldset input[type="number"] {
   margin: 0.5rem;
 }
 
-form a {
-  display: block;
-}
+
 
 form .fieldPref {
   display: grid;
@@ -680,7 +678,7 @@ div.endAlign button {
 }
 
 .filePickerForm {
-  width: 36rem;
+  width: 38rem;
   height: auto;
   margin: 0;
   padding: 0;
@@ -694,13 +692,14 @@ div.endAlign button {
 }
 
 .fileSelected {
-  width: 98%;
+  /* width: 60% */
   font-size: 1.5rem;
 }
 
 label.fileItem {
   display: flex;
   flex-direction: row;
+  flex-wrap: nowrap;
 }
 
 label.fileItem input {
@@ -715,20 +714,22 @@ label.fileItem img {
 label.fileItem img[src] {
   visibility: inherit;
 }
+label.fileItem img[src="#"] {
+  visibility: hidden;
+}
 
 label.fileItem .filename {
-  flex-grow: 3;
+  flex: 3 0 0;
 }
 
-label.fileItem .sizeDate::after  {
-  content: attr(data-after);
-  flex: 0 0 10em;
-  float: right;
-  text-align: right;
+label.fileItem .date  {
+  flex: 1 0 0;
+  text-align: center;
 }
 
-label.fileItem .sizeDate {
-  flex: 0 0 9em;
+label.fileItem .size {
+  flex: 1 0 0;
+  text-align: center;
 }
 
 label.selected {

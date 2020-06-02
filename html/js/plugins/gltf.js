@@ -78,7 +78,7 @@ class GLTFImportExporter extends ImportExporter {
 
       // load (scenes, nodes, meshes, material)
       this._parse('scenes', this.json.scene);1
-   }1
+   }
 
    async _parse(tag, index) {
       if (typeof this[tag] === 'function') {
