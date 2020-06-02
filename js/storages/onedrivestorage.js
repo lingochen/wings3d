@@ -25,7 +25,7 @@ class OneDriveFile extends CloudStorage.CloudFile {
       return CloudStorage.ezAjax(downloadLink, options);
    }
 
-   upload(data, contentType) {
+   async upload(data, contentType) {
       return getAuth()
          .then(account=>{
             let url;
@@ -206,7 +206,7 @@ const ACCESSTOKEN="onedriveAccessToken";
  * given a filename, return a fileItem with the given name.
  */
 async function save(filename) {
-
+   return new OneDriveFile( {name: filename, directory: CloudStorage.getOptions().currentDirectory} );
 };
 
 
@@ -252,10 +252,7 @@ function setupSaveButton(button) {
 function open(filename) {
    return getAuth()
       .then(account=> {
-         if (filename && filename[0] !== '/') {
-            const dir = CloudStorage.getOptions().currentDirectory;
-            filename = `${dir}/${filename}`;
-         }
+         filename = CloudStorage.filenameWithPath(filename);
          const url = `${gAppInfo.graphApiRoot}/me/drive/root:${filename}`; // /me/drive/root:/path/to/file
       
          const options = {

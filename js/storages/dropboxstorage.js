@@ -202,10 +202,11 @@ async function readFolder(path, fileTypes) {
 
 
 /**
- * get file descriptor using filename.
+ * filename + path. return
  */
 async function save(filename) {
-
+   filename = CloudStorage.filenameWithPath(filename);
+   return new DropboxFile({path_display: filename});
 };
 
 
@@ -276,10 +277,7 @@ const logo = 'data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/200
 async function open(filename) {
    return getAuth()
       .then(account=>{
-         if (filename && filename[0] !== '/') {
-            const dir = CloudStorage.getOptions().currentDirectory;
-            filename = `${dir}/${filename}`;
-         }
+         filename = CloudStorage.filenameWithPath(filename);
       
          // get_metadata, if exists then return DropboxFile.
          const options = CloudStorage.getOptions();

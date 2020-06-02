@@ -83,7 +83,13 @@ function getExpireTime(elapseSeconds) {
    return t;
 };
 
-
+function filenameWithPath(filename) {
+   if (filename && filename[0] !== '/') {
+      const dir = getOptions().currentDirectory;
+      filename = `${dir}/${filename}`;
+   }
+   return filename;
+}
 
 /*
  * Opens a new tab/window in the browser showing the XXXX login page(popupFn) for
@@ -482,7 +488,7 @@ function parseToJson(res) {
    return [res, JSON.parse(res.data)];
 }
 
-let _options = {};
+let _options = {currentDirectory:""};
 function setOptions(options) {
    _options = Object.assign(_options, options);
 };
@@ -516,9 +522,9 @@ class CloudFile {
 
    async uploadBlob(blob) {
       if (blob.type.indexOf('text') >= 0) {
-         this.upload(blob, 'text/plain; charset=dropbox-cor s-hack');
+         return this.upload(blob, 'text/plain; charset=dropbox-cor s-hack');
       } else {
-         this.upload(blob, 'application/octet-stream');
+         return this.upload(blob, 'application/octet-stream');
       }
    }
 
@@ -542,4 +548,5 @@ export {
    getFileTypesRegex,
    isExpired,
    getExpireTime,
+   filenameWithPath,
 }
