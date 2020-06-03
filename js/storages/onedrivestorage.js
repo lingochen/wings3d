@@ -26,6 +26,15 @@ class OneDriveFile extends CloudStorage.CloudFile {
    }
 
    async upload(data, contentType) {
+      if (data.size < (4*1024*1024)) { // smaller than 4MB bytes.
+         return this._upload(data, contentType);
+      } else { // now breakup the blob by multiple of 320KB, 6.4MB (5mb~10mb).
+
+
+      }
+   }
+
+   async _upload(data, contentType) {
       return getAuth()
          .then(account=>{
             let url;
@@ -53,6 +62,64 @@ class OneDriveFile extends CloudStorage.CloudFile {
                });
          });
    }
+
+   /**
+    * implemented session upload, for larger than 4MB file.
+    */
+   async _uploadSession(data, contentType) {
+      return getAuth()
+         .then(account=>{
+            let url;
+            // generate url
+            if (this.file.parentReference) {
+               url = `${gAppInfo.graphApiRoot}me/drive/items/${this.file.id}/createUploadSession`;
+            } else {
+               url = `${gAppInfo.graphApiRoot}me/drive/root:${this.file.directory}/${this.file.name}:/createUploadSession`;
+            }
+      
+            const options = {
+               method: 'POST',
+               'Content-Type': "application/json",
+               responseType: 'json',
+               headers: {
+                  Authorization: `Bearer ${account.access_token}`,
+               },
+               data: {"item": {"@microsoft.graph.conflictBehavior": "replace"}},
+            }
+            return CloudStorage.ezAjax(url, options);
+         }).then(result=> {
+            const options = {
+               method: 'PUT',
+               'Content-Type': contentType,
+               'Content-Length': kSize,
+               responseType: 'json',
+            }
+
+            const uploadUrl = result.data.uploadUrl; // got the session upload url, now compute
+            const kSize = 20*327.680;     // 6.4mb
+            let count = Math.floor(data.size / kSize);
+            for (let i = 0; i < count; ++i) {
+               let start = i*kSize;
+               let end = (i+1)*kSize-1;
+               options['Content-Range'] = `byte ${start}-${end}/${data.size}`;
+               options.data = data.slice(start, end+1);
+               let result = await CloudStorage.ezAjax(uploadUrl, options);
+            }
+            // upload the final non-multiple of 6.4mb, data.
+            let start = count*kSize;
+            let end = data.size-1;
+            options['Content-Length'] = data.size-start;
+            options['Content-Range'] = `byte ${start}-${end}/${data.size}`;
+            options.data = data.slice(start, data.size);
+            return CloudStorage.ezAjax(uploadUrl, options)
+               .then(result=>{
+                  this.file = result.data;
+                  return this;
+               });
+         });
+   }
+
+
 
    get isFile() {
       return (this.file.folder === undefined);
