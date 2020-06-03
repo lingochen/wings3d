@@ -20,18 +20,16 @@ class DropboxFile extends CloudStorage.CloudFile {
    }
 
    async download() {
-      const options = CloudStorage.getOptions();
       return getAuth() 
          .then(account=>{
-            const ajaxOptions = {
+            const settings = {
                method: 'POST',
                responseType: 'arraybuffer',
-               headers: {
-                 Authorization: `Bearer ${account.access_token}`,
-                 'Dropbox-API-Arg': JSON.stringify({path: this.file.path_display}),   // open one file only, 
-               },
+             }, headers = {
+               Authorization: `Bearer ${account.access_token}`,
+               'Dropbox-API-Arg': JSON.stringify({path: this.file.path_display}),   // open one file only, 
              };
-            return CloudStorage.ezAjax('https://content.dropboxapi.com/2/files/download', ajaxOptions, options.progress, options.cancel)
+            return CloudStorage.ezAjax(settings, 'https://content.dropboxapi.com/2/files/download', headers)
                .then(res=> {
                   // save JSON in the Dropbox-API-Result response header.
                   this.file = JSON.parse(res.xhr.getResponseHeader('Dropbox-API-Result'));
@@ -44,24 +42,20 @@ class DropboxFile extends CloudStorage.CloudFile {
    async upload(data, _contentType) {
       return getAuth()
          .then(account=>{
-            const options = CloudStorage.getOptions();
-         
-            const ajaxOptions = {
-               method: 'POST',
-               headers: {
-                  Authorization: `Bearer ${account.access_token}`,
-                  'Content-Type': 'application/octet-stream',
-                  'Dropbox-API-Arg': JSON.stringify({
-                     path: this.file.path_display,           // path : '/' + fullPath.join( '/' ),
-                     mode: 'overwrite',                      // 'overwrite', shorthand for {'.tag': 'add' };
-                     autorename: false,
-                     mute: false
-                  }),
-               },
-               data: data,                            
+            const settings = {
+               method: 'POST',                            
+            }, headers = {
+               Authorization: `Bearer ${account.access_token}`,
+               'Content-Type': 'application/octet-stream',
+               'Dropbox-API-Arg': JSON.stringify({
+                  path: this.file.path_display,           // path : '/' + fullPath.join( '/' ),
+                  mode: 'overwrite',                      // 'overwrite', shorthand for {'.tag': 'add' };
+                  autorename: false,
+                  mute: false
+               }),
             };
       
-            return CloudStorage.ezAjax('https://content.dropboxapi.com/2/files/upload', ajaxOptions, options.progress, options.cancel)
+            return CloudStorage.ezAjax(settings, 'https://content.dropboxapi.com/2/files/upload', headers, data)
                .then( result => {
                   // save result
                   let info = JSON.parse(result.xhr.response); //.getResponseHeader('Dropbox-API-Result'));
@@ -160,24 +154,22 @@ async function getAuth() {
 async function readFolder(path, fileTypes) {
    return getAuth()
       .then(account=>{
-         const ajaxOptions = {
+         const settings = {
             method: 'POST',
             responseType: 'json',
-            headers: {
-               Authorization: `Bearer ${account.access_token}`,
-               'Content-Type': 'application/json',
-            },
-            data: JSON.stringify({"path": path,
-                                  "recursive": false,
-                                  "include_deleted": false,
-                                  "include_has_explicit_shared_members": false,
-                                  "include_mounted_folders": true,
-                                  "include_non_downloadable_files": true
-                                  }),
-          };
+          }, headers = {
+            Authorization: `Bearer ${account.access_token}`,
+            'Content-Type': 'application/json',
+         }, data = JSON.stringify({"path": path,
+            "recursive": false,
+            "include_deleted": false,
+            "include_has_explicit_shared_members": false,
+            "include_mounted_folders": true,
+            "include_non_downloadable_files": true
+          });
  
          const filter = CloudStorage.getFileTypesRegex(fileTypes);
-         return CloudStorage.ezAjax('https://api.dropboxapi.com/2/files/list_folder', ajaxOptions)
+         return CloudStorage.ezAjax(settings, 'https://api.dropboxapi.com/2/files/list_folder', headers, data)
             .then(res => CloudStorage.parseToJson(res))
             .then(([_res, data]) => {
                const folders = [], files = [];
@@ -280,22 +272,19 @@ async function open(filename) {
          filename = CloudStorage.filenameWithPath(filename);
       
          // get_metadata, if exists then return DropboxFile.
-         const options = CloudStorage.getOptions();
-         const ajaxOptions = {
+         const settings = {
             method: 'POST',
-            responseType: '',
-            headers: {
-              Authorization: `Bearer ${account.access_token}`,
-              "Content-Type": "application/json"
-            },
-            data: JSON.stringify({
-               'path': filename,
-               'include_media_info': false,
-               'include_deleted': false,
-               'include_has_explicit_shared_members': false
-            })
-          };
-         return CloudStorage.ezAjax('https://api.dropboxapi.com/2/files/get_metadata', ajaxOptions, options.progress, options.cancel)
+            responseType: 'json',
+          }, headers = {
+            Authorization: `Bearer ${account.access_token}`,
+            "Content-Type": "application/json"
+          }, data = JSON.stringify({
+             'path': filename,
+             'include_media_info': false,
+             'include_deleted': false,
+             'include_has_explicit_shared_members': false
+          });
+         return CloudStorage.ezAjax(settings, 'https://api.dropboxapi.com/2/files/get_metadata', headers, data)
             .then(res=> {
                const fileInfo = JSON.parse(res.data);
                return [new DropboxFile(fileInfo)];   

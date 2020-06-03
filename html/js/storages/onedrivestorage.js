@@ -17,20 +17,19 @@ class OneDriveFile extends CloudStorage.CloudFile {
    }
 
    download() {
-      const options = {
+      const settings = {
          responseType: "arraybuffer",
       };
       // Retrieve the contents of the file and load it into our editor
       let downloadLink = this.file["@microsoft.graph.downloadUrl"];
-      return CloudStorage.ezAjax(downloadLink, options);
+      return CloudStorage.ezAjax(settings, downloadLink);
    }
 
    async upload(data, contentType) {
       if (data.size < (4*1024*1024)) { // smaller than 4MB bytes.
          return this._upload(data, contentType);
       } else { // now breakup the blob by multiple of 320KB, 6.4MB (5mb~10mb).
-
-
+         return this._uploadSession(data, contentType);
       }
    }
 
@@ -45,17 +44,14 @@ class OneDriveFile extends CloudStorage.CloudFile {
                url = `${gAppInfo.graphApiRoot}me/drive/root:${this.file.directory}/${this.file.name}:/content`;
             }
       
-            const options = {
+            const settings = {
                method: 'PUT',
-               'Content-Type': "text/plain",
-               processData: false,
                responseType: 'json',
-               headers: {
-                  Authorization: `Bearer ${account.access_token}`,
-               },
-               data: data,
-            }
-            return CloudStorage.ezAjax(url, options)
+            }, headers = {
+               Authorization: `Bearer ${account.access_token}`,
+               'Content-Type': "application/octet-stream", //"text/plain",
+            };
+            return CloudStorage.ezAjax(settings, url, headers, data)
                .then(result=>{   
                   this.file = result.data; // update DriveItem.
                   return this.file.name;
@@ -77,22 +73,23 @@ class OneDriveFile extends CloudStorage.CloudFile {
                url = `${gAppInfo.graphApiRoot}me/drive/root:${this.file.directory}/${this.file.name}:/createUploadSession`;
             }
       
-            const options = {
+            const settings = {
                method: 'POST',
-               'Content-Type': "application/json",
                responseType: 'json',
-               headers: {
-                  Authorization: `Bearer ${account.access_token}`,
-               },
-               data: {"item": {"@microsoft.graph.conflictBehavior": "replace"}},
             }
-            return CloudStorage.ezAjax(url, options);
+            const headers= {
+               Authorization: `Bearer ${account.access_token}`,
+               'Content-Type': "application/json",
+            },
+            return CloudStorage.ezAjax(settings, url, headers, {"item": {"@microsoft.graph.conflictBehavior": "replace"}});
          }).then(result=> {
-            const options = {
+            const settings = {
                method: 'PUT',
-               'Content-Type': contentType,
-               'Content-Length': kSize,
                responseType: 'json',
+            }
+            const headers = {
+               'Content-Type': 'application/octet-stream',
+               'Content-Length': kSize,
             }
 
             const uploadUrl = result.data.uploadUrl; // got the session upload url, now compute
@@ -101,17 +98,15 @@ class OneDriveFile extends CloudStorage.CloudFile {
             for (let i = 0; i < count; ++i) {
                let start = i*kSize;
                let end = (i+1)*kSize-1;
-               options['Content-Range'] = `byte ${start}-${end}/${data.size}`;
-               options.data = data.slice(start, end+1);
-               let result = await CloudStorage.ezAjax(uploadUrl, options);
+               headers['Content-Range'] = `byte ${start}-${end}/${data.size}`;
+               let result = await CloudStorage.ezAjax(settings, uploadUrl, headers, data.slice(start, end+1));
             }
             // upload the final non-multiple of 6.4mb, data.
             let start = count*kSize;
             let end = data.size-1;
-            options['Content-Length'] = data.size-start;
-            options['Content-Range'] = `byte ${start}-${end}/${data.size}`;
-            options.data = data.slice(start, data.size);
-            return CloudStorage.ezAjax(uploadUrl, options)
+            headers['Content-Length'] = data.size-start;
+            headers['Content-Range'] = `byte ${start}-${end}/${data.size}`;
+            return CloudStorage.ezAjax(settings, uploadUrl, headers, data.slice(start, data.size))
                .then(result=>{
                   this.file = result.data;
                   return this;
@@ -218,15 +213,14 @@ async function getAuth() {
 async function readFolder(path, fileTypes) {
    return getAuth()
       .then(account=> {
-         const ajaxOptions = {
+         const settings = {
             method: 'GET',
             responseType: 'json',
-            headers: {
-               Authorization: `Bearer ${account.access_token}`,
-               'Content-Type': "application/json;odata.metadata=none",
-            },
-            data: {},
           };
+         const headers = {
+            Authorization: `Bearer ${account.access_token}`,
+            'Content-Type': "application/json;odata.metadata=none",
+         }
  
          // build readFolder url
          let url = gAppInfo.graphApiRoot + "me/drive/root/children";
@@ -237,7 +231,7 @@ async function readFolder(path, fileTypes) {
          //let query = `?$filter=name eq '.${fileTypes}'`;
  
          const filter = CloudStorage.getFileTypesRegex(fileTypes);
-         return CloudStorage.ezAjax(url, ajaxOptions)
+         return CloudStorage.ezAjax(settings, url, headers)
             .then(res => CloudStorage.parseToJson(res))
             .then(([_res, data]) => {
                const folders = [], files = [];
@@ -322,12 +316,12 @@ function open(filename) {
          filename = CloudStorage.filenameWithPath(filename);
          const url = `${gAppInfo.graphApiRoot}/me/drive/root:${filename}`; // /me/drive/root:/path/to/file
       
-         const options = {
+         const settings = {
             method: "GET",
             responseType: 'json',
-            headers: { Authorization: "Bearer " + account.access_token }, 
          };
-         return CloudStorage.ezAjax(url, options)
+         const headers = { Authorization: `Bearer ${account.access_token}`}, 
+         return CloudStorage.ezAjax(settings, url, headers)
                .then(res=>{
                   return [new OneDriveFile(res.data)];
                });
