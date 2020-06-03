@@ -382,31 +382,30 @@ async function contentSelectDialog(logo, readFolder, fileInfo) {
  * 
  * Default settings
  */
-const defaults = {
+const gDefaults = {
 	method: 'GET',
    username: null,
 	password: null,
-   data: null,
-	headers: {
-      'Content-Type': 'application/x-www-form-urlencoded'
-   },
    responseType: '',
-   timeout: null,
-   withCredentials: false
+   //timeout: null,
+   withCredentials: false,
 };
 
 
 
 /**
  * Make an XHR request, returne a Promise
+ * @param  {Object} userSettings - various ajax setting.
  * @param  {String} url The request URL
- * @param  {Object} options - parameter for request [optional]
+ * @param  {Object} headers - request header
+ * @param  {Blob} bodyData - body of ajax request.
  * @return {Promise}    The XHR request Promise
 */
-function ezAjax(url, options = {}, progress, cancel) {
+function ezAjax(userSettings, url, headers, bodyData) {
    // Merge options into defaults
-   let settings = Object.assign({}, defaults);
-   settings = Object.assign(settings, options);
+   let settings = Object.assign({}, gDefaults);
+   settings = Object.assign(settings, userSettings);
+   const options = getOptions;
    
    // Create the XHR request
    const request = new XMLHttpRequest();
@@ -414,12 +413,12 @@ function ezAjax(url, options = {}, progress, cancel) {
 	// Setup the Promise
 	const xhrPromise = new Promise(function (resolve, reject) {
       // handling progress.
-      if (progress) {
+      if (options.progress) {
          request.addEventListener('progress', function(evt) {
             if (evt.lengthComputable) {
                const percentComplete = parseInt(100.0 * evt.loaded / evt.total);
                // Upload in progress. Do something here with the percent complete.
-               progress(percentComplete);
+               options.progress(percentComplete);
             }
          });
       }
@@ -444,10 +443,12 @@ function ezAjax(url, options = {}, progress, cancel) {
 		request.open(settings.method, url, true, settings.username, settings.password);
 		request.responseType = settings.responseType;
 
-		// Add headers
-		for (const [header, value] of Object.entries(settings.headers)) {
-			request.setRequestHeader(header, value);
-		}
+      // Add headers
+      if (headers) {
+		   for (const [header, value] of Object.entries(headers)) {
+			   request.setRequestHeader(header, value);
+         }
+      }
 
 		// Set timeout
 		if (settings.timeout) {
@@ -466,14 +467,14 @@ function ezAjax(url, options = {}, progress, cancel) {
 		}
 
 		// Send the request
-		request.send(settings.data);
+		request.send(bodyData);
 	});   // end of promise
 
 	// Cancel the XHR request
 	xhrPromise.cancel = function () {
       request.abort();
-      if (cancel) {
-         cancel();
+      if (options.cancel) {
+         options.cancel();
       }
 	};
 
