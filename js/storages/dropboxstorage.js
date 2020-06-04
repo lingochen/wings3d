@@ -286,8 +286,7 @@ async function open(filename) {
           });
          return CloudStorage.ezAjax(settings, 'https://api.dropboxapi.com/2/files/get_metadata', headers, data)
             .then(res=> {
-               const fileInfo = JSON.parse(res.data);
-               return [new DropboxFile(fileInfo)];   
+               return [new DropboxFile(res.data)];   
             });
       })
 

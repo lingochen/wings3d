@@ -80,17 +80,16 @@ class OneDriveFile extends CloudStorage.CloudFile {
             const headers= {
                Authorization: `Bearer ${account.access_token}`,
                'Content-Type': "application/json",
-            },
+            };
             return CloudStorage.ezAjax(settings, url, headers, {"item": {"@microsoft.graph.conflictBehavior": "replace"}});
-         }).then(result=> {
+         }).then(async (result)=> {
             const settings = {
                method: 'PUT',
                responseType: 'json',
-            }
-            const headers = {
+            }, headers = {
                'Content-Type': 'application/octet-stream',
                'Content-Length': kSize,
-            }
+            };
 
             const uploadUrl = result.data.uploadUrl; // got the session upload url, now compute
             const kSize = 20*327.680;     // 6.4mb
@@ -319,8 +318,7 @@ function open(filename) {
          const settings = {
             method: "GET",
             responseType: 'json',
-         };
-         const headers = { Authorization: `Bearer ${account.access_token}`}, 
+         }, headers = { Authorization: `Bearer ${account.access_token}`};
          return CloudStorage.ezAjax(settings, url, headers)
                .then(res=>{
                   return [new OneDriveFile(res.data)];
