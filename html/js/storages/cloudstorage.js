@@ -380,20 +380,6 @@ async function contentSelectDialog(logo, readFolder, fileInfo) {
  * model after atomic.js.  a Promise based ajax.
  * use xhr instead of fetch is because fetch don't fully support progress yet (2019/05/30).
  * 
- * Default settings
- */
-const gDefaults = {
-	method: 'GET',
-   username: null,
-	password: null,
-   responseType: '',
-   //timeout: null,
-   withCredentials: false,
-};
-
-
-
-/**
  * Make an XHR request, returne a Promise
  * @param  {Object} userSettings - various ajax setting.
  * @param  {String} url The request URL
@@ -401,11 +387,16 @@ const gDefaults = {
  * @param  {Blob} bodyData - body of ajax request.
  * @return {Promise}    The XHR request Promise
 */
-function ezAjax(userSettings, url, headers, bodyData) {
+function ezAjax(userSettings, url, userHeaders, bodyData) {
    // Merge options into defaults
-   let settings = Object.assign({}, gDefaults);
-   settings = Object.assign(settings, userSettings);
-   const options = getOptions;
+   const settings = Object.assign({method: 'GET',
+                                 username: null,
+	                              password: null,
+                                 responseType: '',
+                                 //timeout: null,
+                                 withCredentials: false,}, userSettings);
+   const headers = Object.assign({}, userHeaders);
+   const progress = getOptions().progress, cancel = getOptions().cancel;
    
    // Create the XHR request
    const request = new XMLHttpRequest();
@@ -413,12 +404,12 @@ function ezAjax(userSettings, url, headers, bodyData) {
 	// Setup the Promise
 	const xhrPromise = new Promise(function (resolve, reject) {
       // handling progress.
-      if (options.progress) {
+      if (progress) {
          request.addEventListener('progress', function(evt) {
             if (evt.lengthComputable) {
                const percentComplete = parseInt(100.0 * evt.loaded / evt.total);
                // Upload in progress. Do something here with the percent complete.
-               options.progress(percentComplete);
+               progress(percentComplete);
             }
          });
       }
@@ -444,10 +435,8 @@ function ezAjax(userSettings, url, headers, bodyData) {
 		request.responseType = settings.responseType;
 
       // Add headers
-      if (headers) {
-		   for (const [header, value] of Object.entries(headers)) {
-			   request.setRequestHeader(header, value);
-         }
+		for (const [header, value] of Object.entries(headers)) {
+			request.setRequestHeader(header, value);
       }
 
 		// Set timeout
@@ -473,8 +462,8 @@ function ezAjax(userSettings, url, headers, bodyData) {
 	// Cancel the XHR request
 	xhrPromise.cancel = function () {
       request.abort();
-      if (options.cancel) {
-         options.cancel();
+      if (cancel) {
+         cancel();
       }
 	};
 
