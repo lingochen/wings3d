@@ -165,31 +165,52 @@ async function readFolder(path, fileTypes) {
             "include_deleted": false,
             "include_has_explicit_shared_members": false,
             "include_mounted_folders": true,
-            "include_non_downloadable_files": true
+            "include_non_downloadable_files": true,
+            //"limit": 1,
           });
  
          const filter = CloudStorage.getFileTypesRegex(fileTypes);
          return CloudStorage.ezAjax(settings, 'https://api.dropboxapi.com/2/files/list_folder', headers, data)
             .then(res => CloudStorage.parseToJson(res))
             .then(([_res, data]) => {
-               const folders = [], files = [];
-               for (let entry of data.entries) {
-                  if (entry['.tag'] === 'folder') {
-                     folders.push( new DropboxFile(entry) );
-                  } else {
-                     if (entry.name.match(filter)) {
-                        files.push( new DropboxFile(entry)  );
-                     }
-                  }
-               }
-               let cursor;
-               if (data.entries.has_more) {
-                  cursor = data.entries.cursor;
-               }
-               // order by folders then files. continuation cursor if needed.
-               return {fileItems: folders.concat(files), cursor: cursor};
+               return buildPage(data, filter);
             });
       });
+}
+
+function buildPage(data, filter) {
+   const folders = [], files = [];
+   for (let entry of data.entries) {
+      if (entry['.tag'] === 'folder') {
+         folders.push( new DropboxFile(entry) );
+      } else {
+         if (entry.name.match(filter)) {
+            files.push( new DropboxFile(entry)  );
+         }
+      }
+   }
+   let cursor;
+   if (data.has_more) {
+      cursor = ()=>{
+         return readFolderMore(data.cursor, filter);
+      }
+   }
+   // order by folders then files. continuation cursor if needed.
+   return {folders: folders, files: files, cursor: cursor};
+}
+
+function readFolderMore(nextLink, filter) {
+   return getAuth()
+      .then(account=>{
+         const settings = {method: 'POST', responseType: 'json'},
+               headers = { Authorization: `Bearer ${account.access_token}`,'Content-Type': 'application/json'},
+               data = JSON.stringify({"cursor": nextLink}); 
+         return CloudStorage.ezAjax(settings, 'https://api.dropboxapi.com/2/files/list_folder/continue', headers, data)
+            .then(res => CloudStorage.parseToJson(res))
+            .then(([_res, data])=>{
+               return buildPage(data, filter);
+            });
+         });
 }
 
 

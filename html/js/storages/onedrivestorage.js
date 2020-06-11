@@ -233,24 +233,50 @@ async function readFolder(path, fileTypes) {
          return CloudStorage.ezAjax(settings, url, headers)
             .then(res => CloudStorage.parseToJson(res))
             .then(([_res, data]) => {
-               const folders = [], files = [];
-               for (let entry of data.value) {
-                  if (entry.folder) {
-                     folders.push( new OneDriveFile(entry) );
-                  } else {
-                     if (entry.name.match(filter)) {  // todo: how to get graph api to filter filename's extension?
-                        files.push( new OneDriveFile(entry) );
-                     }
-                  }
-               }
-               let cursor;
-               /*if (data.entries.has_more) {
-                  cursor = data.entries.cursor;
-               } */
-               // order by folders then files. continuation cursor if needed.
-               return {fileItems: folders.concat(files), cursor: cursor};
+               return buildPage(data, filter);
             });
       });
+}
+
+
+function readFolderMore(nextLink, filter) {
+   return getAuth()
+      .then(account=> {
+         const settings = {method: 'GET', responseType: 'json',},
+               headers = {
+                  Authorization: `Bearer ${account.access_token}`,
+                  'Content-Type': "application/json;odata.metadata=none",
+               };
+ 
+         return CloudStorage.ezAjax(settings, nextLink, headers)
+            .then(res => CloudStorage.parseToJson(res))
+            .then(([_res, data])=>{
+               return buildPage(data, filter);
+            });
+      });
+}
+
+
+function buildPage(data, filter) {
+   const folders = [], files = [];
+   for (let entry of data.value) {
+      if (entry.folder) {
+         folders.push( new OneDriveFile(entry) );
+      } else {
+         if (entry.name.match(filter)) {  // todo: how to get graph api to filter filename's extension?
+            files.push( new OneDriveFile(entry) );
+         }
+      }
+   }
+   let nextPage;
+   const nextLink = data["@odata.nextLink"];
+   if (nextLink) {   // yes more stuff to do.
+      nextPage = ()=> {
+         return readFolderMore(nextLink, filter);
+      };
+   }
+   // order by folders then files. continuation cursor if needed.
+   return {folders: folders, files: files, cursor: nextPage};
 }
 
 

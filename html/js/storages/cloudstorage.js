@@ -217,47 +217,63 @@ async function contentSelectDialog(logo, readFolder, fileInfo) {
                this.nav.dataset.filepath = path;
             },
             updateFolder: async function(newPath) {   // newPath is array of string.
-               // update navigation.
-               this.updateNav(newPath);
-               // update filecontent
-               function updateLabel(label, item) {
-                     // get input
-                     const input = label.querySelector('input');
-                     input.dataset.filepath = item.path;
-                     input.dataset.filename = item.name;
-                     input.fileInfo = item;
-                     // get span, before, after.
-                     let span = label.querySelectorAll('span');
-                     span[0].textContent = item.name;
-                     if (item.isFile) {
-                        label.querySelector('img').src = '#';
-                        input.classList.remove('folder');
-                        span[1].textContent = formatBytes(item.size);                  // file size.
-                        span[2].textContent = item.modified.toLocaleString('en-US', {year: '2-digit', month: 'short', day: 'numeric' });      // modified date
-                     } else {
-                        label.querySelector('img').src = folderSVG;
-                        input.classList.add('folder');
-                        span[1].textContent = "";
-                        span[2].textContent = "";
-                     }
-                     //span[0].setAttribute('data-before', '');  // folder, or not
-               };
-               const {fileItems, cursor} = await this.readFolder(newPath, this.fileTypes);
-               let labelItems = this.filePane.querySelectorAll("label");
-               let addition = fileItems.length - labelItems.length;
-               if (addition > 0) {
-                  const aFrag = document.createRange().createContextualFragment('<label class="fileItem"><input type="radio" name="selectFile"><img><span class="filename"></span><span class="size"></span><span class="date"></span></label>'.repeat(addition));
-                  this.filePane.appendChild(aFrag);
-                  labelItems = this.filePane.querySelectorAll("label");
-               } else if (addition < 0) {
-                  while (addition++ < 0) {
-                     this.filePane.removeChild(this.filePane.lastChild);
+               function row(item) {
+                  const label = document.createElement('label');
+                  label.classList.add('fileItem');
+                  label.dataset.filepath = item.path;
+                  label.dataset.filename = item.name;
+                  label.fileInfo = item;
+                  return label;
+               }
+               function folderRows(aFrag, folders) {
+                  for (let item of folders) {
+                     const label = row(item);
+                     label.classList.add('folder');
+                     // todo: reuse folderSVG instead of copying each times.
+                     label.insertAdjacentHTML('beforeend',
+                                          `<input type="radio" name="selectFile"><img src='${folderSVG}'><span class="filename">${item.name}</span>`);
+                     aFrag.appendChild(label);
                   }
-                  labelItems = this.filePane.querySelectorAll("label");
+                  return folders.length > 0;
                }
-               for (let i = 0; i < fileItems.length; ++i) {
-                  updateLabel(labelItems[i], fileItems[i]);
+               function fileRows(aFrag, files) {
+                  for (let item of files) {
+                     const label = row(item);
+                     const size = formatBytes(item.size);
+                     const date = item.modified.toLocaleString('en-US', {year: '2-digit', month: 'short', day: 'numeric' });      // modified date
+                     label.insertAdjacentHTML('beforeend',
+                           `<input type="radio" name="selectFile"><img src='#'><span class="filename">${item.name}</span><span class="size">${size}</span><span class="date">${date}</span>`);
+                     aFrag.appendChild(label);
+                  }
+                  return files.length > 0;
                }
+               this.updateNav(newPath);   // update breadcrumb navigation
+               this.currentDirectory = newPath;
+               let {folders, files, cursor} = await this.readFolder(newPath, this.fileTypes);
+               const aFrag = document.createDocumentFragment();
+               folderRows(aFrag, folders);
+               fileRows(aFrag, files);
+               this.filePane.innerHTML = '';
+               this.filePane.appendChild(aFrag);
+               // do pages if any
+               while (cursor) {
+                  let page = await cursor();
+                  if (newPath !== this.currentDirectory) {  // to another directory, we are too late, break.
+                     break;
+                  }
+                  if (folderRows(aFrag, page.folders)) {
+                     let last = this.filePane.querySelectorAll('.folder:last-child');
+                     if (last.length) {
+                        this.filePane.insertBefore(aFrag, last[0].nextSibling);
+                     } else {
+                        this.filePane.insertBefore(aFrag, this.filePane.firstChild);
+                     }
+                  }
+                  fileRows(aFrag, page.files);
+                  this.filePane.appendChild(aFrag);
+                  cursor = page.cursor;
+               }
+
             },
             handleNav: function(evt) { // click
                evt.stopPropagation();
@@ -271,16 +287,17 @@ async function contentSelectDialog(logo, readFolder, fileInfo) {
             handleFileItems: function(evt) { // on change
                evt.stopPropagation();
                if (evt.target.matches('input')) {
-                  if (evt.target.classList.contains('folder')) {  // we click on folder
+                  const label = evt.target.parentNode;
+                  if (label.classList.contains('folder')) {  // we click on folder
                      evt.target.checked = false;
-                     this.updateFolder(evt.target.dataset.filepath);
+                     this.updateFolder(label.dataset.filepath);
                   } else { // click select file
-                     if (this.selected && (this.selected !== evt.target)) {
-                        this.selected.parentNode.classList.toggle('selected');
+                     if (this.selected && (this.selected !== label)) {
+                        this.selected.classList.toggle('selected');
                      }
-                     evt.target.parentNode.classList.toggle('selected');
-                     this.selected = evt.target;
-                     this.nameInput.value = this.selected.dataset.filename;
+                     label.classList.toggle('selected');
+                     this.selected = label;
+                     this.nameInput.value = label.dataset.filename;
                   }
                 }
              },
@@ -288,8 +305,8 @@ async function contentSelectDialog(logo, readFolder, fileInfo) {
                evt.stopPropagation();
                // deselect current selected
                if (this.selected) {
-                  this.selected.checked = false;
-                  this.selected.parentNode.classList.toggle('selected');
+                  //this.selected.checked = false;
+                  this.selected.classList.toggle('selected');
                   this.selected = null;
                }
                // make sure we enabled button
