@@ -146,7 +146,7 @@ class OneDriveFile extends CloudStorage.CloudFile {
 
 const gAppInfo = {
    "clientId": "",
-   "redirectUri": window.location.protocol + "//" + window.location.host  + '/onedrive-redirect.html',
+   "redirectUri": window.location.protocol + "//" + window.location.host  + '/oauth-redirect.html',
    "scopes": "user.read files.readWrite files.readWrite.all", // sites.readWrite.all",
    "authServiceUri": "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
    "graphApiRoot": "https://graph.microsoft.com/v1.0/",
@@ -204,7 +204,7 @@ async function getAuth() {
 
 
 /** 
- * Reads the contents of a folder in the user's Dropbox.  Fails if the given path does not point to a folder.
+ * Reads the contents of a folder in the user's onedrive.  Fails if the given path does not point to a folder.
  * @params {string} - path as in '/test/dir/etc'
  * @params {array} - file types string. ie ['gltf', 'glb']
  * The data sent back is an array of objects with  attributes,

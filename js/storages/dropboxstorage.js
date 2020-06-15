@@ -82,6 +82,10 @@ class DropboxFile extends CloudStorage.CloudFile {
       return this.file.path_display.substring(0, this.file.path_display.lastIndexOf('/'));
    }
 
+   get path() {
+      return this.file.path_display;
+   }
+
    get name() {
       return this.file.name;
    }
@@ -100,7 +104,7 @@ function getAuthenticationUrl() {
    }
 
    const baseUrl = 'https://www.dropbox.com/oauth2/authorize';
-   const redirectUri = window.location.protocol + "//" + window.location.host  + '/dropbox-login.html';
+   const redirectUri = window.location.protocol + "//" + window.location.host  + '/oauth-redirect.html';
 
    const authUrl = `${baseUrl}?response_type=token&client_id=${clientID}&redirect_uri=${redirectUri}`;
    return authUrl;
