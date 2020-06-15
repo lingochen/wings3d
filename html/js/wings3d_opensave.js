@@ -7,6 +7,7 @@ import * as UI from './wings3d_ui.js';
 import * as CloudStorage from './storages/cloudstorage.js';
 import * as Dropbox from './storages/dropboxstorage.js';
 import * as OneDrive from './storages/onedrivestorage.js';
+import * as YandexDisk from './storages/yandexstorage.js';
 
 
 
@@ -156,6 +157,10 @@ async function open(fileTypes) {
       button = document.getElementById('onedriveOpen');
       if (button) {
          _open.set(button, OneDrive.setupOpenButton(button));
+      }
+      button = document.getElementById('yandexDiskOpen');
+      if (button) {
+         _open.set(button, YandexDisk.setupOpenButton(button));
       }
       // setup local file open
       button = document.getElementById('localOpen');
