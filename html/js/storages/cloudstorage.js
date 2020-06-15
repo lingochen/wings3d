@@ -145,12 +145,6 @@ function getAuth(popupWin, authUrl) {
 
 
 /**
- * simple folder Icon
- */
-const folderSVG = 'data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-folder"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>';
-
-
-/**
  * return a Promise. that will resolve(file) 
  * 
  * @param {string} accessToken 
@@ -229,7 +223,7 @@ async function contentSelectDialog(logo, readFolder, fileInfo) {
                   for (let item of folders) {
                      const label = row(item);
                      label.classList.add('folder');
-                     // todo: reuse folderSVG instead of copying each times.
+                     const folderSVG = getOptions().folderSVG || "#";
                      label.insertAdjacentHTML('beforeend',
                                           `<input type="radio" name="selectFile"><img src='${folderSVG}'><span class="filename">${item.name}</span>`);
                      aFrag.appendChild(label);
@@ -495,7 +489,7 @@ function parseToJson(res) {
    return [res, JSON.parse(res.data)];
 }
 
-let _options = {currentDirectory:""};
+let _options = {currentDirectory:"", folderSVG: "#"};
 function setOptions(options) {
    _options = Object.assign(_options, options);
 };

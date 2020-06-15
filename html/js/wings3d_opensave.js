@@ -57,7 +57,8 @@ function setOptions() {
       },
       error: function (errorMessage) {
 
-      }
+      },
+      folderSVG: "./img/clouddisk.svg#folder",
    };
    CloudStorage.setOptions(options);
 };

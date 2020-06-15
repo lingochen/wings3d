@@ -32,4 +32,8 @@
   <polygon points="58.86 162.5 117.73 200 176.59 162.5 117.73 125 58.86 162.5"/>
 </g>
 
+<g id="folder" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" transform="translate(-20 0) scale(9 6)">
+  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+</g>
+
 </svg>
