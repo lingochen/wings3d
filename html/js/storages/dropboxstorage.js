@@ -251,7 +251,7 @@ async function save(filename) {
 async function saveAs(fileInfo) {
    return getAuth()
       .then(_account=>{
-         return CloudStorage.contentSelectDialog(logo, readFolder, fileInfo)
+         return CloudStorage.contentSelectDialog(LOGO, readFolder, fileInfo)
             .then(file=>{
                if (file instanceof DropboxFile) {  // select an existing file to save
                   return file;
@@ -273,7 +273,7 @@ function setupSaveButton(button) {
    if (button) {
       // get clientID from button.
       clientID = button.getAttribute('data-app-key');
-      button.querySelector('.home').src = logo;
+      LOGO = button.querySelector('.home');
 
       // return handling code.
       return [saveAs, save];
@@ -285,7 +285,7 @@ function setupSaveButton(button) {
 /**
  * got the svg logo from dropbox official branding. uriencode(#), utf-8
  */
-const logo = 'data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 235.45 200"><defs><style>.cls-1{fill:%230061ff;}</style></defs><title>DropboxGlyph</title><polygon class="cls-1" points="58.86 0 0 37.5 58.86 75 117.73 37.5 58.86 0"/><polygon class="cls-1" points="176.59 0 117.73 37.5 176.59 75 235.45 37.5 176.59 0"/><polygon class="cls-1" points="0 112.5 58.86 150 117.73 112.5 58.86 75 0 112.5"/><polygon class="cls-1" points="176.59 75 117.73 112.5 176.59 150 235.45 112.5 176.59 75"/><polygon class="cls-1" points="58.86 162.5 117.73 200 176.59 162.5 117.73 125 58.86 162.5"/></svg>';
+let LOGO = "#";
 /*
  * Reads the contents of a file in the user's Dropbox.  
  * Fails if the given path does not point to a file.
@@ -336,7 +336,7 @@ async function pick(fileTypes) {
    // now ask picker to selected a file.
    return getAuth()
       .then(_account=>{
-         return CloudStorage.contentSelectDialog(logo, readFolder, {path:"", ext: fileTypes})
+         return CloudStorage.contentSelectDialog(LOGO, readFolder, {path:"", ext: fileTypes})
          .then(file=>{
             return [file];
          });
@@ -348,7 +348,7 @@ function setupOpenButton(button) {
    if (button) {
       // get clientID from button.
       clientID = button.getAttribute('data-app-key');
-      button.querySelector('.home').src = logo;
+      LOGO = button.querySelector('.home').src;
 
       // return handling code.
       return [pick, open, save];
