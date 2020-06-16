@@ -30,7 +30,7 @@ class LocalFile extends CloudStorage.CloudFile {
    }
 
    get directory() { // we cannot access local file's directory info.
-      return '/';
+      return '';  // or '/' 
    }
 
    get name() {
@@ -106,7 +106,7 @@ async function saveAs(extension) {
       }
    }
       
-   let saveName = "untitiled";
+   let saveName = "untitled";
    // show save storage selection dialog
    const [form, button] = await UI.execDialog('#cloudSaveDialog', 
                                              function(form) {
@@ -138,7 +138,7 @@ async function saveAs(extension) {
    if (_lastSave.selected) {
       let [name, _ext] = CloudStorage.getFilenameAndExtension(_lastSave.selected.name);
       fileInfo.name = name + '.' + extension;
-      fileInfo.path = _lastSave.selected.path;
+      //fileInfo.path = _lastSave.selected.directory; //
    }
    // run the selected Storage's saveAs function.
    return saveAsFn(fileInfo).then(file=>{
