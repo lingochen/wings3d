@@ -106,16 +106,35 @@ async function saveAs(extension) {
       }
    }
       
+   let saveName = "untitiled";
    // show save storage selection dialog
-   const [_form, button] = await UI.execDialog('#cloudSaveDialog', null);
+   const [form, button] = await UI.execDialog('#cloudSaveDialog', 
+                                             function(form) {
+                                                let data = form.querySelector('input[name="selected"');
+                                                if (data) {
+                                                   data.value = saveName;
+                                                }
+                                                let ext = form.querySelector('span.fileExt');
+                                                if (ext) {
+                                                   ext.textContent = extension;
+                                                }
+                                             });
    if (button.value === 'cancel') {
       throw new Error('No storage selected');
+   }
+   // extract filename
+   let data = form.querySelector('input[name="selected"');
+   if (data) {
+      if (data.value) {
+         let [name, _ext] = CloudStorage.getFilenameAndExtension(data.value);
+         saveName = name;
+      }
    }
    let [saveAsFn, saveFn] = _save.get(button);  // get the save routine
    _workingSave.saveFn = saveFn;
    
    // now get saveAs filename if possible
-   const fileInfo = {path: "", name: "untitled" + '.' + extension, ext: [extension]};
+   const fileInfo = {path: "", name: saveName + '.' + extension, ext: [extension]};
    if (_lastSave.selected) {
       let [name, _ext] = CloudStorage.getFilenameAndExtension(_lastSave.selected.name);
       fileInfo.name = name + '.' + extension;
