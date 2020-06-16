@@ -9,7 +9,7 @@
    <script src="./vendor/FileSaver.min.js?v=0cd1ebc44c182996e7d62f29b28dba9f" defer></script>
    <script src="./vendor/gl-matrix-min.js?v=8d57dae6ce3862af598c7ccad3df15ad"></script>
 
-   <script src="wings3d.bundle.js?v=0119fb9dafca312883c99d77d9b09a7e" type="module"></script>
+   <script src="wings3d.bundle.js?v=41c055dc08d8515547aa8b989fa48ea2" type="module"></script>
 
   <script>
     function help(text) {
@@ -1032,6 +1032,10 @@
      <button type="submit" value="ok" id="onedriveSave" data-app-key="6acd185a-104b-4928-b06f-700380de2ce8"><img class="home" alt="OneDrive" src="./img/clouddisk.svg#onedrive"><span>Save to OneDrive</span></button>     
      <button type="submit" value="ok" id="dropboxSave" data-app-key="p6wfhvtsa2hd9nh"><img class="home" alt="Dropbox" src="./img/clouddisk.svg#dropbox"><span>Save to Dropbox</span></button>
      <button type="submit" value="ok" id="localSave"> <span>Save to Local</span></button>
+     <label>File: 
+       <input class="fileSelected" type="text" name="selected" value="">
+       <span class="fileExt">EXT</span>
+     </label>
   </form>
   <form id="cloudOpenDialog" class="dialog cloudForm">
      <h3> Open from <button type="submit" value="cancel" class="close">&times;</button></h3>
@@ -1049,7 +1053,7 @@
      <div>
        <label>File: 
          <input class="fileSelected" type="text" name="selected" value="">
-         <span class="fileExt">EXT</span11>
+         <span class="fileExt">EXT</span>
        </label>
        <button type="submit" value="ok">Ok</button>
        <button type="submit" value="cancel">Cancel</button>
