@@ -99,7 +99,6 @@ async function saveAs(extension) {
       button = document.getElementById('localSave');
       if (button) {
          _save.set(button, [async function(fileInfo) {   // saveAs
-            
             return new LocalFile(fileInfo);
            }, localSaveAsync]                
           );
@@ -107,6 +106,11 @@ async function saveAs(extension) {
    }
       
    let saveName = "untitled";
+   if (_lastSave.selected) {
+      let [name, _ext] = CloudStorage.getFilenameAndExtension(_lastSave.selected.name);
+      saveName = name; // + '.' + extension;
+      //fileInfo.path = _lastSave.selected.directory; //
+   }
    // show save storage selection dialog
    const [form, button] = await UI.execDialog('#cloudSaveDialog', 
                                              function(form) {
@@ -135,11 +139,6 @@ async function saveAs(extension) {
    
    // now get saveAs filename if possible
    const fileInfo = {path: "", name: saveName + '.' + extension, ext: [extension]};
-   if (_lastSave.selected) {
-      let [name, _ext] = CloudStorage.getFilenameAndExtension(_lastSave.selected.name);
-      fileInfo.name = name + '.' + extension;
-      //fileInfo.path = _lastSave.selected.directory; //
-   }
    // run the selected Storage's saveAs function.
    return saveAsFn(fileInfo).then(file=>{
       return [file, saveFn];
