@@ -223,6 +223,17 @@ function runDialog(formID, ev, submitCallback, setup) {
    runDialogCenter(formID, submitCallback, setup, ev);
 };
 
+// prevent "ENTER" key submitted event in form.
+/*document.queraddEventListener("keydown", ":input:not(textarea):not(:submit)", function(event) {
+      if (event.key == "Enter") {
+         event.preventDefault();
+      }
+   });*/
+function preventEnter(event) {
+   if (event.key == "Enter") {
+      event.preventDefault();
+   }
+}
 let gOverlay;
 function runDialogCenter(formID, submitCallback, setup, _ev, notOk) {
    const form = document.querySelector(formID);
@@ -250,6 +261,7 @@ function runDialogCenter(formID, submitCallback, setup, _ev, notOk) {
       document.body.appendChild(gOverlay);  
 
       // handling event
+      form.addEventListener("keydown", preventEnter, true);
       const _pvt = {submitSuccess: false};
       // we need this because submit event won't tell which submit buttons we clicked.
       const submits = form.querySelectorAll('[type=submit]');
@@ -277,6 +289,7 @@ function runDialogCenter(formID, submitCallback, setup, _ev, notOk) {
          ev.preventDefault();
          form.style.display = 'none';
          form.removeEventListener('submit', submitted);
+         form.removeEventListener('keydown', preventEnter);
          document.body.appendChild(form);
          document.body.removeChild(gOverlay);
          for (let submit of removeOk) {
@@ -580,6 +593,7 @@ function showPopup(dom, name) {
    document.body.removeChild(div);
    return div;
 };
+
 
 
 
