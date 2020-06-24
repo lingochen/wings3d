@@ -6,7 +6,6 @@ import {ImportExporter} from "../wings3d_importexport.js";
 import * as View from "../wings3d_view.js";
 import {Material} from "../wings3d_material.js";
 import * as UI from '../wings3d_ui.js';
-import { PreviewCage } from "../wings3d_model.js";
 
 
 class X3dImportExporter extends ImportExporter {
@@ -26,6 +25,7 @@ class X3dImportExporter extends ImportExporter {
       super._reset();
       this.def = new Map;
       this.count = {appearance: 0, cage: 0};
+      this.material = [];
    }
 
    /**
@@ -142,17 +142,18 @@ class X3dImportExporter extends ImportExporter {
       // extract start from Scene?, or just querySelectAll("Scene > Group")? for now, no transform or subgroup.
       const scene = xmlDoc.querySelector("Scene");
       if (scene) {
-         let current = {children:[]};
+         let current = {group: new SceneProxy};
          for (let node of scene.children) {
             this._parseNode(node, current);
          }
          // now, put everthing into world
-         for (let group of current.children) {
+         /*for (let group of current.children) {
             View.addToWorld(group);
          }
          if (current.cage) {
             View.addToWorld(current.cage);
-         }
+         } */
+         return {world: current.group.children, material: this.material};
       }
    }
 
@@ -176,36 +177,27 @@ class X3dImportExporter extends ImportExporter {
    }
 
    Group(groupNode, current) { // create and insert new stuff
-      const group = {children: []};
+      const group = this.createGroup(groupNode.getAttribute('name'));
+      let oldGroup = current.group;
+      current.group = group;
       for (const node of groupNode.children) {
-         this._parseNode(node, group);
+         this._parseNode(node, current);
       }
-      // now we parse all the children, decide if we want cage or group?
-      if (group.children.length > 0) { // yes, yes grouping. now create grouping and append
-         // new Group
-         // newGroup.name =
-         // newGroup.append(group.children)
-         // current.children.push( newGroup );
-
-      } else if (group.cage) {   // cage is enough, so handle it.
-         group.cage.name = groupNode.getAttribute('name');
-         current.children.push( group.cage );
-      }
+      oldGroup.insert( group );
+      current.group = oldGroup;     // restore.
    }
 
    /**
     * 
-    * @param {*} shape - geometry with material. 
+    * @param {*} shape - geometry with material. equivalent to shape.
     */
    Shape(shape, current) {
-      // check existence of PreviewCage
-      if (!current.cage) {
-         current.cage = View.putIntoWorld();
-         current.coords = new Map;
-      }
+      current.cage = this.createCage();
+      current.coords = new Map;
       for (const node of shape.children) {
          this._parseNode(node, current);
       }
+      current.group.insert(current.cage);
    }
 
    /**
@@ -220,7 +212,8 @@ class X3dImportExporter extends ImportExporter {
          if (!name) {
             name = "Material_" + this.count.appearance++;   // supply generic name
          }
-         appear = Material.create(name);
+         appear = this.createMaterial(name);
+         this.material.push(appear);
          if (def) {
             this.def.set(name, appear);
          }
@@ -364,6 +357,20 @@ class X3dImportExporter extends ImportExporter {
 
    }
 }
+
+
+// 
+class SceneProxy {
+   constructor() {
+      this.children = [];
+   }
+
+   insert(group) {
+      this.children.push(group);
+   }
+}
+
+
 
 export {
    X3dImportExporter,
