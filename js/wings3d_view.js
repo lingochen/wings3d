@@ -430,8 +430,10 @@ function moveCage(newParent, model) {  // drag & drop
 
 function addToWorld(model, parent = _environment.world) { // default parent is world
    parent.insert( model );
-   _environment.geometryGraph.addObject(model, parent.guiStatus.ul);
-   model.setVisible(true);
+   //_environment.geometryGraph.addObject(model, parent.guiStatus.ul);
+   for (let cage of model.getCage()) {
+      cage.setVisible(true);
+   }
    Renderer.needToRedraw();
    _environment.world.numberOfCage();   // update CountStatus
    return model;
