@@ -17,7 +17,7 @@ import * as Wings3D from './wings3d.js';
 import {EditCommand} from './wings3d_undo.js';
 import * as Util from './wings3d_util.js';
 import {i18n} from './wings3d_i18n.js';
-import { ByteBuffer } from './wings3d_gl.js';
+//import { ByteBuffer } from './wings3d_gl.js';
 
 
 /**

@@ -41,11 +41,11 @@ PreviewCage.nameSetters.push( function(value) {
  */
 PreviewCage.prototype.updateStatus = function() {
    if (!this.isVisible() || (this.selectedSet.size === 0)) {
-      if (this.guiStatus && this.guiStatus.select.checked) {
+      if (this.guiStatus.select && this.guiStatus.select.checked) {
          this.guiStatus.select.checked = false;
       }
    } else {
-      if (this.guiStatus && !this.guiStatus.select.checked) {
+      if (this.guiStatus.select && !this.guiStatus.select.checked) {
          this.guiStatus.select.checked = true;
       }
    }
