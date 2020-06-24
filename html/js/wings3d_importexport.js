@@ -24,6 +24,18 @@ class ImportExporter {
       }
    }
 
+   createCage(name = "") {
+      return View.createCage(name);
+   }
+
+   createGroup(name = "") {
+      return View.createGroup(name);
+   }
+
+   createMaterial(name) {
+      return Material.create(name);
+   }
+
    async export(world, file, saveAsync) {
       this.saveAsync = saveAsync;
 
@@ -45,7 +57,9 @@ class ImportExporter {
          if (objs) {
             let cages = [];
             for (let cage of objs.world) {
-               cages.push( new CreatePreviewCageCommand(cage) );
+               let command = new CreatePreviewCageCommand(cage);
+               cages.push( command );
+               command.doIt();
             }
             if (cages.length > 1) {
                // combo
@@ -61,8 +75,10 @@ class ImportExporter {
             View.updateWorld();
             // show import stat, # of vertex, edges, faces, and !!boundary edges!!
             let stat = {vertices: 0, edges: 0, faces: 0, boundary: 0};
-            for (let cage of objs.world) {
-               cage.geometry.getStat(stat);
+            for (let group of objs.world) {
+               for (let cage of group.getCage()) {
+                  cage.geometry.getStat(stat);
+               }
             }
             geometryStatus(`${stat.vertices} vertices, ${stat.edges} edges, ${stat.faces} faces, ${stat.boundary} boundary, ${this.non_manifold.length} non-manifold`);
          }
