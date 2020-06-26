@@ -21,35 +21,11 @@ PreviewGroup.nameSetters.push(function(value){
    } 
 });
 
-const superNumberOfCage = PreviewGroup.prototype.numberOfCage;
-PreviewGroup.prototype.numberOfCage = function() {
-   const count = superNumberOfCage.call(this);
-   if (this.guiStatus && this.guiStatus.count) {
-      this.guiStatus.count.textContent = count;
-   }
-   return count;
-};
-
 PreviewCage.nameSetters.push( function(value) {
    if (this.guiStatus && this.guiStatus.textNode) {   // treeView's representation.
       this.guiStatus.textNode.textContent = value;
    } 
  });
-
-/**
- * update gui status.
- */
-PreviewCage.prototype.updateStatus = function() {
-   if (!this.isVisible() || (this.selectedSet.size === 0)) {
-      if (this.guiStatus.select && this.guiStatus.select.checked) {
-         this.guiStatus.select.checked = false;
-      }
-   } else {
-      if (this.guiStatus.select && !this.guiStatus.select.checked) {
-         this.guiStatus.select.checked = true;
-      }
-   }
-};
 })();
 
 // utility - handling event
@@ -110,6 +86,32 @@ class TreeView {
          }
        }, false);
    }
+
+   // toggle cage selection status.
+   updateStatus(world) {
+      let count = 0;
+      for (let node of world.getCage()) {
+         if (!node.isVisible() || !node.hasSelection()) {
+            if (node.guiStatus.select && node.guiStatus.select.checked) {
+               node.guiStatus.select.checked = false;
+            }
+         } else {
+            if (node.guiStatus.select && !node.guiStatus.select.checked) {
+               node.guiStatus.select.checked = true;
+            }
+         }
+         ++count;
+      }
+      return count;
+   };
+
+   updateNumberOfCage(world) {
+      const count = world.numberOfCage();
+      if (world.guiStatus && world.guiStatus.count) {
+         world.guiStatus.count.textContent = count;
+      }
+      return count;
+   };
 
    /**
     * 
