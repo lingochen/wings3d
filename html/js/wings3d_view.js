@@ -425,17 +425,17 @@ function putIntoWorld() {
 function moveCage(newParent, model) {  // drag & drop
    model.removeFromParent();
    newParent.insert(model);
-   _environment.geometryGraph.updateNumberOfCage(_environment.world);   // update Count Status
+   _environment.geometryGraph.updateCount(_environment.world);   // update Count Status
 };
 
 function addToWorld(model, parent = _environment.world) { // default parent is world
    parent.insert( model );
-   _environment.geometryGraph.addObject(model, parent.guiStatus.ul);
+   _environment.geometryGraph.addNode(model, parent);
    for (let cage of model.getCage()) {
       cage.setVisible(true);
    }
    Renderer.needToRedraw();
-   _environment.geometryGraph.updateNumberOfCage(_environment.world);   // update Count Status
+   _environment.geometryGraph.updateCount(_environment.world);   // update Count Status
    return model;
 }
 
@@ -446,7 +446,7 @@ function removeFromWorld(previewCage) {
       Renderer.needToRedraw();
       // remove from geometryGraph
       _environment.geometryGraph.removeObject(previewCage);
-      _environment.geometryGraph.updateNumberOfCage(_environment.world);   // update Count Status
+      _environment.geometryGraph.updateCount(_environment.world);   // update Count Status
    }
    return deleted;
 };

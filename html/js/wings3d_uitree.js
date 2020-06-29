@@ -21,11 +21,45 @@ PreviewGroup.nameSetters.push(function(value){
    } 
 });
 
+
+PreviewGroup.prototype.addGuiStatus = function(treeView, parentUL) {
+   // add here,
+   treeView.addGroup(parentUL, this);
+
+   // call all children to do the same
+   for (let node of this.group) {
+      node.addGuiStatus(treeView, this.guiStatus.ul);
+   }
+};
+
+// update guiStatus
+PreviewGroup.prototype.updateCount = function() {
+   let count = 0;
+   for (let node of this.group) {
+      count += node.updateCount();
+   }
+   if (this.guiStatus && this.guiStatus.count) {
+      this.guiStatus.count.textContent = count;
+   }
+   return count;
+};
+
+
 PreviewCage.nameSetters.push( function(value) {
    if (this.guiStatus && this.guiStatus.textNode) {   // treeView's representation.
       this.guiStatus.textNode.textContent = value;
    } 
  });
+
+PreviewCage.prototype.addGuiStatus = function(treeView, parentUL) {
+   treeView.addObject(this, parentUL);
+}
+
+
+PreviewCage.prototype.updateCount = function() {   // does nothing, just return 1
+   return 1;  
+}
+
 })();
 
 // utility - handling event
@@ -105,12 +139,8 @@ class TreeView {
       return count;
    };
 
-   updateNumberOfCage(world) {
-      const count = world.numberOfCage();
-      if (world.guiStatus && world.guiStatus.count) {
-         world.guiStatus.count.textContent = count;
-      }
-      return count;
+   updateCount(world) {
+      return world.updateCount();
    };
 
    /**
@@ -147,6 +177,11 @@ class TreeView {
        });
 
       return text;
+   }
+
+
+   addNode(node, parent) {
+      node.addGuiStatus(this, parent.guiStatus.ul);
    }
 
 
@@ -199,6 +234,7 @@ class TreeView {
       const self = this;
       let li = model.guiStatus.li;
       if (!li) {
+         const range = document.createRange();
          li = document.createElement('li');
          model.guiStatus.li = li;
          li.classList.add('objectName');
@@ -211,7 +247,7 @@ class TreeView {
             self.drag.cage = model;
           });
          // select whole object
-         const whole = document.createRange().createContextualFragment('<label><input type="checkbox"><span class="smallIcon smallWhole"></span></label>');
+         const whole = range.createContextualFragment('<label><input type="checkbox"><span class="smallIcon smallWhole"></span></label>');
          let input = whole.querySelector('input');
          input.addEventListener('change', (ev)=> {  // whole is fragment. we want label.
             if (model.isLock() || !model.isVisible()) {   // not actually changeable
@@ -236,7 +272,7 @@ class TreeView {
           }, false);
          li.appendChild(text);
          // eye label
-         const eyeLabel = document.createRange().createContextualFragment('<label><input type="checkbox"><span class="smallIcon smallShow"></span></label>');
+         const eyeLabel = range.createContextualFragment('<label><input type="checkbox"><span class="smallIcon smallShow"></span></label>');
          input = eyeLabel.querySelector('input');
          input.addEventListener('change', (ev)=> {  // whole is fragment. we want label.
             if (model.isLock()) {   // non modifiable object
@@ -249,7 +285,7 @@ class TreeView {
          model.guiStatus.visibility = input;
          li.appendChild(eyeLabel);
          // lock/unlock
-         const lockLabel = document.createRange().createContextualFragment('<label><input type="checkbox"><span class="smallIcon smallUnlock"></span></label>');
+         const lockLabel = range.createContextualFragment('<label><input type="checkbox"><span class="smallIcon smallUnlock"></span></label>');
          input = lockLabel.querySelector('input');
          input.addEventListener('change', (ev)=> {  // whole is fragment. we want label.
             View.setObject(model.parent, [model]);
@@ -258,7 +294,7 @@ class TreeView {
          li.appendChild(lockLabel);
          model.guiStatus.locked = input;
          // wireframe
-         const wireframe = document.createRange().createContextualFragment('<label><input type="checkbox"><span class="smallIcon smallWire"></span></label>');
+         const wireframe = range.createContextualFragment('<label><input type="checkbox"><span class="smallIcon smallWire"></span></label>');
          input = wireframe.querySelector('input');
          input.addEventListener('change', (ev)=> {  // whole is fragment. we want label.
             View.setObject(model.parent, [model]);
