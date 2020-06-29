@@ -432,20 +432,22 @@ function addToWorld(model, parent = _environment.world) { // default parent is w
    parent.insert( model );
    _environment.geometryGraph.addNode(model, parent);
    for (let cage of model.getCage()) {
-      cage.setVisible(true);
+      cage.display(true);
    }
    Renderer.needToRedraw();
    _environment.geometryGraph.updateCount(_environment.world);   // update Count Status
    return model;
 }
 
-function removeFromWorld(previewCage) {
-   const deleted = previewCage.removeFromParent();
+function removeFromWorld(preview) {
+   const deleted = preview.removeFromParent();
    if (deleted) {
-      previewCage.setVisible(false);
+      for (let cage of preview.getCage()) {
+         cage.display(false);
+      }
       Renderer.needToRedraw();
       // remove from geometryGraph
-      _environment.geometryGraph.removeObject(previewCage);
+      _environment.geometryGraph.removeNode(preview);
       _environment.geometryGraph.updateCount(_environment.world);   // update Count Status
    }
    return deleted;
