@@ -21,7 +21,6 @@ PreviewGroup.nameSetters.push(function(value){
    } 
 });
 
-
 PreviewGroup.prototype.addGuiStatus = function(treeView, parentUL) {
    // add here,
    treeView.addGroup(parentUL, this);
@@ -30,6 +29,10 @@ PreviewGroup.prototype.addGuiStatus = function(treeView, parentUL) {
    for (let node of this.group) {
       node.addGuiStatus(treeView, this.guiStatus.ul);
    }
+};
+
+PreviewGroup.prototype.removeGuiStatus = function(treeView) {
+   treeView.removeObject(this);
 };
 
 // update guiStatus
@@ -55,6 +58,9 @@ PreviewCage.prototype.addGuiStatus = function(treeView, parentUL) {
    treeView.addObject(this, parentUL);
 }
 
+PreviewCage.prototype.removeGuiStatus = function(treeView) {
+   treeView.removeObject(this);
+}
 
 PreviewCage.prototype.updateCount = function() {   // does nothing, just return 1
    return 1;  
@@ -312,10 +318,16 @@ class TreeView {
    removeObject(model) {
       const li = model.guiStatus.li;
       li.parentNode.removeChild(li);
-      model.removeFromParent();
       //model._textNode = undefined;
    }
 
+
+   /**
+    * 
+    */
+   removeNode(model) {
+      model.removeGuiStatus(this);
+   }
 }
 
 function getTreeView(labelId, id, world) {

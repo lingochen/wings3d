@@ -107,9 +107,7 @@ PreviewGroup.prototype.remove = function(obj) {
          return obj;
       }
    }
-   // console log
-   console.log('remove() integrity error');
-   return null;
+   throw new Error('remove() integrity error');
 };
 
 function countCage(acc, preview) {
@@ -126,6 +124,13 @@ PreviewGroup.prototype.getCage = function* () {
          yield subCage;
       }
    }
+};
+
+PreviewGroup.prototype.removeFromParent = function() {
+   if (this.parent) {
+      return this.parent.remove(this);
+   }
+   return null;
 };
 
 
@@ -182,7 +187,7 @@ const PreviewCage = function(bench, controlMesh) {
    this.geometry = controlMesh;
    this.bench = bench;
    this.guiStatus = {};
-   this.status = {locked: false, visible: false, wireMode: false};
+   this.status = {locked: false, visible: true, wireMode: false};
 
    // index
    //this.edge = {size: 0, index: null};
@@ -245,7 +250,18 @@ PreviewCage.prototype.emptyUndo = function(restore) {
       return this.parent.remove(this);
    }
    return false;
- };
+};
+
+PreviewCage.prototype.display = function(displayOn) {
+   if (displayOn) {
+      if (this.isVisible()) {
+         this.geometry.show();
+      }
+   } else {
+      this.geometry.hide();
+   }
+}
+
 
 // act as destructor
 PreviewCage.prototype.freeBuffer = function() {
