@@ -3,9 +3,7 @@
 //
 //
 import {ImportExporter} from "../wings3d_importexport.js";
-import * as View from "../wings3d_view.js";
-import {Material} from "../wings3d_material.js";
-import * as UI from '../wings3d_ui.js';
+//import {Material} from "../wings3d_material.js";
 
 
 class X3dImportExporter extends ImportExporter {
@@ -35,8 +33,8 @@ class X3dImportExporter extends ImportExporter {
    async _export(world) {
       const parser = new DOMParser();
       const xml = parser.parseFromString(`<?xml version="1.0" encoding="utf-8"?>
-         <!DOCTYPE X3D PUBLIC "ISO//Web3D//DTD X3D 3.3//EN" "http://www.web3d.org/specifications/x3d-3.3.dtd">
-         <X3D profile='Interchange' version='3.3'  xmlns:xsd='http://www.w3.org/2001/XMLSchema-instance' xsd:noNamespaceSchemaLocation =' http://www.web3d.org/specifications/x3d-3.0.xsd '>
+         <!DOCTYPE X3D PUBLIC "ISO//Web3D//DTD X3D 4.0//EN" "http://www.web3d.org/specifications/x3d-4.0.dtd">
+         <X3D profile='Interchange' version='4.0'  xmlns:xsd='http://www.w3.org/2001/XMLSchema-instance' xsd:noNamespaceSchemaLocation =' http://www.web3d.org/specifications/x3d-4.0.xsd '>
          <head>
             <meta name='title' content=''/>
             <meta name='creator' content=''/>
@@ -147,12 +145,6 @@ class X3dImportExporter extends ImportExporter {
             this._parseNode(node, current);
          }
          // now, put everthing into world
-         /*for (let group of current.children) {
-            View.addToWorld(group);
-         }
-         if (current.cage) {
-            View.addToWorld(current.cage);
-         } */
          return {world: current.group.children, material: this.material};
       }
    }
