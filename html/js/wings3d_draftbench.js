@@ -53,7 +53,7 @@ const DraftBench = function(theme, prop, materialList, defaultSize = 2048) {  //
    // previewEdge selected
    this.preview.shaderData.createAttribute('indexBuffer', layoutVec4, gl.STATIC_DRAW);
    this.preview.shaderData.createSampler("edgeState", 1, 1, gl.UNSIGNED_BYTE);
-   this.preview.shaderData.createSampler("edgeVertexColor", 5, 3, gl.UNSIGNED_BYTE);
+   this.preview.shaderData.createSampler("attributeColor", 5, 3, gl.UNSIGNED_BYTE);
 
    // previewVertex
    this.preview.shaderData.createAttribute('vertexIndex', layoutVec, gl.DYNAMIC_DRAW);
@@ -212,7 +212,6 @@ DraftBench.prototype.isModified = function() {
            Material.color.isAltered() ||
            HalfEdge.triangleList.isAltered() ||
            HalfEdge.color.isAltered() 
-           //Polygon.color.isAltered() ||
            );
 };
 
@@ -232,7 +231,7 @@ DraftBench.prototype.draw = function(gl, madsor) {
       this.preview.shaderData.updateSampler("positionBuffer", Vertex.position); // this.position === Vertex.position
 
       // update vertex color if needed (it per hEdge)
-      this.preview.shaderData.updateSampler("edgeVertexColor", HalfEdge.color);
+      this.preview.shaderData.updateSampler("attributeColor", HalfEdge.color);
 
       // update polygon, group state if needed
       this.preview.shaderData.updateSampler("faceState", Polygon.state);
@@ -249,7 +248,7 @@ DraftBench.prototype.draw = function(gl, madsor) {
 
       // bindUniform all
       gl.bindUniform(this.preview.shaderData, ['faceColor', 'faceState', 'faceStateHeight', 'groupState', 'groupStateHeight',
-                                               'materialColor', 'materialColorHeight', "edgeVertexColor", "edgeVertexColorHeight",
+                                               'materialColor', 'materialColorHeight', "attributeColor", "attributeColorHeight",
                                                'positionBuffer', 'positionBufferHeight']);
 
       gl.bindIndex(this.preview.shaderData, 'triangleList');

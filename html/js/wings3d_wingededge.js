@@ -29,7 +29,7 @@
 *
 */
 "use strict";
-import {Float32Buffer, ByteBuffer, Int32Buffer, TriangleIndexBuffer} from './wings3d_gl.js';
+import {Float32Buffer, ByteBuffer, Int32Buffer, TriangleIndexBuffer, ColorAttribute} from './wings3d_gl.js';
 import {BoundingSphere} from './wings3d_boundingvolume.js';
 import {triangulateNaive, triangulate} from './wings3d_triangulate.js';
 import {Material} from './wings3d_material.js';
@@ -256,8 +256,17 @@ WingedEdge.prototype.getNormal = function(normal) {
 };
 
 
+const Attribute = {
+// vertex: null,
+   color: null,
+   normal: null,
+   uv: null,         // uv(4) - 4 group of uv using float16.
+};
+
+
 const HalfEdge = function(wEdge) {  // should only be created by WingedEdge
    HalfEdge.index.alloc();    // allocate 12 (4 * 3)
+   HalfEdge.indexAttribute.alloc();
    HalfEdge.triangleList.alloc();
    HalfEdge.color.alloc();
    this.wingedEdge = wEdge;   // parent winged edge
@@ -270,12 +279,10 @@ const HalfEdge = function(wEdge) {  // should only be created by WingedEdge
    this._face = null;
    this.pair = null;
 };
-HalfEdge.index = null;         // (vertex(index), hEdge(index), PolygonIndex, GroupIndex) hEdge(normal, color, texCoord) (polygon has material, state, centroid), (group state)
-HalfEdge.normal = null;
-HalfEdge.color = null;
-HalfEdge.WHITE = [255, 255, 255];
-// HalfEdge.texCoord = null;  
-// HalfEdge.texCoord1 = null;
+HalfEdge.index = null;        // (vertex(index), hEdge(index), PolygonIndex, GroupIndex) hEdge(normal, color, texCoord) (polygon has material, state, centroid), (group state)
+HalfEdge.indexAttribute = null;    // (color, normal, texCoord) Index.  how about tangent?, joints? weights? 
+HalfEdge.color = null;        // (r,g,b) - using byte.
+HalfEdge.WHITE = [255, 255, 255]; 
 HalfEdge.triangleList = null; // Polygon.index = (HalfEdge.totalSize * 3) - (hEdge, hEdge, apex)
 //HalfEdge.barycentric = null;  // clutch for webgl1
 Object.defineProperties(HalfEdge.prototype, {
@@ -356,19 +363,13 @@ HalfEdge.prototype.setHilite = function(onOff) {
  * 
  */
 HalfEdge.prototype.getVertexColor = function(color) {
-   let i = this.getIndex() * 3;
-   color[0] = HalfEdge.color.get(i++);
-   color[1] = HalfEdge.color.get(i++);
-   color[2] = HalfEdge.color.get(i);
+   HalfEdge.color.getValue(this.getIndex(), color);
 };
 /**
  * 
  */
 HalfEdge.prototype.setVertexColor = function(color) {
-   let i = this.getIndex() * 3;
-   HalfEdge.color.set(i++, color[0]);
-   HalfEdge.color.set(i++, color[1]);
-   HalfEdge.color.set(i, color[2]);
+   HalfEdge.color.setValue(this.getIndex(), color);
 };
 
 HalfEdge.prototype.isLive = function() {
@@ -1111,8 +1112,10 @@ const MeshAllocator = function(allocatedSize) {
    HalfEdge.index = new Float32Buffer(4);    // (vIdx, hIdx, pIdx, gIdx)
    HalfEdge.index.alloc();                   // Zeroth HalfEdge is used as Null(-1).
    HalfEdge.index.set(0, -1); HalfEdge.index.set(1, 0); HalfEdge.index.set(2, -1); HalfEdge.index.set(3, -1);
+   HalfEdge.indexAttribute = new Float32Buffer(3);
+   HalfEdge.indexAttribute.alloc();          // follow zeroth HalfEdge.
    HalfEdge.triangleList = new Int32Buffer(3);     // (hEdge0, hEdge1, hEdge2)
-   HalfEdge.color = new ByteBuffer(3);
+   HalfEdge.color = new ColorAttribute();
    // Vertex
    Vertex.index = new Float32Buffer(3);
    Vertex.position = this.position = new Float32Buffer(3, allocatedSize);  // position buffer.
@@ -3672,6 +3675,7 @@ WingedTopology.prototype.undoHole = function(hole) {
 export {
    WingedEdge,
    HalfEdge,
+   Attribute,
    Vertex,
    Polygon,
    MeshAllocator,
