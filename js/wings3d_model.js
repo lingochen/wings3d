@@ -753,7 +753,7 @@ PreviewCage.prototype.setFaceColor = function(color) {
          // set new color.
          hEdge.setVertexColor(color);
       }
-      polygon._setColor(color);
+      //polygon._setColor(color);
    }
 
    // let _setVertexColor do the work.

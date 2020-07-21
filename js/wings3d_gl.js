@@ -37,6 +37,12 @@ function createWebGLContext(canvasID, attrib) {
             console.log("No floating texture");
             return null;
          }
+         // require half-float texture
+         ext = gl.getExtension('OES_texture_half_float');
+         if (ext === null) {
+            console.log("No half float texture");
+            return null;
+         }
          // require 4 vertex texture unit
          let units = gl.getParameter(gl.MAX_VERTEX_TEXTURE_IMAGE_UNITS);
          if (units < 8) {  // we need at least 5?
@@ -1018,6 +1024,172 @@ Uint32Buffer.prototype.byteSize = function() {
 
 
 /**
+ * Candidate for WASM.
+ * https://stackoverflow.com/questions/32633585/how-do-you-convert-to-half-floats-in-javascript
+ */
+const toHalf = (function() {
+   let floatView = new Float32Array(1);
+   let int32View = new Int32Array(floatView.buffer);
+ 
+   /* This method is faster than the OpenEXR implementation (very often
+    * used, eg. in Ogre), with the additional benefit of rounding, inspired
+    * by James Tursa?s half-precision code. */
+   return function toHalf(value) {
+     floatView[0] = value;     // float32 conversion here
+     var x = int32View[0];
+ 
+     var bits = (x >> 16) & 0x8000; /* Get the sign */
+     var m = (x >> 12) & 0x07ff; /* Keep one extra bit for rounding */
+     var e = (x >> 23) & 0xff; /* Using int is faster here */
+ 
+     /* If zero, or denormal, or exponent underflows too much for a denormal half, return signed zero. */
+     if (e < 103) {
+       return bits;
+     }
+ 
+     /* If NaN, return NaN. If Inf or exponent overflow, return Inf. */
+     if (e > 142) {
+       bits |= 0x7c00;
+       /* If exponent was 0xff and one mantissa bit was set, it means NaN, not Inf, so make sure we set one mantissa bit too. */
+       bits |= ((e == 255) ? 0 : 1) && (x & 0x007fffff);
+       return bits;
+     }
+ 
+     /* If exponent underflows but not too much, return a denormal */
+     if (e < 113) {
+       m |= 0x0800;
+       /* Extra rounding may overflow and set mantissa to 0 and exponent to 1, which is OK. */
+       bits |= (m >> (114 - e)) + ((m >> (113 - e)) & 1);
+       return bits;
+     }
+ 
+     bits |= ((e - 112) << 10) | (m >> 1);
+     /* Extra rounding. An overflow will set mantissa to 0 and increment the exponent, which is OK. */
+     bits += m & 1;
+     return bits;
+   }
+}());
+
+/**
+ * 
+ * https://stackoverflow.com/questions/5678432/decompressing-half-precision-floats-in-javascript
+ */
+const fromHalf = function(binary) {
+   let exponent = (binary & 0x7C00) >> 10, 
+       fraction = binary & 0x03FF;
+   return (binary >> 15 ? -1 : 1) * 
+           (exponent ? 
+               (exponent === 0x1F ? (fraction ? NaN : Infinity) : Math.pow(2, exponent - 15) * (1 + fraction / 0x400)) 
+               : 6.103515625e-5 * (fraction / 0x400)
+            );
+};
+
+
+/**
+ * AttributeBuffer. currently we have (normal, colorRGBA, uv(8)). todo: tangentBasis? joint? weight? 
+ *  should be use by HalfEdge. in webgl1, we use float16 to store value.
+ * rgb=(4)
+ * normal=(4)
+ * uv(4)=(8) - we could stuff extra UV under unused (normal[3], rgb[3]) for ambient textures? that uv(5)
+ * 16 float16. 4(rgba)/attribute
+ */
+const AttributeBuffer = function(componentSize, allocationSize) {
+   BufferObject.call(this, componentSize);
+   if (!allocationSize) {
+      allocationSize = gl.textureSize;
+   }
+   this.buffer = this._allocateBuffer(allocationSize);
+   this.freePool = [];
+   this.refCount = [];
+};
+AttributeBuffer.prototype = Object.create(BufferObject.prototype);
+Object.defineProperty(AttributeBuffer.prototype, 'constructor', { 
+   value: AttributeBuffer,
+   enumerable: false, // so that it does not appear in 'for in' loop
+   writable: true });
+
+AttributeBuffer.prototype.alloc = function() {
+   let index;
+   if (this.freePool.length > 0) {
+      index = this.freePool.pop();
+      this.refCount[index] = 1;  
+   } else { // create new one.
+      index = BufferObject.prototype.alloc.call(this);
+      this.refCount.push( 1 );
+   }
+   return index;
+};
+AttributeBuffer.prototype.bind = function(index) {
+   this.refCount[index]++;
+};
+AttributeBuffer.prototype.free = function(index) {
+   this.refCount[index]--;
+   if (this.refCount[index] === 0) {
+      this.freePool.push(index);
+   }
+};
+/*AttributeBuffer.prototype.getNormal = function(index) {
+   index = index * AttributeBuffer.kSIZE + 3;
+   return [fromHalf(this.buffer[index++]),
+           fromHalf(this.buffer[index++]),
+           fromHalf(this.buffer[index])];   
+}
+AttributeBuffer.prototype.setNormal = function(index, normal) {
+   index = index * AttributeBuffer.kSIZE + 3;
+   this.set(index++, toHalf(normal[0]) );
+   this.set(index++, toHalf(normal[1]) );
+   this.set(index,   toHalf(normal[2]) );   
+}
+AttributeBuffer.prototype.getUV = function(index, channel) {
+   index = index * AttributeBuffer.kSIZE + 6 + channel*2;
+   return [fromHalf(this.buffer[index++]),
+           fromHalf(this.buffer[index])];   
+}
+AttributeBuffer.prototype.setUV = function(index, channel, uv) {
+   index = index * AttributeBuffer.kSIZE + 6 + channel*2;
+   this.set(index++, toHalf(uv[0]) );
+   this.set(index,   toHalf(uv[1]) );
+};*/
+
+
+const ColorAttribute = function(allocationSize) {
+   AttributeBuffer.call(this, 3, allocationSize);
+};
+ColorAttribute.prototype = Object.create(AttributeBuffer.prototype);
+Object.defineProperty(ColorAttribute.prototype, 'constructor', { 
+   value: ColorAttribute,
+   enumerable: false, // so that it does not appear in 'for in' loop
+   writable: true });
+ColorAttribute.prototype._allocateBuffer = function(size) {
+   return new Uint8Array(this.computeAllocateSize(size));
+};
+ColorAttribute.prototype.byteSize = function() {
+   return 1;
+};
+
+ColorAttribute.prototype.setValue = function(index, rgb) {
+   index = index * this.component;
+   this.set(index++, rgb[0] );
+   this.set(index++, rgb[1] );
+   this.set(index,   rgb[2] );
+};
+
+ColorAttribute.prototype.getValue = function(index, rgb) {
+   index = index * this.component;
+   rgb[0] = this.buffer[index++];
+   rgb[1] = this.buffer[index++];
+   rgb[2] = this.buffer[index];
+};
+
+
+//NormalAttribute
+
+
+//UvAttribute
+
+
+
+/**
  * 
  * @param {number} type - manage the buffer here.
  */
@@ -1049,6 +1221,7 @@ TriangleIndexBuffer.prototype.set = function(indexArray, newVals) {
 
 export {
    createWebGLContext,
+   ColorAttribute,
    TriangleIndexBuffer,
    Float32Buffer,
    Int32Buffer,
