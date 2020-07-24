@@ -47,6 +47,7 @@ vertex: (index2TexCoord, materialIndex) =>
    // (vertex, halfEdge, face, group) index
    attribute highp vec4 polygonIndex;
    // (color, normal, texCoord)
+   attribute highp vec3 a_AttributeIndex;
 
    // positionTexture, stateTexture, faceTexture, materialTexture, edgeColorTexture, normalTexture, texCoordTexture.
    uniform highp sampler2D positionBuffer;
@@ -101,7 +102,7 @@ vertex: (index2TexCoord, materialIndex) =>
                color = mix(stateColor, color, 0.5);
             }
             vec3 pos = texture2D(positionBuffer, index2TexCoord(polygonIndex.x, positionBufferHeight)).xyz;
-            vec3 vertexColor = texture2D(attributeColor, index2TexCoord(polygonIndex.y, attributeColorHeight)).rgb;
+            vec3 vertexColor = texture2D(attributeColor, index2TexCoord(a_AttributeIndex.x, attributeColorHeight)).rgb;
             gl_Position = projection * worldView * vec4(pos, 1.0);
             // modulate vertexColor;
             color = color * vec4(vertexColor, 1.0);

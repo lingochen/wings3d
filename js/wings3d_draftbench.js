@@ -41,6 +41,7 @@ const DraftBench = function(theme, prop, materialList, defaultSize = 2048) {  //
    var layoutVec4 = ShaderData.attribLayout(4);
    //var layoutFloat = ShaderData.attribLayout(1);
    this.preview.shaderData.createAttribute('polygonIndex', layoutVec4, gl.STATIC_DRAW);
+   this.preview.shaderData.createAttribute('a_AttributeIndex', layoutVec, gl.STATIC_DRAW);
    this.preview.shaderData.createSampler("faceState", 2, 3, gl.UNSIGNED_BYTE);
    this.preview.shaderData.createSampler("groupState", 3, 1, gl.UNSIGNED_BYTE);
    this.preview.shaderData.createSampler('positionBuffer', 0, 3, gl.FLOAT);
@@ -202,6 +203,7 @@ DraftBench.prototype.freeBuffer = function() {
 DraftBench.prototype.isModified = function() {
    return (Vertex.index.isAltered() ||
            HalfEdge.index.isAltered() ||
+           HalfEdge.indexAttribute.isAltered() ||
            WingedEdge.index.isAltered() ||
            //Polygon.centerIndex.isAltered() ||
            Vertex.position.isAltered() ||
@@ -225,7 +227,7 @@ DraftBench.prototype.draw = function(gl, madsor) {
    try {
       // update polygon(including center) index if needed.
       this.preview.shaderData.updateAttribute("polygonIndex", HalfEdge.index);
-      
+      this.preview.shaderData.updateAttribute("a_AttributeIndex", HalfEdge.indexAttribute);
 
       // update positionBuffer texture if modified
       this.preview.shaderData.updateSampler("positionBuffer", Vertex.position); // this.position === Vertex.position
@@ -245,6 +247,7 @@ DraftBench.prototype.draw = function(gl, madsor) {
 
       // bind polygonIndex
       gl.bindAttribute(this.preview.shaderData, ['polygonIndex']);
+      gl.bindAttribute(this.preview.shaderData, ['a_AttributeIndex']);
 
       // bindUniform all
       gl.bindUniform(this.preview.shaderData, ['faceColor', 'faceState', 'faceStateHeight', 'groupState', 'groupStateHeight',
