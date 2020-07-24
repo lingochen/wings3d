@@ -269,6 +269,7 @@ const HalfEdge = function(wEdge) {  // should only be created by WingedEdge
    HalfEdge.indexAttribute.alloc();
    HalfEdge.triangleList.alloc();
    HalfEdge.color.alloc();
+   //
    this.wingedEdge = wEdge;   // parent winged edge
    this._next = null;
 //   this.prev = null;       // not required, but very nice to have shortcut
@@ -369,7 +370,9 @@ HalfEdge.prototype.getVertexColor = function(color) {
  * 
  */
 HalfEdge.prototype.setVertexColor = function(color) {
-   HalfEdge.color.setValue(this.getIndex(), color);
+   let index = this.getIndex();
+   HalfEdge.color.setValue(index, color);
+   HalfEdge.indexAttribute.set(index*3, index);    
 };
 
 HalfEdge.prototype.isLive = function() {
@@ -1116,6 +1119,8 @@ const MeshAllocator = function(allocatedSize) {
    HalfEdge.indexAttribute.alloc();          // follow zeroth HalfEdge.
    HalfEdge.triangleList = new Int32Buffer(3);     // (hEdge0, hEdge1, hEdge2)
    HalfEdge.color = new ColorAttribute();
+   HalfEdge.color.alloc();                   // zeroth default color, white.
+   HalfEdge.color.setValue(0, [255,255,255]);   
    // Vertex
    Vertex.index = new Float32Buffer(3);
    Vertex.position = this.position = new Float32Buffer(3, allocatedSize);  // position buffer.
