@@ -54,8 +54,8 @@ const WingedEdge = function(orgVert, toVert, index) {
    this.left.origin = orgVert;
    this.right.origin = toVert;
    // update vertex color
-   this.left.setVertexColor(HalfEdge.WHITE);
-   this.right.setVertexColor(HalfEdge.WHITE);
+   this.left.initAttribute();
+   this.right.initAttribute();
    // update HalfEdge.index. offset start at 1
    const idx = 1 + this.index * 2;
    const i = idx * 4;
@@ -71,19 +71,19 @@ WingedEdge.state = null;
 /**
  * 
  */
-WingedEdge.prototype.getRestore = function(colorView) {
-   this.left.getVertexColor(colorView); colorView.inc();
-   this.right.getVertexColor(colorView); colorView.inc();
-   return {wEdge: this, left: {origin: this.left.origin, next: this.left.next}, 
-                        right: {origin: this.right.origin, next: this.right.next} };
+WingedEdge.prototype.discardInternal = function(affected) {
+   this.setGroup(-1);
+   this.left.discardInternal(affected);
+   this.right.discardInternal(affected);
 };
-WingedEdge.prototype.setRestore = function(restore, colorView) {
-   this.left.setVertexColor(colorView); colorView.inc();
-   this.right.setVertexColor(colorView); colorView.inc();
-   this.left.origin = restore.left.origin;
-   this.right.origin = restore.right.origin;
-   this.left.next = restore.left.next;
-   this.right.next = restore.right.next;
+WingedEdge.prototype.archiveInternal = function(archive) {
+   let left = this.left.archiveInternal(archive);
+   let right = this.right.archiveInternal(archive);
+   return {wEdge: this, left: left, right: right};
+};
+WingedEdge.prototype.restoreInternal = function(restore) {
+   this.left.restoreInternal(restore.left);
+   this.right.restoreInternal(restore.right);
 };
 
 WingedEdge.prototype[Symbol.iterator] = function* () {
@@ -268,7 +268,6 @@ const HalfEdge = function(wEdge) {  // should only be created by WingedEdge
    HalfEdge.index.alloc();    // allocate 12 (4 * 3)
    HalfEdge.indexAttribute.alloc();
    HalfEdge.triangleList.alloc();
-   HalfEdge.color.alloc();
    //
    this.wingedEdge = wEdge;   // parent winged edge
    this._next = null;
@@ -283,7 +282,6 @@ const HalfEdge = function(wEdge) {  // should only be created by WingedEdge
 HalfEdge.index = null;        // (vertex(index), hEdge(index), PolygonIndex, GroupIndex) hEdge(normal, color, texCoord) (polygon has material, state, centroid), (group state)
 HalfEdge.indexAttribute = null;    // (color, normal, texCoord) Index.  how about tangent?, joints? weights? 
 HalfEdge.color = null;        // (r,g,b) - using byte.
-HalfEdge.WHITE = [255, 255, 255]; 
 HalfEdge.triangleList = null; // Polygon.index = (HalfEdge.totalSize * 3) - (hEdge, hEdge, apex)
 //HalfEdge.barycentric = null;  // clutch for webgl1
 Object.defineProperties(HalfEdge.prototype, {
@@ -363,16 +361,75 @@ HalfEdge.prototype.setHilite = function(onOff) {
 /**
  * 
  */
-HalfEdge.prototype.getVertexColor = function(color) {
-   HalfEdge.color.getValue(this.getIndex(), color);
+HalfEdge.prototype.getVertexColor = function(colorBuff) {
+   const index = this.getIndex() * 3;
+   const ret = HalfEdge.indexAttribute.get(index);
+   if (colorBuff) {
+      HalfEdge.color.getValue(ret, colorBuff);
+   }
+   return ret;
 };
 /**
  * 
  */
 HalfEdge.prototype.setVertexColor = function(color) {
-   let index = this.getIndex();
-   HalfEdge.color.setValue(index, color);
-   HalfEdge.indexAttribute.set(index*3, index);    
+   // remove old bind
+   let index = this.getIndex() * 3;
+   let oldColor = HalfEdge.indexAttribute.get(index);
+   let colorAsset = {index: oldColor};
+   if (HalfEdge.color.prune(oldColor)) {
+      colorAsset.color = [0, 0, 0];
+      HalfEdge.color.getValue(oldColor, colorAsset.color);
+   }
+   // bind new color
+   HalfEdge.color.bind(color);
+   HalfEdge.indexAttribute.set(index, color); 
+   // return colorBuff 
+   return colorAsset;
+};
+
+HalfEdge.prototype.initAttribute = function() {
+   HalfEdge.color.bind(0);
+   let index = this.getIndex() * 3;
+   HalfEdge.indexAttribute.set(index, 0);
+   // set uv, normal to -1
+};
+
+
+HalfEdge.prototype.discardInternal = function(affected) {
+   // release resources.
+   let index = this.getIndex() * 3;
+   let oldColor = HalfEdge.indexAttribute.get(index);
+   if (HalfEdge.color.prune(oldColor)) {
+      let color = [0, 0, 0];
+      HalfEdge.color.getValue(oldColor, color);
+      affected.color.push( {index: oldColor, color: color} );
+   }
+   this.setEdgeTriangle(null);
+
+   // reset HalfEdge
+   this.face = null;
+   this.origin = null;
+   this.next = this.pair;
+};
+
+HalfEdge.prototype.archiveInternal = function() {
+   let index = this.getIndex() * 3;
+   let oldColor = HalfEdge.indexAttribute.get(index);
+   if (oldColor < 0) {
+      throw(new Error("No color Attribute"));
+   }
+
+   return {origin: this.origin, next: this.next, color: oldColor};
+};
+
+HalfEdge.prototype.restoreInternal = function(archive) {
+   this.origin = archive.origin;
+   this.next = archive.next;
+   // setVertexColor;
+   let index = this.getIndex() * 3;
+   HalfEdge.color.bind(archive.color);
+   HalfEdge.indexAttribute.set(index, archive.color);
 };
 
 HalfEdge.prototype.isLive = function() {
@@ -1119,7 +1176,7 @@ const MeshAllocator = function(allocatedSize) {
    HalfEdge.indexAttribute.alloc();          // follow zeroth HalfEdge.
    HalfEdge.triangleList = new Int32Buffer(3);     // (hEdge0, hEdge1, hEdge2)
    HalfEdge.color = new ColorAttribute();
-   HalfEdge.color.alloc();                   // zeroth default color, white.
+   HalfEdge.color.bind(HalfEdge.color.reserve());    // zeroth default color, white.
    HalfEdge.color.setValue(0, [255,255,255]);   
    // Vertex
    Vertex.index = new Float32Buffer(3);
@@ -1139,7 +1196,7 @@ const MeshAllocator = function(allocatedSize) {
    this.edges = [];        // class WingedEdge
    this.faces = [];        // class Polygon
    this.free = {vertices: [], edges: [], faces: []};
-   this.affected = {vertices: new Set, edges: new Set, faces: new Set};// affected is when reuse, deleted, or change vital stats.
+   this.affected = {vertices: new Set, edges: new Set, faces: new Set, color: []};// affected is when reuse, deleted, or change vital stats.
 };
 // allocation,
 MeshAllocator.prototype.allocVertex = function(pt, delVertex) {
@@ -1276,20 +1333,15 @@ MeshAllocator.prototype.freeVertex = function(vertex) {
 };
 
 MeshAllocator.prototype.freeHEdge = function(edge) {
-   const pair = edge.pair;
-   edge.face = null;
-   pair.face = null;
-   edge.origin = null;
-   pair.origin = null;
-   // link together for a complete loop
-   edge.next = pair;
-   pair.next = edge;
-   edge.setEdgeTriangle(null);
-   pair.setEdgeTriangle(null);
+   const wEdge = edge.wingedEdge;
+   const archive = wEdge.archiveInternal();
+   wEdge.discardInternal(this.affected);
+
    // assert !this.free.edges.has( edge.wingedEdge );
    //this.free.edges.push( edge.wingedEdge );
-   this._insertFreeList(edge.wingedEdge.index, this.free.edges);
+   this._insertFreeList(wEdge.index, this.free.edges);
    //this.affected.edges.add( edge.wingedEdge );
+   return archive;
 };
 
 MeshAllocator.prototype.freePolygon = function(polygon) {
@@ -1469,29 +1521,26 @@ WingedTopology.prototype.getStat = function(stat) {
  * return all undo data so we can redo. 
  */
 WingedTopology.prototype.empty = function() {
-   const delPolygons = [];  // could be reused, so we have to save polygon and it material.
+   const archive = {faces: [], edges: [], vertices: [], uvs: [], colors: []};
    for (let polygon of this.faces) {   // free all polygon, and save polygo list
-      delPolygons.push( polygon.getRestore() );
+      archive.faces.push( polygon.getRestore() );
       this.alloc.freePolygon(polygon);
    }
    this.faces.clear();
-   const delWedges = [];
-   const colors = new Float32Array(this.edges.size * 3 * 2);
-   const colorView = new Vec3View(colors);
+
    for (const wEdge of this.edges) {
-      delWedges.push( wEdge.getRestore(colorView) );
-      this.alloc.freeHEdge(wEdge.left);
+      archive.edges.push( this.alloc.freeHEdge(wEdge.left) );
    }
    this.edges.clear();
-   const delVertices = [];
-   const pts = new Float32Array(this.vertices.size * 3);
+
+   archive.pts = new Float32Array(this.vertices.size * 3);
    const ptView = new Vec3View(pts);
    for (let vertex of this.vertices) {
-      delVertices.push( vertex.getRestore(ptView) );
+      archive.vertices.push( vertex.getRestore(ptView) );
       this.alloc.freeVertex(vertex);
    }
    this.vertices.clear();
-   return {faces: delPolygons, edges: delWedges, vertices: delVertices, colors: colors, pts: pts};
+   return archive;
 };
 WingedTopology.prototype.emptyUndo = function(restoreAll) {
    const ptView = new Vec3View(restoreAll.pts);
@@ -1499,10 +1548,15 @@ WingedTopology.prototype.emptyUndo = function(restoreAll) {
       this.addVertex(vert.vertex);
       vert.vertex.setRestore(vert, ptView);
    }
-   const colorView = new Vec3View(restoreAll.colors);
+   // restore attribute first 
+   for (let color of restoreAll.colors) {
+      
+   }
+
+   const colorView = new Vec3View(restoreAll.attributes);
    for (let wEdge of restoreAll.edges) {
       this._createEdge(wEdge.left.origin, wEdge.right.origin, wEdge.wEdge.left);
-      wEdge.wEdge.setRestore(wEdge, colorView);
+      wEdge.wEdge.restoreInternal(wEdge);
    }
    for (let restore of restoreAll.faces) {   // undo successfully
       const face = this._createPolygon(restore.halfEdge, 4, restore.material, restore);
@@ -1704,7 +1758,6 @@ WingedTopology.prototype._freeVertex = function(vertex) {
 
 WingedTopology.prototype._freeEdge = function(edge) {
    if (this.edges.delete(edge.wingedEdge)){
-      edge.wingedEdge.setGroup(-1);
       this.alloc.freeHEdge(edge);
    }
 };
