@@ -10,7 +10,7 @@
 */
 "use strict";
 import {LooseOctree, Plane} from './wings3d_boundingvolume.js';
-import {WingedTopology, Vertex} from './wings3d_wingededge.js';
+import {WingedTopology, Vertex, HalfEdge} from './wings3d_wingededge.js';
 import {Material} from './wings3d_material.js';
 import * as View from './wings3d_view.js';
 import * as Wings3D from './wings3d.js';
@@ -701,23 +701,20 @@ PreviewCage.prototype.selectBodyMaterial = function(material) {
  * 
  */
 PreviewCage.prototype.setVertexColor = function(color) {
-   const overSize = this.selectedSet.size * 3 * 5;       // should be slight Overize;
-   const snapshot = {hEdges: [], vertexColor: new Util.Vec3View(new Uint8Array(overSize))};
+   const snapshot = {hEdges: [], hEdgeColors: [], oldColors: []};
    const affected = new Set;
 
    for (let vertex of this.selectedSet) {
       for (let hEdge of vertex.edgeRing()) { // get all outEdge
-         // snapshot vertexColor
-         snapshot.hEdges.push( hEdge );
-         snapshot.vertexColor.alloc(Util.Vec3View.uint8resize);
-         hEdge.getVertexColor(snapshot.vertexColor);
-         snapshot.vertexColor.inc();
-         // set new color.
-         hEdge.setVertexColor(color);
+         snapshot.hEdges.push( hEdge );;
+         let oldColor = hEdge.setVertexColor(color);
+         if (oldColor.color) {
+            snapshot.oldColors.push( oldColor );
+         }
+         snapshot.hEdgeColors.push( oldColor.index );
          affected.add(hEdge.face);
       }
    }
-   snapshot.vertexColor.reset();
 
    return snapshot;
 };
@@ -728,11 +725,19 @@ PreviewCage.prototype.setVertexColor = function(color) {
 PreviewCage.prototype.undoVertexColor = function(snapshot) {
    const affected = new Set;
 
-   snapshot.vertexColor.reset();
+   for (let oldColor of snapshot.oldColors) {
+      HalfEdge.color.alloc(oldColor.index);  // restore oldColor
+      HalfEdge.color.setValue(oldColor.index, oldColor.color);
+   }
+
+   let colorIter = snapshot.hEdgeColors.entries();
+   // now reset new Color
    for (let hEdge of snapshot.hEdges) {
-      hEdge.setVertexColor(snapshot.vertexColor);  // restore color
+      hEdge.setVertexColor(colorIter.next().value);  // restore color
       affected.add(hEdge.face);
    }
+
+   // check color.alloc error.
 };
 
 
@@ -740,18 +745,18 @@ PreviewCage.prototype.undoVertexColor = function(snapshot) {
  * 
  */
 PreviewCage.prototype.setFaceColor = function(color) {
-   const overSize = this.selectedSet.size * 3 * 5;       // should be slight Overize;
-   const snapshot = {hEdges: [], vertexColor: new Util.Vec3View(new Uint8Array(overSize))};
+   //const overSize = this.selectedSet.size * 3 * 5;       // should be slight Overize;
+   const snapshot = {hEdges: [], hEdgeColors: [], oldColors: []};
 
    for (let polygon of this.selectedSet) {
       for (let hEdge of polygon.hEdges()) {
-         // snapshot vertexColor
-         snapshot.hEdges.push( hEdge );
-         snapshot.vertexColor.alloc(Util.Vec3View.uint8resize);
-         hEdge.getVertexColor(snapshot.vertexColor);
-         snapshot.vertexColor.inc();
-         // set new color.
-         hEdge.setVertexColor(color);
+         snapshot.hEdges.push( hEdge );;
+         let oldColor = hEdge.setVertexColor(color);
+         if (oldColor.color) {
+            snapshot.oldColors.push( oldColor );
+         }
+         snapshot.hEdgeColors.push( oldColor.index );
+         //affected.add(hEdge.face);
       }
       //polygon._setColor(color);
    }
@@ -765,21 +770,19 @@ PreviewCage.prototype.setFaceColor = function(color) {
  * 
  */
 PreviewCage.prototype.setBodyColor = function(color) {
-   const overSize = this.geometry.edges.size * 3 * 2;       // should be slight Overize;
-   const snapshot = {hEdges: [], vertexColor: new Util.Vec3View(new Uint8Array(overSize))};
+   const snapshot = {hEdges: [], hEdgeColors: [], oldColors: []};
 
    for (let polygon of this.geometry.faces) {
       if (polygon.isLive()) {
          for (let hEdge of polygon.hEdges()) {
-            // snapshot vertexColor
-            snapshot.hEdges.push( hEdge );
-            snapshot.vertexColor.alloc(Util.Vec3View.uint8resize);
-            hEdge.getVertexColor(snapshot.vertexColor);
-            snapshot.vertexColor.inc();
-            // set new color.
-            hEdge.setVertexColor(color);
+            snapshot.hEdges.push( hEdge );;
+            let oldColor = hEdge.setVertexColor(color);
+            if (oldColor.color) {
+               snapshot.oldColors.push( oldColor );
+            }
+            snapshot.hEdgeColors.push( oldColor.index );
          }
-         polygon._setColor(color);
+         //polygon._setColor(color);
       }
    }
 

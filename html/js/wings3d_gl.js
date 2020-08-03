@@ -1099,7 +1099,7 @@ const AttributeBuffer = function(componentSize, allocationSize) {
       allocationSize = gl.textureSize;
    }
    this.buffer = this._allocateBuffer(allocationSize);
-   this.freePool = [];
+   this.freePool = new Set;
    this.refCount = [];
 };
 AttributeBuffer.prototype = Object.create(BufferObject.prototype);
@@ -1108,24 +1108,34 @@ Object.defineProperty(AttributeBuffer.prototype, 'constructor', {
    enumerable: false, // so that it does not appear in 'for in' loop
    writable: true });
 
-AttributeBuffer.prototype.alloc = function() {
-   let index;
-   if (this.freePool.length > 0) {
-      index = this.freePool.pop();
-      this.refCount[index] = 1;  
-   } else { // create new one.
-      index = BufferObject.prototype.alloc.call(this);
-      this.refCount.push( 1 );
+AttributeBuffer.prototype.reserve = function(delIndex) {
+   if (delIndex) {
+      if (!this.freePool.delete(delIndex)) {
+         throw( new Error('non-existence deleted Index found: ' + delIndex) );
+      }
+      return delIndex;
+   } else {
+      let index;
+      if (this.freePool.size > 0) {
+         index = this.freePool.values().next().value;
+         this.freePool.delete(index);
+         this.refCount[index] = 0;  
+      } else { // create new one.
+         index = BufferObject.prototype.alloc.call(this) / this.component;
+         this.refCount.push( 0 );
+      }
+      return index;
    }
-   return index;
 };
 AttributeBuffer.prototype.bind = function(index) {
    this.refCount[index]++;
 };
-AttributeBuffer.prototype.free = function(index) {
-   this.refCount[index]--;
-   if (this.refCount[index] === 0) {
-      this.freePool.push(index);
+AttributeBuffer.prototype.prune = function(index) {
+   const refCount = --this.refCount[index];
+   if (refCount === 0) {
+      this.freePool.add(index);
+   } else if (refCount < 0) {
+      throw(new Error("RefCount error"));
    }
 };
 /*AttributeBuffer.prototype.getNormal = function(index) {
@@ -1179,6 +1189,7 @@ ColorAttribute.prototype.getValue = function(index, rgb) {
    rgb[0] = this.buffer[index++];
    rgb[1] = this.buffer[index++];
    rgb[2] = this.buffer[index];
+   return rgb;
 };
 
 

@@ -11,6 +11,7 @@ import * as UI from './wings3d_ui.js';
 import * as Util from './wings3d_util.js';
 import {action} from './wings3d.js';
 import { Plane } from './wings3d_boundingvolume.js';
+import { HalfEdge } from './wings3d_wingededge.js';
 
 
 class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
@@ -145,7 +146,16 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       const vertexColorHandler = (ev) => {
          const colorPicker = ev.currentTarget;
          let color = Util.hexToRGB8(colorPicker.value);
-         const cmd = new GenericEditCommand(this, this.setVertexColor, [color], this.undoVertexColor);
+         const cmd = new GenericEditCmd((cmd, _madsor)=> {
+                                          if (Number.isInteger(cmd.colorIndex)) {
+                                             HalfEdge.color.reserve(cmd.colorIndex);
+                                          } else {
+                                             cmd.colorIndex = HalfEdge.color.reserve();  // init
+                                          }
+                                          HalfEdge.color.setValue(cmd.colorIndex, color);
+                                          return this.setVertexColor(cmd.colorIndex);  // madsor?
+                                       },
+                                       (cmd, _madsor)=> {this.undoVertexColor(cmd.snapshots);});
          if (cmd.doIt()) {
             View.undoQueue(cmd);
          }
@@ -927,6 +937,28 @@ class GenericEditCommand extends EditCommand {
 
    snapshotPosition() {
       return this.snapshots;
+   }
+}
+
+
+class GenericEditCmd extends EditCommand {
+   constructor(doCmd, undoCmd) {
+      super();
+      this.doCmd = doCmd;
+      this.undoCmd = undoCmd;
+   }
+
+   doIt(currentMadsor) {
+      this.snapshots = this.doCmd(this, currentMadsor);
+      return (this.snapshots.length > 0);
+   }
+
+   undo(currentMadsor) {
+      if (this.undoCmd) {
+         this.undoCmd(this, currentMadsor);
+      } else {
+         this.madsor.restoreSelectionPosition(this.snapshots);
+      }
    }
 }
 
