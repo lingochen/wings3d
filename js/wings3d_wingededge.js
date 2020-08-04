@@ -392,7 +392,7 @@ HalfEdge.prototype.setUV = function(uv) {
    let oldUV = HalfEdge.indexAttribute.get(index);
    let texCoord = Attribute.uv.pruneGet(oldUV);
    Attribute.uv.bind(uv);
-   HalfEdge.indexAttribute.set(index, uv); 
+   HalfEdge.indexAttribute.set(index, uv);
    // return oldAsset 
    return texCoord;
 };

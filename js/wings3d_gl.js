@@ -1158,74 +1158,92 @@ AttributeBuffer.prototype.setNormal = function(index, normal) {
    this.set(index++, toHalf(normal[1]) );
    this.set(index,   toHalf(normal[2]) );   
 }
-AttributeBuffer.prototype.getUV = function(index, channel) {
-   index = index * AttributeBuffer.kSIZE + 6 + channel*2;
-   return [fromHalf(this.buffer[index++]),
-           fromHalf(this.buffer[index])];   
+*/
+
+
+class ColorAttribute extends AttributeBuffer {
+   constructor(allocationSize) {
+      super(3, allocationSize);
+   }
+
+   _allocateBuffer(size) {
+      return new Uint8Array(this.computeAllocateSize(size));
+   };
+
+   byteSize() {
+      return 1;
+   };
+   
+   create() {
+      return [255, 255, 255];
+   }
+   
+   setValue(index, rgb) {
+      index = index * this.component;
+      this.set(index++, rgb[0] );
+      this.set(index++, rgb[1] );
+      this.set(index,   rgb[2] );
+   };
+   
+   getValue(index, rgb) {
+      index = index * this.component;
+      rgb[0] = this.buffer[index++];
+      rgb[1] = this.buffer[index++];
+      rgb[2] = this.buffer[index];
+      return rgb;
+   };
+
 }
-AttributeBuffer.prototype.setUV = function(index, channel, uv) {
-   index = index * AttributeBuffer.kSIZE + 6 + channel*2;
-   this.set(index++, toHalf(uv[0]) );
-   this.set(index,   toHalf(uv[1]) );
-};*/
 
-
-const ColorAttribute = function(allocationSize) {
-   AttributeBuffer.call(this, 3, allocationSize);
-};
-ColorAttribute.prototype = Object.create(AttributeBuffer.prototype);
-Object.defineProperty(ColorAttribute.prototype, 'constructor', { 
-   value: ColorAttribute,
-   enumerable: false, // so that it does not appear in 'for in' loop
-   writable: true });
-ColorAttribute.prototype._allocateBuffer = function(size) {
-   return new Uint8Array(this.computeAllocateSize(size));
-};
-ColorAttribute.prototype.byteSize = function() {
-   return 1;
-};
-
-ColorAttribute.prototype.create = function() {
-   return [255, 255, 255];
-}
-
-ColorAttribute.prototype.setValue = function(index, rgb) {
-   index = index * this.component;
-   this.set(index++, rgb[0] );
-   this.set(index++, rgb[1] );
-   this.set(index,   rgb[2] );
-};
-
-ColorAttribute.prototype.getValue = function(index, rgb) {
-   index = index * this.component;
-   rgb[0] = this.buffer[index++];
-   rgb[1] = this.buffer[index++];
-   rgb[2] = this.buffer[index];
-   return rgb;
-};
 
 
 //NormalAttribute
 
 
 class TexCoordAttribute extends AttributeBuffer {
+   constructor(allocationSize) {
+      super(8, allocationSize);
+   }
+
+   _allocateBuffer(size) {
+      return new Uint16Array(this.computeAllocateSize(size));
+   };
+
+   byteSize() {
+      return 2;
+   };
+
+   create() {
+      return [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
+   }
+
+   getChannel(index, channel, value) {
+      index = index * this.component + channel * 2;
+      value[0] = fromHalf(this.buffer[index++]);
+      value[1] = fromHalf(this.buffer[index]);   
+   }
+
+   getValue(index, value) {
+      index = index * this.component;
+      for (let i = 0; i < this.component; ++i) {
+         value[i] = fromHalf(this.buffer[index+i]);
+      }
+   }
+
+   setChannel(index, channel, uv) {
+      index = index * AttributeBuffer.kSIZE + 6 + channel*2;
+      this.set(index++, toHalf(uv[0]) );
+      this.set(index,   toHalf(uv[1]) );
+   };
+
+   setValue(index, value) {
+      index = index * this.component;
+      for (let i = 0; i < this.component; ++i) {
+         this.set(index+i, toHalf(value[i]));
+      }
+   }
 
 };
-//UvAttribute
-/*const TexCoordAttribute = function(allocationSize) {
-   AttributeBuffer.call(this, 8, allocationSize);
-};
-ColorAttribute.prototype = Object.create(AttributeBuffer.prototype);
-Object.defineProperty(ColorAttribute.prototype, 'constructor', { 
-   value: ColorAttribute,
-   enumerable: false, // so that it does not appear in 'for in' loop
-   writable: true });
-ColorAttribute.prototype._allocateBuffer = function(size) {
-   return new Uint8Array(this.computeAllocateSize(size));
-};
-ColorAttribute.prototype.byteSize = function() {
-   return 1;
-};*/
 
 
 
@@ -1263,6 +1281,7 @@ TriangleIndexBuffer.prototype.set = function(indexArray, newVals) {
 export {
    createWebGLContext,
    ColorAttribute,
+   TexCoordAttribute,
    TriangleIndexBuffer,
    Float32Buffer,
    Int32Buffer,
