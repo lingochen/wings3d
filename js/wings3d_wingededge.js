@@ -376,17 +376,27 @@ HalfEdge.prototype.setVertexColor = function(color) {
    // remove old bind
    let index = this.getIndex() * 3;
    let oldColor = HalfEdge.indexAttribute.get(index);
-   let colorAsset = {index: oldColor};
-   if (HalfEdge.color.prune(oldColor)) {
-      colorAsset.color = [0, 0, 0];
-      HalfEdge.color.getValue(oldColor, colorAsset.color);
-   }
-   // bind new color
+   const colorAsset = HalfEdge.color.pruneGet(oldColor);
    HalfEdge.color.bind(color);
    HalfEdge.indexAttribute.set(index, color); 
    // return colorBuff 
    return colorAsset;
 };
+
+/**
+ * (uv) - uv index.
+ */
+HalfEdge.prototype.setUV = function(uv) {
+   // remove old bind
+   let index = this.getIndex() * 3 + 1;
+   let oldUV = HalfEdge.indexAttribute.get(index);
+   let texCoord = Attribute.uv.pruneGet(oldUV);
+   Attribute.uv.bind(uv);
+   HalfEdge.indexAttribute.set(index, uv); 
+   // return oldAsset 
+   return texCoord;
+};
+
 
 HalfEdge.prototype.initAttribute = function() {
    HalfEdge.color.bind(0);

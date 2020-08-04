@@ -1138,6 +1138,14 @@ AttributeBuffer.prototype.prune = function(index) {
       throw(new Error("RefCount error"));
    }
 };
+AttributeBuffer.prototype.pruneGet = function(oldIndex) {
+   const asset = {index: oldIndex};
+   if (this.prune(oldIndex)) {
+      asset.value = this.create();
+      this.getValue(oldIndex, asset.value);
+   }
+   return asset;
+}
 /*AttributeBuffer.prototype.getNormal = function(index) {
    index = index * AttributeBuffer.kSIZE + 3;
    return [fromHalf(this.buffer[index++]),
@@ -1177,6 +1185,10 @@ ColorAttribute.prototype.byteSize = function() {
    return 1;
 };
 
+ColorAttribute.prototype.create = function() {
+   return [255, 255, 255];
+}
+
 ColorAttribute.prototype.setValue = function(index, rgb) {
    index = index * this.component;
    this.set(index++, rgb[0] );
@@ -1196,7 +1208,25 @@ ColorAttribute.prototype.getValue = function(index, rgb) {
 //NormalAttribute
 
 
+class TexCoordAttribute extends AttributeBuffer {
+
+};
 //UvAttribute
+/*const TexCoordAttribute = function(allocationSize) {
+   AttributeBuffer.call(this, 8, allocationSize);
+};
+ColorAttribute.prototype = Object.create(AttributeBuffer.prototype);
+Object.defineProperty(ColorAttribute.prototype, 'constructor', { 
+   value: ColorAttribute,
+   enumerable: false, // so that it does not appear in 'for in' loop
+   writable: true });
+ColorAttribute.prototype._allocateBuffer = function(size) {
+   return new Uint8Array(this.computeAllocateSize(size));
+};
+ColorAttribute.prototype.byteSize = function() {
+   return 1;
+};*/
+
 
 
 

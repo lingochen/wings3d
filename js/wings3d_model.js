@@ -708,7 +708,7 @@ PreviewCage.prototype.setVertexColor = function(color) {
       for (let hEdge of vertex.edgeRing()) { // get all outEdge
          snapshot.hEdges.push( hEdge );;
          let oldColor = hEdge.setVertexColor(color);
-         if (oldColor.color) {
+         if (oldColor.value) {
             snapshot.oldColors.push( oldColor );
          }
          snapshot.hEdgeColors.push( oldColor.index );
@@ -726,11 +726,11 @@ PreviewCage.prototype.undoVertexColor = function(snapshot) {
    const affected = new Set;
 
    for (let oldColor of snapshot.oldColors) {
-      HalfEdge.color.alloc(oldColor.index);  // restore oldColor
-      HalfEdge.color.setValue(oldColor.index, oldColor.color);
+      HalfEdge.color.reserve(oldColor.index);  // restore oldColor
+      HalfEdge.color.setValue(oldColor.index, oldColor.value);
    }
 
-   let colorIter = snapshot.hEdgeColors.entries();
+   let colorIter = snapshot.hEdgeColors.values();
    // now reset new Color
    for (let hEdge of snapshot.hEdges) {
       hEdge.setVertexColor(colorIter.next().value);  // restore color
