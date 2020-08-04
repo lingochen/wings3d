@@ -409,11 +409,15 @@ HalfEdge.prototype.initAttribute = function() {
 HalfEdge.prototype.discardInternal = function(affected) {
    // release resources.
    let index = this.getIndex() * 3;
-   let oldColor = HalfEdge.indexAttribute.get(index);
-   if (HalfEdge.color.prune(oldColor)) {
-      let color = [0, 0, 0];
-      HalfEdge.color.getValue(oldColor, color);
-      affected.color.push( {index: oldColor, color: color} );
+   let oldIndex = HalfEdge.indexAttribute.get(index);
+   let asset = HalfEdge.color.pruneGet(oldIndex);
+   if (asset.value) {
+      affected.color.push( asset );
+   }
+   oldIndex = HalfEdge.indexAttribute.get(index+1);
+   asset = Attribute.uv.pruneGet(oldIndex);
+   if (asset.value) {
+      affected.uv.push( asset );
    }
    this.setEdgeTriangle(null);
 
