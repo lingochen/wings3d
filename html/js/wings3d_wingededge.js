@@ -29,7 +29,7 @@
 *
 */
 "use strict";
-import {Float32Buffer, ByteBuffer, Int32Buffer, TriangleIndexBuffer, ColorAttribute} from './wings3d_gl.js';
+import {Float32Buffer, ByteBuffer, Int32Buffer, TriangleIndexBuffer, ColorAttribute, TexCoordAttribute} from './wings3d_gl.js';
 import {BoundingSphere} from './wings3d_boundingvolume.js';
 import {triangulateNaive, triangulate} from './wings3d_triangulate.js';
 import {Material} from './wings3d_material.js';
@@ -1191,7 +1191,8 @@ const MeshAllocator = function(allocatedSize) {
    HalfEdge.triangleList = new Int32Buffer(3);     // (hEdge0, hEdge1, hEdge2)
    HalfEdge.color = new ColorAttribute();
    HalfEdge.color.bind(HalfEdge.color.reserve());    // zeroth default color, white.
-   HalfEdge.color.setValue(0, [255,255,255]);   
+   HalfEdge.color.setValue(0, [255,255,255]); 
+   Attribute.uv = new TexCoordAttribute();  
    // Vertex
    Vertex.index = new Float32Buffer(3);
    Vertex.position = this.position = new Float32Buffer(3, allocatedSize);  // position buffer.
@@ -1210,7 +1211,7 @@ const MeshAllocator = function(allocatedSize) {
    this.edges = [];        // class WingedEdge
    this.faces = [];        // class Polygon
    this.free = {vertices: [], edges: [], faces: []};
-   this.affected = {vertices: new Set, edges: new Set, faces: new Set, color: []};// affected is when reuse, deleted, or change vital stats.
+   this.affected = {vertices: new Set, edges: new Set, faces: new Set, color: [], uv: []};// affected is when reuse, deleted, or change vital stats.
 };
 // allocation,
 MeshAllocator.prototype.allocVertex = function(pt, delVertex) {

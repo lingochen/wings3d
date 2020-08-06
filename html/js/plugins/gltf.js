@@ -6,8 +6,8 @@
 import {ImportExporter} from "../wings3d_importexport.js";
 import * as View from "../wings3d_view.js";
 import {Material} from "../wings3d_material.js";
-import * as UI from '../wings3d_ui.js';
-import { PreviewCage } from "../wings3d_model.js";
+import {Attribute} from "../wings3d_wingededge.js";
+//import { PreviewCage } from "../wings3d_model.js";
 
 
 const COMPONENT_TYPES = {
@@ -64,8 +64,9 @@ class GLTFImportExporter extends ImportExporter {
 				manager: this.manager
     */
    async _import(content) {
-      this.json = JSON.parse( content );
+      this.json = JSON.parse( await content.text() );
       this.vertex = new Map;
+      this.uv = new Map;
 
       if ( this.json.asset === undefined || this.json.asset.version[ 0 ] < 2 ) {
          throw new Errorrror( 'Unsupported asset. glTF versions >=2.0 are supported.' );
@@ -209,10 +210,17 @@ class GLTFImportExporter extends ImportExporter {
       return view;
    }
 
-   addTriangles(index, pos, material) {
+   addTriangles(index, pos, uv, material) {
       if (index) {
          for (let i = 0; i < index.length; i+=3) {
-            this.geometry.addPolygon([pos[index[i]], pos[index[i+1]], pos[index[i+2]]], material);
+            let hEdge = this.geometry.addPolygon([pos[index[i]], pos[index[i+1]], pos[index[i+2]]], material).halfEdge;
+            if (uv) {
+               hEdge.setUV(uv[index[i]]);
+               hEdge = hEdge.next;
+               hEdge.setUV(uv[index[i+1]]);
+               hEdge = hEdge.next;
+               hEdge.setUV(uv[index[i+2]]);
+            }
          }
       } else { // array of triangles, no index.
 
@@ -237,10 +245,31 @@ class GLTFImportExporter extends ImportExporter {
             }
             this.vertex.set(position, pos);
          }
-         // texcoord, todo.
+         // texcoord_0
+         let uv;
+         if (attr.TEXCOORD_0) {
+            let texCoord0 = await this._parse('accessors', attr.TEXCOORD_0);
+            let texCoord1;
+            if (attr.TEXCOORD_1) {
+               texCoord1 = await this._parse('accessors', attr.TEXCOORD_1);
+            }
+            uv = this.uv.get(texCoord0);
+            if (uv === undefined) {
+               uv = [];
+               for (let i = 0; i < texCoord0.length; i+=2) {
+                  let index = Attribute.uv.reserve();
+                  uv.push(index);
+                  Attribute.uv.setChannel(index, 0, [texCoord0[i], texCoord0[i+1]]);
+                  if (texCoord1) {
+                     Attribute.uv.setChannel(index, 1, [texCoord1[i], texCoord1[i+1]]);
+                  }
+               }
+               this.uv.set(texCoord0, uv);
+            }
+         }
 
          if ((primitive.mode === undefined) || (primitive.mode === 4)) {   // only mode 4 currently
-            this.addTriangles(index, pos, material);
+            this.addTriangles(index, pos, uv, material);
          }  // todo: mode 5, mode 6
       }
       ret.updateAffected();
