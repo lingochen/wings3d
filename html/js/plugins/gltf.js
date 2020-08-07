@@ -121,8 +121,8 @@ class GLTFImportExporter extends ImportExporter {
       if (url === undefined) {
       }
 
-      return fetch(url)
-             .then(res =>{return res.arrayBuffer();});
+      return this.loadAsync(url)
+             .then(files =>{return files[0].arrayBuffer();});
    }
 
    async getBuffer(index) {

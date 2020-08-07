@@ -402,7 +402,9 @@ HalfEdge.prototype.initAttribute = function() {
    HalfEdge.color.bind(0);
    let index = this.getIndex() * 3;
    HalfEdge.indexAttribute.set(index, 0);
-   // set uv, normal to -1
+   // set uv
+   Attribute.uv.bind(0);
+   HalfEdge.indexAttribute.set(index+1, 0);
 };
 
 
@@ -1193,6 +1195,8 @@ const MeshAllocator = function(allocatedSize) {
    HalfEdge.color.bind(HalfEdge.color.reserve());    // zeroth default color, white.
    HalfEdge.color.setValue(0, [255,255,255]); 
    Attribute.uv = new TexCoordAttribute();  
+   Attribute.uv.bind(Attribute.uv.reserve());
+//   Attribute.uv.setValue(0, [0, 0, 0, 0, 0, 0, 0 ,0]);
    // Vertex
    Vertex.index = new Float32Buffer(3);
    Vertex.position = this.position = new Float32Buffer(3, allocatedSize);  // position buffer.
