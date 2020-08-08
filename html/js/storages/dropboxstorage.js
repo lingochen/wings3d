@@ -19,12 +19,12 @@ class DropboxFile extends CloudStorage.CloudFile {
       super(fileData);
    }
 
-   async download() {
+   async download(responseType="arraybuffer") {
       return getAuth() 
          .then(account=>{
             const settings = {
                method: 'POST',
-               responseType: 'arraybuffer',
+               responseType: responseType,
              }, headers = {
                Authorization: `Bearer ${account.access_token}`,
                'Dropbox-API-Arg': JSON.stringify({path: this.file.path_display}),   // open one file only, 

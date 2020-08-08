@@ -16,7 +16,7 @@ class YandexDiskFile extends CloudStorage.CloudFile {
       super(fileData);
    }
 
-   async download() {
+   async download(responseType="arraybuffer") {
       return getAuth() 
          .then(account=>{
             const settings = {
@@ -34,7 +34,7 @@ class YandexDiskFile extends CloudStorage.CloudFile {
             .then(([_res, data]) => {  // got the download link in {href}
                   const settings = {
                      method: data.method,
-                     //responseType: 'arraybuffer',
+                     responseType: responseType,
                    }, headers = {
                      Authorization: `OAuth ${account.access_token}`,
                    };
