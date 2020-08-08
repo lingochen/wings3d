@@ -127,15 +127,6 @@ class GLTFImportExporter extends ImportExporter {
       }
    }
 
-   async loadURI(url) {
-      if (url === undefined) {
-         throw(new Error("undefined url"));
-      }
-
-      return this.loadAsync(url)
-             .then(files =>{return files[0].arrayBuffer();});
-   }
-
    async getBuffer(index) {
       if (index < 0 || index >= this.cache.buffers.length) {
          throw new Error("out of range buffer index");
@@ -150,15 +141,12 @@ class GLTFImportExporter extends ImportExporter {
    }
 
    buffers(buffer) { // loadarraybuffer
-      return this.loadURI(buffer.uri);
+      return this.loadAsync(buffer.uri)
+         .then(files =>{return files[0].arrayBuffer();});
    }
 
-   async images(image) {
-      return this.parseTexture(image.uri);
-   }
-
-   async parseTexture(texture) {
-      return this.loadAsync(texture) 
+   images(image) {
+      return this.loadAsync(image.uri) 
          .then(files=>{
             return files[0].image();
          });
@@ -177,6 +165,7 @@ class GLTFImportExporter extends ImportExporter {
          if (Array.isArray(metal.baseColorFactor)) {
             pbr.baseColor = [metal.baseColorFactor[0], metal.baseColorFactor[1], metal.baseColorFactor[2]];
             pbr.opacity = metal.baseColorFactor[3];
+            // pbr.baseColorTexture = this.getImage(metal.baseColorTexture);
          }
          if (metal.metallicFactor) pbr.metallic = metal.metallicFactor;   // already have default
          if (metal.roughness) pbr.roughness = metal.roughnessFactor; // already have default
