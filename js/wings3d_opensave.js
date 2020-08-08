@@ -17,6 +17,10 @@ class LocalFile extends CloudStorage.CloudFile {
       super(fileData);
    }
 
+   image() {
+      return CloudStorage.CloudFile._createImage(this.file);
+   }
+
    async arrayBuffer() {
       return this.file.arrayBuffer();
    }

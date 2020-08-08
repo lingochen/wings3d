@@ -16,9 +16,9 @@ class OneDriveFile extends CloudStorage.CloudFile {
       super(fileData);
    }
 
-   download() {
+   download(responseType="arraybuffer") {
       const settings = {
-         responseType: "arraybuffer",
+         responseType: responseType,
       };
       // Retrieve the contents of the file and load it into our editor
       let downloadLink = this.file["@microsoft.graph.downloadUrl"];

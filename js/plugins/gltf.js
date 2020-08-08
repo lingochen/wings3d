@@ -76,6 +76,7 @@ class GLTFImportExporter extends ImportExporter {
 
       // async pre load all buffers, images(texture) first.
       this.loadBuffers();
+      this.loadImages();
 
       // load (scenes, nodes, meshes, material)
       this._parse('scenes', this.json.scene);1
@@ -106,7 +107,6 @@ class GLTFImportExporter extends ImportExporter {
       }
    }
 
-   
    loadBuffers() { // iterate over buffers.// _loadArrayBuffer(buffer.uri, loadArrayBufferCallback);
       const buffers = this.json.buffers || [];
 
@@ -117,8 +117,19 @@ class GLTFImportExporter extends ImportExporter {
       }  
    }
 
+   loadImages() {
+      const images = this.json.images || [];
+
+      this.cache.images = new Map;
+      let index = 0;
+      for (let image of images) {  
+         this.cache.images.set(index++, this.images(image));
+      }
+   }
+
    async loadURI(url) {
       if (url === undefined) {
+         throw(new Error("undefined url"));
       }
 
       return this.loadAsync(url)
@@ -142,14 +153,15 @@ class GLTFImportExporter extends ImportExporter {
       return this.loadURI(buffer.uri);
    }
 
-   async loadImage(image) {
-      return new Promise(function(resolve){
-
-       });
+   async images(image) {
+      return this.parseTexture(image.uri);
    }
 
-   parseTexture(texture) {
-
+   async parseTexture(texture) {
+      return this.loadAsync(texture) 
+         .then(files=>{
+            return files[0].image();
+         });
    }
 
 

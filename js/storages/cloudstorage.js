@@ -503,6 +503,22 @@ class CloudFile {
       this.file = fileData;
    }
 
+   static _createImage(blob) {
+      const img = document.createElement("img");
+      img.src = URL.createObjectURL(blob);
+      img.onload = function() {
+         URL.revokeObjectURL(this.src);
+      }
+      return img;
+   }
+
+   image() {
+      return this.download('blob')
+         .then(res=>{
+            return CloudFile._createImage(res.data);
+         });
+   }
+
    arrayBuffer() {
       return this.download()
       .then(res=>{
