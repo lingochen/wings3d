@@ -1,8 +1,10 @@
 /**
  * 2019-02-19 - add pbr. ready to transition from opengl material to pbr.
  * 
+ * 2020-08-08 - add texture. move all image and texture here ?
  */
 
+import {gl} from './wings3d_gl.js';
 import * as Util from './wings3d_util.js';
 
 
@@ -158,6 +160,91 @@ Material.convertTraditionalToMetallicRoughness = function(material) {
 }
 
 
+
+// Texture parameters can be passed in via the `options` argument.
+// Example usage:
+//
+//     var t = new GL.Texture(256, 256, {
+//       // Defaults to gl.LINEAR, set both at once with "filter"
+//       magFilter: gl.NEAREST,
+//       minFilter: gl.LINEAR,
+//
+//       // Defaults to gl.CLAMP_TO_EDGE, set both at once with "wrap"
+//       wrapS: gl.REPEAT,
+//       wrapT: gl.REPEAT,
+//
+//       format: gl.RGB, // Defaults to gl.RGBA
+//       type: gl.FLOAT // Defaults to gl.UNSIGNED_BYTE
+//     });
+let checkerboardCanvas;
+class Texture {
+   constructor(name, options) {
+      this.name = name;
+      options = options || {};
+      this.id = gl.createTexture();
+      //this.width = 0;
+      //this.height = 0;
+      this.format = options.format || gl.RGBA;
+      this.type = options.type || gl.UNSIGNED_BYTE;
+      this.magFilter = options.magFilter || gl.LINEAR;
+      this.minFilter = options.minFilter || gl.LINEAR;
+      this.wrapS = options.wrapS || gl.CLAMP_TO_EDGE;
+      this.wrapT = options.wrapT || gl.CLAMP_TO_EDGE;
+   }
+
+   static checkerboard() {
+      checkerboardCanvas = checkerboardCanvas || (function() {
+         const c = document.createElement('canvas').getContext('2d');
+         c.canvas.width = c.canvas.height = 128;
+         for (var y = 0; y < c.canvas.height; y += 16) {
+           for (var x = 0; x < c.canvas.width; x += 16) {
+             c.fillStyle = (x ^ y) & 16 ? '#FFF' : '#DDD';
+             c.fillRect(x, y, 16, 16);
+           }
+         }
+         return c.canvas;
+       })();
+      return checkerboardCanvas;
+   }
+
+   bind(unit) {
+      gl.activeTexture(gl.TEXTURE0 + (unit || 0));
+      gl.bindTexture(gl.TEXTURE_2D, this.id);
+      if (!this.image) {   // no image! supply the default checkerbox item.
+         this.setImage(Texture.checkerboard());
+      }
+   }
+
+   static unbind(unit) {
+      gl.activeTexture(gl.TEXTURE0 + (unit || 0));
+      gl.bindTexture(gl.TEXTURE_2D, 0);
+   }
+
+
+   /**
+    * 
+    * image - (dom image), - 
+    */
+   setImage(image) {
+      this.image = image;
+
+      gl.bindTexture(gl.TEXTURE_2D, this.id);
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, this.magFilter);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, this.minFilter);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, this.wrapS);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, this.wrapT);      
+      gl.texImage2D(gl.TEXTURE_2D, 0, this.format, this.format, this.type, image);
+      
+      if ((this.minFilter != gl.NEAREST) && (this.minFilter != gl.LINEAR)) {
+        gl.generateMipmap(gl.TEXTURE_2D);
+      }
+   }
+}
+
+ 
+
 export {
    Material,
+   Texture,
 };

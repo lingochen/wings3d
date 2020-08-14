@@ -341,7 +341,7 @@ class X3dImportExporter extends ImportExporter {
 
    }
 
-   TextureCoordinate() {
+   TextureCoordinate(uv, current) {
 
    }
 

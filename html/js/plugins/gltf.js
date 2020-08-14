@@ -5,7 +5,7 @@
 
 import {ImportExporter} from "../wings3d_importexport.js";
 import * as View from "../wings3d_view.js";
-import {Material} from "../wings3d_material.js";
+import {Material, Texture} from "../wings3d_material.js";
 import {Attribute} from "../wings3d_wingededge.js";
 //import { PreviewCage } from "../wings3d_model.js";
 
@@ -152,12 +152,26 @@ class GLTFImportExporter extends ImportExporter {
          });
    }
 
+   samplers(sampler) {
+      return sampler;
+   }
+
+   async textures(texture) {
+      let sampler = await this._parse('samplers', texture.sampler);
+      let image = this.cache.images.get(texture.source);
+      let ret = new Texture("", sampler);
+      image.then(img=>{
+         ret.setImage(img);
+      });
+
+      return ret;
+   }
 
    /**
     * https://github.com/KhronosGroup/glTF/blob/master/specification/2.0/README.md#materials
     * @param {*} material 
     */
-   materials(material) {
+   async materials(material) {
       const ret = Material.create(material.name || "NoName");
       const metal = material.pbrMetallicRoughness;
       if (metal) {
@@ -165,7 +179,9 @@ class GLTFImportExporter extends ImportExporter {
          if (Array.isArray(metal.baseColorFactor)) {
             pbr.baseColor = [metal.baseColorFactor[0], metal.baseColorFactor[1], metal.baseColorFactor[2]];
             pbr.opacity = metal.baseColorFactor[3];
-            // pbr.baseColorTexture = this.getImage(metal.baseColorTexture);
+            if (metal.baseColorTexture) {
+               pbr.baseColorTexture = await this._parse("textures", metal.baseColorTexture.index);
+            }
          }
          if (metal.metallicFactor) pbr.metallic = metal.metallicFactor;   // already have default
          if (metal.roughness) pbr.roughness = metal.roughnessFactor; // already have default
@@ -294,10 +310,10 @@ class GLTFImportExporter extends ImportExporter {
       return null;
    }
 
-   scenes(scene) {   // load scene, using nodes
+   async scenes(scene) {   // load scene, using nodes
       //this.scene = View.putIntoWorld();
       for (let i of scene.nodes) {
-         this._parse("nodes", i);
+         await this._parse("nodes", i);
       }
       //return this.scene;
       return null;
