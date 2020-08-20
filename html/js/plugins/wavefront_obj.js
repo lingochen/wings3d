@@ -94,7 +94,7 @@ class WavefrontObjImportExporter extends ImportExporter {
          }
          this._readAuxFiles();
          // done reading, return the object.
-         return {world: this.objs, material: this.material};
+         return {world: this.objs, materialCatalog: Array.from(this.materialCatalog.values())};
       }
       return null;
    }

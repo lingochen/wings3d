@@ -68,7 +68,7 @@ class ImportExporter {
                View.undoQueue(cages[0]);
             }
             // put materialCatalog to UItree
-            for (let [_name, material] of this.materialCatalog) {
+            for (let material of objs.materialCatalog) {
                View.addMaterial(material);
             }
             // finalized and update

@@ -145,7 +145,7 @@ class X3dImportExporter extends ImportExporter {
             this._parseNode(node, current);
          }
          // now, put everthing into world
-         return {world: current.group.children, material: this.material};
+         return {world: current.group.children, materialCatalog: this.material};
       }
    }
 
