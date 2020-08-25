@@ -14,6 +14,7 @@ const defaultPBR = { baseColor: Util.hexToRGB("#C9CFB1"),              // rgb, b
                      emission: Util.hexToRGB("#000000"),               // rgb, intensity
                      opacity: 1,                                       // float, 0-1.0
                      // occulsion // should be textureMap.
+                     baseColorTexture: null,
                     };
 /**
  * PhysicallyBasedMaterial
@@ -85,7 +86,7 @@ Material.prototype.setGPU = function() {
 Material.prototype.setValues = function(inputDat) {
    for (const key of Object.keys(inputDat)) {
       if (this.pbr.hasOwnProperty(key)) {
-         if (isNaN(inputDat[key]) && !Array.isArray(inputDat[key])) {
+         if ((key == "baseColor" || key == "emission") && !Array.isArray(inputDat[key])) {
             this.pbr[key] = Util.hexToRGB(inputDat[key]);
          } else {
             this.pbr[key] = inputDat[key];
@@ -228,6 +229,7 @@ class Texture {
    setImage(image) {
       this.image = image;
 
+      return;  // bindTexture has to select unit
       gl.bindTexture(gl.TEXTURE_2D, this.id);
       gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, this.magFilter);

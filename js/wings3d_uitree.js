@@ -406,6 +406,38 @@ class ImageList extends ListView {
       }
    }
 
+   buildImageItem(texture, name) {
+      const dat = {texture: texture, li: null, uuid: Util.get_uuidv4(), name: name, popup: null};
+      //dat.popup = UI.showPopup(img, dat.name);
+      let li = dat.li = document.createElement('li');
+      let pict = document.createRange().createContextualFragment('<span class="smallIcon smallImage"></span>');
+      pict.firstElementChild.addEventListener('click', (_ev) => {
+         this.showTextureImage(dat);
+       });
+      li.appendChild(pict);
+      let whole = document.createRange().createContextualFragment(`<span>${name}</span>`);
+      dat.name = whole.firstElementChild;
+      whole.firstElementChild.addEventListener('contextmenu', function(ev) {
+         ev.preventDefault();
+         let contextMenu = document.querySelector('#importImageTextMenu');
+         if (contextMenu) {
+            UI.positionDom(contextMenu, UI.getPosition(ev));
+            UI.showContextMenu(contextMenu);
+            View.setObject(null, [dat]);
+         }
+       }, false);
+      li.appendChild(whole);
+      this.view.appendChild(li);
+      //dat.popup = UI.showPopup(img, file.name);
+      this.list.push( dat );
+
+      return dat;
+   }
+
+   loadTexture(texture) {
+      this.buildImageItem(texture, texture.name);
+   }
+
    loadImage(file) { // show file name.
       //const self = this;
       let reader = new FileReader();
@@ -420,7 +452,7 @@ class ImageList extends ListView {
          let li = dat.li = document.createElement('li');
          let pict = document.createRange().createContextualFragment('<span class="smallIcon smallImage"></span>');
          pict.firstElementChild.addEventListener('click', (_ev) => {
-            document.body.appendChild(dat.popup);
+            this.showImage([dat]);
           });
          li.appendChild(pict);
          let whole = document.createRange().createContextualFragment(`<span>${file.name}</span>`);
@@ -443,8 +475,19 @@ class ImageList extends ListView {
       reader.readAsDataURL(file);
    }
 
+   showTextureImage(img) {
+      if (!img.popup) {
+         img.popup = UI.showPopup(img.texture.image, img.name);
+      }
+      document.body.appendChild(img.popup);
+   }
+
    showImage(images) {
-      document.body.appendChild(images[0].popup);
+      const img = images[0];
+      if (!img.popup) {
+         img.popup = UI.showPopup(img.img, img.name);
+      }
+      document.body.appendChild(img.popup);
    }
 
    deleteImage(images) {

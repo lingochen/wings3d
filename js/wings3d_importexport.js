@@ -36,6 +36,10 @@ class ImportExporter {
       return Material.create(name);
    }
 
+   createTexture(name, sampler) {
+      return View.createTexture(name, sampler);
+   }
+
    async export(world, file, saveAsync) {
       this.saveAsync = saveAsync;
 
