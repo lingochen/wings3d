@@ -28,6 +28,7 @@ import * as OpenSave from './wings3d_opensave.js'
 import { ImportExporter } from './wings3d_importexport.js';
 import { STLImportExporter } from './plugins/stl.js';
 import { GLTFImportExporter } from './plugins/gltf.js';
+import { Texture } from './wings3d_material.js';
 
 
 // 
@@ -401,6 +402,11 @@ const _environment = {
 function addMaterial(material) {
    _environment.materialList.addMaterial(material);
 };
+function createTexture(name, sampler) {
+   const ret = new Texture(name, sampler);
+   _environment.imageList.loadTexture(ret);
+   return ret;
+}
 function createGroup(name) {
    const ret = new PreviewGroup();
    ret.name = name;
@@ -436,6 +442,7 @@ function addToWorld(model, parent = _environment.world) { // default parent is w
    }
    Renderer.needToRedraw();
    _environment.geometryGraph.updateCount(_environment.world);   // update Count Status
+   _environment.draftBench.updateAffected();
    return model;
 }
 
@@ -1499,6 +1506,7 @@ export {
    makeCombineIntoWorld,
    setObject,
    addMaterial,
+   createTexture,
    createGroup,
    createCage,
    createIntoWorld,

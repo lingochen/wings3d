@@ -4,7 +4,6 @@
  */
 
 import {ImportExporter} from "../wings3d_importexport.js";
-import * as View from "../wings3d_view.js";
 import {Material, Texture} from "../wings3d_material.js";
 import {Attribute} from "../wings3d_wingededge.js";
 //import { PreviewCage } from "../wings3d_model.js";
@@ -79,10 +78,11 @@ class GLTFImportExporter extends ImportExporter {
       this.loadImages();
 
       // load (scenes, nodes, meshes, material)
-      this._parse('scenes', this.json.scene);1
+      const world = await this._parse('scenes', this.json.scene);1
+      return {world: world, materialCatalog: Array.from(this.cache.materials.values())};
    }
 
-   async _parse(tag, index) {
+   _parse(tag, index) {
       if (typeof this[tag] === 'function') {
          if (index === "undefined") {  // impossible, throw error
             console.log("no index");
@@ -96,7 +96,7 @@ class GLTFImportExporter extends ImportExporter {
             if (ret === undefined) {
                const data = this.json[tag] || [];
                if (data.length > index) {// check index is within range
-                  ret = await this[tag](data[index]);
+                  ret = this[tag](data[index]);
                   this.cache[tag].set(index, ret);
                } else { // throw error
 
@@ -156,12 +156,13 @@ class GLTFImportExporter extends ImportExporter {
       return sampler;
    }
 
-   async textures(texture) {
-      let sampler = await this._parse('samplers', texture.sampler);
+   textures(texture) {
+      let sampler = this._parse('samplers', texture.sampler);
       let image = this.cache.images.get(texture.source);
-      let ret = new Texture("", sampler);
+      let ret = this.createTexture("", sampler);
       image.then(img=>{
          ret.setImage(img);
+         return img;
       });
 
       return ret;
@@ -171,8 +172,8 @@ class GLTFImportExporter extends ImportExporter {
     * https://github.com/KhronosGroup/glTF/blob/master/specification/2.0/README.md#materials
     * @param {*} material 
     */
-   async materials(material) {
-      const ret = Material.create(material.name || "NoName");
+   materials(material) {
+      const ret = this.createMaterial(material.name || "NoName");
       const metal = material.pbrMetallicRoughness;
       if (metal) {
          const pbr = {};
@@ -180,7 +181,7 @@ class GLTFImportExporter extends ImportExporter {
             pbr.baseColor = [metal.baseColorFactor[0], metal.baseColorFactor[1], metal.baseColorFactor[2]];
             pbr.opacity = metal.baseColorFactor[3];
             if (metal.baseColorTexture) {
-               pbr.baseColorTexture = await this._parse("textures", metal.baseColorTexture.index);
+               pbr.baseColorTexture = this._parse("textures", metal.baseColorTexture.index);
             }
          }
          if (metal.metallicFactor) pbr.metallic = metal.metallicFactor;   // already have default
@@ -245,7 +246,7 @@ class GLTFImportExporter extends ImportExporter {
    }
 
    async meshes(mesh) {
-      const ret = View.putIntoWorld();
+      const ret = this.createCage();
       this.geometry = ret.geometry;
       for (let primitive of mesh.primitives) {
          const attr = primitive.attributes || {};
@@ -289,14 +290,14 @@ class GLTFImportExporter extends ImportExporter {
             this.addTriangles(index, pos, uv, material);
          }  // todo: mode 5, mode 6
       }
-      ret.updateAffected();
+      //ret.updateAffected();
       return ret;
    }
 
    async nodes(node) {
       // recursive load children if any
       if (node.children !== undefined) {
-         let group = View.createGroup(node.name);
+         let group = this.createGroup(node.name);
          for (let child of node.children) {
             await this._parse('nodes', child);
             //group.insert( await this._parse('nodes', child) );
@@ -307,16 +308,17 @@ class GLTFImportExporter extends ImportExporter {
             return await this._parse('meshes', node.mesh);
          }
       }
-      return null;
+      throw(new Error("unable to handle nodes"));
    }
 
    async scenes(scene) {   // load scene, using nodes
       //this.scene = View.putIntoWorld();
+      let world = [];
       for (let i of scene.nodes) {
-         await this._parse("nodes", i);
+         world.push( await this._parse("nodes", i) );
       }
       //return this.scene;
-      return null;
+      return world;
    }
 
 };
