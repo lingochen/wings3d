@@ -45,8 +45,8 @@ function createWebGLContext(canvasID, attrib) {
          }
          // require 4 vertex texture unit
          let units = gl.getParameter(gl.MAX_VERTEX_TEXTURE_IMAGE_UNITS);
-         if (units < 8) {  // we need at least 5?
-            console.log("Not enough vertex texture units");
+         if (units < 8) {  // we need at least (pos, edgeState, faceState, groupState, materialColor, attributeColor, attributeNormal, attributeUV, baseColorTexture)?
+            console.log("Only " + units + " vertex texture units available");
             return null;
          }
          // get textureSize
