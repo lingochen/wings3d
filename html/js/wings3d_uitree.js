@@ -412,7 +412,7 @@ class ImageList extends ListView {
       let li = dat.li = document.createElement('li');
       let pict = document.createRange().createContextualFragment('<span class="smallIcon smallImage"></span>');
       pict.firstElementChild.addEventListener('click', (_ev) => {
-         this.showTextureImage(dat);
+         this.showImage([dat]);
        });
       li.appendChild(pict);
       let whole = document.createRange().createContextualFragment(`<span>${name}</span>`);
@@ -438,58 +438,17 @@ class ImageList extends ListView {
       this.buildImageItem(texture, texture.name);
    }
 
-   loadImage(file) { // show file name.
-      //const self = this;
-      let reader = new FileReader();
-
-      reader.onload = (_ev) => {
-         const dat = {img: null, li: null, uuid: Util.get_uuidv4(), name: "", popup: null};
-         const img = dat.img = document.createElement("img");
-         img.src = reader.result;
-         img.onload = function () {
-            dat.popup = UI.showPopup(this, file.name);
-          }
-         let li = dat.li = document.createElement('li');
-         let pict = document.createRange().createContextualFragment('<span class="smallIcon smallImage"></span>');
-         pict.firstElementChild.addEventListener('click', (_ev) => {
-            this.showImage([dat]);
-          });
-         li.appendChild(pict);
-         let whole = document.createRange().createContextualFragment(`<span>${file.name}</span>`);
-         dat.name = whole.firstElementChild;
-         whole.firstElementChild.addEventListener('contextmenu', function(ev) {
-            ev.preventDefault();
-            let contextMenu = document.querySelector('#importImageTextMenu');
-            if (contextMenu) {
-               UI.positionDom(contextMenu, UI.getPosition(ev));
-               UI.showContextMenu(contextMenu);
-               View.setObject(null, [dat]);
-            }
-          }, false);
-         li.appendChild(whole);
-         this.view.appendChild(li);
-         //dat.popup = UI.showPopup(img, file.name);
-         this.list.push( dat );
-      };
-
-      reader.readAsDataURL(file);
-   }
-
-   showTextureImage(img) {
+   showImage(images) {
+      const img = images[0];
       if (!img.popup) {
          img.popup = UI.showPopup(img.texture.image, img.name);
       }
       document.body.appendChild(img.popup);
    }
 
-   showImage(images) {
-      const img = images[0];
-      if (!img.popup) {
-         img.popup = UI.showPopup(img.img, img.name);
-      }
-      document.body.appendChild(img.popup);
-   }
-
+   /**
+    * todo: check if images is in use, if in-use then reject operation.
+    */
    deleteImage(images) {
       const image = images[0];
       // remove image from body
