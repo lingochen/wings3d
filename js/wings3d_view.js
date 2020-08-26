@@ -1235,11 +1235,17 @@ function init() {
    // Image List.
    _environment.imageList = TreeView.getImageList('#imageListLabel','#imageList');
    UI.bindMenuItem(Wings3D.action.importImageFileGUI.name, function(ev) {
-      UI.openFile(function(files) { // open file Dialog, and retrive data
-            for (let file of files) {
-               _environment.imageList.loadImage(file);
-            }
-         });      
+      OpenSave.open(['bmp', 'jpg', 'jpeg', 'jfif', 'pjpeg', 'pjp', 'png', 'webp']).then(([files, _loadAsync])=>{
+         for (let file of files) {
+            const texture = createTexture(file.name);
+            file.image().then(img=>{
+               texture.setImage(img);
+               return img;
+            });
+         }
+       }).catch(error=>{
+         alert(error);
+       });  
     });
    UI.bindMenuItem(Wings3D.action.showImage.name, function(_ev){
       _environment.imageList.showImage(_environment.currentObjects);
