@@ -209,11 +209,11 @@ class Texture {
    }
 
    bind(unit) {
-      gl.activeTexture(gl.TEXTURE0 + (unit || 0));
-      gl.bindTexture(gl.TEXTURE_2D, this.id);
       if (!this.image) {   // no image! supply the default checkerbox item.
          this.setImage(Texture.checkerboard());
       }
+      gl.activeTexture(gl.TEXTURE0 + (unit || 0));
+      gl.bindTexture(gl.TEXTURE_2D, this.id);
    }
 
    static unbind(unit) {
@@ -229,9 +229,9 @@ class Texture {
    setImage(image) {
       this.image = image;
 
-      return;  // bindTexture has to select unit
+      gl.activeTexture(gl.TEXTURE0+7);                // use baseColorTexture position to update.
       gl.bindTexture(gl.TEXTURE_2D, this.id);
-      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
+      //gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, this.magFilter);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, this.minFilter);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, this.wrapS);
