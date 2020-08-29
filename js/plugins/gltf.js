@@ -146,10 +146,11 @@ class GLTFImportExporter extends ImportExporter {
    }
 
    images(image) {
-      return this.loadAsync(image.uri) 
-         .then(files=>{
-            return files[0].image();
-         });
+      return {loading: this.loadAsync(image.uri) 
+                        .then(files=>{
+                           return files[0].image();
+                        }),
+              uri: image.uri};
    }
 
    samplers(sampler) {
@@ -159,8 +160,8 @@ class GLTFImportExporter extends ImportExporter {
    textures(texture) {
       let sampler = this._parse('samplers', texture.sampler);
       let image = this.cache.images.get(texture.source);
-      let ret = this.createTexture("", sampler);
-      image.then(img=>{
+      let ret = this.createTexture(image.uri, sampler);
+      image.loading.then(img=>{
          ret.setImage(img);
          return img;
       });
@@ -181,7 +182,7 @@ class GLTFImportExporter extends ImportExporter {
             pbr.baseColor = [metal.baseColorFactor[0], metal.baseColorFactor[1], metal.baseColorFactor[2]];
             pbr.opacity = metal.baseColorFactor[3];
             if (metal.baseColorTexture) {
-               pbr.baseColorTexture = this._parse("textures", metal.baseColorTexture.index);
+               ret.setBaseColorTexture( this._parse("textures", metal.baseColorTexture.index) );
             }
          }
          if (metal.metallicFactor) pbr.metallic = metal.metallicFactor;   // already have default

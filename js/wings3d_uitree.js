@@ -7,7 +7,7 @@ import * as View from './wings3d_view.js';
 import * as Wings3D from './wings3d.js';
 import * as UI from './wings3d_ui.js';
 import * as Util from './wings3d_util.js';
-import {Material} from './wings3d_material.js';
+import {Material, Texture} from './wings3d_material.js';
 import {RenameBodyCommand} from './wings3d_bodymads.js';
 import {PreviewCage, PreviewGroup} from './wings3d_model.js';
 
@@ -446,17 +446,18 @@ class ImageList extends ListView {
       document.body.appendChild(img.popup);
    }
 
-   /**
-    * todo: check if images is in use, if in-use then reject operation.
-    */
    deleteImage(images) {
       const image = images[0];
-      // remove image from body
-      image.popup.remove();
-      // remove li
-      this.view.removeChild(image.li);
-      // remove from list
-      this.list.splice(this.list.indexOf(image), 1);
+      if (Texture.release(image.texture)) {
+         // remove image from body
+         image.popup.remove();
+         // remove li
+         this.view.removeChild(image.li);
+         // remove from list
+         this.list.splice(this.list.indexOf(image), 1);
+      } else {
+         alert("Texture is still in user");
+      }
    }
 
 }

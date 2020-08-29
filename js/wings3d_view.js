@@ -403,7 +403,7 @@ function addMaterial(material) {
    _environment.materialList.addMaterial(material);
 };
 function createTexture(name, sampler) {
-   const ret = new Texture(name, sampler);
+   const ret = Texture.create(name, sampler);
    _environment.imageList.loadTexture(ret);
    return ret;
 }

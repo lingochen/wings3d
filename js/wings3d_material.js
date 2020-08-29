@@ -13,8 +13,12 @@ const defaultPBR = { baseColor: Util.hexToRGB("#C9CFB1"),              // rgb, b
                      metallic: 0.1,                                    // float, 0-1.0
                      emission: Util.hexToRGB("#000000"),               // rgb, intensity
                      opacity: 1,                                       // float, 0-1.0
-                     // occulsion // should be textureMap.
-                     baseColorTexture: null,
+                     baseColorTexture: 0,
+                     normalTexture: 0,
+                     occlusionTexture: 0,
+                     baseColorTexcoord: 0,                              // uv channel # for texCoord
+                     normalTexcoord: 0,
+                     occlusionTexcoord: 0,
                     };
 /**
  * PhysicallyBasedMaterial
@@ -33,7 +37,10 @@ const Material = function(name) {
                     shininessMaterial: 0,                         // 0-1
                     opacityMaterial: 1};                          // 0-1*/
    this.pbr = Object.assign({}, defaultPBR);
-   this.index = Material.color.alloc()/(3*3);
+   for (let i = 0; i < 3; ++i) {
+      Texture.getWhite().assigned();
+   }
+   this.index = Material.color.alloc()/(3*5);
    this.setGPU();
 };
 Material.color = null;  // saved the color
@@ -59,7 +66,9 @@ Material.create = function(name, input) {
 //Material.dead = Material.create("dead");
 
 Material.release = function(material) {
-   if (material.usageCunt === 0) {
+   if (material.usageCount === 0) {
+      // release unused texture.
+      material.setBaseColorTexture(Texture.getWhite());
       gFreeList.push(material);
       return true;
    } else {
@@ -68,9 +77,18 @@ Material.release = function(material) {
 };
 
 
+Material.getInUse = function * () {
+   for (const mat of gList) {
+      if (mat.usageCount > 0) {
+         yield mat;
+      }
+   }
+}
+
+
 Material.prototype.setGPU = function() {
    // now put on Material.color (for gpu)
-   const i = this.index * (3*3);
+   const i = this.index * (3*5);
    Material.color.set(i, this.pbr.baseColor[0]);
    Material.color.set(i+1, this.pbr.baseColor[1]);
    Material.color.set(i+2, this.pbr.baseColor[2]);
@@ -80,6 +98,12 @@ Material.prototype.setGPU = function() {
    Material.color.set(i+6, this.pbr.emission[0]);
    Material.color.set(i+7, this.pbr.emission[1]);
    Material.color.set(i+8, this.pbr.emission[2]);
+};
+Material.prototype.setGPUTexture = function() {
+   const i = this.index * (3*5);
+   Material.color.set(i+9, this.pbr.baseColorTexture);
+   Material.color.set(i+10, this.pbr.normalTexture);
+   Material.color.set(i+11, this.pbr.occlusionTexture);
 };
 
 
@@ -96,6 +120,26 @@ Material.prototype.setValues = function(inputDat) {
       }
    }
    this.setGPU();
+};
+
+Material.prototype.setBaseColorTexture = function(texture) {
+   // release previous
+   Texture.gList[this.pbr.baseColorTexture].unassigned();
+   // assign new one
+   this.pbr.baseColorTexture = texture.idx;
+   texture.assigned();
+   this.setGPUTexture();
+}
+
+Material.prototype.getBasecolorTextureHandle = function() {
+   return Texture.handle(this.pbr.baseColorTexture);
+}
+
+/**
+ * return a string compose of texture's index, which act as hash. or should we packed the texture as int32?
+ */
+Material.prototype.textureHash = function() {
+   return `${this.pbr.baseColorTexture}`;
 };
 
 
@@ -191,21 +235,59 @@ class Texture {
       this.minFilter = options.minFilter || gl.LINEAR;
       this.wrapS = options.wrapS || gl.CLAMP_TO_EDGE;
       this.wrapT = options.wrapT || gl.CLAMP_TO_EDGE;
+      this.usageCount = 0;    // the number of materials that contains this Texture.
    }
 
-   static checkerboard() {
-      checkerboardCanvas = checkerboardCanvas || (function() {
-         const c = document.createElement('canvas').getContext('2d');
-         c.canvas.width = c.canvas.height = 128;
-         for (var y = 0; y < c.canvas.height; y += 16) {
-           for (var x = 0; x < c.canvas.width; x += 16) {
-             c.fillStyle = (x ^ y) & 16 ? '#FFF' : '#DDD';
-             c.fillRect(x, y, 16, 16);
-           }
-         }
-         return c.canvas;
-       })();
-      return checkerboardCanvas;
+   destructor() { // free id texture resource.
+      gl.deleteTexture(this.id);
+      this.id = null;
+      this.image = null;
+   }
+
+   static create(name, options) {
+      let ret = new Texture(name, options);
+      if (Texture.gFreeList.lenth > 0) {
+         ret.idx = gFreeList.pop();
+         Texture.gList[ret.idx] = ret;
+      } else {
+         ret.idx = Texture.gList.length;
+         Texture.gList.push(ret);
+      }
+      
+      return ret;
+   }
+
+   static release(texture) {
+      if (texture.usageCount === 0) {
+         Texture.gFreeList.push(texture.idx);
+         Texture.gList[texture.idx] = null;
+         texture.destructor();
+         return true;
+      } else {
+         return false;
+      }
+   }
+
+   static getWhite() {
+      if (!Texture.WHITE) {
+         Texture.WHITE = (function() { 
+            const white = Texture.create("WHITE");
+            gl.activeTexture(gl.TEXTURE0+7);                // use baseColorTexture position to update.
+            gl.bindTexture(gl.TEXTURE_2D, white.id);
+            // Fill the texture with a 1x1 white pixel.
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([255, 255, 255, 255]));
+            return white;
+         }());
+      }
+      return Texture.WHITE;
+   }
+
+   assigned() {
+      this.usageCount++;
+   }
+
+   unassigned() {
+      this.usageCount--;
    }
 
    bind(unit) {
@@ -221,6 +303,9 @@ class Texture {
       gl.bindTexture(gl.TEXTURE_2D, 0);
    }
 
+   static handle(textureIdx) {
+      return Texture.gList[textureIdx].id;
+   }
 
    /**
     * 
@@ -243,7 +328,20 @@ class Texture {
       }
    }
 }
-
+Texture.gList = [];
+Texture.gFreeList = [];
+Texture.checkerboard = (function() {
+   const c = document.createElement('canvas').getContext('2d');
+   c.canvas.width = c.canvas.height = 128;
+   for (var y = 0; y < c.canvas.height; y += 16) {
+     for (var x = 0; x < c.canvas.width; x += 16) {
+       c.fillStyle = (x ^ y) & 16 ? '#FFF' : '#DDD';
+       c.fillRect(x, y, 16, 16);
+     }
+   }
+   return c.canvas;
+ })();
+Texture.WHITE;
  
 
 export {
