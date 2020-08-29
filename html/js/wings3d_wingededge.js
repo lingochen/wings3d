@@ -280,7 +280,7 @@ const HalfEdge = function(wEdge) {  // should only be created by WingedEdge
    this.pair = null;
 };
 HalfEdge.index = null;        // (vertex(index), hEdge(index), PolygonIndex, GroupIndex) hEdge(normal, color, texCoord) (polygon has material, state, centroid), (group state)
-HalfEdge.indexAttribute = null;    // (color, normal, texCoord) Index.  how about tangent?, joints? weights? 
+HalfEdge.indexAttribute = null;    // (color, normal, texCoord0) Index.  how about tangent?, joints? weights? 
 HalfEdge.color = null;        // (r,g,b) - using byte.
 HalfEdge.triangleList = null; // Polygon.index = (HalfEdge.totalSize * 3) - (hEdge, hEdge, apex)
 //HalfEdge.barycentric = null;  // clutch for webgl1
@@ -388,7 +388,7 @@ HalfEdge.prototype.setVertexColor = function(color) {
  */
 HalfEdge.prototype.setUV = function(uv) {
    // remove old bind
-   let index = this.getIndex() * 3 + 1;
+   let index = this.getIndex() * 3 + 2;
    let oldUV = HalfEdge.indexAttribute.get(index);
    let texCoord = Attribute.uv.pruneGet(oldUV);
    Attribute.uv.bind(uv);
@@ -404,7 +404,7 @@ HalfEdge.prototype.initAttribute = function() {
    HalfEdge.indexAttribute.set(index, 0);
    // set uv
    Attribute.uv.bind(0);
-   HalfEdge.indexAttribute.set(index+1, 0);
+   HalfEdge.indexAttribute.set(index+2, 0);
 };
 
 
@@ -416,7 +416,7 @@ HalfEdge.prototype.discardInternal = function(affected) {
    if (asset.value) {
       affected.color.push( asset );
    }
-   oldIndex = HalfEdge.indexAttribute.get(index+1);
+   oldIndex = HalfEdge.indexAttribute.get(index+2);
    asset = Attribute.uv.pruneGet(oldIndex);
    if (asset.value) {
       affected.uv.push( asset );
@@ -1178,7 +1178,7 @@ Polygon.prototype.isOk = function() {
 //
 const MeshAllocator = function(allocatedSize) {
    // Material
-   Material.color = new Float32Buffer(3*3);    // packed byte to float not
+   Material.color = new Float32Buffer(3*5);    // not packing to byte to save space because there won't be millions of Materials.
    Material.default = Material.create("default");
    Material.dead = Material.create("dead");
    // wEdge
@@ -1196,7 +1196,7 @@ const MeshAllocator = function(allocatedSize) {
    HalfEdge.color.setValue(0, [255,255,255]); 
    Attribute.uv = new TexCoordAttribute();  
    Attribute.uv.bind(Attribute.uv.reserve());
-//   Attribute.uv.setValue(0, [0, 0, 0, 0, 0, 0, 0 ,0]);
+   Attribute.uv.setValue(0, [0, 0, 0, 0, 0, 0, 0 ,0]);
    // Vertex
    Vertex.index = new Float32Buffer(3);
    Vertex.position = this.position = new Float32Buffer(3, allocatedSize);  // position buffer.

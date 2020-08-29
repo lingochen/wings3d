@@ -43,6 +43,7 @@ vertex: (index2TexCoord, materialIndex) =>
 `  uniform mat4 projection;
    uniform mat4 worldView;
    uniform vec4 faceColor[4];
+   uniform float currentBaseColorTexture;
 
    // (vertex, halfEdge, face, group) index
    attribute highp vec4 polygonIndex;
@@ -55,15 +56,18 @@ vertex: (index2TexCoord, materialIndex) =>
    uniform sampler2D faceState;
    uniform sampler2D materialColor;
    uniform sampler2D attributeColor;
+   uniform sampler2D attributeTexCoord;
    uniform float positionBufferHeight;
    uniform float faceStateHeight;
    uniform float groupStateHeight;
    uniform float materialColorHeight;
    uniform float attributeColorHeight;
+   uniform float attributeTexCoordHeight;
 
 
    varying vec4 color;                    // color of material * vertex 
    varying vec4 stateColor;               // selected, or hiliteColor, or just original color
+   varying vec2 baseColorUV;
 
    ${index2TexCoord}
 
@@ -84,7 +88,12 @@ vertex: (index2TexCoord, materialIndex) =>
          vec3 polyState = texture2D(faceState, index2TexCoord(polygonIndex.z, faceStateHeight)).xyz;
          int state = int(max(gState, polyState.x * 255.0)); // luminance === {l, l, l, 1}; l is [0-1]         
          if (state < 4) {
-            float matIndex = materialIndex(polyState) * 3.;
+            float matIndex = materialIndex(polyState) * 5.;
+
+            if (texture2D(materialColor, index2TexCoord(matIndex+3.0, materialColorHeight)).x != currentBaseColorTexture) { // skipped if not the currentTexture
+               return;
+            }
+
             transparency = transparency * texture2D(materialColor, index2TexCoord(matIndex+1., materialColorHeight)).z;
             color = vec4(texture2D(materialColor, index2TexCoord(matIndex, materialColorHeight)).xyz, transparency);   // material color
             if (state == 0) {
@@ -101,6 +110,9 @@ vertex: (index2TexCoord, materialIndex) =>
                }
                color = mix(stateColor, color, 0.5);
             }
+            float channel = texture2D(materialColor, index2TexCoord(matIndex+4.0, materialColorHeight)).x;
+            baseColorUV = texture2D(attributeTexCoord, index2TexCoord(a_AttributeIndex.z*4.0+channel, attributeTexCoordHeight)).ra;
+
             vec3 pos = texture2D(positionBuffer, index2TexCoord(polygonIndex.x, positionBufferHeight)).xyz;
             vec3 vertexColor = texture2D(attributeColor, index2TexCoord(a_AttributeIndex.x, attributeColorHeight)).rgb;
             gl_Position = projection * worldView * vec4(pos, 1.0);
@@ -115,14 +127,18 @@ fragment:
    varying vec4 color;
    varying vec4 stateColor;
 
+   varying vec2 baseColorUV;
+   uniform sampler2D baseColorTexture;
+
+
    void main(void) {
       vec2 oddEven = floor( fract(gl_FragCoord.xy * 0.5) + 0.5 ); // floor( value + 0.5 ) == round( value );
       float result = oddEven.x + oddEven.y;
 
       if (result == 1.0) {
-         gl_FragColor = color;
+         gl_FragColor = color * texture2D(baseColorTexture, baseColorUV);
       } else {
-         gl_FragColor = stateColor;
+         gl_FragColor = stateColor * texture2D(baseColorTexture, baseColorUV);
       }
    }
 ` 

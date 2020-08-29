@@ -17,7 +17,7 @@ import {gl, ShaderData} from './wings3d_gl.js';
 import * as ShaderProg from './wings3d_shaderprog.js';
 import * as Util from './wings3d_util.js';
 import {BoundingSphere} from './wings3d_boundingvolume.js';
-import {MeshAllocator, WingedTopology, WingedEdge, HalfEdge, Polygon, Vertex} from './wings3d_wingededge.js';
+import {MeshAllocator, WingedTopology, WingedEdge, HalfEdge, Polygon, Vertex, Attribute} from './wings3d_wingededge.js';
 import {Material} from './wings3d_material.js';
 
 
@@ -55,6 +55,7 @@ const DraftBench = function(theme, prop, materialList, defaultSize = 2048) {  //
    this.preview.shaderData.createAttribute('indexBuffer', layoutVec4, gl.STATIC_DRAW);
    this.preview.shaderData.createSampler("edgeState", 1, 1, gl.UNSIGNED_BYTE);
    this.preview.shaderData.createSampler("attributeColor", 5, 3, gl.UNSIGNED_BYTE);
+   this.preview.shaderData.createSampler("attributeTexCoord", 6, 2, gl.HALF_FLOAT);
 
    // previewVertex
    this.preview.shaderData.createAttribute('vertexIndex', layoutVec, gl.DYNAMIC_DRAW);
@@ -234,6 +235,7 @@ DraftBench.prototype.draw = function(gl, madsor) {
 
       // update vertex color if needed (it per hEdge)
       this.preview.shaderData.updateSampler("attributeColor", HalfEdge.color);
+      this.preview.shaderData.updateSampler("attributeTexCoord", Attribute.uv);
 
       // update polygon, group state if needed
       this.preview.shaderData.updateSampler("faceState", Polygon.state);
@@ -252,11 +254,29 @@ DraftBench.prototype.draw = function(gl, madsor) {
       // bindUniform all
       gl.bindUniform(this.preview.shaderData, ['faceColor', 'faceState', 'faceStateHeight', 'groupState', 'groupStateHeight',
                                                'materialColor', 'materialColorHeight', "attributeColor", "attributeColorHeight",
+                                               'attributeTexCoord', 'attributeTexCoordHeight',
                                                'positionBuffer', 'positionBufferHeight']);
 
       gl.bindIndex(this.preview.shaderData, 'triangleList');
-      gl.drawElements(gl.TRIANGLES, HalfEdge.triangleList.usedSize, gl.UNSIGNED_INT, 0);                                       
-      //gl.drawArrays(gl.TRIANGLES,  0, HalfEdge.index.usedSize/4);
+
+
+      const textureSet = new Set;
+      for (const mat of Material.getInUse()) {
+         const hash = mat.textureHash();
+         if (textureSet.has(hash)) {
+            continue;   // skipped already drawn set
+         }
+         textureSet.add(hash);
+
+         this.preview.shaderData.setUniform1f('currentBaseColorTexture', mat.pbr.baseColorTexture);
+         this.preview.shaderData.setUniformTexture('baseColorTexture', mat.getBasecolorTextureHandle(), 7);
+
+         // bindUniform changed.
+         gl.bindUniform(this.preview.shaderData, ['currentBaseColorTexture', 'baseColorTexture']);
+
+         gl.drawElements(gl.TRIANGLES, HalfEdge.triangleList.usedSize, gl.UNSIGNED_INT, 0);                                       
+         //gl.drawArrays(gl.TRIANGLES,  0, HalfEdge.index.usedSize/4);
+      }
    } catch (e) {
       console.log(e);
    }

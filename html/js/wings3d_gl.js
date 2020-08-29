@@ -43,6 +43,7 @@ function createWebGLContext(canvasID, attrib) {
             console.log("No half float texture");
             return null;
          }
+         gl.HALF_FLOAT = ext.HALF_FLOAT_OES;
          // require 4 vertex texture unit
          let units = gl.getParameter(gl.MAX_VERTEX_TEXTURE_IMAGE_UNITS);
          if (units < 8) {  // we need at least (pos, edgeState, faceState, groupState, materialColor, attributeColor, attributeNormal, attributeUV, baseColorTexture)?
@@ -366,7 +367,7 @@ function getFormat(formatSize) {
    if (formatSize === 1) {
       return gl.LUMINANCE;
    } else if (formatSize === 2) {
-      return gl.LUMINACE_ALPHA;
+      return gl.LUMINANCE_ALPHA;
    } else if (formatSize === 3) {
       return gl.RGB;
    } else if (formatSize === 4) {
@@ -697,6 +698,11 @@ ShaderData.prototype.setUniformSampler = function(name, sampler) {
                         binder: ShaderData.uniformSampler};
    // also bind "nameHeight".
    this.uniform[name+"Height"] = {value: sampler.height, binder: ShaderData.uniform1f};
+};
+
+ShaderData.prototype.setUniformTexture = function(name, textureHandle, unit) {
+   this.uniform[name] = {value: {unit: unit, handle: textureHandle},
+                         binder: ShaderData.uniformSampler};
 };
 
 /*ShaderData.unifomr1i = function(gl, loc, value) {
@@ -1031,40 +1037,40 @@ const toHalf = (function() {
    let floatView = new Float32Array(1);
    let int32View = new Int32Array(floatView.buffer);
  
-   /* This method is faster than the OpenEXR implementation (very often
-    * used, eg. in Ogre), with the additional benefit of rounding, inspired
-    * by James Tursa?s half-precision code. */
+   // This method is faster than the OpenEXR implementation (very often
+   // used, eg. in Ogre), with the additional benefit of rounding, inspired
+   // by James Tursa?s half-precision code. 
    return function toHalf(value) {
      floatView[0] = value;     // float32 conversion here
      var x = int32View[0];
  
-     var bits = (x >> 16) & 0x8000; /* Get the sign */
-     var m = (x >> 12) & 0x07ff; /* Keep one extra bit for rounding */
-     var e = (x >> 23) & 0xff; /* Using int is faster here */
+     var bits = (x >> 16) & 0x8000; // Get the sign 
+     var m = (x >> 12) & 0x07ff; // Keep one extra bit for rounding 
+     var e = (x >> 23) & 0xff; // Using int is faster here 
  
-     /* If zero, or denormal, or exponent underflows too much for a denormal half, return signed zero. */
+     // If zero, or denormal, or exponent underflows too much for a denormal half, return signed zero. 
      if (e < 103) {
        return bits;
      }
  
-     /* If NaN, return NaN. If Inf or exponent overflow, return Inf. */
+     // If NaN, return NaN. If Inf or exponent overflow, return Inf. 
      if (e > 142) {
        bits |= 0x7c00;
-       /* If exponent was 0xff and one mantissa bit was set, it means NaN, not Inf, so make sure we set one mantissa bit too. */
+       // If exponent was 0xff and one mantissa bit was set, it means NaN, not Inf, so make sure we set one mantissa bit too. 
        bits |= ((e == 255) ? 0 : 1) && (x & 0x007fffff);
        return bits;
      }
  
-     /* If exponent underflows but not too much, return a denormal */
+     // If exponent underflows but not too much, return a denormal
      if (e < 113) {
        m |= 0x0800;
-       /* Extra rounding may overflow and set mantissa to 0 and exponent to 1, which is OK. */
+       // Extra rounding may overflow and set mantissa to 0 and exponent to 1, which is OK.
        bits |= (m >> (114 - e)) + ((m >> (113 - e)) & 1);
        return bits;
      }
  
      bits |= ((e - 112) << 10) | (m >> 1);
-     /* Extra rounding. An overflow will set mantissa to 0 and increment the exponent, which is OK. */
+     // Extra rounding. An overflow will set mantissa to 0 and increment the exponent, which is OK. 
      bits += m & 1;
      return bits;
    }
@@ -1231,7 +1237,7 @@ class TexCoordAttribute extends AttributeBuffer {
    }
 
    setChannel(index, channel, uv) {
-      index = index * AttributeBuffer.kSIZE + 6 + channel*2;
+      index = index * this.component + channel*2;
       this.set(index++, toHalf(uv[0]) );
       this.set(index,   toHalf(uv[1]) );
    };
