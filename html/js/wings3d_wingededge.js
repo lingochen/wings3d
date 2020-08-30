@@ -1553,7 +1553,7 @@ WingedTopology.prototype.empty = function() {
    this.edges.clear();
 
    archive.pts = new Float32Array(this.vertices.size * 3);
-   const ptView = new Vec3View(pts);
+   const ptView = new Vec3View(archive.pts);
    for (let vertex of this.vertices) {
       archive.vertices.push( vertex.getRestore(ptView) );
       this.alloc.freeVertex(vertex);
