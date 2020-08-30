@@ -23,7 +23,10 @@ const defaultPBR = { baseColor: Util.hexToRGB("#C9CFB1"),              // rgb, b
 /**
  * PhysicallyBasedMaterial
  */
-const Material = function(name) {
+const gList = [];
+const gFreeList = [];
+class Material {
+   constructor(name) {
    this.name = name;
    this.uuid = Util.get_uuidv4();
    this.isAltered = false;
@@ -42,142 +45,15 @@ const Material = function(name) {
    }
    this.index = Material.color.alloc()/(3*5);
    this.setGPU();
-};
-Material.color = null;  // saved the color
-
-const gList = [];
-const gFreeList = [];
-Material.create = function(name, input) {
-   let ret;
-   if (gFreeList.lenth > 0) {
-      ret = gFreeList.pop();
-      ret.name = name;
-      ret.setValues(defaultPBR);
-   } else { 
-      ret = new Material(name);
-      gList.push(ret);
-   }
-   if (input) {
-      ret.setValues(input);
-   }
-   return ret;
-};
-//Material.default = Material.create("default");
-//Material.dead = Material.create("dead");
-
-Material.release = function(material) {
-   if (material.usageCount === 0) {
-      // release unused texture.
-      material.setBaseColorTexture(Texture.getWhite());
-      gFreeList.push(material);
-      return true;
-   } else {
-      return false;
-   }
-};
-
-
-Material.getInUse = function * () {
-   for (const mat of gList) {
-      if (mat.usageCount > 0) {
-         yield mat;
-      }
-   }
 }
 
 
-Material.prototype.setGPU = function() {
-   // now put on Material.color (for gpu)
-   const i = this.index * (3*5);
-   Material.color.set(i, this.pbr.baseColor[0]);
-   Material.color.set(i+1, this.pbr.baseColor[1]);
-   Material.color.set(i+2, this.pbr.baseColor[2]);
-   Material.color.set(i+3, this.pbr.roughness);
-   Material.color.set(i+4, this.pbr.metallic);
-   Material.color.set(i+5, this.pbr.opacity);
-   Material.color.set(i+6, this.pbr.emission[0]);
-   Material.color.set(i+7, this.pbr.emission[1]);
-   Material.color.set(i+8, this.pbr.emission[2]);
-};
-Material.prototype.setGPUTexture = function() {
-   const i = this.index * (3*5);
-   Material.color.set(i+9, this.pbr.baseColorTexture);
-   Material.color.set(i+10, this.pbr.normalTexture);
-   Material.color.set(i+11, this.pbr.occlusionTexture);
-};
-
-
-Material.prototype.setValues = function(inputDat) {
-   for (const key of Object.keys(inputDat)) {
-      if (this.pbr.hasOwnProperty(key)) {
-         if ((key == "baseColor" || key == "emission") && !Array.isArray(inputDat[key])) {
-            this.pbr[key] = Util.hexToRGB(inputDat[key]);
-         } else {
-            this.pbr[key] = inputDat[key];
-         }
-      } else {
-         console.log("unknown input material: " + key);
-      }
-   }
-   this.setGPU();
-};
-
-Material.prototype.setBaseColorTexture = function(texture) {
-   // release previous
-   Texture.gList[this.pbr.baseColorTexture].unassigned();
-   // assign new one
-   this.pbr.baseColorTexture = texture.idx;
-   texture.assigned();
-   this.setGPUTexture();
-}
-
-Material.prototype.getBasecolorTextureHandle = function() {
-   return Texture.handle(this.pbr.baseColorTexture);
-}
-
-/**
- * return a string compose of texture's index, which act as hash. or should we packed the texture as int32?
- */
-Material.prototype.textureHash = function() {
-   return `${this.pbr.baseColorTexture}`;
-};
-
-
-Material.prototype.setPBR = function(pbr) {
-   this.pbr = pbr;
-   this.setGPU();
-};
-
-
-Material.prototype.assigned = function() {
-   ++this.usageCount;
-   this.updateGUI();
-   this.isAltered = true;
-}
-
-Material.prototype.unassigned = function() {
-   --this.usageCount;
-   this.updateGUI();
-   this.isAltered = true;
-}
-
-Material.prototype.updateGUI = function() {
-   if (this.guiStatus.count) {
-      this.guiStatus.count.textContent = this.usageCount;
-   }
-   if (this.menu && this.menu.color) {
-      this.menu.color.style.backgroundColor = Util.rgbToHex(...this.pbr.baseColor);
-   }
-   if (this.pict) {
-      this.pict.style.backgroundColor = Util.rgbToHex(...this.pbr.baseColor);
-   }
-}
 
 // https://github.com/AnalyticalGraphicsInc/obj2gltf
 /**
  * convert rgb to luminance
  */
-Material.luminance = function(rgb) {
+static luminance(rgb) {
    return (rgb[0] * 0.2125) + (rgb[1] * 0.7154) + (rgb[2] * 0.0721);
 }
 
@@ -186,7 +62,7 @@ Material.luminance = function(rgb) {
  * Roughness factor is a combination of specular intensity and shininess
  * Metallic factor is 0.0
  */
-Material.convertTraditionalToMetallicRoughness = function(material) {
+static convertTraditionalToMetallicRoughness(material) {
 
    const specularIntensity = Material.luminance(material.specularMaterial);
    let roughnessFactor = 1.0 - material.shininessMaterial;
@@ -205,6 +81,132 @@ Material.convertTraditionalToMetallicRoughness = function(material) {
 }
 
 
+static create(name, input) {
+   let ret;
+   if (gFreeList.lenth > 0) {
+      ret = gFreeList.pop();
+      ret.name = name;
+      ret.setValues(defaultPBR);
+   } else { 
+      ret = new Material(name);
+      gList.push(ret);
+   }
+   if (input) {
+      ret.setValues(input);
+   }
+   return ret;
+};
+//Material.default = Material.create("default");
+//Material.dead = Material.create("dead");
+
+static release(material) {
+   if (material.usageCount === 0) {
+      // release unused texture.
+      material.setBaseColorTexture(Texture.getWhite());
+      gFreeList.push(material);
+      return true;
+   } else {
+      return false;
+   }
+};
+
+
+static * getInUse () {
+   for (const mat of gList) {
+      if (mat.usageCount > 0) {
+         yield mat;
+      }
+   }
+}
+
+   setGPU() {
+      // now put on Material.color (for gpu)
+      const i = this.index * (3*5);
+      Material.color.set(i, this.pbr.baseColor[0]);
+      Material.color.set(i+1, this.pbr.baseColor[1]);
+      Material.color.set(i+2, this.pbr.baseColor[2]);
+      Material.color.set(i+3, this.pbr.roughness);
+      Material.color.set(i+4, this.pbr.metallic);
+      Material.color.set(i+5, this.pbr.opacity);
+      Material.color.set(i+6, this.pbr.emission[0]);
+      Material.color.set(i+7, this.pbr.emission[1]);
+      Material.color.set(i+8, this.pbr.emission[2]);
+   }
+
+   setGPUTexture() {
+      const i = this.index * (3*5);
+      Material.color.set(i+9, this.pbr.baseColorTexture);
+      Material.color.set(i+10, this.pbr.normalTexture);
+      Material.color.set(i+11, this.pbr.occlusionTexture);
+   }
+   
+   setValues(inputDat) {
+      for (const key of Object.keys(inputDat)) {
+         if (this.pbr.hasOwnProperty(key)) {
+            if ((key == "baseColor" || key == "emission") && !Array.isArray(inputDat[key])) {
+               this.pbr[key] = Util.hexToRGB(inputDat[key]);
+            } else {
+               this.pbr[key] = inputDat[key];
+            }
+         } else {
+            console.log("unknown input material: " + key);
+         }
+      }
+      this.setGPU();
+   }
+
+   setBaseColorTexture(texture) {
+      // release previous
+      Texture.gList[this.pbr.baseColorTexture].unassigned();
+      // assign new one
+      this.pbr.baseColorTexture = texture.idx;
+      texture.assigned();
+      this.setGPUTexture();
+   }
+
+   getBasecolorTextureHandle() {
+      return Texture.handle(this.pbr.baseColorTexture);
+   }
+   /**
+   * return a string compose of texture's index, which act as hash. or should we packed the texture as int32?
+   */
+   textureHash() {
+      return `${this.pbr.baseColorTexture}`;
+   }
+
+   setPBR(pbr) {
+      this.pbr = pbr;
+      this.setGPU();
+   }
+
+   assigned() {
+      ++this.usageCount;
+      this.updateGUI();
+      this.isAltered = true;
+   }
+
+   unassigned() {
+      --this.usageCount;
+      this.updateGUI();
+      this.isAltered = true;
+   }
+
+   updateGUI() {
+      if (this.guiStatus.count) {
+         this.guiStatus.count.textContent = this.usageCount;
+      }
+      if (this.menu && this.menu.color) {
+         this.menu.color.style.backgroundColor = Util.rgbToHex(...this.pbr.baseColor);
+      }
+      if (this.pict) {
+         this.pict.style.backgroundColor = Util.rgbToHex(...this.pbr.baseColor);
+      }
+   }
+};
+Material.color = null;  // saved the color
+
+
+
 
 // Texture parameters can be passed in via the `options` argument.
 // Example usage:
@@ -221,7 +223,6 @@ Material.convertTraditionalToMetallicRoughness = function(material) {
 //       format: gl.RGB, // Defaults to gl.RGBA
 //       type: gl.FLOAT // Defaults to gl.UNSIGNED_BYTE
 //     });
-let checkerboardCanvas;
 class Texture {
    constructor(name, options) {
       this.name = name;

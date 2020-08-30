@@ -155,7 +155,7 @@ class MeshAllocatorProxy { // we could use Proxy, but ....
       this.preview.bench.freeVertex(vertex); 
    }
 
-   freeHEdge(hEdge) { this.preview.bench.freeHEdge(hEdge); }
+   freeHEdge(hEdge) { return this.preview.bench.freeHEdge(hEdge); }
 
    freePolygon(polygon) {
       this.preview.removeFace(polygon);
