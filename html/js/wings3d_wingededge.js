@@ -435,17 +435,24 @@ HalfEdge.prototype.archiveInternal = function() {
    if (oldColor < 0) {
       throw(new Error("No color Attribute"));
    }
-
-   return {origin: this.origin, next: this.next, color: oldColor};
+   let oldUV = HalfEdge.indexAttribute.get(index + 2);
+   if (oldUV < 0) {
+      throw(new Error("No uv Attribute"));
+   }
+   return {origin: this.origin, next: this.next, color: oldColor, uv: oldUV};
 };
 
 HalfEdge.prototype.restoreInternal = function(archive) {
    this.origin = archive.origin;
    this.next = archive.next;
    // setVertexColor;
-   let index = this.getIndex() * 3;
-   HalfEdge.color.bind(archive.color);
-   HalfEdge.indexAttribute.set(index, archive.color);
+   this.setVertexColor(archive.color);
+   this.setUV(archive.uv);
+   //let index = this.getIndex() * 3;
+   //HalfEdge.color.bind(archive.color);
+   //HalfEdge.indexAttribute.set(index, archive.color);
+   //Attribute.uv.bind(archive.uv);
+   //HalfEdge.indexAttribute.set(index+2, archive.uv);
 };
 
 HalfEdge.prototype.isLive = function() {
@@ -1262,6 +1269,8 @@ MeshAllocator.prototype.allocEdge = function(begVert, endVert, delOutEdge) {
       }
       outEdge.origin = begVert;
       outEdge.pair.origin = endVert;
+      outEdge.initAttribute();
+      outEdge.pair.initAttribute();
       //this.affected.edges.add( edge );
    } else {
       // initialized data.
@@ -1567,16 +1576,12 @@ WingedTopology.prototype.emptyUndo = function(restoreAll) {
       this.addVertex(vert.vertex);
       vert.vertex.setRestore(vert, ptView);
    }
-   // restore attribute first 
-   for (let color of restoreAll.colors) {
-      
-   }
 
-   const colorView = new Vec3View(restoreAll.attributes);
    for (let wEdge of restoreAll.edges) {
       this._createEdge(wEdge.left.origin, wEdge.right.origin, wEdge.wEdge.left);
       wEdge.wEdge.restoreInternal(wEdge);
    }
+
    for (let restore of restoreAll.faces) {   // undo successfully
       const face = this._createPolygon(restore.halfEdge, 4, restore.material, restore);
       face._assignFace();
