@@ -1119,10 +1119,12 @@ Polygon.prototype._update = function() {
    // now get radius, after we have center, or we could compute min, max, and get distance to center.
    const min = [current.origin[0], current.origin[1], current.origin[2]];
    const max = [current.origin[0], current.origin[1], current.origin[2]];
+   const result = [0, 0, 0];
    do {
       //vec3.add(this, this, current.origin);
       vec3.min(min, min, current.origin);
       vec3.max(max, max, current.origin);
+      vec3.add(result, result, current.origin);
       if (current.getIndex() < this.halfEdge.getIndex()) {
          this.halfEdge = current;
       }
@@ -1135,10 +1137,15 @@ Polygon.prototype._update = function() {
       current = current.next;
    } while (current !== begin);
    // compute bounding box, and 
-   let sphere = {center: [0, 0, 0], radius: 0};
-   sphere.radius = vec3.distance(max, min) / 2.0;
-   vec3.lerp(sphere.center, min, max, 0.5);
-   this.setSphere(sphere);
+   let radius;
+   if (this.numberOfVertex === 3) { // triangle centroid.
+      vec3.scale(result, result, 1.0/3.0);
+      radius = vec3.distance(result, begin.origin);
+   } else { // polygon centroid heuristic.
+      radius = vec3.distance(max, min) / 2.0;
+      vec3.lerp(result, min, max, 0.5);
+   }
+   this.setSphere({center: result, radius: radius});
 
 
    // now ask updatePosition to compute normal centroid and radius and compute normal.
