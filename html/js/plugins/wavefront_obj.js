@@ -5,6 +5,8 @@
 import {ImportExporter} from "../wings3d_importexport.js";
 import * as View from "../wings3d_view.js";
 import {Material} from "../wings3d_material.js";
+import {Attribute} from "../wings3d_wingededge.js";
+import {getFilenameAndExtension} from "../storages/cloudstorage.js";
 import * as UI from '../wings3d_ui.js';
 
 
@@ -109,9 +111,9 @@ class WavefrontObjImportExporter extends ImportExporter {
 
       for (let mtl of this.mtl) {   // read all material.
          this.loadAsync(mtl[0]).then((files)=>{
-            let reader = new WavefrontMtlImportExporter;
+            const reader = new WavefrontMtlImportExporter;
             reader.setMaterialCatalog(materialCatalog);
-            reader._import(files[0]);
+            reader.import(files, this.loadAsync);
             linkedFiles.set(mtl[0], files[0]);
           });
       }
@@ -153,8 +155,10 @@ class WavefrontObjImportExporter extends ImportExporter {
       this.vertexCount++;
    }
 
-   vt(textureVert) {
-
+   vt(texCoord) {
+      const index = Attribute.uv.reserve();
+      this.texCoords.push(index);
+      Attribute.uv.setChannel(index, 0, texCoord.slice(0,2));
    }
 
    /**
@@ -163,18 +167,31 @@ class WavefrontObjImportExporter extends ImportExporter {
     */
    f(index) {
       const faceIndex = [];
+      const uvIndex = [];
       for (let i of index) {
          let split = i.split('/');
          let idx = split[0] - 1;          // convert 1-based index to 0-based index.
-         if ( (idx >= 0) && (idx < this.obj.vertices.size)) {
+         if (split.length > 1) {
+            let uv = split[1] - 1;
+            uvIndex.push(this.texCoords[uv]);
+         }
+         if ( (idx >= 0) && (idx < this.realVertices.length)) {
             faceIndex.push( this.realVertices[idx] );
          } else {
             console.log("face index out of bound: " + idx);
          }
       }
-      let polygonIndex = this.obj.addPolygon(faceIndex, this.currentMaterial);
-      if (polygonIndex === null) {
+      let polygon = this.obj.addPolygon(faceIndex, this.currentMaterial);
+      if (polygon === null) {
          this.non_manifold.push( this.polygonCount );    // addup failure.
+      } else {
+         let hEdge = polygon.halfEdge;
+         if ((uvIndex.length > 0) && (uvIndex.length === faceIndex.length)) {
+            for (let i = 0; i < uvIndex.length; ++i)  {
+               hEdge.setUV(uvIndex[i]);
+               hEdge = hEdge.next;
+            }
+         }
       }
       //if (!this.obj.sanityCheck()) {
       //   console.log("polygon # " + this.polygonCount + " not sane");
@@ -186,7 +203,7 @@ class WavefrontObjImportExporter extends ImportExporter {
       const materialName = mat[0];
       let material = this.materialCatalog.get(materialName);
       if (!material) {
-         material = Material.create(materialName);
+         material = this.createMaterial(materialName);
          this.materialCatalog.set(materialName, material);
       }
       this.currentMaterial = material;
@@ -205,6 +222,7 @@ class WavefrontMtlImportExporter extends ImportExporter {
       //super('Wavefront (.mtl)...', 'Wavefront (.mtl)...');
       super(null, null);
       this.library = new Map;
+      this.textureLibrary = new Map;
    }
 
    extension() {
@@ -223,7 +241,7 @@ class WavefrontMtlImportExporter extends ImportExporter {
       this._reset();
       const mtlText = await blob.text();
       // break the objText to lines we needs.
-      const linesMatch = mtlText.match(/^(newmtl|Ka|Kd|Ks|Ns|Tr|d|illum)(?:\s+(.+))$/gm);   //objText.match(/^v((?:\s+)[\d|\.|\+|\-|e|E]+){3}$/gm);
+      const linesMatch = mtlText.match(/^(newmtl|Ka|Kd|Ks|Ns|Tr|d|illum|map_Kd)(?:\s+(.+))$/gm);   //objText.match(/^v((?:\s+)[\d|\.|\+|\-|e|E]+){3}$/gm);
 
       if (linesMatch) {
          for (let line of linesMatch) {
@@ -235,12 +253,15 @@ class WavefrontMtlImportExporter extends ImportExporter {
          for (let [name, material] of this.library) {
             const pbr = this.catalog.get(name);
             if (pbr) {
-               pbr.setPBR( Material.convertTraditionalToMetallicRoughness(material) );
+               pbr.setValues( Material.convertTraditionalToMetallicRoughness(material.material) );
+               if (material.texture.baseColorTexture) {
+                  pbr.setBaseColorTexture(material.texture.baseColorTexture);
+               }
             }
          }
 
          // done reading, return the object.
-         return {}; //{world: this.objs, material: this.material};    
+         return {world: [], materialCatalog: []};   
       } 
    }
 
@@ -250,12 +271,14 @@ class WavefrontMtlImportExporter extends ImportExporter {
     */
    newmtl(array) {
       const materialName = array[1];
-      this.currentMaterial = {diffuseMaterial: [0.78, 0.81, 0.69], //Util.hexToRGB("#C9CFB1"),    // color, old style to be deleted.
-                              ambientMaterial: [0.78, 0.81, 0.69], //Util.hexToRGB("#C9CFB1"),    // color
-                              specularMaterial: [0, 0, 0],   // color
-                              emissionMaterial: [0, 0, 0],   // color
+      this.current = {material: {diffuseMaterial: [0.78, 0.81, 0.69], //Util.hexToRGB("#C9CFB1"),    // color, old style to be deleted.
+                                 ambientMaterial: [0.78, 0.81, 0.69], //Util.hexToRGB("#C9CFB1"),    // color
+                                 specularMaterial: [0, 0, 0],   // color
+                                 emissionMaterial: [0, 0, 0],   // color
+                                 },
+                      texture: {},
                              };
-      this.library.set(materialName, this.currentMaterial);
+      this.library.set(materialName, this.current);
    }
 
    /**
@@ -268,11 +291,11 @@ class WavefrontMtlImportExporter extends ImportExporter {
    }
 
    Ka(ambient) {
-      this.currentMaterial.ambientMaterial = this._parseRGB(ambient);
+      this.current.material.ambientMaterial = this._parseRGB(ambient);
    }
 
    Kd(diffuse) {
-      this.currentMaterial.diffuseMaterial = this._parseRGB(diffuse);
+      this.current.material.diffuseMaterial = this._parseRGB(diffuse);
    }
 
    /**
@@ -280,7 +303,7 @@ class WavefrontMtlImportExporter extends ImportExporter {
     * @param {*} specular - rgb color is floating point.
     */
    Ks(specular) {
-      this.currentMaterial.specularMaterial = this._parseRGB(specular);
+      this.current.material.specularMaterial = this._parseRGB(specular);
    }
 
    /**
@@ -289,7 +312,7 @@ class WavefrontMtlImportExporter extends ImportExporter {
     */
    Ns(exponent) {
       let shine = (parseFloat(exponent[1]) || 0.0) / 1000.0;
-      this.currentMaterial.shininessMaterial = Math.min(1.0, Math.max(0.0, shine))
+      this.current.material.shininessMaterial = Math.min(1.0, Math.max(0.0, shine))
    }
 
    /**
@@ -297,7 +320,7 @@ class WavefrontMtlImportExporter extends ImportExporter {
     * @param {*} array 
     */
    d(opacity) {
-      this.currentMaterial.opacityMaterial = parseFloat(opacity[1]) || 1.0;
+      this.current.material.opacityMaterial = parseFloat(opacity[1]) || 1.0;
    }
 
    /**
@@ -305,7 +328,7 @@ class WavefrontMtlImportExporter extends ImportExporter {
     * @param {*} array 
     */
    Tr(transparent) {
-      this.currentMaterial.opacityMaterial = 1 - (parseFloat(transparent[1]) || 0.0);
+      this.current.material.opacityMaterial = 1 - (parseFloat(transparent[1]) || 0.0);
    }
 
    /**
@@ -316,6 +339,27 @@ class WavefrontMtlImportExporter extends ImportExporter {
 
    }
 
+   /**
+    * @param {*} - array
+    */
+   map_Kd(options) {
+      const filename = getFilenameAndExtension(options[options.length-1]).join('.');  // uri
+      let texture = this.textureLibrary.get(filename)
+      if (!texture) {
+         texture = this.createTexture(filename);
+         this.loadAsync(filename) 
+                        .then(files=>{
+                            return files[0].image();
+                        }).then(img=>{
+                           img.onload = ()=>{
+                              texture.setImage(img);
+                           }
+                           return img;
+                        });
+         this.textureLibrary.set(filename, texture);
+      }
+      this.current.texture.baseColorTexture = texture;
+   }
 }
 
 export {

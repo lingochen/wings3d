@@ -27,11 +27,11 @@ const gList = [];
 const gFreeList = [];
 class Material {
    constructor(name) {
-   this.name = name;
-   this.uuid = Util.get_uuidv4();
-   this.isAltered = false;
-   this.usageCount = 0;
-   this.guiStatus = {};
+      this.name = name;
+      this.uuid = Util.get_uuidv4();
+      this.isAltered = false;
+      this.usageCount = 0;
+      this.guiStatus = {};
 /*   this.material = {diffuseMaterial: Util.hexToRGB("#C9CFB1"),    // color, old style to be deleted.
                     ambientMaterial: Util.hexToRGB("#C9CFB1"),    // color
                     specularMaterial: Util.hexToRGB("#000000"),   // color
@@ -39,13 +39,13 @@ class Material {
                     vertexColorSelect: 0,                         // true/false
                     shininessMaterial: 0,                         // 0-1
                     opacityMaterial: 1};                          // 0-1*/
-   this.pbr = Object.assign({}, defaultPBR);
-   for (let i = 0; i < 3; ++i) {
-      Texture.getWhite().assigned();
+      this.pbr = Object.assign({}, defaultPBR);
+      for (let i = 0; i < 3; ++i) {
+         Texture.getWhite().assigned();
+      }
+      this.index = Material.color.alloc()/(3*5);
+      this.setGPU();
    }
-   this.index = Material.color.alloc()/(3*5);
-   this.setGPU();
-}
 
 
 
@@ -73,7 +73,7 @@ static convertTraditionalToMetallicRoughness(material) {
    }
 
    return {baseColor: material.diffuseMaterial, 
-           metal: 0.0,
+           metallic: 0.1,
            roughness: roughnessFactor,
            emission: material.emissionMaterial,
            opacity: material.opacityMaterial || 1.0,
@@ -111,13 +111,13 @@ static release(material) {
 };
 
 
-static * getInUse () {
-   for (const mat of gList) {
-      if (mat.usageCount > 0) {
-         yield mat;
+   static * getInUse () {
+      for (const mat of gList) {
+         if (mat.usageCount > 0) {
+            yield mat;
+         }
       }
    }
-}
 
    setGPU() {
       // now put on Material.color (for gpu)
@@ -172,11 +172,6 @@ static * getInUse () {
    */
    textureHash() {
       return `${this.pbr.baseColorTexture}`;
-   }
-
-   setPBR(pbr) {
-      this.pbr = pbr;
-      this.setGPU();
    }
 
    assigned() {
@@ -237,6 +232,7 @@ class Texture {
       this.wrapS = options.wrapS || gl.CLAMP_TO_EDGE;
       this.wrapT = options.wrapT || gl.CLAMP_TO_EDGE;
       this.usageCount = 0;    // the number of materials that contains this Texture.
+      this.setImage(Texture.checkerboard);   // default
    }
 
    destructor() { // free id texture resource.

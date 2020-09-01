@@ -106,6 +106,7 @@ class ImportExporter {
       this.materialCatalog = new Map;
       this.currentMaterial = Material.default;
       this.realVertices = []; // convert index
+      this.texCoords = [];
       this.polygonCount = 0;
       this.vertexCount = 0;
       this.non_manifold = [];
