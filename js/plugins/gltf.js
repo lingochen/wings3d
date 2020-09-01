@@ -162,7 +162,9 @@ class GLTFImportExporter extends ImportExporter {
       let image = this.cache.images.get(texture.source);
       let ret = this.createTexture(image.uri, sampler);
       image.loading.then(img=>{
-         ret.setImage(img);
+         img.onload = ()=> {
+            ret.setImage(img);
+         }
          return img;
       });
 
