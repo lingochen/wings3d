@@ -232,7 +232,7 @@ class Texture {
       this.wrapS = options.wrapS || gl.CLAMP_TO_EDGE;
       this.wrapT = options.wrapT || gl.CLAMP_TO_EDGE;
       this.usageCount = 0;    // the number of materials that contains this Texture.
-      this.setImage(Texture.checkerboard);   // default
+      this.setImage(gl.CHECKERBOARD);   // default
    }
 
    destructor() { // free id texture resource.
@@ -288,9 +288,6 @@ class Texture {
    }
 
    bind(unit) {
-      if (!this.image) {   // no image! supply the default checkerbox item.
-         this.setImage(Texture.checkerboard());
-      }
       gl.activeTexture(gl.TEXTURE0 + (unit || 0));
       gl.bindTexture(gl.TEXTURE_2D, this.id);
    }
@@ -327,17 +324,6 @@ class Texture {
 }
 Texture.gList = [];
 Texture.gFreeList = [];
-Texture.checkerboard = (function() {
-   const c = document.createElement('canvas').getContext('2d');
-   c.canvas.width = c.canvas.height = 128;
-   for (var y = 0; y < c.canvas.height; y += 16) {
-     for (var x = 0; x < c.canvas.width; x += 16) {
-       c.fillStyle = (x ^ y) & 16 ? '#FFF' : '#DDD';
-       c.fillRect(x, y, 16, 16);
-     }
-   }
-   return c.canvas;
- })();
 Texture.WHITE;
  
 
