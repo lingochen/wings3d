@@ -355,6 +355,18 @@ function createWebGLContext(canvasID, attrib) {
       return new ShaderData();
    };
 
+   gl.CHECKERBOARD = (function() {
+      const c = document.createElement('canvas').getContext('2d');
+      c.canvas.width = c.canvas.height = 128;
+      for (var y = 0; y < c.canvas.height; y += 16) {
+        for (var x = 0; x < c.canvas.width; x += 16) {
+          c.fillStyle = (x ^ y) & 16 ? '#FFF' : '#DDD';
+          c.fillRect(x, y, 16, 16);
+        }
+      }
+      return c.canvas;
+    })();
+
    return gl;
 };
 
