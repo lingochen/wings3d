@@ -367,6 +367,32 @@ function createWebGLContext(canvasID, attrib) {
       return c.canvas;
     })();
 
+   gl.resizeImage = function(image) {
+      let scale = 1.0;
+		// check if image > MAX_TEXTURESIZE
+		if ( (image.width > gl.textureSize) || (image.height > gl.textureSize) ) {
+			scale = maxSize / Math.max( image.width, image.height );
+      }
+
+      // resize to powerOf2 image.
+      const width = Math.pow(2, Math.floor(Math.log(scale*image.width) / Math.LN2));
+      const height = Math.pow(2, Math.floor(Math.log(scale*image.height) / Math.LN2));
+
+		if ( (width !== image.width) || (height !== image.height) ) {
+         const context = document.createElement('canvas').getContext('2d');
+         
+         context.canvas.width = width;
+         context.canvas.height = height;
+			context.drawImage(image, 0, 0, width, height);
+
+         console.warn( 'Texture has been resized from (' + image.width + ', ' + image.height + ') to (' + width + ', ' + height + ').' );
+
+         return context.canvas;
+		}
+
+		return image;
+   }
+
    return gl;
 };
 
