@@ -229,8 +229,8 @@ class Texture {
       this.type = options.type || gl.UNSIGNED_BYTE;
       this.magFilter = options.magFilter || gl.LINEAR;
       this.minFilter = options.minFilter || gl.LINEAR;
-      this.wrapS = options.wrapS || gl.CLAMP_TO_EDGE;
-      this.wrapT = options.wrapT || gl.CLAMP_TO_EDGE;
+      this.wrapS = options.wrapS || gl.REPEAT;//gl.CLAMP_TO_EDGE;
+      this.wrapT = options.wrapT || gl.REPEAT;//gl.CLAMP_TO_EDGE;
       this.usageCount = 0;    // the number of materials that contains this Texture.
       this.setImage(gl.CHECKERBOARD);   // default
    }
@@ -306,7 +306,7 @@ class Texture {
     * image - (dom image), - 
     */
    setImage(image) {
-      this.image = image;
+      this.image = gl.resizeImage(image);
 
       gl.activeTexture(gl.TEXTURE0+7);                // use baseColorTexture position to update.
       gl.bindTexture(gl.TEXTURE_2D, this.id);
@@ -315,7 +315,7 @@ class Texture {
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, this.minFilter);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, this.wrapS);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, this.wrapT);      
-      gl.texImage2D(gl.TEXTURE_2D, 0, this.format, this.format, this.type, image);
+      gl.texImage2D(gl.TEXTURE_2D, 0, this.format, this.format, this.type, this.image);
       
       if ((this.minFilter != gl.NEAREST) && (this.minFilter != gl.LINEAR)) {
         gl.generateMipmap(gl.TEXTURE_2D);
