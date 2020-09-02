@@ -340,19 +340,73 @@ class WavefrontMtlImportExporter extends ImportExporter {
    }
 
    /**
+    * paulbourke.net/dataformats/mtl
+    * 
     * @param {*} - array
     */
-   map_Kd(options) {
-      const filename = getFilenameAndExtension(options[options.length-1]).join('.');  // uri
+   map_Kd(params) {
+      function extractUV(index, values) {
+         let u = values[index+1];
+         let v = values[index+2];
+         let w = values[index+3];
+         let spliceOff = 4;
+         if (isNaN(v)) {
+            spliceOff = 2;
+            v = 0;
+         } else if (isNaN(w)) {
+            spliceOff = 3;
+         }
+         values.splice(index, spliceOff);   // -s u v w
+         return [u, v];
+      };
+
+
+      params.shift();
+      const options = {};
+      let pos = params.indexOf('-s');
+      if (pos >= 0) {
+         options.scale = extractUV(pos, params);
+      }
+      pos = params.indexOf('-o');
+      if (pos >= 0) {
+         options.offset = extractUV(pos, params);
+      }
+      pos = params.indexOf('-bm');
+      if (pos >= 0) {
+         options.bumpScale = parseFloat(params[pos+1]);
+         params.splice(pos, 2);
+      }
+      pos = params.indexOf('-clamp');  // -clamp on|off
+      if (pos >= 0) {
+         if (params[pos+1].localeCompare('on') === 0) {
+            options.wrapS = gl.CLAMP_TO_EDGE;
+            options.wrapT = gl.CLAMP_TO_EDGE;
+         }
+         params.splice(pos, 2);
+      }
+      // ignore
+      pos = params.indexOf('-t');   // -t u v w, turbulence for textures
+      if (pos >= 0) {
+         extractUV(pos, params);
+      }
+      for (const ignore of ['-cc', '-mm', 'imfchan', 'texres', 'blendu', 'blendv', '-boost']) {
+         pos = params.indexOf(ignore);
+         if (pos >= 0) {
+            params.splice(pos, 2);
+         }
+      }
+
+      const uri = params.join('').trim();    // 
+      const filename = getFilenameAndExtension(uri).join('.');  // uri
       let texture = this.textureLibrary.get(filename)
       if (!texture) {
          texture = this.createTexture(filename);
-         this.loadAsync(filename) 
+         this.loadAsync(uri) 
                         .then(files=>{
                             return files[0].image();
                         }).then(img=>{
                            img.onload = ()=>{
-                              texture.setImage(img);
+                              texture.setImage(img, true);
                            }
                            return img;
                         });

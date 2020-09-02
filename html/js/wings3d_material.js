@@ -235,7 +235,7 @@ class Texture {
       this.setImage(gl.CHECKERBOARD);   // default
    }
 
-   destructor() { // free id texture resource.
+   close() { // free id texture resource.
       gl.deleteTexture(this.id);
       this.id = null;
       this.image = null;
@@ -258,7 +258,7 @@ class Texture {
       if (texture.usageCount === 0) {
          Texture.gFreeList.push(texture.idx);
          Texture.gList[texture.idx] = null;
-         texture.destructor();
+         texture.close();
          return true;
       } else {
          return false;
@@ -305,12 +305,14 @@ class Texture {
     * 
     * image - (dom image), - 
     */
-   setImage(image) {
+   setImage(image, flip=false) {
       this.image = gl.resizeImage(image);
 
       gl.activeTexture(gl.TEXTURE0+7);                // use baseColorTexture position to update.
       gl.bindTexture(gl.TEXTURE_2D, this.id);
-      //gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
+      if (flip) {
+         gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
+      }
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, this.magFilter);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, this.minFilter);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, this.wrapS);
@@ -319,6 +321,9 @@ class Texture {
       
       if ((this.minFilter != gl.NEAREST) && (this.minFilter != gl.LINEAR)) {
         gl.generateMipmap(gl.TEXTURE_2D);
+      }
+      if (flip) {
+         gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 0);
       }
    }
 }
