@@ -2,6 +2,7 @@
    wings3d, ui and ui utility functions. including tutor.
 
 */
+import {getFilenameAndExtension} from "./storages/cloudstorage.js";
 import * as Hotkey from './wings3d_hotkey.js';
 import * as Wings3D from './wings3d.js';
 
@@ -404,7 +405,9 @@ function openLinkedFile(callBack, filename) {
       const li = document.createElement('li');
       li.textContent = filename;
       multiFilesForm.ul.appendChild(li);
-      multiFilesForm.fileNames.set(filename, [li, callBack]);
+      // break the filename to 
+      const nameextension = getFilenameAndExtension(filename).join('.');
+      multiFilesForm.fileNames.set(nameextension, [li, callBack]);
    }
 }
 
