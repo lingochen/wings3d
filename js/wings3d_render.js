@@ -18,9 +18,8 @@ import * as Util from './wings3d_util.js';
 // initPolygonStipple(); no webgl support. shader replacement? ignore for now
 let lineProg;        // to be replaced
 let groundAxisProg;  // to be replaced
-let textProg;        // to be replaced
-let textCtx;
 let svgUI;
+let lineEnd = {x: null, y: null, z: null};
 
 onReady(function() {
    redrawFlag = true;
@@ -46,11 +45,23 @@ onReady(function() {
    var yon = computeGroundAndAxes(gl, mat.projection, mat.modelView);    
    initMiniAxis(gl, mat.modelView);
 
-   // get canvas2D
-   const element = document.getElementById("text");
-   textCtx = element.getContext("2d");
- //  console.log("Render.init() success");
+   // setup svgUI
    svgUI = document.getElementById('svgUI');
+   lineEnd.x = document.createElementNS("http://www.w3.org/2000/svg", 'text');
+   lineEnd.x.style.fontSize = "18px";
+   lineEnd.x.style.fontFamily = 'Arial';
+   lineEnd.x.textContent = 'x';
+   svgUI.appendChild(lineEnd.x);
+   lineEnd.y = document.createElementNS("http://www.w3.org/2000/svg", 'text');
+   lineEnd.y.style.fontSize = "18px";
+   lineEnd.y.style.fontFamily = 'Arial';
+   lineEnd.y.textContent = 'y';
+   svgUI.appendChild(lineEnd.y);
+   lineEnd.z = document.createElementNS("http://www.w3.org/2000/svg", 'text');
+   lineEnd.z.style.fontSize = "18px";
+   lineEnd.z.style.fontFamily = 'Arial';
+   lineEnd.z.textContent = 'z';
+   svgUI.appendChild(lineEnd.z);
 });
 
 /**
@@ -69,15 +80,6 @@ function worldToScreenPoint(pt) {
    return [(point3D[0] *  0.5 + 0.5) * gl.canvas.width, 
            (point3D[1] * -0.5 + 0.5) * gl.canvas.height];
 };
-
-
-function renderText(x, y, color, txt) {
-   textCtx.font = '18px Arial';
-   //textCtx.textAlign = "start";
-   //textCtx.textBaseline = "bottom";
-   textCtx.fillStyle = color;
-   textCtx.fillText(txt, x, y);   
-}
 
 
 // it seems erlang version use 2d(w) line - line intersection (wikipedia). 
@@ -129,14 +131,15 @@ function clipLine(pt0, pt1) {
    return true; // some of the edges lie inside CVV
 };
 
-function renderASCII(gl, origin, end, c, color, viewport) {
+function renderASCII(xyz, color, origin, end, viewport) {
    if (clipLine(origin, end)) {
       // line inside view volume
       //console.log(end[0], end[1], end[2], end[3]);
-      var x = Math.trunc((0.5*end[0]/end[3]+0.5)*(viewport[2]-20) + 10);
-      var y = viewport[3] - Math.trunc((0.5*end[1]/end[3]+0.5)*(viewport[3]-16) + 7);
-      //console.log("x:", x, "y:", y);
-      renderText(x, y, color, c);
+      const x = Math.trunc((0.5*end[0]/end[3]+0.5)*(viewport[2]-20) + 10);
+      const y = viewport[3] - Math.trunc((0.5*end[1]/end[3]+0.5)*(viewport[3]-16) + 7);
+      lineEnd[xyz].setAttributeNS(null, 'x', x);
+      lineEnd[xyz].setAttributeNS(null, 'y', y);
+      lineEnd[xyz].setAttributeNS(null, 'fill', color);
    }
 };
 
@@ -160,9 +163,9 @@ function renderAxisLetter(gl, zFar) {
       var endx = gl.transformVertex(vec4.fromValues(zFar, 0.0, 0.0, 1.0)), 
           endy = gl.transformVertex(vec4.fromValues(0.0, zFar, 0.0, 1.0)), 
           endz = gl.transformVertex(vec4.fromValues(0.0, 0.0, zFar, 1.0));
-      renderASCII(gl, origin, endx, 'x', View.theme.colorX, viewPort);
-      renderASCII(gl, origin, endy, 'y', View.theme.colorY, viewPort);
-      renderASCII(gl, origin, endz, 'z', View.theme.colorZ, viewPort);
+      renderASCII('x', View.theme.colorX, origin, endx, viewPort);
+      renderASCII('y', View.theme.colorY, origin, endy, viewPort);
+      renderASCII('z', View.theme.colorZ, origin, endz, viewPort);
    }
 };
 
@@ -345,26 +348,13 @@ function renderGroundAndAxes(gl, projection, modelView) {
 };
 
 
-// make sure webgl framebuffer size matched real canvas size.
-// make sure overlay text canvas matched real screen size.
-function resizeToDisplaySize() {
-   if (gl.resizeToDisplaySize()) {  // we should resize with webgl
-      textCtx.canvas.width = textCtx.canvas.clientWidth;
-      textCtx.canvas.height = textCtx.canvas.clientHeight;
-      return true;
-   } 
-   return false;
-};
-
-
 let redrawFlag = false;
 function needToRedraw() {
    redrawFlag = true;
 };
 
 function render(gl, drawWorldFn) {
-   if (resizeToDisplaySize() || Camera.view.isModified || redrawFlag) {
-      textCtx.clearRect(0, 0, textCtx.canvas.width, textCtx.canvas.height)
+   if (gl.resizeToDisplaySize() || Camera.view.isModified || redrawFlag) {
       redrawFlag = false; 
       const backColor = Util.hexToRGBA(View.theme.geometryBackground);
       gl.clearColor(backColor[0], backColor[1], backColor[2], backColor[3]);
@@ -401,10 +391,8 @@ function render(gl, drawWorldFn) {
 
 
 export {
-   renderText,
    needToRedraw,
    render,
-   resizeToDisplaySize,
    svgUI,
 };
 
