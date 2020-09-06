@@ -772,7 +772,7 @@ function selectStart(mousePos) {
       selectionRectangle.rect.setAttributeNS(null, 'y', mousePos.y);
       selectionRectangle.rect.setAttributeNS(null, 'fill', 'none');
       selectionRectangle.rect.setAttributeNS(null, 'stroke', 'black');
-      selectionRectangle.rect.setAttributeNS(null, 'stroke-width', 5);
+      selectionRectangle.rect.setAttributeNS(null, 'stroke-width', 4);
       Renderer.svgUI.appendChild(selectionRectangle.rect);
    }
 };
@@ -800,7 +800,9 @@ function selectDrag(mousePos) {
       selectionRectangle.rect.setAttributeNS(null, 'x', x);
       selectionRectangle.rect.setAttributeNS(null, 'y', y);
       selectionRectangle.rect.setAttributeNS(null, 'width', width);
-      selectionRectangle.rect.setAttributeNS(null, 'height', height); 
+      selectionRectangle.rect.setAttributeNS(null, 'height', height);
+      // now, project 4 slab 
+
    }
 }
 
