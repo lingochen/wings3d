@@ -20,6 +20,7 @@ let lineProg;        // to be replaced
 let groundAxisProg;  // to be replaced
 let textProg;        // to be replaced
 let textCtx;
+let svgUI;
 
 onReady(function() {
    redrawFlag = true;
@@ -49,6 +50,7 @@ onReady(function() {
    const element = document.getElementById("text");
    textCtx = element.getContext("2d");
  //  console.log("Render.init() success");
+   svgUI = document.getElementById('svgUI');
 });
 
 /**
@@ -403,5 +405,6 @@ export {
    needToRedraw,
    render,
    resizeToDisplaySize,
+   svgUI,
 };
 

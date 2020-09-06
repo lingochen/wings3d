@@ -757,22 +757,50 @@ function rayPick(ray) {
 };
 
 let dragMode = null;
-function selectStart() {
+let selectionRectangle = {rect: null, start: [0, 0], end: [0, 0]};
+function selectStart(mousePos) {
    if (lastPick !== null) {   
       // first check if we needs to autoToggle
       mode.current.toggleMulti(hilite);
       // now we can safely dragStart
       dragMode = mode.current.selectStart(lastPick.model, hilite);
       Renderer.needToRedraw();
+   } else { // we are in select rectangle mode
+      selectionRectangle.rect = document.createElementNS("http://www.w3.org/2000/svg", 'rect');
+      selectionRectangle.start = selectionRectangle.end = mousePos;
+      selectionRectangle.rect.setAttributeNS(null, 'x', mousePos.x);
+      selectionRectangle.rect.setAttributeNS(null, 'y', mousePos.y);
+      selectionRectangle.rect.setAttributeNS(null, 'fill', 'none');
+      selectionRectangle.rect.setAttributeNS(null, 'stroke', 'black');
+      selectionRectangle.rect.setAttributeNS(null, 'stroke-width', 5);
+      Renderer.svgUI.appendChild(selectionRectangle.rect);
    }
 };
 
-function selectDrag() {
+function selectDrag(mousePos) {
    if ((dragMode !== null)) {// &&
        if ((lastPick !== null)) {
          dragMode.dragSelect(lastPick.model, hilite);
          Renderer.needToRedraw();
       }
+   } else if (selectionRectangle.rect) { // update selection rectangle.
+      let x = selectionRectangle.start.x;
+      selectionRectangle.end = mousePos;
+      let width = mousePos.x - x;
+      if (width < 0) {
+         width = -width;
+         x = mousePos.x;
+      }
+      let y = selectionRectangle.start.y
+      let height = mousePos.y - y;
+      if (height < 0) {
+         height = -height;
+         y = mousePos.y;
+      }
+      selectionRectangle.rect.setAttributeNS(null, 'x', x);
+      selectionRectangle.rect.setAttributeNS(null, 'y', y);
+      selectionRectangle.rect.setAttributeNS(null, 'width', width);
+      selectionRectangle.rect.setAttributeNS(null, 'height', height); 
    }
 }
 
@@ -780,6 +808,9 @@ function selectFinish() {
    if (dragMode !== null) {
       undoQueue(dragMode.finish());
       dragMode = null;
+   } else if (selectionRectangle.rect) {
+      Renderer.svgUI.removeChild(selectionRectangle.rect);
+      selectionRectangle.rect = null;
    }
 }
 
@@ -808,7 +839,7 @@ function canvasHandleMouseDown(ev) {
       } else {
          //e.stopImmediatePropagation();
          // ask view to select current hilite if any.
-         selectStart();
+         selectStart(UI.getClientPosition(ev));
       }
    }
 };
@@ -891,7 +922,7 @@ function canvasHandleMouseMove(e) {
       //geometryStatus("mouse position: " + ptNear[0] + ", " + ptNear[1] + "," + ptNear[2] + ", <br />"+ ptFar[0] + ", " + ptFar[1] + ", " + ptFar[2]);
       rayPick(ray);
       // selectDrag if left button mousedown
-      selectDrag();
+      selectDrag(UI.getClientPosition(e));
    }
 };
 
