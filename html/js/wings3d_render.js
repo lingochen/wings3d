@@ -393,6 +393,7 @@ function render(gl, drawWorldFn) {
 export {
    needToRedraw,
    render,
+   worldToScreenPoint,
    svgUI,
 };
 

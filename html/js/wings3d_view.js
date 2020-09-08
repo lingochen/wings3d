@@ -756,6 +756,10 @@ function rayPick(ray) {
    lastPick = pick;
 };
 
+function selectionFrustum(start, end) {
+
+};
+
 let dragMode = null;
 let selectionRectangle = {rect: null, start: [0, 0], end: [0, 0]};
 function selectStart(mousePos) {
@@ -770,10 +774,11 @@ function selectStart(mousePos) {
       selectionRectangle.start = selectionRectangle.end = mousePos;
       selectionRectangle.rect.setAttributeNS(null, 'x', mousePos.x);
       selectionRectangle.rect.setAttributeNS(null, 'y', mousePos.y);
-      selectionRectangle.rect.setAttributeNS(null, 'fill', 'none');
-      selectionRectangle.rect.setAttributeNS(null, 'stroke', 'black');
-      selectionRectangle.rect.setAttributeNS(null, 'stroke-width', 4);
+      selectionRectangle.rect.setAttributeNS(null, 'fill', 'blue');
+      selectionRectangle.rect.setAttributeNS(null, 'fill-opacity', 0.50);
       Renderer.svgUI.appendChild(selectionRectangle.rect);
+      // force to faceMode if in multiMode.
+      mode.current.toggleMulti(); 
    }
 };
 
@@ -801,8 +806,6 @@ function selectDrag(mousePos) {
       selectionRectangle.rect.setAttributeNS(null, 'y', y);
       selectionRectangle.rect.setAttributeNS(null, 'width', width);
       selectionRectangle.rect.setAttributeNS(null, 'height', height);
-      // now, project 4 slab 
-
    }
 }
 
@@ -811,6 +814,11 @@ function selectFinish() {
       undoQueue(dragMode.finish());
       dragMode = null;
    } else if (selectionRectangle.rect) {
+      // select everything inside the selection rectangle
+      
+      //undoQueue( mode.current.selectBox(selectionBox(selectionRectangle.start, selectionRectangle.end)) );
+      
+      // cleanup
       Renderer.svgUI.removeChild(selectionRectangle.rect);
       selectionRectangle.rect = null;
    }
@@ -897,27 +905,7 @@ function canvasHandleMouseMove(e) {
       handler.mousemove.handleMouseMove(e, Camera.view);
       Renderer.needToRedraw();
    } else {
-      // handle pick selection
-      var viewport = gl.getViewport();
-      // needs to get the real offset by walking over all the parent.
-      const offset = { left: e.currentTarget.offsetLeft, top: e.currentTarget.offsetTop};
-      for (let reference = e.currentTarget.offsetParent; reference; reference = reference.offsetParet) {
-         offset.left += reference.offsetLeft;
-         offset.top += reference.offsetTop;
-      }
-
-      var winx = e.pageX - offset.left;
-      var winy = (viewport[3]+1) - (e.pageY - offset.top);   // y is upside-down
-      // yes, sometimes mouse coordinate is outside of the viewport. firefox is larger than width, height.
-      if (winx < 0) { winx = 0; }
-      if (winx > viewport[2]) { winx = viewport[2];}
-      if (winy < 0) { winy = 0; }
-      if (winy > viewport[3]) { winy = viewport[3];}
-
-      var mat = loadMatrices(false);
-      var ptNear = gl.unProject(winx, winy, 0.0, mat.modelView, mat.projection);
-      var ptFar = gl.unProject(winx, winy, 1.0, mat.modelView, mat.projection);
-
+      const [ptNear, ptFar] = screenPointToWorld( UI.getClientPosition(e) );
       vec3.sub(ptFar, ptFar, ptNear);
       vec3.normalize(ptFar, ptFar);
       const ray = new Ray(ptNear, ptFar);
@@ -1017,6 +1005,68 @@ function canvasHandleKeyDown(evt) {
 //
 // world rendering and utility functions
 //
+/**
+ * normal-constant form of Plane Equation
+ */
+function computePlane(a, b, c) {
+   const normal = [0, 0, 0];
+   const temp = [0, 0, 0];
+   vec3.sub(normal, c, b); 
+   vec3.sub(temp, a, b);
+   vec3.cross(normal, normal, temp);
+   vec3.normalize(normal);
+
+   return {normal: normal, d: -vec3.dot(b, normal)};
+}
+function screenPointToWorld(pt) {
+   // handle pick selection
+   var viewport = gl.getViewport();
+
+   let winx = pt.x;
+   let winy = viewport[3] - pt.y;   // y is upside-down
+   // yes, sometimes mouse coordinate is outside of the viewport. firefox is larger than width, height.
+   if (winx < 0) { winx = 0; }
+   if (winx > viewport[2]) { winx = viewport[2];}
+   if (winy < 0) { winy = 0; }
+   if (winy > viewport[3]) { winy = viewport[3];}
+   
+   const mat = loadMatrices(false);
+   return [gl.unProject(winx, winy, 0.0, mat.modelView, mat.projection),
+            gl.unProject(winx, winy, 1.0, mat.modelView, mat.projection)];
+};
+
+function selectionBox(start, end) {
+   // sort first
+   let left = start.x;
+   let right = end.x;
+   if (start.x < end.x) {
+      left = end.x;
+      right = start.x;
+   }
+   let top = start.y;           // y-axis flip
+   let bottom = end.y;
+   if (start.y < end.y) {
+      top = start.y;
+      bottom = end.y;
+   }
+
+   // now get the 8 unProject.
+   const [leftBottomNear, leftBottomFar] = screenPointToWorld( {x: left, y: bottom} );
+   const [leftTopNear, leftTopFar] = screenPointToWorld( {x: left, y: top} );
+   const [rightTopNear, rightTopFar] = screenPointToWorld( {x: right, y: top} );
+   const [rightBottomNear, rightBottomFar] = screenPointToWorld( {x: right, y: bottom} );
+
+   // now compute the box's frustum.
+   return [computePlane(leftTopNear, leftBottomNear, leftBottomFar),       // left
+            computePlane(rightTopFar, rightTopNear, rightBottomNear),      // right
+            computePlane(rightTopNear, leftTopNear, leftTopFar),           // top
+            computePlane(leftBottomFar, leftBottomNear,rightBottomNear),   // bottom
+            computePlane(rightBottomNear, leftBottomNear, leftTopNear),    // near
+            computePlane(rightBottomFar, rightTopFar, leftTopFar)          // far
+         ];
+};
+
+
 function loadMatrices(includeLights) {
    let proj = projection(mat4.create()); // passed identity matrix.
    let tmm = modelView(includeLights);
