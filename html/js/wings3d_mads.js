@@ -336,12 +336,16 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       return this.snapshotSelected(PreviewCage.prototype['snapshotSelection' + this.modeName()]);
    }
 
-   _doSelection(doName, forceAll=false) {
-      doName = '_select' + this.modeName() + doName;
+   _doSelection(func, forceAll=false) {
+      const doName = '_select' + this.modeName() + func.name;
+      const params = func.params || [];
       const snapshots = [];
       for (let cage of this.eachCage()) {    // this is snapshot all
          if (forceAll || cage.hasSelection()) {
-            snapshots.push( {preview: cage, snapshot: cage[doName]()} );
+            const snapshot = cage[doName](...params);
+            if (snapshot) {
+               snapshots.push( {preview: cage, snapshot: snapshot} );
+            }
          }
       }
       if (snapshots.length > 0) {
@@ -350,28 +354,32 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       return false;  // null? 
    }
 
+   frustumSelection(frustum) {
+      return this._doSelection({name: 'Frustum', params: [frustum]}, true);
+   }
+
    similarSelection() {
-      return this._doSelection('Similar');
+      return this._doSelection({name:'Similar'});
    }
 
    adjacentSelection() {
-      return this._doSelection('Adjacent');
+      return this._doSelection({name:'Adjacent'});
    }
 
    inverseSelection() {
-      return this._doSelection('Inverse', true);
+      return this._doSelection({name:'Inverse'}, true);
    }
 
    allSelection() {
-      return this._doSelection('All', true);
+      return this._doSelection({name:'All'}, true);
    }
 
    lessSelection() {
-      return this._doSelection('Less');
+      return this._doSelection({name:'Less'});
    }
 
    moreSelection() {
-      return this._doSelection('More');
+      return this._doSelection({name:'More'});
    }
 
    resetSelection() {

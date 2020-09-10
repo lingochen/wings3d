@@ -20,6 +20,7 @@ import {MultiMadsor} from './wings3d_multimads.js';
 import {PreviewCage, PreviewGroup} from './wings3d_model.js';
 import {DraftBench} from './wings3d_draftbench.js';
 import {Ray} from './wings3d_boundingvolume.js';
+import {Plane, Frustum} from './wings3d_geomutil.js';
 import * as Hotkey from './wings3d_hotkey.js';
 import * as Util from './wings3d_util.js';
 import * as TreeView from './wings3d_uitree.js';
@@ -778,7 +779,7 @@ function selectStart(mousePos) {
       selectionRectangle.rect.setAttributeNS(null, 'fill-opacity', 0.50);
       Renderer.svgUI.appendChild(selectionRectangle.rect);
       // force to faceMode if in multiMode.
-      mode.current.toggleMulti(); 
+      mode.current.toggleMulti({face: true}); 
    }
 };
 
@@ -791,6 +792,7 @@ function selectDrag(mousePos) {
    } else if (selectionRectangle.rect) { // update selection rectangle.
       let x = selectionRectangle.start.x;
       selectionRectangle.end = mousePos;
+      // reverse if negative width, height.
       let width = mousePos.x - x;
       if (width < 0) {
          width = -width;
@@ -802,6 +804,7 @@ function selectDrag(mousePos) {
          height = -height;
          y = mousePos.y;
       }
+      // setup svg rectangle.
       selectionRectangle.rect.setAttributeNS(null, 'x', x);
       selectionRectangle.rect.setAttributeNS(null, 'y', y);
       selectionRectangle.rect.setAttributeNS(null, 'width', width);
@@ -814,10 +817,14 @@ function selectFinish() {
       undoQueue(dragMode.finish());
       dragMode = null;
    } else if (selectionRectangle.rect) {
-      // select everything inside the selection rectangle
-      
-      //undoQueue( mode.current.selectBox(selectionBox(selectionRectangle.start, selectionRectangle.end)) );
-      
+      if (selectionRectangle.start.x !== selectionRectangle.end.x &&
+           selectionRectangle.start.y !== selectionRectangle.end.y) {   // won't do zero width, or zero height.
+         // select everything inside the selection rectangle
+         const undo = new EditCommandSimple('frustumSelection', selectionBox(selectionRectangle.start, selectionRectangle.end));
+         if (undo.doIt(mode.current)) {
+            undoQueue( undo );
+         }
+      }
       // cleanup
       Renderer.svgUI.removeChild(selectionRectangle.rect);
       selectionRectangle.rect = null;
@@ -1005,19 +1012,6 @@ function canvasHandleKeyDown(evt) {
 //
 // world rendering and utility functions
 //
-/**
- * normal-constant form of Plane Equation
- */
-function computePlane(a, b, c) {
-   const normal = [0, 0, 0];
-   const temp = [0, 0, 0];
-   vec3.sub(normal, c, b); 
-   vec3.sub(temp, a, b);
-   vec3.cross(normal, normal, temp);
-   vec3.normalize(normal);
-
-   return {normal: normal, d: -vec3.dot(b, normal)};
-}
 function screenPointToWorld(pt) {
    // handle pick selection
    var viewport = gl.getViewport();
@@ -1039,15 +1033,15 @@ function selectionBox(start, end) {
    // sort first
    let left = start.x;
    let right = end.x;
-   if (start.x < end.x) {
+   if (start.x > end.x) {
       left = end.x;
       right = start.x;
    }
    let top = start.y;           // y-axis flip
    let bottom = end.y;
-   if (start.y < end.y) {
-      top = start.y;
-      bottom = end.y;
+   if (start.y > end.y) {
+      top = end.y;
+      bottom = start.y;
    }
 
    // now get the 8 unProject.
@@ -1056,14 +1050,14 @@ function selectionBox(start, end) {
    const [rightTopNear, rightTopFar] = screenPointToWorld( {x: right, y: top} );
    const [rightBottomNear, rightBottomFar] = screenPointToWorld( {x: right, y: bottom} );
 
-   // now compute the box's frustum.
-   return [computePlane(leftTopNear, leftBottomNear, leftBottomFar),       // left
-            computePlane(rightTopFar, rightTopNear, rightBottomNear),      // right
-            computePlane(rightTopNear, leftTopNear, leftTopFar),           // top
-            computePlane(leftBottomFar, leftBottomNear,rightBottomNear),   // bottom
-            computePlane(rightBottomNear, leftBottomNear, leftTopNear),    // near
-            computePlane(rightBottomFar, rightTopFar, leftTopFar)          // far
-         ];
+   // now compute frustum
+   return new Frustum(Plane.fromPoints(leftTopNear, leftBottomNear, leftBottomFar),       // left
+                     Plane.fromPoints(rightBottomNear, rightTopNear, rightTopFar),      // right
+                     Plane.fromPoints(rightTopNear, leftTopNear, leftTopFar),           // top
+                     Plane.fromPoints(leftBottomNear,rightBottomNear, rightBottomFar),   // bottom
+                     Plane.fromPoints(rightBottomNear, leftBottomNear, leftTopNear),    // near
+                     Plane.fromPoints(rightBottomFar, rightTopFar, leftTopFar)          // far
+                     );
 };
 
 

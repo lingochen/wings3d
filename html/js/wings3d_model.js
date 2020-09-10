@@ -1057,6 +1057,26 @@ PreviewCage.prototype._resetSelectVertex = function() {
    return snapshot;
 };
 
+
+PreviewCage.prototype._selectVertexFrustum = function(frustum) {
+   const size = this.selectedSet.size;
+   const snapshot = this.snapshotSelectionVertex();
+
+   // brute-force. loop through all vertex,
+   for (const vertex of this.geometry.vertices) {
+      if (!this.selectedSet.has(vertex)) { 
+         if (frustum.containPoint(vertex)) {
+            this.selectVertex(vertex);
+         }
+      }
+   }
+   
+   if (size !== this.selectedSet.size) {
+      return snapshot;
+   }
+   return null;
+};
+
 PreviewCage.prototype._selectVertexMore = function() {
    const snapshot = this.snapshotSelectionVertex();
 
