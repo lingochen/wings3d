@@ -87,13 +87,18 @@ class EditSelectHandler extends MoveableCommand {
 }
 
 class EditCommandSimple extends EditCommand {
-   constructor(command) {
+   constructor(command, ...theArgs) {
       super();
       this.commandName = command;
+      this.params = theArgs;
    }
 
    doIt(currentMadsor) {
-      this.result = currentMadsor[this.commandName]();
+      if (this.params) {
+         this.result = currentMadsor[this.commandName]( ...this.params );
+      } else {
+         this.result = currentMadsor[this.commandName]();
+      }
       return (this.result !== false);
    }
 
