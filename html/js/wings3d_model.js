@@ -1335,6 +1335,30 @@ PreviewCage.prototype._resetSelectEdge = function() {
    return snapshot;
 };
 
+/**
+ * temp non-optimize solution.
+ * 
+ */
+PreviewCage.prototype._selectEdgeFrustum = function(frustum) {
+   const size = this.selectedSet;
+   const snapshot = this.snapshotSelectionEdge();
+
+   // brute-force. loop through all wEdge
+   for (const wedge of this.geometry.edges) {
+      if (!this.selectedSet.has(wedge)) { 
+         if (frustum.intersectHEdge(wedge.left)) {
+            this.selectEdge(wedge.left);
+         }
+      }
+   }
+   
+   if (size !== this.selectedSet.size) {
+      return snapshot;
+   }
+   return null;
+};
+
+
 PreviewCage.prototype._selectEdgeMore = function() {
    const snapshot = this.snapshotSelectionEdge();
 
