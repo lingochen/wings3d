@@ -1346,7 +1346,7 @@ PreviewCage.prototype._selectEdgeFrustum = function(frustum) {
    // brute-force. loop through all wEdge
    for (const wedge of this.geometry.edges) {
       if (!this.selectedSet.has(wedge)) { 
-         if (frustum.intersectHEdge(wedge.left)) {
+         if (frustum.overlapHEdge(wedge.left)) {
             this.selectEdge(wedge.left);
          }
       }
