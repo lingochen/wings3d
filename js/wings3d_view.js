@@ -757,10 +757,6 @@ function rayPick(ray) {
    lastPick = pick;
 };
 
-function selectionFrustum(start, end) {
-
-};
-
 let dragMode = null;
 let selectionRectangle = {rect: null, start: [0, 0], end: [0, 0]};
 function selectStart(mousePos) {
