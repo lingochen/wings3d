@@ -2,6 +2,7 @@
  * utility for 3d geometry computation.
  * 
  */
+const kEPSILON = 0.000001;
 
 class Plane {
    constructor(plane, pt) {   // plane = normal + d, [nx, ny, nz, d]
@@ -25,6 +26,23 @@ class Plane {
       return vec3.dot(pt, this.plane) + this.plane[3];
    }
 
+   /**
+    * https://stackoverflow.com/questions/5666222/3d-line-plane-intersection
+    * ZGorlock's version
+    */
+   intersectLine(out, a, b) {
+      vec3.sub(out, a, b);
+      vec3.normalize(out, out);
+      const dot = vec3.dot(this.plane, out);
+      if (Math.abs(dot) > kEPSILON) {  // is it not parallel
+         const t = (-this.plane[3] - vec3.dot(this.plane, a)) / dot;
+         vec3.scale(out, out, t);
+         vec3.add(out, a, out);
+         return t;
+      } else {
+         return 0;
+      }
+   }
 };
 
 class Frustum {
@@ -45,34 +63,31 @@ class Frustum {
       return true;
    }
 
-   intersectSphere(sphere) {
+   overlapSphere(sphere) {
 
    }
 
 
-   intersectHEdge(hEdge) {
-      const a = hEdge.origin;
-      const b = hEdge.destination();
+   overlapHEdge(hEdge) {
+      const c = [0, 0, 0];
+      let a = hEdge.origin;
+      let b = hEdge.destination();
       for (let i = 0; i < 6; ++i) {
          const distA = this.planes[i].distanceToPoint(a);
          const distB = this.planes[i].distanceToPoint(b);
          if (distA < 0 && distB < 0) {  // completely outside
             return false;
-         }
-         // should we try to clipping and check line direction afterward for edge cases?
-         /*
-         if (distA > 0 && distB > 0) {
+         } else if (distA > 0 && distB > 0) {
             continue;
-         }
-         let c = this.plane[i].intersectLine(a, b);
-         if (distA < 0) {
-            a = c;
          } else {
-            b = c;
+            this.planes[i].intersectLine(c, a, b);
+            if (distA < 0) {
+               a = c;
+            } else {
+               b = c;
+            }
          }
-         */
       }
-      // we might have false positives
       return true;
    }
 
