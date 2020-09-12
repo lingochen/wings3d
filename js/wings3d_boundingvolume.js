@@ -4,7 +4,7 @@
 */
 
 
-import * as Util from './wings3d_util.js';
+import * as Geom from './wings3d_geomutil.js';
 
 
 
@@ -42,8 +42,7 @@ Object.defineProperties(BoundingSphere.prototype, {
 }*/
 
 BoundingSphere.prototype.isIntersect = function(ray) {
-
-   return Util.intersectRaySphere(ray, this);
+   return Geom.intersectRaySphere(ray, this);
 };
 
 BoundingSphere.prototype.setSphere = function(sphere) {
@@ -349,48 +348,7 @@ LooseOctree.kLOOSENESS = 1.5;    // cannot change. because isInside depend on th
 
 
 
-class Plane {
-   constructor(normal, pt) {
-      this.normal = vec3.clone(normal);
-      vec3.normalize(this.normal, this.normal);    // make sure.
-      this.pt = vec3.clone(pt);
-      this.distance = vec3.dot(this.normal, this.pt); // dot(n, pt) = k form.
-   }
-
-   closestPoint(out, point) { // projection to plane
-      Util.closestPointToPlane(out, point, this);
-   }
-
-   intersectAABB(box) {
-      return Util.intersectPlaneAABB(this, box);
-   }
-
-   intersectSphere(sphere) {
-      return Util.intersectPlaneSphere(this, sphere);
-   }
-}
-
-
-class Ray {
-   constructor(origin, dir) {
-      this.origin = origin;
-      this.direction = dir;
-      this.invDir = vec3.fromValues(1/dir[0], 1/dir[1], 1/dir[2]);   //1/0 still work for our purpose.
-   }
-
-   intersectSphere(sphere) {
-      return Util.intersectRaySphere(this, sphere);
-   }
-
-   intersectAAExtent(extent) {
-      return Util.intersectRayAAExtent(this, extent);
-   }
-}
-
-
 export {
    BoundingSphere,
-   LooseOctree,
-   Plane,
-   Ray
+   LooseOctree
 }

@@ -10,7 +10,7 @@ import * as View from './wings3d_view.js';
 import * as UI from './wings3d_ui.js';
 import * as Util from './wings3d_util.js';
 import {action} from './wings3d.js';
-import { Plane } from './wings3d_boundingvolume.js';
+import { Plane } from './wings3d_geomutil.js';
 import { HalfEdge } from './wings3d_wingededge.js';
 
 
@@ -880,7 +880,7 @@ class PlaneCutHandler extends EditSelectHandler {
 
    hilite(hilite, _currentCage) {
       if (hilite.plane) {
-         this.plane = new Plane(this.planeNormal, hilite.plane.center);
+         this.plane = Plane.fromNormalPoint(this.planeNormal, hilite.plane.center);
          if (this.madsor.planeCuttable(this.plane)) {
             hilite.plane.hilite = true;
             return true;
