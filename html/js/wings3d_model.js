@@ -945,6 +945,32 @@ PreviewCage.prototype._resetSelectBody = function() {
    return oldSet;
 };
 
+/**
+ * temp non-optimize solution.
+ * 
+ */
+PreviewCage.prototype._selectBodyFrustum = function(frustum) {
+   if (this.selectedSet.size === 0) {
+      const snapshot = this.snapshotSelectionBody();
+
+      // brute-force. loop through all faces. we really should go through bvh first
+      for (const polygon of this.geometry.faces) {
+         if (!this.selectedSet.has(polygon)) {
+            let result = frustum.overlapSphere(polygon);
+            if (result > 0) { // totally inside
+               this.selectBody();
+               return snapshot;
+            } else if ( (result === 0) && frustum.overlapPolygon(polygon)) {  // partial overlap, check polygon directly.
+               this.selectBody();
+               return snapshot;
+            }
+         }
+      }
+   }
+   
+   return null;
+};
+
 PreviewCage.prototype._selectBodyLess = function() {
    const snapshot = this.snapshotSelectionBody();
    if (this.hasSelection()) {
@@ -1340,7 +1366,7 @@ PreviewCage.prototype._resetSelectEdge = function() {
  * 
  */
 PreviewCage.prototype._selectEdgeFrustum = function(frustum) {
-   const size = this.selectedSet;
+   const size = this.selectedSet.size;
    const snapshot = this.snapshotSelectionEdge();
 
    // brute-force. loop through all wEdge
@@ -1588,7 +1614,7 @@ PreviewCage.prototype._resetSelectFace = function() {
  * 
  */
 PreviewCage.prototype._selectFaceFrustum = function(frustum) {
-   const size = this.selectedSet;
+   const size = this.selectedSet.size;
    const snapshot = this.snapshotSelectionFace();
 
    // brute-force. loop through all faces. we really should go through bvh first
