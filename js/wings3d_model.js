@@ -1583,6 +1583,32 @@ PreviewCage.prototype._resetSelectFace = function() {
    return snapshot;
 }
 
+/**
+ * temp non-optimize solution.
+ * 
+ */
+PreviewCage.prototype._selectFaceFrustum = function(frustum) {
+   const size = this.selectedSet;
+   const snapshot = this.snapshotSelectionFace();
+
+   // brute-force. loop through all faces. we really should go through bvh first
+   for (const polygon of this.geometry.faces) {
+      if (!this.selectedSet.has(polygon)) {
+         let result = frustum.overlapSphere(polygon);
+         if (result > 0) { // totally inside
+            this.selectFace(polygon);
+         } else if ( (result === 0) && frustum.overlapPolygon(polygon)) {  // partial overlap, check polygon directly.
+            this.selectFace(polygon);
+         }
+      }
+   }
+   
+   if (size !== this.selectedSet.size) {
+      return snapshot;
+   }
+   return null;
+};
+
 PreviewCage.prototype._selectFaceMore = function() {
    const snapshot = this.snapshotSelectionFace();
    // seleceted selectedFace's vertex's all faces.

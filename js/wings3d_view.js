@@ -1014,7 +1014,7 @@ function screenPointToWorld(pt) {
 
    let winx = pt.x;
    let winy = viewport[3] - pt.y;   // y is upside-down
-   // yes, sometimes mouse coordinate is outside of the viewport. firefox is larger than width, height.
+   // yes, sometimes mouse coordinate is outside of the viewport. firefox return values larger than width, height.
    if (winx < 0) { winx = 0; }
    if (winx > viewport[2]) { winx = viewport[2];}
    if (winy < 0) { winy = 0; }
