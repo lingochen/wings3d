@@ -63,13 +63,10 @@ class Frustum {
       return true;
    }
 
-   overlapSphere(sphere) {
-
-   }
-
-
+   /**
+    * do line clipping to determine if line segment overlap frustum.
+    */
    overlapHEdge(hEdge) {
-      const c = [0, 0, 0];
       let a = hEdge.origin;
       let b = hEdge.destination();
       for (let i = 0; i < 6; ++i) {
@@ -80,6 +77,7 @@ class Frustum {
          } else if (distA > 0 && distB > 0) {
             continue;
          } else {
+            const c = [0, 0, 0];
             this.planes[i].intersectLine(c, a, b);
             if (distA < 0) {
                a = c;
@@ -89,6 +87,60 @@ class Frustum {
          }
       }
       return true;
+   }
+
+
+   /**
+    * clip polygon to determine if overlap. use sutherland-hodgeman
+    */
+   overlapPolygon(polygon) {
+      let outputList = [];
+      for (let hEdge of polygon.hEdges()) {
+         outputList.push( hEdge.origin );
+      }
+
+      for (const clipPlane of this.planes) { // iterate through frustum
+         let inputList = outputList;
+         outputList = [];
+
+         for (let i = 0; i < inputList.length; ++i) { // iterate through the resulting polygon
+            let currentPt = inputList[i];
+            let prevPt = inputList[(i+inputList.length-1) % inputList.length];
+
+            if (clipPlane.distanceToPoint(currentPt) > 0) {       // current Inside plane
+               if (clipPlane.distanceToPoint(prevPt) < 0) {    // prev Outside plane
+                  const intersect = [0, 0, 0];
+                  clipPlane.intersectLine(intersect, prevPt, currentPt);
+                  outputList.push(intersect);
+               }
+               outputList.push(currentPt);             
+            } else if (clipPlane.distanceToPoint(prevPt) > 0) { // current Outside, prev Inside
+               const intersect = [0, 0, 0];
+               clipPlane.intersectLine(intersect, prevPt, currentPt);
+               outputList.push(intersect);
+            }
+         }
+      }
+      
+      return (outputList.length > 0);
+   }
+
+   /**
+    * some false positives.
+    * 
+    * return (-1, totally outside), (0, partial overlap possible), (1, totally inside)
+    */
+   overlapSphere(sphere) {
+      let result = 1;
+      for (let i = 0; i < 6; i++) {
+         let distance = this.planes[i].distanceToPoint(sphere.center);
+         if (distance < -sphere.radius) {
+            return -1;
+         } else if (distance < sphere.radius) {
+            result = 0;
+         }
+      }
+      return result;
    }
 
 };
