@@ -39,6 +39,10 @@ class MultiMadsor extends Madsor {
       } // not body possible.
    }
 
+   _doSelection() {
+      return false;
+   }
+
    toggleFunc(toMadsor) {
       let redoFn;
       let snapshots;
