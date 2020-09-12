@@ -9,13 +9,14 @@
 *  Add PreviewGroup. simple grouping without transform.
 */
 "use strict";
-import {LooseOctree, Plane} from './wings3d_boundingvolume.js';
+import {LooseOctree} from './wings3d_boundingvolume.js';
 import {WingedTopology, Vertex, HalfEdge} from './wings3d_wingededge.js';
 import {Material} from './wings3d_material.js';
 import * as View from './wings3d_view.js';
 import * as Wings3D from './wings3d.js';
 import {EditCommand} from './wings3d_undo.js';
 import * as Util from './wings3d_util.js';
+import * as Geom from './wings3d_geomutil.js';
 import {i18n} from './wings3d_i18n.js';
 //import { ByteBuffer } from './wings3d_gl.js';
 
@@ -376,7 +377,7 @@ PreviewCage.prototype.rayPick = function(ray) {
    for (let sphere of this.bvh.root.intersectExtent(ray)) {
       sphere.eachEdge( function(edge) {
          // now check the triangle is ok?
-         var t = Util.intersectTriangle(ray, [sphere.center, edge.origin, edge.destination()]);
+         var t = Geom.intersectTriangle(ray, [sphere.center, edge.origin, edge.destination()]);
          if ((t != 0.0) && (t < hitT)) {
             // intersection, check for smallest t, closest intersection
             hitT = t;
@@ -2226,7 +2227,7 @@ PreviewCage.prototype._putOn = function(target) {
    vec3.negate(normal, normal);
 
    const rotAxis = mat4.create();
-   Util.rotationFromToVec3(rotAxis, normal, target.normal);
+   Geom.rotationFromToVec3(rotAxis, normal, target.normal);
    
    const transform = mat4.create();
    mat4.fromTranslation(transform, target.center);
@@ -2292,7 +2293,7 @@ PreviewCage.prototype.flattenEdge = function(axis) {
       }
       vec3.scale(center, center, 1/vertices.size);
       // now project all vertex to (axis, center) plane.
-      Util.projectVec3(vertices, axis, center);
+      Geom.projectVec3(vertices, axis, center);
    }
 
    this._updatePosition(ret.faces);
@@ -2331,7 +2332,7 @@ PreviewCage.prototype.flattenFace = function(planeNormal) {
       if (!planeNormal) {
          vec3.normalize(normal, normal);
       }
-      Util.projectVec3(vertices, normal, center);
+      Geom.projectVec3(vertices, normal, center);
    }
 
    this._updatePosition(ret.faces);
@@ -2350,7 +2351,7 @@ PreviewCage.prototype.flattenVertex = function(planeNormal) {
          //this.geometry.addAffectedVertexFace(vertex);
       }
       vec3.scale(center, center, 1/selectedVertices.length);
-      Util.projectVec3(selectedVertices, planeNormal, center);
+      Geom.projectVec3(selectedVertices, planeNormal, center);
 
       this._updatePosition(ret.faces);
       return ret;
@@ -3659,7 +3660,7 @@ PreviewCage.prototype.mirrorFace = function() {
          protectVertex.add(hEdge.origin);
          protectWEdge.add(hEdge.wingedEdge);
       }
-      Util.reflectionMat4(mirrorMat, targetFace.normal, targetFace.halfEdge.origin);
+      Geom.reflectionMat4(mirrorMat, targetFace.normal, targetFace.halfEdge.origin);
    };
    const addVertex = (vertex) => {
       let pt = uniqueVertex.get(vertex);
@@ -3776,7 +3777,7 @@ PreviewCage.prototype.cornerEdge = function() {
    }
    // compute direction, and copy position.
    let direction = new Float32Array(dissolveEdges.length*3);
-   const dir = new Util.Vec3View(direction);
+   const dir = new Geom.Vec3View(direction);
    for (let connect of dissolveEdges) {
       vec3.sub(dir, connect.origin, connect.destination());
       vec3.normalize(dir, dir);
@@ -3825,7 +3826,7 @@ PreviewCage.prototype.slideEdge = function() {
          const prev = hEdge.prev();
          const next = hEdge.pair.next;
          // compute which quadrant, pt(normal) is normalized.
-         Util.computeEdgeNormal(pt, next, prev.pair);
+         Geom.computeEdgeNormal(pt, next, prev.pair);
          let max;
          let index;
          for (let i = 0; i < 6; ++i) {
@@ -3890,7 +3891,7 @@ PreviewCage.prototype.planeCuttableFace = function(plane) {
       if (this.selectedSet.has(spherePolygon)) {
          // now, check hEdge against plane.
          for (let hEdge of spherePolygon.hEdges()) {
-            const t = Util.intersectPlaneHEdge(null, plane, hEdge);
+            const t = Geom.intersectPlaneHEdge(null, plane, hEdge);
             if ((t>0) && (t<1)) {   // intersection at begin or end don't count
                return true;
             }
@@ -3928,7 +3929,7 @@ PreviewCage.prototype._planeCutFace = function(cutPlanes) {
          }
       }
       for (let hEdge of cuthEdgeList) {   // only iterate once for every potentail edges
-         const t = Util.intersectPlaneHEdge(pt, plane, hEdge);
+         const t = Geom.intersectPlaneHEdge(pt, plane, hEdge);
          if (t == 0) {  // select origin
             selectedVertex.add( hEdge.origin );
          } else if ( (t>0) && (t<1)) { // spliEdge, and select
@@ -3967,7 +3968,7 @@ PreviewCage.prototype.sliceBody = function(planeNormal, numberOfPart) {
    const numberOfCuts = numberOfPart-1;
    for (let i = 1; i <= numberOfCuts; ++i) {
       vec3.lerp(center, min, max, i/(numberOfCuts+1));
-      cutPlanes.push( new Plane(planeNormal, center) );
+      cutPlanes.push( Geom.Plane.fromNormalPoint(planeNormal, center) );
    }
 
    // iterate through the cut

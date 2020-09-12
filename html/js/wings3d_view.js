@@ -19,8 +19,7 @@ import {BodyMadsor, DeleteBodyCommand, DuplicateBodyCommand} from './wings3d_bod
 import {MultiMadsor} from './wings3d_multimads.js';
 import {PreviewCage, PreviewGroup} from './wings3d_model.js';
 import {DraftBench} from './wings3d_draftbench.js';
-import {Ray} from './wings3d_boundingvolume.js';
-import {Plane, Frustum} from './wings3d_geomutil.js';
+import {Plane, Frustum, Ray} from './wings3d_geomutil.js';
 import * as Hotkey from './wings3d_hotkey.js';
 import * as Util from './wings3d_util.js';
 import * as TreeView from './wings3d_uitree.js';
