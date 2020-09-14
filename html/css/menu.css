@@ -117,3 +117,9 @@ li.dropside::before {
 li.dropside.showBefore::before {
   display: block;
 }
+ul.popup.menu > li.dropside.slideUp {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 100%;
+ }
