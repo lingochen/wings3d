@@ -61,15 +61,15 @@ body {
   position: relative;
   overflow: hidden;
 }
-#glcanvas {
+#glcanvas, #svgUI {
   position: absolute;
-  left: 0px;
-  top: 0px;
+/*  left: 0px;
+  top: 0px; */
   width: 100%;
   height: 100%;
-  line-height: 0px;
+/*  line-height: 0px;*/
 }
-.workbench #text {
+.workbench #svgUI {
   z-index: 10;
   pointer-events: none;
 }
@@ -228,6 +228,12 @@ li.dropside::before {
 li.dropside.showBefore::before {
   display: block;
 }
+ul.popup.menu > li.dropside.slideUp {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 100%;
+ }
 /* slider, copy from http://danielstern.ca/range.css */
 .slider {
   -webkit-appearance: none;
