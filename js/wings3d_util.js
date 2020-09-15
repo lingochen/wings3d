@@ -1,5 +1,8 @@
-
-
+/**
+ * 
+ * 
+ */
+const {vec3} = glMatrix;
 
 
 function getAxisOrder(extent) {
