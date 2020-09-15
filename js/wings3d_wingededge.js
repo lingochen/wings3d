@@ -34,6 +34,7 @@ import {BoundingSphere} from './wings3d_boundingvolume.js';
 import {triangulateNaive, triangulate} from './wings3d_triangulate.js';
 import {Material} from './wings3d_material.js';
 import { Vec3View } from "./wings3d_util.js";
+const {vec3} = glMatrix;
 
 
 const WingedEdge = function(orgVert, toVert, index) {

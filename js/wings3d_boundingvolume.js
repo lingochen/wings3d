@@ -5,7 +5,7 @@
 
 
 import * as Geom from './wings3d_geomutil.js';
-
+const {vec3} = glMatrix;
 
 
 const BoundingSphere = function() {

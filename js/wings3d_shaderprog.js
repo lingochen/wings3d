@@ -100,7 +100,7 @@ vertex: (index2TexCoord, materialIndex) =>
                if (transparency == 0.0) { // whole triangle is transparent.
                   return;
                }
-               stateColor = color;       // current Material color
+               stateColor = vec4(1.0, 1.0, 1.0, 1.0);//color;       // current Material color
             } else {
                for (int i = 1; i < 4; i++) {
                   if (i == state) {
@@ -108,7 +108,7 @@ vertex: (index2TexCoord, materialIndex) =>
                      break;
                   }
                }
-               color = mix(stateColor, color, 0.5);
+               //color = mix(stateColor, color, 0.5);
             }
             float channel = texture2D(materialColor, index2TexCoord(matIndex+4.0, materialColorHeight)).x;
             baseColorUV = texture2D(attributeTexCoord, index2TexCoord(a_AttributeIndex.z*4.0+channel, attributeTexCoordHeight)).ra;
@@ -132,14 +132,14 @@ fragment:
 
 
    void main(void) {
-      vec2 oddEven = floor( fract(gl_FragCoord.xy * 0.5) + 0.5 ); // floor( value + 0.5 ) == round( value );
-      float result = oddEven.x + oddEven.y;
+      //vec2 oddEven = floor( fract(gl_FragCoord.xy * 0.5) + 0.5 ); // floor( value + 0.5 ) == round( value );
+      //float result = oddEven.x + oddEven.y;
 
-      if (result == 1.0) {
-         gl_FragColor = color * texture2D(baseColorTexture, baseColorUV);
-      } else {
-         gl_FragColor = stateColor * texture2D(baseColorTexture, baseColorUV);
-      }
+      //if (result == 1.0) {
+         gl_FragColor = stateColor * color * texture2D(baseColorTexture, baseColorUV);
+      //} else {
+         //gl_FragColor = stateColor * texture2D(baseColorTexture, baseColorUV);
+      //}
    }
 ` 
 };

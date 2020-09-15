@@ -19,7 +19,7 @@ import * as Util from './wings3d_util.js';
 import {BoundingSphere} from './wings3d_boundingvolume.js';
 import {MeshAllocator, WingedTopology, WingedEdge, HalfEdge, Polygon, Vertex, Attribute} from './wings3d_wingededge.js';
 import {Material} from './wings3d_material.js';
-
+const {vec3, quat, mat4} = glMatrix;
 
 
 

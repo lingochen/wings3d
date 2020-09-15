@@ -10,6 +10,7 @@ import * as Camera from './wings3d_camera.js';
 import {onReady, GROUND_GRID_SIZE} from './wings3d.js';
 import * as ShaderProg from './wings3d_shaderprog.js';
 import * as Util from './wings3d_util.js';
+const {vec4, mat4} = glMatrix;
 
 
 

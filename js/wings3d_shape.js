@@ -3,6 +3,7 @@
  *    makeCone
  *    
  */
+const {vec3} = glMatrix;
 
 
 /**

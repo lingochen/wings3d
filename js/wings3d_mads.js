@@ -12,6 +12,7 @@ import * as Util from './wings3d_util.js';
 import {action} from './wings3d.js';
 import { Plane } from './wings3d_geomutil.js';
 import { HalfEdge } from './wings3d_wingededge.js';
+const {vec3, quat} = glMatrix;
 
 
 class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
