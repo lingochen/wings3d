@@ -29,6 +29,7 @@ import { ImportExporter } from './wings3d_importexport.js';
 import { STLImportExporter } from './plugins/stl.js';
 import { GLTFImportExporter } from './plugins/gltf.js';
 import { Texture } from './wings3d_material.js';
+const {vec3, mat4} = glMatrix;
 
 
 // 

@@ -8,6 +8,7 @@
 
 import { MouseMoveHandler } from './wings3d_undo.js';
 import * as Wings3D from './wings3d.js';
+const {vec3, mat4} = glMatrix;
 
 
 class CameraMouseMoveHandler extends MouseMoveHandler {

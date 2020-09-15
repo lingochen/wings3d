@@ -10,7 +10,7 @@ import {i18nElement, i18nSetup} from './wings3d_i18n.js';
 import {Material} from './wings3d_material.js';
 import {CreatePreviewCageCommand} from './wings3d_model.js';
 import * as Shape from './wings3d_shape.js';
-
+const {quat, mat4} = glMatrix;
 
 
 /**

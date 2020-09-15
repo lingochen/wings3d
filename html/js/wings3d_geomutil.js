@@ -2,6 +2,9 @@
  * utility for 3d geometry computation.
  * 
  */
+//import vec3 from '../vendor/gl-matrix-min.js';
+const {vec3} = glMatrix;
+
 const kEPSILON = 0.000001;
 
 // Möller–Trumbore ray-triangle intersection algorithm

@@ -12,6 +12,7 @@ import * as View from './wings3d_view.js';
 import * as UI from './wings3d_ui.js';
 import * as Util from './wings3d_util.js';
 import {action} from './wings3d.js';
+const {vec3} = glMatrix;
 
 
 class BodyMadsor extends Madsor {

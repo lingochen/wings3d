@@ -19,6 +19,7 @@ import * as Util from './wings3d_util.js';
 import * as Geom from './wings3d_geomutil.js';
 import {i18n} from './wings3d_i18n.js';
 //import { ByteBuffer } from './wings3d_gl.js';
+const {vec3, quat, mat4} = glMatrix;
 
 
 /**

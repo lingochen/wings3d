@@ -4,6 +4,7 @@
 //
 */
 "use strict";
+const {vec4, mat4} = glMatrix;
 
 let gl = null;
 function createWebGLContext(canvasID, attrib) {

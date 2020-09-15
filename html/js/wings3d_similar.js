@@ -2,6 +2,8 @@
 // similar comparison
 //
 
+const {vec3} = glMatrix;
+
 class SimilarGeometry {
    constructor() {
       this.set = new Set;
