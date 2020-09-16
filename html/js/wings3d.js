@@ -9,6 +9,7 @@
 import {gl, createWebGLContext} from './wings3d_gl.js';
 //import * as View from './wings3d_view';
 //import * as Interact from './wings3d_interact';
+glMatrix.glMatrix.setMatrixArrayType(Array);       // browser's native array is faster than TypedArray.
 
 //
 // onReady. 
