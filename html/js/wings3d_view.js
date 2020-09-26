@@ -1054,6 +1054,7 @@ function selectStart(ev) {
    const mousePos = UI.getClientPosition(ev);
    if (lastPick !== null) {
       if (ev.detail === 2) { // double click dragOnly.
+         undoEdit();    // undo the previous tweak Select
          selectionMode = dragSelect;
       } else {
          selectionMode = tweakSelect; //dragSelect;
