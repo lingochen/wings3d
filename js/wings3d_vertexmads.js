@@ -3,7 +3,7 @@
 //
 //    
 **/
-import {Madsor, DragSelect, ToggleModeCommand} from './wings3d_mads.js';
+import {Madsor, DragSelect, TweakMove, ToggleModeCommand} from './wings3d_mads.js';
 import {FaceMadsor} from './wings3d_facemads.js';   // for switching
 import {BodyMadsor} from './wings3d_bodymads.js';
 import {EdgeMadsor} from './wings3d_edgemads.js';
@@ -145,6 +145,10 @@ class VertexMadsor extends Madsor {
       return null;
    }
 
+   tweakStart(model, hilite, magnet) {
+      return new TweakMoveVertex(this, model, hilite, magnet);
+   }
+
    isVertexSelectable() { return true; }
 
    _resetSelection(cage) {
@@ -200,6 +204,33 @@ class DragVertexSelect extends DragSelect {
 
    finish() {
       return new VertexSelectCommand(this.select);
+   }
+}
+
+class TweakMoveVertex extends TweakMove {
+   constructor(madsor, model, hilite, magnet) {
+      let vertex = model.tweakVertex(hilite.vertex);
+      super(madsor, model);
+      if (vertex) {
+         this.vertex = vertex;
+      }
+   }
+
+   finish() {
+      // deselect hilite if not already select.
+      if (this.vertex) {   // deselect
+         this.model.selectVertex(this.vertex);
+      }
+      return this.moveHandler;
+   }
+
+   finishAsSelect(hilite) {
+      if (!this.vertex) { // remember to deselect
+         this.model.selectVertex(hilite.vertex);
+      }
+      const select = new Map;
+      select.set(this.model, [hilite.vertex]);
+      return new VertexSelectCommand(select);
    }
 }
 

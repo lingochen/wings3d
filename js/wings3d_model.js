@@ -995,6 +995,16 @@ PreviewCage.prototype._selectBodyInverse = function() {
    return snapshot;
 }
 
+
+
+PreviewCage.prototype.tweakBody = function() {
+   if (!this.hasSelection()) {
+      this.selectBody();
+      return this;
+   }
+   return null;
+};
+
 PreviewCage.prototype.selectBody = function() {
    //let faceColor;
    // we change interior color to show the selection
@@ -1041,6 +1051,16 @@ PreviewCage.prototype.snapshotSelectionBody = function() {
    return {body: new Set(this.selectedSet)};
 }
 
+
+PreviewCage.prototype.tweakVertex = function(vertex) {
+   if (!this.selectedSet.has(vertex)) {
+      this.selectVertex(vertex);
+      return vertex;
+   }
+   return null;
+};
+
+
 PreviewCage.prototype.dragSelectVertex = function(vertex, onOff) {
    if (this.selectedSet.has(vertex)) {
       if (onOff === false) {
@@ -1061,7 +1081,6 @@ PreviewCage.prototype.dragSelectVertex = function(vertex, onOff) {
 
 PreviewCage.prototype.selectVertex = function(vertex) {
    var onOff;
-   var color;
    if (this.selectedSet.has(vertex)) {
       this.selectedSet.delete(vertex);
       onOff = false;
@@ -1297,6 +1316,14 @@ PreviewCage.prototype.restoreFromMultiToBodySelect = function(snapshot) {
    }
 };
 
+
+PreviewCage.prototype.tweakEdge = function(hEdge) {
+   if (!this.selectedSet.has(hEdge.wingedEdge)) {
+      this.selectEdge(hEdge);
+      return hEdge;
+   }
+   return null;
+};
 
 PreviewCage.prototype.dragSelectEdge = function(selectEdge, dragOn) {
    var wingedEdge = selectEdge.wingedEdge;
@@ -1564,6 +1591,15 @@ PreviewCage.prototype._setFaceSelectionOff = function(polygon) {
 PreviewCage.prototype._setFaceSelectionOn = function(polygon) {
    polygon.setSelect(true);
    this.selectedSet.add(polygon);
+};
+
+
+PreviewCage.prototype.tweakFace = function(face) {
+   if (!this.selectedSet.has(face)) {
+      this.selectFace(face);
+      return face;
+   }
+   return null;
 };
 
 PreviewCage.prototype.dragSelectFace = function(polygon, onOff) {

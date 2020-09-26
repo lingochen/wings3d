@@ -477,7 +477,6 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
 
 
 
-
 class DragSelect {
    constructor(madsor, cage, current, onOff) {
       this.madsor = madsor;
@@ -497,6 +496,27 @@ class DragSelect {
          this.select.set(cage, array);
       }
       this.madsor.dragSelect(cage, hilite, array, this.onOff);
+   }
+}
+
+
+class TweakMove { // reuse movePositionHandler.
+   constructor(madsor, model) {
+      // select hilite if not already.
+      this.model = model;
+      this.moveHandler = new MoveFreePositionHandler(madsor);
+   }
+
+/*   finish() {
+      // deselect hilite if not already select.
+      if (this.vertex) {   // deselect
+         this.model.selectVertex(this.vertex);
+      }
+      return this.moveHandler;
+   } */
+
+   handleMove(ev, cameraView) {   // event
+      this.moveHandler.handleMouseMove(ev, cameraView);
    }
 }
 
@@ -975,6 +995,7 @@ class GenericEditCmd extends EditCommand {
 export {
    Madsor,
    DragSelect,
+   TweakMove,
    GenericEditCommand,
    MovePositionHandler,
    MouseMoveAlongAxis,
