@@ -397,6 +397,7 @@ class TweakMoveBody extends TweakMove {
       if (this.body) {   // deselect
          this.model.selectBody();
       }
+      this.moveHandler.commit();
       return this.moveHandler;
    }
 
