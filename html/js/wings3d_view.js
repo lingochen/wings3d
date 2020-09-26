@@ -718,12 +718,165 @@ function setCurrent(edge, intersect, center) {
 }
 
 
+const cameraHandler = (function(){
+   let camera;
+   let oldHandler;
+   function gotoExit(mousePos) {
+      Wings3D.log(Wings3D.action.cameraModeExit, Camera.view);
+      help('L:Select   M:Start Camera   R:Show Menu   [Alt]+R:Tweak menu');      
+      transitionHandler( oldHandler );
+   }
+
+   return {
+      onEntry: (old)=>{
+         oldHandler = old;
+         // let camera handle the mouse event until it quit.
+         camera = Camera.getMouseMoveHandler();
+         gl.canvas.requestPointerLock();
+      },
+
+      onExit: ()=> {
+         document.exitPointerLock();
+         camera = oldHandler = null;
+      },
+
+      onMouseEnter: ()=> {
+         help('L:Accept   M:Drag to Pan  R:Cancel/Restore to View   Move mouse to tumble');
+      },
+
+      onLeftDown: (mousePos)=> { // exit
+         camera.commit();
+         gotoExit(mousePos);
+      },
+
+      onWheelUp: (mousePos)=> {  // exit
+         camera.commit();
+         gotoExit(mousePos);
+      },
+
+      onRightUp: (mousePos)=> {
+         camera.rescind(mousePos);
+         gotoExit(mousePos);
+      },
+
+      onMove: (e)=>{
+         camera.handleMouseMove(e);
+      },
+   };
+}());
+
+
+const mouseMoveHandler = (function(){
+   let mouseMove;
+   function gotoExit(ev) {
+
+      Renderer.needToRedraw();
+   };
+
+   return {
+      onEntry: (handler)=> {
+         mouseMove = handler;
+         gl.canvas.requestPointerLock();
+      },
+
+      onExit: ()=> {
+         document.exitPointerLock();
+         mouseMove = null;
+      },
+
+      onLeftDown: (ev)=> {
+         mouseMove.commit();
+         undoQueue(mouseMove);   // put on queue
+         gotoExit(ev);
+      },
+
+      onRightUp: (ev)=> {
+         mouseMove.rescind();
+         gotoExit(ev);
+      },
+
+      onMove: (ev)=>{
+         mouseMove.handleMouseMove(e, Camera.view);
+         Renderer.needToRedraw();
+      }
+   };
+}());
+
+
+
+const DefaultHandler = (function() {
+   return {
+      onLeftDown: function() {
+
+      },
+
+      onLeftUp: function() {
+
+      },
+
+      leftDoubleDown: function() {  // for Tweak, 
+
+      },
+
+      leftDrag: function() {
+
+      },
+
+      move: function() {
+
+      },
+
+      wheelDown: function() {
+
+      },
+
+      wheelUp: function() {
+
+      },
+
+      wheelScroll: function() {
+
+      },
+
+      contextMenuDown: function() {
+
+      },
+
+      contextMenuUp: function() {
+         
+      }
+   };
+}());
+
+function createElementSVG(element) {
+   return document.createElementNS("http://www.w3.org/2000/svg", element);
+}
+const TweakMode = (function(){
+/*   let selection = {pos: [0,0], area: null};       // dome area...
+         // start tweaking, svgUI shown (dome, spike ...)
+         const dome = createElementSVG('circle');
+         selection.pos = mousePos;
+         dome.setAttributeNS(null, 'cx', mousePos.x);
+         dome.setAttributeNS(null, 'cy', mousePos.y);
+         dome.setAttributeNS(null, 'r', 50);
+         dome.setAttributeNS(null, 'fill', 'blue');
+         dome.rect.setAttributeNS(null, 'fill-opacity', 0.20);
+         Renderer.svgUI.appendChild(dome);
+         selection.area = dome; */
+}());
+
+
 //
 // mouse handling ---------------------------------------------------------------------
 //
 let lastPick = null;
+function rayPick(mousePos) {
+   const [ptNear, ptFar] = screenPointToWorld( mousePos );
+   vec3.sub(ptFar, ptFar, ptNear);
+   vec3.normalize(ptFar, ptFar);
+   const ray = new Ray(ptNear, ptFar);
 
-function rayPick(ray) {
+   // now let pick
    let pick = null;
    for (let model of _environment.world.getCage()) {
       if (!model.isLock() && model.isVisible()) {
@@ -757,74 +910,163 @@ function rayPick(ray) {
    lastPick = pick;
 };
 
-let dragMode = null;
-let selectionRectangle = {rect: null, start: [0, 0], end: [0, 0]};
-function selectStart(mousePos) {
-   if (lastPick !== null) {   
-      // first check if we needs to autoToggle
-      mode.current.toggleMulti(hilite);
-      // now we can safely dragStart
-      dragMode = mode.current.selectStart(lastPick.model, hilite);
-      Renderer.needToRedraw();
-   } else { // we are in select rectangle mode
-      selectionRectangle.rect = document.createElementNS("http://www.w3.org/2000/svg", 'rect');
-      selectionRectangle.start = selectionRectangle.end = mousePos;
-      selectionRectangle.rect.setAttributeNS(null, 'x', mousePos.x);
-      selectionRectangle.rect.setAttributeNS(null, 'y', mousePos.y);
-      selectionRectangle.rect.setAttributeNS(null, 'fill', 'blue');
-      selectionRectangle.rect.setAttributeNS(null, 'fill-opacity', 0.50);
-      Renderer.svgUI.appendChild(selectionRectangle.rect);
-      // force to faceMode if in multiMode.
-      mode.current.toggleMulti({face: true}); 
-   }
-};
+const noSelect = (function(){  // no select
+   return { start: function() {},
+            move: function(ev) {rayPick(UI.getClientPosition(ev));},
+            finish: function() {}
+         };
+}());
 
-function selectDrag(mousePos) {
-   if ((dragMode !== null)) {// &&
-       if ((lastPick !== null)) {
-         dragMode.dragSelect(lastPick.model, hilite);
+const dragSelect = (function(){
+   let dragMode = null;
+   return {
+      start: function(mousePos) {
+         // first check if we needs to autoToggle
+         mode.current.toggleMulti(hilite);
+         // now we can safely dragStart
+         dragMode = mode.current.selectStart(lastPick.model, hilite);
          Renderer.needToRedraw();
+      },
+
+      move: function(ev) {
+         rayPick(UI.getClientPosition(ev));
+         if ((lastPick !== null)) {
+            dragMode.dragSelect(lastPick.model, hilite);
+            Renderer.needToRedraw();
+         }
+      },
+
+      finish: function(mousePos) {
+         undoQueue(dragMode.finish());
+         dragMode = null;
       }
-   } else if (selectionRectangle.rect) { // update selection rectangle.
-      let x = selectionRectangle.start.x;
-      selectionRectangle.end = mousePos;
-      // reverse if negative width, height.
-      let width = mousePos.x - x;
-      if (width < 0) {
-         width = -width;
-         x = mousePos.x;
-      }
-      let y = selectionRectangle.start.y
-      let height = mousePos.y - y;
-      if (height < 0) {
-         height = -height;
-         y = mousePos.y;
-      }
-      // setup svg rectangle.
-      selectionRectangle.rect.setAttributeNS(null, 'x', x);
-      selectionRectangle.rect.setAttributeNS(null, 'y', y);
-      selectionRectangle.rect.setAttributeNS(null, 'width', width);
-      selectionRectangle.rect.setAttributeNS(null, 'height', height);
    }
+}());
+
+
+const boxSelect = (function(){
+   let selectionRectangle = {rect: null, start: [0, 0], end: [0, 0]};
+   return {
+      start: function(mousePos) {
+         selectionRectangle.rect = createElementSVG('rect');
+         selectionRectangle.start = selectionRectangle.end = mousePos;
+         selectionRectangle.rect.setAttributeNS(null, 'x', mousePos.x);
+         selectionRectangle.rect.setAttributeNS(null, 'y', mousePos.y);
+         selectionRectangle.rect.setAttributeNS(null, 'fill', 'blue');
+         selectionRectangle.rect.setAttributeNS(null, 'fill-opacity', 0.50);
+         Renderer.svgUI.appendChild(selectionRectangle.rect);
+         // force to faceMode if in multiMode.
+         mode.current.toggleMulti({face: true}); 
+      },
+
+      move: function(ev) {
+         const mousePos = UI.getClientPosition(ev);
+         let x = selectionRectangle.start.x;
+         selectionRectangle.end = mousePos;
+         // reverse if negative width, height.
+         let width = mousePos.x - x;
+         if (width < 0) {
+            width = -width;
+            x = mousePos.x;
+         }
+         let y = selectionRectangle.start.y
+         let height = mousePos.y - y;
+         if (height < 0) {
+            height = -height;
+            y = mousePos.y;
+         }
+         // setup svg rectangle.
+         selectionRectangle.rect.setAttributeNS(null, 'x', x);
+         selectionRectangle.rect.setAttributeNS(null, 'y', y);
+         selectionRectangle.rect.setAttributeNS(null, 'width', width);
+         selectionRectangle.rect.setAttributeNS(null, 'height', height);
+      },
+
+      finish: function(mousePos) {
+         if (selectionRectangle.start.x !== selectionRectangle.end.x &&
+            selectionRectangle.start.y !== selectionRectangle.end.y) {   // won't do zero width, or zero height.
+            // select everything inside the selection rectangle
+            const undo = new EditCommandSimple('frustumSelection', selectionBox(selectionRectangle.start, selectionRectangle.end));
+            if (undo.doIt(mode.current)) {
+               undoQueue( undo );
+            }
+         }
+         // cleanup
+         Renderer.svgUI.removeChild(selectionRectangle.rect);
+         selectionRectangle.rect = null;
+      }
+   };
+}());
+
+
+
+const tweakSelect = (function() {   // it just like mousemove, but with leftButton pressed down and move
+   let tweak;
+   let isMoved;
+
+   return {
+      start: function(mousePos) {
+         // hide cursor, magnet area
+         gl.canvas.requestPointerLock();
+         // start tweaking
+         isMoved = false;
+         if (isMultiMode()) {
+            for (let current of ['vertex', 'edge', 'face', 'body']) {
+               if (hilite[current]) {
+                  tweak = mode[current].tweakStart(lastPick.model, hilite);
+                  break;
+               } 
+            }
+         } else {
+            tweak = mode.current.tweakStart(lastPick.model, hilite);
+         }
+         Renderer.needToRedraw();
+      },
+ 
+      finish: function(mousePos) {
+         // finish tweak
+         if (isMoved) {
+            undoQueue(tweak.finish());
+            isMoved = false;
+         } else {
+            if (isMultiMode()) {  // switch to selectMode.
+               mode.current.toggleMulti(hilite);
+            }
+            undoQueue(tweak.finishAsSelect(hilite)); // select/deselect
+         }
+         tweak = null;
+         // show cursor, magnet area
+         document.exitPointerLock();
+      },
+   
+      move: function(ev) {
+         isMoved = true;
+         tweak.handleMove(ev, Camera.view);
+         Renderer.needToRedraw();
+      },
+   };
+}());
+
+
+
+let selectionMode = noSelect;
+function selectStart(ev) {
+   const mousePos = UI.getClientPosition(ev);
+   if (lastPick !== null) {
+      if (ev.detail === 2) { // double click dragOnly.
+         selectionMode = dragSelect;
+      } else {
+         selectionMode = tweakSelect; //dragSelect;
+      }
+   } else { // definitely boxSelect Mode
+      selectionMode = boxSelect;
+   }
+   selectionMode.start(mousePos);
 }
 
-function selectFinish() {
-   if (dragMode !== null) {
-      undoQueue(dragMode.finish());
-      dragMode = null;
-   } else if (selectionRectangle.rect) {
-      if (selectionRectangle.start.x !== selectionRectangle.end.x &&
-           selectionRectangle.start.y !== selectionRectangle.end.y) {   // won't do zero width, or zero height.
-         // select everything inside the selection rectangle
-         const undo = new EditCommandSimple('frustumSelection', selectionBox(selectionRectangle.start, selectionRectangle.end));
-         if (undo.doIt(mode.current)) {
-            undoQueue( undo );
-         }
-      }
-      // cleanup
-      Renderer.svgUI.removeChild(selectionRectangle.rect);
-      selectionRectangle.rect = null;
-   }
+function selectFinish(mousePos) {
+   selectionMode.finish(mousePos);
+   selectionMode = noSelect;
 }
 
 function canvasHandleMouseDown(ev) {
@@ -852,7 +1094,7 @@ function canvasHandleMouseDown(ev) {
       } else {
          //e.stopImmediatePropagation();
          // ask view to select current hilite if any.
-         selectStart(UI.getClientPosition(ev));
+         selectStart(ev);
       }
    }
 };
@@ -866,13 +1108,13 @@ function canvasHandleMouseEnter(ev) {
 };
 
 function canvasHandleMouseLeave(ev) {
-   selectFinish();       // we can't caputre mouseup when mouse leave, so force to finish the selection.
+   selectFinish(UI.getClientPosition(ev));       // we can't caputre mouseup when mouse leave, so force to finish the selection.
 };
 
 // event handling, switching state if needs to be
 function canvasHandleMouseUp(ev) {
    if (ev.button == 0) {
-      selectFinish();
+      selectFinish(UI.getClientPosition(ev));
    } else if (ev.button == 1) { // check for middle button down
       if (handler.camera === null) {
          ev.stopImmediatePropagation();
@@ -908,14 +1150,7 @@ function canvasHandleMouseMove(e) {
       handler.mousemove.handleMouseMove(e, Camera.view);
       Renderer.needToRedraw();
    } else {
-      const [ptNear, ptFar] = screenPointToWorld( UI.getClientPosition(e) );
-      vec3.sub(ptFar, ptFar, ptNear);
-      vec3.normalize(ptFar, ptFar);
-      const ray = new Ray(ptNear, ptFar);
-      //geometryStatus("mouse position: " + ptNear[0] + ", " + ptNear[1] + "," + ptNear[2] + ", <br />"+ ptFar[0] + ", " + ptFar[1] + ", " + ptFar[2]);
-      rayPick(ray);
-      // selectDrag if left button mousedown
-      selectDrag(UI.getClientPosition(e));
+      selectionMode.move(e);
    }
 };
 

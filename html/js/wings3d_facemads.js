@@ -3,7 +3,7 @@
 //
 //    
 **/
-import {Madsor, DragSelect, MovePositionHandler, GenericEditCommand, MoveAlongNormal, MouseRotateAlongAxis, ToggleModeCommand} from './wings3d_mads.js';
+import {Madsor, DragSelect, TweakMove, MovePositionHandler, GenericEditCommand, MoveAlongNormal, MouseRotateAlongAxis, ToggleModeCommand} from './wings3d_mads.js';
 import {EdgeMadsor} from './wings3d_edgemads.js';   // for switching
 import {BodyMadsor} from './wings3d_bodymads.js';
 import {VertexMadsor} from './wings3d_vertexmads.js';
@@ -244,6 +244,10 @@ class FaceMadsor extends Madsor {
       }    
    }
 
+   tweakStart(model, hilite, magnet) {
+      return new TweakMoveFace(this, model, hilite, magnet);
+   }
+
    isFaceSelectable() { return true; }
 
    _resetSelection(cage) {
@@ -294,6 +298,34 @@ class DragFaceSelect extends DragSelect {
 
    finish() {
       return new FaceSelectCommand(this.select);
+   }
+}
+
+
+class TweakMoveFace extends TweakMove {
+   constructor(madsor, model, hilite, magnet) {
+      let face = model.tweakFace(hilite.face);
+      super(madsor, model);
+      if (face) {
+         this.face = face;
+      }
+   }
+
+   finish() {
+      // deselect hilite if not already select.
+      if (this.face) {   // deselect
+         this.model.selectFace(this.face);
+      }
+      return this.moveHandler;
+   }
+
+   finishAsSelect(hilite) {
+      if (!this.face) { // remember to deselect
+         this.model.selectFace(hilite.face);
+      }
+      const select = new Map;
+      select.set(this.model, [hilite.face]);
+      return new FaceSelectCommand(select);
    }
 }
 
