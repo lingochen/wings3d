@@ -316,6 +316,7 @@ class TweakMoveFace extends TweakMove {
       if (this.face) {   // deselect
          this.model.selectFace(this.face);
       }
+      this.moveHandler.commit();
       return this.moveHandler;
    }
 

@@ -411,6 +411,7 @@ class TweakMoveEdge extends TweakMove {
       if (this.edge) {   // deselect
          this.model.selectEdge(this.edge);
       }
+      this.moveHandler.commit();
       return this.moveHandler;
    }
 

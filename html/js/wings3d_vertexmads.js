@@ -221,6 +221,7 @@ class TweakMoveVertex extends TweakMove {
       if (this.vertex) {   // deselect
          this.model.selectVertex(this.vertex);
       }
+      this.moveHandler.commit();
       return this.moveHandler;
    }
 
