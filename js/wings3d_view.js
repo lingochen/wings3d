@@ -946,6 +946,7 @@ const dragSelect = (function(){
 
 const boxSelect = (function(){
    let selectionRectangle = {rect: null, start: [0, 0], end: [0, 0]};
+   
    return {
       start: function(mousePos) {
          selectionRectangle.rect = createElementSVG('rect');
@@ -955,11 +956,12 @@ const boxSelect = (function(){
          selectionRectangle.rect.setAttributeNS(null, 'fill', 'blue');
          selectionRectangle.rect.setAttributeNS(null, 'fill-opacity', 0.50);
          Renderer.svgUI.appendChild(selectionRectangle.rect);
-         // force to faceMode if in multiMode.
-         mode.current.toggleMulti({face: true}); 
       },
 
-      move: function(ev) {
+      move: function(ev) {    
+         if (isMultiMode()) { // force to faceMode if in multiMode.
+            mode.current.toggleMulti({face: true}); 
+         }
          const mousePos = UI.getClientPosition(ev);
          let x = selectionRectangle.start.x;
          selectionRectangle.end = mousePos;
