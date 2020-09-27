@@ -946,16 +946,19 @@ const dragSelect = (function(){
 
 const boxSelect = (function(){
    let selectionRectangle = {rect: null, start: [0, 0], end: [0, 0]};
+
+   function setupRectangle(mousePos) {
+      selectionRectangle.rect = createElementSVG('rect');
+      selectionRectangle.rect.setAttributeNS(null, 'x', mousePos.x);
+      selectionRectangle.rect.setAttributeNS(null, 'y', mousePos.y);
+      selectionRectangle.rect.setAttributeNS(null, 'fill', 'blue');
+      selectionRectangle.rect.setAttributeNS(null, 'fill-opacity', 0.50);
+      Renderer.svgUI.appendChild(selectionRectangle.rect);
+   }
    
    return {
       start: function(mousePos) {
-         selectionRectangle.rect = createElementSVG('rect');
          selectionRectangle.start = selectionRectangle.end = mousePos;
-         selectionRectangle.rect.setAttributeNS(null, 'x', mousePos.x);
-         selectionRectangle.rect.setAttributeNS(null, 'y', mousePos.y);
-         selectionRectangle.rect.setAttributeNS(null, 'fill', 'blue');
-         selectionRectangle.rect.setAttributeNS(null, 'fill-opacity', 0.50);
-         Renderer.svgUI.appendChild(selectionRectangle.rect);
       },
 
       move: function(ev) {    
@@ -977,7 +980,9 @@ const boxSelect = (function(){
             height = -height;
             y = mousePos.y;
          }
-         // setup svg rectangle.
+         if (!selectionRectangle.rect) {// setup svg rectangle.
+            setupRectangle(selectionRectangle.start);
+         }
          selectionRectangle.rect.setAttributeNS(null, 'x', x);
          selectionRectangle.rect.setAttributeNS(null, 'y', y);
          selectionRectangle.rect.setAttributeNS(null, 'width', width);
@@ -985,17 +990,19 @@ const boxSelect = (function(){
       },
 
       finish: function(mousePos) {
-         if (selectionRectangle.start.x !== selectionRectangle.end.x &&
-            selectionRectangle.start.y !== selectionRectangle.end.y) {   // won't do zero width, or zero height.
-            // select everything inside the selection rectangle
-            const undo = new EditCommandSimple('frustumSelection', selectionBox(selectionRectangle.start, selectionRectangle.end));
-            if (undo.doIt(mode.current)) {
-               undoQueue( undo );
+         if (selectionRectangle.rect) {
+            if (selectionRectangle.start.x !== selectionRectangle.end.x &&
+               selectionRectangle.start.y !== selectionRectangle.end.y) {   // won't do zero width, or zero height.
+               // select everything inside the selection rectangle
+               const undo = new EditCommandSimple('frustumSelection', selectionBox(selectionRectangle.start, selectionRectangle.end));
+               if (undo.doIt(mode.current)) {
+                  undoQueue( undo );
+               }
             }
+            // cleanup
+            Renderer.svgUI.removeChild(selectionRectangle.rect);
+            selectionRectangle.rect = null;
          }
-         // cleanup
-         Renderer.svgUI.removeChild(selectionRectangle.rect);
-         selectionRectangle.rect = null;
       }
    };
 }());
