@@ -266,6 +266,8 @@ const action = {
    toggleOrtho: ()=> {notImplemented(this);},
    toggleGround: ()=>{notImplemented(this);},
    toggleAxes: ()=> {notImplemented(this);},
+   // tweakMode
+   toggleTweak: ()=> {notImplemented(this);},
    // createObject Menu
    createCube: () => {notImplemented(this);},
    createCubePref: () =>{notImplemented(this);},

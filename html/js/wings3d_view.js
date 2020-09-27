@@ -864,6 +864,11 @@ const TweakMode = (function(){
          Renderer.svgUI.appendChild(dome);
          selection.area = dome; */
 }());
+let tweakMode = true;
+function toggleTweak() {
+   tweakMode = !tweakMode;
+   return tweakMode;
+}
 
 
 //
@@ -1062,11 +1067,15 @@ let selectionMode = noSelect;
 function selectStart(ev) {
    const mousePos = UI.getClientPosition(ev);
    if (lastPick !== null) {
-      if (ev.detail === 2) { // double click dragOnly.
-         undoEdit();    // undo the previous tweak Select
-         selectionMode = dragSelect;
+      if (tweakMode) {
+         if (ev.detail === 2) { // double click dragOnly.
+            undoEdit();    // undo the previous tweak Select
+            selectionMode = dragSelect;
+         } else {
+            selectionMode = tweakSelect; //dragSelect;
+         }
       } else {
-         selectionMode = tweakSelect; //dragSelect;
+         selectionMode = dragSelect;
       }
    } else { // definitely boxSelect Mode
       selectionMode = boxSelect;
@@ -1548,6 +1557,18 @@ function init() {
       let parent = _environment.world;
       parent.insert( group ); // later: change to addToWorld()
       _environment.geometryGraph.addGroup(parent.guiStatus.ul, group);
+    });
+   
+   // tweakMode
+   UI.bindMenuItem(Wings3D.action.toggleTweak.name, function(ev) {
+      const toggle = toggleTweak();
+      // find all tweakMode 
+      const checkboxes = document.querySelectorAll('input[name="tweakMode"]');
+      for (let check of checkboxes) {
+         if (check !== ev.target) { // don't toggle the checkbox that trigger the event, it mess up the state
+            check.checked = toggle;
+         }
+      }
     });
 
    // Image List.

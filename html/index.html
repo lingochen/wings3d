@@ -80,7 +80,7 @@
         <a data-menuid="fileMenu" data-i18n>File</a>
         <ul class="popup menu">
           <li><a data-menuid="clearNew" onmouseover="help('Create a new, empty scene')" onmouseleave="help()" data-i18n>New</a></li>
-          <li><a data-menuid="open" onmouseover="help('Open a previously saved scene')" onmouseleave="help()" data-i18n data-i18n>Open...</a></li>
+          <li><a data-menuid="open" onmouseover="help('Open a previously saved scene')" onmouseleave="help()" data-i18n>Open...</a></li>
           <li class="not-implemented"><a onmouseover="help('Merge a previously saved scene into the current scene')" onmouseleave="help()" data-i18n>Merge...</a></li>
           <li><hr /></li>
           <li><a data-menuid="save" onmouseover="help('Save the current scene')" onmouseleave="help()" data-i18n>Save</a></li>
@@ -391,7 +391,7 @@
       <li><a data-menuid="createSpring" data-i18n>Spring</a><img data-menuid="createSpringPref" class="smallIcon smallPref" src="" alt=""></li>
     </ul>
     <ul id="tweak-context-menu" class="popup menu">
-      <li><a data-menuid="tweakMode" data-i18n>Tweak</a></li>
+      <li><input type="checkbox" checked="checked" name="tweakMode" data-menuid="toggleTweak"><a data-menuid="toggleTweak" data-i18n>Tweak</a></li>
       <li><hr /></li>
       <li class="not-implemented"><a data-menuid="magnetsMenu" data-i18n>Magnets</a></li>
       <li class="not-implemented"><a data-menuid="axisConstraintsMenu" data-i18n>Axis Constraints</a></li>
@@ -403,7 +403,7 @@
       <li><a data-menuid="tweakReleax" data-i18n>Relax</a></li>
       <li><a data-menuid="tweakSlide" data-i18n>Slide</a></li>
       <li><hr /></li>
-      <li class="not-implemented"><a data-menuid="tweakPreferencesMenu"</a>Tweak Preferences</li>
+      <li class="not-implemented"><a data-menuid="tweakPreferencesMenu">Tweak Preferences</a></li>
     </ul>
     <ul id="edge-context-menu" class="popup menu">
       <li class="dropside">
@@ -771,7 +771,7 @@
     <span class="tutor-arrow"></span>
     <div class="tutor-container">
       <span class="close">&times;</span>
-      <div><h3 class="tutor-title"></h3><div class="tutor-progress"><span class="tutor-progress-done"></span><span class="tutor-progress-indicator"></span></div></div>
+      <div><h3 class="tutor-title">No Titled</h3><div class="tutor-progress"><span class="tutor-progress-done"></span><span class="tutor-progress-indicator"></span></div></div>
       <div class="tutor-content"></div>
       <div class="tutor-actions">
         <button class="tutor-nav-button next">Next</button>
@@ -1042,7 +1042,7 @@
 <!-- Save Load -->
   <form id="cloudSaveDialog" class="dialog cloudForm">
      <h3><span data-i18n>Save As</span> <button type="submit" value="cancel" class="close">&times;</button></h3>
-<!--     <button type="submit" value="ok" id="yandexDiskSave" data-app-key="f51f1d0879e64c478086ea9fbbfd7d47"><img class="home" alt="YandexDisk" src="./img/clouddisk.svg#yandex"><span>Save to Yandex Disk</span></button> --->
+<!--     <button type="submit" value="ok" id="yandexDiskSave" data-app-key="f51f1d0879e64c478086ea9fbbfd7d47"><img class="home" alt="YandexDisk" src="./img/clouddisk.svg#yandex"><span>Save to Yandex Disk</span></button> -->
      <button type="submit" value="ok" id="onedriveSave" data-app-key="6acd185a-104b-4928-b06f-700380de2ce8"><img class="home" alt="OneDrive" src="./img/clouddisk.svg#onedrive"><span>Save to OneDrive</span></button>     
      <button type="submit" value="ok" id="dropboxSave" data-app-key="p6wfhvtsa2hd9nh"><img class="home" alt="Dropbox" src="./img/clouddisk.svg#dropbox"><span>Save to Dropbox</span></button>
      <button type="submit" value="ok" id="localSave"> <span>Save to Local</span></button>
@@ -1053,7 +1053,7 @@
   </form>
   <form id="cloudOpenDialog" class="dialog cloudForm">
      <h3> Open from <button type="submit" value="cancel" class="close">&times;</button></h3>
-<!--     <button type="submit" value="ok" id="yandexDiskOpen" data-app-key="f51f1d0879e64c478086ea9fbbfd7d47"><img class="home" alt="YandexDisk" src="./img/clouddisk.svg#yandex"><span>Open from Yandex Disk</span></button> --->
+<!--     <button type="submit" value="ok" id="yandexDiskOpen" data-app-key="f51f1d0879e64c478086ea9fbbfd7d47"><img class="home" alt="YandexDisk" src="./img/clouddisk.svg#yandex"><span>Open from Yandex Disk</span></button> -->
      <button type="submit" value="ok" id="onedriveOpen" data-app-key="6acd185a-104b-4928-b06f-700380de2ce8"><img class="home" alt="OneDrive" src="./img/clouddisk.svg#onedrive"><span>Open from OneDrive</span></button>
      <button type="submit" value="ok" id="dropboxOpen" data-app-key="p6wfhvtsa2hd9nh"><img class="home" alt="Dropbox" src="./img/clouddisk.svg#dropbox"><span>Open from Dropbox</span></button>
      <button type="submit" value="ok" id="localOpen"> <span>Open from Local</span></button>
