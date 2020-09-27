@@ -1028,8 +1028,8 @@ const tweakSelect = (function() {   // it just like mousemove, but with leftButt
          if (isMoved) {
             undoQueue(tweak.finish());
             isMoved = false;
-         } else {
-            if (isMultiMode()) {  // switch to selectMode.
+         } else { // switch to selectMode since there is no movement.
+            if (isMultiMode()) {
                mode.current.toggleMulti(hilite);
             }
             undoQueue(tweak.finishAsSelect(hilite)); // select/deselect
@@ -1651,13 +1651,19 @@ function init() {
    gl.canvas.addEventListener("mouseout", function(evt) {gl.canvas.blur(); });
    gl.canvas.addEventListener("keydown", canvasHandleKeyDown, false);
    // bind context-menu
-   let createObjectContextMenu = {menu: document.querySelector('#create-context-menu')};
+   const createObjectContextMenu = {menu: document.querySelector('#create-context-menu')};
+   const tweakContextMenu = {menu: document.querySelector('#tweak-context-menu')};
    gl.canvas.addEventListener("contextmenu", function(e) {
       if(!canvasHandleContextMenu(e)) {
          e.preventDefault();
-         let contextMenu = currentMode().getContextMenu();
-         if (!contextMenu || !contextMenu.menu) {
-            contextMenu = createObjectContextMenu;
+         let contextMenu;
+         if (e.altKey) {
+            contextMenu = tweakContextMenu;
+         } else {
+            contextMenu = currentMode().getContextMenu();
+            if (!contextMenu || !contextMenu.menu) {
+               contextMenu = createObjectContextMenu;
+            }
          }
          UI.positionDom(contextMenu.menu, UI.getPosition(e));
          UI.showContextMenu(contextMenu.menu);
