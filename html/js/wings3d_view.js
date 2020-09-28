@@ -718,135 +718,72 @@ function setCurrent(edge, intersect, center) {
 }
 
 
-const cameraHandler = (function(){
-   let camera;
-   let oldHandler;
+function attachHandlerCamera(camera) {
    function gotoExit(mousePos) {
       Wings3D.log(Wings3D.action.cameraModeExit, Camera.view);
-      help('L:Select   M:Start Camera   R:Show Menu   [Alt]+R:Tweak menu');      
-      transitionHandler( oldHandler );
+      help('L:Select   M:Start Camera   R:Show Menu   [Alt]+R:Tweak menu');    
+      handler.camera = null;
+      document.exitPointerLock();
    }
 
-   return {
-      onEntry: (old)=>{
-         oldHandler = old;
-         // let camera handle the mouse event until it quit.
-         camera = Camera.getMouseMoveHandler();
-         gl.canvas.requestPointerLock();
-      },
+   // let camera handle the mouse event until it quit.0
+   gl.canvas.requestPointerLock();
+   // tell tutor step, we are in camera mode
+   Wings3D.log(Wings3D.action.cameraModeEnter, Camera.view);
+   help('L:Accept   M:Drag to Pan  R:Cancel/Restore to View   Move mouse to tumble');
 
-      onExit: ()=> {
-         document.exitPointerLock();
-         camera = oldHandler = null;
-      },
-
-      onMouseEnter: ()=> {
-         help('L:Accept   M:Drag to Pan  R:Cancel/Restore to View   Move mouse to tumble');
-      },
-
-      onLeftDown: (mousePos)=> { // exit
+   handler.camera = {
+      commit: ()=> {
          camera.commit();
-         gotoExit(mousePos);
+         gotoExit();
       },
 
-      onWheelUp: (mousePos)=> {  // exit
-         camera.commit();
-         gotoExit(mousePos);
-      },
-
-      onRightUp: (mousePos)=> {
-         camera.rescind(mousePos);
-         gotoExit(mousePos);
+      rescind: ()=> {
+         camera.rescind();
+         gotoExit();
       },
 
       onMove: (e)=>{
          camera.handleMouseMove(e);
       },
    };
-}());
+};
 
 
-const mouseMoveHandler = (function(){
-   let mouseMove;
-   function gotoExit(ev) {
-
+function attachHandlerMouseMove(mouseMove) {
+   function gotoExit() {
+      document.exitPointerLock();
+      handler.mousemove = null;
       Renderer.needToRedraw();
    };
 
-   return {
-      onEntry: (handler)=> {
-         mouseMove = handler;
-         gl.canvas.requestPointerLock();
-      },
+   // onEntry
+   gl.canvas.requestPointerLock();
 
-      onExit: ()=> {
-         document.exitPointerLock();
-         mouseMove = null;
-      },
 
-      onLeftDown: (ev)=> {
+   handler.mousemove = {
+      commit: ()=> {
          mouseMove.commit();
          undoQueue(mouseMove);   // put on queue
-         gotoExit(ev);
+         gotoExit();
       },
 
-      onRightUp: (ev)=> {
+      rescind: ()=> {
          mouseMove.rescind();
-         gotoExit(ev);
+         gotoExit();
       },
 
       onMove: (ev)=>{
-         mouseMove.handleMouseMove(e, Camera.view);
+         mouseMove.handleMouseMove(ev, Camera.view);
          Renderer.needToRedraw();
       }
    };
-}());
+};
 
 
-
-const DefaultHandler = (function() {
-   return {
-      onLeftDown: function() {
-
-      },
-
-      onLeftUp: function() {
-
-      },
-
-      leftDoubleDown: function() {  // for Tweak, 
-
-      },
-
-      leftDrag: function() {
-
-      },
-
-      move: function() {
-
-      },
-
-      wheelDown: function() {
-
-      },
-
-      wheelUp: function() {
-
-      },
-
-      wheelScroll: function() {
-
-      },
-
-      contextMenuDown: function() {
-
-      },
-
-      contextMenuUp: function() {
-         
-      }
-   };
-}());
+function attachHandlerMouseSelect(mouseSelectHandler) {
+   handler.mouseSelect = mouseSelectHandler;
+};
 
 function createElementSVG(element) {
    return document.createElementNS("http://www.w3.org/2000/svg", element);
@@ -1088,22 +1025,26 @@ function selectFinish(mousePos) {
    selectionMode = noSelect;
 }
 
+
+
+function canvasHandleMouseEnter(ev) {
+   help('L:Select   M:Start Camera   R:Show Menu   [Alt]+R:Tweak menu');
+};
+
+function canvasHandleMouseLeave(ev) {
+   selectFinish(UI.getClientPosition(ev));       // we can't caputre mouseup when mouse leave, so force to finish the selection.
+};
+
 function canvasHandleMouseDown(ev) {
    ev.preventDefault();       // this prevent select text on infoLine because of canvas.
    if (ev.button === 0) {
       if (handler.camera !== null) {
          handler.camera.commit();
-         releaseHandlerCamera();
-         Wings3D.log(Wings3D.action.cameraModeExit, Camera.view);
-         help('L:Select   M:Start Camera   R:Show Menu   [Alt]+R:Tweak menu');      
       } else if (handler.mousemove !== null) {
          handler.mousemove.commit();      // yes commit. do the commit thing.
-         undoQueue( handler.mousemove );  // put on queue
-         releaseHandlerMouseMove(); // handler.mousemove = null;
       } else if (handler.mouseSelect !== null) {
          if (handler.mouseSelect.select(hilite)) {
             if (handler.mouseSelect.isMoveable()) {   // now do mousemove.
-               // handler.mousemove must be null.
                attachHandlerMouseMove(handler.mouseSelect); //handler.mousemove = handler.mouseSelect;
             } else {
                undoQueue( handler.mouseSelect );
@@ -1118,18 +1059,6 @@ function canvasHandleMouseDown(ev) {
    }
 };
 
-function canvasHandleMouseEnter(ev) {
-   if (handler.camera !== null) {
-      help('L:Accept   M:Drag to Pan  R:Cancel/Restore to View   Move mouse to tumble');
-   } else {
-      help('L:Select   M:Start Camera   R:Show Menu   [Alt]+R:Tweak menu');
-   }
-};
-
-function canvasHandleMouseLeave(ev) {
-   selectFinish(UI.getClientPosition(ev));       // we can't caputre mouseup when mouse leave, so force to finish the selection.
-};
-
 // event handling, switching state if needs to be
 function canvasHandleMouseUp(ev) {
    if (ev.button == 0) {
@@ -1139,22 +1068,12 @@ function canvasHandleMouseUp(ev) {
          ev.stopImmediatePropagation();
          // let camera handle the mouse event until it quit.
          attachHandlerCamera( Camera.getMouseMoveHandler() );
-         // tell tutor step, we are in camera mode
-         Wings3D.log(Wings3D.action.cameraModeEnter, Camera.view);
-         help('L:Accept   M:Drag to Pan  R:Cancel/Restore to View   Move mouse to tumble');
-         // disable mouse cursor
-         //document.body.style.cursor = 'none';
       } 
    } else if (ev.button === 2) { // hack up 2019/07/26 to handle no contextmenu event in pointerLock, - needs refactor
       if (handler.camera) {      // firefox will generate contextmenu event if we put it on mouseDown.
          handler.camera.rescind();
-         releaseHandlerCamera();
-         Wings3D.log(Wings3D.action.cameraModeExit, Camera.view);   // log action
-         help('L:Select   M:Start Camera   R:Show Menu   [Alt]+R:Tweak menu');
       } else if (handler.mousemove) {
          handler.mousemove.rescind();
-         releaseHandlerMouseMove();
-         Renderer.needToRedraw();
       } else {
          handler.mouseSelect = null;   // no needs to undo because we havent doIt() yet.
          Renderer.needToRedraw();
@@ -1164,10 +1083,9 @@ function canvasHandleMouseUp(ev) {
 
 function canvasHandleMouseMove(e) {
    if (handler.camera !== null) {
-      handler.camera.handleMouseMove(e);
+      handler.camera.onMove(e);
    } else if (handler.mousemove !== null) {
-      handler.mousemove.handleMouseMove(e, Camera.view);
-      Renderer.needToRedraw();
+      handler.mousemove.onMove(e);
    } else {
       selectionMode.move(e);
    }
@@ -1185,28 +1103,6 @@ function canvasHandleContextMenu(ev) {
    return false;
 };
 
-function releaseHandlerCamera() {
-   handler.camera = null;
-   document.exitPointerLock();
-};
-function attachHandlerCamera(camera) {
-   gl.canvas.requestPointerLock();
-   handler.camera = camera;
-}
-
-function releaseHandlerMouseMove() {
-   handler.mousemove = null;
-   document.exitPointerLock();
-};
-// handling in reverse order. the newest one will handle the event. (should be at most 2 handler)
-function attachHandlerMouseMove(mousemoveHandler) {
-   gl.canvas.requestPointerLock();
-   // should we make sure handler.mousemove is null?
-   handler.mousemove = mousemoveHandler;
-};
-function attachHandlerMouseSelect(mouseSelectHandler) {
-   handler.mouseSelect = mouseSelectHandler;
-};
 
 function canvasHandleWheel(e) {
    // adjusting to scroll pixels, inspiration from facebook's estimate.
