@@ -1570,6 +1570,16 @@ function init() {
          }
       }
     });
+   UI.bindMenuItem(Wings3D.action.openTweak.name, (ev) => {
+      const popup = document.querySelector('#tweak-context-menu');
+      // move to ev.target's location
+      const rect = ev.target.getBoundingClientRect();
+      const mousePos = {x: ev.clientX,// + (rect.right-rect.left),   //x position within the element.
+                        y: ev.clientY + (rect.bottom-rect.top)};   //y position within the element.
+      popup.style.left = mousePos.x + 'px';
+      popup.style.top = mousePos.y + 'px';
+      UI.queuePopupMenu(popup);
+    });
 
    // Image List.
    _environment.imageList = TreeView.getImageList('#imageListLabel','#imageList');

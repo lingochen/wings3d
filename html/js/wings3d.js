@@ -342,6 +342,7 @@ const action = {
    toolsMenu: () => {notImplemented(this);},
    fixMeshMenu: () => {notImplemented(this);},
    closeCrack: () => {notImplemented(this);},
+   openTweak: () => {notImplemented(this);},
    //menu action
    bodyDelete: () => {notImplemented(this);},
    bodyRename: () => {notImplemented(this);},
