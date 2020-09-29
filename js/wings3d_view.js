@@ -7,6 +7,7 @@
 import * as UI from './wings3d_ui.js';
 import * as Renderer from './wings3d_render.js';
 import * as Camera from './wings3d_camera.js';
+import {i18n} from './wings3d_i18n.js';
 import {gl} from './wings3d_gl.js';
 import {WavefrontObjImportExporter } from './plugins/wavefront_obj.js';
 import {X3dImportExporter} from './plugins/x3d.js';
@@ -721,7 +722,7 @@ function setCurrent(edge, intersect, center) {
 function attachHandlerCamera(camera) {
    function gotoExit(mousePos) {
       Wings3D.log(Wings3D.action.cameraModeExit, Camera.view);
-      help('L:Select   M:Start Camera   R:Show Menu   [Alt]+R:Tweak menu');    
+      modeHelp();
       handler.camera = null;
       document.exitPointerLock();
    }
@@ -730,7 +731,7 @@ function attachHandlerCamera(camera) {
    gl.canvas.requestPointerLock();
    // tell tutor step, we are in camera mode
    Wings3D.log(Wings3D.action.cameraModeEnter, Camera.view);
-   help('L:Accept   M:Drag to Pan  R:Cancel/Restore to View   Move mouse to tumble');
+   help(`L:${i18n('accept')}   M:${i18n('dragPan')}  R:${i18n('cancelRestoreView')}   ${i18n('moveMouseTumble')}`);
 
    handler.camera = {
       commit: ()=> {
@@ -805,6 +806,13 @@ let tweakMode = true;
 function toggleTweak() {
    tweakMode = !tweakMode;
    return tweakMode;
+}
+function modeHelp() {
+   if (tweakMode) {
+      help(`${i18n('clickSelect')}   ${i18n('paintSelect')}  M:${i18n('startCamera')}   R:${i18n('showMenu')}   [Alt]+R:${i18n('tweakMenu')}`);   
+   } else {
+      help(`L:${i18n('select')}   M:${i18n('startCamera')}  R:${i18n('showMenu')}   [Alt]+R:${i18n('tweakMenu')}`);
+   }
 }
 
 
@@ -1028,7 +1036,7 @@ function selectFinish(mousePos) {
 
 
 function canvasHandleMouseEnter(ev) {
-   help('L:Select   M:Start Camera   R:Show Menu   [Alt]+R:Tweak menu');
+   modeHelp();
 };
 
 function canvasHandleMouseLeave(ev) {
