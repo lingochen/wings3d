@@ -863,14 +863,14 @@ function rayPick(mousePos) {
 const noSelect = (function(){  // no select
    return { start: function() {},
             move: function(ev) {rayPick(UI.getClientPosition(ev));},
-            finish: function() {}
+            finish: function(ev) {}
          };
 }());
 
 const dragSelect = (function(){
    let dragMode = null;
    return {
-      start: function(mousePos) {
+      start: function(_mousePos) {
          // first check if we needs to autoToggle
          mode.current.toggleMulti(hilite);
          // now we can safely dragStart
@@ -886,7 +886,7 @@ const dragSelect = (function(){
          }
       },
 
-      finish: function(mousePos) {
+      finish: function(_ev) {  
          undoQueue(dragMode.finish());
          dragMode = null;
       }
@@ -937,14 +937,19 @@ const boxSelect = (function(){
          selectionRectangle.rect.setAttributeNS(null, 'y', y);
          selectionRectangle.rect.setAttributeNS(null, 'width', width);
          selectionRectangle.rect.setAttributeNS(null, 'height', height);
+         help(`[Ctrl] ${i18n('deselectMarquee')}`);//    [Shift] ${i18n('whollyInsideMarquee')}`);
       },
 
-      finish: function(mousePos) {
+      finish: function(ev) {
          if (selectionRectangle.rect) {
+            let fn = 'frustumSelection';
+            if (ev.ctrlKey) {
+               fn = 'frustumDeselection';
+            }
             if (selectionRectangle.start.x !== selectionRectangle.end.x &&
                selectionRectangle.start.y !== selectionRectangle.end.y) {   // won't do zero width, or zero height.
                // select everything inside the selection rectangle
-               const undo = new EditCommandSimple('frustumSelection', selectionBox(selectionRectangle.start, selectionRectangle.end));
+               const undo = new EditCommandSimple(fn, selectionBox(selectionRectangle.start, selectionRectangle.end));
                if (undo.doIt(mode.current)) {
                   undoQueue( undo );
                }
@@ -952,6 +957,7 @@ const boxSelect = (function(){
             // cleanup
             Renderer.svgUI.removeChild(selectionRectangle.rect);
             selectionRectangle.rect = null;
+            modeHelp();
          }
       }
    };
@@ -964,7 +970,7 @@ const tweakSelect = (function() {   // it just like mousemove, but with leftButt
    let isMoved;
 
    return {
-      start: function(mousePos) {
+      start: function(_mousePos) {
          // hide cursor, magnet area
          gl.canvas.requestPointerLock();
          // start tweaking
@@ -982,7 +988,7 @@ const tweakSelect = (function() {   // it just like mousemove, but with leftButt
          Renderer.needToRedraw();
       },
  
-      finish: function(mousePos) {
+      finish: function(_ev) {
          // finish tweak
          if (isMoved) {
             undoQueue(tweak.finish());
@@ -1028,8 +1034,8 @@ function selectStart(ev) {
    selectionMode.start(mousePos);
 }
 
-function selectFinish(mousePos) {
-   selectionMode.finish(mousePos);
+function selectFinish(ev) {
+   selectionMode.finish(ev);
    selectionMode = noSelect;
 }
 
@@ -1040,7 +1046,7 @@ function canvasHandleMouseEnter(ev) {
 };
 
 function canvasHandleMouseLeave(ev) {
-   selectFinish(UI.getClientPosition(ev));       // we can't caputre mouseup when mouse leave, so force to finish the selection.
+   selectFinish(ev);       // we can't caputre mouseup when mouse leave, so force to finish the selection.
 };
 
 function canvasHandleMouseDown(ev) {
@@ -1070,7 +1076,7 @@ function canvasHandleMouseDown(ev) {
 // event handling, switching state if needs to be
 function canvasHandleMouseUp(ev) {
    if (ev.button == 0) {
-      selectFinish(UI.getClientPosition(ev));
+      selectFinish(ev);
    } else if (ev.button == 1) { // check for middle button down
       if (handler.camera === null) {
          ev.stopImmediatePropagation();

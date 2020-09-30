@@ -951,25 +951,35 @@ PreviewCage.prototype._resetSelectBody = function() {
  * temp non-optimize solution.
  * 
  */
-PreviewCage.prototype._selectBodyFrustum = function(frustum) {
-   if (this.selectedSet.size === 0) {
-      const snapshot = this.snapshotSelectionBody();
+PreviewCage.prototype._bodyFrustum = function(frustum) {
+   const snapshot = this.snapshotSelectionBody();
 
-      // brute-force. loop through all faces. we really should go through bvh first
-      for (const polygon of this.geometry.faces) {
-         if (!this.selectedSet.has(polygon)) {
-            let result = frustum.overlapSphere(polygon);
-            if (result > 0) { // totally inside
-               this.selectBody();
-               return snapshot;
-            } else if ( (result === 0) && frustum.overlapPolygon(polygon)) {  // partial overlap, check polygon directly.
-               this.selectBody();
-               return snapshot;
-            }
-         }
+   // brute-force. loop through all faces. we really should go through bvh first
+   for (const polygon of this.geometry.faces) {
+      let result = frustum.overlapSphere(polygon);
+      if (result > 0) { // totally inside
+         this.selectBody();
+         return snapshot;
+      } else if ( (result === 0) && frustum.overlapPolygon(polygon)) {  // partial overlap, check polygon directly.
+         this.selectBody();
+         return snapshot;
       }
    }
+
+   return null;
+}
+PreviewCage.prototype._selectBodyFrustum = function(frustum) {
+   if (!this.hasSelection()) {
+      return this._bodyFrustum(frustum);
+   }
    
+   return null;
+};
+PreviewCage.prototype._selectBodyFrustumDeselect = function(frustum) {
+   if (this.hasSelection()) {
+      return this._bodyFrustum(frustum);
+   }
+
    return null;
 };
 
@@ -1115,6 +1125,22 @@ PreviewCage.prototype._selectVertexFrustum = function(frustum) {
          if (frustum.containPoint(vertex)) {
             this.selectVertex(vertex);
          }
+      }
+   }
+   
+   if (size !== this.selectedSet.size) {
+      return snapshot;
+   }
+   return null;
+};
+PreviewCage.prototype._selectVertexFrustumDeselect = function(frustum) {
+   const size = this.selectedSet.size;
+   const snapshot = this.snapshotSelectionVertex();
+
+   // brute-force. loop through all selected vertex.
+   for (const vertex of this.selectedSet) { 
+      if (frustum.containPoint(vertex)) {
+         this.selectVertex(vertex);
       }
    }
    
@@ -1413,6 +1439,22 @@ PreviewCage.prototype._selectEdgeFrustum = function(frustum) {
    return null;
 };
 
+PreviewCage.prototype._selectEdgeFrustumDeselect = function(frustum) {
+   const size = this.selectedSet.size;
+   const snapshot = this.snapshotSelectionEdge();
+
+   // brute-force. loop through all selected wEdges
+   for (const wedge of this.selectedSet) { 
+      if (frustum.overlapHEdge(wedge.left)) {
+         this.selectEdge(wedge.left);
+      }
+   }
+   
+   if (size !== this.selectedSet.size) {
+      return snapshot;
+   }
+   return null;
+};
 
 PreviewCage.prototype._selectEdgeMore = function() {
    const snapshot = this.snapshotSelectionEdge();
@@ -1664,6 +1706,25 @@ PreviewCage.prototype._selectFaceFrustum = function(frustum) {
          } else if ( (result === 0) && frustum.overlapPolygon(polygon)) {  // partial overlap, check polygon directly.
             this.selectFace(polygon);
          }
+      }
+   }
+   
+   if (size !== this.selectedSet.size) {
+      return snapshot;
+   }
+   return null;
+};
+PreviewCage.prototype._selectFaceFrustumDeselect = function(frustum) {
+   const size = this.selectedSet.size;
+   const snapshot = this.snapshotSelectionFace();
+
+   // brute-force. loop through all selected faces. we really should go through bvh first
+   for (const polygon of this.selectedSet) {
+      let result = frustum.overlapSphere(polygon);
+      if (result > 0) { // totally inside
+         this.selectFace(polygon);
+      } else if ( (result === 0) && frustum.overlapPolygon(polygon)) {  // partial overlap, check polygon directly.
+         this.selectFace(polygon);
       }
    }
    

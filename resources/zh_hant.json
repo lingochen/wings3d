@@ -482,6 +482,8 @@
       "lights": "燈光",
       "materials": "材質",
       "images": "影象",
+      "deselectMarquee": "取消選定",
+      "whollyInsideMarquee": "（取消)選定完全位於選取框內的元素",
       "length": "長度",
       "vectorLength-help": "二次選集的向量長度",
       "width": "寬度",

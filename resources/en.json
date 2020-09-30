@@ -482,6 +482,8 @@
       "lights": "Lights",
       "materials": "Materials",
       "images": "Images",
+      "deselectMarquee": "Deselect",
+      "whollyInsideMarquee": "(De)select only elements wholly inside marquee",
       "length": "Length",
       "vectorLength-help": "Length of vector in secondary selections",
       "width": "Width",
