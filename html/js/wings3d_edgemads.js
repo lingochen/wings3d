@@ -336,8 +336,8 @@ class EdgeMadsor extends Madsor {
       return null;
    }
 
-   tweakStart(model, hilite, magnet) {
-      return new TweakMoveEdge(this, model, hilite, magnet);
+   _tweakMode(model, hilite, magnet) {
+      return new TweakMoveEdge(model, hilite, magnet);
    }
 
    isEdgeSelectable() { return true; }
@@ -398,9 +398,9 @@ class DragEdgeSelect extends DragSelect {
 
 
 class TweakMoveEdge extends TweakMove {
-   constructor(madsor, model, hilite, magnet) {
+   constructor(model, hilite, magnet) {
       let edge = model.tweakEdge(hilite.edge);
-      super(madsor, model);
+      super(model);
       if (edge) {
          this.edge = edge;
       }

@@ -287,8 +287,8 @@ class BodyMadsor extends Madsor {
       }    
    }
 
-   tweakStart(model, hilite, magnet) {
-      return new TweakMoveBody(this, model, hilite, magnet);
+   _tweakMode(model, hilite, magnet) {
+      return new TweakMoveBody(model, hilite, magnet);
    }
 
    selectBody(snapshots) { // use for unselect by similarSelection.
@@ -384,9 +384,9 @@ class DragBodySelect extends DragSelect {
 
 
 class TweakMoveBody extends TweakMove {
-   constructor(madsor, model, hilite, magnet) {
+   constructor(model, hilite, magnet) {
       let body = model.tweakBody(hilite.body);  // body===model
-      super(madsor, model);
+      super(model);
       if (body) {
          this.body = body;
       }
