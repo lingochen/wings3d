@@ -404,6 +404,21 @@ PreviewCage.prototype.getSelectedSorted = function() {
 }
 
 
+PreviewCage.prototype.getNotSelected = function(geometryMode) {
+   const selectedSet = this.selectedSet;
+   const difference = {
+      *[Symbol.iterator]() {
+         for (let wEdge of geometryMode) {
+            if (!selectedSet.has(wEdge)) {
+               yield wEdge;
+            }
+         }
+      }
+   }
+   return difference;
+};
+
+
 PreviewCage.duplicate = function(originalCage) {
    // copy geometry.
    const indexMap = new Map;
@@ -951,37 +966,41 @@ PreviewCage.prototype._resetSelectBody = function() {
  * temp non-optimize solution.
  * 
  */
-PreviewCage.prototype._bodyFrustum = function(frustum) {
-   const snapshot = this.snapshotSelectionBody();
+PreviewCage.prototype._selectBodyFrustum = function(frustum, deselecting) {
+   if (this.hasSelection() === deselecting) {
+      const snapshot = this.snapshotSelectionBody();
 
-   // brute-force. loop through all faces. we really should go through bvh first
-   for (const polygon of this.geometry.faces) {
-      let result = frustum.overlapSphere(polygon);
-      if (result > 0) { // totally inside
-         this.selectBody();
-         return snapshot;
-      } else if ( (result === 0) && frustum.overlapPolygon(polygon)) {  // partial overlap, check polygon directly.
-         this.selectBody();
-         return snapshot;
+      // brute-force. loop through all faces. we really should go through bvh first
+      for (const polygon of this.geometry.faces) {
+         let result = frustum.overlapSphere(polygon);
+         if (result > 0) { // totally inside
+            this.selectBody();
+            return snapshot;
+         } else if ( (result === 0) && frustum.overlapPolygon(polygon)) {  // partial overlap, check polygon directly.
+            this.selectBody();
+            return snapshot;
+         }
       }
    }
 
    return null;
 }
-PreviewCage.prototype._selectBodyFrustum = function(frustum) {
-   if (!this.hasSelection()) {
-      return this._bodyFrustum(frustum);
-   }
-   
-   return null;
-};
-PreviewCage.prototype._selectBodyFrustumDeselect = function(frustum) {
-   if (this.hasSelection()) {
-      return this._bodyFrustum(frustum);
+PreviewCage.prototype._selectBodyFrustumWhole = function(frustum, deselecting) {
+   if (this.hasSelection() === deselecting) {
+      const snapshot = this.snapshotSelectionBody();
+      for (const vertex of this.geometry.vertices) {
+         if (!frustum.containPoint(vertex)) {
+            return null;   // not whole
+         }
+      }
+      // whole
+      this.selectBody();
+      return snapshot;
    }
 
    return null;
-};
+}
+
 
 PreviewCage.prototype._selectBodyLess = function() {
    const snapshot = this.snapshotSelectionBody();
@@ -1115,30 +1134,16 @@ PreviewCage.prototype._resetSelectVertex = function() {
 };
 
 
-PreviewCage.prototype._selectVertexFrustum = function(frustum) {
+PreviewCage.prototype._selectVertexFrustum = function(frustum, deselecting) {
    const size = this.selectedSet.size;
    const snapshot = this.snapshotSelectionVertex();
 
+   let vertices = this.selectedSet;
+   if (!deselecting) {
+      vertices = this.getNotSelected(this.geometry.vertices);
+   }
    // brute-force. loop through all vertex,
-   for (const vertex of this.geometry.vertices) {
-      if (!this.selectedSet.has(vertex)) { 
-         if (frustum.containPoint(vertex)) {
-            this.selectVertex(vertex);
-         }
-      }
-   }
-   
-   if (size !== this.selectedSet.size) {
-      return snapshot;
-   }
-   return null;
-};
-PreviewCage.prototype._selectVertexFrustumDeselect = function(frustum) {
-   const size = this.selectedSet.size;
-   const snapshot = this.snapshotSelectionVertex();
-
-   // brute-force. loop through all selected vertex.
-   for (const vertex of this.selectedSet) { 
+   for (const vertex of vertices) {
       if (frustum.containPoint(vertex)) {
          this.selectVertex(vertex);
       }
@@ -1148,7 +1153,11 @@ PreviewCage.prototype._selectVertexFrustumDeselect = function(frustum) {
       return snapshot;
    }
    return null;
-};
+}
+PreviewCage.prototype._selectVertexFrustumWhole = function(frustum, deselecting) {
+   return this._selectVertexFrustum(frustum, deselecting);  // vertex selection is always full
+}
+
 
 PreviewCage.prototype._selectVertexMore = function() {
    const snapshot = this.snapshotSelectionVertex();
@@ -1377,7 +1386,7 @@ PreviewCage.prototype.selectEdge = function(selectEdge) {
 
    var onOff;
    if (this.selectedSet.has(wingedEdge)) {
-      this.selectedSet.delete(wingedEdge);5;
+      this.selectedSet.delete(wingedEdge);
       onOff = false;
    } else {
       this.selectedSet.add(wingedEdge);
@@ -1420,31 +1429,16 @@ PreviewCage.prototype._resetSelectEdge = function() {
  * temp non-optimize solution.
  * 
  */
-PreviewCage.prototype._selectEdgeFrustum = function(frustum) {
+PreviewCage.prototype._selectEdgeFrustum = function(frustum, deselecting) {
    const size = this.selectedSet.size;
    const snapshot = this.snapshotSelectionEdge();
 
-   // brute-force. loop through all wEdge
-   for (const wedge of this.geometry.edges) {
-      if (!this.selectedSet.has(wedge)) { 
-         if (frustum.overlapHEdge(wedge.left)) {
-            this.selectEdge(wedge.left);
-         }
-      }
+   let wEdges = this.selectedSet;
+   if (!deselecting) {
+      wEdges = this.getNotSelected(this.geometry.edges);
    }
-   
-   if (size !== this.selectedSet.size) {
-      return snapshot;
-   }
-   return null;
-};
-
-PreviewCage.prototype._selectEdgeFrustumDeselect = function(frustum) {
-   const size = this.selectedSet.size;
-   const snapshot = this.snapshotSelectionEdge();
-
-   // brute-force. loop through all selected wEdges
-   for (const wedge of this.selectedSet) { 
+   // brute-force. loop through all given wEdges
+   for (const wedge of wEdges) {
       if (frustum.overlapHEdge(wedge.left)) {
          this.selectEdge(wedge.left);
       }
@@ -1454,7 +1448,35 @@ PreviewCage.prototype._selectEdgeFrustumDeselect = function(frustum) {
       return snapshot;
    }
    return null;
-};
+}
+PreviewCage.prototype._selectEdgeFrustumWhole = function(frustum, deselecting) {
+   const size = this.selectedSet.size;
+   const snapshot = this.snapshotSelectionEdge();
+
+   // find the containing points
+   const points = new Set;
+   for (const vertex of this.geometry.vertices) {
+      if (frustum.containPoint(vertex)) {
+         points.add(vertex);
+      }
+   }
+   let wEdges = this.selectedSet;
+   if (!deselecting) {
+      wEdges = this.getNotSelected(this.geometry.edges);
+   }
+   for (const wEdge of wEdges) {
+      if ( points.has(wEdge.left.origin) && points.has(wEdge.right.origin) ) {
+         // yes wholly inside frustum.
+         this.selectEdge(wEdge.left);
+      }
+   }
+
+   if (size !== this.selectedSet.size) {
+      return snapshot;
+   }
+   return null;
+}
+
 
 PreviewCage.prototype._selectEdgeMore = function() {
    const snapshot = this.snapshotSelectionEdge();
@@ -1693,33 +1715,16 @@ PreviewCage.prototype._resetSelectFace = function() {
  * temp non-optimize solution.
  * 
  */
-PreviewCage.prototype._selectFaceFrustum = function(frustum) {
+PreviewCage.prototype._selectFaceFrustum = function(frustum, deselecting) {
    const size = this.selectedSet.size;
    const snapshot = this.snapshotSelectionFace();
 
-   // brute-force. loop through all faces. we really should go through bvh first
-   for (const polygon of this.geometry.faces) {
-      if (!this.selectedSet.has(polygon)) {
-         let result = frustum.overlapSphere(polygon);
-         if (result > 0) { // totally inside
-            this.selectFace(polygon);
-         } else if ( (result === 0) && frustum.overlapPolygon(polygon)) {  // partial overlap, check polygon directly.
-            this.selectFace(polygon);
-         }
-      }
+   let faces = this.selectedSet;
+   if (!deselecting) {
+      faces = this.getNotSelected(this.geometry.faces);
    }
-   
-   if (size !== this.selectedSet.size) {
-      return snapshot;
-   }
-   return null;
-};
-PreviewCage.prototype._selectFaceFrustumDeselect = function(frustum) {
-   const size = this.selectedSet.size;
-   const snapshot = this.snapshotSelectionFace();
-
    // brute-force. loop through all selected faces. we really should go through bvh first
-   for (const polygon of this.selectedSet) {
+   for (const polygon of faces) {
       let result = frustum.overlapSphere(polygon);
       if (result > 0) { // totally inside
          this.selectFace(polygon);
@@ -1731,6 +1736,48 @@ PreviewCage.prototype._selectFaceFrustumDeselect = function(frustum) {
    if (size !== this.selectedSet.size) {
       return snapshot;
    }
+   return null;
+}
+PreviewCage.prototype._selectFaceFrustumWhole = function(frustum, deselecting) {
+   const size = this.selectedSet.size;
+   const snapshot = this.snapshotSelectionFace();
+
+   // find the containing points
+   const points = new Set;
+   for (const vertex of this.geometry.vertices) {
+      if (frustum.containPoint(vertex)) {
+         points.add(vertex);
+      }
+   }
+
+   // find iterating set
+   let faces = this.selectedSet;
+   if (!deselecting) {
+      faces = this.getNotSelected(this.geometry.faces);
+   }
+   // brute-force. loop through all selected faces. we really should go through bvh first
+   for (const polygon of faces) {
+      let result = frustum.overlapSphere(polygon);
+      if (result > 0) { // totally inside
+         this.selectFace(polygon);
+      } else if ( result === 0 ) {// partial overlap
+         let isWhole = true;
+         for (const point of polygon.eachVertex()) {
+            if (!points.has(point)) {
+               isWhole = false;
+               break;
+            }
+         }
+         if (isWhole) {
+            this.selectFace(polygon);
+         }
+      }
+   }
+   
+   if (size !== this.selectedSet.size) {
+      return snapshot;
+   }
+
    return null;
 };
 

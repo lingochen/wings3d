@@ -937,19 +937,20 @@ const boxSelect = (function(){
          selectionRectangle.rect.setAttributeNS(null, 'y', y);
          selectionRectangle.rect.setAttributeNS(null, 'width', width);
          selectionRectangle.rect.setAttributeNS(null, 'height', height);
-         help(`[Ctrl] ${i18n('deselectMarquee')}`);//    [Shift] ${i18n('whollyInsideMarquee')}`);
+         help(`[Ctrl] ${i18n('deselectMarquee')}    [Shift] ${i18n('whollyInsideMarquee')}`);
       },
 
       finish: function(ev) {
          if (selectionRectangle.rect) {
             let fn = 'frustumSelection';
-            if (ev.ctrlKey) {
-               fn = 'frustumDeselection';
+            if (ev.shiftKey) {
+               fn = 'frustumSelectionWhole';
             }
+            const deselecting = ev.ctrlKey;
             if (selectionRectangle.start.x !== selectionRectangle.end.x &&
                selectionRectangle.start.y !== selectionRectangle.end.y) {   // won't do zero width, or zero height.
                // select everything inside the selection rectangle
-               const undo = new EditCommandSimple(fn, selectionBox(selectionRectangle.start, selectionRectangle.end));
+               const undo = new EditCommandSimple(fn, selectionBox(selectionRectangle.start, selectionRectangle.end), deselecting);
                if (undo.doIt(mode.current)) {
                   undoQueue( undo );
                }
