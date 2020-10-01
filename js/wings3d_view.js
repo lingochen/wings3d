@@ -969,6 +969,7 @@ const boxSelect = (function(){
 const tweakSelect = (function() {   // it just like mousemove, but with leftButton pressed down and move
    let tweak;
    let isMoved;
+   let tweakMode = "tweakMove";
 
    return {
       start: function(_mousePos) {
@@ -979,13 +980,14 @@ const tweakSelect = (function() {   // it just like mousemove, but with leftButt
          if (isMultiMode()) {
             for (let current of ['vertex', 'edge', 'face', 'body']) {
                if (hilite[current]) {
-                  tweak = mode[current].tweakStart(lastPick.model, hilite);
+                  tweak = mode[current];//.tweakMove(lastPick.model, hilite);
                   break;
                } 
             }
          } else {
-            tweak = mode.current.tweakStart(lastPick.model, hilite);
+            tweak = mode.current;//.tweakMove(lastPick.model, hilite);
          }
+         tweak = tweak[tweakMode](lastPick.model, hilite);
          Renderer.needToRedraw();
       },
  
@@ -1010,6 +1012,10 @@ const tweakSelect = (function() {   // it just like mousemove, but with leftButt
          tweak.handleMove(ev, Camera.view);
          Renderer.needToRedraw();
       },
+
+      setMode(mode) {
+         tweakMode = mode;
+      }
    };
 }());
 
@@ -1471,16 +1477,6 @@ function init() {
     });
    
    // tweakMode
-   UI.bindMenuItem(Wings3D.action.toggleTweak.name, function(ev) {
-      const toggle = toggleTweak();
-      // find all tweakMode 
-      const checkboxes = document.querySelectorAll('input[name="tweakMode"]');
-      for (let check of checkboxes) {
-         if (check !== ev.target) { // don't toggle the checkbox that trigger the event, it mess up the state
-            check.checked = toggle;
-         }
-      }
-    });
    UI.bindMenuItem(Wings3D.action.openTweak.name, (ev) => {
       const popup = document.querySelector('#tweak-context-menu');
       // move to ev.target's location
@@ -1490,6 +1486,36 @@ function init() {
       popup.style.left = mousePos.x + 'px';
       popup.style.top = mousePos.y + 'px';
       UI.queuePopupMenu(popup);
+    });
+   UI.bindMenuItem(Wings3D.action.toggleTweak.name, function(ev) {
+      const toggle = toggleTweak();
+      // find all tweakMode 
+      const checkboxes = document.querySelectorAll('input[data-menuid="toggleTweak"]');
+      for (let check of checkboxes) {
+         if (check !== ev.target) { // don't toggle the checkbox that trigger the event, it mess up the state
+            check.checked = toggle;
+         }
+      }
+    });
+   UI.bindMenuItem(Wings3D.action.tweakMoveFree.name, function(ev) {
+      tweakSelect.setMode("tweakMove");
+      const radio = document.querySelector('input[data-menuid="tweakMoveFree"');
+      radio.checked = true;
+    });
+   UI.bindMenuItem(Wings3D.action.tweakMoveNormal.name, function(ev) {
+      tweakSelect.setMode("tweakMoveNormal");
+      const radio = document.querySelector('input[data-menuid="tweakMoveNormal"');
+      radio.checked = true;
+    });
+   UI.bindMenuItem(Wings3D.action.tweakScaleFree.name, function(ev) {
+      tweakSelect.setMode("tweakScale");
+      const radio = document.querySelector('input[data-menuid="tweakScaleFree"');
+      radio.checked = true;
+    });
+   UI.bindMenuItem(Wings3D.action.tweakScaleUniform.name, function(ev) {
+      tweakSelect.setMode("tweakScaleUniform");
+      const radio = document.querySelector('input[data-menuid="tweakScaleUniform"');
+      radio.checked = true;
     });
 
    // Image List.

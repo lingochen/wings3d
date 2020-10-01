@@ -268,6 +268,10 @@ const action = {
    toggleAxes: ()=> {notImplemented(this);},
    // tweakMode
    toggleTweak: ()=> {notImplemented(this);},
+   tweakMoveFree: ()=> {notImplemented(this);},
+   tweakMoveNormal: ()=> {notImplemented(this);},
+   tweakScaleFree: ()=> {notImplemented(this);},
+   tweakScaleUniform: ()=> {notImplemented(this);},
    // createObject Menu
    createCube: () => {notImplemented(this);},
    createCubePref: () =>{notImplemented(this);},

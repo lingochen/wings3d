@@ -355,6 +355,34 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       return false;  // null? 
    }
 
+   tweakMove(model, hilite, magnet) {
+      const ret = this._tweakMode(model, hilite, magnet);
+      ret.setHandler(new MoveFreePositionHandler(this));
+      return ret;
+   }
+
+   tweakMoveNormal(model, hilite, magnet) {
+      const ret = this._tweakMode(model, hilite, magnet);
+      ret.setHandler(new MoveAlongNormal(this));
+      return ret;
+   }
+
+   tweakScale(model, hilite, magnet) {
+      const ret =  this._tweakMode(model, hilite, magnet);
+      ret.setHandler(new ScaleFreeHandler(this));
+      return ret;
+   }
+
+   tweakScaleUniform(model, hilite, magnet) {
+      const ret = this._tweakMode(model, hilite, magnet);
+      ret.setHandler(new ScaleHandler(this, [1, 1, 1]));
+      return ret;
+   }
+
+   //tweakRelax() {}
+
+   //tweakSlide() {}
+
    frustumSelection(frustum, deselecting) {
       return this._doSelection({name: 'Frustum', params: [frustum, deselecting]}, true);
    }
@@ -505,10 +533,13 @@ class DragSelect {
 
 
 class TweakMove { // reuse movePositionHandler.
-   constructor(madsor, model) {
+   constructor(model) {
       // select hilite if not already.
       this.model = model;
-      this.moveHandler = new MoveFreePositionHandler(madsor);
+   }
+
+   setHandler(moveHandler) {
+      this.moveHandler = moveHandler;
    }
 
 /*   finish() {
@@ -735,6 +766,29 @@ class MoveFreePositionHandler extends MovePositionHandler {
 }
 
 
+class ScaleFreeHandler extends MovePositionHandler {
+   constructor(madsor) {
+      const snapshots = madsor.snapshotTransformGroup();
+      super(madsor, snapshots, [1, 1, 1]);
+   }
+
+   _transformSelection(axis) {
+      this.madsor.scaleSelection(this.snapshots, 1, axis);
+   }
+
+
+   _updateMovement(ev, cameraView) {
+      let x = cameraView.calibrateMovement(ev.movementX);
+      let y = cameraView.calibrateMovement(-ev.movementY);
+      var cam = cameraView.inverseCameraVectors();
+      // move parallel to camera.
+      var movement = [cam.x[0]*x, 0, cam.x[2]*x];
+      vec3.add(this.movement, this.movement, movement);
+      return this.movement;
+   }
+}
+
+
 class ScaleHandler extends MovePositionHandler {
    constructor(madsor, axis) {
       const snapshots = madsor.snapshotTransformGroup();
@@ -752,6 +806,7 @@ class ScaleHandler extends MovePositionHandler {
       return this.movement;
    }
 }
+
 
 
 // movement handler.

@@ -145,8 +145,8 @@ class VertexMadsor extends Madsor {
       return null;
    }
 
-   tweakStart(model, hilite, magnet) {
-      return new TweakMoveVertex(this, model, hilite, magnet);
+   _tweakMode(model, hilite, magnet) {
+      return new TweakMoveVertex(model, hilite, magnet);
    }
 
    isVertexSelectable() { return true; }
@@ -208,9 +208,9 @@ class DragVertexSelect extends DragSelect {
 }
 
 class TweakMoveVertex extends TweakMove {
-   constructor(madsor, model, hilite, magnet) {
+   constructor(model, hilite, magnet) {
       let vertex = model.tweakVertex(hilite.vertex);
-      super(madsor, model);
+      super(model);
       if (vertex) {
          this.vertex = vertex;
       }

@@ -244,8 +244,8 @@ class FaceMadsor extends Madsor {
       }    
    }
 
-   tweakStart(model, hilite, magnet) {
-      return new TweakMoveFace(this, model, hilite, magnet);
+   _tweakMode(model, hilite, magnet) {
+      return new TweakMoveFace(model, hilite, magnet);
    }
 
    isFaceSelectable() { return true; }
@@ -303,9 +303,9 @@ class DragFaceSelect extends DragSelect {
 
 
 class TweakMoveFace extends TweakMove {
-   constructor(madsor, model, hilite, magnet) {
+   constructor(model, hilite, magnet) {
       let face = model.tweakFace(hilite.face);
-      super(madsor, model);
+      super(model);
       if (face) {
          this.face = face;
       }
