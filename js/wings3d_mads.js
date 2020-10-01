@@ -355,12 +355,12 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       return false;  // null? 
    }
 
-   frustumSelection(frustum) {
-      return this._doSelection({name: 'Frustum', params: [frustum]}, true);
+   frustumSelection(frustum, deselecting) {
+      return this._doSelection({name: 'Frustum', params: [frustum, deselecting]}, true);
    }
 
-   frustumDeselection(frustum) {
-      return this._doSelection({name: 'FrustumDeselect', params:[frustum]}, true);
+   frustumSelectionWhole(frustum, deselecting) {
+      return this._doSelection({name: 'FrustumWhole', params:[frustum, deselecting]}, true);
    }
 
    similarSelection() {
