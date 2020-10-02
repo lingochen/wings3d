@@ -169,8 +169,10 @@ function i18nSetup(element) {
       let i18n = elem.getAttribute(i18nAttrib);
       if (!i18n) { // not empty string
          i18n = elem.textContent.replace(/ /g,'');
-         i18n = i18n.replace(/^.{1}/g, i18n[0].toLowerCase());
-         elem.setAttribute(i18nAttrib, i18n);
+         if (i18n) {
+            i18n = i18n.replace(/^.{1}/g, i18n[0].toLowerCase());
+            elem.setAttribute(i18nAttrib, i18n);
+         }
       }
       if (elem.hasAttribute(tooltipAttrib)) {
          elem.setAttribute(tooltipAttrib, i18n);
@@ -182,8 +184,10 @@ function i18nSetup(element) {
       let str = elem.getAttribute(tooltipAttrib);
       if (!str) { // empty tooltip, needs to setup again.
          str = elem.textContent.replace(/ /g,'');
-         str = str.replace(/^.{1}/g, str[0].toLowerCase());
-         elem.setAttribute(tooltipAttrib, str);
+         if (str) {
+            str = str.replace(/^.{1}/g, str[0].toLowerCase());
+            elem.setAttribute(tooltipAttrib, str);
+         }
       }
    }
 
