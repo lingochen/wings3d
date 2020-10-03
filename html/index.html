@@ -395,7 +395,16 @@
       <li><input type="checkbox" checked="checked" data-menuid="toggleTweak"><a data-menuid="toggleTweak" data-i18n>Tweak</a></li>
       <li><hr /></li>
       <li class="not-implemented"><a data-menuid="magnetsMenu" data-i18n>Magnets</a></li>
-      <li class="not-implemented"><a data-menuid="axisConstraintsMenu" data-i18n>Axis Constraints</a></li>
+      <li class="dropside">
+        <a data-menuid="axisConstraintsMenu" data-i18n>Axis Constraints</a>
+        <ul class="popup menu">
+          <li><a data-menuid="constraintX">X</a></li>
+          <li><a data-menuid="constraintY">Y</a></li>
+          <li><a data-menuid="constraintZ">Z</a></li>
+          <li><hr /></li>
+          <li><a data-menuid="constraintNormal" data-i18n>Normal</a></li>
+        </ul>
+      </li>
       <li><hr /></li>
       <li><input type="radio" checked="checked" name="tweakMode" data-menuid="tweakMoveFree"><a data-menuid="tweakMoveFree" data-i18n>Move</a></li>
       <li><input type="radio" name="tweakMode" data-menuid="tweakMoveNormal"><a data-menuid="tweakMoveNormal" data-i18n>Move Normal</a></li>

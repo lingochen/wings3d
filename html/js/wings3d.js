@@ -272,6 +272,7 @@ const action = {
    tweakMoveNormal: ()=> {notImplemented(this);},
    tweakScaleFree: ()=> {notImplemented(this);},
    tweakScaleUniform: ()=> {notImplemented(this);},
+   axisConstraintsMenu: ()=> {notImpelmented(this);},
    // createObject Menu
    createCube: () => {notImplemented(this);},
    createCubePref: () =>{notImplemented(this);},

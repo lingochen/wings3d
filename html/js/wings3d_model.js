@@ -2053,6 +2053,39 @@ PreviewCage.prototype.rotateSelection = function(snapshot, quatRotate, center) {
 };
 
 //
+// scale selection along arbitray axis
+//
+PreviewCage.prototype.scaleAxisSelection = function(snapshot, scale, axis) {
+   //const translate = [0, 0, 0];
+   const scaleV = [scale, 1, 1];
+   vec3.normalize(axis, axis);
+
+   const newAxis = [1, 0, 0]
+   let theta = Math.acos(vec3.dot(axis, newAxis));
+   vec3.cross(newAxis, axis, newAxis);
+   vec3.normalize(newAxis, newAxis);
+   if (theta > (Math.PI / 2)) {
+      vec3.scale(newAxis, newAxis, -1.0);
+      theta = Math.PI - theta;
+   }
+
+   this.transformSelection(snapshot, (transform, origin) => {
+      let scale = mat4.create();
+      mat4.fromScaling(scale, scaleV);
+      let rotate = mat4.create();
+      mat4.fromRotation(rotate, theta, newAxis);
+      let rotateInv = mat4.create();
+      mat4.transpose(rotateInv, rotate);
+      
+      mat4.translate(transform, transform, origin);
+      mat4.mul(transform, transform, rotateInv);
+      mat4.mul(transform, transform, scale);
+      mat4.mul(transform, transform, rotate);
+      mat4.translate(transform, transform, [-origin[0], -origin[1], -origin[2]]);
+    });
+};
+
+//
 // scale selection, by moving vertices
 //
 PreviewCage.prototype.scaleSelection = function(snapshot, scale, axis) {

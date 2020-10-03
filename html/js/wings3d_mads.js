@@ -328,6 +328,10 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       this.doAll(snapshots, PreviewCage.prototype.scaleSelection, scale, axis);
    }
 
+   scaleAxisSelection(snapshots, scale, axis) {
+      this.doAll(snapshots, PreviewCage.prototype.scaleAxisSelection, scale, axis);
+   }
+
    // rotate vertices
    rotateSelection(snapshots, quatRotate, center) {
       this.doAll(snapshots, PreviewCage.prototype.rotateSelection, quatRotate, center);
@@ -769,21 +773,34 @@ class MoveFreePositionHandler extends MovePositionHandler {
 class ScaleFreeHandler extends MovePositionHandler {
    constructor(madsor) {
       const snapshots = madsor.snapshotTransformGroup();
-      super(madsor, snapshots, [1, 1, 1]);
+      super(madsor, snapshots, 1);
+      this.alongX = -1;
    }
 
-   _transformSelection(axis) {
-      this.madsor.scaleSelection(this.snapshots, 1, axis);
+   _transformSelection(scale) {
+      //this.madsor.scaleSelection(this.snapshots, scale, this.axis);
+      this.madsor.scaleAxisSelection(this.snapshots, scale, this.axis);
    }
 
 
    _updateMovement(ev, cameraView) {
-      let x = cameraView.calibrateMovement(ev.movementX);
-      let y = cameraView.calibrateMovement(-ev.movementY);
       var cam = cameraView.inverseCameraVectors();
-      // move parallel to camera.
-      var movement = [cam.x[0]*x, 0, cam.x[2]*x];
-      vec3.add(this.movement, this.movement, movement);
+      if (this.alongX < 0) {  // first time, check we scaling along x or y
+         const value = Math.abs(ev.movementX) - Math.abs(ev.movementY);
+         if (value > 0) {
+            this.alongX = 1;
+         } else if (value < 0) {
+            this.alongX = 0;
+         }
+      }
+      // now find the axis-vector to scale along.
+      if (this.alongX > 0) {
+         this.movement += cameraView.scaleMovement(ev.movementX);   // return +-percentage
+         this.axis = cam.x;
+      } else {
+         this.movement += cameraView.scaleMovement(ev.movementY);   // return +-percentage
+         this.axis = cam.y;
+      }
       return this.movement;
    }
 }
