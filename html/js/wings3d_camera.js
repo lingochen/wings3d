@@ -84,9 +84,9 @@ class CameraMouseMoveHandler extends MouseMoveHandler {
                var cam = mat4.create();
                // fromTranslation, identity * vec3. modelView rest.
                mat4.fromTranslation(cam, vec3.fromValues(-camera.panX, -camera.panY, camera.distance));
-               mat4.rotateX(cam, cam, -camera.elevation * Math.PI / 180);
                mat4.rotateY(cam, cam, -camera.azimuth * Math.PI / 180);
-               mat4.translate(cam, cam, -camera.origin);
+               mat4.rotateX(cam, cam, -camera.elevation * Math.PI / 180);
+               mat4.translate(cam, cam, [-camera.origin[0], -camera.origin[1], -camera.origin[2]]);
                // x===right, y===up, z===forward.
                var ret = {x: [cam[0], cam[1], cam[2]], 
                           y: [cam[4], cam[5], cam[6]], 
