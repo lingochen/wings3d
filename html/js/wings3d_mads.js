@@ -10,8 +10,9 @@ import * as View from './wings3d_view.js';
 import * as UI from './wings3d_ui.js';
 import * as Util from './wings3d_util.js';
 import {action} from './wings3d.js';
-import { Plane } from './wings3d_geomutil.js';
+import { computeAxisScale, Plane } from './wings3d_geomutil.js';
 import { HalfEdge } from './wings3d_wingededge.js';
+import {tweakConstraint} from './wings3d_tweak.js';
 const {vec3, quat} = glMatrix;
 
 
@@ -555,7 +556,7 @@ class TweakMove { // reuse movePositionHandler.
    } */
 
    handleMove(ev, cameraView) {   // event
-      this.moveHandler.handleMouseMove(ev, cameraView);
+      this.moveHandler.handleMouseMove(ev, cameraView, true);
    }
 }
 
@@ -632,8 +633,8 @@ class MovePositionHandler extends MouseMoveHandler {
       this.madsor.updatePosition(this.snapshots);
    }
 
-   handleMouseMove(ev, cameraView) {
-      this._transformSelection(this._updateMovement(ev, cameraView));
+   handleMouseMove(ev, cameraView, tweak = false) {
+      this._transformSelection(this._updateMovement(ev, cameraView, tweak));
    }
 
    _transformSelection(transform) {
@@ -758,12 +759,15 @@ class MoveFreePositionHandler extends MovePositionHandler {
       super(madsor, madsor.snapshotPosition(), [0.0, 0.0, 0.0]);
    }
 
-   _updateMovement(ev, cameraView) {
+   _updateMovement(ev, cameraView, tweak) {
       let x = cameraView.calibrateMovement(ev.movementX);
       let y = cameraView.calibrateMovement(-ev.movementY);
-      var cam = cameraView.inverseCameraVectors();
+      let cam = cameraView.inverseCameraVectors();
       // move parallel to camera.
-      var movement = [cam.x[0]*x + cam.y[0]*y, cam.x[1]*x + cam.y[1]*y, cam.x[2]*x + cam.y[2]*y];
+      let movement = [cam.x[0]*x + cam.y[0]*y, cam.x[1]*x + cam.y[1]*y, cam.x[2]*x + cam.y[2]*y];
+      if (tweak) {
+         movement = tweakConstraint(movement);
+      }
       vec3.add(this.movement, this.movement, movement);
       return movement;
    }
@@ -783,7 +787,7 @@ class ScaleFreeHandler extends MovePositionHandler {
    }
 
 
-   _updateMovement(ev, cameraView) {
+   _updateMovement(ev, cameraView, tweak) {
       var cam = cameraView.inverseCameraVectors();
       if (this.alongX < 0) {  // first time, check we scaling along x or y
          const value = Math.abs(ev.movementX) - Math.abs(ev.movementY);
@@ -800,6 +804,9 @@ class ScaleFreeHandler extends MovePositionHandler {
       } else {
          this.movement += cameraView.scaleMovement(ev.movementY);   // return +-percentage
          this.axis = cam.y;
+      }
+      if (tweak) {
+         this.axis = tweakConstraint(this.axis);
       }
       return this.movement;
    }
