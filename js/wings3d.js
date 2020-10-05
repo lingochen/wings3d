@@ -273,6 +273,9 @@ const action = {
    tweakScaleFree: ()=> {notImplemented(this);},
    tweakScaleUniform: ()=> {notImplemented(this);},
    axisConstraintsMenu: ()=> {notImpelmented(this);},
+   constraintX: ()=>{notImplemented(this);},
+   constraintY: ()=>{notImplemented(this);},
+   constraintZ: ()=>{notImplemented(this);},
    // createObject Menu
    createCube: () => {notImplemented(this);},
    createCubePref: () =>{notImplemented(this);},

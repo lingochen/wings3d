@@ -3,7 +3,7 @@
  * 
  */
 //import vec3 from '../vendor/gl-matrix-min.js';
-const {vec3} = glMatrix;
+const {vec3, mat4} = glMatrix;
 
 const kEPSILON = 0.000001;
 
@@ -318,6 +318,41 @@ function closestPointToPlane(out, point, plane) { // projection to plane
 
 
 /**
+ * don't work, we probabaly have to return the full transform.
+ */
+function computeAxisScale(scaling, axis) {
+   //const translate = [0, 0, 0];
+   const scaleV = [scaling, 1, 1];
+   vec3.normalize(axis, axis);
+
+   const newAxis = [1, 0, 0]
+   let theta = Math.acos(vec3.dot(axis, newAxis));
+   vec3.cross(newAxis, axis, newAxis);
+   vec3.normalize(newAxis, newAxis);
+   if (theta > (Math.PI / 2)) {
+      vec3.scale(newAxis, newAxis, -1.0);
+      theta = Math.PI - theta;
+   }
+
+   const transform = mat4.create();
+   const scale = mat4.create();
+   mat4.fromScaling(scale, scaleV);
+   const rotate = mat4.create();
+   mat4.fromRotation(rotate, theta, newAxis);
+   const rotateInv = mat4.create();
+   mat4.transpose(rotateInv, rotate);
+      
+   //mat4.translate(transform, transform, origin);
+      mat4.mul(transform, transform, rotateInv);
+      mat4.mul(transform, transform, scale);
+      mat4.mul(transform, transform, rotate);
+   //mat4.translate(transform, transform, [-origin[0], -origin[1], -origin[2]]);
+
+   return transform;
+}
+
+
+/**
  * 
  */
 function pickMat4(pick, x, y, width, height, viewport) {
@@ -509,6 +544,7 @@ class Ray {
 export {
    closestPointToPlane,
    computeAngle,
+   computeAxisScale,
    getAxisAngle,
    computeEdgeNormal,  
    intersectTriangle,
