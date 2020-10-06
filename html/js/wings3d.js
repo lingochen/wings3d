@@ -252,6 +252,13 @@ const action = {
    saveAs: () => {notImpelmented(this);},
    open: () => {notImplemented(this);},
    clearNew: () => {notImplemented(this);},
+   // windowMenu
+   windowMenu: ()=>{notImplemented(this);},
+   geometryWindow: ()=>{notImplemented(this);},
+   singlePane: ()=>{notImplemented(this);},
+   horizontalPane: ()=>{notImplemented(this);},
+   verticalPane: ()=>{notImplemented(this);},
+   quadPane: ()=>{notImplemented(this);},
    // view action, button bar
    openSidebar: () => {notImplemented(this);},
    toggleVertexMode: () => {notImplemented(this);},
