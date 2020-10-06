@@ -166,8 +166,19 @@
           <li><a data-menuid="openTweak" data-i18n>Tweak</a></li>
         </ul>
       </li>
-      <li>
-        <a data-i18n>Window</a>
+      <li class="dropdown">
+        <a data-menuid="windowMenu" data-i18n>Window</a>
+        <ul class="popup menu">
+          <li class="dropside">
+            <a data-menuid="geometryWindow" data-i18n>Geometry Window</a>
+            <ul class="popup menu">
+              <li><input type="radio" checked="checked" name="geometryPane" data-menuid="singlePane"><a data-menuid="singlePane" data-i18n>Single Pane</a></li>
+              <li><input type="radio" name="geometryPane" data-menuid="horizontalPane"><a data-menuid="horizontalPane" data-i18n>Horizontal Panes</a></li>
+              <li><input type="radio" name="geometryPane" data-menuid="verticalPane"><a data-menuid="verticalPane" data-i18n>Vertical Panes</a></li>
+              <li><input type="radio" name="geometryPane" data-menuid="quadPane"><a data-menuid="quadPane" data-i18n>Quad Panes</a></li>
+            </ul>
+          </li>
+        </ul>
       </li>
       <li class="dropdown">
         <a data-menuid="helpMenu" data-i18n>Help</a>
@@ -477,10 +488,10 @@
       <li class="dropside">
         <a data-menuid="cutMenu" data-i18n>Cut</a>
         <ul class="popup menu">
-          <li><a data-menuid="cutLine2">2 <span data-i18n>Segments</a></li>
-          <li><a data-menuid="cutLine3">3 <span data-i18n>Segments</a></li>
-          <li><a data-menuid="cutLine4">4 <span data-i18n>Segments</a></li>
-          <li><a data-menuid="cutLine5">5 <span data-i18n>Segments</a></li>
+          <li><a data-menuid="cutLine2">2 <span data-i18n>Segments</span></a></li>
+          <li><a data-menuid="cutLine3">3 <span data-i18n>Segments</span></a></li>
+          <li><a data-menuid="cutLine4">4 <span data-i18n>Segments</span></a></li>
+          <li><a data-menuid="cutLine5">5 <span data-i18n>Segments</span></a></li>
           <li><hr /></li>
           <li><a data-menuid="cutLine10">10 <span data-i18n>Segments</span></a></li>
           <li><hr /></li>

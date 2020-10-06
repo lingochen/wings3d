@@ -444,7 +444,7 @@ function slideBack() {
    let element = grandParent.firstElementChild;
    do {
       //if (element !== dropside) {
-         element.style.visibility = "inherit";
+         element.classList.remove('slideOut');
       //}
    } while (element = element.nextElementSibling);
    if (submenu.length > 0) {
@@ -477,7 +477,7 @@ function toggleSubmenu(ul) {
       let element = grandParent.firstElementChild;
       do {
          if (element !== dropside) {
-            element.style.visibility = "hidden";
+            element.classList.add('slideOut');
          }
       } while (element = element.nextElementSibling);
       submenu.push(ul);
