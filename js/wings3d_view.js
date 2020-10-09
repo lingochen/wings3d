@@ -6,7 +6,7 @@
 
 import * as UI from './wings3d_ui.js';
 import * as Renderer from './wings3d_render.js';
-import * as Camera from './wings3d_camera.js';
+//import * as Camera from './wings3d_camera.js';
 import {i18n} from './wings3d_i18n.js';
 import {gl} from './wings3d_gl.js';
 import {WavefrontObjImportExporter } from './plugins/wavefront_obj.js';
@@ -20,7 +20,7 @@ import {BodyMadsor, DeleteBodyCommand, DuplicateBodyCommand} from './wings3d_bod
 import {MultiMadsor} from './wings3d_multimads.js';
 import {PreviewCage, PreviewGroup} from './wings3d_model.js';
 import {DraftBench} from './wings3d_draftbench.js';
-import {Plane, Frustum, Ray} from './wings3d_geomutil.js';
+import {Ray} from './wings3d_geomutil.js';
 import * as Hotkey from './wings3d_hotkey.js';
 import * as Util from './wings3d_util.js';
 import * as TreeView from './wings3d_uitree.js';
@@ -721,7 +721,7 @@ function setCurrent(edge, intersect, center) {
 
 function attachHandlerCamera(camera) {
    function gotoExit(mousePos) {
-      Wings3D.log(Wings3D.action.cameraModeExit, Camera.view);
+      Wings3D.log(Wings3D.action.cameraModeExit, Renderer.camera);
       modeHelp();
       handler.camera = null;
       document.exitPointerLock();
@@ -730,7 +730,7 @@ function attachHandlerCamera(camera) {
    // let camera handle the mouse event until it quit.0
    gl.canvas.requestPointerLock();
    // tell tutor step, we are in camera mode
-   Wings3D.log(Wings3D.action.cameraModeEnter, Camera.view);
+   Wings3D.log(Wings3D.action.cameraModeEnter, Renderer.camera);
    help(`L:${i18n('accept')}   M:${i18n('dragPan')}  R:${i18n('cancelRestoreView')}   ${i18n('moveMouseTumble')}`);
 
    handler.camera = {
@@ -775,7 +775,7 @@ function attachHandlerMouseMove(mouseMove) {
       },
 
       onMove: (ev)=>{
-         mouseMove.handleMouseMove(ev, Camera.view);
+         mouseMove.handleMouseMove(ev, Renderer.camera);
          Renderer.needToRedraw();
       }
    };
@@ -821,7 +821,7 @@ function modeHelp() {
 //
 let lastPick = null;
 function rayPick(mousePos) {
-   const [ptNear, ptFar] = screenPointToWorld( mousePos );
+   const [ptNear, ptFar] = Renderer.screenPointToWorld( mousePos );
    vec3.sub(ptFar, ptFar, ptNear);
    vec3.normalize(ptFar, ptFar);
    const ray = new Ray(ptNear, ptFar);
@@ -950,7 +950,7 @@ const boxSelect = (function(){
             if (selectionRectangle.start.x !== selectionRectangle.end.x &&
                selectionRectangle.start.y !== selectionRectangle.end.y) {   // won't do zero width, or zero height.
                // select everything inside the selection rectangle
-               const undo = new EditCommandSimple(fn, selectionBox(selectionRectangle.start, selectionRectangle.end), deselecting);
+               const undo = new EditCommandSimple(fn, Renderer.selectionBox(selectionRectangle.start, selectionRectangle.end), deselecting);
                if (undo.doIt(mode.current)) {
                   undoQueue( undo );
                }
@@ -1009,7 +1009,7 @@ const tweakSelect = (function() {   // it just like mousemove, but with leftButt
    
       move: function(ev) {
          isMoved = true;
-         tweak.handleMove(ev, Camera.view);
+         tweak.handleMove(ev, Renderer.camera);
          Renderer.needToRedraw();
       },
 
@@ -1088,7 +1088,7 @@ function canvasHandleMouseUp(ev) {
       if (handler.camera === null) {
          ev.stopImmediatePropagation();
          // let camera handle the mouse event until it quit.
-         attachHandlerCamera( Camera.getMouseMoveHandler() );
+         attachHandlerCamera( Renderer.camera.getMouseMoveHandler() );
       } 
    } else if (ev.button === 2) { // hack up 2019/07/26 to handle no contextmenu event in pointerLock, - needs refactor
       if (handler.camera) {      // firefox will generate contextmenu event if we put it on mouseDown.
@@ -1139,7 +1139,7 @@ function canvasHandleWheel(e) {
    }
    
    // asks camera to zoomIn/Out.
-   Camera.zoomStep(py);
+   Renderer.camera.zoomStep(py);
 };
 
 //-- end of mouse handling-----------------------------------------------
@@ -1152,19 +1152,19 @@ function canvasHandleKeyDown(evt) {
    switch (evt.key) {
       case "Down": // IE/Edge specific value
       case "ArrowDown":
-        Camera.keyPanDownArrow();
+        Renderer.camera.keyPanDownArrow();
         break;
       case "Up": // IE/Edge specific value
       case "ArrowUp":
-        Camera.keyPanUpArrow();
+        Renderer.camera.keyPanUpArrow();
         break;
       case "Left": // IE/Edge specific value
       case "ArrowLeft":
-        Camera.keyPanLeftArrow();
+        Renderer.camera.keyPanLeftArrow();
         break;
       case "Right": // IE/Edge specific value
       case "ArrowRight":
-        Camera.keyPanRightArrow();
+        Renderer.camera.keyPanRightArrow();
         break;
       default:
         return; // Quit when this doesn't handle the key event.
@@ -1179,106 +1179,6 @@ function canvasHandleKeyDown(evt) {
 //
 // world rendering and utility functions
 //
-function screenPointToWorld(pt) {
-   // handle pick selection
-   var viewport = gl.getViewport();
-
-   let winx = pt.x;
-   let winy = viewport[3] - pt.y;   // y is upside-down
-   // yes, sometimes mouse coordinate is outside of the viewport. firefox return values larger than width, height.
-   if (winx < 0) { winx = 0; }
-   if (winx > viewport[2]) { winx = viewport[2];}
-   if (winy < 0) { winy = 0; }
-   if (winy > viewport[3]) { winy = viewport[3];}
-   
-   const mat = loadMatrices(false);
-   return [gl.unProject(winx, winy, 0.0, mat.modelView, mat.projection),
-            gl.unProject(winx, winy, 1.0, mat.modelView, mat.projection)];
-};
-
-function selectionBox(start, end) {
-   // sort first
-   let left = start.x;
-   let right = end.x;
-   if (start.x > end.x) {
-      left = end.x;
-      right = start.x;
-   }
-   let top = start.y;           // y-axis flip
-   let bottom = end.y;
-   if (start.y > end.y) {
-      top = end.y;
-      bottom = start.y;
-   }
-
-   // now get the 8 unProject.
-   const [leftBottomNear, leftBottomFar] = screenPointToWorld( {x: left, y: bottom} );
-   const [leftTopNear, leftTopFar] = screenPointToWorld( {x: left, y: top} );
-   const [rightTopNear, rightTopFar] = screenPointToWorld( {x: right, y: top} );
-   const [rightBottomNear, rightBottomFar] = screenPointToWorld( {x: right, y: bottom} );
-
-   // now compute frustum
-   return new Frustum(Plane.fromPoints(leftTopNear, leftBottomNear, leftBottomFar),       // left
-                     Plane.fromPoints(rightBottomNear, rightTopNear, rightTopFar),      // right
-                     Plane.fromPoints(rightTopNear, leftTopNear, leftTopFar),           // top
-                     Plane.fromPoints(leftBottomNear,rightBottomNear, rightBottomFar),   // bottom
-                     Plane.fromPoints(rightBottomNear, leftBottomNear, leftTopNear),    // near
-                     Plane.fromPoints(rightBottomFar, rightTopFar, leftTopFar)          // far
-                     );
-};
-
-
-function loadMatrices(includeLights) {
-   let proj = projection(mat4.create()); // passed identity matrix.
-   let tmm = modelView(includeLights);
-   return { projection: proj, modelView: tmm.modelView, useSceneLights: tmm.useSceneLights };
-};
-
-//projection() ->
-//     OP0 = gl:getDoublev(?GL_PROJECTION_MATRIX),
-//     projection(e3d_transform:init(list_to_tuple(OP0))).
-function projection(In) {
-   const size = gl.getViewport();
-   const aspect = (size[2]-size[0]) / (size[3]-size[1]);
-   const view = Camera.view;
-   const ortho = prop.orthogonalView;
-   if (!ortho && view.alongAxis) {
-      ortho = prop.force_ortho_along_axis;
-   }
-   var tp = mat4.create();
-   if (ortho) {
-      const sz = view.distance * Math.tan(view.fov * Math.PI  / 180 / 2);
-      mat4.ortho(tp, -sz * aspect, sz * aspect, -sz, sz, view.zNear, view.zFar);      
-   } else {
-      mat4.perspective(tp, view.fov, aspect, view.zNear, view.zFar);
-   }
-
-   mat4.mul(gl.projection, In, tp);
-   return gl.projection;
-};
-
-function modelView(includeLights = false) {
-   const view = Camera.view;
-
-   let useSceneLights = false;
-   if (includeLights) {
-      useSceneLights = prop.useSceneLights; // && Wings3D.light.anyEnabledLights();
-      if (!useSceneLights) {
-         //Wings3D.light.cameraLights();
-      }
-   }
-
-   // fromTranslation, identity * vec3. modelView rest.
-   mat4.fromTranslation(gl.modelView, vec3.fromValues(view.panX, view.panY, -view.distance));
-   mat4.rotateX(gl.modelView, gl.modelView, view.elevation * Math.PI / 180);
-   mat4.rotateY(gl.modelView, gl.modelView, view.azimuth * Math.PI / 180);
-   mat4.translate(gl.modelView, gl.modelView, view.origin);
-
-   if (useSceneLights) {
-      //Wings3D.light.globalLights();
-   }
-   return {useScentLights: useSceneLights, modelView: gl.modelView};
-};
 
 function drawWorld(gl) {
    //if (world.length > 0) {
@@ -1819,9 +1719,6 @@ export {
    undoQueue,
    undoQueueCombo,
    // rendering
-   loadMatrices,
-   projection,
-   modelView,
    drawWorld,
    render
 }; 

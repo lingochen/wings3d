@@ -1,16 +1,18 @@
 /*
-//    Render all objects and helpers (such as axes) in the scene.
-//     Used for the Geometry and AutoUV windows.
+// Render all objects and helpers (such as axes) in the scene.
+//     Used for the Geometry. Original Erlang Version: Bjorn Gustavsson
 //
-//  Original Erlang Version: Bjorn Gustavsson
+// expand it to handle multiple geometry panes. 2020/10/08
+//
 */
 import {gl} from './wings3d_gl.js';
 import * as View from './wings3d_view.js';
-import * as Camera from './wings3d_camera.js';
+import {Camera} from './wings3d_camera.js';
 import {onReady, GROUND_GRID_SIZE} from './wings3d.js';
 import * as ShaderProg from './wings3d_shaderprog.js';
 import * as Util from './wings3d_util.js';
-const {vec4, mat4} = glMatrix;
+import {Plane, Frustum} from './wings3d_geomutil.js';
+const {vec3, vec4, mat4} = glMatrix;
 
 
 
@@ -21,6 +23,7 @@ let lineProg;        // to be replaced
 let groundAxisProg;  // to be replaced
 let svgUI;
 let lineEnd = {x: null, y: null, z: null};
+let camera = new Camera;
 
 onReady(function() {
    redrawFlag = true;
@@ -42,7 +45,7 @@ onReady(function() {
    groundAxisProg.uMVMatrix = gl.getUniformLocation(groundAxisProg.handle, "uMVMatrix");
 
    // compute grid and axis, and write to vbo.
-   var mat = View.loadMatrices(true);
+   var mat = loadMatrices(true);
    var yon = computeGroundAndAxes(gl, mat.projection, mat.modelView);    
    initMiniAxis(gl, mat.modelView);
 
@@ -64,6 +67,106 @@ onReady(function() {
    lineEnd.z.textContent = 'z';
    svgUI.appendChild(lineEnd.z);
 });
+
+
+function screenPointToWorld(pt) {
+   // handle pick selection
+   var viewport = gl.getViewport();
+
+   let winx = pt.x;
+   let winy = viewport[3] - pt.y;   // y is upside-down
+   // yes, sometimes mouse coordinate is outside of the viewport. firefox return values larger than width, height.
+   if (winx < 0) { winx = 0; }
+   if (winx > viewport[2]) { winx = viewport[2];}
+   if (winy < 0) { winy = 0; }
+   if (winy > viewport[3]) { winy = viewport[3];}
+   
+   const mat = loadMatrices(false);
+   return [gl.unProject(winx, winy, 0.0, mat.modelView, mat.projection),
+            gl.unProject(winx, winy, 1.0, mat.modelView, mat.projection)];
+};
+
+function selectionBox(start, end) {
+   // sort first
+   let left = start.x;
+   let right = end.x;
+   if (start.x > end.x) {
+      left = end.x;
+      right = start.x;
+   }
+   let top = start.y;           // y-axis flip
+   let bottom = end.y;
+   if (start.y > end.y) {
+      top = end.y;
+      bottom = start.y;
+   }
+
+   // now get the 8 unProject.
+   const [leftBottomNear, leftBottomFar] = screenPointToWorld( {x: left, y: bottom} );
+   const [leftTopNear, leftTopFar] = screenPointToWorld( {x: left, y: top} );
+   const [rightTopNear, rightTopFar] = screenPointToWorld( {x: right, y: top} );
+   const [rightBottomNear, rightBottomFar] = screenPointToWorld( {x: right, y: bottom} );
+
+   // now compute frustum
+   return new Frustum(Plane.fromPoints(leftTopNear, leftBottomNear, leftBottomFar),       // left
+                     Plane.fromPoints(rightBottomNear, rightTopNear, rightTopFar),      // right
+                     Plane.fromPoints(rightTopNear, leftTopNear, leftTopFar),           // top
+                     Plane.fromPoints(leftBottomNear,rightBottomNear, rightBottomFar),   // bottom
+                     Plane.fromPoints(rightBottomNear, leftBottomNear, leftTopNear),    // near
+                     Plane.fromPoints(rightBottomFar, rightTopFar, leftTopFar)          // far
+                     );
+};
+
+
+function loadMatrices(includeLights) {
+   let proj = projection(mat4.create()); // passed identity matrix.
+   let tmm = modelView(includeLights);
+   return { projection: proj, modelView: tmm.modelView, useSceneLights: tmm.useSceneLights };
+};
+
+//projection() ->
+//     OP0 = gl:getDoublev(?GL_PROJECTION_MATRIX),
+//     projection(e3d_transform:init(list_to_tuple(OP0))).
+function projection(In) {
+   const size = gl.getViewport();
+   const aspect = (size[2]-size[0]) / (size[3]-size[1]);
+   const ortho = View.prop.orthogonalView;
+   if (!ortho && camera.alongAxis) {
+      ortho = View.prop.force_ortho_along_axis;
+   }
+   var tp = mat4.create();
+   if (ortho) {
+      const sz = camera.distance * Math.tan(camera.fov * Math.PI  / 180 / 2);
+      mat4.ortho(tp, -sz * aspect, sz * aspect, -sz, sz, camera.zNear, camera.zFar);      
+   } else {
+      mat4.perspective(tp, camera.fov, aspect, camera.zNear, camera.zFar);
+   }
+
+   mat4.mul(gl.projection, In, tp);
+   return gl.projection;
+};
+
+function modelView(includeLights = false) {
+   let useSceneLights = false;
+   if (includeLights) {
+      useSceneLights = View.prop.useSceneLights; // && Wings3D.light.anyEnabledLights();
+      if (!useSceneLights) {
+         //Wings3D.light.cameraLights();
+      }
+   }
+
+   // fromTranslation, identity * vec3. modelView rest.
+   mat4.fromTranslation(gl.modelView, vec3.fromValues(camera.panX, camera.panY, -camera.distance));
+   mat4.rotateX(gl.modelView, gl.modelView, camera.elevation * Math.PI / 180);
+   mat4.rotateY(gl.modelView, gl.modelView, camera.azimuth * Math.PI / 180);
+   mat4.translate(gl.modelView, gl.modelView, camera.origin);
+
+   if (useSceneLights) {
+      //Wings3D.light.globalLights();
+   }
+   return {useScentLights: useSceneLights, modelView: gl.modelView};
+};
+
 
 /**
  * return screen space windows position for Canvas2D to draw. == gluProject
@@ -263,7 +366,7 @@ function calcGridSize(projection, modelView) {
    ret *= width/height * 0.7;
    return Math.round(ret);
 }
-function computeGroundAndAxes(gl, projection, modelView) {
+function computeGroundAndAxes(projection, modelView) {
    var gridSize = calcGridSize(projection, modelView);
    //console.log("gridsize " + gridSize.toString());
    var data = computeGroundGrid(gridSize, GROUND_GRID_SIZE);
@@ -275,15 +378,14 @@ function computeGroundAndAxes(gl, projection, modelView) {
 
    // compute Axes, bindVBO.
    groundAxisProg.axisVBO = {
-      position: gl.createBufferHandle(getAxis()),
+      position: gl.createBufferHandle(getAxis(camera.zFar)),
       color: gl.createBufferHandle(getAxisColor()),
       length: 3*2*2
    };
 
    return gridSize;
 }
-function getAxis() {
-   var yon = Camera.view.zFar;
+function getAxis(yon) {
    var arry = [[yon, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [-yon, 0.0, 0.0], 
                [0.0, yon, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, -yon, 0.0],
                [0.0, 0.0, yon], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, -yon]];
@@ -305,7 +407,7 @@ function renderGroundAndAxes(gl, projection, modelView) {
       //(wings_pref:get_value(force_show_along_grid) andalso
       //(Camera.view.alongAxis =/= none);      
    if (show) {
-      var alongAxis = Camera.view.alongAxis;
+      //var alongAxis = Camera.view.alongAxis;
       const color = Util.hexToRGBA(View.theme.gridColor);
          //case view.AlongAxis of
          // x -> gl:rotatef(90.0, 0.0, 1.0, 0.0);
@@ -331,7 +433,7 @@ function renderGroundAndAxes(gl, projection, modelView) {
    //if (View.prop.constrainAxes) {
    //   yon = gridSize;
    //} else {
-      yon = Camera.view.zFar;
+      yon = camera.zFar;
    //}
    if (showAxes) {
       // use line segment program
@@ -355,7 +457,7 @@ function needToRedraw() {
 };
 
 function render(gl, drawWorldFn) {
-   if (gl.resizeToDisplaySize() || Camera.view.isModified || redrawFlag) {
+   if (gl.resizeToDisplaySize() || camera.isModified || redrawFlag) {
       redrawFlag = false; 
       const backColor = Util.hexToRGBA(View.theme.geometryBackground);
       gl.clearColor(backColor[0], backColor[1], backColor[2], backColor[3]);
@@ -369,12 +471,12 @@ function render(gl, drawWorldFn) {
       //		                   ?GL_LINE_BIT bor ?GL_COLOR_BUFFER_BIT bor
       //		                   ?GL_LIGHTING_BIT).enable(?GL_DEPTH_TEST).enable(?GL_CULL_FACE);
       // no support for dynamic anti aliasing. only setup in creatingContext
-      var mat = View.loadMatrices(true);
-      if (Camera.view.isModified) {
-         Camera.view.isModified = false;
+      const mat = loadMatrices(true);
+      if (camera.isModified) {
+         camera.isModified = false;
          computeGroundAndAxes(gl, mat.projection, mat.modelView);
       }
-      var yon = renderGroundAndAxes(gl, mat.projection, mat.modelView);
+      const yon = renderGroundAndAxes(gl, mat.projection, mat.modelView);
       renderMiniAxis(gl, mat.modelView);
       //show_saved_bb(St),
       //show_bb_center(St),
@@ -395,6 +497,9 @@ export {
    needToRedraw,
    render,
    worldToScreenPoint,
+   screenPointToWorld,
+   selectionBox,
    svgUI,
+   camera,
 };
 
