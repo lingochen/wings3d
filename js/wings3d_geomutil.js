@@ -3,7 +3,7 @@
  * 
  */
 //import vec3 from '../vendor/gl-matrix-min.js';
-const {vec3, mat4} = glMatrix;
+const {vec3, vec4, mat4} = glMatrix;
 
 const kEPSILON = 0.000001;
 
@@ -352,6 +352,57 @@ function computeAxisScale(scaling, axis) {
 }
 
 
+// it seems erlang version use 2d(w) line - line intersection (wikipedia). 
+// we changed it to blinn's homogenous clipping. we are only interest in clip to end-out region. 
+// clip in clipSpace.
+function clipLine(pt0, pt1) {
+   var tIn = 0.0, tOut = 1.0, tHit;
+   // bc, boundary code.
+   var bc = {pt0: [pt0[3]+pt0[0], pt0[3]-pt0[0], pt0[3]+pt0[1], pt0[3]-pt0[1], pt0[3]+pt0[2], pt0[3]-pt0[2]],
+             pt1: [pt1[3]+pt1[0], pt1[3]-pt1[0], pt1[3]+pt1[1], pt1[3]-pt1[1], pt1[3]+pt1[2], pt1[3]-pt1[2]]};
+   var outCode = {pt0: 0, pt1: 0};
+   for (var i = 0; i < 6; ++i) {
+      var tmp = (bc.pt0[i] < 0) << i;
+      outCode.pt0 |= tmp;
+      outCode.pt1 |= (bc.pt1[i] < 0) << i;
+   }
+
+   if ((outCode.pt0 & outCode.pt1) != 0) { // trivial reject, both point outside the same plane
+      return false;
+   }
+   if ((outCode.pt0 | outCode.pt1) == 0) { // trivial accept
+      return true;
+   }
+   // now, do 3D line clipping
+   for (i=0; i < 6; i++) {  // clip against 6 planes
+      if (bc.pt1[i] < 0) {  // C is outside wall i (exit so tOut)
+         tHit = bc.pt0[i]/(bc.pt0[i] - bc.pt1[i]);      // calculate tHit
+         tOut = Math.min(tOut, tHit);
+      } else if(bc.pt0[i] < 0) { // A is outside wall I (enters so tIn)
+         tHit = bc.pt0[i]/(bc.pt0[i] - bc.pt1[i]);      // calculate tHit
+         tIn = Math.max(tIn, tHit);
+      }
+      if (tIn > tOut) {
+         return false; // CI is empty: early out
+      }
+   }
+
+   var tmp = vec4.create();  // stores homogeneous coordinates
+   if (outCode.pt0 != 0) { // A is outside: tIn has changed. Calculate A_chop
+      for (i = 0; i < 4; ++i) { // compute x, y, z, w component
+         tmp[i] = pt0[i] + tIn * (pt1[i] - pt0[i]);
+      }
+   }
+   if (outCode.pt1 != 0) { // C is outside: tOut has changed. Calculate C_chop
+      for (i = 0; i < 4; ++i) { // compute x, y, z, w component
+         pt1[i] = pt0[i] + tOut * (pt1[i] - pt0[i]);
+      }
+   }
+   pt0 = tmp;
+   return true; // some of the edges lie inside CVV
+};
+
+
 /**
  * 
  */
@@ -547,6 +598,7 @@ export {
    computeAxisScale,
    getAxisAngle,
    computeEdgeNormal,  
+   clipLine,
    intersectTriangle,
    intersectRayAAExtent,
    intersectRaySphere,

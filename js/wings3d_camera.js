@@ -100,7 +100,7 @@ class Camera {
             zNear: 0.1, zFar: 1000.0
       };
       this.alongAxis = false;
-      this.isModified = false;
+      this.isModified = true;
    }
 
    inverseCameraVectors() {

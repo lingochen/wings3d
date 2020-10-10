@@ -5,7 +5,7 @@
 */
 
 import * as UI from './wings3d_ui.js';
-import * as Renderer from './wings3d_render.js';
+import * as Render from './wings3d_render.js';
 //import * as Camera from './wings3d_camera.js';
 import {i18n} from './wings3d_i18n.js';
 import {gl} from './wings3d_gl.js';
@@ -208,7 +208,7 @@ function storePref(form) {
          obj[key] = data.value;
       }
     });
-    Renderer.needToRedraw();
+    Render.needToRedraw();
 };
 
 //--  end of pref and theme --------------------------------------------------------------------------
@@ -255,7 +255,7 @@ function _toggleVertexMode() {
       cmd = mode.current.toggleFunc(mode.vertex);
       mode.current = mode.vertex;
       toggleMode('Vertex');
-      Renderer.needToRedraw();
+      Render.needToRedraw();
    }
    return cmd;
 };
@@ -272,7 +272,7 @@ function _toggleFaceMode() {
       cmd = mode.current.toggleFunc(mode.face);
       mode.current = mode.face;
       toggleMode('Face');
-      Renderer.needToRedraw();
+      Render.needToRedraw();
    }
    return cmd;
 };
@@ -289,7 +289,7 @@ function _toggleEdgeMode() {
       cmd = mode.current.toggleFunc(mode.edge);
       mode.current = mode.edge;
       toggleMode('Edge');
-      Renderer.needToRedraw();
+      Render.needToRedraw();
    }
    return cmd;
 };
@@ -306,7 +306,7 @@ function _toggleBodyMode() {
       cmd = mode.current.toggleFunc(mode.body);
       mode.current = mode.body;
       toggleMode('Body');
-      Renderer.needToRedraw();
+      Render.needToRedraw();
    }
    return cmd;
 };
@@ -323,7 +323,7 @@ function _toggleMultiMode() {
       cmd = mode.current.toggleFunc(mode.multi);
       mode.current = mode.multi;
       toggleMode('Multi');
-      Renderer.needToRedraw();
+      Render.needToRedraw();
    }
    return cmd;
 };
@@ -333,7 +333,7 @@ function restoreVertexMode(snapshots) {
       mode.current.restoreMode(mode.vertex, snapshots);
       mode.current = mode.vertex;
       toggleMode('Vertex');
-      Renderer.needToRedraw();
+      Render.needToRedraw();
    } else {
       // bad state. should always be in other mode. 
    }
@@ -344,7 +344,7 @@ function restoreFaceMode(snapshots) {
       mode.current.restoreMode(mode.face, snapshots);
       mode.current = mode.face;
       toggleMode('Face');
-      Renderer.needToRedraw();
+      Render.needToRedraw();
    } else {
       // bad state. should always be in other mode. 
    }
@@ -355,7 +355,7 @@ function restoreEdgeMode(snapshots) {
       mode.current.restoreMode(mode.edge, snapshots);
       mode.current = mode.edge;
       toggleMode('Edge');
-      Renderer.needToRedraw();
+      Render.needToRedraw();
    } else {
       // bad state. should always be in other mode. 
    }
@@ -366,7 +366,7 @@ function restoreBodyMode(snapshots) {
       mode.current.restoreMode(mode.body, snapshots);
       mode.current = mode.body;
       toggleMode('Body');
-      Renderer.needToRedraw();
+      Render.needToRedraw();
    } else {
       // bad state. should always be in other mode. 
    }
@@ -377,7 +377,7 @@ function restoreMultiMode(snapshots) {
       mode.current.restoreMode(mode.multi, snapshots);
       mode.current = mode.multi;
       toggleMode('Multi');
-      Renderer.needToRedraw();
+      Render.needToRedraw();
    } else {
       // bad state. should always be in other mode. 
    }
@@ -392,12 +392,14 @@ const currentMode = () => mode.current;
 const _environment = {
    world: new PreviewGroup,    // private var
    draftBench: undefined,      // = new DraftBench; wait for GL
+   geometryViews: [],
    geometryGraph: undefined,   // tree management of world; 
    imageList: undefined,
    materialList: undefined,
    lightList: undefined,
    currentObjects: undefined,
    currentParent: undefined,
+   currentView: undefined,
    fileName: "",              // save fileName. + path.
    debug: {toggleOn: false, queue: []},
 };
@@ -442,7 +444,7 @@ function addToWorld(model, parent = _environment.world) { // default parent is w
    for (let cage of model.getCage()) {
       cage.display(true);
    }
-   Renderer.needToRedraw();
+   Render.needToRedraw();
    _environment.geometryGraph.updateCount(_environment.world);   // update Count Status
    _environment.draftBench.updateAffected();
    return model;
@@ -454,7 +456,7 @@ function removeFromWorld(preview) {
       for (let cage of preview.getCage()) {
          cage.display(false);
       }
-      Renderer.needToRedraw();
+      Render.needToRedraw();
       // remove from geometryGraph
       _environment.geometryGraph.removeNode(preview);
       _environment.geometryGraph.updateCount(_environment.world);   // update Count Status
@@ -468,7 +470,7 @@ function updateWorld() {
    for (let cage of _environment.world.getCage()) {
       cage.updateAffected();
    }
-   Renderer.needToRedraw();
+   Render.needToRedraw();
 };
 function makeCombineIntoWorld(cageSelection) {
    let combine = new PreviewCage(_environment.draftBench);
@@ -536,7 +538,7 @@ function undoQueue(editCommand) {
    // now push the new command back
    undo.queue.push(editCommand);
    undo.current++;
-   Renderer.needToRedraw();
+   Render.needToRedraw();
    undo.isModified = true;
    debugPush();
 };
@@ -544,7 +546,7 @@ function undoQueue(editCommand) {
 function redoEdit() {
    if ( (undo.queue.length-1) > undo.current) {
       undo.queue[++undo.current].doIt(mode.current);
-      Renderer.needToRedraw();
+      Render.needToRedraw();
       undo.isModified = true;
       debugPush();
    }
@@ -554,7 +556,7 @@ function undoEdit() {
    if (undo.current >= 0) {
       const cmd = undo.queue[undo.current--];
       cmd.undo(mode.current);
-      Renderer.needToRedraw();
+      Render.needToRedraw();
       undo.isModified = true;
       debugPop();
    }
@@ -721,7 +723,7 @@ function setCurrent(edge, intersect, center) {
 
 function attachHandlerCamera(camera) {
    function gotoExit(mousePos) {
-      Wings3D.log(Wings3D.action.cameraModeExit, Renderer.camera);
+      Wings3D.log(Wings3D.action.cameraModeExit, _environment.currentView.camera);
       modeHelp();
       handler.camera = null;
       document.exitPointerLock();
@@ -730,7 +732,7 @@ function attachHandlerCamera(camera) {
    // let camera handle the mouse event until it quit.0
    gl.canvas.requestPointerLock();
    // tell tutor step, we are in camera mode
-   Wings3D.log(Wings3D.action.cameraModeEnter, Renderer.camera);
+   Wings3D.log(Wings3D.action.cameraModeEnter, _environment.currentView.camera);
    help(`L:${i18n('accept')}   M:${i18n('dragPan')}  R:${i18n('cancelRestoreView')}   ${i18n('moveMouseTumble')}`);
 
    handler.camera = {
@@ -755,7 +757,7 @@ function attachHandlerMouseMove(mouseMove) {
    function gotoExit() {
       document.exitPointerLock();
       handler.mousemove = null;
-      Renderer.needToRedraw();
+      Render.needToRedraw();
    };
 
    // onEntry
@@ -775,8 +777,8 @@ function attachHandlerMouseMove(mouseMove) {
       },
 
       onMove: (ev)=>{
-         mouseMove.handleMouseMove(ev, Renderer.camera);
-         Renderer.needToRedraw();
+         mouseMove.handleMouseMove(ev, _environment.currentView.camera);
+         Render.needToRedraw();
       }
    };
 };
@@ -799,7 +801,7 @@ const TweakMode = (function(){
          dome.setAttributeNS(null, 'r', 50);
          dome.setAttributeNS(null, 'fill', 'blue');
          dome.rect.setAttributeNS(null, 'fill-opacity', 0.20);
-         Renderer.svgUI.appendChild(dome);
+         Render.svgUI.appendChild(dome);
          selection.area = dome; */
 }());
 let tweakMode = true;
@@ -821,7 +823,7 @@ function modeHelp() {
 //
 let lastPick = null;
 function rayPick(mousePos) {
-   const [ptNear, ptFar] = Renderer.screenPointToWorld( mousePos );
+   const [ptNear, ptFar] = _environment.currentView.screenPointToWorld( mousePos );
    vec3.sub(ptFar, ptFar, ptNear);
    vec3.normalize(ptFar, ptFar);
    const ray = new Ray(ptNear, ptFar);
@@ -848,12 +850,12 @@ function rayPick(mousePos) {
       let intersect = vec3.create();
       vec3.scaleAndAdd(intersect, ray.origin, ray.direction, pick.t);
       setCurrent(pick.edge, intersect, pick.center);
-      Renderer.needToRedraw();
+      Render.needToRedraw();
    } else {
       if (lastPick !== null) {
          // deselect last selection
          setCurrent(null);
-         Renderer.needToRedraw();
+         Render.needToRedraw();
       }
    }
    // now the currentPick will be the next lastPick.
@@ -875,14 +877,14 @@ const dragSelect = (function(){
          mode.current.toggleMulti(hilite);
          // now we can safely dragStart
          dragMode = mode.current.selectStart(lastPick.model, hilite);
-         Renderer.needToRedraw();
+         Render.needToRedraw();
       },
 
       move: function(ev) {
          rayPick(UI.getClientPosition(ev));
          if ((lastPick !== null)) {
             dragMode.dragSelect(lastPick.model, hilite);
-            Renderer.needToRedraw();
+            Render.needToRedraw();
          }
       },
 
@@ -903,7 +905,7 @@ const boxSelect = (function(){
       selectionRectangle.rect.setAttributeNS(null, 'y', mousePos.y);
       selectionRectangle.rect.setAttributeNS(null, 'fill', 'blue');
       selectionRectangle.rect.setAttributeNS(null, 'fill-opacity', 0.50);
-      Renderer.svgUI.appendChild(selectionRectangle.rect);
+      Render.svgUI.appendChild(selectionRectangle.rect);
    }
    
    return {
@@ -950,13 +952,13 @@ const boxSelect = (function(){
             if (selectionRectangle.start.x !== selectionRectangle.end.x &&
                selectionRectangle.start.y !== selectionRectangle.end.y) {   // won't do zero width, or zero height.
                // select everything inside the selection rectangle
-               const undo = new EditCommandSimple(fn, Renderer.selectionBox(selectionRectangle.start, selectionRectangle.end), deselecting);
+               const undo = new EditCommandSimple(fn, _environment.currentView.selectionBox(selectionRectangle.start, selectionRectangle.end), deselecting);
                if (undo.doIt(mode.current)) {
                   undoQueue( undo );
                }
             }
             // cleanup
-            Renderer.svgUI.removeChild(selectionRectangle.rect);
+            Render.svgUI.removeChild(selectionRectangle.rect);
             selectionRectangle.rect = null;
             modeHelp();
          }
@@ -988,7 +990,7 @@ const tweakSelect = (function() {   // it just like mousemove, but with leftButt
             tweak = mode.current;//.tweakMove(lastPick.model, hilite);
          }
          tweak = tweak[tweakMode](lastPick.model, hilite);
-         Renderer.needToRedraw();
+         Render.needToRedraw();
       },
  
       finish: function(_ev) {
@@ -1009,8 +1011,8 @@ const tweakSelect = (function() {   // it just like mousemove, but with leftButt
    
       move: function(ev) {
          isMoved = true;
-         tweak.handleMove(ev, Renderer.camera);
-         Renderer.needToRedraw();
+         tweak.handleMove(ev, _environment.currentView.camera);
+         Render.needToRedraw();
       },
 
       setMode(mode) {
@@ -1088,7 +1090,7 @@ function canvasHandleMouseUp(ev) {
       if (handler.camera === null) {
          ev.stopImmediatePropagation();
          // let camera handle the mouse event until it quit.
-         attachHandlerCamera( Renderer.camera.getMouseMoveHandler() );
+         attachHandlerCamera( _environment.currentView.camera.getMouseMoveHandler() );
       } 
    } else if (ev.button === 2) { // hack up 2019/07/26 to handle no contextmenu event in pointerLock, - needs refactor
       if (handler.camera) {      // firefox will generate contextmenu event if we put it on mouseDown.
@@ -1097,7 +1099,7 @@ function canvasHandleMouseUp(ev) {
          handler.mousemove.rescind();
       } else {
          handler.mouseSelect = null;   // no needs to undo because we havent doIt() yet.
-         Renderer.needToRedraw();
+         Render.needToRedraw();
       }
    }
 };
@@ -1139,7 +1141,7 @@ function canvasHandleWheel(e) {
    }
    
    // asks camera to zoomIn/Out.
-   Renderer.camera.zoomStep(py);
+   Render.camera.zoomStep(py);
 };
 
 //-- end of mouse handling-----------------------------------------------
@@ -1149,22 +1151,23 @@ function canvasHandleKeyDown(evt) {
    if (evt.defaultPrevented) {
       return;
    }
+   const camera = _environment.currentView.camera;
    switch (evt.key) {
       case "Down": // IE/Edge specific value
       case "ArrowDown":
-        Renderer.camera.keyPanDownArrow();
+        camera.keyPanDownArrow();
         break;
       case "Up": // IE/Edge specific value
       case "ArrowUp":
-        Renderer.camera.keyPanUpArrow();
+        camera.keyPanUpArrow();
         break;
       case "Left": // IE/Edge specific value
       case "ArrowLeft":
-        Renderer.camera.keyPanLeftArrow();
+        camera.keyPanLeftArrow();
         break;
       case "Right": // IE/Edge specific value
       case "ArrowRight":
-        Renderer.camera.keyPanRightArrow();
+        camera.keyPanRightArrow();
         break;
       default:
         return; // Quit when this doesn't handle the key event.
@@ -1226,10 +1229,14 @@ function drawWorld(gl) {
 function render(gl) {
    if (_environment.world.numberOfCage() > 0) {
       if (_environment.draftBench.isModified()) {   // check for modification. 
-         Renderer.needToRedraw();
+         Render.needToRedraw();
       }
    }
-   Renderer.render(gl, drawWorld);
+   if (gl.resizeToDisplaySize()) {
+      _environment.currentView.setViewport(...gl.getViewport());
+   }
+   _environment.currentView.render(gl, drawWorld);
+   Render.clearRedraw();
 };
 
 //-- end of world rendering and utility functions ---------------------------------------------------------------
@@ -1239,8 +1246,11 @@ function render(gl) {
 //
 function init() {
    initMode();
-   //Renderer.init(gl, drawWorld);  // init by itself
+   //Render.init(gl, drawWorld);  // init by itself
    _environment.draftBench = new DraftBench(theme.draftBench, theme.draftBenchPref, _environment.materialList);
+   // init renderer
+   _environment.currentView = new Render.Renderport([0, 0, gl.canvas.width, gl.canvas.height]);
+   _environment.geometryViews.push( _environment.currentView );
    // init menu
    const selectionMenu = [ {id: Wings3D.action.deselect, fn: 'resetSelection', hotKey: ' '},
                          {id: Wings3D.action.more, fn: 'moreSelection', hotKey: '+'},
@@ -1296,7 +1306,7 @@ function init() {
          const data = document.querySelector(button.selector);
          if (data) {
             prop[button.propName] = !data.checked;  // click event is earlier than input.checked event, so the value hasn't toggle yet.
-            Renderer.needToRedraw();
+            Render.needToRedraw();
          }
        });
    }
@@ -1575,7 +1585,7 @@ function init() {
       resetUndo();
       mode.current.resetSelection();
       _environment.world.empty();
-      Renderer.needToRedraw();
+      Render.needToRedraw();
       return true;
    }
    // plug into import/export menu
