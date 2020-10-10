@@ -140,7 +140,9 @@ function createWebGLContext(canvasID, attrib) {
          out[3]=0.0;
          return out;
       }
-      var viewport = gl.getViewport();
+      if (!viewport) {
+         viewport = gl.getViewport();
+      }
       //Transformation of normalized coordinates between -1 and 1
       input[0]=(winx-viewport[0])/viewport[2]*2.0 - 1.0;
       input[1]=(winy-viewport[1])/viewport[3]*2.0 - 1.0;
@@ -157,9 +159,12 @@ function createWebGLContext(canvasID, attrib) {
       out[3] =1.0;
       return out;
    };
-   gl.transformVertex = function(vertex4) {
-       var out = vec4.create();
-       return vec4.transformMat4(out, vec4.transformMat4(out, vertex4, gl.modelView), gl.projection);
+   gl.transformVertex = function(vertex4, modelView, projection) {
+      var out = vec4.create();
+      if (!modelView) {modelView = gl.modelView;}
+      if (!projection) {projection = gl.projection;}
+
+      return vec4.transformMat4(out, vec4.transformMat4(out, vertex4, modelView), projection);
    };
 
    // shader, programs.
