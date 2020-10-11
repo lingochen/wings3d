@@ -16,7 +16,7 @@ function createWebGLContext(canvasID, attrib) {
       return null;
    }
       
-   attrib = typeof attrib !== 'undefined' ? attrib : { depth: true, stencil: true, antialias: true };
+   attrib = typeof attrib !== 'undefined' ? attrib : { depth: true, stencil: true, antialias: true, preserveDrawingBuffer: true };
 //   gl = canvas.getContext("webgl2", attrib);
 //   if (!gl) {
       gl = canvas.getContext("webgl", attrib);

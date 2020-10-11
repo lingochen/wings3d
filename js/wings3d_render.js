@@ -12,6 +12,7 @@ import {onReady, GROUND_GRID_SIZE} from './wings3d.js';
 import * as ShaderProg from './wings3d_shaderprog.js';
 import * as Util from './wings3d_util.js';
 import {clipLine, Plane, Frustum} from './wings3d_geomutil.js';
+import { GLTFImportExporter } from './plugins/gltf.js';
 const {vec3, vec4, mat4} = glMatrix;
 
 
@@ -43,6 +44,7 @@ class Renderport {
 
       this.camera = new Camera;
       this.viewport = viewport;
+      this.canvasHeight = viewport[3];
       
       // references grid
       //this.axesVBO;
@@ -50,8 +52,9 @@ class Renderport {
       this._computeAxes();
    }
 
-   setViewport(x, y, width, height) {
+   setViewport(x, y, width, height, canvasHeight) {
       this.viewport = [x, y, width, height];
+      this.canvasHeight = canvasHeight;
       this.isRedraw = true;
    }
 
@@ -180,7 +183,10 @@ class Renderport {
 
    // rendering, and it auxiliary 
    render(gl, drawWorldFn) {
+      const saveViewport = gl.getViewport();
       if (this.isRedraw || this.camera.isModified || m_isRedraw) {
+         gl.viewport(...this.viewport);
+         gl.scissor(...this.viewport);
          this.isRedraw = false;
          //m_isRedraw = false; 
          const backColor = Util.hexToRGBA(View.theme.geometryBackground);
@@ -212,6 +218,7 @@ class Renderport {
          //show_camera_image_plane(),
          //wings_develop:gl_error_check("Rendering scene")
       }
+      gl.viewport(...saveViewport);
    };
 
 
@@ -221,10 +228,10 @@ class Renderport {
          const viewport = this.viewport;
          //console.log(end[0], end[1], end[2], end[3]);
          const x = Math.trunc((0.5*end[0]/end[3]+0.5)*(viewport[2]-20) + 10);
-         const y = viewport[3]-Math.trunc((0.5*end[1]/end[3]+0.5)*(viewport[3]-16) + 7);  // flip y-axis
+         const y = Math.trunc((0.5*end[1]/end[3]+0.5)*(viewport[3]-16) + 7);
    
          this.lineEnd[axis].setAttributeNS(null, 'x', x+viewport[0]);
-         this.lineEnd[axis].setAttributeNS(null, 'y', y+viewport[1]);
+         this.lineEnd[axis].setAttributeNS(null, 'y', this.canvasHeight-(y+viewport[1]));
          this.lineEnd[axis].setAttributeNS(null, 'fill', color);
       }
    };
@@ -232,6 +239,12 @@ class Renderport {
    
    _renderAxisLetter(gl, zFar) {
       if (View.prop.showAxes){
+         for (let axis of Object.keys(this.lineEnd)) {
+            if (this.lineEnd[axis].style.display === "none") {
+               this.lineEnd[axis].style.display = "block";
+            }
+         }
+
          var start = vec4.fromValues(0.0, 0.0, 0.0, 1.0);
          var origin = gl.transformVertex(start);
    
@@ -246,6 +259,12 @@ class Renderport {
          this._renderASCII('x', View.theme.colorX, origin, endx);
          this._renderASCII('y', View.theme.colorY, origin, endy);
          this._renderASCII('z', View.theme.colorZ, origin, endz);
+      } else { // hide svg text
+         for (let axis of Object.keys(this.lineEnd)) {
+            if (this.lineEnd[axis].style.display !== "none") {
+               this.lineEnd[axis].style.display = "none";
+            }
+         }
       }
    }
 
@@ -446,6 +465,7 @@ function initMiniAxis(gl) {
 onReady(function() {
    gl.enable(gl.DEPTH_TEST);
    gl.enable(gl.CULL_FACE);   // enable cull face (2018-05-30) back face culling is default
+   gl.enable(gl.SCISSOR_TEST);
    // initialized glsl program, update data
    // program source ShaderProg
    // drawGrid, using LineProgram

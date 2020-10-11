@@ -392,14 +392,12 @@ const currentMode = () => mode.current;
 const _environment = {
    world: new PreviewGroup,    // private var
    draftBench: undefined,      // = new DraftBench; wait for GL
-   geometryViews: [],
    geometryGraph: undefined,   // tree management of world; 
    imageList: undefined,
    materialList: undefined,
    lightList: undefined,
    currentObjects: undefined,
    currentParent: undefined,
-   currentView: undefined,
    fileName: "",              // save fileName. + path.
    debug: {toggleOn: false, queue: []},
 };
@@ -723,7 +721,7 @@ function setCurrent(edge, intersect, center) {
 
 function attachHandlerCamera(camera) {
    function gotoExit(mousePos) {
-      Wings3D.log(Wings3D.action.cameraModeExit, _environment.currentView.camera);
+      Wings3D.log(Wings3D.action.cameraModeExit, m_windows.current.camera);
       modeHelp();
       handler.camera = null;
       document.exitPointerLock();
@@ -732,7 +730,7 @@ function attachHandlerCamera(camera) {
    // let camera handle the mouse event until it quit.0
    gl.canvas.requestPointerLock();
    // tell tutor step, we are in camera mode
-   Wings3D.log(Wings3D.action.cameraModeEnter, _environment.currentView.camera);
+   Wings3D.log(Wings3D.action.cameraModeEnter, m_windows.current.camera);
    help(`L:${i18n('accept')}   M:${i18n('dragPan')}  R:${i18n('cancelRestoreView')}   ${i18n('moveMouseTumble')}`);
 
    handler.camera = {
@@ -777,7 +775,7 @@ function attachHandlerMouseMove(mouseMove) {
       },
 
       onMove: (ev)=>{
-         mouseMove.handleMouseMove(ev, _environment.currentView.camera);
+         mouseMove.handleMouseMove(ev, m_windows.current.camera);
          Render.needToRedraw();
       }
    };
@@ -823,7 +821,7 @@ function modeHelp() {
 //
 let lastPick = null;
 function rayPick(mousePos) {
-   const [ptNear, ptFar] = _environment.currentView.screenPointToWorld( mousePos );
+   const [ptNear, ptFar] = m_windows.current.screenPointToWorld( mousePos );
    vec3.sub(ptFar, ptFar, ptNear);
    vec3.normalize(ptFar, ptFar);
    const ray = new Ray(ptNear, ptFar);
@@ -952,7 +950,7 @@ const boxSelect = (function(){
             if (selectionRectangle.start.x !== selectionRectangle.end.x &&
                selectionRectangle.start.y !== selectionRectangle.end.y) {   // won't do zero width, or zero height.
                // select everything inside the selection rectangle
-               const undo = new EditCommandSimple(fn, _environment.currentView.selectionBox(selectionRectangle.start, selectionRectangle.end), deselecting);
+               const undo = new EditCommandSimple(fn, m_windows.current.selectionBox(selectionRectangle.start, selectionRectangle.end), deselecting);
                if (undo.doIt(mode.current)) {
                   undoQueue( undo );
                }
@@ -1011,7 +1009,7 @@ const tweakSelect = (function() {   // it just like mousemove, but with leftButt
    
       move: function(ev) {
          isMoved = true;
-         tweak.handleMove(ev, _environment.currentView.camera);
+         tweak.handleMove(ev, m_windows.current.camera);
          Render.needToRedraw();
       },
 
@@ -1090,7 +1088,7 @@ function canvasHandleMouseUp(ev) {
       if (handler.camera === null) {
          ev.stopImmediatePropagation();
          // let camera handle the mouse event until it quit.
-         attachHandlerCamera( _environment.currentView.camera.getMouseMoveHandler() );
+         attachHandlerCamera( m_windows.current.camera.getMouseMoveHandler() );
       } 
    } else if (ev.button === 2) { // hack up 2019/07/26 to handle no contextmenu event in pointerLock, - needs refactor
       if (handler.camera) {      // firefox will generate contextmenu event if we put it on mouseDown.
@@ -1151,7 +1149,7 @@ function canvasHandleKeyDown(evt) {
    if (evt.defaultPrevented) {
       return;
    }
-   const camera = _environment.currentView.camera;
+   const camera = m_windows.current.camera;
    switch (evt.key) {
       case "Down": // IE/Edge specific value
       case "ArrowDown":
@@ -1182,6 +1180,34 @@ function canvasHandleKeyDown(evt) {
 //
 // world rendering and utility functions
 //
+const m_windows = {current: null, viewports: [], mode: 0, length: 1};
+function resizeViewports() {
+   const viewport = gl.getViewport();
+
+   if (m_windows.mode === 0) {
+      m_windows.viewports[0].setViewport(...viewport, viewport[3]);
+   } else {
+      const leftWidth = Math.round(viewport[2] / 2.0);
+      const rightWidth = viewport[2] - leftWidth;
+      const bottomHeight = Math.round(viewport[3] / 2.0);
+      const topHeight = viewport[3] - bottomHeight;
+      if (m_windows.mode === 1) {  // left, right
+         // divide width,
+         m_windows.viewports[0].setViewport(0, 0, leftWidth, viewport[3], viewport[3]);
+         m_windows.viewports[1].setViewport(leftWidth, 0, rightWidth, viewport[3], viewport[3]);
+      } else if (m_windows.mode === 2) {  // top, down
+         // divide height
+         m_windows.viewports[0].setViewport(0, 0, viewport[2], bottomHeight, viewport[3]);
+         m_windows.viewports[1].setViewport(0, bottomHeight, viewport[2], topHeight, viewport[3]);
+      } else { // quad
+         // divide width, and height
+         m_windows.viewports[0].setViewport(0, 0, leftWidth, bottomHeight, viewport[3]);
+         m_windows.viewports[1].setViewport(leftWidth, 0, rightWidth, bottomHeight, viewport[3]);
+         m_windows.viewports[2].setViewport(0, bottomHeight, leftWidth, topHeight, viewport[3]);
+         m_windows.viewports[3].setViewport(leftWidth, bottomHeight, rightWidth, topHeight, viewport[3]);
+      }
+   }
+}
 
 function drawWorld(gl) {
    //if (world.length > 0) {
@@ -1232,10 +1258,13 @@ function render(gl) {
          Render.needToRedraw();
       }
    }
-   if (gl.resizeToDisplaySize()) {
-      _environment.currentView.setViewport(...gl.getViewport());
+   if (gl.resizeToDisplaySize()) {  // update viewports if necessary
+      resizeViewports();
    }
-   _environment.currentView.render(gl, drawWorld);
+   // draw
+   for (let i = 0; i < m_windows.length; ++i) {
+      m_windows.viewports[i].render(gl, drawWorld);
+   }
    Render.clearRedraw();
 };
 
@@ -1249,8 +1278,70 @@ function init() {
    //Render.init(gl, drawWorld);  // init by itself
    _environment.draftBench = new DraftBench(theme.draftBench, theme.draftBenchPref, _environment.materialList);
    // init renderer
-   _environment.currentView = new Render.Renderport([0, 0, gl.canvas.width, gl.canvas.height]);
-   _environment.geometryViews.push( _environment.currentView );
+   for (let i = 0; i < 4; ++i) {
+      m_windows.viewports.push( new Render.Renderport([0, 0, gl.canvas.width, gl.canvas.height]) );
+   }
+   m_windows.current = m_windows.viewports[0];
+   //
+   UI.bindMenuItem(Wings3D.action.singlePane.name, (ev)=> {
+      const radio = document.querySelector('input[data-menuid="singlePane"');
+      if (radio !== ev.target) {
+         radio.checked = true;
+      }
+      // delete addition Renderport if there is any
+      if (m_windows.mode !== 0) {
+         m_windows.length = 1;
+         m_windows.mode = 0;
+         m_windows.current = m_windows.viewports[0];
+         resizeViewports();
+      }
+   });
+   // bind multiple geometry menu
+   UI.bindMenuItem(Wings3D.action.horizontalPane.name, (ev)=>{
+      // toggle radio if not already,
+      const radio = document.querySelector('input[data-menuid="horizontalPane"');
+      if (radio !== ev.target) {
+         radio.checked = true;
+      }
+      // delete/add/adjust Renderport.
+      if (m_windows.mode !== 1) {
+         m_windows.mode = 1;
+         m_windows.length = 2;
+         m_windows.current = m_windows.viewports[0];
+         resizeViewports();
+      }
+   });
+   UI.bindMenuItem(Wings3D.action.verticalPane.name, (ev)=>{
+      // toggle radio if not already,
+      const radio = document.querySelector('input[data-menuid="verticalPane"');
+      if (radio !== ev.target) {
+         radio.checked = true;
+      }
+      // delete/add/adjust Renderport.
+      if (m_windows.mode !== 2) {
+         m_windows.mode = 2;
+         m_windows.length = 2;
+         m_windows.current = m_windows.viewports[0];
+         resizeViewports();
+      }
+   });
+
+   UI.bindMenuItem(Wings3D.action.quadPane.name, (ev)=>{
+      // toggle radio if not already,
+      const radio = document.querySelector('input[data-menuid="quadPane"');
+      if (radio !== ev.target) {
+         radio.checked = true;
+      }
+      // delete/add/adjust Renderport.
+      if (m_windows.mode !== 3) {
+         m_windows.mode = 3;
+         m_windows.length = 4;
+         m_windows.current = m_windows.viewports[0];
+         resizeViewports();
+      }
+   });
+
+
    // init menu
    const selectionMenu = [ {id: Wings3D.action.deselect, fn: 'resetSelection', hotKey: ' '},
                          {id: Wings3D.action.more, fn: 'moreSelection', hotKey: '+'},
