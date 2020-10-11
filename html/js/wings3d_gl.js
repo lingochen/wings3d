@@ -100,72 +100,7 @@ function createWebGLContext(canvasID, attrib) {
    gl.getViewport = function() {
       return gl.getParameter(gl.VIEWPORT);
    };
-   // project() transform objectSpace vert to screenSpace,
-   //   return vec4. vec4[3] == 0 meant failure, problems with input projection.
-   gl.project = function(objx, objy, objz, modelView, projection) {
-      //Transformation vectors
-      var input = vec4.fromValues(objx, objy, objz, 1.0);
-          out = vec4.create();
-      //Modelview transform
-      vec4.transformMat4(out, input, modelView);
-      //Projection transform, 
-      vec4.transformMat4(input, out, projection);
-      if(input[3] == 0.0) {//The w value
-         return input;
-      }
-      //Perspective division
-      input[0] /= input[3];
-      input[1] /= input[3];
-      input[2] /= input[3];
-      var viewport = gl.getViewport();
-      //screenCoordinate, Map x, y to range 0-1
-      out[0]=(input[0]*0.5+0.5)*viewport[2]+viewport[0];
-      out[1]=(input[1]*0.5+0.5)*viewport[3]+viewport[1];
-      //This is only correct when glDepthRange(0.0, 1.0)
-      out[2]=input[2]*0.5 + 0.5;	//Between 0 and 1
-      out[3]=1.0;             // out[w] determined success or failure.
-      return out;
-  };
 
-   gl.unProject = function(winx, winy, winz, modelView, projection, viewport) {
-      //Transformation matrices
-      var final = mat4.create(),
-          input = vec4.create(),
-          out = vec4.create();
-      //Calculation for inverting a matrix, compute projection x modelview
-      //and store in A[16]
-      mat4.multiply(final, projection, modelView);
-      //Now compute the inverse of matrix A
-      if(mat4.invert(final, final)==null) {
-         out[3]=0.0;
-         return out;
-      }
-      if (!viewport) {
-         viewport = gl.getViewport();
-      }
-      //Transformation of normalized coordinates between -1 and 1
-      input[0]=(winx-viewport[0])/viewport[2]*2.0 - 1.0;
-      input[1]=(winy-viewport[1])/viewport[3]*2.0 - 1.0;
-      input[2]=2.0*winz-1.0;
-      input[3]=1.0;
-      //Objects coordinates
-      vec4.transformMat4(out, input, final);
-      if(out[3]==0.0) {
-         return out;
-      }
-      out[0]/=out[3];
-      out[1]/=out[3];
-      out[2]/=out[3];
-      out[3] =1.0;
-      return out;
-   };
-   gl.transformVertex = function(vertex4, modelView, projection) {
-      var out = vec4.create();
-      if (!modelView) {modelView = gl.modelView;}
-      if (!projection) {projection = gl.projection;}
-
-      return vec4.transformMat4(out, vec4.transformMat4(out, vertex4, modelView), projection);
-   };
 
    // shader, programs.
    gl.compileGLSL = function(vshader, fshader) {
