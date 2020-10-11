@@ -11,7 +11,7 @@ import {Camera} from './wings3d_camera.js';
 import {onReady, GROUND_GRID_SIZE} from './wings3d.js';
 import * as ShaderProg from './wings3d_shaderprog.js';
 import * as Util from './wings3d_util.js';
-import {clipLine, Plane, Frustum} from './wings3d_geomutil.js';
+import {unProject, transformVertex, clipLine, Plane, Frustum} from './wings3d_geomutil.js';
 import { GLTFImportExporter } from './plugins/gltf.js';
 const {vec3, vec4, mat4} = glMatrix;
 
@@ -124,8 +124,8 @@ class Renderport {
       
       const mat =  {modelView: mat4.create(), projection: mat4.create()};
       this.loadMatrices(mat, false);
-      return [gl.unProject(winx, winy, 0.0, mat.modelView, mat.projection, viewport),
-               gl.unProject(winx, winy, 1.0, mat.modelView, mat.projection, viewport)];
+      return [unProject(winx, winy, 0.0, mat.modelView, mat.projection, viewport),
+               unProject(winx, winy, 1.0, mat.modelView, mat.projection, viewport)];
    };
 
 
@@ -265,15 +265,15 @@ class Renderport {
          }
 
          var start = vec4.fromValues(0.0, 0.0, 0.0, 1.0);
-         var origin = gl.transformVertex(start);
+         var origin = transformVertex(start, gl.modelView, gl.projection);
    
          zFar = zFar + GROUND_GRID_SIZE;
          //gl:polygonMode(?GL_FRONT_AND_BACK, ?GL_FILL),
          
          //var color = [Util.hexToRGB(View.theme.colorX), Util.hexToRGB(View.theme.colorY), Util.hexToRGB(View.theme.colorZ)];
-         let endx = gl.transformVertex(vec4.fromValues(zFar, 0.0, 0.0, 1.0)), 
-             endy = gl.transformVertex(vec4.fromValues(0.0, zFar, 0.0, 1.0)), 
-             endz = gl.transformVertex(vec4.fromValues(0.0, 0.0, zFar, 1.0));
+         let endx = transformVertex(vec4.fromValues(zFar, 0.0, 0.0, 1.0), gl.modelView, gl.projection), 
+             endy = transformVertex(vec4.fromValues(0.0, zFar, 0.0, 1.0), gl.modelView, gl.projection), 
+             endz = transformVertex(vec4.fromValues(0.0, 0.0, zFar, 1.0), gl.modelView, gl.projection);
 
          this._renderASCII('x', View.theme.colorX, origin, endx);
          this._renderASCII('y', View.theme.colorY, origin, endy);
@@ -399,7 +399,7 @@ class Renderport {
    _computeGround(projection, modelView) {
       function calcGridSize(width, height, projection, modelView) {
          var w1 = Math.max(width, height);// /2.0;
-         var coord = gl.unProject(w1, 0.0, 0.0, modelView, projection, [0, 0, width, height]);
+         var coord = unProject(w1, 0.0, 0.0, modelView, projection, [0, 0, width, height]);
          var ret = GROUND_GRID_SIZE * 
                Math.max(Math.round(Math.max(Math.max(Math.abs(coord[0]), Math.abs(coord[1])), Math.abs(coord[2]))), 10.0);
          // hacked an value that just cover the screen space.
