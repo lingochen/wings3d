@@ -862,7 +862,19 @@ function rayPick(mousePos) {
 
 const noSelect = (function(){  // no select
    return { start: function() {},
-            move: function(ev) {rayPick(UI.getClientPosition(ev));},
+            move: function(ev) {
+               const mousePos = UI.getClientPosition(ev);
+               // check on the same panes?
+               if (!m_windows.current.isInside(mousePos)) {
+                  for (let i = 0; i < m_windows.length; ++i) {
+                     if (m_windows.viewports[i].isInside(mousePos)) {
+                        m_windows.current = m_windows.viewports[i];
+                        break;
+                     }
+                  }
+               }
+               rayPick(mousePos);
+            },
             finish: function(ev) {}
          };
 }());
@@ -1181,6 +1193,17 @@ function canvasHandleKeyDown(evt) {
 // world rendering and utility functions
 //
 const m_windows = {current: null, viewports: [], mode: 0, length: 1};
+function changeGeometryWindows(mode, length) {
+   if (mode !== m_windows.mode) {
+      for (let i = length; i< m_windows.length; ++i) {
+         m_windows.viewports[i].hide();
+      }
+      m_windows.mode = mode;
+      m_windows.length = length;
+      m_windows.current = m_windows.viewports[0];
+      resizeViewports();
+   }
+}
 function resizeViewports() {
    const viewport = gl.getViewport();
 
@@ -1288,13 +1311,7 @@ function init() {
       if (radio !== ev.target) {
          radio.checked = true;
       }
-      // delete addition Renderport if there is any
-      if (m_windows.mode !== 0) {
-         m_windows.length = 1;
-         m_windows.mode = 0;
-         m_windows.current = m_windows.viewports[0];
-         resizeViewports();
-      }
+      changeGeometryWindows(0, 1);
    });
    // bind multiple geometry menu
    UI.bindMenuItem(Wings3D.action.horizontalPane.name, (ev)=>{
@@ -1304,12 +1321,7 @@ function init() {
          radio.checked = true;
       }
       // delete/add/adjust Renderport.
-      if (m_windows.mode !== 1) {
-         m_windows.mode = 1;
-         m_windows.length = 2;
-         m_windows.current = m_windows.viewports[0];
-         resizeViewports();
-      }
+      changeGeometryWindows(1, 2);
    });
    UI.bindMenuItem(Wings3D.action.verticalPane.name, (ev)=>{
       // toggle radio if not already,
@@ -1318,12 +1330,7 @@ function init() {
          radio.checked = true;
       }
       // delete/add/adjust Renderport.
-      if (m_windows.mode !== 2) {
-         m_windows.mode = 2;
-         m_windows.length = 2;
-         m_windows.current = m_windows.viewports[0];
-         resizeViewports();
-      }
+      changeGeometryWindows(2, 2);
    });
 
    UI.bindMenuItem(Wings3D.action.quadPane.name, (ev)=>{
@@ -1333,12 +1340,7 @@ function init() {
          radio.checked = true;
       }
       // delete/add/adjust Renderport.
-      if (m_windows.mode !== 3) {
-         m_windows.mode = 3;
-         m_windows.length = 4;
-         m_windows.current = m_windows.viewports[0];
-         resizeViewports();
-      }
+      changeGeometryWindows(3, 4);
    });
 
 
