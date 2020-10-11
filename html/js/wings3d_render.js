@@ -115,7 +115,7 @@ class Renderport {
       const x1 = viewport[0], y1 = viewport[1], x2 = x1 + viewport[2], y2 = y1 + viewport[3];
 
       let winx = pt.x;
-      let winy = y2 - pt.y;   // y is upside-down
+      let winy = this.canvasHeight - pt.y;   // y is upside-down
       // yes, sometimes mouse coordinate is outside of the viewport. firefox return values larger than width, height.
       if (winx < x1) { winx = x1; }
       if (winx > x2) { winx = x2;}
@@ -148,6 +148,18 @@ class Renderport {
       return [(point3D[0] *  0.5 + 0.5) * this.viewport[2] + this.viewport[0], 
               (point3D[1] * -0.5 + 0.5) * this.viewport[3] + this.viewport[1]];
    };
+
+   isInside(mousePos) {
+      const viewport = this.viewport;
+      const x1 = viewport[0], y1 = viewport[1], x2 = x1 + viewport[2], y2 = y1 + viewport[3];
+
+      const x = mousePos.x;
+      const y = this.canvasHeight - mousePos.y;   // y is upside-down
+      if ( (x >= x1) && (x <=x2) && (y>=y1) && (y <= y2)) {
+         return true;
+      }
+      return false;
+   }
 
    // UI
    selectionBox(start, end) {
@@ -221,6 +233,13 @@ class Renderport {
       gl.viewport(...saveViewport);
    };
 
+   hide() { // render will auto-show
+      for (let axis of Object.keys(this.lineEnd)) {
+         if (this.lineEnd[axis].style.display !== "none") {
+            this.lineEnd[axis].style.display = "none";
+         }
+      }
+   }
 
    _renderASCII(axis, color, origin, end) {
       if (clipLine(origin, end)) {
