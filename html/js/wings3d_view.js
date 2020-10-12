@@ -868,7 +868,7 @@ const noSelect = (function(){  // no select
                if (!m_windows.current.isInside(mousePos)) {
                   for (let i = 0; i < m_windows.length; ++i) {
                      if (m_windows.viewports[i].isInside(mousePos)) {
-                        m_windows.current = m_windows.viewports[i];
+                        makeCurrent(m_windows.viewports[i]);
                         break;
                      }
                   }
@@ -1151,7 +1151,7 @@ function canvasHandleWheel(e) {
    }
    
    // asks camera to zoomIn/Out.
-   Render.camera.zoomStep(py);
+   m_windows.current.camera.zoomStep(py);
 };
 
 //-- end of mouse handling-----------------------------------------------
@@ -1192,7 +1192,23 @@ function canvasHandleKeyDown(evt) {
 //
 // world rendering and utility functions
 //
-const m_windows = {current: null, viewports: [], mode: 0, length: 1};
+const m_windows = {current: null, viewports: [], mode: 0, length: 1, hilite: null};
+function updateHiliteRect() {
+   let x = m_windows.current.viewport[0], y = m_windows.current.viewport[1], width = m_windows.current.viewport[2], height = m_windows.current.viewport[3]; 
+   y = gl.canvas.height - height - y;
+   m_windows.hilite.setAttributeNS(null, 'x', x);
+   m_windows.hilite.setAttributeNS(null, 'y', y);
+   m_windows.hilite.setAttributeNS(null, 'width', width);
+   m_windows.hilite.setAttributeNS(null, 'height', height);
+}
+function makeCurrent(newCurrent) {
+   if (m_windows.current !== newCurrent) {
+      m_windows.current.makeCurrent(false);
+      m_windows.current = newCurrent;
+      newCurrent.makeCurrent(true);
+      updateHiliteRect();
+   }
+}
 function changeGeometryWindows(mode, length) {
    if (mode !== m_windows.mode) {
       for (let i = length; i< m_windows.length; ++i) {
@@ -1200,7 +1216,7 @@ function changeGeometryWindows(mode, length) {
       }
       m_windows.mode = mode;
       m_windows.length = length;
-      m_windows.current = m_windows.viewports[0];
+      makeCurrent(m_windows.viewports[0]);
       resizeViewports();
    }
 }
@@ -1230,6 +1246,8 @@ function resizeViewports() {
          m_windows.viewports[3].setViewport(leftWidth, bottomHeight, rightWidth, topHeight, viewport[3]);
       }
    }
+   // resize curretBox too
+   updateHiliteRect();
 }
 
 function drawWorld(gl) {
@@ -1302,9 +1320,15 @@ function init() {
    _environment.draftBench = new DraftBench(theme.draftBench, theme.draftBenchPref, _environment.materialList);
    // init renderer
    for (let i = 0; i < 4; ++i) {
-      m_windows.viewports.push( new Render.Renderport([0, 0, gl.canvas.width, gl.canvas.height]) );
+      m_windows.viewports.push( new Render.Renderport([0, 0, gl.canvas.width, gl.canvas.height], prop.orthogonalView, prop.showAxes, prop.showGroundplane) );
    }
    m_windows.current = m_windows.viewports[0];
+   m_windows.hilite = createElementSVG('rect');
+   m_windows.hilite.setAttributeNS(null, 'x', 0);
+   m_windows.hilite.setAttributeNS(null, 'y', 0);
+   m_windows.hilite.setAttributeNS(null, 'stroke', 'black');
+   m_windows.hilite.setAttributeNS(null, 'fill', 'none');
+   Render.svgUI.appendChild(m_windows.hilite);
    //
    UI.bindMenuItem(Wings3D.action.singlePane.name, (ev)=> {
       const radio = document.querySelector('input[data-menuid="singlePane"');
@@ -1399,7 +1423,8 @@ function init() {
          const data = document.querySelector(button.selector);
          if (data) {
             prop[button.propName] = !data.checked;  // click event is earlier than input.checked event, so the value hasn't toggle yet.
-            Render.needToRedraw();
+            m_windows.current[button.propName](!data.checked);
+            //Render.needToRedraw();
          }
        });
    }

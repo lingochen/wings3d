@@ -31,7 +31,7 @@ function clearRedraw() {
 }
 
 class Renderport {
-   constructor(viewport) { // [x, y, width, height]
+   constructor(viewport, isOrtho, showAxes, showGround) { // [x, y, width, height]
       this.lineEnd = {x: null, y: null, z: null};
 
       for (let axis of Object.keys(this.lineEnd)) {
@@ -50,6 +50,11 @@ class Renderport {
       //this.axesVBO;
       //this.groundGridVBO;
       this._computeAxes();
+
+      // groundplane, axes, orthogonal
+      this.isOrtho = isOrtho;
+      this.axesShow = showAxes;
+      this.groundplaneShow = showGround;
    }
 
    setViewport(x, y, width, height, canvasHeight) {
@@ -73,7 +78,7 @@ class Renderport {
    projection(out, inTransform) {
       const size = this.viewport;
       const aspect = size[2] / size[3];
-      const ortho = View.prop.orthogonalView;
+      const ortho = this.isOrtho;
       if (!ortho && this.camera.alongAxis) {
          ortho = View.prop.force_ortho_along_axis;
       }
@@ -161,6 +166,41 @@ class Renderport {
       return false;
    }
 
+   makeCurrent(isCurrent) {  // enable/disable 
+      if (isCurrent) {  // update icons to reflect current state.         
+         let checkbox = document.querySelector('input[id="toggleGroundFor"]');
+         if (checkbox) {
+            checkbox.checked = this.groundplaneShow;
+         }
+         checkbox = document.querySelector('input[id="toggleAxesFor"]');
+         if (checkbox) {
+            checkbox.checked = this.axesShow;
+         }
+         checkbox = document.querySelector('input[id="toggleOrthoFor"]');
+         if (checkbox) {
+            checkbox.checked = this.isOrtho;
+         }
+      }
+   }
+
+   orthogonalView(flag) {
+      this.isOrtho = flag;
+      this.isRedraw = true;
+   }
+
+   showAxes(flag) {
+      this.axesShow = flag;
+      this.isRedraw = true;
+      if (!flag) {   // remember to hide text
+         this._hideText();
+      }
+   }
+
+   showGroundplane(flag) {
+      this.groundplaneShow = flag;
+      this.isRedraw = true;
+   }
+
    // UI
    selectionBox(start, end) {
       // sort first
@@ -199,8 +239,6 @@ class Renderport {
       if (this.isRedraw || this.camera.isModified || m_isRedraw) {
          gl.viewport(...this.viewport);
          gl.scissor(...this.viewport);
-         this.isRedraw = false;
-         //m_isRedraw = false; 
          const backColor = Util.hexToRGBA(View.theme.geometryBackground);
          gl.clearColor(backColor[0], backColor[1], backColor[2], backColor[3]);
          gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -214,9 +252,10 @@ class Renderport {
          //		                   ?GL_LIGHTING_BIT).enable(?GL_DEPTH_TEST).enable(?GL_CULL_FACE);
          // no support for dynamic anti aliasing. only setup in creatingContext
          const mat = this.loadMatrices(gl, true);
-         if (this.camera.isModified) {
+         if (this.camera.isModified || this.isRedraw) {
             this.camera.isModified = false;
-            this._computeGround(gl, mat.projection, mat.modelView);
+            this.isRedraw = false;
+            this._computeGround(mat.projection, mat.modelView);
          }
          const yon = this._renderGround(gl, mat.projection, mat.modelView);
          this._renderAxes(gl, mat.projection, mat.modelView);
@@ -229,11 +268,16 @@ class Renderport {
          this._renderAxisLetter(gl, yon);
          //show_camera_image_plane(),
          //wings_develop:gl_error_check("Rendering scene")
+         //m_isRedraw = false; 
       }
       gl.viewport(...saveViewport);
    };
 
    hide() { // render will auto-show
+      this._hideText();
+   }
+
+   _hideText() { 
       for (let axis of Object.keys(this.lineEnd)) {
          if (this.lineEnd[axis].style.display !== "none") {
             this.lineEnd[axis].style.display = "none";
@@ -257,9 +301,9 @@ class Renderport {
 
    
    _renderAxisLetter(gl, zFar) {
-      if (View.prop.showAxes){
-         for (let axis of Object.keys(this.lineEnd)) {
-            if (this.lineEnd[axis].style.display === "none") {
+      if (this.axesShow){
+         for (let axis of Object.keys(this.lineEnd)) { 
+            if (this.lineEnd[axis].style.display === "none") { // unhideText,
                this.lineEnd[axis].style.display = "block";
             }
          }
@@ -278,17 +322,11 @@ class Renderport {
          this._renderASCII('x', View.theme.colorX, origin, endx);
          this._renderASCII('y', View.theme.colorY, origin, endy);
          this._renderASCII('z', View.theme.colorZ, origin, endz);
-      } else { // hide svg text
-         for (let axis of Object.keys(this.lineEnd)) {
-            if (this.lineEnd[axis].style.display !== "none") {
-               this.lineEnd[axis].style.display = "none";
-            }
-         }
       }
    }
 
    _renderAxes(gl, projection, modelView) {
-      if (View.prop.showAxes) {
+      if (this.axesShow) {
          // use line segment program
          gl.useProgram(m_groundAxisProg.handle);
          // bind attribute, vertex, color, matrix
@@ -331,10 +369,9 @@ class Renderport {
 
    _renderGround(gl, projection, modelView) {
       // draw groundPlane
-      const show = View.prop.showGroundplane; // || 
          //(wings_pref:get_value(force_show_along_grid) andalso
          //(Camera.view.alongAxis =/= none);      
-      if (show) {
+      if (this.groundplaneShow) {
          //var alongAxis = Camera.view.alongAxis;
          const color = Util.hexToRGBA(View.theme.gridColor);
             //case view.AlongAxis of
@@ -342,7 +379,7 @@ class Renderport {
             // z -> ok;
             // _ -> gl:rotatef(90.0, 1.0, 0.0, 0.0)
          var length = this.groundGridVBO.length;
-         if ( View.prop.showAxes ) {
+         if ( this.axesShow ) {
             length -= 4;            // skip the axes line
          }
          // data
