@@ -158,7 +158,7 @@ ul.menu.bar > li {
   display: flex;
   position: relative;
   list-style-type: none;
-  transition: all 0s; 
+  transition: all 0s;
 }
 
 /* menuItem */
@@ -196,6 +196,11 @@ ul.popup.menu > li > img {
   padding: 0 0.3em 0 0;
 }
 
+ul.popup.menu > li.slideOut {
+  visibility: hidden;
+  height: 0px;
+}
+
 ul.menu li:hover {
   background-color: var(--menuHighlight);
 }
@@ -229,10 +234,8 @@ li.dropside.showBefore::before {
   display: block;
 }
 ul.popup.menu > li.dropside.slideUp {
-  position: absolute;
   top: 0px;
   left: 0px;
-  width: 100%;
  }
 /* slider, copy from http://danielstern.ca/range.css */
 .slider {
