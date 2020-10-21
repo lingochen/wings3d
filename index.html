@@ -1047,7 +1047,7 @@
   <form id="materialSetting" class="dialog">
     <h3><span data-i18n>Material Properties:</span> <span data-i18n>New Material</span></h3>
     <div id="materialWrap">
-    <canvas id="materialCanvas" width="80" height="80"></canvas>
+    <canvas id="materialCanvas" width="128" height="128"></canvas>
     <div class="fieldTable">
       <span data-i18n>Base Color</span><input id="baseColorSlider" class="slider" type="range" min="0" max="255" value="255" onchange="matGradient(this)"><input name="baseColor" type="color" value="#ffffff" onchange="matColor(this)">
       <span data-i18n>Metallic</span><input type="range" class="slider" min="0" max="1" step="0.01" value="1" onchange="this.nextElementSibling.value=this.value"><input name="metallic" type="number" min="0" max="1" step="0.01" value="1" onchange="this.previousElementSibling.value=this.value">

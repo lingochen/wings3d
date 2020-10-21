@@ -8,6 +8,7 @@ import * as Wings3D from './wings3d.js';
 import * as UI from './wings3d_ui.js';
 import * as Util from './wings3d_util.js';
 import {Material, Texture} from './wings3d_material.js';
+import * as PbrSphere from './wings3d_materialsphere.js';
 import {RenameBodyCommand} from './wings3d_bodymads.js';
 import {PreviewCage, PreviewGroup} from './wings3d_model.js';
 
@@ -582,6 +583,8 @@ class MaterialList extends ListView {
 
    editMaterial(ev, objects) {
       const dat = objects[0];
+
+
       UI.runDialog('#materialSetting', ev, function(form) {
          const data = UI.extractDialogValue(form);
          dat.setValues(data);
@@ -592,6 +595,11 @@ class MaterialList extends ListView {
          const data = form.querySelector('h3 > span');
          if (data) {
             data.textContent = dat.name;
+         }
+         const canvas = form.querySelector('canvas');
+         if (canvas) {
+            const ctx = canvas.getContext('2d');
+            ctx.putImageData(PbrSphere.preview(dat.pbr), 0, 0);
          }
          for (let [key, value] of Object.entries(dat.pbr)) {
             const data = form.querySelector(`div > [name=${key}]`);
