@@ -430,6 +430,36 @@ let wireframeLine = {   // http://codeflow.org/entries/2012/aug/02/easy-wirefram
    `
 };
 
+let pbrMaterial = {
+   vertex:
+      `attribute vec3 position;
+      attribute vec3 normal;
+      
+      uniform mat4 worldView;
+      uniform mat4 projection;
+
+      varying vec3 vNormal;
+      void main(void) {
+         vNormal = normal;
+         gl_Position = projection * worldView * vec4(position, 1.0);
+      }`,
+   fragment:
+      `precision mediump float;
+
+      struct Material {
+         vec3 baseColor;
+      };
+
+      uniform Material mtl;
+      uniform vec3 lightDir;
+      varying vec3 vNormal; 
+
+      void main(void) {
+         float diff = max(dot(normalize(vNormal), lightDir), 0.0);
+         gl_FragColor = vec4(diff * mtl.baseColor, 1);
+      }`,
+};
+
 
 Wings3D.onReady(function() {
    const index2TexCoord = 
@@ -456,6 +486,8 @@ Wings3D.onReady(function() {
    selectedColorPoint = gl.createShaderProgram(selectedColorPoint.vertex(index2TexCoord), selectedColorPoint.fragment);
 
    drawSelectablePolygon = gl.createShaderProgram(drawSelectablePolygon.vertex(index2TexCoord, materialIndex), drawSelectablePolygon.fragment);
+
+   pbrMaterial = gl.createShaderProgram(pbrMaterial.vertex, pbrMaterial.fragment);
 });
 
 export {
@@ -469,4 +501,5 @@ export {
    solidColor,
    colorPoint,
    drawSelectablePolygon,
+   pbrMaterial,
 };

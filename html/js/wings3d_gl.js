@@ -4,10 +4,16 @@
 //
 */
 "use strict";
-const {vec4, mat4} = glMatrix;
+const {mat4} = glMatrix;
 
 let gl = null;
 function createWebGLContext(canvasID, attrib) {
+   gl = _createWebGLContext(canvasID, attrib);
+   return gl;
+}
+
+
+function _createWebGLContext(canvasID, attrib) {
    var _pvt = {currentShader: null};
 
    // initialization
@@ -19,7 +25,7 @@ function createWebGLContext(canvasID, attrib) {
    attrib = typeof attrib !== 'undefined' ? attrib : { depth: true, stencil: true, antialias: true, preserveDrawingBuffer: true };
 //   gl = canvas.getContext("webgl2", attrib);
 //   if (!gl) {
-      gl = canvas.getContext("webgl", attrib);
+      const gl = canvas.getContext("webgl", attrib);
       if (gl) {
          // init_extensions(), init_restrictions()
          let ext = gl.getExtension("OES_standard_derivatives"); // in webgl2 is standard.
@@ -1265,6 +1271,7 @@ TriangleIndexBuffer.prototype.set = function(indexArray, newVals) {
 
 export {
    createWebGLContext,
+   _createWebGLContext,
    ColorAttribute,
    TexCoordAttribute,
    TriangleIndexBuffer,
