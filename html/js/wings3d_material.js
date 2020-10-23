@@ -146,7 +146,7 @@ static release(material) {
             if ((key == "baseColor" || key == "emission") && !Array.isArray(inputDat[key])) {
                this.pbr[key] = Util.hexToRGB(inputDat[key]);
             } else {
-               this.pbr[key] = inputDat[key];
+               this.pbr[key] = parseFloat(inputDat[key]);
             }
          } else {
             console.log("unknown input material: " + key);
