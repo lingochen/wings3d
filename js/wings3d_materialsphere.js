@@ -133,7 +133,13 @@ class PbrSphere {
       gl.useProgram(Program.pbrMaterial.progHandle);
 
       // set pbrMaterial.
-       gl.uniform3fv(Program.pbrMaterial.uniform['mtl.baseColor'].loc, pbrMaterial.baseColor);
+      gl.uniform3fv(Program.pbrMaterial.uniform.baseColor.loc, pbrMaterial.baseColor);
+      gl.uniform3fv(Program.pbrMaterial.uniform.emission.loc, pbrMaterial.emission); // not used yet. optimized out of shader
+      gl.uniform1f(Program.pbrMaterial.uniform.metallic.loc, pbrMaterial.metallic);
+      gl.uniform1f(Program.pbrMaterial.uniform.roughness.loc, pbrMaterial.roughness);
+      gl.uniform1i(Program.pbrMaterial.uniform.useDiffuseMap.loc, 0);
+      gl.uniform1i(Program.pbrMaterial.uniform.usePBRMap.loc, 0);
+      gl.uniform1i(Program.pbrMaterial.uniform.useEmissionMap.loc, 0);
 
       // Turn on the position, normal
       gl.setBufferAndAttrib(this.mesh.buffer.position, Program.pbrMaterial.attribute.position.loc);
@@ -150,18 +156,24 @@ class PbrSphere {
                         0.5, 100);
 
       // Compute the camera's matrix using look at., then  get the view matrix
-      const viewMatrix = mat4.create();
-      mat4.lookAt(viewMatrix, 
-                   [0, 0, 2],          // camera position 
+      const cameraPos = [0, 0, 2];
+      const tmpMatrix = mat4.create();
+      mat4.lookAt(tmpMatrix, 
+                   cameraPos,          // camera position 
                    [0, 0, 0],          // target
                    [0, 1, 0]);         // up
+      mat4.multiply(projectionMatrix, projectionMatrix, tmpMatrix);
+      mat4.identity(tmpMatrix);
       const lightDir = [1, -1, 1];
       vec3.normalize(lightDir, lightDir);
 
-      // Set the matrix, lightDir
-      gl.uniformMatrix4fv(Program.pbrMaterial.transform.projection, false, projectionMatrix);
-      gl.uniformMatrix4fv(Program.pbrMaterial.transform.worldView, false, viewMatrix);
+      // Set the matrix, lightDir, 
+      gl.uniformMatrix4fv(Program.pbrMaterial.transform.worldViewProjection, false, projectionMatrix);
+      gl.uniformMatrix4fv(Program.pbrMaterial.transform.world, false, tmpMatrix);
+      gl.uniform3fv(Program.pbrMaterial.uniform.wsEyepoint.loc, cameraPos);
       gl.uniform3fv(Program.pbrMaterial.uniform.lightDir.loc, lightDir);
+      gl.uniform3fv(Program.pbrMaterial.uniform.lightDiffuse.loc, [1.0, 1.0, 1.0]);
+      gl.uniform3fv(Program.pbrMaterial.uniform.lightSpecular.loc, [1.0, 1.0, 1.0]);
 
       // Draw the geometry using 
       gl.drawElements(gl.TRIANGLES, this.mesh.index.length, gl.UNSIGNED_SHORT, 0);
