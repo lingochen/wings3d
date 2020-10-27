@@ -302,7 +302,8 @@ class GLTFImportExporter extends ImportExporter {
       if (node.children !== undefined) {
          let group = this.createGroup(node.name);
          for (let child of node.children) {
-            await this._parse('nodes', child);
+            let res = await this._parse('nodes', child);
+            group.insert( res );
             //group.insert( await this._parse('nodes', child) );
          }
          return group;
