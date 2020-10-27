@@ -434,6 +434,7 @@ let pbrMaterial = {
    vertex:
       `attribute vec3 position;
       attribute vec3 normal;
+      attribute vec2 uv;
       uniform vec3 baseColor;
       
       uniform mat4 world;
@@ -448,7 +449,7 @@ let pbrMaterial = {
          wsPosition = (world * vec4(position, 1.0)).xyz;
          gl_Position = worldViewProjection * vec4(position, 1.0);
          vBaseColor = baseColor;
-         vTexCoord = vec2(0.0);
+         vTexCoord = uv;
       }`,
    fragment: (base, material) =>
       `precision mediump float;
@@ -483,7 +484,7 @@ let pbrMaterial = {
          vec3 specContrib = F * G * D / (4.0 * pbr.NdotL * pbr.NdotV);
          specContrib *= lightSpecular;
          // Obtain final intensity as reflectance (BRDF) scaled by the energy of the light (cosine law)
-         vec3 frag_color = pbr.NdotL * (diffuseContrib + specContrib) 
+         vec3 frag_color = pbr.NdotL * (diffuseContrib + specContrib);
          frag_color +=  getEmission();
          gl_FragColor = vec4(pow(frag_color,vec3(1.0/2.2)), pbr.opaque);
       }`,
