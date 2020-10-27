@@ -23,6 +23,7 @@ class Vertex { // hacked up class.
 class Mesh {
    constructor() {
       this.vertex = [];
+      this.uv = [];
       this.normal = [];
       this.index = [];
       this.buffer = {};
@@ -31,6 +32,16 @@ class Mesh {
    addVertex(vert) {
       this.vertex.push( vert );
       this.normal.push( [0, 0, 0] );
+
+      // compute uv for sphere
+      // https://en.wikipedia.org/wiki/UV_mapping                
+      // posn is the normalized vector from P to the sphere center(0, 0, 0)
+      const posn = [0, 0, 0];
+      vec3.normalize(posn, vert);
+      const u = 0.5 + Math.atan2(posn[2], posn[0]) / (2.*Math.PI);
+      const v = 0.5 - Math.asin(posn[1]) / Math.PI;
+      this.uv.push( [u, v] );
+
       return new Vertex(this.vertex.length-1);
    }
 
@@ -77,6 +88,12 @@ class Mesh {
       this.buffer.position = gl.createBuffer();
       gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer.position);
       array = Float32Array.from(this.vertex.flat());
+      gl.bufferData(gl.ARRAY_BUFFER, array, gl.STATIC_DRAW);
+
+      // upload uv
+      this.buffer.uv = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer.uv);
+      array = Float32Array.from(this.uv.flat());
       gl.bufferData(gl.ARRAY_BUFFER, array, gl.STATIC_DRAW);
 
       // upload index
@@ -141,10 +158,10 @@ class PbrSphere {
       gl.uniform1i(Program.pbrMaterial.uniform.usePBRMap.loc, 0);
       gl.uniform1i(Program.pbrMaterial.uniform.useEmissionMap.loc, 0);
 
-      // Turn on the position, normal
+      // Turn on the position, normal, uv
       gl.setBufferAndAttrib(this.mesh.buffer.position, Program.pbrMaterial.attribute.position.loc);
       gl.setBufferAndAttrib(this.mesh.buffer.normal, Program.pbrMaterial.attribute.normal.loc);
-
+      gl.setBufferAndAttrib(this.mesh.buffer.uv, Program.pbrMaterial.attribute.uv.loc);
       // set index
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.mesh.buffer.index);
 
@@ -187,7 +204,7 @@ class PbrSphere {
       // draw using predefined sphere geometry
 
       // Render to the texture (using clear because it's simple)
-      gl.clearColor(0, 0, 0, 1); //
+      gl.clearColor(0.2, 0.2, 0.2, 1); //
       gl.clear(gl.COLOR_BUFFER_BIT);
 
       // now draw the sphere
