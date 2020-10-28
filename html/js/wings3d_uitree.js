@@ -582,10 +582,21 @@ class MaterialList extends ListView {
    }
 
    editMaterial(ev, objects) {
+      function extractData(form) {
+         const data = UI.extractDialogValue(form);
+         for (let [key, value] of Object.entries(data)) {
+            if (isNaN(value)) {  // convert '#121212' to rgb
+               data[key] = Util.hexToRGB(value);
+            } else {
+               data[key] = parseFloat(value);
+            }
+         }
+         return data;
+      }
       const dat = objects[0];
 
       UI.runDialog('#materialSetting', ev, function(form) {
-         const data = UI.extractDialogValue(form);
+         const data = extractData(form);
          dat.setValues(data);
          dat.menu.color.style.backgroundColor = dat.pict.style.backgroundColor = Util.rgbToHex(...dat.pbr.baseColor);
        }, (form)=>{ // handle setup
@@ -616,15 +627,8 @@ class MaterialList extends ListView {
          if (!form.onchange) {   // use onchange for update
             form.onchange = function(ev) {
                // extract current pbr values, and ask canvas to redo pbr value
-               const data = UI.extractDialogValue(form); // or this.
-               for (let [key, value] of Object.entries(data)) {
-                  if (isNaN(value)) {  // convert '#121212' to rgb
-                     data[key] = Util.hexToRGB(value);
-                  } else {
-                     data[key] = parseFloat(value);
-                  }
-               }
                if (canvas) {
+                  const data = extractData(form);
                   const ctx = canvas.getContext('2d');
                   ctx.putImageData(PbrSphere.preview(data), 0, 0);
                }
