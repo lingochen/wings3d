@@ -134,7 +134,7 @@ class PbrSphere {
       //gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, depthBuffer);
     
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-    
+      gl.bindTexture(gl.TEXTURE_2D, null);
     
       // create sphere object.
       this.mesh = new Mesh;
