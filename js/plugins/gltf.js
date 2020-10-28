@@ -183,9 +183,9 @@ class GLTFImportExporter extends ImportExporter {
          if (Array.isArray(metal.baseColorFactor)) {
             pbr.baseColor = [metal.baseColorFactor[0], metal.baseColorFactor[1], metal.baseColorFactor[2]];
             pbr.opacity = metal.baseColorFactor[3];
-            if (metal.baseColorTexture) {
-               ret.setBaseColorTexture( this._parse("textures", metal.baseColorTexture.index) );
-            }
+         }
+         if (metal.baseColorTexture) {
+            ret.setBaseColorTexture( this._parse("textures", metal.baseColorTexture.index) );
          }
          if (metal.metallicFactor) pbr.metallic = metal.metallicFactor;   // already have default
          if (metal.roughness) pbr.roughness = metal.roughnessFactor; // already have default
