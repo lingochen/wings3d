@@ -161,7 +161,7 @@ class PbrSphere {
       // Turn on the position, normal, uv
       gl.setBufferAndAttrib(this.mesh.buffer.position, Program.pbrMaterial.attribute.position.loc);
       gl.setBufferAndAttrib(this.mesh.buffer.normal, Program.pbrMaterial.attribute.normal.loc);
-      gl.setBufferAndAttrib(this.mesh.buffer.uv, Program.pbrMaterial.attribute.uv.loc);
+      gl.setBufferAndAttrib(this.mesh.buffer.uv, Program.pbrMaterial.attribute.uv.loc, 2);
       // set index
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.mesh.buffer.index);
 
