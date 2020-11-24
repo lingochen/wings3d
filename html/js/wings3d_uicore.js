@@ -213,6 +213,18 @@ class MaterialUI extends HTMLElement {
       this.setAttribute('def', materialName);
    }
 
+   get default() {
+      return (this.getAttribute('default') !== null);
+   }
+
+   set default(enable) {
+      if (enable) {
+         this.setAttribute('default', '');
+      } else {
+         this.removeAttribute('default');
+      }
+   }
+
    // should we merge with "def"?
    rename(newName) {
       this.def = newName;
