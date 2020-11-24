@@ -10,6 +10,7 @@ import * as Wings3D from "./js/wings3d.js"
 import './js/wings3d_ui.js';
 import './js/wings3d_i18n.js';
 import './js/wings3d_primitive.js';
+import './js/wings3d_uicore.js';
 
 // plugins
 import "./js/plugins/wavefront_obj.js";
