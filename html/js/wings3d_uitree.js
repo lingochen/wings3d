@@ -463,6 +463,7 @@ class ImageList extends ListView {
 
 }
 
+
 function getImageList(labelId, id) {
    const listView = document.querySelector(id); // get <ul>
    const label = document.querySelector(labelId);
@@ -471,7 +472,7 @@ function getImageList(labelId, id) {
    }
    // console log error
    return null;
-};
+}
 
 class MaterialList extends ListView {
    constructor(label, listView) {
@@ -493,36 +494,9 @@ class MaterialList extends ListView {
     */
    addMaterial(material) {
       const dat = material;
-      // now show on li.
-      let li = dat.li = document.createElement('li');
-      let pictFrag = document.createRange().createContextualFragment('<span class="materialIcon"></span>');
-      dat.pict = pictFrag.firstElementChild;
-      dat.pict.addEventListener('click', (ev) => {
-         // edit material Setting
-         this.editMaterial(ev, [dat]);
-       });
-      dat.pict.style.backgroundColor = Util.rgbToHex(...dat.pbr.baseColor);
-      li.appendChild(pictFrag);
-      let whole = document.createRange().createContextualFragment(`<span>${dat.name}</span>`);
-      dat.text = whole.firstElementChild;
-      if (dat !== Material.default) {   // default material's name cannot be changed.
-         ListView.addRenameListener(dat.text, dat);
-      }
 
-      dat.text.addEventListener('contextmenu', function(ev) {  // contextMenu
-         ev.preventDefault();
-         let contextMenu = document.querySelector('#materialMenu');
-         if (contextMenu) {
-            UI.positionDom(contextMenu, UI.getPosition(ev));
-            UI.showContextMenu(contextMenu);
-            View.setObject(null, [dat]);
-         }
-       }, false);
-      li.appendChild(whole);
-      let count = document.createRange().createContextualFragment(`<span class="resultCount">${dat.usageCount}</span>`);
-      dat.guiStatus.count = count.firstElementChild;
-      li.appendChild(count);
-      this.view.appendChild(li);
+      const mat = document.createElement('wings3d-material');
+      this.view.appendChild(mat);
       // also put on subMenu.
       if (!this.submenu) {
          this.submenu = document.querySelector('[data-menuid="faceMaterialMenu"]');
@@ -531,25 +505,30 @@ class MaterialList extends ListView {
          }
       }
       if (this.submenu) {
-         dat.menu = {};
-         li = dat.menu.li = document.createElement('li');
+         mat.menu = {};
+         let li = mat.menu.li = document.createElement('li');
          let aFrag = document.createRange().createContextualFragment('<a></a>');
-         dat.menu.a = aFrag.firstElementChild; 
+         mat.menu.a = aFrag.firstElementChild; 
          li.appendChild(aFrag);
          let nameFrag = document.createRange().createContextualFragment(`<span>${dat.name}</span>`);
-         dat.menu.text = nameFrag.firstElementChild;
-         dat.menu.a.appendChild(nameFrag);
+         mat.menu.text = nameFrag.firstElementChild;
+         mat.menu.a.appendChild(nameFrag);
          let square = document.createRange().createContextualFragment('<span style="width: 1rem;"></span>');
-         dat.menu.color = square.firstElementChild; 
-         dat.menu.a.appendChild(square);
-         dat.menu.color.style.backgroundColor = Util.rgbToHex(...dat.pbr.baseColor);
+         mat.menu.color = square.firstElementChild; 
+         mat.menu.a.appendChild(square);
+         mat.menu.color.style.backgroundColor = Util.rgbToHex(...dat.pbr.baseColor);
 
-         dat.menu.a.addEventListener('click', function(ev){
+         mat.menu.a.addEventListener('click', function(ev){
             View.setObject(null, [dat]);       
             Wings3D.runAction(ev.button, "assignMaterial", ev);
           });
          this.submenu.prepend(li); // put on submenu
       }
+      // set mat value
+      mat.def = material.name;
+      mat._mat = material;
+      mat.setBaseColor(Util.rgbToHex(...dat.pbr.baseColor));
+      mat.setUsageCount(material.usageCount);
 
       this.list.push(dat);
    }
@@ -571,7 +550,7 @@ class MaterialList extends ListView {
    }
 
    duplicateMaterial(objects) {
-      const dat = objects[0];
+      const dat = objects[0]._mat;
       let name = dat.name.split(/\d+$/);
       if (name.length > 1) {
          name = name[0] + (parseInt(dat.name.match(/\d+$/), 10) + 1);
@@ -581,74 +560,17 @@ class MaterialList extends ListView {
       this.addMaterial(Material.create(name, dat.pbr));
    }
 
-   editMaterial(ev, objects) {
-      function extractData(form) {
-         const data = UI.extractDialogValue(form);
-         for (let [key, value] of Object.entries(data)) {
-            if (isNaN(value)) {  // convert '#121212' to rgb
-               data[key] = Util.hexToRGB(value);
-            } else {
-               data[key] = parseFloat(value);
-            }
-         }
-         return data;
-      }
-      const dat = objects[0];
-
-      UI.runDialog('#materialSetting', ev, function(form) {
-         const data = extractData(form);
-         dat.setValues(data);
-         dat.menu.color.style.backgroundColor = dat.pict.style.backgroundColor = Util.rgbToHex(...dat.pbr.baseColor);
-       }, (form)=>{ // handle setup
-         form.reset();
-         MaterialList.resetCSS();
-         const data = form.querySelector('h3 > span');
-         if (data) {
-            data.textContent = dat.name;
-         }
-         const canvas = form.querySelector('canvas');
-         if (canvas) {
-            const ctx = canvas.getContext('2d');
-            ctx.putImageData(PbrSphere.preview(dat.pbr), 0, 0);
-         }
-         for (let [key, value] of Object.entries(dat.pbr)) {
-            const data = form.querySelector(`div > [name=${key}]`);
-            if (data) {
-               if(isNaN(value)) {
-                  data.value = Util.rgbToHex(value[0], value[1], value[2]);
-               } else {
-                  data.value = value;
-               }
-               if (data.onchange) { // vertexColorSelect don't have onChange
-                  data.onchange();
-               }
-            }
-         }
-         if (!form.onchange) {   // use onchange for update
-            form.onchange = function(ev) {
-               // extract current pbr values, and ask canvas to redo pbr value
-               if (canvas) {
-                  const data = extractData(form);
-                  const ctx = canvas.getContext('2d');
-                  ctx.putImageData(PbrSphere.preview(data), 0, 0);
-               }
-            }
-         }
-       }, 
-       );
-   }
-
-   deleteMaterial(objects) {
-      const dat = objects[0];
-      if (dat === Material.default) {   // default material is not deletable.
+   deleteMaterial(objects) {  // default and in-use material is not deletable.
+      const mat = objects[0];
+      if (mat._mat === Material.default) {   // default material is not deletable.
          return;
       }
       // remove li
-      this.view.removeChild(dat.li);
+      this.view.removeChild(mat);
       // remove from list
-      this.list.splice(this.list.indexOf(dat), 1);
+      this.list.splice(this.list.indexOf(mat._mat), 1);
       // remove from submenu
-      this.submenu.removeChild(dat.menu.li);
+      this.submenu.removeChild(mat.menu.li);
    }
 
    newName() {
@@ -656,17 +578,16 @@ class MaterialList extends ListView {
    }
 
    renameMaterial(ev, objects) {
-      const dat = objects[0];
-      if (dat === Material.default) {   // default material cannot be deleted
+      const mat = objects[0];
+      if (mat._mat === Material.default) {   // default material cannot be renamed
          return;
       }
       // run rename dialog
       UI.runDialog('#renameDialog', ev, function(form) {
          const data = UI.extractDialogValue(form);
-         dat.name = data[dat.uuid]; // now rename
-         dat.menu.text.textContent = dat.text.textContent = dat.name;
+         mat.rename(data[mat._mat.uuid]);
       }, function(form) {
-         UI.addLabelInput(form, objects);
+         UI.addLabelInput(form, [mat._mat]);
       });
    }
 

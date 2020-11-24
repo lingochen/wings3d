@@ -1574,11 +1574,12 @@ function init() {
       _environment.materialList.createMaterial(ev);
     });
    UI.bindMenuItem(Wings3D.action.editMaterial.name, function(ev) {
-      _environment.materialList.editMaterial(ev, _environment.currentObjects);
+      //_environment.materialList.editMaterial(ev, _environment.currentObjects);
+      _environment.currentObjects[0]._editMaterial(ev);
     });
    UI.bindMenuItem(Wings3D.action.deleteMaterial.name, function(_ev){
       // check if any alive polygon is using the tobe delete Material
-      if (_environment.currentObjects[0].usageCount === 0) {
+      if (!_environment.currentObjects[0].isInUse()) {
          _environment.materialList.deleteMaterial(_environment.currentObjects);
       } else {
          alert("Materials is in use");
