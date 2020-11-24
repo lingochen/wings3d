@@ -529,6 +529,9 @@ class MaterialList extends ListView {
       mat._mat = material;
       mat.setBaseColor(Util.rgbToHex(...dat.pbr.baseColor));
       mat.setUsageCount(material.usageCount);
+      if (material === Material.default) {
+         mat.default = true;
+      }
 
       this.list.push(dat);
    }
@@ -562,7 +565,7 @@ class MaterialList extends ListView {
 
    deleteMaterial(objects) {  // default and in-use material is not deletable.
       const mat = objects[0];
-      if (mat._mat === Material.default) {   // default material is not deletable.
+      if (mat.default) {   // default material is not deletable.
          return;
       }
       // remove li
@@ -579,7 +582,7 @@ class MaterialList extends ListView {
 
    renameMaterial(ev, objects) {
       const mat = objects[0];
-      if (mat._mat === Material.default) {   // default material cannot be renamed
+      if (mat.default) {   // default material cannot be renamed
          return;
       }
       // run rename dialog
