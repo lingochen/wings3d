@@ -534,22 +534,14 @@ class MaterialList extends ListView {
       }
 
       this.list.push(dat);
+
+      return mat;
    }
 
    createMaterial(ev) {
-      const materialList = this;
-      const newName = materialList.newName();
-      UI.runDialog('#materialSetting', ev, function(form) {
-         const data = UI.extractDialogValue(form);
-         materialList.addMaterial(Material.create(newName, data));
-       }, function(form) {
-          form.reset();
-          MaterialList.resetCSS();
-          const data = form.querySelector('h3 > span');
-          if (data) {
-             data.textContent = newName;
-          }
-       });
+      const newName = this.newName();
+      const mat = this.addMaterial(Material.create(newName));
+      mat.editMaterial(ev);
    }
 
    duplicateMaterial(objects) {
