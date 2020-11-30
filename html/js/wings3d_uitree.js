@@ -566,6 +566,8 @@ class MaterialList extends ListView {
       this.list.splice(this.list.indexOf(mat._mat), 1);
       // remove from submenu
       this.submenu.removeChild(mat.menu.li);
+      // remove from Material.
+      Material.release(mat._mat);
    }
 
    newName() {
