@@ -24,15 +24,15 @@
   "devDependencies": {
     "babel-minify": "^0.5.1",
     "babel-minify-webpack-plugin": "^0.3.1",
-    "css-loader": "^3.4.2",
+    "css-loader": "^3.6.0",
     "extract-text-webpack-plugin": "^4.0.0-beta.0",
-    "file-loader": "^5.0.2",
-    "mocha": "^6.2.2",
+    "file-loader": "^5.1.0",
+    "mocha": "^6.2.3",
     "style-loader": "^0.23.1",
     "uglify-es": "^3.3.9",
     "uglifyjs-webpack-plugin": "^2.2.0",
     "url-loader": "^2.3.0",
-    "webpack": "^4.41.5",
-    "webpack-cli": "^3.3.10"
+    "webpack": "^4.44.2",
+    "webpack-cli": "^3.3.12"
   }
 }
