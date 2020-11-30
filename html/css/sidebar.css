@@ -111,7 +111,7 @@ input:checked+.smallIcon {
   background-image: url("../img/bluecube/small_wire.png");
 }
 .smallImage {
-  background-image: url("../img/bluecube/small_image.png");
+  background-image: url("../img/bluecube/small_texture.png");
 }
 .smallPref {
   background-image: url("../img/bluecube/small_pref.png");
