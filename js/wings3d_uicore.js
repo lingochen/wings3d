@@ -8,6 +8,30 @@ import * as Util from './wings3d_util.js';
 import * as PbrSphere from './wings3d_materialsphere.js';
 import * as View from './wings3d_view.js';
 
+
+/**
+ * model after x3d texture node/ under image.
+ */
+const textureTemplate = document.createElement('template');
+textureTemplate.innerHTML = `
+
+  <li><span><span></li>
+`;
+class TextureUI extends HTMLElement {
+   constructor() {
+      super();
+      this.attachShadow({mode: 'open'});
+
+      this.shadowRoot.appendChild(textureTemplate.content.cloneNode(true));
+   }
+
+   get type() {
+      
+   }
+};
+
+
+
 const materialTemplate = document.createElement('template');
 materialTemplate.innerHTML = `
    <style>
@@ -237,6 +261,12 @@ class MaterialUI extends HTMLElement {
       this.menu.color.style.backgroundColor = color;
    }
 
+   setBaseColorTexture(texture) {
+      if (texture) {
+         this._add
+      }
+   }
+
    setUsageCount(count) {
       this.span.count.textContent = count;      
    }
@@ -244,6 +274,17 @@ class MaterialUI extends HTMLElement {
    isInUse() {
       return (this._mat.usageCount > 0);
    }
+
+   get material() {
+      return this._mat;
+   }
+
+   set material(newMat) {
+      this._mat = newMat;
+      // set textures if exists
+      this.setBaseColorTexture(newMat.pbr.baseColorTexture);
+   }
+
 }
 customElements.define('wings3d-material', MaterialUI);
 
