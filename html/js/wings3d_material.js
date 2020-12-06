@@ -155,13 +155,25 @@ static release(material) {
       this.setGPU();
    }
 
-   setBaseColorTexture(texture) {
+   setTexture(name, texture) {
       // release previous
-      Texture.gList[this.pbr.baseColorTexture].unassigned();
+      Texture.gList[this.pbr[name]].unassigned();
       // assign new one
-      this.pbr.baseColorTexture = texture.idx;
+      this.pbr[name] = texture.idx;
       texture.assigned();
       this.setGPUTexture();
+   }
+
+   setBaseColorTexture(texture) {
+      this.setTexture('baseColorTexture', texture);
+   }
+
+   setNormalTexture(texture) {
+      this.setTexture('normalTexture', texture);
+   }
+
+   setOcclusionTexture(texture) {
+      this.setTexture('occlusionTexture', texture);
    }
 
    getBaseColorInHex() {
@@ -170,6 +182,14 @@ static release(material) {
 
    getBaseColorTexture() {
       return Texture.handle(this.pbr.baseColorTexture);
+   }
+
+   getNormalTexture() {
+      return Texture.handle(this.pbr.normalTexture);
+   }
+
+   getOcclusionTexture() {
+      return Texture.handle(this.pbr.occlusionTexture);
    }
 
    /**

@@ -71,11 +71,19 @@ materialTemplate.innerHTML = `
    .resultCount::after {
       content: ")";
    }
-   .baseColorTexture > img {
+   li > img {
       object-fit: cover;
-      object-position: -32px 0px;
       height: 16px;
       width: 16px;
+   }
+   li.baseColorTexture > img {
+      object-position: -32px 0px;
+   }
+   li.normalTexture > img {
+      object-position: -48px 0px;
+   }
+   li.occlusionTexture > img {
+      object-position: -64px 0px;
    }
    
     input {
@@ -116,9 +124,9 @@ materialTemplate.innerHTML = `
    <input type="checkbox" id="materialCheck" disabled />
    <label for="materialCheck"><span class="materialIcon"></span><span></span><span class="resultCount"></span></label>
    <ul class="texture">
-     <li class="baseColorTexture shown"><img src="../img/bluecube/small_texture.png"><span>test</span></li>
-     <li ></li>
-     <li></li>
+     <li class="baseColorTexture"><img src="../img/bluecube/small_texture.png"><span></span></li>
+     <li class="normalTexture"><img src="../img/bluecube/small_texture.png"><span></span></li>
+     <li class="occlusionTexture"><img src="../img/bluecube/small_texture.png"><span></span></li>
      <li></li>
    </ul>
 `;
@@ -324,7 +332,19 @@ class MaterialUI extends HTMLElement {
    }
 
    setBaseColorTexture(texture) {
-      const li = this.shadowRoot.querySelector('.baseColorTexture');
+      return this.setTexture('baseColorTexture', texture);
+   }
+
+   setNormalTexture(texture) {
+      return this.setTexture('normalTexture', texture);
+   }
+
+   setOcclusionTexture(texture) {
+      return this.setTexture('occlusionTexture', texture);
+   }
+
+   setTexture(name, texture) {
+      const li = this.shadowRoot.querySelector(`.${name}`);
       if (texture.isExist()) { // enabled 
          li.classList.add("shown");
          li.querySelector('span').textContent = texture.name;
@@ -357,6 +377,8 @@ class MaterialUI extends HTMLElement {
       // set textures if exists
       let hasTexture = false;
       hasTexture |= this.setBaseColorTexture(newMat.getBaseColorTexture());
+      hasTexture != this.setNormalTexture(newMat.getNormalTexture());
+      hasTexture != this.setOcclusionTexture(newMat.getOcclusionTexture());
       this.shadowRoot.querySelector('input').disabled = !hasTexture;
    }
 
