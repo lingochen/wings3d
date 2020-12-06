@@ -178,8 +178,8 @@ class GLTFImportExporter extends ImportExporter {
    materials(material) {
       const ret = this.createMaterial(material.name || "NoName");
       const metal = material.pbrMetallicRoughness;
+      const pbr = {baseColor:[1, 1, 1], opacity: 1};
       if (metal) {
-         const pbr = {};
          if (Array.isArray(metal.baseColorFactor)) {
             pbr.baseColor = [metal.baseColorFactor[0], metal.baseColorFactor[1], metal.baseColorFactor[2]];
             pbr.opacity = metal.baseColorFactor[3];
@@ -187,18 +187,23 @@ class GLTFImportExporter extends ImportExporter {
          if (metal.baseColorTexture) {
             ret.setBaseColorTexture( this._parse("textures", metal.baseColorTexture.index) );
          }
+
          if (metal.metallicFactor) pbr.metallic = metal.metallicFactor;   // already have default
          if (metal.roughness) pbr.roughness = metal.roughnessFactor; // already have default
-         ret.setValues(pbr);
+      }
+      if (material.normalTexture) {
+         ret.setNormalTexture( this._parse("textures", material.normalTexture.index) );
+      }
+      if (material.occlusionTexture) {
+         ret.setOcclusionTexture( this._parse("textures", material.occlusionTexture.index) );
       }
       /** todo:
-      material.normalTexture = undefined;
-      material.occlusionTexture = undefined;
       material.emissiveTexture = undefined;
       material.emissiveFactor = vec3.fromValues(0, 0, 0);
       material.alphaMode = "OPAQUE";
       material.alphaCutoff = 0.5;
       material.doubleSided = false;*/
+      ret.setValues(pbr);
       return ret;
    }
 
