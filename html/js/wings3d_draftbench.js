@@ -269,7 +269,7 @@ DraftBench.prototype.draw = function(gl, madsor) {
          textureSet.add(hash);
 
          this.preview.shaderData.setUniform1f('currentBaseColorTexture', mat.pbr.baseColorTexture);
-         this.preview.shaderData.setUniformTexture('baseColorTexture', mat.getBasecolorTextureHandle(), 7);
+         this.preview.shaderData.setUniformTexture('baseColorTexture', mat.getBaseColorTexture().id, 7);
 
          // bindUniform changed.
          gl.bindUniform(this.preview.shaderData, ['currentBaseColorTexture', 'baseColorTexture']);

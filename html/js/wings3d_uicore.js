@@ -14,8 +14,10 @@ import * as View from './wings3d_view.js';
  */
 const textureTemplate = document.createElement('template');
 textureTemplate.innerHTML = `
+  <style>
 
-  <li><span><span></li>
+  </style>
+  <span class="smallIcon smallImage"><span><span></span>
 `;
 class TextureUI extends HTMLElement {
    constructor() {
@@ -35,6 +37,22 @@ class TextureUI extends HTMLElement {
 const materialTemplate = document.createElement('template');
 materialTemplate.innerHTML = `
    <style>
+   :host {
+      display: block;
+    }
+   ul {
+      display: none;
+      list-style: none; /* Remove list bullets */
+      padding: 0;
+      margin: 0;
+   }
+   li {
+      display: none;
+      padding-left: 1rem;
+   }
+   li.shown {
+      display: block;
+   }
    .materialIcon { /* https://stackoverflow.com/questions/50646577/how-to-ignore-transparent-pixels-with-background-blend-mode */
       display: inline-block;
       background-image: url("../img/bluecube/material.png");
@@ -48,17 +66,61 @@ materialTemplate.innerHTML = `
       background-color: white;
    }
    .resultCount::before {
-      content: "(";
+      content: " (";
    }
    .resultCount::after {
       content: ")";
    }
+   .baseColorTexture > img {
+      object-fit: cover;
+      object-position: -32px 0px;
+      height: 16px;
+      width: 16px;
+   }
+   
+    input {
+      display: none;
+    }
+    input:checked ~ ul {
+      display: block;
+    }
+    label {
+      cursor: pointer;
+      font-weight: bold;
+    }
+    input:not([disabled]) ~ label:before {
+      content: '';
+      width: 0;
+      height: 0;
+      position: absolute;
+      border-style: solid;
+      margin-top: 0.2em;
+      margin-left: -0.6em;
+      border-width: 6px;
+      border-top-color: transparent;
+      border-right-color: transparent;
+      border-bottom-color: transparent;
+      border-left-color: red;
+    }
+    input:checked:not([disabled])~ label:before {
+      content: '';
+      margin-top: 0.4em;
+      margin-left: -0.8em;
+      border-width: 7px 5px 0;
+      border-top-color: red;
+      border-right-color: transparent;
+      border-bottom-color: transparent;
+      border-left-color: transparent;
+    }
    </style>
-   <li><span class="materialIcon"></span><span></span><span class="resultCount"></span>
-     <ul class="texture">
-        <slot></slot>
-     </ul>
-   </li>
+   <input type="checkbox" id="materialCheck" disabled />
+   <label for="materialCheck"><span class="materialIcon"></span><span></span><span class="resultCount"></span></label>
+   <ul class="texture">
+     <li class="baseColorTexture shown"><img src="../img/bluecube/small_texture.png"><span>test</span></li>
+     <li ></li>
+     <li></li>
+     <li></li>
+   </ul>
 `;
 
 class MaterialUI extends HTMLElement {
@@ -99,7 +161,7 @@ class MaterialUI extends HTMLElement {
       }
       this.addEventListener('contextmenu', this.menuMaterial, false);
 
-      if (!this.getAttribute('default')) {   // default material's name cannot be changed.
+      if (!this.default) {   // default material's name cannot be changed.
          this.editDef = this._editDef(this.span.def);
       }
    }
@@ -262,8 +324,14 @@ class MaterialUI extends HTMLElement {
    }
 
    setBaseColorTexture(texture) {
-      if (texture) {
-         this._add
+      const li = this.shadowRoot.querySelector('.baseColorTexture');
+      if (texture.isExist()) { // enabled 
+         li.classList.add("shown");
+         li.querySelector('span').textContent = texture.name;
+         return true;
+      } else {
+         li.classList.remove('shown');
+         return false;
       }
    }
 
@@ -281,8 +349,15 @@ class MaterialUI extends HTMLElement {
 
    set material(newMat) {
       this._mat = newMat;
+      this.def = newMat.name;
+      this.setBaseColor(newMat.getBaseColorInHex());
+      this.setUsageCount(newMat.usageCount);
+
+
       // set textures if exists
-      this.setBaseColorTexture(newMat.pbr.baseColorTexture);
+      let hasTexture = false;
+      hasTexture |= this.setBaseColorTexture(newMat.getBaseColorTexture());
+      this.shadowRoot.querySelector('input').disabled = !hasTexture;
    }
 
 }
