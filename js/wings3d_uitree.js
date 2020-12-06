@@ -496,7 +496,6 @@ class MaterialList extends ListView {
       const dat = material;
 
       const mat = document.createElement('wings3d-material');
-      this.view.appendChild(mat);
       // also put on subMenu.
       if (!this.submenu) {
          this.submenu = document.querySelector('[data-menuid="faceMaterialMenu"]');
@@ -525,14 +524,12 @@ class MaterialList extends ListView {
          this.submenu.prepend(li); // put on submenu
       }
       // set mat value
-      mat.def = material.name;
-      mat._mat = material;
-      mat.setBaseColor(Util.rgbToHex(...dat.pbr.baseColor));
-      mat.setUsageCount(material.usageCount);
+      mat.material = material;
       if (material === Material.default) {
          mat.default = true;
       }
 
+      this.view.appendChild(mat);
       this.list.push(dat);
 
       return mat;

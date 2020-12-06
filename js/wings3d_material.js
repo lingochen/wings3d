@@ -164,9 +164,14 @@ static release(material) {
       this.setGPUTexture();
    }
 
-   getBasecolorTextureHandle() {
+   getBaseColorInHex() {
+      return Util.rgbToHex(...this.pbr.baseColor);
+   }
+
+   getBaseColorTexture() {
       return Texture.handle(this.pbr.baseColorTexture);
    }
+
    /**
    * return a string compose of texture's index, which act as hash. or should we packed the texture as int32?
    */
@@ -298,7 +303,11 @@ class Texture {
    }
 
    static handle(textureIdx) {
-      return Texture.gList[textureIdx].id;
+      return Texture.gList[textureIdx];
+   }
+
+   isExist() { // 
+      return (this.idx !== 0);
    }
 
    /**
