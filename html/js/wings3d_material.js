@@ -14,11 +14,15 @@ const defaultPBR = { baseColor: Util.hexToRGB("#C9CFB1"),              // rgb, b
                      emission: Util.hexToRGB("#000000"),               // rgb, intensity
                      opacity: 1,                                       // float, 0-1.0
                      baseColorTexture: 0,
+                     roughnessTexture: 0,
                      normalTexture: 0,
                      occlusionTexture: 0,
+                     emissionTexture: 0,
                      baseColorTexcoord: 0,                              // uv channel # for texCoord
+                     roughnessTexcoord: 0,
                      normalTexcoord: 0,
                      occlusionTexcoord: 0,
+                     emissionTexcoord: 0
                     };
 /**
  * PhysicallyBasedMaterial
@@ -168,12 +172,20 @@ static release(material) {
       this.setTexture('baseColorTexture', texture);
    }
 
+   setRoughnessTexture(texture) {
+      this.setTexture("roughnessTexture", texture);
+   }
+
    setNormalTexture(texture) {
       this.setTexture('normalTexture', texture);
    }
 
    setOcclusionTexture(texture) {
       this.setTexture('occlusionTexture', texture);
+   }
+
+   setEmissionTexture(texture) {
+      this.setTexture("emissionTexture", texture);
    }
 
    getBaseColorInHex() {
@@ -184,12 +196,20 @@ static release(material) {
       return Texture.handle(this.pbr.baseColorTexture);
    }
 
+   getRoughnessTexture() {
+      return Texture.handle(this.pbr.roughnessTexture);
+   }
+
    getNormalTexture() {
       return Texture.handle(this.pbr.normalTexture);
    }
 
    getOcclusionTexture() {
       return Texture.handle(this.pbr.occlusionTexture);
+   }
+
+   getEmissionTexture() {
+      return Texture.handle(this.pbr.emissionTexture);
    }
 
    /**
