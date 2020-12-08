@@ -85,6 +85,12 @@ materialTemplate.innerHTML = `
    li.occlusionTexture > img {
       object-position: -64px 0px;
    }
+   li.emissionTexture > img {
+      object-position: -80px 0px;
+   }
+   li.roughnessTexture > img {
+      object-position: -96px 0px;
+   }
    
     input {
       display: none;
@@ -125,9 +131,10 @@ materialTemplate.innerHTML = `
    <label for="materialCheck"><span class="materialIcon"></span><span></span><span class="resultCount"></span></label>
    <ul class="texture">
      <li class="baseColorTexture"><img src="../img/bluecube/small_texture.png"><span></span></li>
+     <li class="roughnessTexture"><img src="../img/bluecube/small_texture.png"><span></span></li>
      <li class="normalTexture"><img src="../img/bluecube/small_texture.png"><span></span></li>
      <li class="occlusionTexture"><img src="../img/bluecube/small_texture.png"><span></span></li>
-     <li></li>
+     <li class="emissionTexture"><img src="../img/bluecube/small_texture.png"><span></span></li>
    </ul>
 `;
 
@@ -168,6 +175,9 @@ class MaterialUI extends HTMLElement {
          this.menuMaterial = (ev)=>{this._menuMaterial(ev);};
       }
       this.addEventListener('contextmenu', this.menuMaterial, false);
+      // add contextMenu for texture.
+
+      
 
       if (!this.default) {   // default material's name cannot be changed.
          this.editDef = this._editDef(this.span.def);
@@ -335,12 +345,20 @@ class MaterialUI extends HTMLElement {
       return this.setTexture('baseColorTexture', texture);
    }
 
+   setRoughnessTexture(texture) {
+      return this.setTexture("roughnessTexture", texture);
+   }
+
    setNormalTexture(texture) {
       return this.setTexture('normalTexture', texture);
    }
 
    setOcclusionTexture(texture) {
       return this.setTexture('occlusionTexture', texture);
+   }
+
+   setEmissionTexture(texture) {
+      return this.setTexture("emissionTexture", texture);
    }
 
    setTexture(name, texture) {
@@ -377,8 +395,10 @@ class MaterialUI extends HTMLElement {
       // set textures if exists
       let hasTexture = false;
       hasTexture |= this.setBaseColorTexture(newMat.getBaseColorTexture());
-      hasTexture != this.setNormalTexture(newMat.getNormalTexture());
-      hasTexture != this.setOcclusionTexture(newMat.getOcclusionTexture());
+      hasTexture |= this.setRoughnessTexture(newMat.getRoughnessTexture());
+      hasTexture |= this.setNormalTexture(newMat.getNormalTexture());
+      hasTexture |= this.setOcclusionTexture(newMat.getOcclusionTexture());
+      hasTexture |= this.setEmissionTexture(newMat.getEmissionTexture());
       this.shadowRoot.querySelector('input').disabled = !hasTexture;
    }
 

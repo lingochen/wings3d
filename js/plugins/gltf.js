@@ -187,6 +187,9 @@ class GLTFImportExporter extends ImportExporter {
          if (metal.baseColorTexture) {
             ret.setBaseColorTexture( this._parse("textures", metal.baseColorTexture.index) );
          }
+         if (metal.metallicRoughnessTexture) {
+            ret.setRoughnessTexture( this._parse("textures", metal.metallicRoughnessTexture.index) );
+         }
 
          if (metal.metallicFactor) pbr.metallic = metal.metallicFactor;   // already have default
          if (metal.roughness) pbr.roughness = metal.roughnessFactor; // already have default
@@ -197,9 +200,14 @@ class GLTFImportExporter extends ImportExporter {
       if (material.occlusionTexture) {
          ret.setOcclusionTexture( this._parse("textures", material.occlusionTexture.index) );
       }
+      if (material.emissiveTexture) {
+         ret.setEmissionTexture( this._parse("textures", material.emissiveTexture.index) );
+      }
+      if (material.emissiveFactor) {
+         pbr.emission = material.emissiveFactor;
+      }
+
       /** todo:
-      material.emissiveTexture = undefined;
-      material.emissiveFactor = vec3.fromValues(0, 0, 0);
       material.alphaMode = "OPAQUE";
       material.alphaCutoff = 0.5;
       material.doubleSided = false;*/
