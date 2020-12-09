@@ -574,7 +574,7 @@ const dragMove = (function() {
    return ret;
 }());
 // moveable popup box,
-function showPopup(dom, name) {
+function showPopup() {//dom, name) {
    // create div to wrap dom, 
    let div = document.createElement('div');
    div.classList.add('popup');
@@ -589,12 +589,12 @@ function showPopup(dom, name) {
    h3.addEventListener('mousedown', (ev)=>{dragMove.mouseDown(ev, div);});
    document.addEventListener('mouseup', dragMove.mouseUp);        // same function
    document.addEventListener('mousemove', dragMove.mouseMove);    // won't get addEvent again and again.
-   h3.textContent = name;
+   //h3.textContent = name;
    div.appendChild(h3);
    // now insert dom
    let wrap = document.createElement('div');
    wrap.classList.add('wrap');
-   wrap.appendChild(dom);
+   //wrap.appendChild(dom);
    div.appendChild(wrap);
 
    // float div on the middle of screen

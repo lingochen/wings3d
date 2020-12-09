@@ -232,7 +232,7 @@ class MaterialUI extends HTMLElement {
       if (contextMenu) {
          UI.positionDom(contextMenu, UI.getPosition(ev));
          UI.showContextMenu(contextMenu);
-         View.setObject(null, [texture]);
+         View.setObject(null, [{texture: texture}]);
       }
    }
 
