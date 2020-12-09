@@ -51,7 +51,9 @@ class Material {
       this.setGPU();
    }
 
-
+   static textureTypes() {
+      return ['baseColorTexture', "roughnessTexture", 'normalTexture', 'occlusionTexture', "emissionTexture", ];
+   }
 
 // https://github.com/AnalyticalGraphicsInc/obj2gltf
 /**
@@ -106,7 +108,9 @@ static create(name, input) {
 static release(material) {
    if (material.usageCount === 0) {
       // release unused texture.
-      material.setBaseColorTexture(Texture.getWhite());
+      for (let texture of Material.textureTypes()) {
+         material[texture] = Texture.getWhite();
+      }
       gFreeList.push(material);
       return true;
    } else {
@@ -159,59 +163,62 @@ static release(material) {
       this.setGPU();
    }
 
-   setTexture(name, texture) {
-      // release previous
-      Texture.gList[this.pbr[name]].unassigned();
-      // assign new one
-      this.pbr[name] = texture.idx;
-      texture.assigned();
-      this.setGPUTexture();
-   }
-
-   setBaseColorTexture(texture) {
-      this.setTexture('baseColorTexture', texture);
-   }
-
-   setRoughnessTexture(texture) {
-      this.setTexture("roughnessTexture", texture);
-   }
-
-   setNormalTexture(texture) {
-      this.setTexture('normalTexture', texture);
-   }
-
-   setOcclusionTexture(texture) {
-      this.setTexture('occlusionTexture', texture);
-   }
-
-   setEmissionTexture(texture) {
-      this.setTexture("emissionTexture", texture);
-   }
 
    getBaseColorInHex() {
       return Util.rgbToHex(...this.pbr.baseColor);
    }
 
-   getBaseColorTexture() {
+   setTexture(name, texture) {
+      if (texture.idx !== this.pbr[name].idx) {
+         // release previous
+         Texture.gList[this.pbr[name]].unassigned();
+         // assign new one
+         this.pbr[name] = texture.idx;
+         texture.assigned();
+         this.setGPUTexture();
+      }
+   }
+
+   get baseColorTexture() {
       return Texture.handle(this.pbr.baseColorTexture);
    }
 
-   getRoughnessTexture() {
+   set baseColorTexture(texture) {
+      this.setTexture('baseColorTexture', texture);
+   }
+
+   get roughnessTexture() {
       return Texture.handle(this.pbr.roughnessTexture);
    }
 
-   getNormalTexture() {
+   set roughnessTexture(texture) {
+      this.setTexture("roughnessTexture", texture);
+   }
+
+   get normalTexture() {
       return Texture.handle(this.pbr.normalTexture);
    }
 
-   getOcclusionTexture() {
+   set normalTexture(texture) {
+      this.setTexture('normalTexture', texture);
+   }
+
+   get occlusionTexture() {
       return Texture.handle(this.pbr.occlusionTexture);
    }
 
-   getEmissionTexture() {
+   set occlusionTexture(texture) {
+      this.setTexture('occlusionTexture', texture);
+   }
+
+   get emissionTexture() {
       return Texture.handle(this.pbr.emissionTexture);
    }
 
+   set emissionTexture(texture) {
+      this.setTexture("emissionTexture", texture);
+   }
+   
    /**
    * return a string compose of texture's index, which act as hash. or should we packed the texture as int32?
    */
