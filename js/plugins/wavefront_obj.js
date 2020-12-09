@@ -255,7 +255,7 @@ class WavefrontMtlImportExporter extends ImportExporter {
             if (pbr) {
                pbr.setValues( Material.convertTraditionalToMetallicRoughness(material.material) );
                if (material.texture.baseColorTexture) {
-                  pbr.setBaseColorTexture(material.texture.baseColorTexture);
+                  pbr.baseColorTexture = material.texture.baseColorTexture;
                }
             }
          }

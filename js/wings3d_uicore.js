@@ -15,11 +15,16 @@ import * as View from './wings3d_view.js';
 const textureTemplate = document.createElement('template');
 textureTemplate.innerHTML = `
   <style>
-
+   img {
+     object-fit: cover;
+     height: 16px;
+     width: 16px;
+     object-position: 0px 0px;
+   }
   </style>
-  <span class="smallIcon smallImage"><span><span></span>
+  <img src="../img/bluecube/small_texture.png><span></span>
 `;
-class TextureUI extends HTMLElement {
+class ImageUI extends HTMLElement {
    constructor() {
       super();
       this.attachShadow({mode: 'open'});
@@ -27,9 +32,8 @@ class TextureUI extends HTMLElement {
       this.shadowRoot.appendChild(textureTemplate.content.cloneNode(true));
    }
 
-   get type() {
-      
-   }
+
+
 };
 
 
@@ -142,21 +146,36 @@ class MaterialUI extends HTMLElement {
    constructor() {
       super();
       this.attachShadow({mode: 'open'});
-
       this.shadowRoot.appendChild(materialTemplate.content.cloneNode(true));
+
+      // create listener.
+      this.listener = {};
+      this.listener.editMaterial = (ev)=>{this.editMaterial(ev);};
+      this.listener.contextMaterial = (ev)=>{this.contextMaterial(ev);};
+      for (let texture of MaterialUI.textureTypes()) {
+         this.listener[texture] = (ev)=>{this.contextTexture(ev, this._mat[texture]);};
+      }
+      this.listener.editDef = this.editDef();
+   }
+
+   getMain() {  // return [pict, def, count] span
       const span = {};
       [span.pict, span.def, span.count] = this.shadowRoot.querySelectorAll("span");
-      this.span = span;
+      return span;
    }
 
    static get observedAttributes() {
       return ['def'];
    };
 
+   static textureTypes() {
+      return ['baseColorTexture', "roughnessTexture", 'normalTexture', 'occlusionTexture', "emissionTexture", ];
+   }
+
    attributeChangedCallback(attrName, oldVal, newVal) {
       switch (attrName) {
          case 'def':
-            this.span.def.textContent = newVal; // remember to show text in "span"
+            this.getMain().def.textContent = newVal; // remember to show text in "span"
          break;
       }
    }
@@ -165,33 +184,32 @@ class MaterialUI extends HTMLElement {
       // upgrade attribute,
       this._upgradeProps(['def']);
 
-      // connect event if not already
-      if (!this.hasOwnProperty('editMaterial')) {
-         this.editMaterial = (ev)=>{this._editMaterial(ev);};
-      }
-      this.span.pict.addEventListener('click', this.editMaterial);
-
-      if (!this.hasOwnProperty('menuMaterial')) {
-         this.menuMaterial = (ev)=>{this._menuMaterial(ev);};
-      }
-      this.addEventListener('contextmenu', this.menuMaterial, false);
-      // add contextMenu for texture.
-
-      
-
+      const main = this.getMain();
+      main.pict.addEventListener('click', this.listener.editMaterial);
+      this.addEventListener('contextmenu', this.listener.contextMaterial, false);
       if (!this.default) {   // default material's name cannot be changed.
-         this.editDef = this._editDef(this.span.def);
+         main.def.addEventListener('dbclick', this.listener.editDef.dbclick);
+         main.def.addEventListener('blur', this.listener.editDef.blur);
+      }
+
+      // add contextMenu for textures
+      for (let texture of MaterialUI.textureTypes()) {
+         let li = this.shadowRoot.querySelector(`.${texture}`);
+         li.addEventListener('contextmenu', this.listener[texture]);
       }
    }
 
    disconnectedCallback() {
-      this.span.pict.removeEventListener('click', this.editMaterial);   
-      this.removeEventListener('contextmenu', this.menuMaterial);
-      if (this.editDef) {
-         const text = this.span.def;
-         text.removeEventListener('dblclick', this.editDef.dbclick);
-         text.removeEventListener('blur', this.editDef.blur);
+      for (let texture of MaterialUI.textureTypes()) {
+         let li = this.shadowRoot.querySelector(`.${texture}`);
+         li.removeEventListener('contextmenu', this.listener[texture]);
       }
+      const main = this.getMain();
+      main.pict.removeEventListener('click', this.listener.editMaterial);   
+      this.removeEventListener('contextmenu', this.listener.menuMaterial);
+         
+      main.def.removeEventListener('dblclick', this.listener.editDef.dbclick);
+      main.def.removeEventListener('blur', this.listener.editDef.blur);
    }
 
    /**
@@ -207,7 +225,18 @@ class MaterialUI extends HTMLElement {
       }
    }
 
-   _menuMaterial(ev) {
+   contextTexture(ev, texture) {
+      ev.preventDefault();
+      ev.stopPropagation();
+      let contextMenu = document.querySelector('#importImageTextMenu');
+      if (contextMenu) {
+         UI.positionDom(contextMenu, UI.getPosition(ev));
+         UI.showContextMenu(contextMenu);
+         View.setObject(null, [texture]);
+      }
+   }
+
+   contextMaterial(ev) {
       ev.preventDefault();
       let contextMenu = document.querySelector('#materialMenu');
       if (contextMenu) {
@@ -217,7 +246,7 @@ class MaterialUI extends HTMLElement {
       }
    }
 
-   _editMaterial(ev) {
+   editMaterial(ev) {
       function extractData(form) {
          const data = UI.extractDialogValue(form);
          for (let [key, value] of Object.entries(data)) {
@@ -278,7 +307,7 @@ class MaterialUI extends HTMLElement {
        );
    }
 
-   _editDef(text) {
+   editDef() {
       const data = this;
       const entry = function(ev) {
          if (ev.keyCode == 13) {
@@ -298,14 +327,14 @@ class MaterialUI extends HTMLElement {
          this.focus();
          this.addEventListener('keydown', entry);
        };
-      text.addEventListener('dblclick', ret.dbclick);
+      //text.addEventListener('dblclick', ret.dbclick);
       ret.blur = function(ev) {
          // restore 
          this.textContent = data._mat.name;   // restore name
          this.contentEditable = false;
          this.removeEventListener('keydown', entry);
        };
-      text.addEventListener('blur', ret.blur);
+      //text.addEventListener('blur', ret.blur);
       return ret;
    }
 
@@ -337,28 +366,8 @@ class MaterialUI extends HTMLElement {
    }
 
    setBaseColor(color) {
-      this.span.pict.style.backgroundColor = color;
+      this.getMain().pict.style.backgroundColor = color;
       this.menu.color.style.backgroundColor = color;
-   }
-
-   setBaseColorTexture(texture) {
-      return this.setTexture('baseColorTexture', texture);
-   }
-
-   setRoughnessTexture(texture) {
-      return this.setTexture("roughnessTexture", texture);
-   }
-
-   setNormalTexture(texture) {
-      return this.setTexture('normalTexture', texture);
-   }
-
-   setOcclusionTexture(texture) {
-      return this.setTexture('occlusionTexture', texture);
-   }
-
-   setEmissionTexture(texture) {
-      return this.setTexture("emissionTexture", texture);
    }
 
    setTexture(name, texture) {
@@ -374,7 +383,7 @@ class MaterialUI extends HTMLElement {
    }
 
    setUsageCount(count) {
-      this.span.count.textContent = count;      
+      this.getMain().count.textContent = count;      
    }
 
    isInUse() {
@@ -394,11 +403,9 @@ class MaterialUI extends HTMLElement {
 
       // set textures if exists
       let hasTexture = false;
-      hasTexture |= this.setBaseColorTexture(newMat.getBaseColorTexture());
-      hasTexture |= this.setRoughnessTexture(newMat.getRoughnessTexture());
-      hasTexture |= this.setNormalTexture(newMat.getNormalTexture());
-      hasTexture |= this.setOcclusionTexture(newMat.getOcclusionTexture());
-      hasTexture |= this.setEmissionTexture(newMat.getEmissionTexture());
+      for (let texture of MaterialUI.textureTypes()) {
+         hasTexture |= this.setTexture(texture, newMat[texture]);
+      }
       this.shadowRoot.querySelector('input').disabled = !hasTexture;
    }
 

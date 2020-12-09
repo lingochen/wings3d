@@ -1575,7 +1575,7 @@ function init() {
     });
    UI.bindMenuItem(Wings3D.action.editMaterial.name, function(ev) {
       //_environment.materialList.editMaterial(ev, _environment.currentObjects);
-      _environment.currentObjects[0]._editMaterial(ev);
+      _environment.currentObjects[0].editMaterial(ev);
     });
    UI.bindMenuItem(Wings3D.action.deleteMaterial.name, function(_ev){
       // check if any alive polygon is using the tobe delete Material
