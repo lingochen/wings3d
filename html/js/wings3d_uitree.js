@@ -405,10 +405,11 @@ class ImageList extends ListView {
             UI.showContextMenu(contextMenu);
           }, false);
       }
+      this.popup = UI.showPopup();
    }
 
    buildImageItem(texture, name) {
-      const dat = {texture: texture, li: null, uuid: Util.get_uuidv4(), name: name, popup: null};
+      const dat = {texture: texture, li: null};
       //dat.popup = UI.showPopup(img, dat.name);
       let li = dat.li = document.createElement('li');
       let pict = document.createRange().createContextualFragment('<span class="smallIcon smallImage"></span>');
@@ -417,7 +418,6 @@ class ImageList extends ListView {
        });
       li.appendChild(pict);
       let whole = document.createRange().createContextualFragment(`<span>${name}</span>`);
-      dat.name = whole.firstElementChild;
       whole.firstElementChild.addEventListener('contextmenu', function(ev) {
          ev.preventDefault();
          let contextMenu = document.querySelector('#importImageTextMenu');
@@ -441,23 +441,28 @@ class ImageList extends ListView {
 
    showImage(images) {
       const img = images[0];
-      if (!img.popup) {
-         img.popup = UI.showPopup(img.texture.image, img.name);
+      const wrap = this.popup.querySelector('.wrap');
+      while (wrap.firstChild) {
+         wrap.removeChild(wrap.lastChild);
       }
-      document.body.appendChild(img.popup);
+      wrap.appendChild(img.texture.image);
+      const h3 = this.popup.querySelector('h3');
+      h3.textContent = img.texture.name;
+      // now show
+      document.body.appendChild(this.popup);
    }
 
    deleteImage(images) {
       const image = images[0];
       if (Texture.release(image.texture)) {
-         // remove image from body
-         image.popup.remove();
          // remove li
-         this.view.removeChild(image.li);
-         // remove from list
-         this.list.splice(this.list.indexOf(image), 1);
+         if (image.li) {
+            this.view.removeChild(image.li);
+            // remove from list
+            this.list.splice(this.list.indexOf(image), 1);
+         }
       } else {
-         alert("Texture is still in user");
+         alert("Texture is still in use");
       }
    }
 
