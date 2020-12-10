@@ -153,7 +153,7 @@ class MaterialUI extends HTMLElement {
       this.listener.editMaterial = (ev)=>{this.editMaterial(ev);};
       this.listener.contextMaterial = (ev)=>{this.contextMaterial(ev);};
       for (let texture of MaterialUI.textureTypes()) {
-         this.listener[texture] = (ev)=>{this.contextTexture(ev, this._mat[texture]);};
+         this.listener[texture] = (ev)=>{this.contextTexture(ev, texture);};
       }
       this.listener.editDef = this.editDef();
    }
@@ -225,14 +225,14 @@ class MaterialUI extends HTMLElement {
       }
    }
 
-   contextTexture(ev, texture) {
+   contextTexture(ev, textureType) {
       ev.preventDefault();
       ev.stopPropagation();
-      let contextMenu = document.querySelector('#importImageTextMenu');
+      let contextMenu = document.querySelector('#importTextureMenu');
       if (contextMenu) {
          UI.positionDom(contextMenu, UI.getPosition(ev));
          UI.showContextMenu(contextMenu);
-         View.setObject(null, [{texture: texture}]);
+         View.setObject(null, [{textureType: textureType, ui: this}]);
       }
    }
 
@@ -370,16 +370,25 @@ class MaterialUI extends HTMLElement {
       this.menu.color.style.backgroundColor = color;
    }
 
+   removeTexture(textureType) {
+      const li = this.shadowRoot.querySelector(`.${textureType}`);
+      if (li) {
+         li.classList.remove('shown');
+         this._mat.removeTexture(textureType);
+      }
+   }
+
    setTexture(name, texture) {
       const li = this.shadowRoot.querySelector(`.${name}`);
-      if (texture.isExist()) { // enabled 
-         li.classList.add("shown");
-         li.querySelector('span').textContent = texture.name;
-         return true;
-      } else {
+      if (li) {
+         if (texture.isExist()) { // enabled 
+            li.classList.add("shown");
+            li.querySelector('span').textContent = texture.name;
+            return true;
+         } //else
          li.classList.remove('shown');
-         return false;
       }
+      return false;
    }
 
    setUsageCount(count) {

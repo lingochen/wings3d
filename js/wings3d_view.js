@@ -1606,6 +1606,11 @@ function init() {
       cmd.doIt();    // needs to run first                                                
       undoQueue( cmd );                                                 
     });
+   //Material's textures.
+   UI.bindMenuItem(Wings3D.action.deleteTexture.name, function(_ev){
+      const obj = _environment.currentObjects[0];
+      obj.ui.removeTexture(obj.textureType);
+   });
    // let lightList
 
 
