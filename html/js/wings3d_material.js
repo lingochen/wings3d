@@ -168,6 +168,12 @@ static release(material) {
       return Util.rgbToHex(...this.pbr.baseColor);
    }
 
+   removeTexture(textureType) {
+      if (this.pbr[textureType]) {
+         this.setTexture(textureType, Texture.getWhite());
+      }
+   }
+
    setTexture(name, texture) {
       if (texture.idx !== this.pbr[name].idx) {
          // release previous

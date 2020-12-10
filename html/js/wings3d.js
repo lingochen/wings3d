@@ -324,6 +324,7 @@ const action = {
    importImageFileGUI: ()=>{notImplemented(this);},
    showImage: ()=>{notImplemented(this);},
    deleteImage: ()=>{notImplemented(this);},
+   deleteTexture: ()=>{notImplemented(this);},
    createMaterial: ()=>{notImplemented(this);},
    editMaterial: ()=>{notImplemented(this);},
    deleteMaterial: ()=>{notImplemented(this);},
