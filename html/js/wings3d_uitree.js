@@ -408,35 +408,16 @@ class ImageList extends ListView {
       this.popup = UI.showPopup();
    }
 
-   buildImageItem(texture, name) {
-      const dat = {texture: texture, li: null};
-      //dat.popup = UI.showPopup(img, dat.name);
-      let li = dat.li = document.createElement('li');
-      let pict = document.createRange().createContextualFragment('<span class="smallIcon smallImage"></span>');
-      pict.firstElementChild.addEventListener('click', (_ev) => {
-         this.showImage([dat]);
-       });
-      li.appendChild(pict);
-      let whole = document.createRange().createContextualFragment(`<span>${name}</span>`);
-      whole.firstElementChild.addEventListener('contextmenu', function(ev) {
-         ev.preventDefault();
-         let contextMenu = document.querySelector('#importImageTextMenu');
-         if (contextMenu) {
-            UI.positionDom(contextMenu, UI.getPosition(ev));
-            UI.showContextMenu(contextMenu);
-            View.setObject(null, [dat]);
-         }
-       }, false);
-      li.appendChild(whole);
-      this.view.appendChild(li);
-      //dat.popup = UI.showPopup(img, file.name);
-      this.list.push( dat );
+   buildImageItem(texture) {
+      const image = document.createElement('wings3d-image');
+      image.texture = texture;
+      this.view.appendChild(image);
 
-      return dat;
+      return image;
    }
 
    loadTexture(texture) {
-      this.buildImageItem(texture, texture.name);
+      this.buildImageItem(texture);
    }
 
    showImage(images) {
@@ -456,10 +437,8 @@ class ImageList extends ListView {
       const image = images[0];
       if (Texture.release(image.texture)) {
          // remove li
-         if (image.li) {
-            this.view.removeChild(image.li);
-            // remove from list
-            this.list.splice(this.list.indexOf(image), 1);
+         if (image.ui) {
+            this.view.removeChild(image.ui);
          }
       } else {
          alert("Texture is still in use");

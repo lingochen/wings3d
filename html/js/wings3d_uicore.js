@@ -3,11 +3,23 @@
  * 
  */
 
+import * as Wings3D from './wings3d.js';
 import * as UI from './wings3d_ui.js';
 import * as Util from './wings3d_util.js';
 import * as PbrSphere from './wings3d_materialsphere.js';
 import * as View from './wings3d_view.js';
 
+
+function contextMenu(ev, menuName, thatObj) {
+   ev.preventDefault();
+   ev.stopPropagation();
+   let contextMenu = document.querySelector(menuName);
+   if (contextMenu) {
+      UI.positionDom(contextMenu, UI.getPosition(ev));
+      UI.showContextMenu(contextMenu);
+      View.setObject(null, [thatObj]);
+   }
+}
 
 /**
  * model after x3d texture node/ under image.
@@ -15,26 +27,58 @@ import * as View from './wings3d_view.js';
 const textureTemplate = document.createElement('template');
 textureTemplate.innerHTML = `
   <style>
-   img {
+   :host {
+     display: block;
+   }
+   img { 
      object-fit: cover;
      height: 16px;
      width: 16px;
      object-position: 0px 0px;
    }
   </style>
-  <img src="../img/bluecube/small_texture.png><span></span>
+  <img src="../img/bluecube/small_texture.png"><span></span>
 `;
 class ImageUI extends HTMLElement {
    constructor() {
       super();
       this.attachShadow({mode: 'open'});
-
       this.shadowRoot.appendChild(textureTemplate.content.cloneNode(true));
+      this.listener = {};
+      this.listener.contextMenu = (ev)=> {
+         contextMenu(ev, '#importImageTextMenu', {textureTypes: 'image', texture: this._texture, ui: this});
+      }
+      this.listener.showImage = (ev)=> {
+         View.setObject(null, [{textureTypes: 'image', texture: this._texture, ui: this}]);
+         Wings3D.runAction(0, 'showImage', ev);
+      }
    }
 
+   connectedCallback() {
+      this.addEventListener('contextmenu', this.listener.contextMenu, false);
+      const img = this.shadowRoot.querySelector("img");
+      img.addEventListener('click', this.listener.showImage);
+   }
 
+   disconnectedCallback() {
+      const img = this.shadowRoot.querySelector("img");
+      img.removeEventListener('click', this.listener.showImage);
+      this.removeEventListener('contextmenu', this.listener.contextMenu);
+   }
 
+   get texture() {
+      return this._texture;
+   }
+
+   set texture(texture) {
+      if (texture) {
+         this._texture = texture;
+         const span = this.shadowRoot.querySelector("span");
+         span.textContent = texture.name;
+      }
+   }
 };
+customElements.define('wings3d-image', ImageUI);
 
 
 
@@ -151,9 +195,13 @@ class MaterialUI extends HTMLElement {
       // create listener.
       this.listener = {};
       this.listener.editMaterial = (ev)=>{this.editMaterial(ev);};
-      this.listener.contextMaterial = (ev)=>{this.contextMaterial(ev);};
+      this.listener.contextMaterial = (ev)=>{
+         contextMenu(ev, '#materialMenu', this);
+      };
       for (let texture of MaterialUI.textureTypes()) {
-         this.listener[texture] = (ev)=>{this.contextTexture(ev, texture);};
+         this.listener[texture] = (ev)=>{
+            contextMenu(ev, '#importTextureMenu', {textureType: texture, texture: this._mat[texture] , ui: this});
+         };
       }
       this.listener.editDef = this.editDef();
    }
@@ -222,27 +270,6 @@ class MaterialUI extends HTMLElement {
             delete this[prop];
             this[prop] = value;        // use class method to set value.
          }
-      }
-   }
-
-   contextTexture(ev, textureType) {
-      ev.preventDefault();
-      ev.stopPropagation();
-      let contextMenu = document.querySelector('#importTextureMenu');
-      if (contextMenu) {
-         UI.positionDom(contextMenu, UI.getPosition(ev));
-         UI.showContextMenu(contextMenu);
-         View.setObject(null, [{textureType: textureType, ui: this}]);
-      }
-   }
-
-   contextMaterial(ev) {
-      ev.preventDefault();
-      let contextMenu = document.querySelector('#materialMenu');
-      if (contextMenu) {
-         UI.positionDom(contextMenu, UI.getPosition(ev));
-         UI.showContextMenu(contextMenu);
-         View.setObject(null, [this]);
       }
    }
 
@@ -368,6 +395,10 @@ class MaterialUI extends HTMLElement {
    setBaseColor(color) {
       this.getMain().pict.style.backgroundColor = color;
       this.menu.color.style.backgroundColor = color;
+   }
+
+   getTexture(textureType) {
+      return this._mat[textureType];
    }
 
    removeTexture(textureType) {
