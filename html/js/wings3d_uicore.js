@@ -9,7 +9,8 @@ import * as Util from './wings3d_util.js';
 import * as PbrSphere from './wings3d_materialsphere.js';
 import * as View from './wings3d_view.js';
 
-
+// utility - handling event
+let gDragObject
 function contextMenu(ev, menuName, thatObj) {
    ev.preventDefault();
    ev.stopPropagation();
@@ -19,10 +20,10 @@ function contextMenu(ev, menuName, thatObj) {
       UI.showContextMenu(contextMenu);
       View.setObject(null, [thatObj]);
    }
-}
+};
 
 /**
- * model after x3d texture node/ under image.
+ * model after x3d texture node?/ under image.
  */
 const textureTemplate = document.createElement('template');
 textureTemplate.innerHTML = `
@@ -52,9 +53,16 @@ class ImageUI extends HTMLElement {
          View.setObject(null, [{textureTypes: 'image', texture: this._texture, ui: this}]);
          Wings3D.runAction(0, 'showImage', ev);
       }
+      this.listener.dragStart = (ev)=> {
+         ev.stopPropagation()
+         ev.dataTransfer.setData('text/plain', 'ImageUI');
+         gDragObject = this;
+      }
    }
 
    connectedCallback() {
+      this.setAttribute('draggable', true);
+      this.addEventListener('dragstart', this.listener.dragStart);
       this.addEventListener('contextmenu', this.listener.contextMenu, false);
       const img = this.shadowRoot.querySelector("img");
       img.addEventListener('click', this.listener.showImage);
@@ -64,6 +72,7 @@ class ImageUI extends HTMLElement {
       const img = this.shadowRoot.querySelector("img");
       img.removeEventListener('click', this.listener.showImage);
       this.removeEventListener('contextmenu', this.listener.contextMenu);
+      this.removeEventListener('dragstart', this.listener.dragStart);
    }
 
    get texture() {
@@ -88,6 +97,15 @@ materialTemplate.innerHTML = `
    :host {
       display: block;
     }
+   :host.dropZone {
+      border-style: dashed;
+      border-color: #333;
+      background: #ccc;
+    }
+   :host.dropZone * { /* avoid dragleave event when .dropZone have children */
+      pointer-events: none;
+    }
+
    ul {
       display: none;
       list-style: none; /* Remove list bullets */
@@ -194,6 +212,32 @@ class MaterialUI extends HTMLElement {
 
       // create listener.
       this.listener = {};
+      this.listener.dragEnter = (ev)=> {
+         if (gDragObject && (gDragObject instanceof ImageUI)) {
+            ev.preventDefault();
+            ev.stopPropagation();
+            this.classList.add('dropZone');
+         }
+      }
+      this.listener.dragOver = (ev)=> {
+         ev.preventDefault();
+      }
+      this.listener.dragLeave = (ev)=> {
+         ev.preventDefault();
+         ev.stopPropagation();
+         if (ev.target === this &&                             // won't handle child's bubbling phase
+             gDragObject && (gDragObject instanceof ImageUI)) {
+            this.classList.remove('dropZone');
+         }
+      }
+      this.listener.drop = (ev)=> {
+         if (ev.dataTransfer.getData("text/plain") === 'ImageUI') {  // check if allow
+            this.listener.dragLeave(ev);
+            // now ask textureMenu to decide the type.
+            alert('dropped'); // todo: texture menu.
+         }
+      }
+
       this.listener.editMaterial = (ev)=>{this.editMaterial(ev);};
       this.listener.contextMaterial = (ev)=>{
          contextMenu(ev, '#materialMenu', this);
@@ -232,6 +276,13 @@ class MaterialUI extends HTMLElement {
       // upgrade attribute,
       this._upgradeProps(['def']);
 
+      // dropzone
+      this.addEventListener("drop", this.listener.drop);
+      this.addEventListener("dragenter", this.listener.dragEnter);
+      this.addEventListener("dragover", this.listener.dragOver);
+      this.addEventListener("dragleave", this.listener.dragLeave);
+
+      // shadow
       const main = this.getMain();
       main.pict.addEventListener('click', this.listener.editMaterial);
       this.addEventListener('contextmenu', this.listener.contextMaterial, false);
