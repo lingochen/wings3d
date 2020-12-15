@@ -564,13 +564,15 @@ const dragMove = (function() {
       div = null;
    }
    ret.mouseMove = function(ev) {
-      ev.preventDefault();
       if (isDown) {
-          const mousePosition = {x : ev.clientX, y : ev.clientY};
-          div.style.left = (mousePosition.x + offset[0]) + 'px';
-          div.style.top  = (mousePosition.y + offset[1]) + 'px';
+         //ev.preventDefault();
+         const mousePosition = {x : ev.clientX, y : ev.clientY};
+         div.style.left = (mousePosition.x + offset[0]) + 'px';
+         div.style.top  = (mousePosition.y + offset[1]) + 'px';
       }
    }
+   document.addEventListener('mouseup', ret.mouseUp);        // only needs to register once
+   document.addEventListener('mousemove', ret.mouseMove);   
    return ret;
 }());
 // moveable popup box,
@@ -587,8 +589,7 @@ function showPopup() {//dom, name) {
    // create label to drag move
    let h3 = document.createElement('h3');
    h3.addEventListener('mousedown', (ev)=>{dragMove.mouseDown(ev, div);});
-   document.addEventListener('mouseup', dragMove.mouseUp);        // same function
-   document.addEventListener('mousemove', dragMove.mouseMove);    // won't get addEvent again and again.
+
    //h3.textContent = name;
    div.appendChild(h3);
    // now insert dom
