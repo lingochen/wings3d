@@ -234,7 +234,7 @@ class MaterialUI extends HTMLElement {
          if (ev.dataTransfer.getData("text/plain") === 'ImageUI') {  // check if allow
             this.listener.dragLeave(ev);
             // now ask textureMenu to decide the type.
-            alert('dropped'); // todo: texture menu.
+            this.addTexture(ev, gDragObject);
          }
       }
 
@@ -322,6 +322,18 @@ class MaterialUI extends HTMLElement {
             this[prop] = value;        // use class method to set value.
          }
       }
+   }
+
+   addTexture(ev, imageUI) {
+      UI.runDialog("#textureTypePicker", ev, (form)=>{
+         const type = form.querySelector('input:checked').value;
+         if (type in this._mat) {
+            this.setTexture(type, imageUI.texture);
+            this._mat[type] = imageUI.texture;
+         }
+       }, (form)=>{
+         form.reset();
+       });
    }
 
    editMaterial(ev) {
