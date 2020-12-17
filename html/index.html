@@ -1133,6 +1133,19 @@
       <button type="submit" value="ok">Ok</button>
     </fieldset>
   </form>
+  <form id="textureTypePicker" class="dialog">
+    <header class="modal-header">Texture Type
+      <button class="close" aria-label="close modal" data-close>✕</button>
+    </header>
+    <div class="verticalPref">
+    <label><input name="textureType" type="radio" value="baseColorTexture" checked><span>BaseColorTexture</span></label>
+    <label><input name="textureType" type="radio" value="roughnessTexture"><span>roughnessTexture</span></label>
+    <label><input name="textureType" type="radio" value="normalTexture"><span>normalTexture</span></label>
+    <label><input name="textureType" type="radio" value="occlusionTexture"><span>occlusionTexture</span></label>
+    <label><input name="textureType" type="radio" value="emissionTexture"><span>emissionTexture</span></label>
+    </div>
+    <button type="submit" value="ok">Ok</button>     
+  </form>
 </body>
 
 </html>
