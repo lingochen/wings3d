@@ -327,7 +327,7 @@ class MaterialUI extends HTMLElement {
    addTexture(ev, imageUI) {
       UI.runDialog("#textureTypePicker", ev, (form)=>{
          const type = form.querySelector('input:checked').value;
-         if (type in this._mat) {
+         if (type in this._mat) {   // sanity check
             this.setTexture(type, imageUI.texture);
             this._mat[type] = imageUI.texture;
          }
