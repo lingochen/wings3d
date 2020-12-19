@@ -114,6 +114,11 @@ class ImportExporter {
       this.workingFiles = {selected: null, linked: new Map};
    }
 
+   static decodeText(dataView) {
+      // The TextDecoder interface is documented at http://encoding.spec.whatwg.org/#interface-textdecoder
+      const decoder = new TextDecoder('utf-8');
+      return decoder.decode(dataView);   
+   }
 
    static addLoadStore(loadStore) {
       if (loadStore.importMenuText || loadStore.exportMenuText) {

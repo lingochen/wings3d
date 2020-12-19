@@ -4,7 +4,7 @@
  */
 
 import {ImportExporter} from "../wings3d_importexport.js";
-import {Material, Texture} from "../wings3d_material.js";
+//import {Material, Texture} from "../wings3d_material.js";
 import {Attribute} from "../wings3d_wingededge.js";
 //import { PreviewCage } from "../wings3d_model.js";
 
@@ -34,10 +34,14 @@ const TYPE_SIZES = {
    'MAT3': 9,
    'MAT4': 16
 };
+const BINARY_HEADR_MAGIC= "glTF";
+const BINARY_EXTENSION_HEADER_LENGTH = 12;
+const BINARY_EXTENSION_JSON_TYPES = 0x4E4F534A;
+const BINARY_EXTENSION_BIN_TYPES  = 0x004E4942;
 
 class GLTFImportExporter extends ImportExporter {
    constructor() {
-      super(['GLTF', 'gltf'], ['GLTF', 'gltf']);
+      super(['GLTF', 'gltf, glb'], ['GLTF', 'gltf']);
       this.cache = {};
    }
 
@@ -63,13 +67,21 @@ class GLTFImportExporter extends ImportExporter {
 				manager: this.manager
     */
    async _import(content) {
-      this.json = JSON.parse( await content.text() );
+      // check if glb,
+      const data = await content.arrayBuffer();
+      const magic = ImportExporter.decodeText( new Uint8Array(data, 0, 4) );
+      if (magic === BINARY_HEADR_MAGIC) {
+         this.parseGLB(data);
+      } else {
+         this.json = JSON.parse( ImportExporter.decodeText(data) );
+      }
       this.vertex = new Map;
       this.uv = new Map;
 
       if ( this.json.asset === undefined || this.json.asset.version[ 0 ] < 2 ) {
-         throw new Errorrror( 'Unsupported asset. glTF versions >=2.0 are supported.' );
-      } if (this.json.scene === undefined) {
+         throw new Error( 'GLTF: Unsupported asset. Version < 2.0.' );
+      } 
+      if (this.json.scene === undefined) {
          throw new Error("No Scene");
       }
 
@@ -107,6 +119,39 @@ class GLTFImportExporter extends ImportExporter {
       }
    }
 
+   parseGLB(data) {
+      const chunkView = new DataView(data, 0);
+      
+      if ( chunkView.getUint32(4, true) < 2.0 ) {
+			throw new Error("GLTF: Don't support 1.0 file.");
+      }
+      //const length = chunkView.getUint32(8, true);
+
+		let chunkIndex = BINARY_EXTENSION_HEADER_LENGTH;
+
+      while (chunkIndex < chunkView.byteLength) {
+         let chunkLength = chunkView.getUint32(chunkIndex, true);
+         chunkIndex += 4;
+         let chunkType = chunkView.getUint32(chunkIndex, true);
+         chunkIndex += 4;
+
+         //json
+         if (chunkType === BINARY_EXTENSION_JSON_TYPES) {
+		      const contentArray = new Uint8Array(data, chunkIndex, chunkLength);
+            this.json = JSON.parse( ImportExporter.decodeText(contentArray) );
+         } else if (chunkType === BINARY_EXTENSION_BIN_TYPES) {
+            this._bin = data.slice(chunkIndex, chunkIndex + chunkLength);
+         }
+         // dont support other extension yet
+
+         chunkIndex += chunkLength;
+      }
+
+      if (!this.json) {
+         throw new Error("GLTF: Invalid file, no JSON Chunk");
+      }
+   }
+
    loadBuffers() { // iterate over buffers.// _loadArrayBuffer(buffer.uri, loadArrayBufferCallback);
       const buffers = this.json.buffers || [];
 
@@ -141,16 +186,35 @@ class GLTFImportExporter extends ImportExporter {
    }
 
    buffers(buffer) { // loadarraybuffer
-      return this.loadAsync(buffer.uri)
-         .then(files =>{return files[0].arrayBuffer();});
+      if (buffer.uri) {
+         return this.loadAsync(buffer.uri)
+            .then(files =>{return files[0].arrayBuffer();});
+      } else { // glb buffer
+         return Promise.resolve( this._bin );
+      }
    }
 
    images(image) {
-      return {loading: this.loadAsync(image.uri) 
-                        .then(files=>{
-                           return files[0].image();
-                        }),
-              uri: image.uri};
+      if (image.uri) {
+         return {loading: this.loadAsync(image.uri) 
+                           .then(files=>{
+                              return files[0].image();
+                           }),
+                  uri: image.uri};
+      } else {
+         return {loading: this._parse("bufferViews", image.bufferView)
+                         .then(view=>{
+                           const arrayView = new Uint8Array( view.buffer, view.byteOffset, view.byteLength );
+                           const blob = new Blob( [arrayView], {type: image.mimeType} );
+                           const img = document.createElement("img");
+                           img.src = URL.createObjectURL(blob);
+                           img.onload = function() {
+                              URL.revokeObjectURL(this.src);
+                           }
+                           return img;
+                         }),
+                 uri: "Internal"};
+      }
    }
 
    samplers(sampler) {
@@ -223,7 +287,7 @@ class GLTFImportExporter extends ImportExporter {
       }
       const bufferView = await this._parse("bufferViews", accessor.bufferView);
       const itemBytes = TypedArray.BYTES_PER_ELEMENT * itemSize;
-      const byteOffset = (accessor.byteOffset || 0) + (bufferView.byteOffset || 0);
+      const byteOffset = (accessor.byteOffset || 0) + bufferView.byteOffset;
       const byteStride = bufferView.byteStride || itemBytes;
       const arrayLength = accessor.count * itemSize;
       if (byteStride !== itemBytes) {  // interleaved array
@@ -235,7 +299,7 @@ class GLTFImportExporter extends ImportExporter {
 
    async bufferViews(view) {  // load cached buffer
       //view.buffer = undefined;
-      //view.byteOffset = 0;
+      view.byteOffset = view.byteOffset || 0;
       //view.byteLength = undefined;
       //view.byteStride = 0;
       //view.target = undefined;
