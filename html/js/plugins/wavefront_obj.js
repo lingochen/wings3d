@@ -209,9 +209,21 @@ class WavefrontObjImportExporter extends ImportExporter {
       this.currentMaterial = material;
    }
 
+   /**
+    * hackup support for escape white space file name
+    */
    mtllib(libraries) {
+      let hackUp = "";
       for (let lib of libraries) {
-         this.mtl.set(lib, null);   // adds up
+         if (lib[lib.length-1] === '\\') {   // check if escape char at end;
+            hackUp += lib.replace(/.$/," ");     // replace with white space
+         } else if (hackUp) {
+            lib = hackUp + lib;
+            hackUp = "";
+         }
+         if (!hackUp) {
+            this.mtl.set(lib, null);   // adds up
+         }
       }
    }
 }
