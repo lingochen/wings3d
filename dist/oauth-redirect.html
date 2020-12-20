@@ -1,1 +1,20 @@
-../html/oauth-redirect.html
+<!DOCTYPE html>
+<html lang="en">
+  <script> 
+  function getAuthInfoFromUrl() {
+    if (window.location.hash) {
+      let authResponse = window.location.hash.substring(1);
+      let authInfo = JSON.parse(
+        '{' + authResponse.replace(/([^=]+)=([^&]+)&?/g, '"$1":"$2",').slice(0,-1) + '}',
+        function(key, value) { return key === "" ? value : decodeURIComponent(value); });
+      return authInfo;
+    } else {
+      alert("failed to receive auth token");
+    }
+  }
+
+  // redirect back, post result messages back to main window
+  let authInfo = getAuthInfoFromUrl();  
+  window.opener.postMessage(['oauth2Login', authInfo ], '*' );
+  </script>
+</html>

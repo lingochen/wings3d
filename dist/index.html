@@ -1,1 +1,1151 @@
-../html/index.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Wings3D.net</title>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+   <link rel="icon" type="image/png" href="img/favicon-96x96.png" />
+   <link rel="stylesheet" href="styles.css?v=fa2a526ddac6a04dd79aa03b1008d924" />
+   <script src="./vendor/FileSaver.min.js?v=0cd1ebc44c182996e7d62f29b28dba9f" defer></script>
+   <script src="./vendor/gl-matrix-min.js?v=8d57dae6ce3862af598c7ccad3df15ad" type="module"></script>
+
+   <script src="wings3d.bundle.js?v=4a880e0e1a7ed2df7cbb16f3cbf2fb3d" type="module"></script>
+
+  <script>  
+    function help(text) {
+      if (typeof text === "undefined") {
+          text = ''; /* none-breaking space */
+      }
+      document.getElementById('helpbar').textContent=text;
+    }
+    function geometryStatus(text) {
+      if (typeof text === "undefined") {
+          text = ''; /* none-breaking space */
+      }
+      /* no safe escaping*/
+      document.getElementById('statusbar').innerHTML=text;
+    }
+    function toHex(num) {
+      let hexString = Math.trunc(num).toString(16);
+      if (hexString.length % 2) { // ie. 0 convert to 00
+        hexString = '0' + hexString;
+      }
+      return hexString;
+    }
+    function matGradient(slider) { // auto change colorPicker
+      const colorPicker = slider.nextElementSibling;
+      const hex = window.getComputedStyle(document.documentElement, null).getPropertyValue(`--${colorPicker.name}Max`).trim();
+      const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+      let scale;
+      if ((r >= g) && (r >= b)) { // r is largest integer.
+        scale = slider.value / r;  
+      } else if ((g >= r) && (g >=b)) {
+        scale = slider.value / g; 
+      } else {
+        scale = slider.value / b;
+      }
+      colorPicker.value = `#${toHex(scale*r)}${toHex(scale*g)}${toHex(scale*b)}`; 
+    }
+    function matColor(colorPicker) {  // set slider, and css var;
+      const slider = colorPicker.previousElementSibling;
+      const hex = colorPicker.value.trim();
+      const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+      let currentMax;
+      let maxColor;
+      if ((r === g) && (g === b) && (b === 0)) {  // special black color
+        currentMax = 0;
+        maxColor = '#FFFFFF';
+      } else if ((r >= g) && (r >= b)) { // r is largest integer.
+        currentMax = r;
+        const scale = 255 / r;
+        maxColor = `#${toHex(255)}${toHex(scale*g)}${toHex(scale*b)}`;    
+      } else if ((g >= r) && (g >=b)) {
+        currentMax = g;
+        const scale = 255 / g;
+        maxColor = `#${toHex(scale*r)}${toHex(255)}${toHex(scale*b)}`;   
+      } else {
+        currentMax = b;
+        const scale = 255 / b;
+        maxColor = `#${toHex(scale*r)}${toHex(scale*g)}${toHex(255)}`;   
+      }
+      document.documentElement.style.setProperty(`--${colorPicker.name}Max`, maxColor);
+      slider.value = currentMax;
+    }
+  </script> 
+</head>
+<body class="page-layout">
+  <nav class="menu bar marginal">
+    <ul class="menu bar">
+      <li class="dropdown">
+        <a data-menuid="fileMenu" data-i18n>File</a>
+        <ul class="popup menu">
+          <li><a data-menuid="clearNew" onmouseover="help('Create a new, empty scene')" onmouseleave="help()" data-i18n>New</a></li>
+          <li><a data-menuid="open" onmouseover="help('Open a previously saved scene')" onmouseleave="help()" data-i18n>Open...</a></li>
+          <li class="not-implemented"><a onmouseover="help('Merge a previously saved scene into the current scene')" onmouseleave="help()" data-i18n>Merge...</a></li>
+          <li><hr /></li>
+          <li><a data-menuid="save" onmouseover="help('Save the current scene')" onmouseleave="help()" data-i18n>Save</a></li>
+          <li><a data-menuid="saveAs" onmouseover="help('Save the current scene under a new name')" onmouseleave="help()" data-i18n>Save As...</a></li>
+          <li class="not-implemented"><a onmouseover="help('Save only the selected objects or faces')" onmouseleave="help()">Save Selected...</a></li>
+          <li class="not-implemented"><a onmouseover="help('Generate new filename and save')" onmouseleave="help()">Save Incrementally</a></li>
+          <li class="not-implemented"><a onmouseover="help('Include unused materials when saving a .wings file')" onmouseleave="help()">Save Unused Materials</a></li>
+          <li><hr /></li>
+          <li class="not-implemented"><a onmouseover="help('Revert current scene to the saved contents')" onmouseleave="help()" data-i18n>Revert</a></li>
+          <li><hr /></li>
+          <li class="dropside"><a data-menuid="importMenu" data-i18n>Import</a><ul data-menuid="fileImport" class="popup menu"> </ul></li>
+          <li class="dropside"><a data-menuid="exportMenu" data-i18n>Export</a><ul data-menuid="fileExport" class="popup menu"> </ul></li>
+          <li class="not-implemented"><a>Export Selected</a></li>
+          <li><hr /></li>
+          <li class="not-implemented"><a onmouseover="help('Import an image file')" onmouseleave="help()" data-i18n>Import Image...</a></li>
+          <li><hr /></li>
+          <li class="not-implemented"><a>Render</a></li>
+          <li><hr /></li>
+          <li class="not-implemented"><a onmouseover="help('Install a plug-in')" onmouseleave="help()">Install Plug-In</a></li>
+          <li><hr /></li>
+          <li class="not-implemented"><a onmouseover="help('Save a preference subset from your current settings')" onmouseleave="help()">Save Preference Subset</a></li>
+          <li class="dropside"><a>Load Preference Subset</a>
+            <ul class="popup menu">
+              <li class="not-implemented"><a onmouseover="help('Load a previously saved preference subset')" onmouseleave="help()">Load...</a></li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+      <li>
+        <a data-menuid="editMenu" data-i18n>Edit</a>
+      </li>
+      <li class="dropdown">
+        <a data-menuid="selectMenu" data-i18n>Select</a>
+        <ul class="popup menu">
+          <li><a onmouseover="help('Deselect selection')" onmouseleave="help()" data-menuid="deselect" data-hotkey="space" data-i18n>Deselect</a></li>
+          <li><hr /></li>
+          <li><a onmouseover="help('More selection')" onmouseleave="help()" data-menuid="more" data-i18n>More</a></li>
+          <li><a onmouseover="help('Less selection')" onmouseleave="help()" data-menuid="less" data-i18n>Less</a></li>
+          <li><a onmouseover="help('Similar selection')" onmouseleave="help()" data-menuid="similar" data-i18n>Similar</a></li>
+          <li><a onmouseover="help('Adjacent Selection')" onmouseleave="help()" data-menuid='adjacent' data-i18n>Adjacent</a></li>
+          <li><a onmouseover="help('All selection')" onmouseleave="help()" data-menuid="all" data-i18n>All</a></li>
+          <li><a onmouseover="help('Invert selection')" onmouseleave="help()" data-menuid="inverse" data-i18n>Inverse</a></li>
+          <li><hr /></li>
+          <li class="dropside">
+            <a data-menuid="edgeLoopMenu" data-i18n>Edge Loop</a>
+            <ul class="popup menu">
+              <li><hr /></li>
+              <li><a data-menuid="edgeLoop1" data-i18n>Edge Loop</a></li>
+              <li><a data-menuid="edgeRing1" data-i18n>Edge Ring</a></li>
+              <li class="dropside">
+                 <a data-menuid="nthEdgeRingMenu" data-i18n>Every Nth Ring</a>
+                 <ul class="popup menu">
+                   <li><a data-menuid="edgeRing2" data-i18n>Second</a></li>
+                   <li><a data-menuid="edgeRing3" data-i18n>Third</a></li>
+                   <li><a data-menuid="edgeRingN" data-i18n>Nth...</a></li>
+                 </ul>
+              </li>
+              <li class="dropside">
+                 <a data-menuid="nthEdgeLoopMenu" data-i18n>Every Nth Loop</a>
+                 <ul class="popup menu">
+                   <li><a data-menuid="edgeLoop2" data-i18n>Second</a></li>
+                   <li><a data-menuid="edgeLoop3" data-i18n>Third</a></li>
+                   <li><a data-menuid="edgeLoopN" data-i18n>Nth...</a></li>
+                 </ul>
+              </li>
+            </ul>
+          </li>
+          <li class="dropside">
+            <a data-menuid="byMenu" data-i18n>by</a>
+            <ul class="popup menu">
+              <li><a data-menuid="edgeBoundary" data-i18n>Boundary Edge</a></li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+      <li class="dropdown">
+        <a data-menuid="toolsMenu" data-i18n>Tools</a>
+        <ul class="popup menu">
+          <li class="dropside"><a data-menuid="fixMeshMenu">Fix Mesh</a>
+            <ul class="popup menu">
+            </ul>
+          </li>
+          <li><a data-menuid="openTweak" data-i18n>Tweak</a></li>
+        </ul>
+      </li>
+      <li class="dropdown">
+        <a data-menuid="windowMenu" data-i18n>Window</a>
+        <ul class="popup menu">
+          <li class="dropside">
+            <a data-menuid="geometryWindow" data-i18n>Geometry Window</a>
+            <ul class="popup menu">
+              <li><input type="radio" checked="checked" name="geometryPane" data-menuid="singlePane"><a data-menuid="singlePane" data-i18n>Single Pane</a></li>
+              <li><input type="radio" name="geometryPane" data-menuid="horizontalPane"><a data-menuid="horizontalPane" data-i18n>Horizontal Panes</a></li>
+              <li><input type="radio" name="geometryPane" data-menuid="verticalPane"><a data-menuid="verticalPane" data-i18n>Vertical Panes</a></li>
+              <li><input type="radio" name="geometryPane" data-menuid="quadPane"><a data-menuid="quadPane" data-i18n>Quad Panes</a></li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+      <li class="dropdown">
+        <a data-menuid="helpMenu" data-i18n>Help</a>
+        <ul class="popup menu">
+          <li><a href="http://www.wings3d.com/?page_id=87" target="_blank">Documentation</a></li>
+          <li><a href="http://www.wings3d.com/paulthepuzzles/aardvarks.html" target="_blank">Tutorials, Notes</a></li>
+          <li><a href="https://www.youtube.com/results?search_query=wings3d+" target="_blank">Video Tutorials</a></li>
+          <li class="not-implemented"><a onmouseover="help('Start the introduction Tour')" onmouseleave="help()" data-menuid="introduction">Introduction</a></li>
+          <li class="dropside"><a onmouseover="help('Learn how to use')" onmouseleave="help()">Let practice..</a>
+            <ul class="popup menu">
+              <li><a data-menuid="basicCommands">Basic Commands</a></li>
+              <li class="not-implemented"><a>Edge Rings</a></li>
+              <li class="not-implemented"><a>Virtual Mirror</a></li>
+              <li class="not-implemented"><a>Texturing</a></li>
+            </ul>
+          </li>
+          <li class="dropside"><a>I want to model...</a>
+            <ul class="popup menu">
+              <li class="not-implemented" data-menuid="tableTutor"><a>a Table</a></li>
+              <li class="not-implemented"><a>a Car</a></li>
+            </ul>
+          </li>
+          <li><hr /></li>
+          <li><a href="https://github.com/lingochen/wings3d" target="_blank" onmouseover="help('About Wings3d4Web')" data-menuid="about">About</a></li>
+        </ul>
+      </li>
+    <li><select id="selectLanguage">
+      <option value='{"lang":"en","ver":"ad5961b8e48ae8ad14a49634789e7629"}'>English</option>
+      <option value='{"lang":"zh_hant","ver":"e269a0dc2914d89ffc5a88db77848fb5"}'>正體</option>
+      <option value='{"lang":"zh_hans","ver":"197f869a904b9d68830efbfb54eb699e"}'>简体</option>
+    </select></li>
+    </ul>
+  </nav>
+  <nav class="button-bar unselectable marginal" data-menuid="toolbar">
+    <div class="button-group system-group">
+     	<input id="openSidebarFor" type="checkbox">
+      <label data-menuid="openSidebar" for="openSidebarFor" class="button">
+        <img src="../img/bluecube.png" class="iconImg sidebarImg" alt>
+        <span data-i18n>Sidebar</span>
+      </label>
+      <label data-menuid="open" class="button">
+        <img src="../img/bluecube.png"  class="iconImg openImg" alt>
+        <span data-i18n>Open...</span>
+      </label>
+      <label data-menuid="save" class="button">
+        <img src="../img/bluecube.png" class="iconImg saveImg" alt>
+        <span data-i18n>Save</span>
+      </label>
+      <label class="button" data-menuid="undoEdit">
+        <img src="../img/bluecube.png" class="iconImg undoImg" alt>
+        <span data-i18n>Undo</span>
+      </label>
+      <label class="button" data-menuid="redoEdit">
+        <img src="../img/bluecube.png" class="iconImg redoImg" alt>
+        <span data-i18n>Redo</span>
+      </label>
+    </div>
+    <div class="button-group object-select">
+      <input type="radio" name="toggleMode" id="toggleMultiModeFor" checked>
+      <label data-menuid="toggleMultiMode" class="button" for="toggleMultiModeFor">
+        <img src="../img/bluecube.png" class="iconImg multiImg" alt>
+        <span data-i18n>Multi</span>
+      </label>
+      <input type="radio" name="toggleMode" id="toggleVertexModeFor">
+      <label data-menuid="toggleVertexMode" class="button" for="toggleVertexModeFor">
+        <img src="../img/bluecube.png" class="iconImg vertexImg" alt>
+        <span data-i18n>Vertex</span>
+      </label>
+      <input type="radio" name="toggleMode" id="toggleEdgeModeFor">
+      <label data-menuid="toggleEdgeMode" class="button" for="toggleEdgeModeFor">
+        <img src="../img/bluecube.png" class="iconImg edgeImg" alt>
+        <span data-i18n>Edge</span>
+      </label>
+      <input type="radio" name="toggleMode" id="toggleFaceModeFor">
+      <label data-menuid="toggleFaceMode" class="button" for="toggleFaceModeFor">
+        <img src="../img/bluecube.png" class="iconImg faceImg" alt>
+        <span data-i18n>Face</span>
+      </label>
+      <input type="radio" name="toggleMode" id="toggleBodyModeFor">
+      <label data-menuid="toggleBodyMode" class="button" for="toggleBodyModeFor">
+        <img src="../img/bluecube.png" class="iconImg bodyImg" alt>
+        <span data-i18n>Body</span>
+      </label>
+    </div>
+    <div class="button-group set-pref">
+      <label data-menuid="preferenceButton" class="button">
+        <img src="../img/bluecube.png" class="iconImg prefImg" alt>
+        <span data-i18n>Prefs</span>
+      </label>
+      <input type="checkbox" id="toggleSmoothFor">
+      <label data-menuid="toggleSmooth" for="toggleSmoothFor" class="button not-implemented">
+        <img src="../img/bluecube.png" class="iconImg smoothImg" alt>
+        <span data-i18n>Workmode</span>
+      </label>
+      <input type="checkbox" id="toggleOrthoFor">
+      <label data-menuid="toggleOrtho" for="toggleOrthoFor" class="button">
+        <img src="../img/bluecube.png" class="iconImg perspectiveImg" alt>
+        <span>Ortho</span>
+      </label>
+      <input type="checkbox" id="toggleGroundFor" checked>
+      <label data-menuid="toggleGround" for="toggleGroundFor" class="button">
+        <img src="../img/bluecube.png" class="iconImg groundplaneImg" alt>
+        <span data-i18n>Ground Plane</span>
+      </label>
+      <input type="checkbox" id="toggleAxesFor" checked>
+      <label data-menuid="toggleAxes" for="toggleAxesFor" class="button">
+        <img src="../img/bluecube.png" class="iconImg axesImg" alt>
+        <span data-i18n>Axes</span>
+      </label>
+    </div>
+  </nav>
+  <div id="viewport" class="content">
+    <div id="sidebar" class="sidebar"> 
+      <input id="outlinerbox" type="checkbox">
+      <label for="outlinerbox"><span data-i18n>Outliner</span></label>
+      <ul id="outliner" class="sidebarPanel treeview">
+        <li>
+          <input type="checkbox" id="lightInput">
+          <label for="lightInput" class="folder" data-i18n>Lights</label>
+          <ul id="lights">
+          </ul>
+        </li>
+        <li>
+          <input type="checkbox" id="materialInput">
+          <label for="materialInput" class="folder" id="materialListLabel" data-i18n>Materials</label>
+          <ul id="materialList">
+          </ul>
+        </li>
+        <li>
+          <input type="checkbox" id="imageInput">
+          <label for="imageInput" class="folder" id="imageListLabel" data-i18n>Images</label>
+          <ul id="imageList">
+          </ul>
+        </li>
+      </ul>
+      <input id="geometryGraphbox" type="checkbox" checked>
+      <label for="geometryGraphbox" class="folder"><span data-i18n>Geometry Graph</span></label>
+      <ul id="geometryGraph" class="sidebarPanel treeview">
+        <li>
+          <input type="checkbox" id="objectInput">
+          <label for="objectInput" class="folder" id="objectListLabel"><span data-i18n>Objects</span><span class="resultCount">0</span></label>
+          <ul id="objectList">
+          </ul>       
+        </li>
+      </ul>
+      <input id="selectionGroupbox" type="checkbox">
+      <label for="selectionGroupbox" class="folder"><span data-i18n>Selection Groups</span></label>
+      <div id="selectionGroup" class="sidebarPanel"><span>test3</span></div>
+    </div>
+    <div id="workbench" class="workbench">
+      <div id="statusbar"> Wings3D Geometry </div>
+      
+        <canvas id="glcanvas" tabindex='1'>
+          Your browser doesn't appear to support the 
+          <code>&lt;canvas&gt;</code> element.
+        </canvas>
+        <svg id="svgUI"></svg>
+    </div>
+  </div>
+  <footer id="helpbar" class="marginal">This is help bar</footer>
+
+  <!-- Hidden context menu -->
+  <nav class="menu" style="position:absolute">
+    <ul id ="geometryGraphText" class="popup menu">
+      <li><a data-menuid="objectDuplicate" data-i18n>Duplicate</a></li>
+      <li><a data-menuid="objectDelete" data-i18n>Delete</a></li>
+      <li><hr /></li>
+      <li><a data-menuid="createGroup" data-i18n>Create Folder</a></li>
+    </ul>
+    <ul id="geometryGraphWorld" class="popup menu">
+      <li><a data-menuid="createGroupWorld" data-i18n>Create Folder</a></li>
+    </ul>
+    <ul id="importImageMenu" class="popup menu">
+      <li><a data-menuid="importImageFileGUI" data-i18n>Import Image...</a></li>
+    </ul>
+    <ul id="importImageTextMenu" class="popup menu">
+      <li><a data-menuid="showImage" data-i18n>Show</a></li>
+      <li class="not-implemented"><a  data-i18n>Refresh</a></li>
+      <li><hr /></li>
+      <li><a data-menuid="deleteImage" data-i18n>Delete</a></li>
+      <li><hr /></li>
+      <li class="not-implemented"><a data-i18n>Create Normal Map</a></li>
+      <li><hr /></li>
+      <li class="not-implemented"><a data-i18n>Export...</a></li>
+      <li><hr /></li>
+      <li class="not-implemented"><a data-i18n>Duplicate</a></li>
+      <li class="not-implemented"><a data-i18n>Rename</a></li>
+    </ul>
+    <ul id="importTextureMenu" class="popup menu">
+      <li><a data-menuid="showImage" data-i18n>Show</a></li>
+      <li class="not-implemented"><a  data-i18n>Refresh</a></li>
+      <li><hr /></li>
+      <li><a data-menuid="deleteTexture" data-i18n>Remove Texture</a></li>
+      <li><hr /></li>
+      <li class="not-implemented"><a data-i18n>Create Normal Map</a></li>
+      <li><hr /></li>
+      <li class="not-implemented"><a data-i18n>Export...</a></li>
+      <li><hr /></li>
+      <li class="not-implemented"><a data-i18n>Duplicate</a></li>
+      <li class="not-implemented"><a data-i18n>Rename</a></li>
+    </ul>
+    <ul id="materialMenu" class="popup menu">
+      <li><a data-menuid="editMaterial" data-i18n>Edit Material...</a></li>
+      <li><a data-menuid="assignMaterial" data-i18n>Assign to Selection</a></li>
+      <li><hr /></li>
+      <li><a data-menuid="selectMaterial" data-i18n>Select</a></li>
+      <li><hr /></li>
+      <li><a data-menuid="duplicateMaterial" data-i18n>Duplicate</a></li>
+      <li><a data-menuid="deleteMaterial" data-i18n>Delete</a></li>
+      <li><a data-menuid="renameMaterial" data-i18n>Rename</a></li>   
+    </ul>
+    <ul id="createMaterialMenu" class="popup menu">
+      <li><a data-menuid="createMaterial" data-i18n>Material...</a></li>
+    </ul>
+    <!-- Main contextMenu -->
+    <ul id="create-context-menu" class="popup menu">
+      <li><a data-menuid="createCube" data-i18n>Cube</a><img data-menuid="createCubePref" class="smallIcon smallPref" src="" alt=""></li>
+      <li><a data-menuid="createCylinder" data-i18n>Cylinder</a><img data-menuid="createCylinderPref" class="smallIcon smallPref" src="" alt=""></li>
+      <li><a data-menuid="createSphere" data-i18n>Sphere</a><img data-menuid="createSpherePref" class="smallIcon smallPref" src="" alt=""></li>
+      <li><a data-menuid="createTorus" data-i18n>Torus</a><img data-menuid="createTorusPref" class="smallIcon smallPref" src="" alt=""></li>
+      <li><a data-menuid="createCone" data-i18n>Cone</a><img data-menuid="createConePref" class="smallIcon smallPref" src="" alt=""></li>
+      <li><hr /></li>
+      <li><a data-menuid="createTetrahedron" data-i18n>Tetrahedron</a><img data-menuid="createTetrahedronPref" class="smallIcon smallPref" src="" alt=""></li>
+      <li><a data-menuid="createOctahedron" data-i18n>Octahedron</a><img data-menuid="createOctahedronPref" class="smallIcon smallPref" src="" alt=""></li>
+      <li><a data-menuid="createOctotoad" data-i18n>Octotoad</a><img data-menuid="createOctotoadPref" class="smallIcon smallPref" src="" alt=""></li>
+      <li><a data-menuid="createDodecahedron" data-i18n>Dodecahedron</a><img data-menuid="createDodecahedronPref" class="smallIcon smallPref" src="" alt=""></li>
+      <li><a data-menuid="createIcosahedron" data-i18n>Icosahedron</a><img data-menuid="createIcosahedronPref" class="smallIcon smallPref" src="" alt=""></li>
+      <li><hr /></li>
+      <li><a data-menuid="createPlane" data-i18n>Various Planes</a><img data-menuid="createPlanePref" class="smallIcon smallPref" src="" alt=""></li>
+      <!-- <li class="not-implemented"><a data-menuid="createGrid">Grid</a></li> -->
+      <li><hr></li>
+      <li><a data-menuid="createMaterial" data-i18n>Material...</a></li>
+      <li><hr /></li>
+      <li><a data-menuid="createSpiral" data-i18n>Spiral</a><img data-menuid="createSpiralPref" class="smallIcon smallPref" src="" alt=""></li>
+      <li><a data-menuid="createSpring" data-i18n>Spring</a><img data-menuid="createSpringPref" class="smallIcon smallPref" src="" alt=""></li>
+    </ul>
+    <ul id="tweak-context-menu" class="popup menu">
+      <li><input type="checkbox" checked="checked" data-menuid="toggleTweak"><a data-menuid="toggleTweak" data-i18n>Tweak</a></li>
+      <li><hr /></li>
+      <li class="not-implemented"><a data-menuid="magnetsMenu" data-i18n>Magnets</a></li>
+      <li class="dropside">
+        <a data-menuid="axisConstraintsMenu" data-i18n>Axis Constraints</a>
+        <ul class="popup menu">
+          <li><input type="checkbox" data-menuid="constraintX"><a data-menuid="constraintX">X</a></li>
+          <li><input type="checkbox" data-menuid="constraintY"><a data-menuid="constraintY">Y</a></li>
+          <li><input type="checkbox" data-menuid="constraintZ"><a data-menuid="constraintZ">Z</a></li>
+          <li><hr /></li>
+        </ul>
+      </li>
+      <li><hr /></li>
+      <li><input type="radio" checked="checked" name="tweakMode" data-menuid="tweakMoveFree"><a data-menuid="tweakMoveFree" data-i18n>Move</a></li>
+      <li><input type="radio" name="tweakMode" data-menuid="tweakMoveNormal"><a data-menuid="tweakMoveNormal" data-i18n>Move Normal</a></li>
+      <li><input type="radio" name="tweakMode" data-menuid="tweakScaleFree"><a data-menuid="tweakScaleFree" data-i18n>Scale</a></li>
+      <li><input type="radio" name="tweakMode" data-menuid="tweakScaleUniform"><a data-menuid="tweakScaleUniform" data-i18n>Scale Uniform</a></li>
+      <li class="not-implemented"><input type="radio" name="tweakMode" data-menuid="tweakRelax"><a data-menuid="tweakReleax" data-i18n>Relax</a></li>
+      <li class="not-implemented"><input type="radio" name="tweakMode" data-menuid="tweakSlide"><a data-menuid="tweakSlide" data-i18n>Slide</a></li>
+      <li><hr /></li>
+      <li class="not-implemented"><a data-menuid="tweakPreferencesMenu">Tweak Preferences</a></li>
+    </ul>
+    <ul id="edge-context-menu" class="popup menu">
+      <li class="dropside">
+	      <a data-menuid="edgeMoveMenu" data-i18n>Move</a>
+        <ul class="popup menu">
+          <li><a data-menuid="edgeMoveNormal" data-i18n>Normal</a></li>
+          <li><a data-menuid="edgeMoveFree" data-i18n>Free</a></li>
+          <li><a data-menuid="edgeMoveX">X</a></li>
+          <li><a data-menuid="edgeMoveY">Y</a></li>
+          <li><a data-menuid="edgeMoveZ">Z</a></li>
+        </ul>
+      </li>
+      <li class="dropside">
+        <a data-menuid="edgeRotateMenu" data-i18n>Rotate</a>
+        <ul class ="popup menu">
+          <li><a data-menuid="edgeRotateFree" data-i18n>Free</a></li>
+          <li><a data-menuid="edgeRotateX">X</a></li>
+          <li><a data-menuid="edgeRotateY">Y</a></li>
+          <li><a data-menuid="edgeRotateZ">Z</a></li>
+        </ul>
+      </li>
+      <li><a data-menuid="edgeScaleUniform" data-i18n>Scale Uniform</a></li>
+      <li class="dropside">
+        <a data-menuid="edgeScaleAxis" data-i18n>Scale Axis</a>
+        <ul class ="popup menu">
+          <li><a data-menuid="edgeScaleAxisX">X</a></li>
+          <li><a data-menuid="edgeScaleAxisY">Y</a></li>
+          <li><a data-menuid="edgeScaleAxisZ">Z</a></li>
+        </ul>
+      </li>
+      <li class="dropside">
+        <a data-menuid="edgeScaleRadial" data-i18n>Scale Radial</a>
+        <ul class ="popup menu">
+          <li><a data-menuid="edgeScaleRadialX">X</a></li>
+          <li><a data-menuid="edgeScaleRadialY">Y</a></li>
+          <li><a data-menuid="edgeScaleRadialZ">Z</a></li>
+        </ul>
+      </li>
+      <li><a data-menuid="edgeSlide" data-i18n>Slide</a></li>
+      <li><hr /></li>
+      <li class="dropside">
+        <a data-menuid="edgeExtrudeMenu" data-i18n>Extrude</a>
+        <ul class ="popup menu">
+          <li><a data-menuid="edgeExtrudeNormal" data-i18n>Normal</a></li>
+          <li><a data-menuid="edgeExtrudeFree" data-i18n>Free</a></li>
+          <li><a data-menuid="edgeExtrudeX">X</a></li>
+          <li><a data-menuid="edgeExtrudeY">Y</a></li>
+          <li><a data-menuid="edgeExtrudeZ">Z</a></li>
+        </ul>
+      </li>
+      <li><a data-menuid="edgeCrease" data-i18n>Crease</a></li>
+      <li><hr /></li>
+      <li class="dropside">
+        <a data-menuid="edgeFlatten" data-i18n>Flatten</a>
+        <ul class ="popup menu">
+          <li><a data-menuid="edgeFlattenX">X</a></li>
+          <li><a data-menuid="edgeFlattenY">Y</a></li>
+          <li><a data-menuid="edgeFlattenZ">Z</a></li>
+        </ul>
+      </li>
+      <li><hr /></li>
+      <li class="dropside">
+        <a data-menuid="cutMenu" data-i18n>Cut</a>
+        <ul class="popup menu">
+          <li><a data-menuid="cutLine2">2 <span data-i18n>Segments</span></a></li>
+          <li><a data-menuid="cutLine3">3 <span data-i18n>Segments</span></a></li>
+          <li><a data-menuid="cutLine4">4 <span data-i18n>Segments</span></a></li>
+          <li><a data-menuid="cutLine5">5 <span data-i18n>Segments</span></a></li>
+          <li><hr /></li>
+          <li><a data-menuid="cutLine10">10 <span data-i18n>Segments</span></a></li>
+          <li><hr /></li>
+          <li><a data-menuid="cutAsk" data-i18n>Enter Number...</a></li>
+          <li><hr /></li>
+          <li class="not-implemented"><a data-menuid="cutArbitrary" data-i18n>Cut at arbitrary position</a></li>
+        </ul>
+      </li>
+      <li><a data-menuid="cutAndConnect" data-i18n>Connect</a></li>
+      <li><a data-menuid="edgeBevel" data-i18n>Bevel</a></li>
+      <li><hr /></li>
+      <li><a data-menuid="edgeDissolve" data-i18n>Dissolve</a></li>
+      <li><a data-menuid="edgeCollapse" data-i18n>Collapse</a></li>
+      <li><hr /></li>
+      <li class="dropside">
+        <a data-menuid="edgeHardness" data-i18n>Hardness</a>
+        <ul class="popup menu">
+          <li><a data-menuid="edgeSoft" data-i18n>Soft</a></li>
+          <li><a data-menuid="edgeHard" data-i18n>Hard</a></li>
+          <li><a data-menuid="edgeInvert" data-i18n>Invert</a></li>
+        </ul>
+      </li>
+      <li><hr /></li>
+      <li><a data-menuid="edgeLoopCut" data-i18n>Loop Cut</a></li>
+      <li><hr /></li>
+      <li><a data-menuid="edgeCorner" data-i18n>Corner</a></li>
+      <li><hr /></li>
+      <li><a data-menuid="closeCrack">Close Crack</a></li>
+    </ul>
+    <ul id="face-context-menu" class="context-menu popup menu">
+      <li class="dropside">
+        <a data-menuid="faceMoveMenu" data-i18n>Move</a>
+        <ul class="popup menu">
+          <li><a data-menuid="faceMoveNormal" data-i18n>Normal</a></li>
+          <li><a data-menuid="faceMoveFree" data-i18n>Free</a></li>
+          <li><a data-menuid="faceMoveX">X</a></li>
+          <li><a data-menuid="faceMoveY">Y</a></li>
+          <li><a data-menuid="faceMoveZ">Z</a></li>
+        </ul>
+      </li>
+      <li class="dropside">
+        <a data-menuid="faceRotateMenu" data-i18n>Rotate</a>
+        <ul class ="popup menu">
+          <li><a data-menuid="faceRotateFree" data-i18n>Free</a></li>
+          <li><a data-menuid="faceRotateX">X</a></li>
+          <li><a data-menuid="faceRotateY">Y</a></li>
+          <li><a data-menuid="faceRotateZ">Z</a></li>
+        </ul>
+      </li>
+      <li><a data-menuid="faceScaleUniform" data-i18n>Scale Uniform</a></li>
+      <li class="dropside">
+        <a data-menuid="faceScaleAxis" data-i18n>Scale Axis</a>
+        <ul class ="popup menu">
+          <li><a data-menuid="faceScaleAxisX">X</a></li>
+          <li><a data-menuid="faceScaleAxisY">Y</a></li>
+          <li><a data-menuid="faceScaleAxisZ">Z</a></li>
+        </ul>
+      </li>
+      <li class="dropside">
+        <a data-menuid="faceScaleRadial" data-i18n>Scale Radial</a>
+        <ul class ="popup menu">
+          <li><a data-menuid="faceScaleRadialX">X</a></li>
+          <li><a data-menuid="faceScaleRadialY">Y</a></li>
+          <li><a data-menuid="faceScaleRadialZ">Z</a></li>
+        </ul>
+      </li>
+      <li><hr /></li>
+      <li class="dropside">
+        <a data-menuid="faceExtrudeMenu" data-i18n>Extrude</a>
+        <ul class="popup menu">
+          <li><a data-menuid="faceExtrudeNormal" data-i18n>Normal</a></li>
+          <li><a data-menuid="faceExtrudeFree" data-i18n>Free</a></li>
+          <li><a data-menuid="faceExtrudeX">X</a></li>
+          <li><a data-menuid="faceExtrudeY">Y</a></li>
+          <li><a data-menuid="faceExtrudeZ">Z</a></li>
+        </ul>
+      </li>
+      <li><hr /></li>
+      <li class="dropside">
+        <a data-menuid="faceFlatten" data-i18n>Flatten</a>
+        <ul class ="popup menu">
+          <li><a data-menuid="faceFlattenNormal" data-i18n>Normal</a></li>
+          <li><a data-menuid="faceFlattenX">X</a></li>
+          <li><a data-menuid="faceFlattenY">Y</a></li>
+          <li><a data-menuid="faceFlattenZ">Z</a></li>
+        </ul>
+      </li>
+      <li><hr /></li>
+      <li><a data-menuid="faceInset" data-i18n>Inset</a></li>
+      <li><a data-menuid="faceIntrude" data-i18n>Intrude</a></li>
+      <li><a data-menuid="faceBevel" data-i18n>Bevel</a></li>
+      <li><a data-menuid="faceBridge" data-i18n>Bridge</a></li>
+      <li><hr /></li>
+      <li><a data-menuid="faceBump" data-i18n>Bump</a></li>
+      <li><a data-menuid="faceLift" data-i18n>Lift</a></li>
+      <li><a data-menuid="facePutOn" data-i18n>Put On</a></li>
+      <li><hr /></li>
+      <li><a data-menuid="faceMirror" data-i18n>Mirror</a></li>
+      <li><a data-menuid="faceDissolve" data-i18n>Dissolve</a></li>
+      <li><a data-menuid="faceCollapse" data-i18n>Collapse</a></li>
+      <li><hr /></li>
+      <li class="dropside">
+        <a data-menuid="faceMaterialMenu" data-i18n>Material</a>
+        <ul class="popup menu"></ul>
+      </li>
+      <li><input type="color" data-menuid="faceColor" style="opacity:0;width:100%;position:absolute;"/><a data-i18n>Vertex Color</a></li>
+      <li><hr /></li>
+      <li class="dropside">
+        <a data-menuid="facePlaneCut" data-i18n>Plane Cut</a>
+        <ul class ="popup menu">
+          <li><a data-menuid="facePlaneCutX">X</a></li>
+          <li><a data-menuid="facePlaneCutY">Y</a></li>
+          <li><a data-menuid="facePlaneCutZ">Z</a></li>
+        </ul>
+      </li>
+    </ul>
+    <ul id="vertex-context-menu" class="popup menu">
+      <li class="dropside">
+        <a data-menuid="vertexMoveMenu" data-i18n>Move</a>
+        <ul class="popup menu">
+          <li><a data-menuid="vertexMoveNormal" data-i18n>Normal</a></li>
+          <li><a data-menuid="vertexMoveFree" data-i18n>Free</a></li>
+          <li><a data-menuid="vertexMoveX">X</a></li>
+          <li><a data-menuid="vertexMoveY">Y</a></li>
+          <li><a data-menuid="vertexMoveZ">Z</a></li>
+        </ul>
+      </li>
+      <li class="dropside">
+        <a data-menuid="vertexRotateMenu" data-i18n>Rotate</a>
+        <ul class ="popup menu">
+          <li><a data-menuid="vertexRotateFree" data-i18n>Free</a></li>
+          <li><a data-menuid="vertexRotateX">X</a></li>
+          <li><a data-menuid="vertexRotateY">Y</a></li>
+          <li><a data-menuid="vertexRotateZ">Z</a></li>
+        </ul>
+      </li>
+      <li><a data-menuid="vertexScaleUniform" data-i18n>Scale Uniform</a></li>
+      <li class="dropside">
+        <a data-menuid="vertexScaleAxis" data-i18n>Scale Axis</a>
+        <ul class ="popup menu">
+          <li><a data-menuid="vertexScaleAxisX">X</a></li>
+          <li><a data-menuid="vertexScaleAxisY">Y</a></li>
+          <li><a data-menuid="vertexScaleAxisZ">Z</a></li>
+        </ul>
+      </li>
+      <li class="dropside">
+        <a data-menuid="vertexScaleRadial" data-i18n>Scale Radial</a>
+        <ul class ="popup menu">
+          <li><a data-menuid="vertexScaleRadialX">X</a></li>
+          <li><a data-menuid="vertexScaleRadialY">Y</a></li>
+          <li><a data-menuid="vertexScaleRadialZ">Z</a></li>
+        </ul>
+      </li>
+      <li><hr /></li>
+      <li class="dropside">
+        <a data-menuid="vertexExtrudeMenu" data-i18n>Extrude</a>
+        <ul class="popup menu">
+          <li><a data-menuid="vertexExtrudeNormal" data-i18n>Normal</a></li>
+          <li><a data-menuid="vertexExtrudeFree" data-i18n>Free</a></li>
+          <li><a data-menuid="vertexExtrudeX">X</a></li>
+          <li><a data-menuid="vertexExtrudeY">Y</a></li>
+          <li><a data-menuid="vertexExtrudeZ">Z</a></li>
+        </ul>
+      </li>
+      <li><hr /></li>
+      <li class="dropside">
+        <a data-menuid="vertexFlatten" data-i18n>Flatten</a>
+        <ul class ="popup menu">
+          <li><a data-menuid="vertexFlattenX">X</a></li>
+          <li><a data-menuid="vertexFlattenY">Y</a></li>
+          <li><a data-menuid="vertexFlattenZ">Z</a></li>
+        </ul>
+      </li>
+      <li><hr /></li>
+      <li><a data-menuid="vertexConnect" data-i18n>Connect</a></li>
+      <li><a data-menuid="vertexBevel" data-i18n>Bevel</a></li>
+      <li><a data-menuid="vertexDissolve" data-i18n>Dissolve</a></li>
+      <li><a data-menuid="vertexCollapse" data-i18n>Collapse</a></li>
+      <li><a data-menuid="vertexWeld" data-i18n>Weld</a></li>
+      <li><hr /></li>
+      <li><input type="color" data-menuid="vertexColor" style="opacity:0;width:100%;position:absolute;"/><a data-i18n>Vertex Color</a></li>
+      <li><hr /></li>
+    </ul>
+    <ul id="body-context-menu" class="popup menu">
+      <li class="dropside">
+        <a data-menuid="bodyMoveMenu" data-i18n>Move</a>
+        <ul class="popup menu">
+          <li><a data-menuid="bodyMoveFree" data-i18n>Free</a></li>
+          <li><a data-menuid="bodyMoveX">X</a></li>
+          <li><a data-menuid="bodyMoveY">Y</a></li>
+          <li><a data-menuid="bodyMoveZ">Z</a></li>
+        </ul>
+      </li>
+      <li class="dropside">
+        <a data-menuid="bodyRotateMenu" data-i18n>Rotate</a>
+        <ul class ="popup menu">
+          <li><a data-menuid="bodyRotateFree" data-i18n>Free</a></li>
+          <li><a data-menuid="bodyRotateX">X</a></li>
+          <li><a data-menuid="bodyRotateY">Y</a></li>
+          <li><a data-menuid="bodyRotateZ">Z</a></li>
+        </ul>
+      </li>
+      <li><a data-menuid="bodyScaleUniform" data-i18n>Scale Uniform</a></li>
+      <li class="dropside">
+        <a data-menuid="bodyScaleAxis" data-i18n>Scale Axis</a>
+        <ul class ="popup menu">
+          <li><a data-menuid="bodyScaleAxisX">X</a></li>
+          <li><a data-menuid="bodyScaleAxisY">Y</a></li>
+          <li><a data-menuid="bodyScaleAxisZ">Z</a></li>
+        </ul>
+      </li>
+      <li class="dropside">
+        <a data-menuid="bodyScaleRadial" data-i18n>Scale Radial</a>
+        <ul class ="popup menu">
+          <li><a data-menuid="bodyScaleRadialX">X</a></li>
+          <li><a data-menuid="bodyScaleRadialY">Y</a></li>
+          <li><a data-menuid="bodyScaleRadialZ">Z</a></li>
+        </ul>
+      </li>
+      <li><hr /></li>
+      <li class="dropside">
+        <a data-menuid="bodyFlipMenu" data-i18n>Flip...</a>
+        <ul class ="popup menu">
+          <li><a data-menuid="bodyFlipX">X</a></li>
+          <li><a data-menuid="bodyFlipY">Y</a></li>
+          <li><a data-menuid="bodyFlipZ">Z</a></li>
+        </ul>
+      </li>
+      <li><hr /></li>
+      <li><a data-menuid="bodyInvert" data-i18n>Invert</a></li>
+      <li><hr /></li>
+      <li><a data-menuid="bodyCombine" data-i18n>Combine</a></li>
+      <li><a data-menuid="bodySeparate" data-i18n>Separate</a></li>
+      <li><hr /></li>
+      <li><a data-menuid="bodyWeld" data-i18n>Weld</a></li>
+      <li class="dropside">
+        <a data-menuid="bodyPlaneCut" data-i18n>Plane Cut</a>
+        <ul class ="popup menu">
+          <li><a data-menuid="bodyPlaneCutX">X</a></li>
+          <li><a data-menuid="bodyPlaneCutY">Y</a></li>
+          <li><a data-menuid="bodyPlaneCutZ">Z</a></li>
+        </ul>
+      </li>
+      <li class="dropside">
+        <a data-menuid="bodySlice" data-i18n>Slice</a>
+        <ul class ="popup menu">
+          <li><a data-menuid="bodySliceX">X</a></li>
+          <li><a data-menuid="bodySliceY">Y</a></li>
+          <li><a data-menuid="bodySliceZ">Z</a></li>
+        </ul>
+      </li>
+      <li><hr /></li>
+      <li class="dropside">
+        <a data-menuid="bodyDuplicateMoveMenu" data-i18n>Duplicate</a>
+        <ul class="popup menu">
+          <li><a data-menuid="bodyDuplicateMoveFree" data-i18n>Free</a></li>
+          <li><a data-menuid="bodyDuplicateMoveX">X</a></li>
+          <li><a data-menuid="bodyDuplicateMoveY">Y</a></li>
+          <li><a data-menuid="bodyDuplicateMoveZ">Z</a></li>
+        </ul>
+      </li>
+      <li><a data-menuid="bodyDelete" data-i18n>Delete</a></li>
+      <li><a data-menuid="bodyRename" data-i18n>Rename</a></li>
+      <li><hr /></li>
+      <li><input type="color" data-menuid="bodyColor" style="opacity:0;width:100%;position:absolute;"/><a data-i18n>Vertex Color</a></li>
+      <li><hr /></li>
+    </ul>
+  </nav>
+  <!-- Start of various Dialog -->
+  <form id="cutLineDialog" class="dialog">
+     <label><span data-i18n>Segments</span>
+     <input type="number" name="Segments" value="8">
+     </label>
+     <button type="submit" value="cancel">Cancel</button>
+     <button type="submit" value="ok">Ok</button>
+  </form>
+  <form id="sliceBodyDialog" class="dialog">
+     <label>Slice into Equal Parts     </label>
+     <input type="range" name="amountRange" min="2" max="100" value="2" oninput="this.form.amountInput.value=this.value" />
+     <input type="number" name="amountInput" min="2" max="100" value="2" oninput="this.form.amountRange.value=this.value" />
+     <button type="submit" value="cancel">Cancel</button>
+     <button type="submit" value="ok">Ok</button>
+  </form>
+  <form id="exportFile" class="dialog">
+     <h2>Saving Scene</h2>
+       <label>Filename: <input type="text" name="Filename" placeholder="wings3d-web"/></label>
+       <button type="submit" value="ok">Ok</button>
+       <button type="submit" value="cancel">Cancel</button>
+  </form>
+  <form id="renameDialog" class="dialog">
+     <h2 data-i18n>Rename</h2>
+       <div class="content-dummy"></div>
+       <button type="submit" value="cancel">Cancel</button>
+       <button type="submit" value="ok">Ok</button>
+  </form>
+  <div id="tutorGuide" class="exclude tutor-bubble left hide">
+    <span class="tutor-arrow"></span>
+    <div class="tutor-container">
+      <span class="close">&times;</span>
+      <div><h3 class="tutor-title">No Titled</h3><div class="tutor-progress"><span class="tutor-progress-done"></span><span class="tutor-progress-indicator"></span></div></div>
+      <div class="tutor-content"></div>
+      <div class="tutor-actions">
+        <button class="tutor-nav-button next">Next</button>
+        <p class="tutor-selection"></p>
+      </div>
+    </div>
+  </div>
+  <form id="uploadFile" class="dialog">
+  </form>
+  <input id="importFile" style="display:none;" type='file'>
+  <form id="importFileListForm" name="importFileListForm" class="dialog">
+    <div><label>Missing Files</label>
+    <ul id="missingFiles"></ul>
+    </div>
+    <input name="fileListInput" type='file' multiple>
+    <button type="submit" value="ok" data-i18n>Close</button>
+  </form>
+  <form id="preferenceForm" class="dialog">
+    <div class="tabs">
+      <input name="tabPref" id="generalPref" type="radio" checked>
+      <label class="tabButton" for="generalPref" data-i18n>General</label>
+      <div class="tabPanel">
+        <fieldset class="fieldPref">
+          <legend data-tooltip data-i18n>Vertex Display</legend>
+          <label for="unselectedSize" data-i18n>Unselected Size</label>
+          <input id="unselectedSize" name="unselectedVertexSize" type="number">
+          <label for="selectedSize" data-i18n>Selected Size</label>
+          <input id="selectedSize" name="selectedVertexSize" type="number">
+          <label for="magnetVertexSize" data-i18n>Magnet Mask Vertex Size</label>
+          <input id="magnetVertexSize" name="maskedVertexSize" type="number">
+          <label for="unselectedVertex"><span data-i18n>Unselected Vertices</span><input id="unselectedVertex" name="unselectedVertexColor" type="color"></label> 
+          <label for="magnetMask"><span data-i18n>Magnet Mask</span><input id="magnetMask" name="maskedVertexColor" type="color"></label>
+        </fieldset>
+        <fieldset class="fieldPref">
+          <legend data-tooltip data-i18n>Edge Display</legend>
+          <label for="unselectedWidth" data-i18n>Unselected Width</label>
+          <input id="unselectedWidth" name="unselectedEdgeWidth" type="number">
+          <label for="selectedWidth" data-i18n>Selected Width</label>
+          <input id="selectedWidth" name="selectedEdgeWidth" type="number">
+          <label for="hardEdgeWidth" data-i18n>Hard Edge Width</label>
+          <input id="hardEdgeWidth" name="hardEdgeWidth" type="number">
+          <label for="softEdges"><span data-i18n>Soft Edges</span><input id="softEdges" name="unselectedEdgeColor" type="color"></label>
+          <label for="hardEdges"><span data-i18n>Hard Edges</span><input id="hardEdges" name="hardEdgeColor" type="color"></label>      
+        </fieldset>
+        <fieldset class="fieldPref">
+          <legend data-tooltip data-i18n>Highlighting</legend>
+          <label for="unselected"><span data-i18n>Unselected</span><input id="unselected" type="color"></label>
+          <label for="selected"><span data-i18n>Selected</span><input id="selected" type="color"></label>
+        </fieldset>
+        <fieldset class="fieldPref">
+          <legend data-tooltip data-i18n>Selection</legend>
+          <label for="selectionColor" data-i18n>Selection Color</label>
+          <input id="selectionColor" name="selectedColor" type="color">
+        </fieldset>
+        <fieldset class="fieldPref">
+          <legend data-tooltip data-i18n>Information Text</legend>
+          <label for="infoText" data-i18n>Text</label>
+          <input id="infoText" name="infoText" type="color">
+          <label for="infoBackground" data-tooltip="infoBackground" data-i18n>Background</label>
+          <input id="infoBackground" name="infoBackground" type="color">
+          <label for="infoVerbose" data-tooltip="infoVerbose"><input id="infoVerbose" name="infoVerbose" type="checkbox"><span data-i18n>Verbose</span></label>
+        </fieldset>
+        <fieldset  class="fieldPref">
+          <legend data-i18n>Normals Display</legend>
+          <label for="normalLength" data-tooltip="normalLength" data-i18n>Length</label>
+          <input id="normalLength" type="number">
+          <label for="normalWidth" data-tooltip="normalWidth" data-i18n>Width</label>
+          <input id="normalWidth" type="number">
+          <label for="normalColor" data-tooltip="normalColor" data-i18n>Color</label>
+          <input id="normalColor" type="color"> 
+        </fieldset>
+        <fieldset class="fieldPref">
+          <legend data-tooltip data-i18n>Materials</legend>
+          <label for="materialDefault" data-tooltip="materialDefault" data-i18n>Default</label>
+          <input id="materialDefault" name="faceColor" type="color">
+        </fieldset>
+        <fieldset class="horizontalPref">
+          <legend data-tooltip data-i18n>Axes</legend>
+          <div class="verticalPref">          
+            <label for="constrainAxesToGrid" data-tooltip="constrainAxesToGrid"><input id="constrainAxesToGrid" type="checkbox"><span data-i18n>Constrain Axes to Grid</span></label>
+            <label for="showMiniAxis"><input id="showMiniAxis" name="showMiniAxis" type="checkbox"><span data-i18n>Show Mini Axis</span></label>
+          </div>
+          <div class="fieldPref">
+            <label for="xPlusColor" data-tooltip="xPlusColor">+X <span data-i18n>Color</span></label>
+            <input id="xPlusColor" name="colorX" type="color">
+            <label for="yPlusColor" data-tooltip="yPlusColor">+Y <span data-i18n>Color</span></label>
+            <input id="yPlusColor" name="colorY" type="color">
+            <label for="zPlusColor" data-tooltip="zPlusColor">+Z <span data-i18n>Color</span></label>
+            <input id="zPlusColor" name="colorZ" type="color">
+          </div>
+          <div class="fieldPref">
+            <label for="xMinusColor" data-tooltip="xMinusColor">-X <span data-i18n>Color</span></label>
+            <input id="xMinusColor" name="negColorX" type="color">
+            <label for="yMinusColor" data-tooltip="yMinusColor">-Y <span data-i18n>Color</span></label>
+            <input id="yMinusColor" name="negColorY" type="color">
+            <label for="zMinusColor" data-tooltip="zMinusColor">-Z <span data-i18n>Color</span></label>
+            <input id="zMinusColor" name="negColorZ" type="color">
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend data-tooltip data-i18n>Grid</legend>
+          <label for="gridColor" data-tooltip="gridColor"><span data-i18n>Color</span><input id="gridColor" name="gridColor" type="color"></label>          
+          <label for="forceAAGrid" data-tooltip="forceAAGrid"><input id="forceAAGrid" type="checkbox"><span data-i18n>Force Axis-Aligned Grid</span></label>          
+          <label for="forceAAOrtho" data-tooltip="forceAAOrtho"><input id="forceAAOrtho" type="checkbox"><span data-i18n>Force Axis-Aligned Ortho</span></label>
+        </fieldset>
+      </div>
+
+      <input name="tabPref" id="cameraPref" type="radio">
+      <label class="tabButton" for="cameraPref" data-tooltip="cameraPref" data-i18n>Camera</label>
+      <div class="tabPanel horizontalPref">
+        <div class="verticalPref">
+        <fieldset>
+          <legend data-tooltip data-i18n>Mouse Buttons</legend>
+          <select id="mouseButton">
+            <option selected value="3" data-i18n>Three</option>
+            <option value="2" data-i18n>Two</option>
+            <option value="1" data-i18n>One</option>
+          </select>
+        </fieldset>
+        <fieldset>
+          <legend data-tooltip data-i18n>Camera Mode</legend>
+          <select id="cameraMode">
+            <option value="0" selected>Wings 3D</option>
+            <option value="1">Mirai</option>
+            <option value="2">Nendo</option>
+          </select>
+        </fieldset>
+        <fieldset>
+          <legend data-tooltip data-i18n>Rotation Speed</legend>
+          <input type="range" min="1" max="100" value="1" onchange="this.nextElementSibling.value=this.value" />
+          <input id="rotationSpeed" type="number" min="1" max="100" value="1" step="1" onchange="this.previousElementSibling.value=this.value" />
+        </fieldset>
+        <fieldset>
+          <legend data-tooltip data-i18n>Pan Speed</legend>
+          <input type="range" min="1" max="100" value="1" onchange="this.nextElementSibling.value=this.value" />
+          <input id="panSpeed" type="number" min="1" max="100" value="1" step="1" onchange="this.previousElementSibling.value=this.value" />
+        </fieldset>
+        <fieldset>
+          <legend data-tooltip data-i18n>Arrow Key Pan Speed</legend>
+          <input type="range" min="1" max="100" value="1" onchange="this.nextElementSibling.value=this.value" />
+          <input id="arrowKeyPanSpeed" type="number" min="1" max="100" value="1" step="1" onchange="this.previousElementSibling.value=this.value" />
+        </fieldset>
+        </div>
+        <div class="verticalPref">
+        <fieldset class="verticalPref">
+          <legend data-tooltip data-i18n>Scroll Wheel</legend>          
+          <label data-tooltip><input id="wheelZoom" type="checkbox"><span data-i18n>Wheel Zooms</span></label>
+          <label data-tooltip="aimZoom"><input id="aimZoom" type="checkbox"><span data-i18n="aimZoom">Zooming in aims Camera</span></label>
+          <label data-tooltip="zoomFactor"><span data-i18n>Zoom Factor</span><input id="zoomFactor" type="number"><span>%</span></label>
+          <label data-tooltip="altZoomFactor"><span data-i18n="altZoomFactor">Alternate Zoom Factor (Alt+Scroll)</span><input id="altZoomFactor" type="number" min="0" max="100"><span>%</span></label>
+        </fieldset>
+        <fieldset>
+          <legend data-tooltip data-i18n>Unidirectional Camera</legend>
+          <input id="wheelPansRotates" name="wheelConditional" type="checkbox">
+          <label for="wheelPansRotates" data-tooltip data-i18n>Wheel Pans Rotates</label>
+          <label data-tooltip><input id="infoLineHelpString" name="wheelConditional" type="checkbox"><span data-i18n>Show Info Line Help String</span></label>
+          <fieldset name="dragConditional">
+            <legend data-tooltip data-i18n>Pan Speed</legend>
+            <input name="wheelConditional" type="range" min="1" max="100" value="1" onchange="this.nextElementSibling.value=this.value" />
+            <input id="scrollPanSpeed" name="wheelConditional" type="number" min="1" max="100" value="1" step="1" onchange="this.previousElementSibling.value=this.value" />
+          </fieldset>
+          <fieldset name="dragConditional">
+            <legend data-i18n>Rotation Step in Degrees</legend>
+            <input name="wheelConditional" type="range" min="1" max="100" value="1" onchange="this.nextElementSibling.value=this.value" />
+            <input id="scrollRotateStepDegree" name="wheelConditional" type="number" min="1" max="100" value="1" step="1" onchange="this.previousElementSibling.value=this.value" />
+          </fieldset>
+        </fieldset>
+        </div>
+      </div>
+
+      <input name="tabPref" id="interfacePref" type="radio">
+      <label class="tabButton" for="interfacePref" data-tooltip data-i18n>User Interface</label>
+      <div class="tabPanel">
+        <fieldset class="verticalPref">
+          <legend data-i18n>Colors</legend>
+          <label class="setValue"><span data-i18n>Geometry Background</span><input name="geometryBackground" type="color"></label>
+          <hr />
+          <label class="setValue"><span data-i18n>Menubar Background</span><input name="menubarBackground" type="color"></label> 
+          <label class="setValue"><span data-i18n>Menubar Text</span><input name="menubarText" type="color"></label>
+          <hr />
+          <label class="setValue"><span data-i18n>Menu Background</span><input name="menuBackground" type="color"></label>
+          <label class="setValue"><span data-i18n>Menu Text</span><input name="menuText" type="color"></label>
+          <label class="setValue"><span data-i18n>Menu Highlight</span><input name="menuHighlight" type="color"></label>
+          <label class="setValue"><span data-i18n>Menu Highlight Text</span><input name="menuHighlightText" type="color"></label>
+          <hr />
+          <label class="setValue"><span data-i18n>Info Line Background</span><input name="infoLineBackground" type="color"></label>
+          <label class="setValue"><span data-i18n>Info Line Text</span><input name="infoLineText" type="color"></label>
+        </fieldset>
+        <fieldset>
+          <legend data-tooltip data-i18n>Interface Icons</legend>
+          <label><select id="iconSet">
+            <option selected value="blue">Blue Cube</option>
+          </select></label>
+          <label><input id="showToolbar" type="checkbox"><span data-i18n>Show Toolbar</span></label>
+          <fieldset> 
+            <legend data-i18n>Toolbar Icons</legend>
+          </fieldset>
+        </fieldset>
+      </div>
+
+      <input name="tabPref" id="advancedMiscPref" type="radio">
+      <label class="tabButton" for="advancedMiscPref"><span data-i18n>Advanced</span>/<span data-i18n>Misc</span></label>
+      <div class="tabPanel">
+        <fieldset>
+          <legend data-i18n>Vector Display</legend>
+          <label class="setValue" data-tooltip="vectorLength"><span data-i18n>Length</span><input id="vectorLength" type="number"></label>
+          <label class="setValue" data-tooltip="vectorWidth"><span data-i18n>Width</span><input id="vectorWidth" type="number"></label>
+          <label class="setValue" data-tooltip="vectorColor"><span data-i18n>Color</span><input id="vectorColor" type="color"></label>
+        </fieldset>
+        <fieldset>
+          <legend data-i18n>Clipping Plane Indicator</legend>
+          <label class="setValue" data-tooltip="clippingPlaneSize"><span data-i18n>Size</span><input id="clippingPlaneSize" type="number"></label>
+          <label class="setValue" data-tooltip="clippingPlaneColor"><span data-i18n>Color</span><input id="clippingPlaneColor" type="color"></label>
+        </fieldset>
+        <fieldset>
+          <legend data-i18n>Drag Preferences</legend>
+          <input id="customizeDragResponse" name="dragConditional" type="checkbox">
+          <label for="customizeDragResponse" data-tooltip data-i18n>Customize Drag Response</label>
+          <fieldset name="dragConditional">
+            <legend data-i18n>Mouse Dragging Speed</legend>
+            <input name="dragSpeed" type="range" min="1" max="10" value="8.5" step="0.5" onchange="this.nextElementSibling.value=this.value" />
+            <input name="dragSpeed" id="mouseDraggingSpeed" type="number" min="1" max="10" value="8.5" step="0.5" onchange="this.previousElementSibling.value=this.value" />
+          </fieldset>
+          <fieldset name="dragConditional">
+            <legend data-i18n>Mouse Scaling Speed</legend>
+            <input name="dragScaleSpeed" type="range" min="1" max="10" value="8.5" step="0.5" onchange="this.nextElementSibling.value=this.value" />
+            <input name="dragScaleSpeed" id="mouseScalingSpeed" type="number" min="1" max="10" value="8.5" step="0.5" onchange="this.previousElementSibling.value=this.value" />
+          </fieldset>
+          <fieldset name="dragConditional">
+            <legend data-i18n>Mouse Rotating Speed</legend>
+            <input name="dragRotateSpeed" type="range" min="1" max="10" value="8.5" step="0.5" onchange="this.nextElementSibling.value=this.value" />
+            <input name="dragRotateSpeed" id="mouseRotatingSpeed" type="number" min="1" max="10" value="8.5" step="0.5" onchange="this.previousElementSibling.value=this.value" />
+          </fieldset>
+        </fieldset>
+        <fieldset>
+          <legend data-i18n>Misc</legend>
+          <input id="saveAuto" name="saveConditional" type="checkbox">
+          <label for="saveAuto" data-i18n>Save automatically every</label>
+          <label><input id="saveAutoMinute" name="saveConditional" type="number"><span data-i18n>minutes</span></label>
+          <fieldset>
+            <legend data-i18n>Auto Rotate</legend>
+            <label class="setValue"><span data-i18n>Angle per second</span><input id="autoRotateAnglePerSecond" type="number"></label>
+          </fieldset>
+        </fieldset>
+      </div>
+    </div>
+
+    <div class="endAlign">
+    <button type="submit" value="cancel">Cancel</button>
+    <button type="submit" value="ok">Ok</button>
+    </div>
+  </form>
+  <form id="materialSetting" class="dialog">
+    <h3><span data-i18n>Material Properties:</span> <span data-i18n>New Material</span></h3>
+    <div id="materialWrap">
+    <canvas id="materialCanvas" width="128" height="128"></canvas>
+    <div class="fieldTable">
+      <span data-i18n>Base Color</span><input id="baseColorSlider" class="slider" type="range" min="0" max="255" value="255" onchange="matGradient(this)"><input name="baseColor" type="color" value="#ffffff" onchange="matColor(this)">
+      <span data-i18n>Metallic</span><input type="range" class="slider" min="0" max="1" step="0.01" value="1" onchange="this.nextElementSibling.value=this.value"><input name="metallic" type="number" min="0" max="1" step="0.01" value="1" onchange="this.previousElementSibling.value=this.value">
+      <span data-i18n>Roughness</span><input type="range" class="slider" min="0" max="1" step="0.01" value="1" onchange="this.nextElementSibling.value=this.value"><input name="roughness" type="number" min="0" max="1" step="0.01" value="1" onchange="this.previousElementSibling.value=this.value">
+      <span data-i18n>Emission</span><input id="emissionSlider" type="range" class="slider" min="0" max="255" value="0" onchange="matGradient(this)"><input name="emission" type="color" value="#000000" onchange="matColor(this)">
+      <span data-i18n>Opacity</span><input type="range" class="slider" min="0" max="1" step="0.01" value="1" onchange="this.nextElementSibling.value=this.value"><input name="opacity" type="number" min="0" max="1" step="0.01" value="1" onchange="this.previousElementSibling.value=this.value">
+    </div>
+    </div>
+    <button type="submit" value="cancel">Cancel</button>
+    <button type="submit" value="ok">Ok</button>
+  </form>
+<!-- Save Load -->
+  <form id="cloudSaveDialog" class="dialog cloudForm">
+     <h3><span data-i18n>Save As</span> <button type="submit" value="cancel" class="close">&times;</button></h3>
+<!--     <button type="submit" value="ok" id="yandexDiskSave" data-app-key="f51f1d0879e64c478086ea9fbbfd7d47"><img class="home" alt="YandexDisk" src="./img/clouddisk.svg#yandex"><span>Save to Yandex Disk</span></button> -->
+     <button type="submit" value="ok" id="onedriveSave" data-app-key="6acd185a-104b-4928-b06f-700380de2ce8"><img class="home" alt="OneDrive" src="./img/clouddisk.svg#onedrive"><span>Save to OneDrive</span></button>     
+     <button type="submit" value="ok" id="dropboxSave" data-app-key="p6wfhvtsa2hd9nh"><img class="home" alt="Dropbox" src="./img/clouddisk.svg#dropbox"><span>Save to Dropbox</span></button>
+     <button type="submit" value="ok" id="localSave"> <span>Save to Local</span></button>
+     <label>File: 
+       <input class="fileSelected" type="text" name="selected" value="">
+       <span class="fileExt">EXT</span>
+     </label>
+  </form>
+  <form id="cloudOpenDialog" class="dialog cloudForm">
+     <h3> Open from <button type="submit" value="cancel" class="close">&times;</button></h3>
+<!--     <button type="submit" value="ok" id="yandexDiskOpen" data-app-key="f51f1d0879e64c478086ea9fbbfd7d47"><img class="home" alt="YandexDisk" src="./img/clouddisk.svg#yandex"><span>Open from Yandex Disk</span></button> -->
+     <button type="submit" value="ok" id="onedriveOpen" data-app-key="6acd185a-104b-4928-b06f-700380de2ce8"><img class="home" alt="OneDrive" src="./img/clouddisk.svg#onedrive"><span>Open from OneDrive</span></button>
+     <button type="submit" value="ok" id="dropboxOpen" data-app-key="p6wfhvtsa2hd9nh"><img class="home" alt="Dropbox" src="./img/clouddisk.svg#dropbox"><span>Open from Dropbox</span></button>
+     <button type="submit" value="ok" id="localOpen"> <span>Open from Local</span></button>
+  </form>
+  <form id="contentPicker" class="filePickerForm dialog">
+     <h3><span class="title">Select</span><button type="submit" value="cancel" class="close">&times;</button></h3>
+     <div class="searchbar"></div>
+     <ul class="breadcrumb"><li><a><img class="home" alt="Home"></a></li></ul>
+     <fieldset class="filePicker">
+     </fieldset>
+     <div>
+       <label>File: 
+         <input class="fileSelected" type="text" name="selected" value="">
+         <span class="fileExt">EXT</span>
+       </label>
+       <button type="submit" value="ok">Ok</button>
+       <button type="submit" value="cancel">Cancel</button>
+     </div>
+  </form>
+  <form id="askSaveDialog" class="dialog">
+    <h3><button type="submit" value="cancel" class="close">&times;</button></h3>
+    <p>Do you want to save your changes?</p>
+    <div>
+      <button type="submit" value="ok">Ok</button>
+      <button type="submit" value="cancel">Cancel</button>
+      <button type="submit" value="no">No</button>
+    </div>
+  </form>
+  <form id="start-help" class="dialog">
+    <header class="modal-header">Start Help
+      <button class="close" aria-label="close modal" data-close>✕</button>
+    </header>
+    <ul style="list-style: none">
+     <li><a href="http://www.wings3d.com/?page_id=87" target="_blank">Wings3D documentation</a></li>
+     <li><a href="http://www.wings3d.com/paulthepuzzles/aardvarks.html" target="_blank">Wings3D tutorials, notes and general information</a></li>
+     <li><a href="https://www.youtube.com/results?search_query=wings3d+" target="_blank">Youtube Wings3D Tutorials</a></li>
+    </ul>
+  </form>
+  <form id="askStlDialog" class="dialog">
+    <fieldset class="verticalPref">      
+      <legend>Post-Open processing</legend>   
+      <label><input type="checkbox" name="unify"><span>Unify Duplicated Vertices</span></label>
+      <label><input type="checkbox" name="zup"><span>Z-Up</span></label>
+      <button type="submit" value="ok">Ok</button>
+    </fieldset>
+  </form>
+  <form id="textureTypePicker" class="dialog">
+    <header class="modal-header">Texture Type
+      <button class="close" aria-label="close modal" data-close>✕</button>
+    </header>
+    <div class="verticalPref">
+    <label><input name="textureType" type="radio" value="baseColorTexture" checked><span>BaseColorTexture</span></label>
+    <label><input name="textureType" type="radio" value="roughnessTexture"><span>roughnessTexture</span></label>
+    <label><input name="textureType" type="radio" value="normalTexture"><span>normalTexture</span></label>
+    <label><input name="textureType" type="radio" value="occlusionTexture"><span>occlusionTexture</span></label>
+    <label><input name="textureType" type="radio" value="emissionTexture"><span>emissionTexture</span></label>
+    </div>
+    <button type="submit" value="ok">Ok</button>     
+  </form>
+</body>
+
+</html>
