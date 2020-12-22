@@ -770,7 +770,7 @@ function attachHandlerMouseMove(mouseMove) {
       },
 
       rescind: ()=> {
-         mouseMove.rescind();
+         mouseMove.undo();//mouseMove.rescind();   // temp fix: 2020/12/22
          gotoExit();
       },
 
