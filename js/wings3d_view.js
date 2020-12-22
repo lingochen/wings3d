@@ -1115,12 +1115,14 @@ function canvasHandleMouseUp(ev) {
 };
 
 function canvasHandleMouseMove(e) {
-   if (handler.camera !== null) {
-      handler.camera.onMove(e);
-   } else if (handler.mousemove !== null) {
-      handler.mousemove.onMove(e);
-   } else {
-      selectionMode.move(e);
+   if ((e.movementX !== 0) || (e.movementY !==0)) {   // guard against (0,0) movement.
+      if (handler.camera !== null) {
+         handler.camera.onMove(e);
+      } else if (handler.mousemove !== null) {
+         handler.mousemove.onMove(e);
+      } else {
+         selectionMode.move(e);
+      }
    }
 };
 
