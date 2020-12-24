@@ -1791,7 +1791,7 @@ function init() {
 
    // toggle debugging 
    window.addEventListener('keyup', function(evt) {
-      if (evt.altKey && evt.ctrlKey && evt.key == 74) { // ctrl + alt + j
+      if (evt.altKey && evt.ctrlKey && evt.key === 'j') { // ctrl + alt + j
          toggleDebug();
       }
     });
