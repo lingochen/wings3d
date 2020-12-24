@@ -158,7 +158,7 @@ class TreeView {
       text.textContent = model.name;
       model.guiStatus.textNode = text;
       const entry = function(ev) {
-         if (ev.key == 13) {
+         if (ev.key == 'Enter') {
             // rename if different
             if (this.textContent !== model.name) {
                const data = {};
@@ -355,7 +355,7 @@ class ListView {
     */
    static addRenameListener(text, data) {
       const entry = function(ev) {
-         if (ev.key == 13) {
+         if (ev.key == 'Enter') {
             // rename if not empty
             if (this.textContent != "") {
                data.name = this.textContent;

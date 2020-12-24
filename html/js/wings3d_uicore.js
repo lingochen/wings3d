@@ -400,7 +400,7 @@ class MaterialUI extends HTMLElement {
    editDef() {
       const data = this;
       const entry = function(ev) {
-         if (ev.key == 13) {
+         if (ev.key == 'Enter') {
             // rename if not empty
             if (this.textContent != "") {
                data._mat.name = this.textContent;
