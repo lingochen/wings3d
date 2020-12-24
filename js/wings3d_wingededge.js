@@ -2358,6 +2358,7 @@ WingedTopology.prototype.bevelEdge = function(wingedEdges) {   // wingedEdges(se
          edge.pair.next = prevOut.pair;
          firstOut.pair.next = edge.pair;
          const polygon = this._createPolygon(edge.pair, edgeInsertion.length, Material.default);   // todo: find the correct material
+         polygon._assignFace();
          ret.selectedFaces.add( polygon );
       }
    }
@@ -2540,6 +2541,7 @@ WingedTopology.prototype.bevelVertex = function(vertices) {
          const firstBevel = vertex.outEdge.pair.next;
          firstBevel.pair.next = lastBevel.pair;   // innerEdge loop connected.
          const polygon = this._createPolygon(firstBevel.pair, count+1, Material.default); // todo: find the correct material. 
+         //polygon._assignFace();
          ret.selectedFaces.push(polygon);
       } else { // weird case of 2 edge vertex
          console.log("weird 2 edge vertex, to be done later");
