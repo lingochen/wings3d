@@ -330,9 +330,9 @@ Object.defineProperties(HalfEdge.prototype, {
 HalfEdge.prototype.setTriangle = function(apex) {
    const idx = this.getIndex();
    const i = (idx-1)*3;
-   HalfEdge.triangleList.set(i, idx);                       // draw tirangle
+   HalfEdge.triangleList.set(i, idx);                       // draw triangle
    HalfEdge.triangleList.set(i+1, this.next.getIndex());
-   HalfEdge.triangleList.set(i+2, apex.getIndex());  // draw tirangle
+   HalfEdge.triangleList.set(i+2, apex.getIndex());  // draw triangle
    this.updateApex(apex);  // set draw edge
 };
 HalfEdge.prototype.setEdgeTriangle = function(apex) {    // edge only
@@ -1064,6 +1064,7 @@ Polygon.prototype._assignFace = function() {
       current.face = this;
       current = current.next;
    } while (current != this.halfEdge);
+   return this;
 };
 
 // compute centroid and radius, and normal
@@ -2141,6 +2142,7 @@ WingedTopology.prototype.doubleEdge = function(inEdge) {
       newIn.face.halfEdge = newIn;
    }
    this.addAffectedFace(newIn.face);
+   this.addAffectedFace(inEdge.pair.face);   // 2020-12-25 - due to double edge, sometime vertex will move to other face.
    const newPolygon = this._createPolygon(newOut, 2, Material.default); // todo: outEdge.face.material?
    newOut.face = newPolygon;
    inEdge.face = newPolygon;
