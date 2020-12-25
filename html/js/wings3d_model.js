@@ -3220,6 +3220,8 @@ PreviewCage.prototype.dissolveSelectedFace = function() {
    for (let polygon of this.selectedSet) {
       if (polygon.isLive()) {
          selectedSet.add(polygon);
+      } else {
+         polygon.setSelect(false);  // clear selection.
       }
    }
    this.selectedSet = selectedSet;
@@ -3398,19 +3400,15 @@ PreviewCage.prototype.bevelVertex = function() {
  */
 PreviewCage.prototype.bridge = function(targetFace, sourceFace) {
    if (this.selectedSet.size === 2) {  // make sure. it really target, source
-      for (let polygon of targetFace.oneRing()) {  // make sure they are not neighbor
+      for (let polygon of targetFace.oneRing()) {  // and make sure they are not neighbor
          if (polygon === sourceFace) {
             return null;
          }
       }
 
-      const deltaCenter = vec3.create();
-      //vec3.sub(deltaCenter, targetSphere.center, sourceSphere.center);   // what if we don't move the center, would it work better? so far, no
-      const result = this.geometry.bridgeFace(targetFace, sourceFace, deltaCenter);
-      // clear selection
-      result.selectedFaces = this.selectedSet;
-      this._resetSelectFace();
-
+      const snapshot = this._resetSelectFace(); // clear selection in preparation for bridging
+      const result = this.geometry.bridgeFace(targetFace, sourceFace);
+      Object.assign(result, snapshot);
 
       // update previewBox.
       this.updateAffected();
@@ -3425,6 +3423,7 @@ PreviewCage.prototype.bridge = function(targetFace, sourceFace) {
 PreviewCage.prototype.undoBridge = function(bridge) {
    if (bridge) {
       this.geometry.undoBridgeFace(bridge);
+      // restore selection
 
       // update previewBox.
       this.updateAffected();
