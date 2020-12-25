@@ -3410,11 +3410,12 @@ WingedTopology.prototype.bridgeFace = function(targetFace, sourceFace, deltaCent
    // move source to target
    for (let hEdge of sourceFace.hEdges()) {
       const point = vec3.clone(hEdge.origin);
-      vec3.add(point, point, deltaCenter);
+      //vec3.add(point, point, deltaCenter);
       sourceHEdges.unshift( {hEdge: hEdge, delta: point} );  // reverse direction.
       hEdge.face = null;   // remove face reference
    }
    // project origin's vertices  to target's plane? skip it for now
+
    // find the smallest length combined.
    let index = -1;
    let len = Number.MAX_SAFE_INTEGER;
@@ -3423,17 +3424,16 @@ WingedTopology.prototype.bridgeFace = function(targetFace, sourceFace, deltaCent
       // add up th length
       let currentLen = 0;
       for (let j = 0; j < targetHEdges.length; ++j) {
-         vec3.sub(temp, targetHEdges[j].origin, sourceHEdges[j].delta);
-         len += vec3.length(temp);
+         vec3.sub(temp, targetHEdges[j].origin, sourceHEdges[(i+j)%targetHEdges.length].delta);
+         currentLen += vec3.length(temp);
       }
       if (currentLen < len) {
          len = currentLen;
          index = i;
       }
-      sourceHEdges.push( sourceHEdges.shift() );  // rotate 
    }
-   // hopefully -1 works well enough with splice and unshift.
-   sourceHEdges.unshift.apply( sourceHEdges, sourceHEdges.splice(index-1, sourceHEdges.length ) ); // rotate to desired location.
+   // rotate to desired location.
+   sourceHEdges.unshift.apply( sourceHEdges, sourceHEdges.splice(index, sourceHEdges.length ) );
    // remove face, and bridge target[0] at the source index
    ret.target.face = this._freePolygon(targetFace);
    ret.source.face = this._freePolygon(sourceFace);
