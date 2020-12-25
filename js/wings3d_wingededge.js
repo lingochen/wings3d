@@ -3398,7 +3398,7 @@ WingedTopology.prototype.restoreDissolveVertex = function(undo) {
 //
 // bridge the 2 faces. and 
 //
-WingedTopology.prototype.bridgeFace = function(targetFace, sourceFace, deltaCenter) {
+WingedTopology.prototype.bridgeFace = function(targetFace, sourceFace) {
    const ret = {target: {face: targetFace, hEdge: targetFace.halfEdge}, source: {face: sourceFace, hEdge: sourceFace.halfEdge} };
    // get the 2 faces vertices
    const targetHEdges = [];
@@ -3409,9 +3409,7 @@ WingedTopology.prototype.bridgeFace = function(targetFace, sourceFace, deltaCent
    }
    // move source to target
    for (let hEdge of sourceFace.hEdges()) {
-      const point = vec3.clone(hEdge.origin);
-      //vec3.add(point, point, deltaCenter);
-      sourceHEdges.unshift( {hEdge: hEdge, delta: point} );  // reverse direction.
+      sourceHEdges.unshift( hEdge );  // reverse direction.
       hEdge.face = null;   // remove face reference
    }
    // project origin's vertices  to target's plane? skip it for now
@@ -3424,7 +3422,7 @@ WingedTopology.prototype.bridgeFace = function(targetFace, sourceFace, deltaCent
       // add up th length
       let currentLen = 0;
       for (let j = 0; j < targetHEdges.length; ++j) {
-         vec3.sub(temp, targetHEdges[j].origin, sourceHEdges[(i+j)%targetHEdges.length].delta);
+         vec3.sub(temp, targetHEdges[j].origin, sourceHEdges[(i+j)%targetHEdges.length].origin);
          currentLen += vec3.length(temp);
       }
       if (currentLen < len) {
@@ -3440,7 +3438,7 @@ WingedTopology.prototype.bridgeFace = function(targetFace, sourceFace, deltaCent
    let hEdgePrev = null;
    const hEdges = [];
    for (let i = 0; i < targetHEdges.length; ++i) {  // create new Edge, new Face.
-      const hEdge = this.addEdge(sourceHEdges[i].hEdge.origin, targetHEdges[i].origin);
+      const hEdge = this.addEdge(sourceHEdges[i].origin, targetHEdges[i].origin);
       if (hEdgePrev) {  // added the face
          this._createPolygon(hEdgePrev, 4, Material.default)._assignFace();  // todo: hEdgePrev.pair.face.material?
       }
