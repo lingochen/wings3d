@@ -3442,13 +3442,12 @@ WingedTopology.prototype.bridgeFace = function(targetFace, sourceFace, deltaCent
    for (let i = 0; i < targetHEdges.length; ++i) {  // create new Edge, new Face.
       const hEdge = this.addEdge(sourceHEdges[i].hEdge.origin, targetHEdges[i].origin);
       if (hEdgePrev) {  // added the face
-         this._createPolygon(hEdgePrev, 4, Material.default);  // todo: hEdgePrev.pair.face.material?
+         this._createPolygon(hEdgePrev, 4, Material.default)._assignFace();  // todo: hEdgePrev.pair.face.material?
       }
       hEdges.push( hEdge );
       hEdgePrev = hEdge;
    }
-   this._createPolygon(hEdgePrev, 4, Material.default);  // todo: hEdgePrev.pair.face.material?
-
+   this._createPolygon(hEdgePrev, 4, Material.default)._assignFace();  // todo: hEdgePrev.pair.face.material?
    ret.hEdges = hEdges;
    return ret;
 }
@@ -3462,8 +3461,8 @@ WingedTopology.prototype.undoBridgeFace = function(bridge) {
       this._freeEdge(hEdge);
    }
    // now, get the 2 face back
-   this._createPolygon(bridge.target.hEdge, bridge.hEdges.length, Material.default, bridge.target.face);
-   this._createPolygon(bridge.source.hEdge, bridge.hEdges.length, Material.default, bridge.source.face);
+   this._createPolygon(bridge.target.hEdge, bridge.hEdges.length, Material.default, bridge.target.face)._assignFace();
+   this._createPolygon(bridge.source.hEdge, bridge.hEdges.length, Material.default, bridge.source.face)._assignFace();
 };
 
 //
