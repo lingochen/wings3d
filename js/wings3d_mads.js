@@ -421,9 +421,15 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
    }
 
    resetSelection() {
+      const snapshots = [];
       for (let cage of this.selectedCage()) {
-         this._resetSelection(cage);
+         const snapshot = this._resetSelection(cage);
+         snapshots.push( {preview: cage, snapshot: snapshot} );
       }
+      if (snapshots.length > 0) {
+         return {undo: this.undoDoSelection, snapshots: snapshots};
+      }
+      return false;  // null? 
    }
 
    restoreSelection(selection) {

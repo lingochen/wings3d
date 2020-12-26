@@ -152,7 +152,7 @@ class VertexMadsor extends Madsor {
    isVertexSelectable() { return true; }
 
    _resetSelection(cage) {
-      cage._resetSelectVertex();
+      return cage._resetSelectVertex();
    }
 
    _restoreSelection(cage, snapshot) {
