@@ -251,7 +251,7 @@ class FaceMadsor extends Madsor {
    isFaceSelectable() { return true; }
 
    _resetSelection(cage) {
-      cage._resetSelectFace();
+      return cage._resetSelectFace();
    }
 
    _restoreSelection(cage, snapshot) {

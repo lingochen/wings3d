@@ -343,7 +343,7 @@ class EdgeMadsor extends Madsor {
    isEdgeSelectable() { return true; }
 
    _resetSelection(cage) {
-      cage._resetSelectEdge();
+      return cage._resetSelectEdge();
    }
 
    _restoreSelection(cage, snapshot) {
