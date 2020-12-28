@@ -400,13 +400,13 @@ Wings3D.onReady(function() {
             maker.update("cut", Number(evt.target.value));
           }),
          tag('<div class="primitiveOptions"></div>',
-            numberInput("X", {min: 0, value: 2}, function(evt) {
+            numberInput("X", {min: 0, step: 'any', value: 2}, function(evt) {
                maker.update("sizeX", Number(evt.target.value));
             }, false),
-            numberInput("Y", {min: 0, value: 2}, function(evt) {
+            numberInput("Y", {min: 0, step: 'any', value: 2}, function(evt) {
                maker.update("sizeY", Number(evt.target.value));
             }, false),
-            numberInput("Z", {min: 0, value: 2}, function(evt) {
+            numberInput("Z", {min: 0, step: 'any', value: 2}, function(evt) {
                maker.update("sizeZ", Number(evt.target.value));
             }, false)),
             tag(`<fieldset>
