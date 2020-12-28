@@ -93,9 +93,10 @@ class X3dImportExporter extends ImportExporter {
             const material = xml.createElement("PhysicalMaterial");
             appearance.appendChild(material);
             if (def.has(materialName)) {
-               material.setAttribute("USE", materialName);
+               appearance.setAttribute("USE", materialName);
             } else {
-               material.setAttribute("DEF", materialName);
+               def.set(materialName, appearance);
+               appearance.setAttribute("DEF", materialName);
                const pbr = mat.pbr;
                material.setAttribute("baseColor", `${pbr.baseColor[0]} ${pbr.baseColor[1]} ${pbr.baseColor[2]}` );
                //material.setAttribute("emissiveColor", `${pbr.emissionMaterial[0]} ${pbr.emissionMaterial[1]} ${pbr.emissionMaterial[2]}`);
@@ -140,7 +141,7 @@ class X3dImportExporter extends ImportExporter {
       // extract start from Scene?, or just querySelectAll("Scene > Group")? for now, no transform or subgroup.
       const scene = xmlDoc.querySelector("Scene");
       if (scene) {
-         let current = {group: new SceneProxy};
+         let current = {group: new SceneProxy, coords: new Map};
          for (let node of scene.children) {
             this._parseNode(node, current);
          }
@@ -169,14 +170,29 @@ class X3dImportExporter extends ImportExporter {
    }
 
    Group(groupNode, current) { // create and insert new stuff
-      const group = this.createGroup(groupNode.getAttribute('name'));
+      const group = new SceneProxy;//this.createGroup(groupNode.getAttribute('DEF'));
       let oldGroup = current.group;
+      let oldCage = current.cage;
       current.group = group;
+      current.cage = null;
       for (const node of groupNode.children) {
          this._parseNode(node, current);
       }
-      oldGroup.insert( group );
+      if (group.children.length > 1) {
+         let real = this.createGroup(groupNode.getAttribute('DEF'));
+         for (let child of group.children) {
+            real.insert( child );
+         }
+         oldGroup.insert( real );
+      } else if (current.cage) {
+         let name = groupNode.getAttribute('DEF');
+         if (name) {
+            current.cage.name = name;
+         }
+         oldGroup.insert( current.cage );
+      }
       current.group = oldGroup;     // restore.
+      current.cage = oldCage;
    }
 
    /**
@@ -184,12 +200,13 @@ class X3dImportExporter extends ImportExporter {
     * @param {*} shape - geometry with material. equivalent to shape.
     */
    Shape(shape, current) {
-      current.cage = this.createCage();
-      current.coords = new Map;
+      if (!current.cage) {
+         current.cage = this.createCage();
+         current.group.insert(current.cage);
+      }
       for (const node of shape.children) {
          this._parseNode(node, current);
       }
-      current.group.insert(current.cage);
    }
 
    /**
@@ -225,9 +242,9 @@ class X3dImportExporter extends ImportExporter {
       let mat = this._getUse(material);
       if (!mat) {
          let name = material.getAttribute("DEF");
-         if (name) {
-            this.def.set(name, material);
-         }
+         //if (name) {
+         //   this.def.set(name, material);
+         //}
          mat = material;
       }
       // set pbr
