@@ -79,15 +79,15 @@ class X3dImportExporter extends ImportExporter {
          }
          // now create Group, sort by Material
          const group = xml.createElement("Group");
-         const groupName = cage.name + "Group";
-         group.setAttribute("DEF", groupName);
+         //const groupName = cage.name + "Group";
+         group.setAttribute("DEF", cage.name);
          scene.appendChild(group);
-         def.set(groupName, group);
+         def.set(cage.name, group);
          for (const [mat, indexedFaceSet] of materialList) {
             const shape = xml.createElement("Shape");
             group.appendChild(shape);
             // create material
-            const materialName = mat.name+"PBR";
+            const materialName = mat.name;//+"PBR";
             const appearance = xml.createElement("Appearance");
             shape.appendChild(appearance);
             const material = xml.createElement("PhysicalMaterial");
@@ -173,7 +173,9 @@ class X3dImportExporter extends ImportExporter {
       const group = new SceneProxy;//this.createGroup(groupNode.getAttribute('DEF'));
       let oldGroup = current.group;
       let oldCage = current.cage;
+      let oldCoords = current.coords;
       current.group = group;
+      current.coords = new Map;
       current.cage = null;
       for (const node of groupNode.children) {
          this._parseNode(node, current);
@@ -193,6 +195,7 @@ class X3dImportExporter extends ImportExporter {
       }
       current.group = oldGroup;     // restore.
       current.cage = oldCage;
+      current.coords = oldCoords;
    }
 
    /**
@@ -200,10 +203,6 @@ class X3dImportExporter extends ImportExporter {
     * @param {*} shape - geometry with material. equivalent to shape.
     */
    Shape(shape, current) {
-      if (!current.cage) {
-         current.cage = this.createCage();
-         current.group.insert(current.cage);
-      }
       for (const node of shape.children) {
          this._parseNode(node, current);
       }
@@ -219,7 +218,7 @@ class X3dImportExporter extends ImportExporter {
          let name = appearance.getAttribute("DEF");
          const def = name;
          if (!name) {
-            name = "Material_" + this.count.appearance++;   // supply generic name
+            name = "Material." + this.count.appearance++;   // supply generic name
          }
          appear = this.createMaterial(name);
          this.material.push(appear);
@@ -296,7 +295,7 @@ class X3dImportExporter extends ImportExporter {
          if (name) {
             this.def.set(name, faceSet);
          }
-      } else { // we don't do instance, so we will always create new one.
+      } else { // we don't do instance yet, so we will always create new one.
          faceSet = reuse;
       }
       // get child coord, color, normal first.
@@ -322,17 +321,29 @@ class X3dImportExporter extends ImportExporter {
    }
 
    Coordinate(coordinate, current) {
-      let coord = this._getUse(coordinate);
-      if (!coord || !current.coords.has(coord)) {   // if we are reusing, do we have same parent Cage? if not we have to add to current cage
-         if (!coord) {
-            coord = coordinate;
-            let name = coord.getAttribute("DEF");  // set coordSet   
-            if (name) {
-               this.def.set(name, coord);
-            }
+      //let coord = this._getUse(coordinate);  // no support for true instancing yet
+      let name = coordinate.getAttribute("USE");
+      if (name) { 
+         if (current.coords.has(name)) {
+            let value = current.coords.get(name).cage;
+            current.cage = value.cage;
+            current.remapIndex = value.remapIndex;
+         } else {
+            throw( new Error("TODO: support coordinate instancing.") );
+         }
+      } else { // either DEF, or noreuse
+         current.cage = this.createCage();
+         current.group.insert(current.cage);
+         let index = [];
+         current.remapIndex = index;
+
+         let coord = coordinate;
+         let name = coord.getAttribute("DEF");  // set coordSet   
+         if (name) {
+            this.def.set(name, coord);
+            current.coords.set(name, {cage: current.cage, remapIndex: index} );
          }
          // now add coordinate
-         let index = [];
          let pts = coord.getAttribute("point");
          pts = pts.trim().split(/[,\s]+/);                 // split by whitespaces or comma
          const vertex = [0.0, 0.0, 0.0];
@@ -342,11 +353,6 @@ class X3dImportExporter extends ImportExporter {
             vertex[2] = parseFloat(pts[i+2]) || 0.0;
             index.push( current.cage.geometry.addVertex(vertex).index );
          }
-         // add the remap index.
-         current.remapIndex = index;
-         current.coords.set(coordinate, index);
-      } else { // do we actully need next?
-         //current.rempIndex = current.coords.get(coord);   // make sure we have the correct one?
       }
    }
 
