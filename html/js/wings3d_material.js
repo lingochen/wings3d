@@ -83,6 +83,16 @@ static convertTraditionalToMetallicRoughness(material) {
            roughness: roughnessFactor,
            emission: material.emissionMaterial,
            opacity: material.opacityMaterial || 1.0,
+           baseColorTexture: 0,
+           roughnessTexture: 0,
+           normalTexture: 0,
+           occlusionTexture: 0,
+           emissionTexture: 0,
+           baseColorTexcoord: 0,                              // uv channel # for texCoord
+           roughnessTexcoord: 0,
+           normalTexcoord: 0,
+           occlusionTexcoord: 0,
+           emissionTexcoord: 0
           };
 }
 

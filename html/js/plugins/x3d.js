@@ -3,8 +3,22 @@
 //
 //
 import {ImportExporter} from "../wings3d_importexport.js";
-//import {Material} from "../wings3d_material.js";
+import {Material} from "../wings3d_material.js";
 
+
+function toFs(value, defaultVal) {
+   if (value) {
+      return value.trim().split(/[,\s]+/).map(Number);
+   }
+   return defaultVal;
+}
+
+function toF(value, defaultVal) {
+   if (value) {
+      return parseFloat(value);
+   }
+   return defaultVal;
+}
 
 class X3dImportExporter extends ImportExporter {
    constructor() {
@@ -170,6 +184,10 @@ class X3dImportExporter extends ImportExporter {
    }
 
    Group(groupNode, current) { // create and insert new stuff
+      this.Transform(groupNode, current);
+   }
+
+   Transform(groupNode, current) {
       const group = new SceneProxy;//this.createGroup(groupNode.getAttribute('DEF'));
       let oldGroup = current.group;
       let oldCage = current.cage;
@@ -250,13 +268,13 @@ class X3dImportExporter extends ImportExporter {
       const old = {};
       let value;
       if (value = material.getAttribute('baseColor')) {
-         old.baseColor = value.trim().split(/[,\s]+/).map(Number);
+         old.baseColor = toFs(value);
       }
       if (value = material.getAttribute('roughnessFactor')) {
-         old.roughness = value;
+         old.roughness = toF(value);
       }
       if (value = material.getAttribute('metallicFactor')) {
-         old.metallic = value;
+         old.metallic = toF(value);
       }
       if (value = material.getAttribute('transparency')) {
          old.opacity = 1.0 - value; // transparency to opacity
@@ -279,11 +297,11 @@ class X3dImportExporter extends ImportExporter {
       }
       // get old style blinn-phong material.
       const old = {};
-      old.diffuseMaterial = material.getAttribute("diffuseColor") || [1.0, 1.0, 1.0];
-      old.specularMaterial = material.getAttribute("specularColor") || [0.0, 0.0, 0.0];
-      old.shininessMaterial = material.getAttribute("shininess") || 0;
-      old.emissionMaterial = material.getAttribute("emissiveColor") || [0.0, 0.0, 0.0];
-      old.opacityMaterial = 1 - (material.getAttribute("transparency") || 0);
+      old.diffuseMaterial = toFs(material.getAttribute("diffuseColor"), [1.0, 1.0, 1.0]);
+      old.specularMaterial = toFs(material.getAttribute("specularColor"), [0.0, 0.0, 0.0]);
+      old.shininessMaterial = toF(material.getAttribute("shininess"), 0);
+      old.emissionMaterial = toFs(material.getAttribute("emissiveColor"), [0.0, 0.0, 0.0]);
+      old.opacityMaterial = 1 - toF(material.getAttribute("transparency"), 0);
       //old.ambientMaterial = material.getAttribute("ambientIntensity");   // not needed.
       current.appearance.pbr = Material.convertTraditionalToMetallicRoughness(old);
    }
