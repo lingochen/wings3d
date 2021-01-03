@@ -20,6 +20,20 @@ function toF(value, defaultVal) {
    return defaultVal;
 }
 
+/**
+ * https://stackoverflow.com/questions/376373/pretty-printing-xml-with-javascript
+ */
+function formatXml(xml, tab) { // tab = optional indent value, default is tab (\t)
+   var formatted = '', indent= '';
+   tab = tab || '\t';
+   xml.split(/>\s*</).forEach(function(node) {
+       if (node.match( /^\/\w/ )) indent = indent.substring(tab.length); // decrease indent by one 'tab'
+       formatted += indent + '<' + node + '>\r\n';
+       if (node.match( /^<?\w[^>]*[^\/]$/ )) indent += tab;              // increase indent
+   });
+   return formatted.substring(1, formatted.length-3);
+}
+
 class X3dImportExporter extends ImportExporter {
    constructor() {
       super(['Web3D', 'x3d'], ['Web3D', 'x3d']);
@@ -128,7 +142,7 @@ class X3dImportExporter extends ImportExporter {
             }
             const geometry = xml.createElement("IndexedFaceSet");
             shape.appendChild(geometry);
-            geometry.setAttribute("coordIndex", coordIndex);
+            geometry.setAttribute('coordIndex', coordIndex);
             // add coordinate set
             if (!coordinate) {
                coordinate = xml.createElement("Coordinate");
@@ -140,7 +154,7 @@ class X3dImportExporter extends ImportExporter {
       }
       // done creating dom, now write it out
       const s = new XMLSerializer;
-      const blob = new Blob([s.serializeToString(xml)], {type: "text/plain;charset=utf-8"});
+      const blob = new Blob([formatXml(s.serializeToString(xml))], {type: "text/plain;charset=utf-8"});
       return blob;
    }
 
@@ -303,7 +317,21 @@ class X3dImportExporter extends ImportExporter {
       old.emissionMaterial = toFs(material.getAttribute("emissiveColor"), [0.0, 0.0, 0.0]);
       old.opacityMaterial = 1 - toF(material.getAttribute("transparency"), 0);
       //old.ambientMaterial = material.getAttribute("ambientIntensity");   // not needed.
-      current.appearance.pbr = Material.convertTraditionalToMetallicRoughness(old);
+      const pbr = Material.convertTraditionalToMetallicRoughness(old);
+      current.appearance.setValues(pbr);
+   }
+
+   ImageTexture(textureNode, current) {
+      let reuse = this._getUse(textureNode);
+      if (!reuse) { 
+         let str = textureNode.getAttribute('url');
+         let urls = str.match(/"[^"]+"/g);
+         for (let url of urls) {
+            
+         }
+
+      }
+      let type = textureNode.getAttribute('containerField');   // 
    }
 
    IndexedFaceSet(faceSet, current) {
