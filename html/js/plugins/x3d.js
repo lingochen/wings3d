@@ -4,6 +4,7 @@
 //
 import {ImportExporter} from "../wings3d_importexport.js";
 import {Material} from "../wings3d_material.js";
+import {Attribute} from "../wings3d_wingededge.js";
 
 
 function toFs(value, defaultVal) {
@@ -13,7 +14,7 @@ function toFs(value, defaultVal) {
    return defaultVal;
 }
 
-function toF(value, defaultVal) {
+function toF(value, defaultVal=0.0) {
    if (value) {
       return parseFloat(value);
    }
@@ -214,8 +215,10 @@ class X3dImportExporter extends ImportExporter {
       let oldGroup = current.group;
       let oldCage = current.cage;
       let oldCoords = current.coords;
+      let oldUV = current.uv;
       current.group = group;
       current.coords = new Map;
+      current.uv = null;
       current.cage = null;
       for (const node of groupNode.children) {
          this._parseNode(node, current);
@@ -236,6 +239,7 @@ class X3dImportExporter extends ImportExporter {
       current.group = oldGroup;     // restore.
       current.cage = oldCage;
       current.coords = oldCoords;
+      current.uv = oldUV;
    }
 
    /**
@@ -341,7 +345,7 @@ class X3dImportExporter extends ImportExporter {
                   return files[0].image();
                }).then(img=>{
                   img.onload = ()=> {
-                     reuse.setImage(img);
+                     reuse.setImage(img, true);
                   }
                return img;
             });
@@ -351,7 +355,7 @@ class X3dImportExporter extends ImportExporter {
       }
       let type = textureNode.getAttribute('containerField');   // texture types if exists
       if (type) {
-         
+
       } else {
          type = 'baseColorTexture';
       }
@@ -377,16 +381,36 @@ class X3dImportExporter extends ImportExporter {
       let start = 0;
       let index = faceSet.getAttribute("coordIndex");
       index = index.trim().split(/[,\s]+/);  // split by comma, or white space. todo: match "integer"
+      let uvIndex = faceSet.getAttribute("texCoordIndex");
+      if (uvIndex) {
+         uvIndex = uvIndex.trim().split(/[,\s]+/);
+      } else {
+         uvIndex = Array.from(index);
+      }
       for (let i = 0; i < index.length; ++i) {
          const value = parseInt(index[i], 10);
          if (value === -1) {  // done, have polygon.
-            current.cage.geometry._addPolygon(start, i, index, appearance);
+            let hEdge = current.cage.geometry._addPolygon(start, i, index, appearance).halfEdge;
+            if (current.uv) {
+               for (let j = start; j < i; ++j) {
+                  hEdge.setUV(current.uv[uvIndex[j]]);
+                  hEdge = hEdge.next;
+               }
+            }
             start = i+1;
          } else {
             index[i] = current.remapIndex[value];
          }
       }
       // add color?
+
+   }
+
+   Color(rgb) {
+
+   }
+
+   ColorRGBA(rgba) {
 
    }
 
@@ -426,16 +450,24 @@ class X3dImportExporter extends ImportExporter {
       }
    }
 
-   Color(rgb) {
-
-   }
-
-   ColorRGBA(rgba) {
-
-   }
-
-   TextureCoordinate(uv, current) {
-
+   TextureCoordinate(texCoordNode, current) {
+      let uv = this._getUse(texCoordNode);
+      if (!uv) {
+         uv = [];
+         let name = texCoordNode.getAttribute("DEF");
+         if (name) {
+            this.def.set(name, uv);
+         }
+         // now extract texCoord
+         let texCoord = texCoordNode.getAttribute("point");
+         texCoord = texCoord.trim().split(/[,\s]+/);                 // split by whitespaces or comma
+         for (let i = 0; i < texCoord.length; i+=2) {
+            let index = Attribute.uv.reserve();
+            uv.push(index);
+            Attribute.uv.setChannel(index, 0, [parseFloat(texCoord[i]), parseFloat(texCoord[i+1])]);
+         }
+      }
+      current.uv = uv;
    }
 
    MultiTextureCoordinate() {
