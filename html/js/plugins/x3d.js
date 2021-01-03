@@ -52,6 +52,7 @@ class X3dImportExporter extends ImportExporter {
       this.def = new Map;
       this.count = {appearance: 0, cage: 0};
       this.material = [];
+      this.textures = new Map;
    }
 
    /**
@@ -197,6 +198,13 @@ class X3dImportExporter extends ImportExporter {
       return null;
    }
 
+   _getUrl(node) {
+      let str = node.getAttribute('url');
+      let urls = str.match(/"[^"]+"/g);
+      // return first 
+      return urls[0].slice(1, -1);
+   }
+
    Group(groupNode, current) { // create and insert new stuff
       this.Transform(groupNode, current);
    }
@@ -324,14 +332,30 @@ class X3dImportExporter extends ImportExporter {
    ImageTexture(textureNode, current) {
       let reuse = this._getUse(textureNode);
       if (!reuse) { 
-         let str = textureNode.getAttribute('url');
-         let urls = str.match(/"[^"]+"/g);
-         for (let url of urls) {
-            
+         const uri = this._getUrl(textureNode);
+         reuse = this.textures.get(uri);
+         if (!reuse) {
+            reuse = this.createTexture(uri);
+            this.loadAsync(uri)
+               .then(files=>{
+                  return files[0].image();
+               }).then(img=>{
+                  img.onload = ()=> {
+                     reuse.setImage(img);
+                  }
+               return img;
+            });
+            // cache it
+            this.textures.set(uri, reuse);
          }
-
       }
-      let type = textureNode.getAttribute('containerField');   // 
+      let type = textureNode.getAttribute('containerField');   // texture types if exists
+      if (type) {
+         
+      } else {
+         type = 'baseColorTexture';
+      }
+      current.appearance[type] = reuse;
    }
 
    IndexedFaceSet(faceSet, current) {
