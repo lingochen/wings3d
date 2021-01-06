@@ -169,7 +169,7 @@ class X3dImportExporter extends ImportExporter {
                if (mat.hasBaseColorTexture()) {
                   const image = xml.createElement("ImageTexture");
                   image.setAttribute("containerField", "baseTexture");
-                  image.setAttribute("url", `"${image.name}"`);
+                  image.setAttribute("url", `"${mat.baseColorTexture.name}"`);
                   if (mat.baseColorTexture.flipY) {
                      image.setAttribute("flipVertically", "true");
                   }
@@ -351,6 +351,10 @@ class X3dImportExporter extends ImportExporter {
          old.opacity = 1.0 - value; // transparency to opacity
       }
       current.appearance.setValues(old);
+      // read texture if any
+      for (const node of material.children) {   // parse imagetexture ...
+         this._parseNode(node, current);
+      }
    };
 
    /**
@@ -400,11 +404,15 @@ class X3dImportExporter extends ImportExporter {
       }
       let type = textureNode.getAttribute('containerField');   // texture types if exists
       if (type) {
-
-      } else {
-         type = 'baseColorTexture';
+         if (type == "baseTexture") {
+            type = 'baseColorTexture';
+         } else { // unknown type
+            type = null;
+         }
       }
-      current.appearance[type] = reuse;
+      if (type) {
+         current.appearance[type] = reuse;
+      }
    }
 
    IndexedFaceSet(faceSet, current) {
