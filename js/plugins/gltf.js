@@ -326,7 +326,7 @@ class GLTFImportExporter extends ImportExporter {
    }
 
    async meshes(mesh) {
-      const ret = this.createCage();
+      const ret = this.createCage(mesh.name);
       this.geometry = ret.geometry;
       for (let primitive of mesh.primitives) {
          const attr = primitive.attributes || {};
