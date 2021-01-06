@@ -397,6 +397,16 @@ HalfEdge.prototype.setUV = function(uv) {
    // return oldAsset 
    return texCoord;
 };
+/**
+ * return the uv index. 0 meant no uv
+ */
+HalfEdge.prototype.getUV = function() {
+   let index = this.getIndex() * 3 + 2;
+   return HalfEdge.indexAttribute.get(index);
+};
+HalfEdge.prototype.getUVCoord = function(channel, coord) {
+   Attribute.uv.getChannel(this.getUV(), channel, coord);
+}
 
 
 HalfEdge.prototype.initAttribute = function() {
