@@ -185,6 +185,10 @@ static release(material) {
       }
    }
 
+   hasBaseColorTexture() {
+      return this.pbr.baseColorTexture !== 0;
+   }
+
    get baseColorTexture() {
       return Texture.handle(this.pbr.baseColorTexture);
    }
@@ -290,6 +294,10 @@ class Texture {
       this.wrapS = options.wrapS || gl.REPEAT;//gl.CLAMP_TO_EDGE;
       this.wrapT = options.wrapT || gl.REPEAT;//gl.CLAMP_TO_EDGE;
       this.usageCount = 0;    // the number of materials that contains this Texture.
+      this.flipY = false;
+      if (options.flipY) {
+         this.flipY = true;
+      }
       this.setImage(gl.CHECKERBOARD);   // default
    }
 
@@ -385,6 +393,7 @@ class Texture {
         gl.generateMipmap(gl.TEXTURE_2D);
       }
       if (flip) {
+         this.flipY = true;
          gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 0);
       }
    }
