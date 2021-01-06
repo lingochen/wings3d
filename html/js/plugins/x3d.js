@@ -63,8 +63,8 @@ class X3dImportExporter extends ImportExporter {
    async _export(world) {
       const parser = new DOMParser();
       const xml = parser.parseFromString(`<?xml version="1.0" encoding="utf-8"?>
-         <!DOCTYPE X3D PUBLIC "ISO//Web3D//DTD X3D 4.0//EN" "http://www.web3d.org/specifications/x3d-4.0.dtd">
-         <X3D profile='Interchange' version='4.0'  xmlns:xsd='http://www.w3.org/2001/XMLSchema-instance' xsd:noNamespaceSchemaLocation =' http://www.web3d.org/specifications/x3d-4.0.xsd '>
+         <!DOCTYPE X3D PUBLIC "ISO//Web3D//DTD X3D 3.3//EN" "http://www.web3d.org/specifications/x3d-3.3.dtd">
+         <X3D profile='Interchange' version='3.3'  xmlns:xsd='http://www.w3.org/2001/XMLSchema-instance' xsd:noNamespaceSchemaLocation =' http://www.web3d.org/specifications/x3d-3.3.xsd '>
          <head>
             <meta name='title' content=''/>
             <meta name='creator' content=''/>
@@ -95,17 +95,50 @@ class X3dImportExporter extends ImportExporter {
          let coordinate = xml.createElement('Coordinate');  // create first to be used
          const coordName = cage.name+"Coord";
          coordinate.setAttribute("DEF", coordName);
-         coordinate.setAttribute("point", coord);
+         coordinate.setAttribute("point", coord.trim());
          def.set(coordName, coordinate);
-         // now sort by material
+         // create uv, color, if any, walk over all polygons's edge.
+         let uv = "";
+         let uvLength = 0;
+         const mapUV = new Map;
+         // also sort by material
          const materialList = new Map;
          for (let polygon of mesh.faces) {
-            let array = materialList.get(polygon.material);
-            if (!array) {
-               array = [];
-               materialList.set(polygon.material, array);
+            let faceSet = materialList.get(polygon.material);
+            if (!faceSet) {
+               faceSet = {faces:[], coordIndex: "", uvIndex: ""};
+               materialList.set(polygon.material, faceSet);
             }
-            array.push(polygon);
+            faceSet.faces.push(polygon);
+            // add uv, color if existed.
+            const uvPoint = [0.0, 0.0];
+            for (let hEdge of polygon.hEdges()) {
+               faceSet.coordIndex = `${faceSet.coordIndex} ${mapCoord.get(hEdge.origin.index)}`;
+               const index = hEdge.getUV();
+               if (index > 0) {  // we have uv
+                  let remap = mapUV.get(index);
+                  if (!remap) {
+                     remap = uvLength++;
+                     mapUV.set( remap );
+                     hEdge.getUVCoord(0, uvPoint);
+                     uv += ` ${uvPoint[0]} ${uvPoint[1]}`;
+                  }
+                  faceSet.uvIndex += ` ${remap}`;
+               }
+            }
+            faceSet.coordIndex += ' -1';
+            if (faceSet.uvIndex) {
+               faceSet.uvIndex += ' -1';
+            }
+         }
+         // now create uvCoord if exists
+         let uvCoord;
+         const uvCoordName = cage.name+"TextureCoord";
+         if (uv) {
+            uvCoord = xml.createElement('TextureCoordinate');
+            uvCoord.setAttribute("DEF", uvCoordName);
+            uvCoord.setAttribute("point", uv.trim());
+            def.set(uvCoordName, uvCoord);
          }
          // now create Group, sort by Material
          const group = xml.createElement("Group");
@@ -133,25 +166,37 @@ class X3dImportExporter extends ImportExporter {
                material.setAttribute("roughnessFactor", `${pbr.roughness}`);
                material.setAttribute("metallicFactor", `${pbr.metallic}`);
                material.setAttribute("transparency",`${1.0-pbr.opacity}`);
-            }
-            // create indexFaceSet
-            let coordIndex = "";
-            for (let polygon of indexedFaceSet) {
-               for (let hEdge of polygon.hEdges()) {
-                  coordIndex = `${coordIndex} ${mapCoord.get(hEdge.origin.index)}`;
+               if (mat.hasBaseColorTexture()) {
+                  const image = xml.createElement("ImageTexture");
+                  image.setAttribute("containerField", "baseTexture");
+                  image.setAttribute("url", `"${image.name}"`);
+                  if (mat.baseColorTexture.flipY) {
+                     image.setAttribute("flipVertically", "true");
+                  }
+                  material.appendChild(image);
                }
-               coordIndex = `${coordIndex} -1`;    // close polygon
             }
+            // x3d indexFaceSet
             const geometry = xml.createElement("IndexedFaceSet");
             shape.appendChild(geometry);
-            geometry.setAttribute('coordIndex', coordIndex);
-            // add coordinate set
-            if (!coordinate) {
+            geometry.setAttribute('coordIndex', indexedFaceSet.coordIndex.trim());
+            // add coordinate subNode 
+            if (!coordinate) {   // the first time through is DEF, no needs to create again
                coordinate = xml.createElement("Coordinate");
                coordinate.setAttribute("USE", coordName);
             }
             geometry.appendChild(coordinate);
             coordinate = null;                              // used.
+            // add uvCoordinate subNode if exist
+            if (indexedFaceSet.uvIndex) {
+               geometry.setAttribute('texCoordIndex', indexedFaceSet.uvIndex.trim());
+               if (!uvCoord) { // avoid first time DEF
+                  uvCoord = xml.createElement("TextureCoordinate");
+                  uvCoord.setAttribute("DEF", uvCoordName);
+               }
+               geometry.appendChild(uvCoord);
+               uvCoord = null;
+            }
          }
       }
       // done creating dom, now write it out
