@@ -372,7 +372,7 @@ class Texture {
    }
 
    isExist() { // 
-      return (this.id !== 0);
+      return (this.idx !== 0);
    }
 
    /**
