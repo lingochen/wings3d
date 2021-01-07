@@ -170,7 +170,8 @@ class X3dImportExporter extends ImportExporter {
                   const image = xml.createElement("ImageTexture");
                   image.setAttribute("containerField", "baseTexture");
                   image.setAttribute("url", `"${mat.baseColorTexture.name}"`);
-                  if (mat.baseColorTexture.flipY) {
+                  const baseColorTexture = mat.baseColorTexture;
+                  if (!baseColorTexture.flipY) {   // x3d setting is flipY, so when not flip we've to setAttribute
                      image.setAttribute("flipVertically", "true");
                   }
                   material.appendChild(image);
@@ -388,13 +389,17 @@ class X3dImportExporter extends ImportExporter {
          const uri = this._getUrl(textureNode);
          reuse = this.textures.get(uri);
          if (!reuse) {
-            reuse = this.createTexture(uri);
+            let flipY = true;
+            if (textureNode.getAttribute("flipVertically") == "true") {
+               flipY = false;
+            }
+            reuse = this.createTexture(uri, {flipY: flipY});
             this.loadAsync(uri)
                .then(files=>{
                   return files[0].image();
                }).then(img=>{
                   img.onload = ()=> {
-                     reuse.setImage(img, true);
+                     reuse.setImage(img);
                   }
                return img;
             });

@@ -412,13 +412,13 @@ class WavefrontMtlImportExporter extends ImportExporter {
       const filename = getFilenameAndExtension(uri).join('.');  // uri
       let texture = this.textureLibrary.get(filename)
       if (!texture) {
-         texture = this.createTexture(filename);
+         texture = this.createTexture(filename, {flipY: true});
          this.loadAsync(uri) 
                         .then(files=>{
                             return files[0].image();
                         }).then(img=>{
                            img.onload = ()=>{
-                              texture.setImage(img, true);
+                              texture.setImage(img);
                            }
                            return img;
                         });
