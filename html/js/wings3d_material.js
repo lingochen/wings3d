@@ -283,21 +283,10 @@ Material.color = null;  // saved the color
 class Texture {
    constructor(name, options) {
       this.name = name;
-      options = options || {};
       this.id = gl.createTexture();
-      //this.width = 0;
-      //this.height = 0;
-      this.format = options.format || gl.RGBA;
-      this.type = options.type || gl.UNSIGNED_BYTE;
-      this.magFilter = options.magFilter || gl.LINEAR;
-      this.minFilter = options.minFilter || gl.LINEAR;
-      this.wrapS = options.wrapS || gl.REPEAT;//gl.CLAMP_TO_EDGE;
-      this.wrapT = options.wrapT || gl.REPEAT;//gl.CLAMP_TO_EDGE;
       this.usageCount = 0;    // the number of materials that contains this Texture.
-      this.flipY = false;
-      if (options.flipY) {
-         this.flipY = true;
-      }
+      this.sampler = Texture.defaultSampler();
+      this.setSampler(options);
       this.setImage(gl.CHECKERBOARD);   // default
    }
 
@@ -306,6 +295,21 @@ class Texture {
       this.id = null;
       this.image = null;
    }
+
+   static defaultSampler() {
+      const options = {
+         format: gl.RGBA,
+         type: gl.UNSIGNED_BYTE,
+         magFilter: gl.LINEAR,
+         minFilter: gl.LINEAR,
+         wrapS: gl.REPEAT,//gl.CLAMP_TO_EDGE;
+         wrapT: gl.REPEAT,//gl.CLAMP_TO_EDGE;
+         flipY: false,
+         unit: 0,
+         // channel: -1,
+      };
+      return options;
+   };
 
    static create(name, options) {
       let ret = new Texture(name, options);
@@ -368,7 +372,7 @@ class Texture {
    }
 
    isExist() { // 
-      return (this.idx !== 0);
+      return (this.id !== 0);
    }
 
    /**
@@ -380,20 +384,28 @@ class Texture {
 
       gl.activeTexture(gl.TEXTURE0+7);                // use baseColorTexture position to update.
       gl.bindTexture(gl.TEXTURE_2D, this.id);
-      if (this.flipY) {
+      if (this.sampler.flipY) {
          gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
       }
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, this.magFilter);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, this.minFilter);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, this.wrapS);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, this.wrapT);      
-      gl.texImage2D(gl.TEXTURE_2D, 0, this.format, this.format, this.type, this.image);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, this.sampler.magFilter);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, this.sampler.minFilter);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, this.sampler.wrapS);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, this.sampler.wrapT);      
+      gl.texImage2D(gl.TEXTURE_2D, 0, this.sampler.format, this.sampler.format, this.sampler.type, this.image);
       
-      if ((this.minFilter != gl.NEAREST) && (this.minFilter != gl.LINEAR)) {
+      if ((this.sampler.minFilter != gl.NEAREST) && (this.sampler.minFilter != gl.LINEAR)) {
         gl.generateMipmap(gl.TEXTURE_2D);
       }
-      if (this.flipY) { // restore to default setting
+      if (this.sampler.flipY) { // restore to default setting
          gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 0);
+      }
+   }
+
+   setSampler(options) {
+      if (options) {
+         for (let [key, value] of Object.entries(options)) {
+            this.sampler[key] = value;
+         }
       }
    }
 }
