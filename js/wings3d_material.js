@@ -375,12 +375,12 @@ class Texture {
     * 
     * image - (dom image), - 
     */
-   setImage(image, flip=false) {
+   setImage(image) {
       this.image = gl.resizeImage(image);
 
       gl.activeTexture(gl.TEXTURE0+7);                // use baseColorTexture position to update.
       gl.bindTexture(gl.TEXTURE_2D, this.id);
-      if (flip) {
+      if (this.flipY) {
          gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
       }
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, this.magFilter);
@@ -392,8 +392,7 @@ class Texture {
       if ((this.minFilter != gl.NEAREST) && (this.minFilter != gl.LINEAR)) {
         gl.generateMipmap(gl.TEXTURE_2D);
       }
-      if (flip) {
-         this.flipY = true;
+      if (this.flipY) { // restore to default setting
          gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 0);
       }
    }
