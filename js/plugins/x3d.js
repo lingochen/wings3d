@@ -171,7 +171,7 @@ class X3dImportExporter extends ImportExporter {
                   image.setAttribute("containerField", "baseTexture");
                   image.setAttribute("url", `"${mat.baseColorTexture.name}"`);
                   const baseColorTexture = mat.baseColorTexture;
-                  if (!baseColorTexture.flipY) {   // x3d setting is flipY, so when not flip we've to setAttribute
+                  if (!baseColorTexture.sampler.flipY) {   // x3d setting is flipY, so when not flip we've to setAttribute
                      image.setAttribute("flipVertically", "true");
                   }
                   material.appendChild(image);
