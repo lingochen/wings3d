@@ -876,7 +876,8 @@ class MouseRotateFree extends MovePositionHandler { // EditCommand {
       super();
       this.madsor = madsor;
       this.snapshots = madsor.snapshotTransformGroup();
-      this.quatRotate = [0, 0, 0, 1];     // cumulative rotate movement
+      //this.quatRotate = [0, 0, 0, 1];     // cumulative rotate movement
+      this.movement = 0.0;
       if (center) {
          this.center = [center[0], center[1], center[2]];
       }
@@ -884,11 +885,15 @@ class MouseRotateFree extends MovePositionHandler { // EditCommand {
 
    handleMouseMove(ev, cameraView) {
       const movement = cameraView.rotateMovement(ev.movementX);
+      this.movement += movement;
       const quatRotate = [0,0,0,1];
-      let cam = cameraView.inverseCameraVectors();
-      quat.setAxisAngle(quatRotate, cam.z, movement);
-      quat.multiply(this.quatRotate, this.quatRotate, quatRotate);
-      this.madsor.rotateSelection(this.snapshots, this.quatRotate, this.center);
+      if (!this.axisVec3) {
+         let cam = cameraView.inverseCameraVectors();
+         this.axisVec3 = cam.z;
+      }
+      quat.setAxisAngle(quatRotate, this.axisVec3, this.movement);
+      //quat.multiply(this.quatRotate, this.quatRotate, quatRotate);
+      this.madsor.rotateSelection(this.snapshots, quatRotate, this.center);
    }
 
    doIt() {
