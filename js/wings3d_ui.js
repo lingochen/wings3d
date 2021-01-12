@@ -295,18 +295,13 @@ function runDialogCenter(formID, submitCallback, setup, _ev, notOk) {
       form.addEventListener('submit', function submitted(ev) {
          // hide the dialog, prevent default.
          ev.preventDefault();
-         form.style.display = 'none';
-         form.removeEventListener('submit', submitted);
-         form.removeEventListener('keydown', preventEnter);
-         document.body.appendChild(form);
+         // remove and clean up
          document.body.removeChild(gOverlay);
-         for (let submit of removeOk) {
-            submit.removeEventListener('click', handleOk);
-         }
-         for (let submit of removeCancel) {
-            submit.removeEventListener('click', handleCancel);
-         }
-         // get form's input data.
+         form.outerHTML = form.outerHTML;       // remove all eventHandlers in one swoop.
+         gOverlay.removeChild(gOverlay.firstElementChild);
+         form.style.display = 'none';
+         document.body.appendChild(form);
+         // get form's input data and return
          if (_pvt.submitSuccess) { 
             submitCallback(form, _pvt.button);     // ask function to extract element's value.
          } else {
