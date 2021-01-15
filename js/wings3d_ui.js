@@ -275,20 +275,17 @@ function runDialogCenter(formID, submitCallback, setup, _ev, notOk) {
       const submits = form.querySelectorAll('[type=submit]');
       function handleOk(ev) {
          _pvt.submitSuccess = true;
-         _pvt.button = this;
+         _pvt.button = ev.target;
       }
       function handleCancel(ev) {
          _pvt.submitSuccess = false;
-         _pvt.button = this;
+         _pvt.button = ev.target;
       }
-      const removeOk = [], removeCancel = [];
       for (let submit of submits) {
          if ('ok'.localeCompare(submit.value, 'en', {'sensitivity': 'base'}) == 0) {
             submit.addEventListener('click', handleOk);
-            removeOk.push(submit);
          } else { // all else, no, cancel
             submit.addEventListener('click', handleCancel);
-            removeCancel.push(submit);
          }
       }
       // wait for handling event.
