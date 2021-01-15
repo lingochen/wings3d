@@ -752,7 +752,30 @@ function attachHandlerCamera(camera) {
 
 
 function attachHandlerMouseMove(mouseMove) {
+   function onTab(evt) {
+      if (evt.key == 'Tab') {   // yes, tab.
+         evt.preventDefault();
+         document.removeEventListener('keyup', onTab);
+         document.exitPointerLock();
+         UI.execDialog('#numericInput', function(form) {  // setup input.
+            const input = form.querySelector('input');
+            const setting = mouseMove.getInputSetting();
+            input.value = setting.value;
+            input.addEventListener('change', function(evt) {
+               handler.mousemove.onInput(evt);
+            });
+            // setup default.
+         }).then(([_form, button])=>{ // check ok, or not
+            if (button.value == 'ok') {
+               handler.mousemove.commit();
+            } else {
+               handler.mousemove.rescind();
+            }
+         });
+      }
+   }
    function gotoExit() {
+      document.removeEventListener('keyup', onTab);
       document.exitPointerLock();
       handler.mousemove = null;
       Render.needToRedraw();
@@ -760,7 +783,8 @@ function attachHandlerMouseMove(mouseMove) {
 
    // onEntry
    gl.canvas.requestPointerLock();
-
+   // request handling of tab.
+   document.addEventListener('keyup', onTab);
 
    handler.mousemove = {
       commit: ()=> {
@@ -776,6 +800,11 @@ function attachHandlerMouseMove(mouseMove) {
 
       onMove: (ev)=>{
          mouseMove.handleMouseMove(ev, m_windows.current.camera);
+         Render.needToRedraw();
+      },
+
+      onInput: (evt)=>{
+         mouseMove.handleInput(evt);
          Render.needToRedraw();
       }
    };

@@ -643,6 +643,15 @@ class MovePositionHandler extends MouseMoveHandler {
       this._transformSelection(this._updateMovement(ev, cameraView, tweak));
    }
 
+   handleInput(evt) {
+      this._transformSelection(this._updateInput(Number(evt.target.value)));
+   }
+
+   // return, 
+   getInputSetting() {
+      return {value: this.movement, name: "", suffix: "" };
+   }
+
    _transformSelection(transform) {
       this.madsor.moveSelection(this.snapshots, transform);
    }
@@ -684,6 +693,17 @@ class MouseMoveAlongAxis extends MovePositionHandler {
       this.axis = axis;
    }
 
+   getInputSetting() {
+      return {value: this.movement[this.axis], name: "", suffix: "" };
+   }
+
+   _updateInput(moveTo) {
+      let movement = [0.0, 0.0, 0.0];
+      movement[this.axis] = moveTo - this.movement[this.axis];
+      this.movement[this.axis] = moveTo;
+      return movement;
+   }
+
    _updateMovement(ev, cameraView) {
       let move = cameraView.calibrateMovement(ev.movementX);
       let movement = [0.0, 0.0, 0.0];
@@ -697,6 +717,11 @@ class MoveDirectionHandler extends MoveVertexHandler {
    constructor(madsor, cmd, noNegative=false) {
       super(madsor, 0, cmd);
       this.noNegative = noNegative;
+   }
+
+   _updateInput(moveTo) { 
+      let move = moveTo - this.movement;
+
    }
    
    _updateMovement(ev, cameraView) {
