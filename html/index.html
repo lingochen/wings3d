@@ -9,7 +9,7 @@
    <script src="./vendor/FileSaver.min.js?v=0cd1ebc44c182996e7d62f29b28dba9f" defer></script>
    <script src="./vendor/gl-matrix-min.js?v=8d57dae6ce3862af598c7ccad3df15ad" type="module"></script>
 
-   <script src="wings3d.bundle.js?v=e1d58497f0ccb931e234c71360462a60" type="module"></script>
+   <script src="wings3d.bundle.js?v=d24dbcd72fc13c1b97b6ea027966974a" type="module"></script>
 
   <script>  
     function help(text) {
@@ -1117,7 +1117,7 @@
   </form>
   <form id="start-help" class="dialog">
     <header class="modal-header">Start Help
-      <button class="close" aria-label="close modal" data-close>✕</button>
+      <button class="close" type="submit" aria-label="close modal" data-close>✕</button>
     </header>
     <ul style="list-style: none">
      <li><a href="http://www.wings3d.com/?page_id=87" target="_blank">Wings3D documentation</a></li>
@@ -1135,7 +1135,7 @@
   </form>
   <form id="textureTypePicker" class="dialog">
     <header class="modal-header">Texture Type
-      <button class="close" aria-label="close modal" data-close>✕</button>
+      <button class="close" type="submit" aria-label="close modal" data-close>✕</button>
     </header>
     <div class="verticalPref">
     <label><input name="textureType" type="radio" value="baseColorTexture" checked><span>BaseColorTexture</span></label>
@@ -1146,6 +1146,14 @@
     </div>
     <button type="submit" value="ok">Ok</button>     
   </form>
+  <form id="numericInput" class="dialog">
+    <header class="modal-header">Numeric Input
+      <button class="close" type="submit" aria-label="close modal" data-close>✕</button>
+    </header>
+    <div class="verticalPref">
+      <label><input type="number" step= "any"/>%</label>
+      <button type="submit" value="ok">Ok</button>
+    </div>
+  </form>
 </body>
-
 </html>
