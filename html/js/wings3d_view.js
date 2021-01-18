@@ -804,7 +804,7 @@ function attachHandlerMouseMove(mouseMove) {
       },
 
       onInput: (evt)=>{
-         mouseMove.handleInput(evt);
+         mouseMove.handleInput(evt, m_windows.current.camera);
          Render.needToRedraw();
       }
    };

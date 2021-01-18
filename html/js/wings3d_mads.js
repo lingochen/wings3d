@@ -609,6 +609,7 @@ class MovePositionHandler extends MouseMoveHandler {
       this.madsor = madsor;
       this.snapshots = snapshots;
       this.movement = movement;
+
    }
 
    commit() {
@@ -640,11 +641,11 @@ class MovePositionHandler extends MouseMoveHandler {
    }
 
    handleMouseMove(ev, cameraView, tweak = false) {
-      this._transformSelection(this._updateMovement(ev, cameraView, tweak));
+      this._transformSelection(this._processMouse(ev, cameraView, tweak));
    }
 
-   handleInput(evt) {
-      this._transformSelection(this._updateInput(Number(evt.target.value)));
+   handleInput(evt, cameraView) {
+      this._transformSelection(this._processInput(Number(evt.target.value), cameraView));
    }
 
    // return, 
@@ -697,14 +698,14 @@ class MouseMoveAlongAxis extends MovePositionHandler {
       return {value: this.movement[this.axis], name: "", suffix: "" };
    }
 
-   _updateInput(moveTo) {
+   _processInput(moveTo, _cameraView) {
       let movement = [0.0, 0.0, 0.0];
       movement[this.axis] = moveTo - this.movement[this.axis];
       this.movement[this.axis] = moveTo;
       return movement;
    }
 
-   _updateMovement(ev, cameraView) {
+   _processMouse(ev, cameraView) {
       let move = cameraView.calibrateMovement(ev.movementX);
       let movement = [0.0, 0.0, 0.0];
       movement[this.axis] = move;
@@ -719,12 +720,12 @@ class MoveDirectionHandler extends MoveVertexHandler {
       this.noNegative = noNegative;
    }
 
-   _updateInput(moveTo) { 
+   _processInput(moveTo) { 
       let move = moveTo - this.movement;
 
    }
    
-   _updateMovement(ev, cameraView) {
+   _processMouse(ev, cameraView) {
       let move = cameraView.calibrateMovement(ev.movementX);
       this.movement += move;
       if (this.noNegative && (this.movement < 0)) {
@@ -773,7 +774,17 @@ class MoveAlongNormal extends MovePositionHandler {
       this.noNegative = noNegative;
    }
 
-   _updateMovement(ev, cameraView) {
+   _processInput(moveTo, cameraView) {
+      if (this.noNegative && (moveTo < 0)) {
+         return 0.0;
+      } else {
+         let movement = moveTo - this.movement;
+         this.movement = moveTo;
+         return movement;
+      }
+   }
+
+   _processMouse(ev, cameraView) {
       let move = cameraView.calibrateMovement(ev.movementX);
       this.movement += move;
       if (this.noNegative && (this.movement < 0)) {
@@ -790,7 +801,12 @@ class MoveFreePositionHandler extends MovePositionHandler {
       super(madsor, madsor.snapshotPosition(), [0.0, 0.0, 0.0]);
    }
 
-   _updateMovement(ev, cameraView, tweak) {
+
+   _processInput(moveTo) {
+
+   }
+
+   _processMouse(ev, cameraView, tweak) {
       let x = cameraView.calibrateMovement(ev.movementX);
       let y = cameraView.calibrateMovement(-ev.movementY);
       let cam = cameraView.inverseCameraVectors();
@@ -818,7 +834,7 @@ class ScaleFreeHandler extends MovePositionHandler {
    }
 
 
-   _updateMovement(ev, cameraView, tweak) {
+   _processMouse(ev, cameraView, tweak) {
       var cam = cameraView.inverseCameraVectors();
       if (this.alongX < 0) {  // first time, check we scaling along x or y
          const value = Math.abs(ev.movementX) - Math.abs(ev.movementY);
@@ -855,7 +871,7 @@ class ScaleHandler extends MovePositionHandler {
       this.madsor.scaleSelection(this.snapshots, scale, this.axis);
    }
 
-   _updateMovement(ev, cameraView) {
+   _processMouse(ev, cameraView) {
       let scale = cameraView.scaleMovement(ev.movementX);   // return +-percentage.
       this.movement += scale;
       return this.movement;
@@ -941,7 +957,7 @@ class BevelHandler extends MovePositionHandler {
       }
    }
 
-   _updateMovement(ev, cameraView) {
+   _processMouse(ev, cameraView) {
       let move = cameraView.calibrateMovement(ev.movementX);
       if ((this.movement+move) > this.vertexLimit) {
          move = this.vertexLimit - this.movement;
