@@ -242,12 +242,12 @@ function preventEnter(event) {
       event.preventDefault();
    }
 }
-let gOverlay;
+let gOverlay = null;
 function runDialogCenter(formID, submitCallback, setup, _ev, notOk) {
    const form = document.querySelector(formID);
    if (form) {
       // create overlay if not already
-      if (!gOverlay) {
+      if (gOverlay === null) {
          gOverlay = document.createElement("div");
          gOverlay.classList.add("overlay");
          gOverlay.addEventListener('keydown', function(ev) { // prevent document handling hotkey.
@@ -292,6 +292,7 @@ function runDialogCenter(formID, submitCallback, setup, _ev, notOk) {
       form.addEventListener('submit', function submitted(ev) {
          // hide the dialog, prevent default.
          ev.preventDefault();
+         form.removeEventListener('submit', submitted);  // form's eventListener has to remove here.
          // remove and clean up
          document.body.removeChild(gOverlay);
          form.outerHTML = form.outerHTML;       // remove all eventHandlers in one swoop.
