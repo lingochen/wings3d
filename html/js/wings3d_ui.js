@@ -244,8 +244,9 @@ function preventEnter(event) {
 }
 let gOverlay = null;
 function runDialogCenter(formID, submitCallback, setup, _ev, notOk) {
-   const form = document.querySelector(formID);
-   if (form) {
+   const original = document.querySelector(formID);
+
+   if (original) {
       // create overlay if not already
       if (gOverlay === null) {
          gOverlay = document.createElement("div");
@@ -254,7 +255,8 @@ function runDialogCenter(formID, submitCallback, setup, _ev, notOk) {
             ev.stopPropagation();
          });
       }
- 
+      const form = original.cloneNode(true);
+      form.id = "";
       gOverlay.appendChild(form); 
       form.style.display = 'block';
       if (_ev) {
@@ -262,7 +264,6 @@ function runDialogCenter(formID, submitCallback, setup, _ev, notOk) {
       } else {
          gOverlay.classList.add("centerModal");
       }
-      form.reset();
       if (setup) {
          setup(form);
       }
@@ -295,10 +296,10 @@ function runDialogCenter(formID, submitCallback, setup, _ev, notOk) {
          form.removeEventListener('submit', submitted);  // form's eventListener has to remove here.
          // remove and clean up
          document.body.removeChild(gOverlay);
-         form.outerHTML = form.outerHTML;       // remove all eventHandlers in one swoop.
-         gOverlay.removeChild(gOverlay.firstElementChild);
-         form.style.display = 'none';
-         document.body.appendChild(form);
+         //form.outerHTML = form.outerHTML;       // remove all eventHandlers in one swoop.
+         gOverlay.removeChild(form);
+         //form.style.display = 'none';
+         //document.body.appendChild(form);
          // get form's input data and return
          if (_pvt.submitSuccess) { 
             submitCallback(form, _pvt.button);     // ask function to extract element's value.
