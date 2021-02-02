@@ -609,7 +609,6 @@ class MovePositionHandler extends MouseMoveHandler {
       this.madsor = madsor;
       this.snapshots = snapshots;
       this.movement = movement;
-
    }
 
    commit() {
@@ -644,13 +643,21 @@ class MovePositionHandler extends MouseMoveHandler {
       this._transformSelection(this._processMouse(ev, cameraView, tweak));
    }
 
-   handleInput(evt, cameraView) {
-      this._transformSelection(this._processInput(Number(evt.target.value), cameraView));
+   handleInput(evt, cameraView, axis) {
+      this._transformSelection(this._processInput(Number(evt.target.value), cameraView, axis));
    }
 
    // return, 
    getInputSetting() {
-      return {value: this.movement, name: "", suffix: "" };
+      return [{value: this.movement, name: "D"}];
+   }
+
+   _processInput(moveTo, _cameraView, _axis) {
+      return this._processMove(moveTo - this.movement);
+   }
+
+   _processMouse(ev, cameraView) {
+      return this._processMove( cameraView.calibrateMovement(ev.movementX) );
    }
 
    _transformSelection(transform) {
@@ -695,18 +702,14 @@ class MouseMoveAlongAxis extends MovePositionHandler {
    }
 
    getInputSetting() {
-      return {value: this.movement[this.axis], name: "", suffix: "" };
+      return [{value: this.movement[this.axis], name: "D", }];
    }
 
-   _processInput(moveTo, _cameraView) {
-      let movement = [0.0, 0.0, 0.0];
-      movement[this.axis] = moveTo - this.movement[this.axis];
-      this.movement[this.axis] = moveTo;
-      return movement;
+   _processInput(moveTo, _cameraView, _axis) {
+      return this._processMove(moveTo - this.movement[this.axis]);
    }
 
-   _processMouse(ev, cameraView) {
-      let move = cameraView.calibrateMovement(ev.movementX);
+   _processMove(move) {
       let movement = [0.0, 0.0, 0.0];
       movement[this.axis] = move;
       this.movement[this.axis] += move;
@@ -714,7 +717,7 @@ class MouseMoveAlongAxis extends MovePositionHandler {
    }
 }
 
-class MoveDirectionHandler extends MoveVertexHandler {
+/*class MoveDirectionHandler extends MoveVertexHandler {
    constructor(madsor, cmd, noNegative=false) {
       super(madsor, 0, cmd);
       this.noNegative = noNegative;
@@ -734,7 +737,7 @@ class MoveDirectionHandler extends MoveVertexHandler {
       }
       return move;
    }
-}
+}*/
 
 
 class MoveBidirectionHandler extends MoveVertexHandler {
@@ -763,6 +766,9 @@ class MoveBidirectionHandler extends MoveVertexHandler {
       this.movement += move;
       this.madsor.moveSelection(this.snapshots, move);
    }
+
+   // override handleInput
+   
 }
 
 class MoveAlongNormal extends MovePositionHandler {
@@ -774,18 +780,7 @@ class MoveAlongNormal extends MovePositionHandler {
       this.noNegative = noNegative;
    }
 
-   _processInput(moveTo, cameraView) {
-      if (this.noNegative && (moveTo < 0)) {
-         return 0.0;
-      } else {
-         let movement = moveTo - this.movement;
-         this.movement = moveTo;
-         return movement;
-      }
-   }
-
-   _processMouse(ev, cameraView) {
-      let move = cameraView.calibrateMovement(ev.movementX);
+   _processMove(move) {
       this.movement += move;
       if (this.noNegative && (this.movement < 0)) {
          move -= this.movement;
@@ -801,9 +796,16 @@ class MoveFreePositionHandler extends MovePositionHandler {
       super(madsor, madsor.snapshotPosition(), [0.0, 0.0, 0.0]);
    }
 
+   getInputSetting() {
+      return [{value: this.movement[0], name: "Dx"}, {value: this.movement[1], name: "Dy"}, {value: this.movement[2], name: "Dz",}];
+   }
 
-   _processInput(moveTo) {
-
+   _processInput(moveTo, _cameraView, axis) {   // (0, 1, 2) 
+      let movement = this.movement.slice();
+      movement[axis] = moveTo;
+      let diff = [movement[0] - this.movement[0], movement[1] - this.movement[1], movement[2] - this.movement[2]];
+      this.movement = movement;
+      return diff;
    }
 
    _processMouse(ev, cameraView, tweak) {
@@ -956,6 +958,8 @@ class BevelHandler extends MovePositionHandler {
          this.vertexLimit = Math.min(this.vertexLimit, snapshot.vertexLimit);
       }
    }
+
+   
 
    _processMouse(ev, cameraView) {
       let move = cameraView.calibrateMovement(ev.movementX);
@@ -1130,7 +1134,7 @@ export {
    GenericEditCommand,
    MovePositionHandler,
    MouseMoveAlongAxis,
-   MoveDirectionHandler,
+   //MoveDirectionHandler,
    MoveBidirectionHandler,
    MoveAlongNormal,
    MoveFreePositionHandler,

@@ -758,12 +758,18 @@ function attachHandlerMouseMove(mouseMove) {
          document.removeEventListener('keyup', onTab);
          document.exitPointerLock();
          UI.execDialog('#numericInput', function(form) {  // setup input.
-            const input = form.querySelector('input');
-            const setting = mouseMove.getInputSetting();
-            input.value = setting.value;
-            input.addEventListener('change', function(evt) {
-               handler.mousemove.onInput(evt);
-            });
+            const labels = form.querySelectorAll('label');
+            const settings = mouseMove.getInputSetting();
+            for (let i = 0; i < settings.length; ++i) {
+               labels[i].classList.remove('hide');
+               const input = labels[i].querySelector('input');
+               input.value = settings[i].value;
+               input.addEventListener('change', function(evt) {
+                  handler.mousemove.onInput(evt, i);
+               });
+               const span = labels[i].querySelector('span');
+               span.textContent = settings[i].name;
+            }
             // setup default.
          }).then(([_form, button])=>{ // check ok, or not
             if (button.value == 'ok') {
@@ -803,8 +809,8 @@ function attachHandlerMouseMove(mouseMove) {
          Render.needToRedraw();
       },
 
-      onInput: (evt)=>{
-         mouseMove.handleInput(evt, m_windows.current.camera);
+      onInput: (evt, index)=>{
+         mouseMove.handleInput(evt, m_windows.current.camera, index);
          Render.needToRedraw();
       }
    };
