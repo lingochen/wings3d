@@ -273,6 +273,10 @@ div.endAlign button {
   font-size: 1.5rem;
 }
 
+label.hide {
+  display: none;
+}
+
 label.fileItem {
   display: flex;
   flex-direction: row;
