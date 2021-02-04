@@ -895,17 +895,25 @@ class MouseRotateAlongAxis extends MovePositionHandler { // EditCommand {
       }
    }
 
+   getInputSetting() {
+      return [{value: this.movement, name: "°"}];
+   }
+
+   handleInput(evt, _cameraView, _axis) {
+      this.movement = Number(evt.target.value);
+      this.doIt();
+   }
+
    handleMouseMove(ev, cameraView) {
       this.movement += cameraView.rotateMovement(ev.movementX);
-      const quatRotate = quat.create();
-      quat.setAxisAngle(quatRotate, this.axisVec3, this.movement);
-      this.madsor.rotateSelection(this.snapshots, quatRotate, this.center);
+      this.doIt();
    }
 
    doIt() {
       const quatRotate = quat.create();
       quat.setAxisAngle(quatRotate, this.axisVec3, this.movement);
       this.madsor.rotateSelection(this.snapshots, quatRotate, this.center);
+      return true;
    }
 
    undo() {
@@ -917,6 +925,7 @@ class MouseRotateAlongAxis extends MovePositionHandler { // EditCommand {
 class MouseRotateFree extends MovePositionHandler { // EditCommand {
    constructor(madsor, center) {
       super();
+      this.movement = 0;
       this.madsor = madsor;
       this.snapshots = madsor.snapshotTransformGroup();
       this.quatRotate = [0, 0, 0, 1];     // cumulative rotate movement
@@ -925,11 +934,23 @@ class MouseRotateFree extends MovePositionHandler { // EditCommand {
       }
    }
 
+   getInputSetting() {
+      return [{value: this.movement, name: "°"}];
+   }
+
+   handleInput(evt, cameraView, _axis) {
+      const movement = Number(evt.target.value);
+      this._processMove(movement-this.movement, cameraView.inverseCameraVectors());
+   }
+
    handleMouseMove(ev, cameraView) {
       const movement = cameraView.rotateMovement(ev.movementX);
+      this._processMove(movement, cameraView.inverseCameraVectors());
+   }
+
+   _processMove(movement, cam) {
+      this.movement += movement;
       const quatRotate = [0,0,0,1];
-      let cam = cameraView.inverseCameraVectors();
-      //this.axisVec3 = cam.z;
       quat.setAxisAngle(quatRotate, cam.z, movement);
       quat.multiply(this.quatRotate, this.quatRotate, quatRotate);
       this.madsor.rotateSelection(this.snapshots, this.quatRotate, this.center);
@@ -958,8 +979,6 @@ class BevelHandler extends MovePositionHandler {
          this.vertexLimit = Math.min(this.vertexLimit, snapshot.vertexLimit);
       }
    }
-
-   
 
    _processMouse(ev, cameraView) {
       let move = cameraView.calibrateMovement(ev.movementX);
