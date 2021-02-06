@@ -830,11 +830,25 @@ class ScaleFreeHandler extends MovePositionHandler {
       this.alongX = -1;
    }
 
+   getInputSetting() {
+      return [{value: this.movement*100, name: "%"}];
+   }
+
    _transformSelection(scale) {
       //this.madsor.scaleSelection(this.snapshots, scale, this.axis);
       this.madsor.scaleAxisSelection(this.snapshots, scale, this.axis);
    }
 
+   _processInput(evt, cameraView, _axis) {
+      const cam = cameraView.inverseCameraVectors();
+      this.movement = Number(evt.target.value)/100.0;
+      if (this.alongX === 0) {   
+         this.axis = cam.y;
+      } else {
+         this.axis = cam.x;
+      }
+      return this.movement;
+   }
 
    _processMouse(ev, cameraView, tweak) {
       var cam = cameraView.inverseCameraVectors();
@@ -869,14 +883,22 @@ class ScaleHandler extends MovePositionHandler {
       this.axis = axis;
    }
 
-   _transformSelection(scale) {
-      this.madsor.scaleSelection(this.snapshots, scale, this.axis);
+   getInputSetting() {  // use percentage
+      return [{value: this.movement*100, name: "%"}];
+   }
+
+   _processInput(moveTo, cameraView, _axis) {
+      this.movement = moveTo / 100.0; // convert from percentage
+      return this.movement;
    }
 
    _processMouse(ev, cameraView) {
-      let scale = cameraView.scaleMovement(ev.movementX);   // return +-percentage.
-      this.movement += scale;
-      return this.movement;
+       this.movement += cameraView.scaleMovement(ev.movementX);
+       return this.movement;
+   }
+
+   _transformSelection(scale) {
+      this.madsor.scaleSelection(this.snapshots, scale, this.axis);
    }
 }
 
