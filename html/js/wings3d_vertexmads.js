@@ -76,7 +76,6 @@ class VertexMadsor extends Madsor {
    }
 
    undoBevel(snapshots, selection) {
-      this.restoreSelectionPosition(snapshots);
       // collapse extrudeEdge
       this.doAll(snapshots, PreviewCage.prototype.collapseSplitOrBevelEdge);
       // restore Vertex Selection

@@ -51,9 +51,22 @@ class MoveableCommand extends EditCommand {
       return false;
    }
 
-   handleMouseMove(ev, cameraView) {
+   getInputSetting() {
       if (this.moveHandler) {
-         this.moveHandler.handleMouseMove(ev, cameraView);
+         return this.moveHandler.getInputSetting();
+      }
+      return [];
+   }
+
+   handleInput(evt, cameraView, axis) {
+      if (this.moveHandler) {
+         this.moveHandler.handleInput(evt, cameraView, axis);
+      }
+   }
+
+   handleMouseMove(ev, cameraView, tweak) {
+      if (this.moveHandler) {
+         this.moveHandler.handleMouseMove(ev, cameraView, tweak);
       }
    }
 

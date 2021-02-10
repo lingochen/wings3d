@@ -220,9 +220,9 @@ class EdgeMadsor extends Madsor {
    }
 
    undoBevel(snapshots, selection) {
-      this.restoreSelectionPosition(snapshots);
       this.collapseEdge(snapshots);
-      View.restoreEdgeMode(selection);
+      // restore Vertex Selection
+      View.restoreEdgeMode(selection); 
    }
 
    crease() {
