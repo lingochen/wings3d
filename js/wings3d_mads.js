@@ -1185,6 +1185,7 @@ export {
    MouseMoveAlongAxis,
    //MoveDirectionHandler,
    MoveBidirectionHandler,
+   MoveLimitHandler,
    MoveAlongNormal,
    MoveFreePositionHandler,
    MouseRotateAlongAxis,
