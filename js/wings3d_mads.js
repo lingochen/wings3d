@@ -990,20 +990,13 @@ class MouseRotateFree extends MovePositionHandler { // EditCommand {
 }
 
 
-class BevelHandler extends MovePositionHandler {
-   constructor(madsor) {
-      const selection = madsor.snapshotSelection();   // have to get selection first
-      super(madsor, madsor.bevel(), 0.0);
-      this.selection = selection;
-      // get limit
-      this.vertexLimit = Number.MAX_SAFE_INTEGER;
-      for (let snapshot of this.snapshots) {
-         this.vertexLimit = Math.min(this.vertexLimit, snapshot.vertexLimit);
-      }
+class MoveLimitHandler extends MovePositionHandler {
+   constructor(madsor, snapshots, limit) {
+      super(madsor, snapshots, 0.0);
+      this.vertexLimit = limit;
    }
 
-   _processMouse(ev, cameraView) {
-      let move = cameraView.calibrateMovement(ev.movementX);
+   _processMove(move) {
       if ((this.movement+move) > this.vertexLimit) {
          move = this.vertexLimit - this.movement;
       } else if ((this.movement+move) < 0) {
@@ -1012,17 +1005,32 @@ class BevelHandler extends MovePositionHandler {
       this.movement += move;
       return move;
    }
+};
+
+
+class BevelHandler extends MoveableCommand {
+   constructor(madsor) {
+      super();
+      this.madsor = madsor;
+      this.selection = this.madsor.snapshotSelection();
+      this.snapshots = this.madsor.bevel();    
+      // get limit
+      let vertexLimit = Number.MAX_SAFE_INTEGER;
+      for (let snapshot of this.snapshots) {
+         this.vertexLimit = Math.min(this.vertexLimit, snapshot.vertexLimit);
+      } 
+      this.moveHandler = new MoveLimitHandler(madsor, this.snapshots, vertexLimit);
+   }
 
    doIt() {
       this.snapshots = this.madsor.bevel();   // should test for current snapshots and prev snapshots? should not change
       // no needs to recompute limit, wont change, 
-      // move 
-      super.doIt();  // = this.madsor.moveSelection(this.snapshots, this.movement);
+      super.doIt();  // move to new position.
    }
 
    undo() {
+      super.undo();  // restore to original position
       this.madsor.undoBevel(this.snapshots, this.selection);
-      //this.snapshots = undefined;
    }
 }
 
