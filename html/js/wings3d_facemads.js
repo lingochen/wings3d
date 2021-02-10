@@ -3,7 +3,7 @@
 //
 //    
 **/
-import {Madsor, DragSelect, TweakMove, MovePositionHandler, GenericEditCommand, MoveAlongNormal, MouseRotateAlongAxis, ToggleModeCommand} from './wings3d_mads.js';
+import {Madsor, DragSelect, TweakMove, MoveLimitHandler, GenericEditCommand, MoveAlongNormal, MouseRotateAlongAxis, ToggleModeCommand} from './wings3d_mads.js';
 import {EdgeMadsor} from './wings3d_edgemads.js';   // for switching
 import {BodyMadsor} from './wings3d_bodymads.js';
 import {VertexMadsor} from './wings3d_vertexmads.js';
@@ -440,41 +440,28 @@ class MergePreviewCommand extends EditCommand {
 }
 
 
-class InsetFaceHandler extends MovePositionHandler {
+class InsetFaceHandler extends MoveableCommand {
    constructor(madsor) {
-      super(madsor);
-      //this.selectedFaces = madsor.snapshotSelection();
-      this.movement = 0;
-      this.doIt();   // init.
+      super();
+      this.madsor = madsor;
+      this.snapshots = this.madsor.inset();    
+      // get limit
+      let vertexLimit = Number.MAX_SAFE_INTEGER;
+      for (let snapshot of this.snapshots) {
+         this.vertexLimit = Math.min(this.vertexLimit, snapshot.vertexLimit);
+      } 
+      this.moveHandler = new MoveLimitHandler(madsor, this.snapshots, vertexLimit);
+
    }
 
    doIt() {
       this.snapshots = this.madsor.inset();   // should we test for current snapshots and prev snapshots?
-      this.madsor.moveSelection(this.snapshots, this.movement);
-      // get limit
-      this.vertexLimit = Number.MAX_SAFE_INTEGER;
-      for (let obj of this.snapshots) {
-         this.vertexLimit = Math.min(this.vertexLimit, obj.snapshot.vertexLimit);
-      } 
-   }
-
-   //_updateMovement(ev) {  // change back when we all move to moveSelection
-   handleMouseMove(ev, cameraView) {
-      let move = cameraView.calibrateMovement(ev.movementX);
-      if ((this.movement+move) > this.vertexLimit) {
-         move = this.vertexLimit - this.movement;
-      } else if ((this.movement+move) < 0) {
-         move = 0 - this.movement;
-      }
-      this.movement += move;
-      this.madsor.moveSelection(this.snapshots, move);
-      return move;
+      super.doIt();
    }
 
    undo() {
-      //this.madsor.restoreSelectionPosition(this.snapshots);  // do we realy needs this. since we are destroying it.
+      //super.undo();   // no needs because we are destroying it?
       this.madsor.collapseEdgeNew(this.snapshots);
-      //this.snapshots = undefined;
    }
 }
 
