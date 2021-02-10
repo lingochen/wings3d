@@ -2553,7 +2553,7 @@ WingedTopology.prototype.bevelVertex = function(vertices) {
          const firstBevel = vertex.outEdge.pair.next;
          firstBevel.pair.next = lastBevel.pair;   // innerEdge loop connected.
          const polygon = this._createPolygon(firstBevel.pair, count+1, Material.default); // todo: find the correct material. 
-         //polygon._assignFace();
+         polygon._assignFace();  // assign face to all edges, some were not assigned.
          ret.selectedFaces.push(polygon);
       } else { // weird case of 2 edge vertex
          console.log("weird 2 edge vertex, to be done later");
