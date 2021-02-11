@@ -445,12 +445,7 @@ class InsetFaceHandler extends MoveableCommand {
       super();
       this.madsor = madsor;
       this.snapshots = this.madsor.inset();    
-      // get limit
-      let vertexLimit = Number.MAX_SAFE_INTEGER;
-      for (let snapshot of this.snapshots) {
-         this.vertexLimit = Math.min(this.vertexLimit, snapshot.vertexLimit);
-      } 
-      this.moveHandler = new MoveLimitHandler(madsor, this.snapshots, vertexLimit);
+      this.moveHandler = new MoveLimitHandler(madsor, this.snapshots);
 
    }
 

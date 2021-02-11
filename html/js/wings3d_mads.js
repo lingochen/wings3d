@@ -991,9 +991,12 @@ class MouseRotateFree extends MovePositionHandler { // EditCommand {
 
 
 class MoveLimitHandler extends MovePositionHandler {
-   constructor(madsor, snapshots, limit) {
+   constructor(madsor, snapshots) {
       super(madsor, snapshots, 0.0);
-      this.vertexLimit = limit;
+      this.vertexLimit = Number.MAX_SAFE_INTEGER;
+      for (let obj of snapshots) {
+         this.vertexLimit = Math.min(this.vertexLimit, obj.snapshot.vertexLimit);
+      }
    }
 
    _processMove(move) {
@@ -1014,12 +1017,7 @@ class BevelHandler extends MoveableCommand {
       this.madsor = madsor;
       this.selection = this.madsor.snapshotSelection();
       this.snapshots = this.madsor.bevel();    
-      // get limit
-      let vertexLimit = Number.MAX_SAFE_INTEGER;
-      for (let snapshot of this.snapshots) {
-         this.vertexLimit = Math.min(this.vertexLimit, snapshot.vertexLimit);
-      } 
-      this.moveHandler = new MoveLimitHandler(madsor, this.snapshots, vertexLimit);
+      this.moveHandler = new MoveLimitHandler(madsor, this.snapshots);
    }
 
    doIt() {
