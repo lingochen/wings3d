@@ -35,13 +35,17 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       // movement for (x, y, z)
       for (let axis=0; axis < 3; ++axis) {
          UI.bindMenuItem(mode + 'Move' + axisName[axis], function(ev) {
-               View.attachHandlerMouseMove(new MouseMoveAlongAxis(self, axis));
+               const move = new MouseMoveAlongAxis(self, axis);
+               move.doIt();
+               View.attachHandlerMouseMove(move);
             });
       }
       // free Movement.
       const moveFree = {body: action.bodyMoveFree, face: action.faceMoveFree, edge: action.edgeMoveFree, vertex: action.vertexMoveFree};
       UI.bindMenuItem(moveFree[mode].name, function(ev) {
-            View.attachHandlerMouseMove(new MoveFreePositionHandler(self));
+            const move = new MoveFreePositionHandler(self);
+            move.doIt();
+            View.attachHandlerMouseMove(move);
          });
       // normal Movement.
       const moveNormal = {face: action.faceMoveNormal, edge: action.edgeMoveNormal, vertex: action.vertexMoveNormal};
@@ -364,7 +368,9 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
 
    tweakMove(model, hilite, magnet) {
       const ret = this._tweakMode(model, hilite, magnet);
-      ret.setHandler(new MoveFreePositionHandler(this));
+      const move = new MoveFreePositionHandler(this);
+      move.doIt();
+      ret.setHandler(move);
       return ret;
    }
 
@@ -704,9 +710,9 @@ class MoveableHandler extends MovePositionHandler { // temp refactoring class
 
 
 // movement handler.
-class MouseMoveAlongAxis extends MovePositionHandler {
-   constructor(madsor, axis) {   // 0 = x axis, 1 = y axis, 2 = z axis.
-      super(madsor, madsor.snapshotPosition(), [0.0, 0.0, 0.0]);
+class MouseMoveAlongAxis extends MoveableHandler {
+   constructor(madsor, axis, cmd) {   // 0 = x axis, 1 = y axis, 2 = z axis.
+      super(madsor, [0.0, 0.0, 0.0], cmd);
       this.axis = axis;
    }
 
@@ -801,9 +807,9 @@ class MoveAlongNormal extends MoveableHandler {
 }
 
 
-class MoveFreePositionHandler extends MovePositionHandler {
-   constructor(madsor) {
-      super(madsor, madsor.snapshotPosition(), [0.0, 0.0, 0.0]);
+class MoveFreePositionHandler extends MoveableHandler {
+   constructor(madsor, cmd) {
+      super(madsor, [0.0, 0.0, 0.0], cmd);
    }
 
    getInputSetting() {
