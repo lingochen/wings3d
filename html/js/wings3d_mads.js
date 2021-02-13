@@ -47,7 +47,9 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       const moveNormal = {face: action.faceMoveNormal, edge: action.edgeMoveNormal, vertex: action.vertexMoveNormal};
       if (moveNormal[mode]) {
          UI.bindMenuItem(moveNormal[mode].name, function(ev) {
-            View.attachHandlerMouseMove(new MoveAlongNormal(self));
+            const move = new MoveAlongNormal(self, false);
+            move.doIt();
+            View.attachHandlerMouseMove(move);
           });
       }
       // scale uniform
@@ -368,7 +370,9 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
 
    tweakMoveNormal(model, hilite, magnet) {
       const ret = this._tweakMode(model, hilite, magnet);
-      ret.setHandler(new MoveAlongNormal(this));
+      const move = new new MoveAlongNormal(this, false);
+      move.doIt();
+      ret.setHandler(move);
       return ret;
    }
 
@@ -666,30 +670,35 @@ class MovePositionHandler extends MouseMoveHandler {
 }
 
 
-class MoveVertexHandler extends MovePositionHandler { // temp refactoring class
+class MoveableHandler extends MovePositionHandler { // temp refactoring class
    constructor(madsor, movement, cmd) {
       super(madsor, null, movement);
       this.cmd = cmd;
    }
 
+   snapshotPosition() {
+      return this.madsor.snapshotPosition();
+   }
+
    doIt() {
+      let ret = true;
       if (this.cmd) {
-         this.cmd.doIt();
+         ret = this.cmd.doIt();
          this.snapshots = this.cmd.snapshotPosition();
       } else {
          this.snapshots = this.snapshotPosition();
       }
-      super.doIt();
-      return true;
+      if (ret) {
+         super.doIt();
+      }
+      return ret;
    }
 
    undo() {
+      super.undo();     // guaranteed originial position.
       if (this.cmd) {
-         this.cmd.undo();   // no need to restore to be deleted position
-      } else {
-         super.undo();
+         this.cmd.undo();   
       }
-
    }
 }
 
@@ -717,7 +726,7 @@ class MouseMoveAlongAxis extends MovePositionHandler {
    }
 }
 
-/*class MoveDirectionHandler extends MoveVertexHandler {
+/*class MoveDirectionHandler extends MoveableHandler {
    constructor(madsor, cmd, noNegative=false) {
       super(madsor, 0, cmd);
       this.noNegative = noNegative;
@@ -740,7 +749,7 @@ class MouseMoveAlongAxis extends MovePositionHandler {
 }*/
 
 
-class MoveBidirectionHandler extends MoveVertexHandler {
+class MoveBidirectionHandler extends MoveableHandler {
    constructor(madsor, cmd) {
       super(madsor, 0, cmd);
    }
@@ -771,13 +780,14 @@ class MoveBidirectionHandler extends MoveVertexHandler {
    
 }
 
-class MoveAlongNormal extends MovePositionHandler {
-   constructor(madsor, noNegative = false, snapshots) {
-      if (!snapshots) {
-         snapshots = madsor.snapshotPositionAndNormal();
-      }
-      super(madsor, snapshots, 0.0);
+class MoveAlongNormal extends MoveableHandler {
+   constructor(madsor, noNegative, cmd) {
+      super(madsor, 0.0, cmd);
       this.noNegative = noNegative;
+   }
+
+   snapshotPosition() {
+      return this.madsor.snapshotPositionAndNormal();
    }
 
    _processMove(move) {
@@ -1069,7 +1079,7 @@ class ExtrudeFreeHandler extends ExtrudeHandler {
 class ExtrudeNormalHandler extends ExtrudeHandler {
    constructor(madsor) {
       super(madsor);
-      this.moveHandler = new MoveAlongNormal(madsor);
+      this.moveHandler = new MoveAlongNormal(madsor, false);
    }
 }
 // end of extrude
