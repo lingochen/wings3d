@@ -3,7 +3,7 @@
  * MADS (Modify, Add, Delete, Select) operation. 
  *
 **/
-import {EditCommand, EditSelectHandler, MouseMoveHandler, MoveableCommand} from './wings3d_undo.js';
+import {EditCommand, EditSelectHandler, MouseMoveHandler} from './wings3d_undo.js';
 import {PreviewCage} from './wings3d_model.js';
 import * as ShaderProg from './wings3d_shaderprog.js';
 import * as View from './wings3d_view.js';
@@ -91,20 +91,29 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
          // movement for (x, y, z)
          for (let axis=0; axis < 3; ++axis) {
             UI.bindMenuItem(extrudeMode[axis].name, (ev) => {
-                  View.attachHandlerMouseMove(new ExtrudeAlongAxisHandler(this, axis));
+               const cmd = new GenericEditCommand(this, this.extrude, null, this.undoExtrude, null);
+               const move = new MouseMoveAlongAxis(this, axis, cmd);
+               move.doIt();
+               View.attachHandlerMouseMove(move);
              });
          }
       }
       const extrudeFree = {face: action.faceExtrudeFree, edge: action.edgeExtrudeFree, vertex: action.vertexExtrudeFree };
       if (extrudeFree[mode]) {
          UI.bindMenuItem(extrudeFree[mode].name, (ev) => {
-            View.attachHandlerMouseMove(new ExtrudeFreeHandler(this));
+            const cmd = new GenericEditCommand(this, this.extrude, null, this.undoExtrude, null);
+            const move = new MoveFreePositionHandler(this, cmd);
+            move.doIt();
+            View.attachHandlerMouseMove(move);
           });
       }
       const extrudeNormal = {face: action.faceExtrudeNormal, edge: action.edgeExtrudeNormal, vertex: action.vertexExtrudeNormal};
       if (extrudeNormal[mode]) {
          UI.bindMenuItem(extrudeNormal[mode].name, (ev) => {
-            View.attachHandlerMouseMove(new ExtrudeNormalHandler(this));
+            const cmd = new GenericEditCommand(this, this.extrude, null, this.undoExtrude, null);
+            const move = new MoveAlongNormal(this, false, cmd);
+            move.doIt();
+            View.attachHandlerMouseMove(move);
           });
       }
       // flatten x,y,z
@@ -693,10 +702,8 @@ class MoveableHandler extends MovePositionHandler { // temp refactoring class
       let ret = true;
       if (this.cmd) {
          ret = this.cmd.doIt();
-         this.snapshots = this.cmd.snapshotPosition();
-      } else {
-         this.snapshots = this.snapshotPosition();
       }
+      this.snapshots = this.snapshotPosition();
       if (ret) {
          super.doIt();
       }
@@ -1038,47 +1045,6 @@ class MoveLimitHandler extends MoveableHandler {
    }
 };
 
-// extrude
-class ExtrudeHandler extends MoveableCommand {
-   constructor(madsor) {
-      super();
-      this.madsor = madsor;
-      this.contourEdges = madsor.extrude();
-   }
-
-   doIt() {
-      this.contourEdges = this.madsor.extrude(this.contourEdges);
-      super.doIt();     // = this.madsor.moveSelection(this.snapshots, this.movement);
-   }
-
-   undo() {
-      super.undo(); //this.madsor.restoreSelectionPosition(this.snapshots);
-      this.madsor.undoExtrude(this.contourEdges);
-   }
-}
-
-class ExtrudeAlongAxisHandler extends ExtrudeHandler {
-   constructor(madsor, axis) { 
-      super(madsor);
-      this.moveHandler = new MouseMoveAlongAxis(madsor, axis); // this should comes earlier
-   }
-}
-
-
-class ExtrudeFreeHandler extends ExtrudeHandler {
-   constructor(madsor) {
-      super(madsor);
-      this.moveHandler = new MoveFreePositionHandler(madsor);
-   }
-}
-
-class ExtrudeNormalHandler extends ExtrudeHandler {
-   constructor(madsor) {
-      super(madsor);
-      this.moveHandler = new MoveAlongNormal(madsor, false);
-   }
-}
-// end of extrude
 
 class PlaneCutHandler extends EditSelectHandler {
    constructor(madsor, planeNorm) {
