@@ -58,7 +58,11 @@ class FaceMadsor extends Madsor {
        });
       UI.bindMenuItem(action.faceInset.name, (ev) => {
          if (this.hasSelection()) {
-            View.attachHandlerMouseMove(new InsetFaceHandler(this));
+            const cmd = new GenericEditCommand(this, this.inset, [], this.collapseEdgeNew, []);
+            const move = new MoveLimitHandler(this, cmd);
+            move.doIt();
+            View.attachHandlerMouseMove(move);
+            //View.attachHandlerMouseMove(new InsetFaceHandler(this));
          } else {
             geometryStatus('No selected face');
          }
@@ -103,6 +107,12 @@ class FaceMadsor extends Madsor {
             View.undoQueue(cmd);
          }
        });
+      //UI.bindMenuItem(action.faceExtractNormal.name, (_ev)=>{
+      //   const extract = new GenericEditCommand(this, this.extract(), null, this.undoExtract);
+      //   const cmd = new MoveAlongNormal(this, true, extract);
+      //   cmd.doIt();
+      //   View.undoQueue(cmd);
+      // });
    }
 
    // get selected Face's vertex snapshot. for doing, and redo queue. 
@@ -117,6 +127,14 @@ class FaceMadsor extends Madsor {
    snapshotTransformGroup() {
       return this.snapshotSelected(PreviewCage.prototype.snapshotTransformFaceGroup);
    }
+
+   //extract() {
+   //   return this.snapshotSelected(PreviewCage.prototype.extractFace);
+   //}
+
+   //undoExtract(snapshots, _selection) {
+   //
+   //}
 
    bevel() {
       return this.snapshotSelected(PreviewCage.prototype.bevelFace);
@@ -436,27 +454,6 @@ class MergePreviewCommand extends EditCommand {
       View.removeFromWorld(this.combine);
       View.addToWorld(this.targetCage);
       View.addToWorld(this.sourceCage);
-   }
-}
-
-
-class InsetFaceHandler extends MoveableCommand {
-   constructor(madsor) {
-      super();
-      this.madsor = madsor;
-      this.snapshots = this.madsor.inset();    
-      this.moveHandler = new MoveLimitHandler(madsor, this.snapshots);
-
-   }
-
-   doIt() {
-      this.snapshots = this.madsor.inset();   // should we test for current snapshots and prev snapshots?
-      super.doIt();
-   }
-
-   undo() {
-      //super.undo();   // no needs because we are destroying it?
-      this.madsor.collapseEdgeNew(this.snapshots);
    }
 }
 

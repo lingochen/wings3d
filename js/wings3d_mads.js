@@ -75,8 +75,11 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       // Bevel
       const bevel = {face: action.faceBevel, edge: action.edgeBevel, vertex: action.vertexBevel};
       if (bevel[mode]) {
-         UI.bindMenuItem(bevel[mode].name, (ev)=> {
-            View.attachHandlerMouseMove(new BevelHandler(this));
+         UI.bindMenuItem(bevel[mode].name, (ev)=>{
+            const cmd = new GenericEditCommand(this, this.bevel, null, this.undoBevel, [this.snapshotSelection()]);
+            const move = new MoveLimitHandler(this, cmd);
+            move.doIt();
+            View.attachHandlerMouseMove(move);
           });
       }
       // extrude
@@ -1006,13 +1009,22 @@ class MouseRotateFree extends MovePositionHandler { // EditCommand {
 }
 
 
-class MoveLimitHandler extends MovePositionHandler {
-   constructor(madsor, snapshots) {
-      super(madsor, snapshots, 0.0);
-      this.vertexLimit = Number.MAX_SAFE_INTEGER;
-      for (let obj of snapshots) {
-         this.vertexLimit = Math.min(this.vertexLimit, obj.snapshot.vertexLimit);
+class MoveLimitHandler extends MoveableHandler {
+   constructor(madsor, cmd) {
+      super(madsor, 0.0, cmd);
+   }
+
+   doIt() {
+      if (super.doIt()) {
+         if (typeof this.vertexLimit === 'undefined') {
+            this.vertexLimit = Number.MAX_SAFE_INTEGER;
+            for (let obj of this.snapshots) {
+               this.vertexLimit = Math.min(this.vertexLimit, obj.snapshot.vertexLimit);
+            }
+         }
+         return true;
       }
+      return false;
    }
 
    _processMove(move) {
@@ -1025,28 +1037,6 @@ class MoveLimitHandler extends MovePositionHandler {
       return move;
    }
 };
-
-
-class BevelHandler extends MoveableCommand {
-   constructor(madsor) {
-      super();
-      this.madsor = madsor;
-      this.selection = this.madsor.snapshotSelection();
-      this.snapshots = this.madsor.bevel();    
-      this.moveHandler = new MoveLimitHandler(madsor, this.snapshots);
-   }
-
-   doIt() {
-      this.snapshots = this.madsor.bevel();   // should test for current snapshots and prev snapshots? should not change
-      // no needs to recompute limit, wont change, 
-      super.doIt();  // move to new position.
-   }
-
-   undo() {
-      super.undo();  // restore to original position
-      this.madsor.undoBevel(this.snapshots, this.selection);
-   }
-}
 
 // extrude
 class ExtrudeHandler extends MoveableCommand {
