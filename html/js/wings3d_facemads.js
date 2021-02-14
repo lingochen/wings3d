@@ -7,7 +7,7 @@ import {Madsor, DragSelect, TweakMove, MoveLimitHandler, GenericEditCommand, Mov
 import {EdgeMadsor} from './wings3d_edgemads.js';   // for switching
 import {BodyMadsor} from './wings3d_bodymads.js';
 import {VertexMadsor} from './wings3d_vertexmads.js';
-import {MoveableCommand, EditCommand, EditSelectHandler} from './wings3d_undo.js';
+import {EditCommand, EditSelectHandler} from './wings3d_undo.js';
 import {PreviewCage} from './wings3d_model.js';
 import * as View from './wings3d_view.js';
 import * as UI from './wings3d_ui.js';
@@ -68,10 +68,16 @@ class FaceMadsor extends Madsor {
          }
        });
       UI.bindMenuItem(action.faceBump.name, (ev) => {
-         View.attachHandlerMouseMove(new BumpFaceHandler(this));
+         const cmd = new GenericEditCommand(this, this.bump, null, this.undoBump, null);
+         const move = new MoveAlongNormal(this, false, cmd);
+         move.doIt();
+         View.attachHandlerMouseMove(move);
        });
       UI.bindMenuItem(action.faceIntrude.name, (ev) => {
-         View.attachHandlerMouseMove(new IntrudeFaceHandler(this));
+         const cmd = new GenericEditCommand(this, this.intrude, null, this.undoIntrude, null);
+         const move = new MoveAlongNormal(this, true, cmd);
+         move.doIt();
+         View.attachHandlerMouseMove(move);
        });
       UI.bindMenuItem(action.faceLift.name, (ev) => {
          const snapshots = this.snapshotSelected(PreviewCage.prototype.snapshotTransformFaceGroup);
@@ -454,47 +460,6 @@ class MergePreviewCommand extends EditCommand {
       View.removeFromWorld(this.combine);
       View.addToWorld(this.targetCage);
       View.addToWorld(this.sourceCage);
-   }
-}
-
-// Bump
-class BumpFaceHandler extends MoveableCommand {
-   constructor(madsor) {
-      super();
-      this.madsor = madsor;
-      this.bump = madsor.bump();
-      this.moveHandler = new MoveAlongNormal(madsor);
-   }
-
-   doIt() {
-      this.bump = this.madsor.bump(this.bump);
-      super.doIt();     // = this.madsor.moveSelection(this.snapshots, this.movement);
-   }
-
-   undo() {
-      super.undo(); //this.madsor.restoreSelectionPosition(this.snapshots);
-      this.madsor.undoBump(this.bump);
-   }
-}
-
-// Intrude
-class IntrudeFaceHandler extends MoveableCommand {
-   constructor(madsor) {
-      super();
-      this.madsor = madsor;
-      this.intrude = madsor.intrude();
-      this.moveHandler = new MoveAlongNormal(madsor, true);
-   }
-
-   doIt() {
-      this.intrude = this.madsor.intrude();
-      super.doIt();     // = this.madsor.moveSelection(this.snapshots, this.movement);
-      return true;
-   }
-
-   undo() {
-      super.undo(); //this.madsor.restoreSelectionPosition(this.snapshots);
-      this.madsor.undoIntrude(this.intrude);
    }
 }
 

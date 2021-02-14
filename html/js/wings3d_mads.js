@@ -695,7 +695,11 @@ class MoveableHandler extends MovePositionHandler { // temp refactoring class
    }
 
    snapshotPosition() {
-      return this.madsor.snapshotPosition();
+      if (this.cmd) {
+         return this.cmd.snapshotPosition();
+      } else {
+         return this.madsor.snapshotPosition();
+      }
    }
 
    doIt() {
