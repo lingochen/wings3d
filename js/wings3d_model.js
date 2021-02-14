@@ -3954,7 +3954,7 @@ PreviewCage.prototype.cornerEdge = function() {
    }
    // compute direction, and copy position.
    let direction = new Float32Array(dissolveEdges.length*3);
-   const dir = new Geom.Vec3View(direction);
+   const dir = new Util.Vec3View(direction);
    for (let connect of dissolveEdges) {
       vec3.sub(dir, connect.origin, connect.destination());
       vec3.normalize(dir, dir);
