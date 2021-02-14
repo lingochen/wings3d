@@ -7,7 +7,7 @@ import {Madsor, DragSelect, TweakMove, ToggleModeCommand, MoveAlongNormal, MoveB
 import {FaceMadsor} from './wings3d_facemads.js';   // for switching
 import {BodyMadsor} from './wings3d_bodymads.js';
 import {VertexMadsor} from './wings3d_vertexmads.js';
-import {EditCommand, EditCommandCombo, MoveableCommand} from './wings3d_undo.js';
+import {EditCommand, EditCommandCombo} from './wings3d_undo.js';
 import {PreviewCage} from './wings3d_model.js';
 import * as UI from './wings3d_ui.js';
 import * as View from './wings3d_view.js';
@@ -64,7 +64,10 @@ class EdgeMadsor extends Madsor {
          });
       // Crease
       UI.bindMenuItem(action.edgeCrease.name, (ev) => {
-         View.attachHandlerMouseMove(new CreaseEdgeHandler(this));
+         const cmd = new GenericEditCommand(this, this.crease, null, this.undoExtrude, null);
+         const move = new MoveAlongNormal(this, false, cmd);
+         move.doIt();
+         View.attachHandlerMouseMove(move);
       });
 
       // EdgeLoop.
@@ -135,7 +138,10 @@ class EdgeMadsor extends Madsor {
          }
         });
       UI.bindMenuItem(action.edgeCorner.name, (ev) => {
-         View.attachHandlerMouseMove(new EdgeCornerHandler(this));
+         const cmd = new GenericEditCommand(this, this.corner, null, this.undoCorner, null);
+         const move = new MoveAlongNormal(this, false, cmd);
+         move.doIt();
+         View.attachHandlerMouseMove(move);
        });
       UI.bindMenuItem(action.edgeSlide.name, (ev) => {
          const handler = new MoveBidirectionHandler(this, new GenericEditCommand(this, this.slide));
@@ -513,27 +519,6 @@ class CollapseEdgeCommand extends EditCommand {
    }
 }
 
-// Crease
-class CreaseEdgeHandler extends MoveableCommand {
-   constructor(madsor) {
-      super();
-      this.madsor = madsor;
-      this.contourEdges = madsor.crease();
-      this.moveHandler = new MoveAlongNormal(madsor);
-   }
-
-   doIt() {
-      this.contourEdges = this.madsor.crease(this.contourEdges);
-      super.doIt();     // = this.madsor.moveSelection(this.movement, this.snapshots);
-   }
-
-   undo() {
-      super.undo(); //this.madsor.restoreSelectionPosition(this.snapshots);
-      this.madsor.undoExtrude(this.contourEdges);
-   }
-}
-// end of Crease
-
 class EdgeLoopCommand extends EditCommand {
    constructor(madsor, nth) {
       super();
@@ -594,26 +579,6 @@ class LoopCutCommand extends EditCommand {
          this.madsor.undoLoopCut(this.loopCut);
       }
    }
-}
-
-class EdgeCornerHandler extends MoveableCommand {
-   constructor(madsor) {
-      super();
-      this.madsor = madsor;
-      this.cornerEdges = madsor.corner();
-      this.moveHandler = new MoveAlongNormal(madsor, false, this.cornerEdges);
-   }
-
-   doIt() {
-      this.cornerEdges = this.madsor.corner();
-      super.doIt();
-   }
-
-   undo() {
-      // super.undo();  // not need, because movement was deleted
-      this.madsor.undoCorner(this.cornerEdges);
-   }
-
 }
 
 
