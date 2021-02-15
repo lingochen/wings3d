@@ -3,7 +3,7 @@
 //
 //    
 **/
-import {Madsor, DragSelect, TweakMove, ToggleModeCommand} from './wings3d_mads.js';
+import {Madsor, DragSelect, TweakMove, ToggleModeCommand, GenericEditCommand} from './wings3d_mads.js';
 import {FaceMadsor} from './wings3d_facemads.js';   // for switching
 import {BodyMadsor} from './wings3d_bodymads.js';
 import {EdgeMadsor} from './wings3d_edgemads.js';
@@ -21,9 +21,9 @@ class VertexMadsor extends Madsor {
       super('Vertex');
       const self = this;
       UI.bindMenuItem(action.vertexConnect.name, (ev) => {
-            const vertexConnect = this.connectVertex();
-            if (vertexConnect.doIt()) {
-               View.undoQueue(vertexConnect);   // saved for undo
+            const cmd = this.connectVertex();
+            if (cmd.doIt()) {
+               View.undoQueue(cmd);   // saved for undo
             } else {
                // show no connection possible message.
             }
@@ -91,7 +91,7 @@ class VertexMadsor extends Madsor {
    }
 
    andConnectVertex(prevCmd) {
-      const vertexConnect = new VertexConnectCommand(this);
+      const vertexConnect = this.connectVertex();
       if (vertexConnect.doIt()) {
          View.undoQueueCombo([prevCmd, vertexConnect]);
       } else { // no connection possible
@@ -101,14 +101,19 @@ class VertexMadsor extends Madsor {
    }
 
    connectVertex() {
-      return  new VertexConnectCommand(this);
+      return new GenericEditCommand(this, this.connect, null, this.dissolveConnect, null);
    }
 
    connect() {
-      return this.snapshotSelected(PreviewCage.prototype.connectVertex);
+      const ret = this.snapshotSelected(PreviewCage.prototype.connectVertex);
+      if (ret.length > 0) {
+         View.restoreEdgeMode(ret);
+      }
+      return ret;
    };
 
    dissolveConnect(snapshots) {
+      View.restoreVertexMode();
       this.doAll(snapshots, PreviewCage.prototype.dissolveConnect);
    }
 
@@ -253,31 +258,6 @@ class VertexSelectCommand extends EditCommand {
    }  
 }
 
-
-class VertexConnectCommand extends EditCommand {
-   constructor(madsor) {
-      super();
-      this.madsor = madsor;
-   }
-
-   doIt() {
-      // reconnect
-      this.cageArray = this.madsor.connect();
-      if (this.cageArray.length > 0) { // goes to edgeMode.
-         View.restoreEdgeMode(this.cageArray);    // abusing the api?
-         return true;
-      }
-      return false;
-   }
-
-   undo() {
-      // restore to vertexMode.
-      View.restoreVertexMode();
-      // dissolve the connect edges.
-      this.madsor.dissolveConnect(this.cageArray);
-   }  
-}
-
 class VertexDissolveCommand extends EditCommand {
    constructor(madsor) {
       super();
@@ -351,6 +331,5 @@ class VertexWeldCommand extends EditSelectHandler {
 
 
 export {
-   VertexMadsor,
-   VertexConnectCommand,
+   VertexMadsor
 }
