@@ -3228,7 +3228,11 @@ PreviewCage.prototype.dissolveSelectedFace = function() {
    // update previewBox.
    this.updateAffected();
    // return undo function
-   return {edges: substract, selection: selectedFace};
+   if (substract.length) {
+      return {edges: substract, selection: selectedFace};
+   } else {
+      return null;
+   }
 };
 /**
  * 
