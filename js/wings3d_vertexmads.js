@@ -28,13 +28,13 @@ class VertexMadsor extends Madsor {
                // show no connection possible message.
             }
          });
-      UI.bindMenuItemMode(action.vertexDissolve.name, function(ev) {
-            const dissolve = new VertexDissolveCommand(self);
+      UI.bindMenuItemMode(action.vertexDissolve.name, (ev)=> {
+            const dissolve = new GenericEditCommand(this, this.dissolve, null, this.undoDissolve, null);
             dissolve.doIt();
             View.undoQueue(dissolve);
          }, this, 'Delete');
-      UI.bindMenuItemMode(action.vertexCollapse.name, function(ev) {
-            const dissolve = new VertexCollapseCommand(self);
+      UI.bindMenuItemMode(action.vertexCollapse.name, (ev)=> {
+            const dissolve = new GenericEditCommand(this, this.collapse, null, this.undoCollapse, null);
             dissolve.doIt();
             View.undoQueue(dissolve);
          }, this, 'Backspace');
@@ -122,6 +122,18 @@ class VertexMadsor extends Madsor {
    }
 
    undoDissolve(dissolveArray) {
+      this.doAll(dissolveArray, PreviewCage.prototype.undoDissolveVertex);
+   }
+
+   collapse() {
+      const ret = this.snapshotSelected(PreviewCage.prototype.dissolveSelectedVertex);
+      View.restoreFaceMode(ret);
+      return ret;
+   }
+
+   undoCollapse(dissolveArray) {
+      View.currentMode().resetSelection();
+      View.restoreVertexMode();
       this.doAll(dissolveArray, PreviewCage.prototype.undoDissolveVertex);
    }
 
@@ -256,41 +268,6 @@ class VertexSelectCommand extends EditCommand {
    undo() {
       this.doIt();   // selectVertex, flip/flop, so
    }  
-}
-
-class VertexDissolveCommand extends EditCommand {
-   constructor(madsor) {
-      super();
-      this.madsor = madsor;
-   }
-
-   doIt() {
-      // dissolve, guaranteed dissolveCount > 0
-      this.dissolve = this.madsor.dissolve();
-   }
-
-   undo() {
-      this.madsor.undoDissolve(this.dissolve);
-   }
-}
-
-class VertexCollapseCommand extends EditCommand {
-   constructor(madsor) {
-      super();
-      this.madsor = madsor;
-   }
-
-   doIt() {
-      // collapse, is just like dissolve, but switch to facemode
-      this.dissolve = this.madsor.dissolve();
-      View.restoreFaceMode(this.dissolve);
-   }
-
-   undo(current) {
-      current.resetSelection();
-      View.restoreVertexMode();
-      this.madsor.undoDissolve(this.dissolve);
-   }
 }
 
 
