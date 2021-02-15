@@ -26,8 +26,8 @@ class FaceMadsor extends Madsor {
                geometryStatus('Selected Face not dissolveable');
             }
          }, this, 'Backspace');
-      UI.bindMenuItem(action.faceCollapse.name, function(ev) {
-            const command = new CollapseFaceCommand(self);
+      UI.bindMenuItem(action.faceCollapse.name, (ev)=>{
+            const command = new GenericEditCommand(this, this.collapse, null, this.undoCollapse, null);
             command.doIt();
             View.undoQueue(command);
          });
@@ -182,10 +182,16 @@ class FaceMadsor extends Madsor {
 
    // face collapse 
    collapse() {
-      return this.snapshotSelected(PreviewCage.prototype.collapseSelectedFace);
+      const ret = this.snapshotSelected(PreviewCage.prototype.collapseSelectedFace);
+      if (ret.length > 0) {
+         View.restoreVertexMode(ret);
+      }
+      return ret;
    }
    undoCollapse(collapseArray) {
+      View.currentMode().resetSelection();
       this.doAll(collapseArray, PreviewCage.prototype.undoCollapseFace);
+      View.restoreFaceMode(collapseArray);
    }
 
    // intrude, 
@@ -368,31 +374,6 @@ class FaceSelectCommand extends EditCommand {
    undo() {
       this.doIt();   // selectEdge, flip/flop, so
    }
-}
-
-
-class CollapseFaceCommand extends EditCommand {
-   constructor(madsor) {
-      super();
-      this.madsor = madsor;
-   }
-
-   doIt() {
-      const collapse = this.madsor.collapse();
-      if (collapse.length > 0) {
-         this.collapse = collapse;
-         View.restoreVertexMode(this.collapse);
-         return true;
-      } else {
-         return false;
-      }
-   }
-
-   undo() {
-      View.currentMode().resetSelection();
-      this.madsor.undoCollapse(this.collapse);
-      View.restoreFaceMode(this.collapse);
-   }   
 }
 
 
