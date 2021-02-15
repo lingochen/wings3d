@@ -18,8 +18,8 @@ class FaceMadsor extends Madsor {
    constructor() {
       super('Face');
       var self = this;
-      UI.bindMenuItemMode(action.faceDissolve.name, function(ev) {
-            const command = new DissolveFaceCommand(self);
+      UI.bindMenuItemMode(action.faceDissolve.name, (ev)=> {
+            const command = new GenericEditCommand(this, this.dissolve, null, this.undoDissolve, null);
             if (command.doIt()) {
                View.undoQueue(command);
             } else {
@@ -103,7 +103,6 @@ class FaceMadsor extends Madsor {
          }
         });
       UI.bindMenuItem(action.faceMirror.name, (ev) => {
-         //const command = new MirrorFaceCommand(this);
          const command = new GenericEditCommand(this, this.mirror, null, this.undoMirror, null);
          command.doIt();
          View.undoQueue(command);
@@ -372,27 +371,6 @@ class FaceSelectCommand extends EditCommand {
 }
 
 
-class DissolveFaceCommand extends EditCommand {
-   constructor(madsor) {
-      super();
-      this.madsor = madsor;
-   }
-
-   doIt() {
-      const dissolve = this.madsor.dissolve();
-      if (dissolve.length > 0) {
-         this.dissolve = dissolve;
-         return true;
-      } else {
-         return false;
-      }
-   }
-
-   undo() {
-      this.madsor.undoDissolve(this.dissolve);
-   }
-}
-
 class CollapseFaceCommand extends EditCommand {
    constructor(madsor) {
       super();
@@ -563,22 +541,6 @@ class PutOnCommand extends EditSelectHandler {
    undo() {
       this.preview.restoreMoveSelection(this.snapshot);
       this.preview.updatePosition(this.snapshot);
-   }
-}
-
-
-class MirrorFaceCommand extends EditCommand {
-   constructor(madsor) {
-      super();
-      this.madsor = madsor;
-   }
-
-   doIt() {
-      this.mirror = this.madsor.mirror();
-   }
-
-   undo() {
-      this.madsor.undoMirror(this.mirror);
    }
 }
 
