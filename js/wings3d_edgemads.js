@@ -45,17 +45,17 @@ class EdgeMadsor extends Madsor {
             self.cutAndConnect();
          });
       // Dissolve
-      UI.bindMenuItemMode(action.edgeDissolve.name, function(ev) {
-            const dissolve = self.dissolve();
-            if (dissolve.length > 0) {
-               View.undoQueue(new DissolveEdgeCommand(self, dissolve));
+      UI.bindMenuItemMode(action.edgeDissolve.name, (ev)=> {
+            const dissolve = new GenericEditCommand(this, this.dissolve, null, this.reinsertDissolve, null);
+            if (dissolve.doIt()) {
+               View.undoQueue(dissolve);
             } else {
                // should not happened.
             }
          }, this, 'Backspace');
       // Collapse
-      UI.bindMenuItem(action.edgeCollapse.name, function(ev) {
-            const command = new CollapseEdgeCommand(self);
+      UI.bindMenuItem(action.edgeCollapse.name, (ev)=> {
+            const command = new GenericEditCommand(this, this.collapse, null, this.undoCollapse, null);
             if (command.doIt()) {
                View.undoQueue(command);
             } else {
@@ -294,10 +294,16 @@ class EdgeMadsor extends Madsor {
 
    // collapse edge
    collapse() {
-      return this.snapshotSelected(PreviewCage.prototype.collapseSelectedEdge);
+      const ret = this.snapshotSelected(PreviewCage.prototype.collapseSelectedEdge);
+      if (ret.length > 0) {
+         View.restoreVertexMode(ret);
+      }
+      return ret;
    }
 
-   restoreEdge(collapseEdgesArray) {
+   undoCollapse(collapseEdgesArray) {
+      View.currentMode().resetSelection();
+      View.restoreEdgeMode();
       this.doAll(collapseEdgesArray, PreviewCage.prototype.restoreCollapseEdge);
    }
 
@@ -477,47 +483,6 @@ class CutEdgeCommand extends EditCommand {
    }
 }
 
-
-class DissolveEdgeCommand extends EditCommand {
-   constructor(madsor, dissolveEdges) {
-      super();
-      this.madsor = madsor;
-      this.dissolveEdges = dissolveEdges;
-   }
-
-   doIt() {
-      this.madsor.dissolve(); // return data should be the same as previous one
-   }
-
-   undo() {
-      this.madsor.reinsertDissolve(this.dissolveEdges);
-   }
-}
-
-
-class CollapseEdgeCommand extends EditCommand {
-   constructor(madsor) {
-      super();
-      this.madsor = madsor;
-   }
-
-   doIt() {
-      const collapse = this.madsor.collapse();
-      if (collapse.length > 0) {
-         this.collapse = collapse;
-         View.restoreVertexMode(this.collapse);
-         return true;
-      } else {
-         return false;
-      }
-   }
-
-   undo() {
-      View.currentMode().resetSelection();
-      View.restoreEdgeMode();
-      this.madsor.restoreEdge(this.collapse);
-   }
-}
 
 class EdgeLoopCommand extends EditCommand {
    constructor(madsor, nth) {
