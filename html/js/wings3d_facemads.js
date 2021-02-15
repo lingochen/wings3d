@@ -103,7 +103,8 @@ class FaceMadsor extends Madsor {
          }
         });
       UI.bindMenuItem(action.faceMirror.name, (ev) => {
-         const command = new MirrorFaceCommand(this);
+         //const command = new MirrorFaceCommand(this);
+         const command = new GenericEditCommand(this, this.mirror, null, this.undoMirror, null);
          command.doIt();
          View.undoQueue(command);
        });
