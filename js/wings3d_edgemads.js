@@ -24,7 +24,10 @@ class EdgeMadsor extends Madsor {
          const name = numberOfSegments.name;
          const count = name.substring('cutLine'.length);
          UI.bindMenuItem(name, function(ev) {
-               self.cutEdge(count);
+               const cmd = new GenericEditCommand(self, self.cut, [count], self.undoCut, [self.snapshotSelection()]);
+               if (cmd.doIt()) {
+                  View.undoQueue(cmd);
+               } else {/* impossible condition*/}
             });
       }
       // cutEdge Dialog, show form when click
@@ -35,14 +38,20 @@ class EdgeMadsor extends Madsor {
                if (data) {
                   const number = parseInt(data.value, 10);
                   if ((number != NaN) && (number > 0) && (number < 100)) { // sane input
-                     self.cutEdge(number);
+                     const cmd = new GenericEditCommand(self, self.cut, [number], self.undoCut, [self.snapshotSelection()]);
+                     if (cmd.doIt()) {
+                        View.undoQueue(cmd);
+                     } else {/* impossible condition*/}
                   }
                }
             });
         });
       // cutAndConnect
-      UI.bindMenuItem(action.cutAndConnect.name, function(ev) {
-            self.cutAndConnect();
+      UI.bindMenuItem(action.cutAndConnect.name, (ev)=>{
+            const cutEdge = new GenericEditCommand(this, this.cut, [2], this.undoCut, [this.snapshotSelection()]);
+            cutEdge.doIt();
+            const vertexMadsor = View.currentMode();   // assurely it vertexMode
+            vertexMadsor.andConnectVertex(cutEdge);
          });
       // Dissolve
       UI.bindMenuItemMode(action.edgeDissolve.name, (ev)=> {
@@ -247,21 +256,14 @@ class EdgeMadsor extends Madsor {
       this.doAll(contourEdges, PreviewCage.prototype.undoExtrudeEdge);
    }
 
-   cutEdge(numberOfSegments) {
-      const cutEdge = new CutEdgeCommand(this, numberOfSegments);
-      View.undoQueue(cutEdge);
-      cutEdge.doIt();
-   }
-
-   cutAndConnect() {
-      const cutEdge = new CutEdgeCommand(this, 2);
-      cutEdge.doIt();
-      const vertexMadsor = View.currentMode();   // assurely it vertexMode
-      vertexMadsor.andConnectVertex(cutEdge);
-   }
-
    cut(numberOfSegments) {
-      return this.snapshotSelected(PreviewCage.prototype.cutEdge, numberOfSegments);
+      const snapshots = this.snapshotSelected(PreviewCage.prototype.cutEdge, numberOfSegments);
+      View.restoreVertexMode(snapshots);
+      return snapshots;
+   }
+   undoCut(snapshots, selectedEdges) {
+      this.collapseEdge(snapshots);
+      View.restoreEdgeMode(selectedEdges);
    }
 
    closeCrack() {
@@ -462,30 +464,7 @@ class EdgeSelectCommand extends EditCommand {
 }
 
 
-//class CutEdgeMoveCommand extends MouseMoveHandler {
-//}
-
-
-class CutEdgeCommand extends EditCommand {
-   constructor(madsor, numberOfSegments) {
-      super();
-      this.madsor = madsor;
-      this.numberOfSegments = numberOfSegments;
-      this.selectedEdges = madsor.snapshotSelection();
-   }
-
-   doIt() {
-      const snapshots = this.madsor.cut(this.numberOfSegments);
-      View.restoreVertexMode(snapshots);    // abusing the api?
-      this.snapshots = snapshots;
-   }
-
-   undo() {
-      // restoreToEdgeMode
-      this.madsor.collapseEdge(this.snapshots);
-      View.restoreEdgeMode(this.selectedEdges);
-   }
-}
+// loop, and ring
 
 
 class EdgeLoopCommand extends EditCommand {
