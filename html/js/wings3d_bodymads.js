@@ -65,9 +65,11 @@ class BodyMadsor extends Madsor {
          }
        });
       UI.bindMenuItem(action.bodySeparate.name, (ev)=> {
-         const command = new SeparateBodyCommand(this);
+         const command = new BodyEditCommand(this, this.separate, null, this.undoSeparate, null);
          if (command.doIt()) {   // check if separable.
             View.undoQueue(command);
+         } else {
+            geometryStatus("No separation");
          }
        });
       const flip = [action.bodyFlipX, action.bodyFlipY, action.bodyFlipZ];
@@ -215,14 +217,20 @@ class BodyMadsor extends Madsor {
             View.addToWorld(preview);     // has to addToWorld after separate all selection, or we will mess up the iteration.
          }
       }
-      return selection;
+      if (selection.length > 0) {
+         return selection;
+      } else {
+         return null;
+      }
    }
    undoSeparate(separateSelection) {
       for (let separate of separateSelection) {
          for (let preview of separate.snapshot) {
             View.removeFromWorld(preview);
+            preview.dead();
          }
          // addback the original one
+         separate.preview.revive();
          View.addToWorld(separate.preview);
       }
    }
@@ -542,24 +550,6 @@ class RenameBodyCommand extends EditCommand {
       }  
    }
 }
-
-
-class SeparateBodyCommand extends EditCommand {
-   constructor(madsor) {
-      super();
-      this.madsor = madsor;
-   }
-
-   doIt() {
-      this.separate = this.madsor.separate();
-      return (this.separate.length > 0);
-   }
-
-   undo() {
-      this.madsor.undoSeparate(this.separate);
-      this.separate = null; // release memory
-   } 
-};
 
 
 class FlipBodyAxis extends EditCommand {

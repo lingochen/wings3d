@@ -472,7 +472,7 @@ PreviewCage.prototype.revive = function() {
 
 PreviewCage.prototype.separate = function() {
    const separatePreview = [];
-   const separateGeometry = this.geometry.separateOut();
+   const separateGeometry = this.geometry.separateOut(this);
    if (separateGeometry) {
       let sep = 0;
       for (let geometry of separateGeometry) {
