@@ -501,6 +501,8 @@ const action = {
    facePlaneCutZ: ()=> {notImplemented(this);},
    faceMaterialMenu: ()=> {notImplemented(this);},
    faceColor: ()=> {notImplemented(this);},
+   faceExtractMenu: ()=> {notImplemented(this);},
+   faceExtractNormal: ()=> {notImplemented(this);},
    // vertex
    vertexConnect: () => {notImplemented(this);},
    vertexDissolve: () => {notImplemented(this);},
