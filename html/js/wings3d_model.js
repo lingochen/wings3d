@@ -446,9 +446,9 @@ PreviewCage.duplicate = function(originalCage) {
 
 PreviewCage.prototype.merge = function(mergeSelection) {
    // copy geometry.
-   this.geometry.merge(function* (){for (let cage of mergeSelection) {yield cage.geometry;}});
+   this.geometry.merge(this, function* (){yield* mergeSelection;});
    // selectBody
-   this.selectBody();
+   //this.selectBody();
    //this.selectedSet = new Set(function* (){for (let cage of mergeSelection) {yield* cage.selectedSet;}}());
    // clear out all ?
 /*   for (let cage of mergeSelection) {
@@ -480,15 +480,13 @@ PreviewCage.prototype.separate = function() {
 
 
 PreviewCage.prototype.detachFace = function(detachFaces, number) {
-   const detach = this.geometry.detachFace(detachFaces);
+   const detach = this.geometry.detachFace(this, detachFaces);
    const separate = new PreviewCage(this.bench);   // should only happened once for each partition.
-   separate.geometry.faces = detachFaces;
-   separate.geometry.edges = detach.edges;
-   separate.geometry.vertices = detach.vertices;
+   separate.geometry._merge(separate, detachFaces, detach.edges, detach.vertices);
    separate.name = this.name + "_cut" + number.toString();
 
    return separate;
-};
+}; 
 
 
 PreviewCage.prototype.setVisible = function(on) {
@@ -3724,9 +3722,13 @@ PreviewCage.prototype.loopCut = function() {
          for (let edgeLoop of contours) {
             if ((edgeLoop.length > 0) && !fillFaces.has(edgeLoop[0].outer.face)) { // not already separated.
                this.geometry.liftContour(edgeLoop);
-               const fillFace = this.geometry._createPolygon(edgeLoop[0].outer, edgeLoop.size); // fill hole.
+               let fillFace = this.geometry._createPolygon(edgeLoop[0].outer, edgeLoop.size); // fill outer hole
+               fillFace._assignFace(); 
                newFills.push(fillFace);
                separate = this.detachFace(partition, i);
+               fillFace = separate.geometry._createPolygon(edgeLoop[0].inner.pair, edgeLoop.size); // fill inner hole
+               fillFace._assignFace(); 
+               separate.selectedSet.add(fillFace);
                ret.contourLoops.push( edgeLoop );
             }
          }
@@ -3772,6 +3774,7 @@ PreviewCage.prototype.undoLoopCut = function(undo) {
    for (let wEdge of undo.selectedSet) {
       this.selectEdge(wEdge.left);
    }
+   this.updateAffected();
 };
 
 
