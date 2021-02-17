@@ -2,7 +2,7 @@
 // bodymadsor. 
 //
 
-import {Madsor, DragSelect, TweakMove, MouseMoveAlongAxis, MoveFreePositionHandler, ToggleModeCommand, GenericEditCommand} from './wings3d_mads.js';
+import {Madsor, DragSelect, TweakMove, MouseMoveAlongAxis, MoveFreePositionHandler, ToggleModeCommand, BodyEditCommand} from './wings3d_mads.js';
 import {FaceMadsor} from './wings3d_facemads.js';   // for switching
 import {EdgeMadsor} from './wings3d_edgemads.js';
 import {VertexMadsor} from './wings3d_vertexmads.js';
@@ -38,13 +38,21 @@ class BodyMadsor extends Madsor {
       const duplicateMove = [action.bodyDuplicateMoveX, action.bodyDuplicateMoveY, action.bodyDuplicateMoveZ];
       // movement for (x, y, z)
       for (let axis=0; axis < 3; ++axis) {
-         UI.bindMenuItem(duplicateMove[axis].name, function(ev) { //action.bodyDulipcateMoveX(Y,Z)
-               View.attachHandlerMouseMove(new DuplicateMouseMoveAlongAxis(self, axis, self.getSelected()));
-            });
+         UI.bindMenuItem(duplicateMove[axis].name, (ev)=> { //action.bodyDulipcateMoveX(Y,Z)
+            const selection = [this.getSelected()];
+            const cmd = new BodyEditCommand(this, this.duplicate, selection, this.undoDuplicate, selection);
+            const move = new MouseMoveAlongAxis(this, axis, cmd);
+            move.doIt();
+            View.attachHandlerMouseMove(move);
+          });
       }
-      UI.bindMenuItem(action.bodyDuplicateMoveFree.name, function(ev) {
-            View.attachHandlerMouseMove(new DuplicateMoveFreePositionHandler(self, self.getSelected()));
-         });
+      UI.bindMenuItem(action.bodyDuplicateMoveFree.name, (ev)=> {
+         const selection = [this.getSelected()];
+         const cmd = new BodyEditCommand(this, this.duplicate, selection, this.undoDuplicate, selection);
+         const move = new MoveFreePositionHandler(this, cmd);
+         move.doIt();
+         View.attachHandlerMouseMove(move);
+       });
       UI.bindMenuItem(action.bodyInvert.name, (ev)=> {
          const command = new InvertBodyCommand(this);
          command.doIt();
@@ -116,6 +124,28 @@ class BodyMadsor extends Madsor {
 
    snapshotTransformGroup() {
       return this.snapshotSelected(PreviewCage.prototype.snapshotTransformBodyGroup);
+   }
+
+   duplicate(cageSelection) {
+      const duplicateSelections = [];
+      for (let cage of cageSelection) {
+         let dup = PreviewCage.duplicate(cage);
+         View.addToWorld(dup);
+         dup.selectBody();
+         duplicateSelections.push( dup );
+         cage.selectBody();   // deselect original.
+      }
+      return duplicateSelections;
+   }
+
+   undoDuplicate(duplicateSelection, cageSelection) {
+      for (let cage of duplicateSelection) {
+         cage.selectBody();   // deselect
+         View.removeFromWorld(cage);
+      }
+      for (let cage of cageSelection) {
+         cage.selectBody();   // reselect
+      }
    }
 
    combine(cageSelection) {
@@ -431,6 +461,7 @@ class BodySelectCommand extends EditCommand {
 
 }
 
+
 class DeleteBodyCommand extends EditCommand {
    constructor(previewCages) {
       super();
@@ -480,79 +511,6 @@ class RenameBodyCommand extends EditCommand {
    }
 }
 
-
-class DuplicateBodyCommand extends EditCommand {
-   constructor(originalCages) {
-      super();
-      this.originalCages = originalCages;
-      this.duplicateCages = [];
-      for (let cage of originalCages) {
-         let duplicate = PreviewCage.duplicate(cage);
-         this.duplicateCages.push( duplicate );
-      }
-   }
-
-   _toggleOriginalSelected() {
-      for (let cage of this.originalCages) {
-         cage.selectBody();
-      }
-   }
-
-   doIt() {
-      for (let cage of this.duplicateCages) {
-         View.addToWorld(cage);
-         cage.selectBody();
-      }
-      this._toggleOriginalSelected();
-   }
-
-   undo() {
-      for (let cage of this.duplicateCages) {
-         cage.selectBody();                  // deselection before out
-         View.removeFromWorld(cage);
-      }
-      this._toggleOriginalSelected();        // reselected the original
-   }
-}
-
-class DuplicateMouseMoveAlongAxis extends MouseMoveAlongAxis {
-   constructor(madsor, axis, originalCages) {
-      const duplicateBodyCommand = new DuplicateBodyCommand(originalCages);
-      duplicateBodyCommand.doIt();
-      super(madsor, axis);
-      this.duplicateBodyCommand = duplicateBodyCommand;
-   }
-
-   doIt() {
-      this.duplicateBodyCommand.doIt();
-      super.doIt();     // movement.
-   }
-
-   undo() {
-      super.undo();
-      this.duplicateBodyCommand.undo();
-   }
-}
-
-class DuplicateMoveFreePositionHandler extends MoveFreePositionHandler {
-   constructor(madsor, originalCages) {
-      const duplicateBodyCommand = new DuplicateBodyCommand(originalCages);
-      duplicateBodyCommand.doIt();
-      super(madsor);
-      this.duplicateBodyCommand = duplicateBodyCommand;
-   }
-
-   doIt() {
-      this.duplicateBodyCommand.doIt();
-      super.doIt();     // movement.
-      return true;
-   }
-
-   undo() {
-      super.undo();
-      this.duplicateBodyCommand.undo();
-   }
-}
 
 class InvertBodyCommand extends EditCommand {
    constructor(madsor) {
