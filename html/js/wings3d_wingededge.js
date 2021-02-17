@@ -3704,6 +3704,7 @@ WingedTopology.prototype.insertFan = function(polygon, fanLists) {
 WingedTopology.prototype.invert = function() {
    const reverse = [];
    for (let polygon of this.faces) {
+      this.addAffectedFace(polygon);
       for (let hEdge of polygon.hEdges()) {
          reverse.push( {hEdge: hEdge.next.pair, next: hEdge.pair} );
       }
