@@ -1616,26 +1616,29 @@ WingedTopology.prototype.free = function() {
 };
 
 // merge - should we check alloc is the same?
-WingedTopology.prototype.merge = function(geometryGenerator) {
-   const self = this;
-   this.vertices = new Set(function* () { yield* self.vertices; 
-                                          for (let geometry of geometryGenerator()) {
-                                             for (let vertex of geometry.vertices) {
-                                                vertex.setGroup(self.guid);
-                                                yield vertex;
-                                             }
-                                          }
-                                        }());
-   this.edges = new Set(function* () { yield* self.edges; 
-                                       for (let geometry of geometryGenerator()) {
-                                          for (let wEdge of geometry.edges) {
-                                             wEdge.setGroup(self.guid);
-                                             yield wEdge;
-                                          }
-                                       }
-                                     }());
-   this.faces = new Set(function* () {yield* self.faces; for (let geometry of geometryGenerator()) {yield* geometry.faces;}}());
+WingedTopology.prototype.merge = function(thisCage, cageGenerator) {
+   for (let cage of cageGenerator()) {
+      for (let polygon of cage.geometry.faces) {
+         cage.removeFace(polygon);
+      }
+      this._merge(thisCage, cage.geometry.faces, cage.geometry.edges, cage.geometry.vertices);
+   }
 };
+
+WingedTopology.prototype._merge = function(thisCage, faces, edges, vertices) {
+   for (let vert of vertices) {
+      vert.setGroup(this.guid);
+      this.vertices.add(vert);
+   }
+   for (let wEdge of edges) {
+      wEdge.setGroup(this.guid);
+      this.edges.add(wEdge);
+   }
+   for (let polygon of faces) {
+      thisCage.insertFace(polygon);
+      this.faces.add(polygon);
+   }
+}
 
 // separate - separate out non-connected geometry.
 WingedTopology.prototype.separateOut = function() {
@@ -1684,10 +1687,11 @@ WingedTopology.prototype.separateOut = function() {
    }
 };
 
-WingedTopology.prototype.detachFace = function(faceSet) {
+WingedTopology.prototype.detachFace = function(thisCage, faceSet) {
    const vertices = new Set;
    const edges = new Set;
    for (let polygon of faceSet) {
+      thisCage.removeFace(polygon);
       this.faces.delete(polygon);
       for (let hEdge of polygon.hEdges()) {
          vertices.add(hEdge.origin);
@@ -2715,14 +2719,15 @@ WingedTopology.prototype.weldContour = function(edgeLoop) {
             current = prev.next;
          } while (current !== end);
          prev.next = edge.outer;
+         edge.outer.origin.reorient(); // make sure smallest outEdge
       }
       edge.outer.face = edge.inner.face;
+      this.addAffectedFace(edge.outer.face);
       if (edge.inner.face.halfEdge === edge.inner) {
          edge.outer.face.halfEdge = edge.outer;
       }
 
       edgePrev = edge;
-      this.addAffectedFace(edge.outer.face);
    }
 
    // now we can safely release memory
@@ -2731,7 +2736,6 @@ WingedTopology.prototype.weldContour = function(edgeLoop) {
       // remove vertex, and edge.
       this._freeVertex(edge.inner.origin);
       this._freeEdge(edge.inner);
-
    }
 };
 
