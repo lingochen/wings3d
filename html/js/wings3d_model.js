@@ -3752,6 +3752,7 @@ PreviewCage.prototype.loopCut = function() {
          ret.separateCages.push( separate );
       }
    }
+   this.updateAffected();
 
    return ret;
 };
