@@ -20,7 +20,7 @@ class BodyMadsor extends Madsor {
       super('Body');
       const self = this;
       UI.bindMenuItemMode(action.bodyDelete.name, function(ev) {
-            const command = new DeleteBodyCommand(self.getSelected());
+            const command = self.deleteCommand(self.getSelected());
             View.undoQueue( command );
             command.doIt(); // delete current selected.
          }, this, 'Backspace');
@@ -122,6 +122,25 @@ class BodyMadsor extends Madsor {
 
    snapshotTransformGroup() {
       return this.snapshotSelected(PreviewCage.prototype.snapshotTransformBodyGroup);
+   }
+
+   deleteCommand(selection) {
+      return new BodyEditCommand(this, this.delete, [selection], this.undoDelete, null);
+   }
+
+   delete(selection) {
+      const undoCage = [];
+      for (let previewCage of selection) {
+         undoCage.push( [previewCage, previewCage.parent] );
+         View.removeFromWorld(previewCage);
+      }
+      return undoCage;
+   }
+
+   undoDelete(restoreCage) {
+      for (let [previewCage, parent] of restoreCage) {
+         View.addToWorld(previewCage, parent);
+      }
    }
 
    duplicateCommand(selection) {
@@ -492,27 +511,6 @@ class BodyEditCommand extends EditCommand {
 }
 
 
-class DeleteBodyCommand extends EditCommand {
-   constructor(previewCages) {
-      super();
-      this.previewCages = previewCages;
-   }
-
-   doIt() {
-      this.undoCage = [];
-      for (let previewCage of this.previewCages) {
-         this.undoCage.push( [previewCage, previewCage.parent] );
-         View.removeFromWorld(previewCage);
-      }
-   }
-
-   undo() {
-      for (let [previewCage, parent] of this.undoCage) {
-         View.addToWorld(previewCage, parent);
-      }
-   }
-}
-
 class RenameBodyCommand extends EditCommand {
    constructor(previewCages, data) {
       super();
@@ -603,6 +601,5 @@ class FlipBodyAxis extends EditCommand {
 
 export {
    BodyMadsor,
-   DeleteBodyCommand,
    RenameBodyCommand,
 }
