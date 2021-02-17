@@ -2008,6 +2008,12 @@ PreviewCage.prototype.edgeRing = function(nth) {
    return ret;
 };
 
+PreviewCage.prototype.undoLoopOrRing = function(snapshot) {
+   for (let hEdge of snapshot) {
+      this.selectEdge(hEdge); // deselect.
+   }
+}
+
 
 //-----------------------------------------------------------------------------------------------------
 // move selection functions

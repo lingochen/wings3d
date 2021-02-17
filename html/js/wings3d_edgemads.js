@@ -83,8 +83,8 @@ class EdgeMadsor extends Madsor {
       for (let [numberOfSegments, hotkey] of [[action.edgeLoop1,"l"], [action.edgeLoop2,undefined], [action.edgeLoop3,undefined]]) {
          const name = numberOfSegments.name;
          const count = name.substring('edgeLoop'.length);        
-         UI.bindMenuItem(name, function(ev) {
-            const command = new EdgeLoopCommand(self, count);
+         UI.bindMenuItem(name,(ev)=> {
+            const command = new GenericEditCommand(this, this.edgeLoop, [count], this.undoLoopOrRing, null);
             if (command.doIt()) {
                View.undoQueue(command);
             } else { // should not happened, make some noise
@@ -95,11 +95,11 @@ class EdgeMadsor extends Madsor {
       // EdgeLoop Nth., show form when click
       UI.bindMenuItem(action.edgeLoopN.name, function(ev) {
          UI.runDialog('#cutLineDialog', ev, function(form) {
-            const data = form.querySelector('input=[name="Segments"');
+            const data = form.querySelector('input[name="Segments"]');
             if (data) {
                const number = parseInt(data.value, 10);
                if ((number != NaN) && (number > 0) && (number < 100)) { // sane input
-                  const command = new EdgeLoopCommand(self, number);
+                  const command = new GenericEditCommand(self, self.edgeLoop, [number], self.undoLoopOrRing, null);
                   if (command.doIt()) {
                      View.undoQueue(command);
                   } else { // should not happened, make some noise
@@ -112,8 +112,8 @@ class EdgeMadsor extends Madsor {
       for (let [numberOfSegments, hotkey] of [[action.edgeRing1,"g"], [action.edgeRing2,undefined], [action.edgeRing3,undefined]]) {
          const name = numberOfSegments.name;
          const count = name.substring('edgeRing'.length);
-         UI.bindMenuItem(name, function(ev) {
-            const command = new EdgeRingCommand(self, count);
+         UI.bindMenuItem(name, (ev)=> {
+            const command = new GenericEditCommand(this, this.edgeRing, [count], this.undoLoopOrRing, null);
             if (command.doIt()) {
                View.undoQueue(command);
             } else { // should not happened, make some noise
@@ -124,11 +124,11 @@ class EdgeMadsor extends Madsor {
       // EdgeRing Nth
       UI.bindMenuItem(action.edgeRingN.name, function(ev) {
          UI.runDialog('#cutLineDialog', ev, function(form) {
-            const data = form.querySelector('input[name="Segments"');
+            const data = form.querySelector('input[name="Segments"]');
             if (data) {
                const number = parseInt(data.value, 10);
                if ((number != NaN) && (number > 0) && (number < 100)) { // sane input
-                  const command = new EdgeRingCommand(self, number);
+                  const command = new GenericEditCommand(self, self.edgeRing, [number], self.undoLoopOrRing, null);
                   if (command.doIt()) {
                      View.undoQueue(command);
                   } else { // should not happened, make some noise
@@ -286,6 +286,10 @@ class EdgeMadsor extends Madsor {
       return this.snapshotSelected(PreviewCage.prototype.edgeRing, nth);
    }
 
+   undoLoopOrRing(snapshots) {
+      this.doAll(snapshots, PreviewCage.prototype.undoLoopOrRing);
+   }
+
    collapseEdge(snapshots) {  // undo of splitEdge.
       this.doAll(snapshots, PreviewCage.prototype.collapseSplitOrBevelEdge);
    }
@@ -404,6 +408,11 @@ class EdgeMadsor extends Madsor {
    }
 }
 
+
+
+// drag, 
+// tweak, 
+// select handler
 class DragEdgeSelect extends DragSelect {
    constructor(madsor, cage, halfEdge, onOff) {
       super(madsor, cage, halfEdge, onOff);
@@ -463,47 +472,6 @@ class EdgeSelectCommand extends EditCommand {
    }
 }
 
-
-// loop, and ring
-
-
-class EdgeLoopCommand extends EditCommand {
-   constructor(madsor, nth) {
-      super();
-      this.madsor = madsor;
-      this.nth = nth;
-      this.selectedEdges = madsor.snapshotSelection();
-   }
-
-   doIt() {
-      const loopSelection = this.madsor.edgeLoop(this.nth);
-      return (loopSelection.length > 0);
-   }
-
-   undo() {
-      this.madsor.resetSelection();
-      this.madsor.restoreSelection(this.selectedEdges);
-   }
-}
-
-class EdgeRingCommand extends EditCommand {
-   constructor(madsor, nth) {
-      super();
-      this.madsor = madsor;
-      this.nth = nth;
-      this.selectedEdges = madsor.snapshotSelection();
-   }
-
-   doIt() {
-      const loopSelection = this.madsor.edgeRing(this.nth);
-      return (loopSelection.length > 0);
-   }
-
-   undo() {
-      this.madsor.resetSelection();
-      this.madsor.restoreSelection(this.selectedEdges);
-   } 
-}
 
 
 
