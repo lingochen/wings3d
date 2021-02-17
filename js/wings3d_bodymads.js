@@ -57,9 +57,11 @@ class BodyMadsor extends Madsor {
          View.undoQueue(command);
         });
       UI.bindMenuItem(action.bodyCombine.name, (ev)=> {
-         const command = new CombineBodyCommand(this);
+         const command = new BodyEditCommand(this, this.combine, null, this.undoCombine, null);//new CombineBodyCommand(this);
          if (command.doIt()) {   // do we really have 2 + objects?
             View.undoQueue(command);
+         } else {
+            geometryStatus("No Combine");
          }
        });
       UI.bindMenuItem(action.bodySeparate.name, (ev)=> {
@@ -189,7 +191,9 @@ class BodyMadsor extends Madsor {
    undoCombine(combine) {
       if (combine) {
          View.removeFromWorld(combine.combine);
+         combine.combine.dead(); // remove polygons from combine.
          for (let cage of combine.oldSelection) {
+            cage.revive();
             View.addToWorld(cage);  // restore oldCage
          }
       }
@@ -538,28 +542,6 @@ class RenameBodyCommand extends EditCommand {
       }  
    }
 }
-
-
-class CombineBodyCommand extends EditCommand {
-   constructor(madsor) {
-      super();
-      this.madsor = madsor;
-   }
-
-   doIt() {
-      this.combine = this.madsor.combine();
-      if (this.combine) {
-         return true;
-      } else {
-         return false;
-      }
-   }
-
-   undo() {
-      this.madsor.undoCombine(this.combine);
-      this.combine = null; // release memory
-   } 
-};
 
 
 class SeparateBodyCommand extends EditCommand {
