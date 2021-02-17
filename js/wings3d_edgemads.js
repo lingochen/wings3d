@@ -130,7 +130,7 @@ class EdgeMadsor extends Madsor {
        });
        // loopCut
        UI.bindMenuItem(action.edgeLoopCut.name, (ev) => {
-         const command = new LoopCutCommand(this);
+         const command = new GenericEditCommand(this, this.loopCut, null, this.undoLoopCut, null);
          if (command.doIt()) {
             View.undoQueue(command);
          } else { // geometry status. no LoopCut available.
@@ -526,24 +526,6 @@ class EdgeRingCommand extends EditCommand {
    } 
 }
 
-class LoopCutCommand extends EditCommand {
-   constructor(madsor) {
-      super();
-      this.madsor = madsor;
-   }
-
-   doIt() {
-      this.loopCut = this.madsor.loopCut();
-      return (this.loopCut.length > 0);
-   }
-
-   undo() {
-      if (this.loopCut.length > 0) {
-
-         this.madsor.undoLoopCut(this.loopCut);
-      }
-   }
-}
 
 
 export {
