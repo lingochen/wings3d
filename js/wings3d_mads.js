@@ -695,7 +695,7 @@ class MoveableHandler extends MovePositionHandler { // temp refactoring class
    }
 
    snapshotPosition() {
-      if (this.cmd) {
+      if (this.cmd && this.cmd.snapshotPosition) {
          return this.cmd.snapshotPosition();
       } else {
          return this.madsor.snapshotPosition();
@@ -1099,7 +1099,7 @@ class PlaneCutHandler extends EditSelectHandler {
 }
 
 
-class GenericEditCommand extends EditCommand {
+class BodyEditCommand extends EditCommand {
    constructor(madsor, doCmd, doParams, undoCmd, undoParams) {
       super();
       this.madsor = madsor;
@@ -1121,11 +1121,19 @@ class GenericEditCommand extends EditCommand {
          this.madsor.restoreSelectionPosition(this.snapshots);
       }
    }
+}
+
+
+class GenericEditCommand extends BodyEditCommand {
+   constructor(madsor, doCmd, doParams, undoCmd, undoParams) {
+      super(madsor, doCmd, doParams, undoCmd, undoParams);
+   }
 
    snapshotPosition() {
       return this.snapshots;
    }
 }
+
 
 
 class GenericEditCmd extends EditCommand {
@@ -1154,6 +1162,7 @@ export {
    Madsor,
    DragSelect,
    TweakMove,
+   BodyEditCommand,
    GenericEditCommand,
    MovePositionHandler,
    MouseMoveAlongAxis,
