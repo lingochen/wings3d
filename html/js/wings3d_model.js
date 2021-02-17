@@ -459,6 +459,17 @@ PreviewCage.prototype.merge = function(mergeSelection) {
    } */
 };
 
+
+PreviewCage.prototype.dead = function() {
+   for (let polygon of this.geometry.faces) {
+      this.removeFace(polygon);
+   }
+}
+
+PreviewCage.prototype.revive = function() {
+   this.geometry.revive(this);
+}
+
 PreviewCage.prototype.separate = function() {
    const separatePreview = [];
    const separateGeometry = this.geometry.separateOut();
