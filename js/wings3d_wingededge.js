@@ -1651,7 +1651,7 @@ WingedTopology.prototype.revive = function(thisCage) {
 }
 
 // separate - separate out non-connected geometry.
-WingedTopology.prototype.separateOut = function() {
+WingedTopology.prototype.separateOut = function(thisCage) {
    const traversed = new Set;
    const separate = [];
    let faces;
@@ -1683,6 +1683,7 @@ WingedTopology.prototype.separateOut = function() {
       // we have the face list. now rebuild vertex and edge lists.
       for (let mesh of separate) {
          for (let polygon of mesh.faces) {
+            thisCage.removeFace(polygon); // separate out of cage
             for (let hEdge of polygon.hEdges()) {
                mesh.vertices.add( hEdge.origin );
                hEdge.origin.setGroup(mesh.guid);
