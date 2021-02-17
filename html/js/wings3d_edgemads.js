@@ -199,23 +199,27 @@ class EdgeMadsor extends Madsor {
 
    loopCut() {
       const snapshots = this.snapshotSelected(PreviewCage.prototype.loopCut);
-      for (let snapshot of snapshots) {
-         for (let preview of snapshot.snapshot.separateCages) {
-            View.addToWorld(preview);
-            preview.selectBody();
+      if (snapshots.length > 0) {
+         View.restoreBodyMode();
+         for (let snapshot of snapshots) {
+            for (let preview of snapshot.snapshot.separateCages) {
+               View.addToWorld(preview);
+               preview.selectBody();
+            }
          }
       }
       return snapshots;
    }
 
    undoLoopCut(snapshots) {
-      this.doAll(snapshots, PreviewCage.prototype.undoLoopCut);
       for (let snapshot of snapshots) {   // we have to remove later because of removeFromWorld will set invisible flag on polygon.
          for (let preview of snapshot.snapshot.separateCages) {
-            //preview.selectBody();
+            preview.selectBody();
             View.removeFromWorld(preview);
          }
       }
+      View.restoreEdgeMode();
+      this.doAll(snapshots, PreviewCage.prototype.undoLoopCut);
    }
 
    bevel() {
@@ -530,17 +534,12 @@ class LoopCutCommand extends EditCommand {
 
    doIt() {
       this.loopCut = this.madsor.loopCut();
-      if (this.loopCut.length > 0) {   // change to body Mode.
-         View.restoreBodyMode();
-         return true;
-      } else {
-         return false;
-      }
+      return (this.loopCut.length > 0);
    }
 
    undo() {
       if (this.loopCut.length > 0) {
-         View.restoreEdgeMode();
+
          this.madsor.undoLoopCut(this.loopCut);
       }
    }
