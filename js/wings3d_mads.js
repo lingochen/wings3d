@@ -1099,7 +1099,7 @@ class PlaneCutHandler extends EditSelectHandler {
 }
 
 
-class BodyEditCommand extends EditCommand {
+class GenericEditCommand extends EditCommand {
    constructor(madsor, doCmd, doParams, undoCmd, undoParams) {
       super();
       this.madsor = madsor;
@@ -1120,13 +1120,6 @@ class BodyEditCommand extends EditCommand {
       } else {
          this.madsor.restoreSelectionPosition(this.snapshots);
       }
-   }
-}
-
-
-class GenericEditCommand extends BodyEditCommand {
-   constructor(madsor, doCmd, doParams, undoCmd, undoParams) {
-      super(madsor, doCmd, doParams, undoCmd, undoParams);
    }
 
    snapshotPosition() {
@@ -1162,7 +1155,6 @@ export {
    Madsor,
    DragSelect,
    TweakMove,
-   BodyEditCommand,
    GenericEditCommand,
    MovePositionHandler,
    MouseMoveAlongAxis,

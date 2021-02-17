@@ -3504,6 +3504,7 @@ PreviewCage.prototype.insetFace = function() {
 
 PreviewCage.prototype.invertBody = function() {
    this.geometry.invert();
+   this.updateAffected();
 };
 
 PreviewCage.prototype.flipBodyAxis = function(pivot, axis) {

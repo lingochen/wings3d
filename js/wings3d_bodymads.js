@@ -2,7 +2,7 @@
 // bodymadsor. 
 //
 
-import {Madsor, DragSelect, TweakMove, MouseMoveAlongAxis, MoveFreePositionHandler, ToggleModeCommand, BodyEditCommand} from './wings3d_mads.js';
+import {Madsor, DragSelect, TweakMove, MouseMoveAlongAxis, MoveFreePositionHandler, ToggleModeCommand} from './wings3d_mads.js';
 import {FaceMadsor} from './wings3d_facemads.js';   // for switching
 import {EdgeMadsor} from './wings3d_edgemads.js';
 import {VertexMadsor} from './wings3d_vertexmads.js';
@@ -39,22 +39,20 @@ class BodyMadsor extends Madsor {
       // movement for (x, y, z)
       for (let axis=0; axis < 3; ++axis) {
          UI.bindMenuItem(duplicateMove[axis].name, (ev)=> { //action.bodyDulipcateMoveX(Y,Z)
-            const selection = [this.getSelected()];
-            const cmd = new BodyEditCommand(this, this.duplicate, selection, this.undoDuplicate, selection);
+            const cmd = this.duplicateCommand(this.getSelected());
             const move = new MouseMoveAlongAxis(this, axis, cmd);
             move.doIt();
             View.attachHandlerMouseMove(move);
           });
       }
       UI.bindMenuItem(action.bodyDuplicateMoveFree.name, (ev)=> {
-         const selection = [this.getSelected()];
-         const cmd = new BodyEditCommand(this, this.duplicate, selection, this.undoDuplicate, selection);
+         const cmd = this.duplicateCommand(this.getSelected());
          const move = new MoveFreePositionHandler(this, cmd);
          move.doIt();
          View.attachHandlerMouseMove(move);
        });
       UI.bindMenuItem(action.bodyInvert.name, (ev)=> {
-         const command = new InvertBodyCommand(this);
+         const command = new BodyEditCommand(this, this.invert, null, this.invert, null);
          command.doIt();
          View.undoQueue(command);
         });
@@ -124,6 +122,10 @@ class BodyMadsor extends Madsor {
 
    snapshotTransformGroup() {
       return this.snapshotSelected(PreviewCage.prototype.snapshotTransformBodyGroup);
+   }
+
+   duplicateCommand(selection) {
+      return new BodyEditCommand(this, this.duplicate, [selection], this.undoDuplicate, [selection]);
    }
 
    duplicate(cageSelection) {
@@ -209,11 +211,13 @@ class BodyMadsor extends Madsor {
       // invert the draftBench's preview and update
       View.updateWorld();
       this.hiliteView = null; // invalidate hilite
+      return true;
    }
 
    flipAxis(snapShotPivot, axis) {
       this.doAll(snapShotPivot, PreviewCage.prototype.flipBodyAxis, axis);
       View.updateWorld();
+      return true;
    }
 
    planeCuttable(plane) {
@@ -462,6 +466,32 @@ class BodySelectCommand extends EditCommand {
 }
 
 
+class BodyEditCommand extends EditCommand {
+   constructor(madsor, doCmd, doParams, undoCmd, undoParams) {
+      super();
+      this.madsor = madsor;
+      this.doCmd = doCmd;
+      this.doParams = doParams;
+      this.undoCmd = undoCmd; 
+      this.undoParams = undoParams;
+   }
+
+   doIt(_currentMadsor) {
+      this.snapshots = this.doCmd.call(this.madsor, ...(this.doParams? this.doParams : []));
+      if (this.snapshots) {
+         return true;
+      }
+      return false;
+   }
+
+   undo(_currentMadsor) {
+      if (this.undoCmd) {
+         this.undoCmd.call(this.madsor, this.snapshots, ...(this.undoParams? this.undoParams : []) );
+      }
+   }
+}
+
+
 class DeleteBodyCommand extends EditCommand {
    constructor(previewCages) {
       super();
@@ -511,22 +541,6 @@ class RenameBodyCommand extends EditCommand {
    }
 }
 
-
-class InvertBodyCommand extends EditCommand {
-   constructor(madsor) {
-      super();
-      this.madsor = madsor;
-   }
-
-   doIt() {
-      this.madsor.invert();
-      return true;
-   }
-
-   undo() {
-      this.madsor.invert();
-   }   
-}
 
 class CombineBodyCommand extends EditCommand {
    constructor(madsor) {
@@ -590,6 +604,5 @@ class FlipBodyAxis extends EditCommand {
 export {
    BodyMadsor,
    DeleteBodyCommand,
-   DuplicateBodyCommand,
    RenameBodyCommand,
 }
