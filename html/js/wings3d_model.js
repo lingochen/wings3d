@@ -460,7 +460,7 @@ PreviewCage.prototype.merge = function(mergeSelection) {
 };
 
 
-PreviewCage.prototype.dead = function() {
+PreviewCage.prototype.extinquish = function() {
    for (let polygon of this.geometry.faces) {
       this.removeFace(polygon);
    }
