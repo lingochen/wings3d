@@ -193,7 +193,7 @@ class BodyMadsor extends Madsor {
    undoCombine(combine) {
       if (combine) {
          View.removeFromWorld(combine.combine);
-         combine.combine.dead(); // remove polygons from combine.
+         combine.combine.extinquish(); // remove polygons from combine.
          for (let cage of combine.oldSelection) {
             cage.revive();
             View.addToWorld(cage);  // restore oldCage
@@ -227,7 +227,7 @@ class BodyMadsor extends Madsor {
       for (let separate of separateSelection) {
          for (let preview of separate.snapshot) {
             View.removeFromWorld(preview);
-            preview.dead();
+            preview.extinquish();
          }
          // addback the original one
          separate.preview.revive();

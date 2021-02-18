@@ -1618,7 +1618,7 @@ WingedTopology.prototype.free = function() {
 // merge - should we check alloc is the same?
 WingedTopology.prototype.merge = function(thisCage, cageGenerator) {
    for (let cage of cageGenerator()) {
-      cage.dead();   // remove polygon from bvh.
+      cage.extinquish();   // remove polygon from bvh.
       this._merge(thisCage, cage.geometry.faces, cage.geometry.edges, cage.geometry.vertices);
    }
 };

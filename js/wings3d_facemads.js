@@ -429,7 +429,7 @@ class MergePreviewCommand extends EditCommand {
       this.combine.selectFace(this.target.face);
       this.combine.selectFace(this.source.face);
       View.removeFromWorld(this.combine);
-      this.combine.dead();
+      this.combine.extinquish();
 
       this.target.preview.revive();
       View.addToWorld(this.target.preview);
