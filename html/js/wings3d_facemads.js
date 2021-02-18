@@ -41,7 +41,7 @@ class FaceMadsor extends Madsor {
                let bridge;
                if (dest.preview !== origin.preview) {
                   // merge dest and origin.
-                  merge = new MergePreviewCommand(dest.preview, origin.preview);
+                  merge = new MergePreviewCommand(dest, origin);
                   merge.doIt();
                   bridge = new BridgeFaceCommand(merge.getCombine(), dest.face, origin.face);
                } else {
@@ -378,7 +378,7 @@ class FaceSelectCommand extends EditCommand {
 
 
 //
-// current limitation, no interobject bridge yet.
+// interobject bridge by combo of bridgefacecommand and mergepreviewcommand
 //
 class BridgeFaceCommand extends EditCommand {
    constructor(cage, target, source) {
@@ -400,10 +400,10 @@ class BridgeFaceCommand extends EditCommand {
 }
 
 class MergePreviewCommand extends EditCommand {
-   constructor(targetCage, sourceCage) {
+   constructor(target, source) {
       super();
-      this.targetCage = targetCage;
-      this.sourceCage = sourceCage;
+      this.target = target;
+      this.source = source;
    }
 
    getCombine() {
@@ -411,15 +411,33 @@ class MergePreviewCommand extends EditCommand {
    }
 
    doIt() {
-      this.combine = View.makeCombineIntoWorld([this.targetCage, this.sourceCage]);
-      this.combine.name = this.targetCage.name;
+      this.target.preview.selectFace(this.target.face);
+      this.source.preview.selectFace(this.source.face);
+      if (this.combine) {
+         this.combine.revive();
+         View.addToWorld(this.combine);
+      } else {
+         this.combine = View.makeCombineIntoWorld([this.target.preview, this.source.preview]);
+         this.combine.name = this.target.preview.name;
+      }
+      this.combine.selectFace(this.target.face);
+      this.combine.selectFace(this.source.face);
       return true;
    }
 
    undo() {
+      this.combine.selectFace(this.target.face);
+      this.combine.selectFace(this.source.face);
       View.removeFromWorld(this.combine);
-      View.addToWorld(this.targetCage);
-      View.addToWorld(this.sourceCage);
+      this.combine.dead();
+
+      this.target.preview.revive();
+      View.addToWorld(this.target.preview);
+      this.target.preview.selectFace(this.target.face);
+
+      this.source.preview.revive();
+      View.addToWorld(this.source.preview);
+      this.source.preview.selectFace(this.source.face);
    }
 }
 
