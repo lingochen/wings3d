@@ -503,6 +503,10 @@ const action = {
    faceColor: ()=> {notImplemented(this);},
    faceExtractMenu: ()=> {notImplemented(this);},
    faceExtractNormal: ()=> {notImplemented(this);},
+   faceExtractX: () => {notImplemented(this);},
+   faceExtractY: () => {notImplemented(this);},
+   faceExtractZ: () => {notImplemented(this);},
+   faceExtractFree: () => {notImplemented(this);},
    // vertex
    vertexConnect: () => {notImplemented(this);},
    vertexDissolve: () => {notImplemented(this);},
