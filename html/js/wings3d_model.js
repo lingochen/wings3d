@@ -2557,18 +2557,55 @@ PreviewCage.prototype.flattenVertex = function(planeNormal) {
 // topology changing --
 
 
+/**
+ * find the seleted faces and make a new copy.
+ */
 PreviewCage.prototype.extractFace = function() {
-   var vertexSize = this.geometry.vertices.size;
-   var edgeSize = this.geometry.edges.size;
-   var faceSize = this.geometry.faces.size;
-   // array of edgeLoop. 
-   var edgeLoops = this.geometry.extractPolygon(this.selectedSet);
-   // adjust preview to the new vertices, edges and faces.
-   this._resizeBoundingSphere(faceSize);
-   this._resizePreview(vertexSize, faceSize);
-   //this._resizeEdges();
+   // create new Cage
+   const copy = new PreviewCage(this.bench);
+  
+   const unique = new Map;
+   // given the group, copy vertex first, then copy the face with new vertex
+   for (let polygon of this.selectedSet) {
+      let face = [];
+      // copy vertex
+      for (let vertex of polygon.eachVertex()) {
+         let index = unique.get(vertex);
+         if (index === undefined) {
+            const vert = copy.geometry.addVertex(vertex);
+            index = vert.index;
+            unique.set(vertex, index);
+         }
+         face.push( index );
+      }
+      // now copy polygon
+      copy.geometry.addPolygon(face, polygon.material);
+      // copy attributes
 
-   return edgeLoops;
+   }
+
+   // deselect all polygons, and select all
+   this._resetSelectFace();
+   for (let polygon of copy.geometry.faces) {
+      copy.selectFace(polygon);
+   }
+   copy.name = this.name + "_extract";
+
+   // find EdgeLoops, now fill the hole with polygon.
+   const edgeLoops = WingedTopology.findContours(copy.geometry.faces);
+   for (let loop of edgeLoops) {
+      const head = loop[0].outer.pair;
+      const face = [];
+      let current = head;
+      do {
+         face.push( current.origin.index );
+         current = current.next;
+      } while (current !== head);
+      // add polygon
+      copy.geometry.addPolygon(face, Material.default);
+   }
+
+   return {preview: copy, snapshot: copy.snapshotFacePosition()};
 };
 
 
@@ -4190,6 +4227,9 @@ PreviewCage.prototype.getBodySelection = function(selection, extent) {
       selection.push( polygon );
    }
 };
+
+
+
 
 
 /**

@@ -3,7 +3,7 @@
 //
 //    
 **/
-import {Madsor, DragSelect, TweakMove, MoveLimitHandler, GenericEditCommand, MoveAlongNormal, MouseRotateAlongAxis, ToggleModeCommand} from './wings3d_mads.js';
+import {Madsor, DragSelect, TweakMove, MoveLimitHandler, GenericEditCommand, MoveAlongNormal, MoveFreePositionHandler, MouseMoveAlongAxis, MouseRotateAlongAxis, ToggleModeCommand} from './wings3d_mads.js';
 import {EdgeMadsor} from './wings3d_edgemads.js';   // for switching
 import {BodyMadsor} from './wings3d_bodymads.js';
 import {VertexMadsor} from './wings3d_vertexmads.js';
@@ -113,12 +113,32 @@ class FaceMadsor extends Madsor {
             View.undoQueue(cmd);
          }
        });
-      //UI.bindMenuItem(action.faceExtractNormal.name, (_ev)=>{
-      //   const extract = new GenericEditCommand(this, this.extract(), null, this.undoExtract);
-      //   const cmd = new MoveAlongNormal(this, true, extract);
-      //   cmd.doIt();
-      //   View.undoQueue(cmd);
-      // });
+
+      // extractFace
+      UI.bindMenuItem(action.faceExtractNormal.name, (_ev)=>{
+         const extract = new GenericEditCommand(this, this.extract, null, this.undoExtract, [this.snapshotSelection()]);
+         const cmd = new MoveAlongNormal(this, true, extract);
+         cmd.doIt();
+         View.attachHandlerMouseMove(cmd);
+       });
+      // extractFace free
+      UI.bindMenuItem(action.faceExtractFree.name, (_ev)=> {
+         const extract = new GenericEditCommand(this, this.extract, null, this.undoExtract, [this.snapshotSelection()]);        
+         const move = new MoveFreePositionHandler(this, extract);
+         move.doIt();
+         View.attachHandlerMouseMove(move);
+       });
+      // extractFace axis
+      //const axisVec = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
+      const axisName = ['X', 'Y', 'Z'];
+      for (let axis=0; axis < 3; ++axis) {
+         UI.bindMenuItem('faceExtract' + axisName[axis], (_ev)=> {
+            const extract = new GenericEditCommand(this, this.extract, null, this.undoExtract, [this.snapshotSelection()]);
+            const move = new MouseMoveAlongAxis(self, axis, extract);
+            move.doIt();
+            View.attachHandlerMouseMove(move);
+          });
+      }
    }
 
    // get selected Face's vertex snapshot. for doing, and redo queue. 
@@ -134,13 +154,25 @@ class FaceMadsor extends Madsor {
       return this.snapshotSelected(PreviewCage.prototype.snapshotTransformFaceGroup);
    }
 
-   //extract() {
-   //   return this.snapshotSelected(PreviewCage.prototype.extractFace);
-   //}
+   extract() {
+      const snapshots = [];
+      for (let cage of this.selectedCage()) {
+         const snapshot = cage.extractFace();
+         snapshots.push( snapshot );
+      } 
+      for (let snapshot of snapshots) {
+         View.addToWorld(snapshot.preview);
+      }
+      return snapshots;
+   }
 
-   //undoExtract(snapshots, _selection) {
-   //
-   //}
+   undoExtract(snapshots, selection) {
+      for (let snapshot of snapshots) {
+         View.removeFromWorld(snapshot.preview);
+         snapshot.preview.freeBuffer();            // clean up.
+      }
+      this.restoreSelection(selection);
+   }
 
    bevel() {
       return this.snapshotSelected(PreviewCage.prototype.bevelFace);
