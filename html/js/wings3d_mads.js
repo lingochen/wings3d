@@ -34,19 +34,19 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       // type handler 
       // movement for (x, y, z)
       for (let axis=0; axis < 3; ++axis) {
-         UI.bindMenuItem(mode + 'Move' + axisName[axis], function(ev) {
-            self.doMoveAlongAxis(axis);
+         UI.bindMenuItem(mode + 'Move' + axisName[axis], (_ev)=> {
+            this.doMoveAlongAxis(axis);
           });
       }
       // free Movement.
       const moveFree = {body: action.bodyMoveFree, face: action.faceMoveFree, edge: action.edgeMoveFree, vertex: action.vertexMoveFree};
-      UI.bindMenuItem(moveFree[mode].name, function(ev) {
+      UI.bindMenuItem(moveFree[mode].name, (_ev)=> {
          this.doMoveFree();
        });
       // normal Movement.
       const moveNormal = {face: action.faceMoveNormal, edge: action.edgeMoveNormal, vertex: action.vertexMoveNormal};
       if (moveNormal[mode]) {
-         UI.bindMenuItem(moveNormal[mode].name, function(ev) {
+         UI.bindMenuItem(moveNormal[mode].name, (_ev)=> {
             this.doMoveAlongNormal(false);
           });
       }
