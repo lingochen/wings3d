@@ -2,7 +2,7 @@
 // bodymadsor. 
 //
 
-import {Madsor, DragSelect, TweakMove, MouseMoveAlongAxis, MoveFreePositionHandler, ToggleModeCommand} from './wings3d_mads.js';
+import {Madsor, DragSelect, TweakMove, ToggleModeCommand} from './wings3d_mads.js';
 import {FaceMadsor} from './wings3d_facemads.js';   // for switching
 import {EdgeMadsor} from './wings3d_edgemads.js';
 import {VertexMadsor} from './wings3d_vertexmads.js';
@@ -39,17 +39,11 @@ class BodyMadsor extends Madsor {
       // movement for (x, y, z)
       for (let axis=0; axis < 3; ++axis) {
          UI.bindMenuItem(duplicateMove[axis].name, (ev)=> { //action.bodyDulipcateMoveX(Y,Z)
-            const cmd = this.duplicateCommand(this.getSelected());
-            const move = new MouseMoveAlongAxis(this, axis, cmd);
-            move.doIt();
-            View.attachHandlerMouseMove(move);
+            this.doMoveAlongAxis(axis, this.duplicateCommand(this.getSelected()) );
           });
       }
       UI.bindMenuItem(action.bodyDuplicateMoveFree.name, (ev)=> {
-         const cmd = this.duplicateCommand(this.getSelected());
-         const move = new MoveFreePositionHandler(this, cmd);
-         move.doIt();
-         View.attachHandlerMouseMove(move);
+         this.doMoveFree( this.duplicateCommand(this.getSelected()) );
        });
       UI.bindMenuItem(action.bodyInvert.name, (ev)=> {
          const command = new BodyEditCommand(this, this.invert, null, this.invert, null);
