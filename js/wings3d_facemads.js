@@ -12,6 +12,7 @@ import {PreviewCage} from './wings3d_model.js';
 import * as View from './wings3d_view.js';
 import * as UI from './wings3d_ui.js';
 import {action} from './wings3d.js';
+const {vec3} = glMatrix;
 
 
 class FaceMadsor extends Madsor {
