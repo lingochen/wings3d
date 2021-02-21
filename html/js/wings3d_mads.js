@@ -35,25 +35,19 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       // movement for (x, y, z)
       for (let axis=0; axis < 3; ++axis) {
          UI.bindMenuItem(mode + 'Move' + axisName[axis], function(ev) {
-               const move = new MouseMoveAlongAxis(self, axis);
-               move.doIt();
-               View.attachHandlerMouseMove(move);
-            });
+            self.doMoveAlongAxis(axis);
+          });
       }
       // free Movement.
       const moveFree = {body: action.bodyMoveFree, face: action.faceMoveFree, edge: action.edgeMoveFree, vertex: action.vertexMoveFree};
       UI.bindMenuItem(moveFree[mode].name, function(ev) {
-            const move = new MoveFreePositionHandler(self);
-            move.doIt();
-            View.attachHandlerMouseMove(move);
-         });
+         this.doMoveFree();
+       });
       // normal Movement.
       const moveNormal = {face: action.faceMoveNormal, edge: action.edgeMoveNormal, vertex: action.vertexMoveNormal};
       if (moveNormal[mode]) {
          UI.bindMenuItem(moveNormal[mode].name, function(ev) {
-            const move = new MoveAlongNormal(self, false);
-            move.doIt();
-            View.attachHandlerMouseMove(move);
+            this.doMoveAlongNormal(false);
           });
       }
       // scale uniform
@@ -76,10 +70,7 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       const bevel = {face: action.faceBevel, edge: action.edgeBevel, vertex: action.vertexBevel};
       if (bevel[mode]) {
          UI.bindMenuItem(bevel[mode].name, (ev)=>{
-            const cmd = new GenericEditCommand(this, this.bevel, null, this.undoBevel, [this.snapshotSelection()]);
-            const move = new MoveLimitHandler(this, cmd);
-            move.doIt();
-            View.attachHandlerMouseMove(move);
+            this.doMoveLimit( new GenericEditCommand(this, this.bevel, null, this.undoBevel, [this.snapshotSelection()]) );
           });
       }
       // extrude
@@ -91,29 +82,20 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
          // movement for (x, y, z)
          for (let axis=0; axis < 3; ++axis) {
             UI.bindMenuItem(extrudeMode[axis].name, (ev) => {
-               const cmd = new GenericEditCommand(this, this.extrude, null, this.undoExtrude, null);
-               const move = new MouseMoveAlongAxis(this, axis, cmd);
-               move.doIt();
-               View.attachHandlerMouseMove(move);
+               this.doMoveAlongAxis(axis, new GenericEditCommand(this, this.extrude, null, this.undoExtrude, null) );
              });
          }
       }
       const extrudeFree = {face: action.faceExtrudeFree, edge: action.edgeExtrudeFree, vertex: action.vertexExtrudeFree };
       if (extrudeFree[mode]) {
          UI.bindMenuItem(extrudeFree[mode].name, (ev) => {
-            const cmd = new GenericEditCommand(this, this.extrude, null, this.undoExtrude, null);
-            const move = new MoveFreePositionHandler(this, cmd);
-            move.doIt();
-            View.attachHandlerMouseMove(move);
+            this.doMoveFree( new GenericEditCommand(this, this.extrude, null, this.undoExtrude, null) );
           });
       }
       const extrudeNormal = {face: action.faceExtrudeNormal, edge: action.edgeExtrudeNormal, vertex: action.vertexExtrudeNormal};
       if (extrudeNormal[mode]) {
          UI.bindMenuItem(extrudeNormal[mode].name, (ev) => {
-            const cmd = new GenericEditCommand(this, this.extrude, null, this.undoExtrude, null);
-            const move = new MoveAlongNormal(this, false, cmd);
-            move.doIt();
-            View.attachHandlerMouseMove(move);
+            this.doMoveAlongNormal( new GenericEditCommand(this, this.extrude, null, this.undoExtrude, null) );
           });
       }
       // flatten x,y,z
@@ -187,6 +169,36 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
             ev.currentTarget.addEventListener("change", vertexColorHandler);  // currentTarget === colorPicker
           });
       }
+   }
+
+   doMoveAlongAxis(axis, cmd) {
+      const move = new MouseMoveAlongAxis(this, axis, cmd);
+      move.doIt();
+      View.attachHandlerMouseMove(move);
+   }
+
+   doMoveAlongNormal(noNegative, cmd) {
+      const move = new MoveAlongNormal(this, noNegative, cmd);
+      move.doIt();
+      View.attachHandlerMouseMove(move);
+   }
+
+   doMoveBidirection(cmd) {
+      const handler = new MoveBidirectionHandler(this, cmd);
+      handler.doIt();
+      View.attachHandlerMouseMove(handler);
+   }
+
+   doMoveFree(cmd) {
+      const move = new MoveFreePositionHandler(this, cmd);
+      move.doIt();
+      View.attachHandlerMouseMove(move);
+   }
+
+   doMoveLimit(cmd) {
+      const move = new MoveLimitHandler(this, cmd);
+      move.doIt();
+      View.attachHandlerMouseMove(move);
    }
 
    modeName() {

@@ -3,7 +3,7 @@
 //
 //    
 **/
-import {Madsor, DragSelect, TweakMove, ToggleModeCommand, MoveAlongNormal, MoveBidirectionHandler, GenericEditCommand} from './wings3d_mads.js';
+import {Madsor, DragSelect, TweakMove, ToggleModeCommand, GenericEditCommand} from './wings3d_mads.js';
 import {FaceMadsor} from './wings3d_facemads.js';   // for switching
 import {BodyMadsor} from './wings3d_bodymads.js';
 import {VertexMadsor} from './wings3d_vertexmads.js';
@@ -73,10 +73,7 @@ class EdgeMadsor extends Madsor {
          });
       // Crease
       UI.bindMenuItem(action.edgeCrease.name, (ev) => {
-         const cmd = new GenericEditCommand(this, this.crease, null, this.undoExtrude, null);
-         const move = new MoveAlongNormal(this, false, cmd);
-         move.doIt();
-         View.attachHandlerMouseMove(move);
+         this.doMoveAlongNormal(false, GenericEditCommand(this, this.crease, null, this.undoExtrude, null) );
       });
 
       // EdgeLoop.
@@ -147,15 +144,10 @@ class EdgeMadsor extends Madsor {
          }
         });
       UI.bindMenuItem(action.edgeCorner.name, (ev) => {
-         const cmd = new GenericEditCommand(this, this.corner, null, this.undoCorner, null);
-         const move = new MoveAlongNormal(this, false, cmd);
-         move.doIt();
-         View.attachHandlerMouseMove(move);
+         this.doMoveAlongNormal(false, new GenericEditCommand(this, this.corner, null, this.undoCorner, null) );
        });
       UI.bindMenuItem(action.edgeSlide.name, (ev) => {
-         const handler = new MoveBidirectionHandler(this, new GenericEditCommand(this, this.slide));
-         handler.doIt();
-         View.attachHandlerMouseMove(handler);
+         this.doMoveBidirection( new GenericEditCommand(this, this.slide) );
         });
       // Hardness
       for (let [hardness, operand] of [[action.edgeSoft, 0], [action.edgeHard, 1], [action.edgeInvert, 2]]) {

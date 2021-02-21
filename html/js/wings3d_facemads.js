@@ -3,7 +3,7 @@
 //
 //    
 **/
-import {Madsor, DragSelect, TweakMove, MoveLimitHandler, GenericEditCommand, MoveAlongNormal, MoveFreePositionHandler, MouseMoveAlongAxis, MouseRotateAlongAxis, ToggleModeCommand} from './wings3d_mads.js';
+import {Madsor, DragSelect, TweakMove, GenericEditCommand, MouseRotateAlongAxis, ToggleModeCommand} from './wings3d_mads.js';
 import {EdgeMadsor} from './wings3d_edgemads.js';   // for switching
 import {BodyMadsor} from './wings3d_bodymads.js';
 import {VertexMadsor} from './wings3d_vertexmads.js';
@@ -58,26 +58,16 @@ class FaceMadsor extends Madsor {
        });
       UI.bindMenuItem(action.faceInset.name, (ev) => {
          if (this.hasSelection()) {
-            const cmd = new GenericEditCommand(this, this.inset, [], this.collapseEdgeNew, []);
-            const move = new MoveLimitHandler(this, cmd);
-            move.doIt();
-            View.attachHandlerMouseMove(move);
-            //View.attachHandlerMouseMove(new InsetFaceHandler(this));
+            this.doMoveLimit( new GenericEditCommand(this, this.inset, [], this.collapseEdgeNew, []) );
          } else {
             geometryStatus('No selected face');
          }
        });
       UI.bindMenuItem(action.faceBump.name, (ev) => {
-         const cmd = new GenericEditCommand(this, this.bump, null, this.undoBump, null);
-         const move = new MoveAlongNormal(this, false, cmd);
-         move.doIt();
-         View.attachHandlerMouseMove(move);
+         this.doMoveAlongNormal(false, new GenericEditCommand(this, this.bump, null, this.undoBump, null) );
        });
       UI.bindMenuItem(action.faceIntrude.name, (ev) => {
-         const cmd = new GenericEditCommand(this, this.intrude, null, this.undoIntrude, null);
-         const move = new MoveAlongNormal(this, true, cmd);
-         move.doIt();
-         View.attachHandlerMouseMove(move);
+         this.doMoveAlongNormal(true, GenericEditCommand(this, this.intrude, null, this.undoIntrude, null) );
        });
       UI.bindMenuItem(action.faceLift.name, (ev) => {
          const snapshots = this.snapshotSelected(PreviewCage.prototype.snapshotTransformFaceGroup);
@@ -116,27 +106,18 @@ class FaceMadsor extends Madsor {
 
       // extractFace
       UI.bindMenuItem(action.faceExtractNormal.name, (_ev)=>{
-         const extract = new GenericEditCommand(this, this.extract, null, this.undoExtract, [this.snapshotSelection()]);
-         const cmd = new MoveAlongNormal(this, true, extract);
-         cmd.doIt();
-         View.attachHandlerMouseMove(cmd);
+         this.doMoveAlongNormal(false, new GenericEditCommand(this, this.extract, null, this.undoExtract, [this.snapshotSelection()]) );
        });
       // extractFace free
       UI.bindMenuItem(action.faceExtractFree.name, (_ev)=> {
-         const extract = new GenericEditCommand(this, this.extract, null, this.undoExtract, [this.snapshotSelection()]);        
-         const move = new MoveFreePositionHandler(this, extract);
-         move.doIt();
-         View.attachHandlerMouseMove(move);
+         this.doMoveFree( new GenericEditCommand(this, this.extract, null, this.undoExtract, [this.snapshotSelection()]) );        
        });
       // extractFace axis
       //const axisVec = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
       const axisName = ['X', 'Y', 'Z'];
       for (let axis=0; axis < 3; ++axis) {
          UI.bindMenuItem('faceExtract' + axisName[axis], (_ev)=> {
-            const extract = new GenericEditCommand(this, this.extract, null, this.undoExtract, [this.snapshotSelection()]);
-            const move = new MouseMoveAlongAxis(self, axis, extract);
-            move.doIt();
-            View.attachHandlerMouseMove(move);
+            this.doMoveAlongNormal(axis, new GenericEditCommand(this, this.extract, null, this.undoExtract, [this.snapshotSelection()]) );
           });
       }
    }
