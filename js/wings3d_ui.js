@@ -276,11 +276,11 @@ function runDialogCenter(formID, submitCallback, setup, _ev, notOk) {
       const submits = form.querySelectorAll('[type=submit]');
       function handleOk(ev) {
          _pvt.submitSuccess = true;
-         _pvt.button = ev.target;
+         _pvt.button = ev.currentTarget;
       }
       function handleCancel(ev) {
          _pvt.submitSuccess = false;
-         _pvt.button = ev.target;
+         _pvt.button = ev.currentTarget;
       }
       for (let submit of submits) {
          if ('ok'.localeCompare(submit.value, 'en', {'sensitivity': 'base'}) == 0) {
