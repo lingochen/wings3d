@@ -3950,27 +3950,37 @@ PreviewCage.prototype.mirrorFace = function() {
 }
 
 PreviewCage.prototype.undoMirrorFace = function(undoMirror) {
+   const deleteWedges = new Set;
+   const holes = [];
    for (let undo of undoMirror.mirrorGroups) {
-      const wEdges = new Set();
       for (let polygon of undo.newMirrors) {
          for (let hEdge of polygon.hEdges()) {
             if (!undoMirror.protectVertex.has(hEdge.origin)) {
                this.geometry._freeVertex(hEdge.origin);
             }
-            if (undoMirror.protectWEdge.has(hEdge.wingedEdge)) {
-               hEdge.next = hEdge.next.pair.next;     // hacky: restore to original connection.
-            } else {
-               wEdges.add( hEdge.wingedEdge );
+            if (!undoMirror.protectWEdge.has(hEdge.wingedEdge)) {
+               deleteWedges.add( hEdge.wingedEdge );
             }
          }
          this.geometry._freePolygon(polygon);
       }
-      for (let wEdge of wEdges) {
-         this.geometry._freeEdge(wEdge.left);
-      }
       // restore hole
-      this.undoHoleSelectedFace([undo.holed]);
+      holes.push( undo.holed );
    }
+   // fixed vertexes, remove deleteWedges link.
+   for (let vert of undoMirror.protectVertex) {
+      vert.restructure(deleteWedges)
+   }
+
+   // now safely delete wEdges.
+   for (let wEdge of deleteWedges) {
+      this.geometry._freeEdge(wEdge.left);
+   }
+
+   // now safely restore holes
+   this.undoHoleSelectedFace(holes);
+
+   // restore
    this.updateAffected();
 };
 
