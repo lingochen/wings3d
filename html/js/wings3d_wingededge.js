@@ -657,6 +657,46 @@ Vertex.prototype.setGroup = function(topology) {
 };
 
 
+Vertex.prototype.restructure = function(deleteWedges) {
+   let start = this.outEdge;
+   let outEdge = this.outEdge;
+   let current = this.outEdge;
+   let prev = null;
+   while (deleteWedges.has(current.wingedEdge)) {
+      prev = current;
+      current = current.next.pair;
+      start = outEdge = current;
+      if (current === this.outEdge) {  // should not happened
+         break;
+      }
+   }
+   do {
+      if (deleteWedges.has(current.wingedEdge)) {
+         // remove current from link list
+         if (prev === null) {
+            let cur = current;
+            do {
+               prev = cur;
+               cur = cur.pair.next;
+            } while (cur !== current);
+         }
+         prev.pair.next = current.pair.next;
+         if (outEdge === current) { // outEdge should not point to deleteWedges
+            outEdge = current.pair.next;
+         }
+      } else {
+         if (current.index < outEdge.index) {
+            outEdge = current;
+         }
+         prev = current;
+      }
+      current = current.pair.next;
+   } while (current !== start);
+   if (this.outEdge !== outEdge) {
+      this.outEdge = outEdge;    // lowest index outEdge
+   }
+}
+
 //
 // compute normal(later) and adjust outEdge to lowest index edge.
 //
