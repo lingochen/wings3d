@@ -95,7 +95,7 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       const extrudeNormal = {face: action.faceExtrudeNormal, edge: action.edgeExtrudeNormal, vertex: action.vertexExtrudeNormal};
       if (extrudeNormal[mode]) {
          UI.bindMenuItem(extrudeNormal[mode].name, (ev) => {
-            this.doMoveAlongNormal( new GenericEditCommand(this, this.extrude, null, this.undoExtrude, null) );
+            this.doMoveAlongNormal(false, new GenericEditCommand(this, this.extrude, null, this.undoExtrude, null) );
           });
       }
       // flatten x,y,z
