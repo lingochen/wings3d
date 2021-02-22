@@ -118,7 +118,7 @@ class FaceMadsor extends Madsor {
       const axisName = ['X', 'Y', 'Z'];
       for (let axis=0; axis < 3; ++axis) {
          UI.bindMenuItem('faceExtract' + axisName[axis], (_ev)=> {
-            this.doMoveAlongNormal(axis, new GenericEditCommand(this, this.extract, null, this.undoExtract, [this.snapshotSelection()]) );
+            this.doMoveAlongAxis(axis, new GenericEditCommand(this, this.extract, null, this.undoExtract, [this.snapshotSelection()]) );
           });
       }
    }
