@@ -93,16 +93,16 @@ async function saveAs(extension) {
       // now setup dropbox/onedrive/yandex/google/box/pcloud buttons
       let button = document.getElementById('dropboxSave');
       if (button) {
-         _save.set(button, Dropbox.setupSaveButton(button));
+         _save.set(button.id, Dropbox.setupSaveButton(button));
       }
       button = document.getElementById('onedriveSave');
       if (button) {
-         _save.set(button, OneDrive.setupSaveButton(button));
+         _save.set(button.id, OneDrive.setupSaveButton(button));
       }
       // setup local file store
       button = document.getElementById('localSave');
       if (button) {
-         _save.set(button, [async function(fileInfo) {   // saveAs
+         _save.set(button.id, [async function(fileInfo) {   // saveAs
             return new LocalFile(fileInfo);
            }, localSaveAsync]                
           );
@@ -138,7 +138,7 @@ async function saveAs(extension) {
          saveName = name;
       }
    }
-   let [saveAsFn, saveFn] = _save.get(button);  // get the save routine
+   let [saveAsFn, saveFn] = _save.get(button.id);  // get the save routine
    _workingSave.saveFn = saveFn;
    
    // now get saveAs filename if possible
