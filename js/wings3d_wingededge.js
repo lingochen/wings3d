@@ -1092,9 +1092,10 @@ Polygon.prototype.computeNormal = (function() {
    return function() {
       const v1 = this.halfEdge.origin;
       const v0 = this.halfEdge.next.origin;
-      const v2 = this.halfEdge.next.destination();
+      //const v2 = this.halfEdge.next.destination();
+      this.getCentroid(U);
+      vec3.sub(V, U, v0);
       vec3.sub(U, v1, v0);
-      vec3.sub(V, v2, v0);
       vec3.cross(V, V, U);
       vec3.normalize(V, V);
       const i = this.index * 3;
