@@ -175,20 +175,20 @@ async function open(fileTypes) {
       // now setup dropbox/onedrive/yandex/google/box/pcloud buttons
       let button = document.getElementById('dropboxOpen');
       if (button) {
-         _open.set(button, Dropbox.setupOpenButton(button));
+         _open.set(button.id, Dropbox.setupOpenButton(button));
       }
       button = document.getElementById('onedriveOpen');
       if (button) {
-         _open.set(button, OneDrive.setupOpenButton(button));
+         _open.set(button.id, OneDrive.setupOpenButton(button));
       }
       button = document.getElementById('yandexDiskOpen');
       if (button) {
-         _open.set(button, YandexDisk.setupOpenButton(button));
+         _open.set(button.id, YandexDisk.setupOpenButton(button));
       }
       // setup local file open
       button = document.getElementById('localOpen');
       if (button) {
-         _open.set(button, [async (fileTypes)=>{
+         _open.set(button.id, [async (fileTypes)=>{
                               return UI.openFileAsync(CloudStorage.getFileTypesString(fileTypes))
                                  .then(files=>{
                                     return files.map(file=>{return new LocalFile(file);});
@@ -209,7 +209,7 @@ async function open(fileTypes) {
    if (button.value === "cancel") {
       throw new Error('No storage selected');
    }
-   const [pick, open, saveFn] = _open.get(button);
+   const [pick, open, saveFn] = _open.get(button.id);
    _workingSave.saveFn = saveFn;
    return pick(fileTypes).then(files=>{
       return [files, open];
