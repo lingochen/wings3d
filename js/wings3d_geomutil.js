@@ -273,6 +273,21 @@ function computeAngle(crossNorm, v0, v1, v2) {
    return rad;
 }
 
+/** 
+ * 
+ * https://stackoverflow.com/questions/5188561/signed-angle-between-two-3d-vectors-with-same-origin-within-the-same-plane
+ * Assuming that the plane normal is normalized (|Vn| == 1), the signed angle is simply:
+ *  atan2((Va x Vb) . Vn, Va . Vb)
+**/
+const computeVectorAngle  = (function() {
+   let norm = [0, 0, 0];
+   return function(vn, va, vb) {
+      vec3.cross(norm, va, vb);
+      return Math.atan2( vec3.dot(norm, vn), vec3.dot(va, vb) );
+   };
+}());
+
+
 function getAxisAngle(axis, vFrom, vTo) {
    vec3.cross(axis, vFrom, vTo);
    let rad = Math.atan2(vec3.length(axis), vec3.dot(vFrom, vTo));
@@ -657,6 +672,7 @@ class Ray {
 export {
    closestPointToPlane,
    computeAngle,
+   computeVectorAngle,
    computeAxisScale,
    getAxisAngle,
    computeEdgeNormal,  

@@ -2266,11 +2266,9 @@ PreviewCage.prototype.snapshotEdgePositionAndNormal = function() {
    const vertices = new Set;
    const normalMap = new Map; 
    // first collect all the vertex
-   const tempNorm = vec3.create();
    for (let wingedEdge of this.selectedSet) {
       const p0 = wingedEdge.left.face;
       const p1 = wingedEdge.right.face;
-      //vec3.normalize(tempNorm, tempNorm);
       for (let edge of wingedEdge) {
          let vertex = edge.origin;
          let normal;
@@ -2301,6 +2299,7 @@ PreviewCage.prototype.snapshotEdgePositionAndNormal = function() {
    }
    return this.snapshotPosition(vertices, normalArray);
 };
+
 
 PreviewCage.prototype.snapshotTransformEdgeGroup = function() {
    const vertices = new Set;
@@ -4059,13 +4058,35 @@ PreviewCage.prototype.undoCornerEdge = function(undo) {
    this.updateAffected();
 }
 
+
 PreviewCage.prototype.slideEdge = function() {
    const selection = this.snapshotSelectionEdge();
 
-   const sixAxis = [[0, 0, 1], [0, 1, 0], [1, 0, 0], [0, 0, -1], [0, -1, 0], [-1, 0, 0]];
+   const sixAxis = [[0, 0, -1], [0, 1, 0], [1, 0, 0], [0, 0, 1], [0, -1, 0], [-1, 0, 0]];
    const vertices = new Map;
-   const pt = vec3.create();
+   const v0 = vec3.create(), v1 = vec3.create(), vn = vec3.create();
+   const normPlane = vec3.create(), slideDir = vec3.create();
    for (let wEdge of selection.wingedEdges) {
+      wEdge.getNormal(vn);
+      // compute plane vector, 
+      vec3.sub(normPlane, wEdge.left.origin, wEdge.right.origin);
+      vec3.normalize(normPlane, normPlane);
+      vec3.cross(slideDir, normPlane, vn);
+      vec3.normalize(slideDir, slideDir);
+      // now find which axis is the closest
+      let index = 0;
+      let max = -1.0;
+      for (let i = 0; i < 6; ++i) {
+         let angle = vec3.dot(sixAxis[i], slideDir);
+         if (angle > max) {   // range is (-1, 1). -1 is 180 degree, 1 is 0 degreen
+            max = angle;
+            index = i;
+         }
+      }
+      if (index > 2) {  // negative territory, reverse norm vector
+         vec3.negate(normPlane, normPlane);
+      }
+      // compute which side to slide
       for (let hEdge of wEdge) {
          // compute the direction
          let dir = vertices.get(hEdge.origin);
@@ -4075,32 +4096,19 @@ PreviewCage.prototype.slideEdge = function() {
          }
          const prev = hEdge.prev();
          const next = hEdge.pair.next;
-         // compute which quadrant, pt(normal) is normalized.
-         Geom.computeEdgeNormal(pt, next, prev.pair);
-         let max;
-         let index;
-         for (let i = 0; i < 6; ++i) {
-            let axis = sixAxis[i];
-            let angle =  vec3.dot(axis, pt);
-            if (i === 0) {
-               max = angle;
-               index = 0;
-            } else if (max < angle) {
-               max = angle;
-               index = i;
-            }
-         }
-         // now compute the dir
-         if (index > 2) {   // check if needs to reverse negative and positive.
-            vec3.sub(pt, hEdge.origin, prev.origin);
-            vec3.add(dir.negative, dir.negative, pt);
-            vec3.sub(pt, next.destination(), next.origin);
-            vec3.add(dir.positive, dir.positive, pt);
+         // compute positive, negative slide edge.
+         vec3.sub(v0, prev.origin, hEdge.origin);
+         let angle = Geom.computeVectorAngle(normPlane, vn, v0);
+         vec3.sub(v1, next.destination(), hEdge.origin);
+         let angle2 =  Geom.computeVectorAngle(normPlane, vn, v1);
+         if (angle > angle2) {
+            vec3.negate(v1, v1);
+            vec3.add(dir.positive, dir.positive, v0);
+            vec3.add(dir.negative, dir.negative, v1);
          } else {
-            vec3.sub(pt, prev.origin, hEdge.origin);
-            vec3.add(dir.positive, dir.positive, pt);
-            vec3.sub(pt, next.origin, next.destination());
-            vec3.add(dir.negative, dir.negative, pt);
+            vec3.negate(v0, v0);
+            vec3.add(dir.positive, dir.positive, v1);
+            vec3.add(dir.negative, dir.negative, v0);
          }
       }
    }
