@@ -8,7 +8,8 @@
 }
 
 nav.menu {
-  display: block;
+  display: flex;
+  
   margin: 0;
   padding: 0;
 /*  overflow: hidden; */
@@ -39,6 +40,7 @@ ul.popup.menu ul.popup.menu {
 }
 ul.menu.bar {
   display: flex;
+  flex-wrap: wrap;
   flex-direction: row;
 }
 ul.menu.bar > li {
