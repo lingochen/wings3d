@@ -9,10 +9,9 @@
 
 nav.menu {
   display: flex;
-  
   margin: 0;
   padding: 0;
-/*  overflow: hidden; */
+  position: relative;
 }
 ul.menu {
   margin: 0;
@@ -40,14 +39,15 @@ ul.popup.menu ul.popup.menu {
 }
 ul.menu.bar {
   display: flex;
-  flex-wrap: wrap;
   flex-direction: row;
+  /*flex-wrap: wrap; */
+  overflow-x: auto;
 }
 ul.menu.bar > li {
   margin: 0;
   padding: 0;
   display: flex;
-  position: relative;
+  position: static;
   list-style-type: none;
   transition: all 0s;
 }

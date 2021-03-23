@@ -19,9 +19,9 @@ html, body {
 
 body {
   display: block;
-  overflow:hidden;
-    height: 100vh;
-    width: 100vw;
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
 }
 
 .unfocus:not(.exclude) {
@@ -40,8 +40,10 @@ body {
 }
 .marginal {
   flex: 0 1 auto;
-  flex-wrap: wrap;
   border: 1px dotted grey;
+}
+.button-bar {
+  overflow-x: auto;
 }
 .sidebar {
   display: none;
@@ -88,7 +90,7 @@ body {
   width: 100%;
   background-color: var(--infoBackground);
   color: var(--infoText);
-  overflow: hidden;
+  overflow-x: auto;
 }
 
 #helpbar {
@@ -96,7 +98,7 @@ body {
   background-color: var(--infoLineBackground);
   color: var(--infoLineText);
   height: 1.5rem;
-  overflow: hidden;
+  overflow-x: auto;
 }
 
 /* global class */
