@@ -480,15 +480,6 @@ function toggleSubmenu(ul) {
 };
 
 // show popupMenu
-function clickInsideElement( e, className ) {
-   let target = e.target;
-   do {
-      if ( target.classList && target.classList.contains(className) ) {
-         return target;
-      }
-   } while ( target = target.parentNode )
-   return false;
-};
 
 let currentMenu=false;
 let nextPopup=false;
@@ -502,6 +493,8 @@ function toggleMenuOff() {
       currentMenu = nextPopup;
       nextPopup=false;
       currentMenu.style.visibility = "visible";   // toggleMenuOn
+      const pos = currentMenu.parentNode.getBoundingClientRect(); // due to scrolling, we have to move
+      currentMenu.style.left = pos.left + "px";
    }
 };
 let firstClick = 0;
