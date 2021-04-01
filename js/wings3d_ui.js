@@ -509,13 +509,13 @@ function clickListener() {
             toggleMenuOff();
             if (!currentMenu) {
                // remove listening event
-               document.removeEventListener("mouseup", callBack);
+               document.removeEventListener("pointerup", callBack);
             }
          //}
       }
     }
 
-   document.addEventListener("mouseup", callBack, false);
+   document.addEventListener("pointerup", callBack, false);
 };
 function showContextMenu(popupMenu) {
    if (currentMenu) {
@@ -558,8 +558,8 @@ const dragMove = (function() {
          div.style.top  = (mousePosition.y + offset[1]) + 'px';
       }
    }
-   document.addEventListener('mouseup', ret.mouseUp);        // only needs to register once
-   document.addEventListener('mousemove', ret.mouseMove);   
+   document.addEventListener('pointerup', ret.mouseUp);        // only needs to register once
+   document.addEventListener('pointermove', ret.mouseMove);   
    return ret;
 }());
 // moveable popup box,
@@ -575,7 +575,7 @@ function showPopup() {//dom, name) {
    div.appendChild(span);
    // create label to drag move
    let h3 = document.createElement('h3');
-   h3.addEventListener('mousedown', (ev)=>{dragMove.mouseDown(ev, div);});
+   h3.addEventListener('pointerdown', (ev)=>{dragMove.mouseDown(ev, div);});
 
    //h3.textContent = name;
    div.appendChild(h3);

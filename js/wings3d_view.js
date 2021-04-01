@@ -30,7 +30,7 @@ import { ImportExporter } from './wings3d_importexport.js';
 import { STLImportExporter } from './plugins/stl.js';
 import { GLTFImportExporter } from './plugins/gltf.js';
 import { Texture } from './wings3d_material.js';
-const {vec3, mat4} = glMatrix;
+const {vec2, vec3} = glMatrix;
 
 
 // 
@@ -1192,6 +1192,138 @@ function canvasHandleWheel(e) {
 };
 
 //-- end of mouse handling-----------------------------------------------
+//-- touch event handling -----------------------------------------------
+// two-finger, pinch-Zoom
+
+// two-finger tap, right click
+
+// two-finger move, move
+
+// two-finger rotate, rotate
+
+
+// two-finger touch event.
+let _2fingers = (()=>{
+   const pointers = new Map;
+   function touchRecord(evt) {
+      const data =  {pos: [evt.clientX, evt.clientY], velocity: [0, 0], time: Date.now()};
+      return {prev: data, current: data};
+   }
+   function touchRecordUpdate(evt) {
+      const record = pointers.get(evt.pointerId);
+      if (record) {
+         record.prev = record.current;
+         record.current = {pos: [evt.clientX, evt.clientY], velocity: [0, 0], time: Date.now()};
+      }   
+   }
+
+   const startHandler = {
+      onDown: (evt)=> {
+         if (pointers.has(evt.pointerId)) {
+            console.log("bad pointer down state");
+         } else {
+            pointers.set(evt.pointerId, touchRecord(evt));
+            if (pointers.size === 2) {
+               return actionHandler;
+            }
+         }
+         return this;
+      },
+
+      onUp: (evt)=> {
+         pointers.delete(evt.pointerId);
+         if (pointers.size === 2) {
+            return actionHandler;
+         }
+         return this;
+      },
+
+      onCancel: (_evt)=>{
+         return this;
+      },
+
+      onMove: (evt)=> {
+         touchRecordUpdate(evt);
+         return this;
+      },
+   };
+
+   function touchAction() { // 
+      if (pointers.size === 2) { // yes, see if we have pinchZoom, rotate, or simple move.
+         const ePtr = pointers[Symbol.iterator]();
+         const a = ePtr.next().value; 
+         const b = ePtr.next().value;
+         //let rotate = Math.atan2(y4 - y3, x4 - x3) - Math.atan2(y2 - y1, x2 - x1),
+         let scale = Math.sqrt(vec2.sqrLen(a.current, b.current) / vec2.sqrLen(a.prev, b.prev));
+         // now zoom action
+         if (scale >= 1.0) {  // negative direction
+            m_windows.current.camera.zoomStep( scale * -50 );
+         } else {
+            m_windows.current.camera.zoomStep( 1/scale * 50);
+         }
+         
+         //translate = [x3 - scale * x1 * Math.cos(rotate) + scale * y1 * Math.sin(rotate), y3 - scale * y1 * Math.cos(rotate) - scale * x1 * Math.sin(rotate)];
+         /*return {
+            rotate,
+            scale,
+            translate,
+            matrix: [
+               [scale * Math.cos(rotate), -scale * Math.sin(rotate), translate[0]],
+               [scale * Math.sin(rotate), scale * Math.cos(rotate), translate[1]],
+               [0, 0, 1]
+            ]
+         };*/
+      }
+   }
+
+   const actionHandler = {
+      lastMoveId: null,
+
+      onDown: (evt)=> { 
+         pointers.set(evt.pointerId, touchRecord(evt));
+         if (pointers.size !== 2) {// we really don't want third finger. so we return to start again.
+            return startHandler;
+         }
+         return this;
+      },
+
+      onUp: (evt)=> {
+         pointers.delete(evt.pointerId);
+         if (pointers.size !== 2) {
+            return startHandler;
+         }
+         return this;
+      },
+
+      onCancel: (evt)=> {
+
+      },
+
+      onMove: (evt)=> { // we have 2 finger, now check if 
+         if (this.lastMoveId !== evt.pointerId) {  // ok, we got our 2 fingers
+            clearTimeout(touchAction);
+            touchRecordUpdate(evt);
+            calcAction();
+         } else { // let timer determined if we should apply the action.
+            setTimeout(touchAction, 100);
+         }
+         this.lastMoveId = evt.pointerId;
+         return this;
+      }
+   };
+   return startHandler;
+})();
+function canvasHandleTouchStart(evt) {
+   _2fingers = _2fingers.onDown(evt);
+};
+function canvasHandleTouchMove(evt) {
+   _2Fingers = _2fingers.onMove(evt);
+};
+function canvasHandleTouchEnd(evt) {
+   _2fingers = _2fingers.onUp(evt);
+};
+
+//-- end of touch event handling ----------------------------------------
 //-- handle Camera pan by keyboard -------------------------------------
 
 function canvasHandleKeyDown(evt) {
@@ -1688,15 +1820,15 @@ function init() {
     });
 
    // capture click mouse event.
-   gl.canvas.addEventListener("mouseenter", canvasHandleMouseEnter, false);
-   gl.canvas.addEventListener("mousedown", canvasHandleMouseDown, false); 
-   gl.canvas.addEventListener("mouseup", canvasHandleMouseUp, false);
-   gl.canvas.addEventListener("mouseleave", canvasHandleMouseLeave, false);
-   gl.canvas.addEventListener("mousemove", canvasHandleMouseMove, false);
+   gl.canvas.addEventListener("pointerenter", canvasHandleMouseEnter, false);
+   gl.canvas.addEventListener("pointerdown", canvasHandleMouseDown, false); 
+   gl.canvas.addEventListener("pointerup", canvasHandleMouseUp, false);
+   gl.canvas.addEventListener("pointerleave", canvasHandleMouseLeave, false);
+   gl.canvas.addEventListener("pointermove", canvasHandleMouseMove, false);
    gl.canvas.addEventListener("wheel", canvasHandleWheel, false);
    // capture keydown
-   gl.canvas.addEventListener("mouseover", function(evt) { gl.canvas.focus(); });
-   gl.canvas.addEventListener("mouseout", function(evt) {gl.canvas.blur(); });
+   gl.canvas.addEventListener("pointerover", function(evt) { gl.canvas.focus(); });
+   gl.canvas.addEventListener("pointerout", function(evt) {gl.canvas.blur(); });
    gl.canvas.addEventListener("keydown", canvasHandleKeyDown, false);
    // bind context-menu
    const createObjectContextMenu = {menu: document.querySelector('#create-context-menu')};

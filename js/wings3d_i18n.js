@@ -212,7 +212,7 @@ onReady(()=> {
       setCurrentLocale("en");
    }
    // hookup help message handler for title tooltip
-   document.body.addEventListener("mouseover", function(ev) {
+   document.body.addEventListener("pointerover", function(ev) {
       const text = ev.target.getAttribute("title");
       if (text !== null) {
          const helpText = text.replace(newLine, "    ");
