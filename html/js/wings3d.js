@@ -211,8 +211,8 @@ function bindAction(menuItems, button, id, fn) {
       if (!Array.isArray(action[id])) {
          action[id] = [null, null, null];
          for (const item of menuItems) {
-            item.addEventListener("mousedown", handleMouseDown);
-            item.addEventListener("mouseup", handleMouseUp);
+            item.addEventListener("pointerdown", handleMouseDown);
+            item.addEventListener("pointerup", handleMouseUp);
             item.addEventListener("contextmenu", handleContextmenu);  // no ops.
          }
       }

@@ -99,20 +99,20 @@ function draggable(container, dragItem) {
    let currentX;
    let currentY;
 
-   dragItem.addEventListener("mousedown", dragStart, false);
-   dragItem.addEventListener("mouseup", dragEnd, false);
+   dragItem.addEventListener("pointerdown", dragStart, false);
+   dragItem.addEventListener("pointerup", dragEnd, false);
    dragItem.classList.add("draggable");
 
    function dragStart(e) {
       currentX = e.clientX;
       currentY = e.clientY;
-      document.body.addEventListener("mousemove", drag, false);   // if attach to dragItem, mousemove could move out of focus.
+      document.body.addEventListener("pointermove", drag, false);   // if attach to dragItem, mousemove could move out of focus.
       dragItem.classList.add("dragging");
    }
 
    function dragEnd(e) {
       dragItem.classList.remove("dragging");
-      document.body.removeEventListener("mousemove", drag);
+      document.body.removeEventListener("pointermove", drag);
    }
 
    function drag(e) {
