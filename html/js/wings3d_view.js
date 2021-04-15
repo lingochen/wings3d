@@ -855,6 +855,64 @@ function modeHelp() {
 // mouse handling ---------------------------------------------------------------------
 //
 let lastPick = null;
+let _pointer = (function() {
+   let primary = {detail: 0, lastDown: {time: 0, pos: [0,0]} };
+   let states = new Map;
+
+   return {
+      downUpdate: (evt)=> {
+         if (evt.isPrimary) { // only interested in primary
+            // check lastTime of the up Event
+            const currentTime = Date.now();
+            const pos = [evt.clientX, evt.clientY];
+            if ((currentTime - primary.lastDown.time < 300) &&  // inside 300
+                (vec2.distance(pos, primary.lastDown.pos) < 10)) { // inside errorBound
+               primary.detail += 1;
+            } else { // reset click count
+               primary.detail = 1;
+            }
+            primary.lastDown.time = currentTime;
+            primary.lastDown.pos = pos;
+         }
+      },
+
+      upUpdate: (evt) => { // check primary
+         if (evt.isPrimary) {
+
+         }
+      },
+
+      moveUpdate: (evt) => {  //
+         const pos = [evt.clientX, evt.clientY];
+         if (!states.has(evt.pointerId)) {
+            states.set(evt.pointerId, {last: pos, current: pos});
+         } else {
+            const record = states.get(evt.pointerId);
+            record.last = record.current;
+            record.current = pos;
+         }
+      },
+
+      isDoubleDown: ()=> {   // is primary in doubleDown mode.
+         return (primary.detail === 2);
+      },
+
+      getMovement: (pointerId)=> {
+         const pos = states.get(pointerId);
+         if (pos) {
+            return {movementX: pos.current[0] - pos.last[0],
+                     movementY: pos.current[1] - pos.last[1]};
+         } else {
+            return {movementX: 0, movementY: 0};
+         }
+      },
+   };
+}());
+function getClientPosition(e) {
+   const rect = e.target.getBoundingClientRect();
+   return {x: e.clientX - rect.left,   //x position within the element.
+           y: e.clientY - rect.top};   //y position within the element.
+};
 function rayPick(mousePos) {
    const [ptNear, ptFar] = m_windows.current.screenPointToWorld( mousePos );
    vec3.sub(ptFar, ptFar, ptNear);
@@ -897,18 +955,17 @@ function rayPick(mousePos) {
 
 const noSelect = (function(){  // no select
    return { start: function() {},
-            move: function(ev) {
-               const mousePos = UI.getClientPosition(ev);
+            move: function(evtMove) {
                // check on the same panes?
-               if (!m_windows.current.isInside(mousePos)) {
+               if (!m_windows.current.isInside(evtMove.mousePos)) {
                   for (let i = 0; i < m_windows.length; ++i) {
-                     if (m_windows.viewports[i].isInside(mousePos)) {
+                     if (m_windows.viewports[i].isInside(evtMove.mousePos)) {
                         makeCurrent(m_windows.viewports[i]);
                         break;
                      }
                   }
                }
-               rayPick(mousePos);
+               rayPick(evtMove.mousePos);
             },
             finish: function(ev) {}
          };
@@ -925,8 +982,8 @@ const dragSelect = (function(){
          Render.needToRedraw();
       },
 
-      move: function(ev) {
-         rayPick(UI.getClientPosition(ev));
+      move: function(evtMove) {
+         rayPick(evtMove.mousePos);
          if ((lastPick !== null)) {
             dragMode.dragSelect(lastPick.model, hilite);
             Render.needToRedraw();
@@ -958,24 +1015,23 @@ const boxSelect = (function(){
          selectionRectangle.start = selectionRectangle.end = mousePos;
       },
 
-      move: function(ev) {    
+      move: function(evtMove) {    
          if (isMultiMode()) { // force to faceMode if in multiMode.
             mode.current.toggleMulti({face: true}); 
          }
-         const mousePos = UI.getClientPosition(ev);
          let x = selectionRectangle.start.x;
-         selectionRectangle.end = mousePos;
+         selectionRectangle.end = evtMove.mousePos;
          // reverse if negative width, height.
-         let width = mousePos.x - x;
+         let width = evtMove.mousePos.x - x;
          if (width < 0) {
             width = -width;
-            x = mousePos.x;
+            x = evtMove.mousePos.x;
          }
          let y = selectionRectangle.start.y
-         let height = mousePos.y - y;
+         let height = evtMove.mousePos.y - y;
          if (height < 0) {
             height = -height;
-            y = mousePos.y;
+            y = evtMove.mousePos.y;
          }
          if (!selectionRectangle.rect) {// setup svg rectangle.
             setupRectangle(selectionRectangle.start);
@@ -1069,11 +1125,10 @@ const tweakSelect = (function() {   // it just like mousemove, but with leftButt
 
 
 let selectionMode = noSelect;
-function selectStart(ev) {
-   const mousePos = UI.getClientPosition(ev);
+function selectStart(isDoubleDown, mousePos) {
    if (lastPick !== null) {
       if (tweakMode) {
-         if (ev.detail === 2) { // double click dragOnly.
+         if (isDoubleDown) { // double click dragOnly.
             undoEdit();    // undo the previous tweak Select
             selectionMode = dragSelect;
          } else {
@@ -1103,8 +1158,11 @@ function canvasHandleMouseLeave(ev) {
    selectFinish(ev);       // we can't caputre mouseup when mouse leave, so force to finish the selection.
 };
 
+const _lastTouch = {};
 function canvasHandleMouseDown(ev) {
    ev.preventDefault();       // this prevent select text on infoLine because of canvas.
+   // touch event
+   _pointer.downUpdate(ev);
    if (ev.button === 0) {
       if (handler.camera !== null) {
          handler.camera.commit();
@@ -1122,13 +1180,15 @@ function canvasHandleMouseDown(ev) {
       } else {
          //e.stopImmediatePropagation();
          // ask view to select current hilite if any.
-         selectStart(ev);
+         selectStart(_pointer.isDoubleDown(ev.pointerId), getClientPosition(ev));
       }
    }
 };
 
 // event handling, switching state if needs to be
 function canvasHandleMouseUp(ev) {
+   // touch event
+   _pointer.upUpdate(ev);
    if (ev.button == 0) {
       selectFinish(ev);
    } else if (ev.button == 1) { // check for middle button down
@@ -1150,20 +1210,25 @@ function canvasHandleMouseUp(ev) {
 };
 
 function canvasHandleMouseMove(e) {
-   if ((e.movementX !== 0) || (e.movementY !==0)) {   // guard against (0,0) movement.
+   _pointer.moveUpdate(e);
+   //if (!_2fingers.is2Fingers()) { // handle 2 finger event
+      const move = Object.assign({}, e);
+      move.mousePos = getClientPosition(e);
+      move.movementX = e.movementX;
+      move.movementY = e.movementY;
       if (handler.camera !== null) {
-         handler.camera.onMove(e);
+         handler.camera.onMove(move);
       } else if (handler.mousemove !== null) {
-         handler.mousemove.onMove(e);
+         handler.mousemove.onMove(move);
       } else {
-         selectionMode.move(e);
+         selectionMode.move(move);
       }
-   }
+   //}
 };
 
 // contextMenu, mouse right click.
 function canvasHandleContextMenu(ev) {
-   if (handler.mouseSelect) {
+   if (_2fingers.is2Fingers() || handler.mouseSelect) {
       // prevent propagation.
       ev.preventDefault();
       ev.stopImmediatePropagation();      // prevent document's contextmenu popup
@@ -1193,15 +1258,6 @@ function canvasHandleWheel(e) {
 
 //-- end of mouse handling-----------------------------------------------
 //-- touch event handling -----------------------------------------------
-// two-finger, pinch-Zoom
-
-// two-finger tap, right click
-
-// two-finger move, move
-
-// two-finger rotate, rotate
-
-
 // two-finger touch event.
 let _2fingers = (()=>{
    const pointers = new Map;
@@ -1211,13 +1267,31 @@ let _2fingers = (()=>{
    }
    function touchRecordUpdate(evt) {
       const record = pointers.get(evt.pointerId);
+      geometryStatus("update");
       if (record) {
+         geometryStatus("update record");
          record.prev = record.current;
          record.current = {pos: [evt.clientX, evt.clientY], velocity: [0, 0], time: Date.now()};
+         geometryStatus("update record done");
       }   
+   }
+   function touchMovement(pointerId) {
+      const evt = {movementX: 0, movementY: 0};
+      const record = pointers.get(pointerId);
+      if (record) {
+         evt.movementX = record.current.pos[0] - record.prev.pos[0];
+         evt.movementY = record.current.pos[1] - record.prev.pos[1];
+      }
+      return evt;
    }
 
    const startHandler = {
+      is2Fingers: ()=>{return false;},
+
+      getMovement: (pointerId)=> {
+         return touchMovement(pointerId);
+      },
+
       onDown: (evt)=> {
          if (pointers.has(evt.pointerId)) {
             console.log("bad pointer down state");
@@ -1227,7 +1301,7 @@ let _2fingers = (()=>{
                return actionHandler;
             }
          }
-         return this;
+         return startHandler;
       },
 
       onUp: (evt)=> {
@@ -1235,20 +1309,21 @@ let _2fingers = (()=>{
          if (pointers.size === 2) {
             return actionHandler;
          }
-         return this;
+         return startHandler;
       },
 
       onCancel: (_evt)=>{
-         return this;
+         return startHandler;
       },
 
       onMove: (evt)=> {
          touchRecordUpdate(evt);
-         return this;
+         return startHandler;
       },
    };
 
    function touchAction() { // 
+      geometryStatus("touch action");
       if (pointers.size === 2) { // yes, see if we have pinchZoom, rotate, or simple move.
          const ePtr = pointers[Symbol.iterator]();
          const a = ePtr.next().value; 
@@ -1261,7 +1336,7 @@ let _2fingers = (()=>{
          } else {
             m_windows.current.camera.zoomStep( 1/scale * 50);
          }
-         
+         geometryStatus("scale: " + scale);
          //translate = [x3 - scale * x1 * Math.cos(rotate) + scale * y1 * Math.sin(rotate), y3 - scale * y1 * Math.cos(rotate) - scale * x1 * Math.sin(rotate)];
          /*return {
             rotate,
@@ -1279,12 +1354,18 @@ let _2fingers = (()=>{
    const actionHandler = {
       lastMoveId: null,
 
+      is2Fingers: ()=>{return true;},
+
+      getMovement: (pointerId)=>{
+         return touchMovement(pointerId);
+      },
+
       onDown: (evt)=> { 
          pointers.set(evt.pointerId, touchRecord(evt));
          if (pointers.size !== 2) {// we really don't want third finger. so we return to start again.
             return startHandler;
          }
-         return this;
+         return actionHandler;
       },
 
       onUp: (evt)=> {
@@ -1292,7 +1373,7 @@ let _2fingers = (()=>{
          if (pointers.size !== 2) {
             return startHandler;
          }
-         return this;
+         return actionHandler;
       },
 
       onCancel: (evt)=> {
@@ -1300,15 +1381,18 @@ let _2fingers = (()=>{
       },
 
       onMove: (evt)=> { // we have 2 finger, now check if 
-         if (this.lastMoveId !== evt.pointerId) {  // ok, we got our 2 fingers
-            clearTimeout(touchAction);
+         if (actionHandler.lastMoveId !== evt.pointerId) {  // ok, we got our 2 fingers
+            geometryStatus("ok");
+            //clearTimeout(touchAction);
             touchRecordUpdate(evt);
-            calcAction();
+            //calcAction();
+            geometryStatus("calc move");
          } else { // let timer determined if we should apply the action.
+            geometryStatus("wait move");
             setTimeout(touchAction, 100);
          }
-         this.lastMoveId = evt.pointerId;
-         return this;
+         actionHandler.lastMoveId = evt.pointerId;
+         return actionHandler;
       }
    };
    return startHandler;
@@ -1317,7 +1401,7 @@ function canvasHandleTouchStart(evt) {
    _2fingers = _2fingers.onDown(evt);
 };
 function canvasHandleTouchMove(evt) {
-   _2Fingers = _2fingers.onMove(evt);
+   _2fingers = _2fingers.onMove(evt);
 };
 function canvasHandleTouchEnd(evt) {
    _2fingers = _2fingers.onUp(evt);

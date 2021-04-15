@@ -147,12 +147,6 @@ function placement(targetId, placement, bubble) {
 };
 
 
-function getClientPosition(e) {
-   const rect = e.target.getBoundingClientRect();
-   return {x: e.clientX - rect.left,   //x position within the element.
-           y: e.clientY - rect.top};   //y position within the element.
-};
-
   /**
    * Get's exact position of event.
    * 
@@ -599,7 +593,6 @@ export {
    styleSheet,
    getArrow,
    placement,
-   getClientPosition,
    getPosition,
    positionDom,
    addMenuItem,
