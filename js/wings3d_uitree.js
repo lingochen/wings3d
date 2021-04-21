@@ -122,7 +122,7 @@ class TreeView {
          let contextMenu = document.querySelector('#geometryGraphWorld');
          if (contextMenu) {
             UI.positionDom(contextMenu, UI.getPosition(ev));
-            UI.showContextMenu(contextMenu);
+            UI.showContextMenu(contextMenu, ev);
             View.setObject(world, [world]);
          }
        }, false);
@@ -273,7 +273,7 @@ class TreeView {
             let contextMenu = document.querySelector('#geometryGraphText');
             if (contextMenu) {
                UI.positionDom(contextMenu, UI.getPosition(ev));
-               UI.showContextMenu(contextMenu);
+               UI.showContextMenu(contextMenu, ev);
                View.setObject(model.parent, [model]);
             }
           }, false);
@@ -402,7 +402,7 @@ class ImageList extends ListView {
          label.addEventListener('contextmenu', function(ev) {
             ev.preventDefault();
             UI.positionDom(contextMenu, UI.getPosition(ev));
-            UI.showContextMenu(contextMenu);
+            UI.showContextMenu(contextMenu, ev);
           }, false);
       }
       this.popup = UI.showPopup();
@@ -467,7 +467,7 @@ class MaterialList extends ListView {
          label.addEventListener('contextmenu', function(ev) {
             ev.preventDefault();
             UI.positionDom(contextMenu, UI.getPosition(ev));
-            UI.showContextMenu(contextMenu);
+            UI.showContextMenu(contextMenu, ev);
           }, false);
       }
    }
