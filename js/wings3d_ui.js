@@ -507,7 +507,7 @@ function showContextMenu(popupMenu, evt) {   // button pressed.
    if (currentMenu) {
       toggleMenuOff();
    } else {
-      if (evt.buttons & 0x02) { // right-button|contextMenu, (linux, mac) fire on down
+      if ((evt.type === "mouse") && (evt.buttons & 0x02)) { // right-button|contextMenu, (linux, mac) fire on down
          document.addEventListener("pointerup", function context(e){
             //if (e.button === evt.button) {
                document.removeEventListener("pointerup", context);
