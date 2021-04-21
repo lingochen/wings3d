@@ -491,32 +491,32 @@ function toggleMenuOff() {
       currentMenu.style.left = pos.left + "px";
    }
 };
-let firstClick = 0;
 function clickListener() {
    function callBack(e) {
-      if (firstClick) {
-         firstClick--;
-      } else {
-      //let clickeElIsLink = clickInsideElement( e, popupMenuClass );
-      //if ( !clickeElIsLink ) {
-         //if ( (e.button == 0) || (e.button == 1) ) {  // somehow, any click should 
-            toggleMenuOff();
-            if (!currentMenu) {
-               // remove listening event
-               document.removeEventListener("pointerup", callBack);
-            }
-         //}
-      }
-    }
+      //if ( (e.button == 0) || (e.button == 1) ) {  // somehow, any click should 
+         toggleMenuOff();
+         if (!currentMenu) {  // no menu
+            // remove listening event
+            document.removeEventListener("pointerup", callBack);
+         }
+    };
 
    document.addEventListener("pointerup", callBack, false);
 };
-function showContextMenu(popupMenu) {
+function showContextMenu(popupMenu, evt) {   // button pressed.
    if (currentMenu) {
       toggleMenuOff();
    } else {
-      firstClick++;
-      clickListener();
+      if (evt.buttons & 0x02) { // right-button|contextMenu, (linux, mac) fire on down
+         document.addEventListener("pointerup", function context(e){
+            //if (e.button === evt.button) {
+               document.removeEventListener("pointerup", context);
+               clickListener();
+            //}
+         });
+      } else { // windows, tablet, fire on up.
+         clickListener();
+      }
    }
    currentMenu = popupMenu;
    currentMenu.style.visibility = "visible";   // toggleMenuOn
