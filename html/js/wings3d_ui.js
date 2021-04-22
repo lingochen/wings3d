@@ -491,14 +491,19 @@ function toggleMenuOff() {
       currentMenu.style.left = pos.left + "px";
    }
 };
+let _checkContextUp = false;
 function clickListener() {
    function callBack(e) {
+      if (_checkContextUp && (e.button === 2)) { // linux, mac, contextMenu on mouse down, so there will be a mouseUp that we have to skip.
+         _checkContextUp = false;
+      } else {
       //if ( (e.button == 0) || (e.button == 1) ) {  // somehow, any click should 
          toggleMenuOff();
          if (!currentMenu) {  // no menu
             // remove listening event
             document.removeEventListener("pointerup", callBack);
          }
+      }
     };
 
    document.addEventListener("pointerup", callBack, false);
@@ -507,17 +512,9 @@ function showContextMenu(popupMenu, evt) {   // button pressed.
    if (currentMenu) {
       toggleMenuOff();
    } else {
-      if ((evt.type === "mouse") && (evt.buttons & 0x02)) { // right-button|contextMenu, (linux, mac) fire on down
-         document.addEventListener("pointerup", function context(e){
-            //if (e.button === evt.button) {
-               document.removeEventListener("pointerup", context);
-               clickListener();
-            //}
-         });
-      } else { // windows, tablet, fire on up.
-         clickListener();
-      }
+      clickListener();
    }
+   _checkContextUp = true;
    currentMenu = popupMenu;
    currentMenu.style.visibility = "visible";   // toggleMenuOn
 };
