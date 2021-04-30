@@ -494,9 +494,7 @@ function toggleMenuOff() {
 let _checkContextUp = false;
 function clickListener() {
    function callBack(e) {
-      if (_checkContextUp && (e.button === 2)) { // linux, mac, contextMenu on mouse down, so there will be a mouseUp that we have to skip.
-         _checkContextUp = false;
-      } else {
+      if (!(_checkContextUp && (e.button === 2))) { // linux, mac, contextMenu on mouse down, so there will be a mouseUp that we have to skip.
       //if ( (e.button == 0) || (e.button == 1) ) {  // somehow, any click should 
          toggleMenuOff();
          if (!currentMenu) {  // no menu
@@ -504,6 +502,7 @@ function clickListener() {
             document.removeEventListener("pointerup", callBack);
          }
       }
+      _checkContextUp = false;
     };
 
    document.addEventListener("pointerup", callBack, false);

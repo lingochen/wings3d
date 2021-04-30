@@ -850,7 +850,139 @@ function modeHelp() {
    }
 }
 
+//-- touch event handling -----------------------------------------------
+// two-finger touch event.
+let _2fingers = (()=>{
+   let touchStart, touchCurrent;
+   let lastGesture = -1;
+   function touchRecord(evt) {
+      const data =  {pos: [evt.clientX, evt.clientY], velocity: [0, 0], time: Date.now()};
+      return data;
+   }
 
+   const startHandler = {
+      is2Fingers: ()=>{return false;},
+
+      onDown: (evt)=> {
+         if (evt.touches.length === 2) {
+            touchStart = [touchRecord(evt.touches[0]), touchRecord(evt.touches[1])];
+            touchCurrent = touchStart;
+            return actionHandler;
+         }
+         return startHandler;
+      },
+
+      onUp: (evt)=> {
+         if (evt.touches.length === 2) {
+            touchStart = [touchRecord(evt.touches[0]), touchRecord(evt.touches[1])];
+            touchCurrent = touchStart;
+            return actionHandler;
+         }
+         return startHandler;
+      },
+
+      onCancel: (_evt)=>{
+         return startHandler;
+      },
+
+      onMove: (evt)=> {
+         return startHandler;
+      },
+   };
+
+   function touchAction(onRotate, onScale, onTranslate) { 
+      // check if we have enough movement
+      let a0 = touchStart[0].pos, a1 = touchCurrent[0].pos, 
+               b0 = touchStart[1].pos, b1 = touchCurrent[1].pos;
+      const aV = [0, 0], bV= [0, 0];
+      vec2.sub(aV, a1, a0);
+      vec2.sub(bV, b1, b0);
+      const aLen = vec2.len(aV), bLen = vec2.len(bV);
+
+      if ((aLen > 9) || (bLen > 9)) {
+         const ba1 = [0, 0], ba0 = [0, 0];
+         vec2.sub(ba1, b1, a1);
+         vec2.sub(ba0, b0, a0);
+         let rotate = Math.atan2(ba1[1], ba1[0]) - Math.atan2(ba0[1], ba0[0]);
+         const jitter = Math.PI/25;
+         if ( (rotate > jitter) || (rotate < -jitter) ) {
+            onRotate(rotate);
+            touchStart = touchCurrent;
+         } else {
+            let scale = Math.sqrt(vec2.sqrLen(ba1) / vec2.sqrLen(ba0));
+            if (vec2.dot(aV, bV) <= 0) {  // scale should not move on same dir.
+               if ( (scale > 1.04) || (scale < 0.96) ) {
+                  onScale(scale);
+                  touchStart = touchCurrent;
+               }
+            } else {
+               // check if we are panning, (no rotate,scale), the length of (a1,a0) == (b1,b0), so we just check 1
+               let scale = aLen / bLen;
+               if ((scale < 1.22) && (scale > 0.8)) {  // 2 finger should move more less togther
+                  vec2.lerp(aV, aV, bV, 0.5);   // average vec
+                  onTranslate(aV);
+                  touchStart = touchCurrent;
+               } 
+            }
+         }
+      }
+   }
+
+   const actionHandler = {
+      is2Fingers: ()=>{return true;},
+
+      onGesture: (rotate, scale, translate)=>{
+         touchAction(rotate, scale, translate);
+      },
+
+      onDown: (evt)=> {
+         if (evt.touches.length !== 2) {  // we only want 2 finger
+            touchStart = touchCurrent = null;
+            return startHandler;
+         }
+         return actionHandler;
+      },
+
+      onUp: (evt)=> {
+         if (evt.touches.length !== 2) {
+            touchStart = touchCurrent = null;
+            return startHandler;
+         }
+         // this should not happened!
+         return actionHandler;
+      },
+
+      onCancel: (evt)=> {
+
+      },
+
+      onMove: (evt)=> { // we have 2 finger, now check if 
+         if (evt.touches.length === 2) {
+            touchCurrent = [touchRecord(evt.touches[0]), touchRecord(evt.touches[1])];
+         }
+         return actionHandler;
+      }
+   };
+   return startHandler;
+})();
+function canvasHandleTouchDown(evt) {
+   _2fingers = _2fingers.onDown(evt);
+}
+function canvasHandleTouchUp(evt) {
+   _2fingers = _2fingers.onUp(evt);
+}
+/** 
+   firefox for window don't handle 2 pointers move well. (the 2nd touch fire event sporadically with large movement)
+   so we revert using touchmove when we detect 2 pointers.
+   todo: comeback to revisit(2021/04/26) the problem.
+*/
+function canvasHandleTouchMove(evt) {
+   _2fingers = _2fingers.onMove(evt);
+   if (evt.touches.length === 2) {
+      // check, move, zoom, rotate
+   }
+}
+//-- end of touch event handling ----------------------------------------
 //
 // mouse handling ---------------------------------------------------------------------
 //
@@ -861,6 +993,7 @@ let _pointer = (function() {
 
    return {
       downUpdate: (evt)=> {
+         //_2fingers = _2fingers.onDown(evt);
          if (evt.isPrimary) { // only interested in primary
             // check lastTime of the up Event
             const currentTime = Date.now();
@@ -877,12 +1010,14 @@ let _pointer = (function() {
       },
 
       upUpdate: (evt) => { // check primary
+         //_2fingers = _2fingers.onUp(evt);
          if (evt.isPrimary) {
 
          }
       },
 
       moveUpdate: (evt) => {  //
+         //_2fingers = _2fingers.onMove(evt);
          const pos = [evt.clientX, evt.clientY];
          if (!states.has(evt.pointerId)) {
             states.set(evt.pointerId, {last: pos, current: pos});
@@ -897,13 +1032,11 @@ let _pointer = (function() {
          return (primary.detail === 2);
       },
 
-      getMovement: (pointerId)=> {
+      getMovement: (pointerId, move)=> {
          const pos = states.get(pointerId);
          if (pos) {
-            return {movementX: pos.current[0] - pos.last[0],
-                     movementY: pos.current[1] - pos.last[1]};
-         } else {
-            return {movementX: 0, movementY: 0};
+            move.movementX = pos.current[0] - pos.last[0];
+            move.movementY = pos.current[1] - pos.last[1];
          }
       },
    };
@@ -1211,11 +1344,32 @@ function canvasHandleMouseUp(ev) {
 
 function canvasHandleMouseMove(e) {
    _pointer.moveUpdate(e);
-   //if (!_2fingers.is2Fingers()) { // handle 2 finger event
-      const move = Object.assign({}, e);
-      move.mousePos = getClientPosition(e);
-      move.movementX = e.movementX;
-      move.movementY = e.movementY;
+   const move = Object.assign({}, e);
+   move.mousePos = getClientPosition(e);
+   move.movementX = e.movementX;
+   move.movementY = e.movementY;
+   if ((e.pointerType !== "mouse")) {  // touch buttons don't have movementXY, so we have to get it ourself
+      _pointer.getMovement(e.pointerId, move);
+      //console.log("touch:" + e.pointerId+ " t:" + e.timeStamp + " x:" + move.movementX + " y:" + move.movementY);
+   }
+   if (_2fingers.is2Fingers()) { // handle 2 finger event
+      _2fingers.onGesture((rotate)=> {
+            console.log("rotate: " + rotate);
+         },
+         (scale)=>{
+            console.log("scale:" + scale);
+               /*         // now zoom action
+               if (scale >= 1.0) {  // negative direction
+                  m_windows.current.camera.zoomStep( scale * -50 );
+               } else {
+                  m_windows.current.camera.zoomStep( 1/scale * 50);
+               } */
+         },
+         (translate)=> {
+            console.log("translate:" + translate);
+         }
+      );
+   } else if ( (move.movementX !== 0) || (move.movementY !== 0)) {
       if (handler.camera !== null) {
          handler.camera.onMove(move);
       } else if (handler.mousemove !== null) {
@@ -1223,7 +1377,7 @@ function canvasHandleMouseMove(e) {
       } else {
          selectionMode.move(move);
       }
-   //}
+   }
 };
 
 // contextMenu, mouse right click.
@@ -1257,157 +1411,7 @@ function canvasHandleWheel(e) {
 };
 
 //-- end of mouse handling-----------------------------------------------
-//-- touch event handling -----------------------------------------------
-// two-finger touch event.
-let _2fingers = (()=>{
-   const pointers = new Map;
-   function touchRecord(evt) {
-      const data =  {pos: [evt.clientX, evt.clientY], velocity: [0, 0], time: Date.now()};
-      return {prev: data, current: data};
-   }
-   function touchRecordUpdate(evt) {
-      const record = pointers.get(evt.pointerId);
-      geometryStatus("update");
-      if (record) {
-         geometryStatus("update record");
-         record.prev = record.current;
-         record.current = {pos: [evt.clientX, evt.clientY], velocity: [0, 0], time: Date.now()};
-         geometryStatus("update record done");
-      }   
-   }
-   function touchMovement(pointerId) {
-      const evt = {movementX: 0, movementY: 0};
-      const record = pointers.get(pointerId);
-      if (record) {
-         evt.movementX = record.current.pos[0] - record.prev.pos[0];
-         evt.movementY = record.current.pos[1] - record.prev.pos[1];
-      }
-      return evt;
-   }
 
-   const startHandler = {
-      is2Fingers: ()=>{return false;},
-
-      getMovement: (pointerId)=> {
-         return touchMovement(pointerId);
-      },
-
-      onDown: (evt)=> {
-         if (pointers.has(evt.pointerId)) {
-            console.log("bad pointer down state");
-         } else {
-            pointers.set(evt.pointerId, touchRecord(evt));
-            if (pointers.size === 2) {
-               return actionHandler;
-            }
-         }
-         return startHandler;
-      },
-
-      onUp: (evt)=> {
-         pointers.delete(evt.pointerId);
-         if (pointers.size === 2) {
-            return actionHandler;
-         }
-         return startHandler;
-      },
-
-      onCancel: (_evt)=>{
-         return startHandler;
-      },
-
-      onMove: (evt)=> {
-         touchRecordUpdate(evt);
-         return startHandler;
-      },
-   };
-
-   function touchAction() { // 
-      geometryStatus("touch action");
-      if (pointers.size === 2) { // yes, see if we have pinchZoom, rotate, or simple move.
-         const ePtr = pointers[Symbol.iterator]();
-         const a = ePtr.next().value; 
-         const b = ePtr.next().value;
-         //let rotate = Math.atan2(y4 - y3, x4 - x3) - Math.atan2(y2 - y1, x2 - x1),
-         let scale = Math.sqrt(vec2.sqrLen(a.current, b.current) / vec2.sqrLen(a.prev, b.prev));
-         // now zoom action
-         if (scale >= 1.0) {  // negative direction
-            m_windows.current.camera.zoomStep( scale * -50 );
-         } else {
-            m_windows.current.camera.zoomStep( 1/scale * 50);
-         }
-         geometryStatus("scale: " + scale);
-         //translate = [x3 - scale * x1 * Math.cos(rotate) + scale * y1 * Math.sin(rotate), y3 - scale * y1 * Math.cos(rotate) - scale * x1 * Math.sin(rotate)];
-         /*return {
-            rotate,
-            scale,
-            translate,
-            matrix: [
-               [scale * Math.cos(rotate), -scale * Math.sin(rotate), translate[0]],
-               [scale * Math.sin(rotate), scale * Math.cos(rotate), translate[1]],
-               [0, 0, 1]
-            ]
-         };*/
-      }
-   }
-
-   const actionHandler = {
-      lastMoveId: null,
-
-      is2Fingers: ()=>{return true;},
-
-      getMovement: (pointerId)=>{
-         return touchMovement(pointerId);
-      },
-
-      onDown: (evt)=> { 
-         pointers.set(evt.pointerId, touchRecord(evt));
-         if (pointers.size !== 2) {// we really don't want third finger. so we return to start again.
-            return startHandler;
-         }
-         return actionHandler;
-      },
-
-      onUp: (evt)=> {
-         pointers.delete(evt.pointerId);
-         if (pointers.size !== 2) {
-            return startHandler;
-         }
-         return actionHandler;
-      },
-
-      onCancel: (evt)=> {
-
-      },
-
-      onMove: (evt)=> { // we have 2 finger, now check if 
-         if (actionHandler.lastMoveId !== evt.pointerId) {  // ok, we got our 2 fingers
-            geometryStatus("ok");
-            //clearTimeout(touchAction);
-            touchRecordUpdate(evt);
-            //calcAction();
-            geometryStatus("calc move");
-         } else { // let timer determined if we should apply the action.
-            geometryStatus("wait move");
-            setTimeout(touchAction, 100);
-         }
-         actionHandler.lastMoveId = evt.pointerId;
-         return actionHandler;
-      }
-   };
-   return startHandler;
-})();
-function canvasHandleTouchStart(evt) {
-   _2fingers = _2fingers.onDown(evt);
-};
-function canvasHandleTouchMove(evt) {
-   _2fingers = _2fingers.onMove(evt);
-};
-function canvasHandleTouchEnd(evt) {
-   _2fingers = _2fingers.onUp(evt);
-};
-
-//-- end of touch event handling ----------------------------------------
 //-- handle Camera pan by keyboard -------------------------------------
 
 function canvasHandleKeyDown(evt) {
@@ -1909,6 +1913,9 @@ function init() {
    gl.canvas.addEventListener("pointerup", canvasHandleMouseUp, false);
    gl.canvas.addEventListener("pointerleave", canvasHandleMouseLeave, false);
    gl.canvas.addEventListener("pointermove", canvasHandleMouseMove, false);
+   gl.canvas.addEventListener("touchstart", canvasHandleTouchDown);
+   gl.canvas.addEventListener("touchend", canvasHandleTouchUp);
+   gl.canvas.addEventListener("touchmove", canvasHandleTouchMove);
    gl.canvas.addEventListener("wheel", canvasHandleWheel, false);
    // capture keydown
    gl.canvas.addEventListener("pointerover", function(evt) { gl.canvas.focus(); });
@@ -1930,7 +1937,7 @@ function init() {
             }
          }
          UI.positionDom(contextMenu.menu, UI.getPosition(e));
-         UI.showContextMenu(contextMenu.menu);
+         UI.showContextMenu(contextMenu.menu, e);
       }
    }, false);   
 
