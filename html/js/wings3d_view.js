@@ -724,7 +724,7 @@ function attachHandlerCamera(camera) {
       Wings3D.log(Wings3D.action.cameraModeExit, m_windows.current.camera);
       modeHelp();
       handler.camera = null;
-      document.exitPointerLock();
+      setTimeout(()=>{document.exitPointerLock()}, 1);   // windows firefox fire contextmenu after mouseup if we don't delay releasePointerLock
    }
 
    // let camera handle the mouse event until it quit.0
@@ -782,7 +782,7 @@ function attachHandlerMouseMove(mouseMove) {
    }
    function gotoExit() {
       document.removeEventListener('keyup', onTab);
-      document.exitPointerLock();
+      setTimeout(()=>{document.exitPointerLock()}, 1);
       handler.mousemove = null;
       Render.needToRedraw();
    };
@@ -854,7 +854,6 @@ function modeHelp() {
 // two-finger touch event.
 let _2fingers = (()=>{
    let touchStart, touchCurrent;
-   let lastGesture = -1;
    function touchRecord(evt) {
       const data =  {pos: [evt.clientX, evt.clientY], velocity: [0, 0], time: Date.now()};
       return data;
@@ -885,7 +884,7 @@ let _2fingers = (()=>{
          return startHandler;
       },
 
-      onMove: (evt)=> {
+      onMove: (_evt)=> {
          return startHandler;
       },
    };
@@ -906,6 +905,9 @@ let _2fingers = (()=>{
          let rotate = Math.atan2(ba1[1], ba1[0]) - Math.atan2(ba0[1], ba0[0]);
          const jitter = Math.PI/25;
          if ( (rotate > jitter) || (rotate < -jitter) ) {
+            // 
+
+
             onRotate(rotate);
             touchStart = touchCurrent;
          } else {
@@ -980,6 +982,22 @@ function canvasHandleTouchMove(evt) {
    _2fingers = _2fingers.onMove(evt);
    if (evt.touches.length === 2) {
       // check, move, zoom, rotate
+      _2fingers.onGesture((rotate)=> {
+         console.log("rotate: " + rotate);
+
+      },
+      (scale)=>{
+         // now zoom action
+         if (scale >= 1.0) {  // negative direction
+            m_windows.current.camera.zoomStep( scale * -50 );
+         } else {
+            m_windows.current.camera.zoomStep( 1/scale * 50);
+         }
+      },
+      (translate)=> {
+         m_windows.current.camera.pan(translate[0], -translate[1]);
+      }
+   );
    }
 }
 //-- end of touch event handling ----------------------------------------
@@ -1350,26 +1368,9 @@ function canvasHandleMouseMove(e) {
    move.movementY = e.movementY;
    if ((e.pointerType !== "mouse")) {  // touch buttons don't have movementXY, so we have to get it ourself
       _pointer.getMovement(e.pointerId, move);
-      //console.log("touch:" + e.pointerId+ " t:" + e.timeStamp + " x:" + move.movementX + " y:" + move.movementY);
    }
-   if (_2fingers.is2Fingers()) { // handle 2 finger event
-      _2fingers.onGesture((rotate)=> {
-            console.log("rotate: " + rotate);
-         },
-         (scale)=>{
-            console.log("scale:" + scale);
-               /*         // now zoom action
-               if (scale >= 1.0) {  // negative direction
-                  m_windows.current.camera.zoomStep( scale * -50 );
-               } else {
-                  m_windows.current.camera.zoomStep( 1/scale * 50);
-               } */
-         },
-         (translate)=> {
-            console.log("translate:" + translate);
-         }
-      );
-   } else if ( (move.movementX !== 0) || (move.movementY !== 0)) {
+   if (!_2fingers.is2Fingers() && 
+       ((move.movementX !== 0) || (move.movementY !== 0))) {
       if (handler.camera !== null) {
          handler.camera.onMove(move);
       } else if (handler.mousemove !== null) {
