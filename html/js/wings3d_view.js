@@ -896,7 +896,7 @@ let _2fingers = (()=>{
       const aV = [0, 0], bV= [0, 0];
       vec2.sub(aV, a1, a0);
       vec2.sub(bV, b1, b0);
-      const aLen = vec2.len(aV), bLen = vec2.len(bV);
+      let aLen = vec2.len(aV), bLen = vec2.len(bV);
 
       if ((aLen > 9) || (bLen > 9)) {
          const ba1 = [0, 0], ba0 = [0, 0];
@@ -905,10 +905,14 @@ let _2fingers = (()=>{
          let rotate = Math.atan2(ba1[1], ba1[0]) - Math.atan2(ba0[1], ba0[0]);
          const jitter = Math.PI/25;
          if ( (rotate > jitter) || (rotate < -jitter) ) {
-            // 
-
-
-            onRotate(rotate);
+            if (a0[0] > b0[0]) { // we want a to be on the left
+               [aLen, bLen] = [bLen, aLen];
+            }
+            if (rotate > 0) {
+               onRotate(-aLen, -bLen);
+            } else {
+               onRotate(aLen, bLen);
+            }
             touchStart = touchCurrent;
          } else {
             let scale = Math.sqrt(vec2.sqrLen(ba1) / vec2.sqrLen(ba0));
@@ -982,9 +986,8 @@ function canvasHandleTouchMove(evt) {
    _2fingers = _2fingers.onMove(evt);
    if (evt.touches.length === 2) {
       // check, move, zoom, rotate
-      _2fingers.onGesture((rotate)=> {
-         console.log("rotate: " + rotate);
-
+      _2fingers.onGesture((dx, dy)=> {
+         m_windows.current.camera.rotate(dx, dy);
       },
       (scale)=>{
          // now zoom action
