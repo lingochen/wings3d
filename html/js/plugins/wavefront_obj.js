@@ -32,7 +32,7 @@ class WavefrontObjImportExporter extends ImportExporter {
     * 
     * @param {*} world - generator for iteration.
     */
-   _export(world) {
+   async _export(world) {
       let idx = 1;      // obj index start at 1;
       const remap = new Map();
 

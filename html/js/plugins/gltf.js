@@ -41,7 +41,7 @@ const BINARY_EXTENSION_BIN_TYPES  = 0x004E4942;
 
 class GLTFImportExporter extends ImportExporter {
    constructor() {
-      super(['GLTF', 'gltf, glb'], ['GLTF', 'gltf']);
+      super(['GLTF', 'gltf, glb']);  // no export yet['GLTF', 'gltf']);
       this.cache = {};
    }
 
