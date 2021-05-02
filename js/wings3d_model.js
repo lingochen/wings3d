@@ -3510,7 +3510,8 @@ PreviewCage.prototype.insetFace = function() {
    const direction = new Util.Vec3View(contours.direction);
    contours.vertexLimit = Number.MAX_SAFE_INTEGER;  // really should call moveLimit.
    for (let polygon of this.selectedSet) {
-      let prev = null;
+      const center = vec3.create();
+      polygon.getCentroid(center);
       contours.faces.add(polygon);
       for (let hEdge of polygon.hEdges()) {
          contours.vertices.push(hEdge.origin);
@@ -3519,12 +3520,7 @@ PreviewCage.prototype.insetFace = function() {
          contours.wingedEdges.add( hEdge.pair.next.wingedEdge );  // the extrude edge 
          vec3.copy(position, hEdge.origin);
          position.inc();
-         if (!prev) {
-            prev = hEdge.prev();
-         }
-         vec3.scale(direction, hEdge.destination(), 1.0/2);            // compute the sliding middle point
-         vec3.scaleAndAdd(direction, direction, prev.origin, 1.0/2);
-         vec3.sub(direction, direction, hEdge.origin);
+         vec3.sub(direction, center, hEdge.origin);   // slide to center.
          // get length and normalized.
          const len = vec3.length(direction);
          if (len < contours.vertexLimit) {
@@ -3532,8 +3528,6 @@ PreviewCage.prototype.insetFace = function() {
          }
          vec3.normalize(direction, direction);
          direction.inc();
-         // 
-         prev = hEdge;
       }
    }
 
