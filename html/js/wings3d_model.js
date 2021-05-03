@@ -3509,8 +3509,8 @@ PreviewCage.prototype.insetFace = function() {
    contours.direction = new Float32Array(vertexCount*3);    // also add direction.
    const direction = new Util.Vec3View(contours.direction);
    contours.vertexLimit = Number.MAX_SAFE_INTEGER;  // really should call moveLimit.
+   const center = vec3.create();
    for (let polygon of this.selectedSet) {
-      const center = vec3.create();
       polygon.getCentroid(center);
       contours.faces.add(polygon);
       for (let hEdge of polygon.hEdges()) {
