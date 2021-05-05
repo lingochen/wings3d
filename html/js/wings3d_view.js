@@ -719,16 +719,37 @@ function setCurrent(edge, intersect, center) {
 }
 
 
+const _mousePointer = (function(){
+   let _nestCount = 0;
+
+   return {
+      hide: ()=> {
+         if (_nestCount === 0) {
+            gl.canvas.requestPointerLock();
+         }
+         ++_nestCount;
+      },
+
+      show: () => {
+         --_nestCount;
+         if (_nestCount === 0) {
+            setTimeout(()=>{document.exitPointerLock()}, 1);  // workaround firefox's quirk. exitPointerLock() in right mouse up's handler will follow by contextmenu event.
+         }
+      },
+   };
+}());
+
+
 function attachHandlerCamera(camera) {
    function gotoExit(mousePos) {
       Wings3D.log(Wings3D.action.cameraModeExit, m_windows.current.camera);
       modeHelp();
       handler.camera = null;
-      setTimeout(()=>{document.exitPointerLock()}, 1);   // windows firefox fire contextmenu after mouseup if we don't delay releasePointerLock
+      _mousePointer.show();
    }
 
    // let camera handle the mouse event until it quit.0
-   gl.canvas.requestPointerLock();
+   _mousePointer.hide();
    // tell tutor step, we are in camera mode
    Wings3D.log(Wings3D.action.cameraModeEnter, m_windows.current.camera);
    help(`L:${i18n('accept')}   M:${i18n('dragPan')}  R:${i18n('cancelRestoreView')}   ${i18n('moveMouseTumble')}`);
@@ -756,7 +777,7 @@ function attachHandlerMouseMove(mouseMove) {
       if (evt.key == 'Tab') {   // yes, tab.
          evt.preventDefault();
          document.removeEventListener('keyup', onTab);
-         document.exitPointerLock();
+         _mousePointer.show();
          UI.execDialog('#numericInput', function(form) {  // setup input.
             const labels = form.querySelectorAll('label');
             const settings = mouseMove.getInputSetting();
@@ -782,13 +803,13 @@ function attachHandlerMouseMove(mouseMove) {
    }
    function gotoExit() {
       document.removeEventListener('keyup', onTab);
-      setTimeout(()=>{document.exitPointerLock()}, 1);
+      _mousePointer.show();
       handler.mousemove = null;
       Render.needToRedraw();
    };
 
    // onEntry
-   gl.canvas.requestPointerLock();
+   _mousePointer.hide();
    // request handling of tab.
    document.addEventListener('keyup', onTab);
 
@@ -1231,7 +1252,7 @@ const tweakSelect = (function() {   // it just like mousemove, but with leftButt
    return {
       start: function(_mousePos) {
          // hide cursor, magnet area
-         gl.canvas.requestPointerLock();
+         _mousePointer.hide();
          // start tweaking
          isMoved = false;
          if (isMultiMode()) {
@@ -1261,7 +1282,7 @@ const tweakSelect = (function() {   // it just like mousemove, but with leftButt
          }
          tweak = null;
          // show cursor, magnet area
-         document.exitPointerLock();
+         _mousePointer.show();
       },
    
       move: function(ev) {
