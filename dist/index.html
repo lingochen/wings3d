@@ -3,13 +3,13 @@
 <head>
 <title>Wings3D.net</title>
 <meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
    <link rel="icon" type="image/png" href="img/favicon-96x96.png" />
-   <link rel="stylesheet" href="styles.css?v=58ba883059248a193f2465cdc21842d3" />
+   <link rel="stylesheet" href="styles.css?v=3fe5547b972a588162892d34255e1694" />
    <script src="./vendor/FileSaver.min.js?v=0cd1ebc44c182996e7d62f29b28dba9f" defer></script>
    <script src="./vendor/gl-matrix-min.js?v=8d57dae6ce3862af598c7ccad3df15ad" type="module"></script>
 
-   <script src="wings3d.bundle.js?v=052c6905569ee17136fb2a0e135fc27c" type="module"></script>
+   <script src="wings3d.bundle.js?v=52356196166841142fe0c031735cc10b" type="module"></script>
 
   <script>  
     function help(text) {
@@ -74,7 +74,7 @@
   </script> 
 </head>
 <body class="page-layout">
-  <nav class="menu bar marginal">
+  <nav class="menu marginal">
     <ul class="menu bar">
       <li class="dropdown">
         <a data-menuid="fileMenu" data-i18n>File</a>
@@ -216,76 +216,76 @@
     <div class="button-group system-group">
      	<input id="openSidebarFor" type="checkbox">
       <label data-menuid="openSidebar" for="openSidebarFor" class="button">
-        <img src="../img/bluecube.png" class="iconImg sidebarImg" alt>
+        <img src="./img/bluecube.png" class="iconImg sidebarImg" alt>
         <span data-i18n>Sidebar</span>
       </label>
       <label data-menuid="open" class="button">
-        <img src="../img/bluecube.png"  class="iconImg openImg" alt>
+        <img src="./img/bluecube.png"  class="iconImg openImg" alt>
         <span data-i18n>Open...</span>
       </label>
       <label data-menuid="save" class="button">
-        <img src="../img/bluecube.png" class="iconImg saveImg" alt>
+        <img src="./img/bluecube.png" class="iconImg saveImg" alt>
         <span data-i18n>Save</span>
       </label>
       <label class="button" data-menuid="undoEdit">
-        <img src="../img/bluecube.png" class="iconImg undoImg" alt>
+        <img src="./img/bluecube.png" class="iconImg undoImg" alt>
         <span data-i18n>Undo</span>
       </label>
       <label class="button" data-menuid="redoEdit">
-        <img src="../img/bluecube.png" class="iconImg redoImg" alt>
+        <img src="./img/bluecube.png" class="iconImg redoImg" alt>
         <span data-i18n>Redo</span>
       </label>
     </div>
     <div class="button-group object-select">
       <input type="radio" name="toggleMode" id="toggleMultiModeFor" checked>
       <label data-menuid="toggleMultiMode" class="button" for="toggleMultiModeFor">
-        <img src="../img/bluecube.png" class="iconImg multiImg" alt>
+        <img src="./img/bluecube.png" class="iconImg multiImg" alt>
         <span data-i18n>Multi</span>
       </label>
       <input type="radio" name="toggleMode" id="toggleVertexModeFor">
       <label data-menuid="toggleVertexMode" class="button" for="toggleVertexModeFor">
-        <img src="../img/bluecube.png" class="iconImg vertexImg" alt>
+        <img src="./img/bluecube.png" class="iconImg vertexImg" alt>
         <span data-i18n>Vertex</span>
       </label>
       <input type="radio" name="toggleMode" id="toggleEdgeModeFor">
       <label data-menuid="toggleEdgeMode" class="button" for="toggleEdgeModeFor">
-        <img src="../img/bluecube.png" class="iconImg edgeImg" alt>
+        <img src="./img/bluecube.png" class="iconImg edgeImg" alt>
         <span data-i18n>Edge</span>
       </label>
       <input type="radio" name="toggleMode" id="toggleFaceModeFor">
       <label data-menuid="toggleFaceMode" class="button" for="toggleFaceModeFor">
-        <img src="../img/bluecube.png" class="iconImg faceImg" alt>
+        <img src="./img/bluecube.png" class="iconImg faceImg" alt>
         <span data-i18n>Face</span>
       </label>
       <input type="radio" name="toggleMode" id="toggleBodyModeFor">
       <label data-menuid="toggleBodyMode" class="button" for="toggleBodyModeFor">
-        <img src="../img/bluecube.png" class="iconImg bodyImg" alt>
+        <img src="./img/bluecube.png" class="iconImg bodyImg" alt>
         <span data-i18n>Body</span>
       </label>
     </div>
     <div class="button-group set-pref">
       <label data-menuid="preferenceButton" class="button">
-        <img src="../img/bluecube.png" class="iconImg prefImg" alt>
+        <img src="./img/bluecube.png" class="iconImg prefImg" alt>
         <span data-i18n>Prefs</span>
       </label>
       <input type="checkbox" id="toggleSmoothFor">
       <label data-menuid="toggleSmooth" for="toggleSmoothFor" class="button not-implemented">
-        <img src="../img/bluecube.png" class="iconImg smoothImg" alt>
+        <img src="./img/bluecube.png" class="iconImg smoothImg" alt>
         <span data-i18n>Workmode</span>
       </label>
       <input type="checkbox" id="toggleOrthoFor">
       <label data-menuid="toggleOrtho" for="toggleOrthoFor" class="button">
-        <img src="../img/bluecube.png" class="iconImg perspectiveImg" alt>
+        <img src="./img/bluecube.png" class="iconImg perspectiveImg" alt>
         <span>Ortho</span>
       </label>
       <input type="checkbox" id="toggleGroundFor" checked>
       <label data-menuid="toggleGround" for="toggleGroundFor" class="button">
-        <img src="../img/bluecube.png" class="iconImg groundplaneImg" alt>
+        <img src="./img/bluecube.png" class="iconImg groundplaneImg" alt>
         <span data-i18n>Ground Plane</span>
       </label>
       <input type="checkbox" id="toggleAxesFor" checked>
       <label data-menuid="toggleAxes" for="toggleAxesFor" class="button">
-        <img src="../img/bluecube.png" class="iconImg axesImg" alt>
+        <img src="./img/bluecube.png" class="iconImg axesImg" alt>
         <span data-i18n>Axes</span>
       </label>
     </div>
