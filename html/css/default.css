@@ -45,6 +45,7 @@ body {
 }
 .button-bar {
   overflow-x: auto;
+  overflow-y: hidden;
 }
 .sidebar {
   display: none;
