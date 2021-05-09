@@ -526,7 +526,7 @@ class MaterialList extends ListView {
    }
 
    duplicateMaterial(objects) {
-      const dat = objects[0]._mat;
+      const dat = objects[0].material;
       let name = dat.name.split(/\d+$/);
       if (name.length > 1) {
          name = name[0] + (parseInt(dat.name.match(/\d+$/), 10) + 1);
@@ -563,9 +563,9 @@ class MaterialList extends ListView {
       // run rename dialog
       UI.runDialog('#renameDialog', ev, function(form) {
          const data = UI.extractDialogValue(form);
-         mat.rename(data[mat._mat.uuid]);
+         mat.rename(data[mat.material.uuid]);
       }, function(form) {
-         UI.addLabelInput(form, [mat._mat]);
+         UI.addLabelInput(form, [mat.material]);
       });
    }
 
@@ -581,7 +581,8 @@ function getMaterialList(labelId, id) {
    const label = document.querySelector(labelId);
    if (label && listView) {
       const ret = new MaterialList(label, listView);
-      ret.addMaterial(Material.default);
+      const mat = ret.addMaterial(Material.default);
+      Material.default = mat.material; // proxy the default.
       return ret;
    }
    // console log error
