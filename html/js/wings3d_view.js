@@ -1875,7 +1875,7 @@ function init() {
     });
    UI.bindMenuItem(Wings3D.action.assignMaterial.name, function(_ev) {
       if (mode.current === mode.face) {
-         const cmd = new GenericEditCommand(currentMode(), currentMode().assignMaterial, [_environment.currentObjects[0]], 
+         const cmd = new GenericEditCommand(currentMode(), currentMode().assignMaterial, [_environment.currentObjects[0].material],  // wings3d-material._mat
                                                            currentMode().undoAssignMaterial);
          undoQueue( cmd );                                                 
          cmd.doIt();
