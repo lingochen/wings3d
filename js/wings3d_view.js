@@ -6,7 +6,7 @@
 
 import * as UI from './wings3d_ui.js';
 import * as Render from './wings3d_render.js';
-//import * as Camera from './wings3d_camera.js';
+import * as Camera from './wings3d_camera.js';
 import {i18n} from './wings3d_i18n.js';
 import {gl} from './wings3d_gl.js';
 import {WavefrontObjImportExporter } from './plugins/wavefront_obj.js';
