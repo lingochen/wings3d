@@ -502,12 +502,12 @@ class MaterialList extends ListView {
          mat.menu.color.style.backgroundColor = Util.rgbToHex(...dat.pbr.baseColor);
 
          mat.menu.a.addEventListener('click', function(ev){
-            View.setObject(null, [dat]);       
+            View.setObject(null, [mat]);       
             Wings3D.runAction(ev.button, "assignMaterial", ev);
           });
          this.submenu.prepend(li); // put on submenu
       }
-      // set mat value
+      // set webcomponent mat value
       mat.material = material;
       if (material === Material.default) {
          mat.default = true;
