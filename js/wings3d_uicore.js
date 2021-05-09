@@ -494,15 +494,31 @@ class MaterialUI extends HTMLElement {
    }
 
    get material() {
-      return this._mat;
+      return this._matProxy;
    }
 
    set material(newMat) {
-      this._mat = newMat;
+      const materialDom = this;
       this.def = newMat.name;
+      this._mat = newMat;
+      this._matProxy = new Proxy(newMat, {
+         get(target, prop) {
+            if (typeof target[prop] == 'function') {
+               return function (...args) {
+                  const usageCount = target.usageCount;
+                  const ret = target[prop].apply(target, args);
+                  if (usageCount !== target.usageCount) {   // now update Materila-U
+                     materialDom.setUsageCount(target.usageCount);
+                  }
+                  return ret;
+               }
+            }
+            return target[prop];
+        },
+      });
+
       this.setBaseColor(newMat.getBaseColorInHex());
       this.setUsageCount(newMat.usageCount);
-
 
       // set textures if exists
       let hasTexture = false;

@@ -35,7 +35,6 @@ class Material {
       this.uuid = Util.get_uuidv4();
       this.isAltered = false;
       this.usageCount = 0;
-      this.guiStatus = {};
 /*   this.material = {diffuseMaterial: Util.hexToRGB("#C9CFB1"),    // color, old style to be deleted.
                     ambientMaterial: Util.hexToRGB("#C9CFB1"),    // color
                     specularMaterial: Util.hexToRGB("#000000"),   // color
@@ -238,26 +237,12 @@ static release(material) {
 
    assigned() {
       ++this.usageCount;
-      this.updateGUI();
       this.isAltered = true;
    }
 
    unassigned() {
       --this.usageCount;
-      this.updateGUI();
       this.isAltered = true;
-   }
-
-   updateGUI() {
-      if (this.guiStatus.count) {
-         this.guiStatus.count.textContent = this.usageCount;
-      }
-      if (this.menu && this.menu.color) {
-         this.menu.color.style.backgroundColor = Util.rgbToHex(...this.pbr.baseColor);
-      }
-      if (this.pict) {
-         this.pict.style.backgroundColor = Util.rgbToHex(...this.pbr.baseColor);
-      }
    }
 };
 Material.color = null;  // saved the color
