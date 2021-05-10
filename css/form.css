@@ -37,10 +37,11 @@ div.wrap {
   background-color:  #fff;
   border: solid 1px #dfdfdf;
   box-shadow: 1px 1px 2px #cfcfcf;
-  width: 300px;
-  min-width: 30%;
-  max-width: fit-content;
-  max-width: -moz-fit-content;
+  width: fit-content;
+  min-width: 300px;
+  max-width: 1024px;
+  max-height: 100vh;
+  overflow-y: auto;
 }
 
 .dialog.small {
