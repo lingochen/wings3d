@@ -261,7 +261,7 @@ function runDialogCenter(formID, submitCallback, setup, _ev, notOk) {
       if (setup) {
          setup(form);
       }
-      document.body.appendChild(gOverlay);  
+      document.body.prepend(gOverlay); // prepend instead of append because cloneNode() will duplicate id, and we want clone's id first, so css worked.
 
       // handling event
       form.addEventListener("keydown", preventEnter, true);
