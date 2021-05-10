@@ -361,7 +361,7 @@ class MaterialUI extends HTMLElement {
             style.setProperty("--baseColorMax", "#FFFFFF");
             style.setProperty("--emissionMax", "#FFFFFF");
          }
-         const data = form.querySelector('h3 > span');
+         const data = form.querySelector('h3 > span:nth-child(2)');
          if (data) {
             data.textContent = dat.name;
          }
