@@ -423,7 +423,7 @@ function slideBack() {
    }
    // hide current ul
    const ul = submenu.pop();
-   ul.style.visibility = "hidden";
+   ul.classList.remove("toggleOn");
    // now toggle parent sibling
    const dropside = ul.parentElement;  
    dropside.classList.remove('hideAfter', 'showBefore', 'slideUp');
@@ -469,7 +469,7 @@ function toggleSubmenu(ul) {
          }
       } while (element = element.nextElementSibling);
       submenu.push(ul);
-      ul.style.visibility = "visible";
+      ul.classList.add("toggleOn");
    }
 };
 
@@ -479,14 +479,14 @@ let currentMenu=false;
 let nextPopup=false;
 function toggleMenuOff() {
    if (currentMenu) {
-      currentMenu.style.visibility = "hidden";
+      currentMenu.classList.remove("toggleOn");
       currentMenu=false;
       while (slideBack()) {}
    }
    if (nextPopup) {
       currentMenu = nextPopup;
       nextPopup=false;
-      currentMenu.style.visibility = "visible";   // toggleMenuOn
+      currentMenu.classList.add("toggleOn");   // toggleMenuOn
       const pos = currentMenu.parentNode.getBoundingClientRect(); // due to scrolling, we have to move
       currentMenu.style.left = pos.left + "px";
    }
@@ -515,7 +515,7 @@ function showContextMenu(popupMenu, evt) {   // button pressed.
    }
    _checkContextUp = true;
    currentMenu = popupMenu;
-   currentMenu.style.visibility = "visible";   // toggleMenuOn
+   currentMenu.classList.add("toggleOn");   // toggleMenuOn
 };
 function queuePopupMenu(popupMenu) {
    if (popupMenu !==currentMenu) {

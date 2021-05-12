@@ -20,22 +20,32 @@ ul.menu {
 }
 /* dropdown menu */
 ul.popup.menu {
-  visibility : hidden;
+  display: none;
   position: absolute;    /* parent need to be relative */
   top: 100%;             /* place directly under parent */
   z-index: 100;
+  max-height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+ul.popup.menu.toggleOn {
+  display: block;
 }
 ul.popup.menu > li {
   display: flex;
   position: relative;
+}
+li.dropside {
+  flex-direction: column;
 }
 ul.popup.menu  hr {
   width: 100%;
   margin: 0em;
   border-width: 2px
 }
-ul.popup.menu ul.popup.menu {
+li.dropside > ul.popup.menu {
   width: 100%;
+  position: inherit;
 }
 ul.menu.bar {
   display: flex;
@@ -88,7 +98,7 @@ ul.popup.menu > li > img {
 }
 
 ul.popup.menu > li.slideOut {
-  visibility: hidden;
+  display: none;
   height: 0px;
 }
 
@@ -104,27 +114,35 @@ ul.menu li > a.hotkey:after {
 }
 
 /* added attribute for showing extra menu available. */
-li.dropdown:after {
-  content: "\2304";
+li.dropdown > a, li.dropside > a {
+  position: relative;
 }
-li.dropside::after {
+li.dropdown > a::after {
+  content: "\2304";
+  position: absolute;
+  right: 0;
+}
+li.dropside > a::after {
   content: "\203a";
+  position: absolute;
+  right: 0;
   padding: 0 0.5em 0 0;
   align-self: center;
 }
-li.dropside.hideAfter::after {
+li.dropside.hideAfter > a::after {
   display: none;
 }
-li.dropside::before {
+li.dropside > a::before {
   content:"\2039";
   align-self: center;
   padding: 0 0 0 0.5em;
+  margin-left: -1rem;
+  position: absolute;
   display: none;
 }
-li.dropside.showBefore::before {
-  display: block;
+li.dropside.showBefore > a::before {
+  display: inline;
 }
 ul.popup.menu > li.dropside.slideUp {
-  top: 0px;
-  left: 0px;
+  min-width: 10rem;
  }
