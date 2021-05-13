@@ -16,8 +16,8 @@ function contextMenu(ev, menuName, thatObj) {
    ev.stopPropagation();
    let contextMenu = document.querySelector(menuName);
    if (contextMenu) {
-      UI.positionDom(contextMenu, UI.getPosition(ev));
       UI.showContextMenu(contextMenu, ev);
+      UI.positionDom(contextMenu, UI.getPosition(ev));
       View.setObject(null, [thatObj]);
    }
 };

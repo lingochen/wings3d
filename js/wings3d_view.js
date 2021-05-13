@@ -1961,8 +1961,8 @@ function init() {
                contextMenu = createObjectContextMenu;
             }
          }
-         UI.positionDom(contextMenu.menu, UI.getPosition(e));
          UI.showContextMenu(contextMenu.menu, e);
+         UI.positionDom(contextMenu.menu, UI.getPosition(e));
       }
    }, false);   
 
