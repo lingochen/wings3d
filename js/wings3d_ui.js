@@ -497,10 +497,12 @@ function clickListener() {
    function callBack(e) {
       if (!(_checkContextUp && (e.button === 2))) { // linux, mac, contextMenu on mouse down, so there will be a mouseUp that we have to skip.
       //if ( (e.button == 0) || (e.button == 1) ) {  // somehow, any click should 
-         toggleMenuOff();
-         if (!currentMenu) {  // no menu
-            // remove listening event
-            document.removeEventListener("pointerup", callBack);
+         if (e.target !== currentMenu) {  // inside menu, could be scrollbar
+            toggleMenuOff();
+            if (!currentMenu) {  // no menu
+               // remove listening event
+               document.removeEventListener("pointerup", callBack);
+            }
          }
       }
       _checkContextUp = false;
