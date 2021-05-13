@@ -172,8 +172,9 @@ function placement(targetId, placement, bubble) {
    * @param {Object} e The event
    */
 function positionDom(element, mousePosition) {
-   var elementWidth = element.offsetWidth + 4;
-   var elementHeight = element.offsetHeight + 4;
+   const rect = element.getBoundingClientRect();
+   var elementWidth = rect.width + 4;
+   var elementHeight = rect.height + 4;
 
    var windowWidth = window.innerWidth;
    var windowHeight = window.innerHeight;
