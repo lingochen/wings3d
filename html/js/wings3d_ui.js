@@ -414,7 +414,7 @@ let styleSheet = (function(){
    // webkit hack, still needs in 2018?
    style.appendChild(document.createTextNode(''));
    return style.sheet;
-}());
+})();
 
 
 const submenu = [];
@@ -493,28 +493,24 @@ function toggleMenuOff() {
    }
 };
 let _checkContextUp = false;
-function clickListener() {
-   function callBack(e) {
-      if (!(_checkContextUp && (e.button === 2))) { // linux, mac, contextMenu on mouse down, so there will be a mouseUp that we have to skip.
-      //if ( (e.button == 0) || (e.button == 1) ) {  // somehow, any click should 
-         if (e.target !== currentMenu) {  // inside menu, could be scrollbar
-            toggleMenuOff();
-            if (!currentMenu) {  // no menu
-               // remove listening event
-               document.removeEventListener("pointerup", callBack);
-            }
+function clickListener(e) {
+   if (!(_checkContextUp && (e.button === 2))) { // linux, mac, contextMenu on mouse down, so there will be a mouseUp that we have to skip.
+   //if ( (e.button == 0) || (e.button == 1) ) {  // somehow, any click should 
+      if (e.target !== currentMenu) {  // inside menu, could be scrollbar
+         toggleMenuOff();
+         if (!currentMenu) {  // no menu
+            // remove listening event
+            document.removeEventListener("pointerup", clickListener);
          }
       }
-      _checkContextUp = false;
-    };
-
-   document.addEventListener("pointerup", callBack, false);
+   }
+   _checkContextUp = false;
 };
 function showContextMenu(popupMenu, evt) {   // button pressed.
    if (currentMenu) {
       toggleMenuOff();
    } else {
-      clickListener();
+      document.addEventListener("pointerup", clickListener, false);
    }
    _checkContextUp = true;
    currentMenu = popupMenu;
@@ -524,7 +520,7 @@ function queuePopupMenu(popupMenu) {
    if (popupMenu !==currentMenu) {
       nextPopup = popupMenu;
       if (!currentMenu) {
-         clickListener();
+         document.addEventListener("pointerup", clickListener, false);
       }
    }
 };
@@ -554,7 +550,7 @@ const dragMove = (function() {
    document.addEventListener('pointerup', ret.mouseUp);        // only needs to register once
    document.addEventListener('pointermove', ret.mouseMove);   
    return ret;
-}());
+})();
 // moveable popup box,
 function showPopup() {//dom, name) {
    // create div to wrap dom, 
