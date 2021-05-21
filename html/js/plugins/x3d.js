@@ -203,7 +203,7 @@ class X3dImportExporter extends ImportExporter {
       // done creating dom, now write it out
       const s = new XMLSerializer;
       const blob = new Blob([formatXml(s.serializeToString(xml))], {type: "text/plain;charset=utf-8"});
-      return blob;
+      return [blob, null];
    }
 
    /**

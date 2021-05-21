@@ -7,7 +7,7 @@ import * as UI from './wings3d_ui.js';
 import * as CloudStorage from './storages/cloudstorage.js';
 import * as Dropbox from './storages/dropboxstorage.js';
 import * as OneDrive from './storages/onedrivestorage.js';
-import * as YandexDisk from './storages/yandexstorage.js';
+//import * as YandexDisk from './storages/yandexstorage.js';
 
 
 
@@ -39,6 +39,10 @@ class LocalFile extends CloudStorage.CloudFile {
 
    get name() {
       return this.file.name;
+   }
+
+   get root() {
+      return this.file.root;
    }
 };
 
@@ -142,7 +146,7 @@ async function saveAs(extension) {
    _workingSave.saveFn = saveFn;
    
    // now get saveAs filename if possible
-   const fileInfo = {path: "", name: saveName + '.' + extension, ext: [extension]};
+   const fileInfo = {path: "", name: saveName + '.' + extension, ext: [extension], root: saveName};
    // run the selected Storage's saveAs function.
    return saveAsFn(fileInfo).then(file=>{
       return [file, saveFn];

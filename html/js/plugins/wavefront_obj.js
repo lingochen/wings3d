@@ -75,8 +75,10 @@ class WavefrontObjImportExporter extends ImportExporter {
 
       }
       const blob = new Blob([text], {type: "text/plain;charset=utf-8"});
+      // now the accompany material lib
+      text = "#wings3d.net wavefront export\n";
 
-      return blob;
+      return [blob, {ext: 'mtl', blob: new Blob([text], {type: "text/plain;charset=utf-8"})}];
    }
 
    async _import(file) {

@@ -45,8 +45,13 @@ class ImportExporter {
 
       this._reset();    // init before save.
       this.workingFiles.selected = file;
-      return this._export(world).then(blob=>{
+      return this._export(world).then(([blob, extra])=>{
          file.uploadBlob(blob);
+         if (extra) {
+            saveAsync(file.root + '.' + extra.ext).then(file=>{
+               file.uploadBlob(extra.blob);
+            });
+         }
          return this.workingFiles;
       });
    }
