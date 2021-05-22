@@ -37,7 +37,7 @@ class WavefrontObjImportExporter extends ImportExporter {
       const remap = new Map();
 
       let text = "#wings3d.net wavefront export\n";
-
+      let materialCatalog = new Set;
       for (const cage of world) {
          const mesh = cage.geometry;
          text += "o " + cage.name + "\n";
@@ -52,6 +52,7 @@ class WavefrontObjImportExporter extends ImportExporter {
          // sort by material.
          const materialList = new Map;
          for (let polygon of mesh.faces) {
+            materialCatalog.add(polygon.material);
             let array = materialList.get(polygon.material);
             if (!array) {
                array = [];
@@ -70,15 +71,14 @@ class WavefrontObjImportExporter extends ImportExporter {
                   text += " " + remap.get(hEdge.origin.index);
                }
                text += "\n";
-            }
+            }            
          }
 
       }
       const blob = new Blob([text], {type: "text/plain;charset=utf-8"});
-      // now the accompany material lib
-      text = "#wings3d.net wavefront export\n";
+      const extBlob = WavefrontMtlImportExporter.exportBlob(materialCatalog);
 
-      return [blob, {ext: 'mtl', blob: new Blob([text], {type: "text/plain;charset=utf-8"})}];
+      return [blob, {ext: 'mtl', blob: extBlob}];
    }
 
    async _import(file) {
@@ -249,6 +249,23 @@ class WavefrontMtlImportExporter extends ImportExporter {
 
    setMaterialCatalog(catalog) {
       this.catalog = catalog;
+   }
+
+   // http://exocortex.com/blog/extending_wavefront_mtl_to_support_pbr
+   static exportBlob(materialList) {
+      let text = "#wings3d.net wavefront export\n";
+      for (let material of materialList) {
+         text += `newmtl ${material.name}\n`;
+         text += `Kd ${material.pbr.baseColor[0]} ${material.pbr.baseColor[1]} ${material.pbr.baseColor[2]}\n`;
+         text += `Pr ${material.pbr.roughness}\n`;
+         text += `Pm ${material.pbr.metallic}\n`;
+         text += `Ke ${material.pbr.emission[0]} ${material.pbr.emission[1]} ${material.pbr.emission[2]}\n`;
+         let transparency = 1.0-material.pbr.opacity;
+         text += `Tf ${transparency}\n`;
+      }
+
+      const blob = new Blob([text], {type: "text/plain;charset=utf-8"});
+      return blob;
    }
 
    async _import(blob) {
