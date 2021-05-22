@@ -32,11 +32,12 @@ class WavefrontObjImportExporter extends ImportExporter {
     * 
     * @param {*} world - generator for iteration.
     */
-   async _export(world) {
+   async _export(world, rootName) {
       let idx = 1;      // obj index start at 1;
       const remap = new Map();
 
       let text = "#wings3d.net wavefront export\n";
+          text += `mtllib ${rootName}.mtl\n`;
       let materialCatalog = new Set;
       for (const cage of world) {
          const mesh = cage.geometry;
@@ -272,7 +273,7 @@ class WavefrontMtlImportExporter extends ImportExporter {
       this._reset();
       const mtlText = await blob.text();
       // break the objText to lines we needs.
-      const linesMatch = mtlText.match(/^(newmtl|Ka|Kd|Ks|Ns|Tr|d|illum|map_Kd)(?:\s+(.+))$/gm);   //objText.match(/^v((?:\s+)[\d|\.|\+|\-|e|E]+){3}$/gm);
+      const linesMatch = mtlText.match(/^(newmtl|Ka|Kd|Pr|Pm|ke|Ks|Ns|Tr|d|illum|map_Kd)(?:\s+(.+))$/gm);   //objText.match(/^v((?:\s+)[\d|\.|\+|\-|e|E]+){3}$/gm);
 
       if (linesMatch) {
          for (let line of linesMatch) {
@@ -329,6 +330,10 @@ class WavefrontMtlImportExporter extends ImportExporter {
       this.current.material.diffuseMaterial = this._parseRGB(diffuse);
    }
 
+   Ke(emission) {
+      this.current.material.emissionMaterial = this._parseRGB(emission);
+   }
+
    /**
     * specular color "Ks r g b"
     * @param {*} specular - rgb color is floating point.
@@ -344,6 +349,14 @@ class WavefrontMtlImportExporter extends ImportExporter {
    Ns(exponent) {
       let shine = (parseFloat(exponent[1]) || 0.0) / 1000.0;
       this.current.material.shininessMaterial = Math.min(1.0, Math.max(0.0, shine))
+   }
+
+   Pr(roughness) {
+      this.current.material.roughnessMaterial = this._parseRGB(roughness);
+   }
+
+   Pm(metallic) {
+      this.current.material.metallicMaterial = parseFloat(metallic) || 0.1;
    }
 
    /**
