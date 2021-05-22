@@ -76,9 +76,12 @@ static convertTraditionalToMetallicRoughness(material) {
    if (specularIntensity < 0.1) {
       roughnessFactor *= (1.0 - specularIntensity);
    }
+   if (material.roughnessMaterial) {
+      roughnessFactor = material.roughnessMaterial;
+   }
 
    return {baseColor: material.diffuseMaterial, 
-           metallic: 0.1,
+           metallic: material.metallicMaterial || 0.1,
            roughness: roughnessFactor,
            emission: material.emissionMaterial,
            opacity: material.opacityMaterial || 1.0,
