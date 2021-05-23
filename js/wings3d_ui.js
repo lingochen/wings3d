@@ -357,9 +357,17 @@ function openLinkedFileAsync(filename) {
 }
 const multiFilesForm = {form: undefined, input: undefined, ul: undefined, close: undefined, fileNames: new Map};
 function openLinkedFile(callBack, filename) {
-   if (!multiFilesForm.form) {   // init
-      const form = document.forms['importFileListForm'];
-      if (form) {
+   // run dialog if not already run
+   if (multiFilesForm.fileNames.size === 0) {
+      runDialog('#importFileListForm', null, 
+      ()=>{       // done, callback
+         multiFilesForm.form = undefined;
+         multiFilesForm.input = undefined;
+         multiFilesForm.ul = undefined;
+         multiFilesForm.close = undefined;
+         multiFilesForm.fileNames.clear();
+       },
+      (form)=> {  // setup form
          multiFilesForm.form = form;
          const fileInput = form['fileListInput'];  // access the file input directly. bad form?
          if (fileInput) {
@@ -382,18 +390,7 @@ function openLinkedFile(callBack, filename) {
             multiFilesForm.ul = form.querySelector('ul');
             multiFilesForm.close = form.querySelector('button');
          }
-      }
-   }
-
-   // runDialog if not already run.
-   if (multiFilesForm.fileNames.size === 0) {
-      // reset everything first, remove all .multiFilesForm.form.reset();
-      multiFilesForm.input.value = null;
-      // now run
-      runDialog('#importFileListForm', null, ()=>{
-         multiFilesForm.fileNames.clear();
-         multiFilesForm.ul.innerHTML = "";
-       });
+      });
    }
 
    // add to ul lists.
