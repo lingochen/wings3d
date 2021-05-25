@@ -548,6 +548,15 @@ class CloudFile {
    get path() {
       return `${this.directory}/${this.name}`;
    }
+
+   get root() {
+      let i = this.name.lastIndexOf('.');
+      if (i >= 0) {
+         return this.name.substring(0, i);
+      } else {
+         return this.name;
+      }
+   }
 };
 
 
