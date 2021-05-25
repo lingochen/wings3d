@@ -8,7 +8,9 @@ import {gl} from './wings3d_gl.js';
 import * as Util from './wings3d_util.js';
 
 
-const defaultPBR = { baseColor: Util.hexToRGB("#C9CFB1"),              // rgb, baseColor, 
+const defaultPBR = { name: "",
+                     usageCount: 0,
+                     baseColor: Util.hexToRGB("#C9CFB1"),              // rgb, baseColor, 
                      roughness: 0.8,                                   // float, 0-1.0
                      metallic: 0.1,                                    // float, 0-1.0
                      emission: Util.hexToRGB("#000000"),               // rgb, intensity
@@ -31,20 +33,12 @@ const gList = [];
 const gFreeList = [];
 class Material {
    constructor(name) {
-      this.name = name;
       this.uuid = Util.get_uuidv4();
       this.isAltered = false;
-      this.usageCount = 0;
-/*   this.material = {diffuseMaterial: Util.hexToRGB("#C9CFB1"),    // color, old style to be deleted.
-                    ambientMaterial: Util.hexToRGB("#C9CFB1"),    // color
-                    specularMaterial: Util.hexToRGB("#000000"),   // color
-                    emissionMaterial: Util.hexToRGB("#000000"),   // color
-                    vertexColorSelect: 0,                         // true/false
-                    shininessMaterial: 0,                         // 0-1
-                    opacityMaterial: 1};                          // 0-1*/
       this.pbr = Object.assign({}, defaultPBR);
+      this.pbr.name = name;
       for (let i = 0; i < 3; ++i) {
-         Texture.getWhite().assigned();
+         Texture.getWhite().assigned();         // default zero is assigned.
       }
       this.index = Material.color.alloc()/(3*5);
       this.setGPU();
@@ -108,7 +102,7 @@ static create(name, input) {
 //Material.dead = Material.create("dead");
 
 static release(material) {
-   if (material.usageCount === 0) {
+   if (material.pbr.usageCount === 0) {
       // release unused texture.
       for (let texture of Material.textureTypes()) {
          material[texture] = Texture.getWhite();
@@ -123,7 +117,7 @@ static release(material) {
 
    static * getInUse () {
       for (const mat of gList) {
-         if (mat.usageCount > 0) {
+         if (mat.pbr.usageCount > 0) {
             yield mat;
          }
       }
@@ -164,7 +158,6 @@ static release(material) {
       }
       this.setGPU();
    }
-
 
    getBaseColorInHex() {
       return Util.rgbToHex(...this.pbr.baseColor);
@@ -238,13 +231,17 @@ static release(material) {
       return `${this.pbr.baseColorTexture}`;
    }
 
+   isInUse() {
+      return this.pbr.usageCount > 0;
+   }
+
    assigned() {
-      ++this.usageCount;
+      ++this.pbr.usageCount;
       this.isAltered = true;
    }
 
    unassigned() {
-      --this.usageCount;
+      --this.pbr.usageCount;
       this.isAltered = true;
    }
 };

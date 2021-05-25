@@ -549,6 +549,7 @@ class MaterialList extends ListView {
       this.submenu.removeChild(mat.menu.li);
       // remove from Material.
       Material.release(mat._mat);
+      mat.material = null;    // clear
    }
 
    newName() {
@@ -582,7 +583,6 @@ function getMaterialList(labelId, id) {
    if (label && listView) {
       const ret = new MaterialList(label, listView);
       const mat = ret.addMaterial(Material.default);
-      Material.default = mat.material; // proxy the default.
       return ret;
    }
    // console log error

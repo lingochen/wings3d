@@ -399,8 +399,10 @@ function openLinkedFile(callBack, filename) {
       li.textContent = filename;
       multiFilesForm.ul.appendChild(li);
       // break the filename to 
-      const nameextension = getFilenameAndExtension(filename).join('.');
+      const rootAndExt = getFilenameAndExtension(filename);
+      const nameextension = rootAndExt.join('.');
       multiFilesForm.fileNames.set(nameextension, [li, callBack]);
+      //multiFilesForm.fileInput.accept += `,${rootAndExt[1]}`;
    }
 }
 
