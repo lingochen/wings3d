@@ -8,6 +8,7 @@ import * as UI from './wings3d_ui.js';
 import * as Util from './wings3d_util.js';
 import * as PbrSphere from './wings3d_materialsphere.js';
 import * as View from './wings3d_view.js';
+import { Material } from './wings3d_material.js';
 
 // utility - handling event
 let gDragObject
@@ -327,8 +328,7 @@ class MaterialUI extends HTMLElement {
    addTexture(ev, imageUI) {
       UI.runDialog("#textureTypePicker", ev, (form)=>{
          const type = form.querySelector('input:checked').value;
-         if (type in this._mat) {   // sanity check
-            this.setTexture(type, imageUI.texture);
+         if (type in this._mat) {   // sanity chec
             this._mat[type] = imageUI.texture;
          }
        }, (form)=>{
@@ -352,8 +352,7 @@ class MaterialUI extends HTMLElement {
 
       UI.runDialog('#materialSetting', ev, (form)=>{
          const data = extractData(form);
-         dat.setValues(data);
-         this.setBaseColor(Util.rgbToHex(...dat.pbr.baseColor));
+         dat.setValues(data);    // proxy will reflect back to setBaseColor
        }, (form)=>{ // handle setup
          form.reset();
          {  // resetCSS
@@ -450,30 +449,28 @@ class MaterialUI extends HTMLElement {
 
    // should we merge with "def"?
    rename(newName) {
-      this.def = newName;
       this._mat.name = newName;
-      this.menu.text.textContent = newName;
-   }
-
-   setBaseColor(color) {
-      this.getMain().pict.style.backgroundColor = color;
-      this.menu.color.style.backgroundColor = color;
-   }
-
-   getTexture(textureType) {
-      return this._mat[textureType];
    }
 
    removeTexture(textureType) {
       const li = this.shadowRoot.querySelector(`.${textureType}`);
       if (li) {
-         li.classList.remove('shown');
          this._mat.removeTexture(textureType);
       }
    }
 
-   setTexture(name, texture) {
-      const li = this.shadowRoot.querySelector(`.${name}`);
+   _setName(newName) {
+      this.def = newName;
+      this.menu.text.textContent = newName;
+   }
+
+   _setBaseColor(color) {
+      this.getMain().pict.style.backgroundColor = color;
+      this.menu.color.style.backgroundColor = color;
+   }
+
+   _setTexture(type, texture) {
+      const li = this.shadowRoot.querySelector(`.${type}`);
       if (li) {
          if (texture.isExist()) { // enabled 
             li.classList.add("shown");
@@ -485,47 +482,57 @@ class MaterialUI extends HTMLElement {
       return false;
    }
 
-   setUsageCount(count) {
+   _setUsageCount(count) {
       this.getMain().count.textContent = count;      
    }
 
    isInUse() {
-      return (this._mat.usageCount > 0);
+      return this.material.isInUse();
    }
 
    get material() {
-      return this._matProxy;
+      return this._mat;
    }
 
    set material(newMat) {
-      const materialDom = this;
-      this.def = newMat.name;
-      this._mat = newMat;
-      this._matProxy = new Proxy(newMat, {
-         get(target, prop) {
-            if (typeof target[prop] == 'function') {
-               return function (...args) {
-                  const usageCount = target.usageCount;
-                  const ret = target[prop].apply(target, args);
-                  if (usageCount !== target.usageCount) {   // now update Materila-U
-                     materialDom.setUsageCount(target.usageCount);
-                  }
-                  return ret;
-               }
-            }
-            return target[prop];
-        },
-      });
-
-      this.setBaseColor(newMat.getBaseColorInHex());
-      this.setUsageCount(newMat.usageCount);
-
-      // set textures if exists
-      let hasTexture = false;
-      for (let texture of MaterialUI.textureTypes()) {
-         hasTexture |= this.setTexture(texture, newMat[texture]);
+      if (this._mat) {  // restore pbr
+         this._mat.pbr = this._oldPbr;
+         this._oldPbr = null;
       }
-      this.shadowRoot.querySelector('input').disabled = !hasTexture;
+      this._mat = newMat;
+      if (newMat) {
+         this.def = newMat.pbr.name;
+         this._oldPbr = newMat.pbr;
+         // intercept change.
+         const update = new Map;
+         update.set('name', (value)=>{this._setName(value);});
+         update.set('usageCount', (value)=>{this._setUsageCount(value);});
+         update.set('baseColor', (color)=>{this._setBaseColor(Util.rgbToHex(...color));});
+         for (let textureType of MaterialUI.textureTypes()) {
+            update.set(textureType, (texture)=>{this._setTexture(textureType, texture);});
+         }
+         newMat.pbr = new Proxy(newMat.pbr, {
+            set(target, prop, value) { // intercept setting of pbr[prop].
+               target[prop] = value;
+               const fn = update.get(prop);
+               if (fn) {   // update the UI.
+                  fn(value);
+               }
+
+               return true;
+            },
+         });
+
+         this._setBaseColor(newMat.getBaseColorInHex());
+         this._setUsageCount(newMat.pbr.usageCount);
+
+         // set textures if exists
+         let hasTexture = false;
+         for (let texture of MaterialUI.textureTypes()) {
+            hasTexture |= this._setTexture(texture, newMat[texture]);
+         }
+         this.shadowRoot.querySelector('input').disabled = !hasTexture;
+      }
    }
 
 }
