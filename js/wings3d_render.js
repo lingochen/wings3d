@@ -17,6 +17,7 @@ const {vec3, vec4, mat4} = glMatrix;
 
 
 
+const SVGNS = "http://www.w3.org/2000/svg";
 // initPolygonStipple(); no webgl support. shader replacement? ignore for now
 let m_lineProg;        // to be replaced
 let m_groundAxisProg;  // to be replaced
@@ -33,13 +34,27 @@ function clearRedraw() {
 class Renderport {
    constructor(viewport, isOrtho, showAxes, showGround) { // [x, y, width, height]
       this.lineEnd = {x: null, y: null, z: null};
+      this.miniAxis = {x: null, y: null, z: null};
 
       for (let axis of Object.keys(this.lineEnd)) {
-         this.lineEnd[axis] = document.createElementNS("http://www.w3.org/2000/svg", 'text');
+         this.lineEnd[axis] = document.createElementNS(SVGNS, 'text');
          this.lineEnd[axis].style.fontSize = "18px";
          this.lineEnd[axis].style.fontFamily = 'Arial';
          this.lineEnd[axis].textContent = axis;
          m_svgUI.appendChild(this.lineEnd[axis]);
+         // miniAis circle text
+         let g = this.miniAxis[axis] = document.createElementNS(SVGNS, 'g');
+         g.setAttributeNS(null, 'transform', 'translate(-100,-100)');
+         let circle = document.createElementNS(SVGNS, 'circle');
+         circle.setAttributeNS(null, 'style', 'cx: 7; cy: -7; r: 14; stroke: blue; stroke-width: 1px;');
+         g.appendChild(circle);
+         let text = document.createElementNS(SVGNS, 'text');
+         text.style.fontSize = "28px";
+         text.style.fontFamily = 'Arial';
+         text.style.fill = 'black';
+         text.textContent = axis;
+         g.appendChild(text);
+         m_svgUI.appendChild(g);
       }
 
       this.camera = new Camera;
@@ -282,6 +297,9 @@ class Renderport {
          if (this.lineEnd[axis].style.display !== "none") {
             this.lineEnd[axis].style.display = "none";
          }
+         if (this.miniAxis[axis].style.display !== "none") {
+            this.miniAxis[axis].style.display = "none";
+         }
       }
    }
 
@@ -339,21 +357,61 @@ class Renderport {
       }
    }
 
+   _renderCircle(axis, color, pos) {
+      //if (clipLine(origin, end)) {
+         const g = this.miniAxis[axis];
+         if (g.style.display === "none") { // unhideText,
+            g.style.display = "block";
+         }
+         // line inside view volume
+         const viewport = this.viewport;
+         //console.log(end[0], end[1], end[2], end[3]);
+         const x = Math.trunc((0.5*pos[0]/pos[3]+0.5)*(viewport[2])-7);
+         const y = Math.trunc((0.5*pos[1]/pos[3]+0.5)*(viewport[3])-7);
+   
+         g.transform.baseVal.getItem(0).setTranslate(
+            x+viewport[0], this.canvasHeight-(y+viewport[1])
+         );
+         g.setAttributeNS(null, 'fill', color);
+         g.parentNode.appendChild(g);              // move to last
+      //}
+   };
+
+   _renderMiniAxisLetter(projection, modelView) {
+      if (View.prop.showMiniAxis) {
+         let endx = transformVertex(vec4.fromValues(0.1, 0.0, 0.0, 1.0), modelView, projection), 
+         endy = transformVertex(vec4.fromValues(0.0, 0.1, 0.0, 1.0), modelView, projection), 
+         endz = transformVertex(vec4.fromValues(0.0, 0.0, 0.1, 1.0), modelView, projection);
+         
+         let draw = [{axis: 'x', color: View.theme.colorX, end: endx},
+                     {axis: 'y', color: View.theme.colorY, end: endy},
+                     {axis: 'z', color: View.theme.colorZ, end: endz}];
+         draw.sort((a,b)=>{return b.end[2]-a.end[2];});
+
+         for (const v of draw) {
+            this._renderCircle(v.axis, v.color, v.end);
+         }
+      }
+   }
+
    _renderMiniAxes(gl, inModelView) {
       if (View.prop.showMiniAxis) {
          let ratio = this.viewport[2]/ this.viewport[3];//gl.canvas.clientWidth / gl.canvas.clientHeight;
          // set current rotation.
          const modelView = mat4.create();//m_miniAxisVBO.modelView;
          mat4.copy(modelView, inModelView);
-         modelView[12] = 0.11-ratio;
-         modelView[13] = -1.0+0.11;
+         modelView[12] = 0.15-ratio;
+         modelView[13] = -1.0+0.15;
          modelView[14] = 0.0;
          // set current projection
          const projection = mat4.create();
          mat4.ortho(projection, -ratio, ratio, -1.0, 1.0, 0.00001,  10000000.0);
+
+         // update letters location.
+         this._renderMiniAxisLetter(projection, modelView);
+         
          // save attribute
          const length = m_miniAxisVBO.length;
-   
          // render mini axis, use groundAxisProg
          gl.useProgram(m_groundAxisProg.handle);
          // bind attribute, vertex, color, matrix
