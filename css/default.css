@@ -68,7 +68,7 @@ body {
   overflow: hidden;
   align-items: stretch;
 }
-#glcanvas, #svgUI {
+#glcanvas, #svgUI, #overlayUI {
   position: absolute;
 /*  left: 0px;
   top: 0px;  */
@@ -83,16 +83,24 @@ body {
 #glcanvas {
   background-color: black;
 }
-
+#overlayUI {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  pointer-events: none;
+}
+#overlayUI .active {
+  pointer-events: auto;
+}
 #statusbar {
-  position:absolute;
+/*  position:absolute;
   z-index: 20;
   left: 0px;
-  top: 0px;
+  top: 0px; */
   width: 100%;
   background-color: var(--infoBackground);
   color: var(--infoText);
-  overflow-x: auto;
+  overflow-x: hidden;
 }
 
 #helpbar {
@@ -100,7 +108,7 @@ body {
   background-color: var(--infoLineBackground);
   color: var(--infoLineText);
   height: 1.5rem;
-  overflow-x: auto;
+  overflow-x: hidden;
 }
 
 /* global class */
