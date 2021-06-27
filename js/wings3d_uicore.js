@@ -1,5 +1,8 @@
 /**
  * implement web component..
+ * wings3d-image
+ * wings3d-material
+ * wings3d-jogdial
  * 
  */
 
@@ -8,7 +11,7 @@ import * as UI from './wings3d_ui.js';
 import * as Util from './wings3d_util.js';
 import * as PbrSphere from './wings3d_materialsphere.js';
 import * as View from './wings3d_view.js';
-import { Material } from './wings3d_material.js';
+//import { Material } from './wings3d_material.js';
 
 // utility - handling event
 let gDragObject
@@ -538,4 +541,81 @@ class MaterialUI extends HTMLElement {
 }
 customElements.define('wings3d-material', MaterialUI);
 
+
+//------------------------------------------------------------------
+const jogDialTemplate = document.createElement('template');
+jogDialTemplate.innerHTML = `
+   <style>
+    :host {
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+    }
+    input[type='number'] {
+      font-size: 3rem;
+      margin: 0 1rem 0 1rem;
+      text-align: right;
+    }
+    button.mark {
+      color: white;
+      font-size: 3rem;
+      border-radius: 12px;
+    }
+    button.check {
+      background-color: green;
+    }
+    button.cross {
+      background-color: red;
+    }
+   </style>
+   <button class="check mark">✓</button>
+   <div>
+     <input type="number" value="0" step="0.01"><span class="type"></span>
+   </div>
+   <button class="cross mark">✗</button>
+`;
+class ScrubberUI extends HTMLElement {
+   constructor() {
+      super();
+      this.attachShadow({mode: 'open'});
+      this.shadowRoot.appendChild(jogDialTemplate.content.cloneNode(true));
+      this._callback = {};
+      this._ok = this.shadowRoot.querySelector('.check');
+      this._ok.addEventListener("pointerdown", (ev)=>{
+         if (ev.isPrimary && this._callback.confirm) {
+            this._callback.confirm(true);
+         }
+       });
+      this._cancel = this.shadowRoot.querySelector('.cross');
+      this._cancel.addEventListener("pointerdown", (ev)=>{
+         if (ev.isPrimary && this._callback.confirm) {
+            this._callback.confirm(false);
+         }
+       });
+      this._changeX = this.shadowRoot.querySelector('input');
+      this._changeX.addEventListener("change", (ev)=> {
+         if (this._callback.change) {
+            this._callback.change(ev, 0);
+         }
+       });
+   }
+
+   setConfirmCallback(okcancel) {
+      this._callback.confirm = okcancel;
+   }
+
+   setChangeCallback(onChange) {
+      this._callback.change = onChange;
+   }
+
+   updateStep(settings) {
+      this._changeX.value = Number.parseFloat(settings[0].value).toFixed(2);
+
+   }
+
+   reset() {
+
+   }
+}
+customElements.define('wings3d-scrubber', ScrubberUI);
 

@@ -802,7 +802,8 @@ function attachHandlerMouseMove(mouseMove) {
       }
    }
    function gotoExit() {
-      document.removeEventListener('keyup', onTab);
+      _jogDial.hide();
+      //document.removeEventListener('keyup', onTab);
       _mousePointer.show();
       handler.mousemove = null;
       Render.needToRedraw();
@@ -811,8 +812,11 @@ function attachHandlerMouseMove(mouseMove) {
    // onEntry
    _mousePointer.hide();
    // request handling of tab.
-   document.addEventListener('keyup', onTab);
-
+   //document.addEventListener('keyup', onTab);
+   _jogDial.show( (evt, index)=>{
+      handler.mousemove.onInput(evt, index);
+    });
+   
    handler.mousemove = {
       commit: ()=> {
          mouseMove.commit();
@@ -827,6 +831,7 @@ function attachHandlerMouseMove(mouseMove) {
 
       onMove: (ev)=>{
          mouseMove.handleMouseMove(ev, m_windows.current.camera);
+         _jogDial.update(mouseMove.getInputSetting());
          Render.needToRedraw();
       },
 
@@ -1024,6 +1029,65 @@ function canvasHandleTouchMove(evt) {
    );
    }
 }
+const _jogDial = (()=> {
+   function simulatePointer(name, button) {  //button: 0 = left, 1 = middle, 2 = right
+      return new PointerEvent(name, {
+         view: window,
+         bubbles: true,
+         cancelable: true,
+         isPrimary: true,
+         /* whatever properties you want to give it */
+         detail: 1,
+         screenX: 0, //The coordinates within the entire page
+         screenY: 0,
+         clientX: 0, //The coordinates within the viewport
+         clientY: 0,
+         ctrlKey: false,
+         altKey: false,
+         shiftKey: false,
+         metaKey: false, //I *think* 'meta' is 'Cmd/Apple' on Mac, and 'Windows key' on Win. Not sure, though!
+         button: button, 
+         relatedTarget: null,
+     });
+   }
+   let container;
+   function isOk() {
+      if (!container) {
+         container = document.getElementById('jogDial');
+         if (!container) {
+            return false;
+         }
+         container.setConfirmCallback((ok)=>{
+            if (ok) {
+               gl.canvas.dispatchEvent(simulatePointer('pointerdown', 0));
+            } else {
+               gl.canvas.dispatchEvent(simulatePointer('pointerup', 2));
+            }
+          });
+      }
+      return true;
+   }
+
+   return {
+      show: (onChange)=> {
+         if (isOk()) {
+            container.classList.remove('hide');
+         }
+         container.setChangeCallback(onChange);
+      },
+      hide: ()=> {
+         if (isOk()) {
+            container.classList.add('hide');
+         }
+      },
+      
+      update: (value)=>{
+         if (isOk()) {
+            container.updateStep(value);
+         }
+      },
+   };
+})();
 //-- end of touch event handling ----------------------------------------
 //
 // mouse handling ---------------------------------------------------------------------

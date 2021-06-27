@@ -89,9 +89,6 @@ body {
   justify-content: space-between;
   pointer-events: none;
 }
-#overlayUI .active {
-  pointer-events: auto;
-}
 #statusbar {
 /*  position:absolute;
   z-index: 20;
@@ -109,6 +106,15 @@ body {
   color: var(--infoLineText);
   height: 1.5rem;
   overflow-x: hidden;
+}
+
+#jogDial {
+  display: flex;
+  justify-content: center;
+  pointer-events: auto;
+}
+#jogDial.hide {
+  display: none;
 }
 
 /* global class */
