@@ -813,7 +813,7 @@ function attachHandlerMouseMove(mouseMove) {
    _mousePointer.hide();
    // request handling of tab.
    //document.addEventListener('keyup', onTab);
-   _jogDial.show( (evt, index)=>{
+   _jogDial.show( (evt, index)=>{   // callBack 
       handler.mousemove.onInput(evt, index);
     });
    
@@ -1036,6 +1036,7 @@ const _jogDial = (()=> {
          bubbles: true,
          cancelable: true,
          isPrimary: true,
+         pointerType: "mouse",
          /* whatever properties you want to give it */
          detail: 1,
          screenX: 0, //The coordinates within the entire page
@@ -1406,7 +1407,9 @@ function canvasHandleMouseDown(ev) {
       if (handler.camera !== null) {
          handler.camera.commit();
       } else if (handler.mousemove !== null) {
-         handler.mousemove.commit();      // yes commit. do the commit thing.
+         if (ev.pointerType === "mouse") {   // skipped touch/pen down event,
+            handler.mousemove.commit();      // yes commit. do the commit thing.
+         }
       } else if (handler.mouseSelect !== null) {
          if (handler.mouseSelect.select(hilite)) {
             if (handler.mouseSelect.isMoveable()) {   // now do mousemove.
