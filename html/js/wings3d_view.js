@@ -1475,7 +1475,7 @@ function canvasHandleMouseMove(e) {
 
 // contextMenu, mouse right click.
 function canvasHandleContextMenu(ev) {
-   if (_2fingers.is2Fingers() || handler.mouseSelect) {
+   if (_2fingers.is2Fingers() || handler.mouseSelect || handler.mousemove) {  // add mousemove, 2021/06/29, prevent touch contexmenu
       // prevent propagation.
       ev.preventDefault();
       ev.stopImmediatePropagation();      // prevent document's contextmenu popup
