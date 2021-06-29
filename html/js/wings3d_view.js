@@ -1120,7 +1120,7 @@ let _pointer = (function() {
       upUpdate: (evt) => { // check primary
          //_2fingers = _2fingers.onUp(evt);
          if (evt.isPrimary) {
-
+            states.delete(evt.pointerId); // reset pos
          }
       },
 
@@ -1399,7 +1399,7 @@ function canvasHandleMouseLeave(ev) {
    selectFinish(ev);       // we can't caputre mouseup when mouse leave, so force to finish the selection.
 };
 
-const _lastTouch = {};
+//const _lastTouch = {};
 function canvasHandleMouseDown(ev) {
    ev.preventDefault();       // this prevent select text on infoLine because of canvas.
    // touch event
