@@ -773,7 +773,7 @@ function attachHandlerCamera(camera) {
 
 
 function attachHandlerMouseMove(mouseMove) {
-   function onTab(evt) {
+   /*function onTab(evt) {
       if (evt.key == 'Tab') {   // yes, tab.
          evt.preventDefault();
          document.removeEventListener('keyup', onTab);
@@ -799,8 +799,8 @@ function attachHandlerMouseMove(mouseMove) {
                handler.mousemove.rescind();
             }
          });
-      }
-   }
+      } 
+   }*/
    function gotoExit() {
       _jogDial.hide();
       //document.removeEventListener('keyup', onTab);
@@ -813,9 +813,9 @@ function attachHandlerMouseMove(mouseMove) {
    _mousePointer.hide();
    // request handling of tab.
    //document.addEventListener('keyup', onTab);
-   _jogDial.show( (evt, index)=>{   // callBack 
+   _jogDial.show((evt, index)=>{   // callBack 
       handler.mousemove.onInput(evt, index);
-    });
+    }, mouseMove.getInputSetting());
    
    handler.mousemove = {
       commit: ()=> {
@@ -1070,11 +1070,12 @@ const _jogDial = (()=> {
    }
 
    return {
-      show: (onChange)=> {
+      show: (onChange, settings)=> {
          if (isOk()) {
+            container.setChangeCallback(onChange);
+            container.reset(settings);
             container.classList.remove('hide');
          }
-         container.setChangeCallback(onChange);
       },
       hide: ()=> {
          if (isOk()) {
@@ -1082,9 +1083,9 @@ const _jogDial = (()=> {
          }
       },
       
-      update: (value)=>{
+      update: (settings)=>{
          if (isOk()) {
-            container.updateStep(value);
+            container.updateStep(settings);
          }
       },
    };

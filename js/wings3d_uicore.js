@@ -553,7 +553,6 @@ jogDialTemplate.innerHTML = `
     }
     input[type='number'] {
       font-size: 3rem;
-      margin: 0 1rem 0 1rem;
       text-align: right;
     }
     button.mark {
@@ -567,11 +566,16 @@ jogDialTemplate.innerHTML = `
     button.cross {
       background-color: red;
     }
+    table {
+      margin: 0 1rem 0 1rem;
+    }
+    th {
+      font-size: 2rem; 
+      background-color: white; 
+    }
    </style>
    <button class="check mark">✓</button>
-   <div>
-     <input type="number" value="0" step="0.01"><span class="type"></span>
-   </div>
+   <table></table>
    <button class="cross mark">✗</button>
 `;
 class ScrubberUI extends HTMLElement {
@@ -592,12 +596,6 @@ class ScrubberUI extends HTMLElement {
             this._callback.confirm(false);
          }
        });
-      this._changeX = this.shadowRoot.querySelector('input');
-      this._changeX.addEventListener("change", (ev)=> {
-         if (this._callback.change) {
-            this._callback.change(ev, 0);
-         }
-       });
    }
 
    setConfirmCallback(okcancel) {
@@ -608,13 +606,36 @@ class ScrubberUI extends HTMLElement {
       this._callback.change = onChange;
    }
 
-   updateStep(settings) {
-      this._changeX.value = Number.parseFloat(settings[0].value).toFixed(2);
-
+   reset(settings) {
+      const table = this.shadowRoot.querySelector('table');
+      table.innerHTML = "";
+      this._change = [];
+      for (let i = 0; i < settings.length; ++i) {
+         const tr = document.createElement('tr');
+         const td = document.createElement('td');
+         const input = document.createElement('input');
+         input.type = "number";
+         input.value = Number.parseFloat(settings[i].value).toFixed(2);
+         input.step = 0.01;
+         td.appendChild(input);
+         tr.appendChild(td);
+         const th = document.createElement('th');
+         th.textContent = settings[i].name;
+         tr.appendChild(th);
+         table.appendChild(tr);
+         this._change.push(input);
+         input.addEventListener("change", (ev)=> {
+            if (this._callback.change) {
+               this._callback.change(ev, i);
+            }
+          });
+      }
    }
 
-   reset() {
-
+   updateStep(settings) {
+      for (let i = 0; i < settings.length; ++i) {
+         this._change[i].value = Number.parseFloat(settings[i].value).toFixed(2);
+      }
    }
 }
 customElements.define('wings3d-scrubber', ScrubberUI);
