@@ -552,12 +552,14 @@ jogDialTemplate.innerHTML = `
       justify-content: center;
     }
     input[type='number'] {
-      font-size: 3rem;
+      font-size: 2.5rem;
       text-align: right;
+      max-width: 20rem;
+      width: 100%;
     }
     button.mark {
       color: white;
-      font-size: 3rem;
+      font-size: 2.5rem;
       border-radius: 12px;
     }
     button.check {
