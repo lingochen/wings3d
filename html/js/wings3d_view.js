@@ -716,6 +716,8 @@ function setCurrent(edge, intersect, center) {
    if (!(hilite.vertex || hilite.edge || hilite.face)) {
       hilite.plane = null;
    }
+   // don't forget
+   Render.needToRedraw();
 }
 
 
@@ -1182,12 +1184,10 @@ function rayPick(mousePos) {
       let intersect = vec3.create();
       vec3.scaleAndAdd(intersect, ray.origin, ray.direction, pick.t);
       setCurrent(pick.edge, intersect, pick.center);
-      Render.needToRedraw();
    } else {
       if (lastPick !== null) {
          // deselect last selection
          setCurrent(null);
-         Render.needToRedraw();
       }
    }
    // now the currentPick will be the next lastPick.
@@ -1437,6 +1437,10 @@ function canvasHandleMouseUp(ev) {
    _pointer.upUpdate(ev);
    if (ev.button == 0) {
       selectFinish(ev);
+      if (ev.pointerType !== "mouse") {   // deselect current selection? todo: determine if needed 2021/07/01
+         lastPick = null;
+         setCurrent(null);
+      }
    } else if (ev.button == 1) { // check for middle button down
       if (handler.camera === null) {
          ev.stopImmediatePropagation();
