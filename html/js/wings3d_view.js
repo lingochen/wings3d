@@ -1423,6 +1423,9 @@ function canvasHandleMouseDown(ev) {
       } else {
          //e.stopImmediatePropagation();
          // ask view to select current hilite if any.
+         if (ev.pointerType !== "mouse") {   // hilite for touch/pen
+            rayPick(getClientPosition(ev));
+         }
          selectStart(_pointer.isDoubleDown(ev.pointerId), getClientPosition(ev));
       }
    }
