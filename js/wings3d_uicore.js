@@ -598,6 +598,12 @@ class ScrubberUI extends HTMLElement {
             this._callback.confirm(false);
          }
        });
+      this._cancel.addEventListener("keydown", (ev)=>{   // keep tabbing within scrubber.
+         if (ev.key == 'Tab') {   // yes, we cycle back to first ok, button.
+            ev.preventDefault();
+            this._ok.focus();
+         }
+       });
    }
 
    setConfirmCallback(okcancel) {
