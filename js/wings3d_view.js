@@ -775,34 +775,6 @@ function attachHandlerCamera(camera) {
 
 
 function attachHandlerMouseMove(mouseMove) {
-   /*function onTab(evt) {
-      if (evt.key == 'Tab') {   // yes, tab.
-         evt.preventDefault();
-         document.removeEventListener('keyup', onTab);
-         _mousePointer.show();
-         UI.execDialog('#numericInput', function(form) {  // setup input.
-            const labels = form.querySelectorAll('label');
-            const settings = mouseMove.getInputSetting();
-            for (let i = 0; i < settings.length; ++i) {
-               labels[i].classList.remove('hide');
-               const input = labels[i].querySelector('input');
-               input.value = settings[i].value;
-               input.addEventListener('change', function(evt) {
-                  handler.mousemove.onInput(evt, i);
-               });
-               const span = labels[i].querySelector('span');
-               span.textContent = settings[i].name;
-            }
-            // setup default.
-         }).then(([_form, button])=>{ // check ok, or not
-            if (button.value == 'ok') {
-               handler.mousemove.commit();
-            } else {
-               handler.mousemove.rescind();
-            }
-         });
-      } 
-   }*/
    function gotoExit() {
       _jogDial.hide();
       //document.removeEventListener('keyup', onTab);
@@ -1075,8 +1047,8 @@ const _jogDial = (()=> {
       show: (onChange, settings)=> {
          if (isOk()) {
             container.setChangeCallback(onChange);
-            container.reset(settings);
             container.classList.remove('hide');
+            container.reset(settings);
          }
       },
       hide: ()=> {
