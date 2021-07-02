@@ -588,22 +588,35 @@ class ScrubberUI extends HTMLElement {
       this._callback = {};
       this._ok = this.shadowRoot.querySelector('.check');
       this._ok.addEventListener("pointerdown", (ev)=>{
-         if (ev.isPrimary && this._callback.confirm) {
-            this._callback.confirm(true);
+         if (ev.isPrimary) {
+            this.confirm(true);
+         }
+       });
+      this._ok.addEventListener("keydown", (ev)=>{
+         if (ev.key == "Enter") {
+            this.confirm(true);
          }
        });
       this._cancel = this.shadowRoot.querySelector('.cross');
       this._cancel.addEventListener("pointerdown", (ev)=>{
-         if (ev.isPrimary && this._callback.confirm) {
-            this._callback.confirm(false);
+         if (ev.isPrimary) {
+            this.confirm(false);
          }
        });
       this._cancel.addEventListener("keydown", (ev)=>{   // keep tabbing within scrubber.
          if (ev.key == 'Tab') {   // yes, we cycle back to first ok, button.
             ev.preventDefault();
             this._ok.focus();
+         } else if (ev.key == 'Enter') {
+            this.confirm(false);
          }
        });
+   }
+
+   confirm(isOk) {
+      if (this._callback.confirm) {
+         this._callback.confirm(isOk);
+      }
    }
 
    setConfirmCallback(okcancel) {
