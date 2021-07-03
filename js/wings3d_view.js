@@ -983,6 +983,7 @@ function canvasHandleTouchUp(evt) {
    todo: comeback to revisit(2021/04/26) the problem.
 */
 function canvasHandleTouchMove(evt) {
+   // evt.preventDefault();
    _2fingers = _2fingers.onMove(evt);
    if (evt.touches.length === 2) {
       // check, move, zoom, rotate
@@ -1072,6 +1073,7 @@ let lastPick = null;
 let _pointer = (function() {
    let primary = {detail: 0, lastDown: {time: 0, pos: [0,0]} };
    let states = new Map;
+   const isFirefox = (navigator.userAgent.indexOf('Firefox') !== -1);
 
    return {
       downUpdate: (evt)=> {
@@ -1079,7 +1081,7 @@ let _pointer = (function() {
          if (evt.isPrimary) { // only interested in primary
             // check lastTime of the up Event
             const currentTime = Date.now();
-            const pos = [evt.clientX, evt.clientY];
+            const pos = [evt.screenX, evt.screenY];
             if ((currentTime - primary.lastDown.time < 300) &&  // inside 300
                 (vec2.distance(pos, primary.lastDown.pos) < 10)) { // inside errorBound
                primary.detail += 1;
@@ -1100,7 +1102,7 @@ let _pointer = (function() {
 
       moveUpdate: (evt) => {  //
          //_2fingers = _2fingers.onMove(evt);
-         const pos = [evt.clientX, evt.clientY];
+         const pos = [evt.screenX, evt.screenY];
          if (!states.has(evt.pointerId)) {
             states.set(evt.pointerId, {last: pos, current: pos});
          } else {
@@ -1114,11 +1116,13 @@ let _pointer = (function() {
          return (primary.detail === 2);
       },
 
-      getMovement: (pointerId, move)=> {
-         const pos = states.get(pointerId);
-         if (pos) {
-            move.movementX = pos.current[0] - pos.last[0];
-            move.movementY = pos.current[1] - pos.last[1];
+      getMovement: (pointerId, move)=> {  // for touch based, and firefox only.(chrome/edge has correct movement(x,y), but incorrect touch pointer position)
+         if (isFirefox) {
+            const pos = states.get(pointerId);
+            if (pos) {
+               move.movementX = pos.current[0] - pos.last[0];
+               move.movementY = pos.current[1] - pos.last[1];
+            }
          }
       },
    };
@@ -1437,7 +1441,7 @@ function canvasHandleMouseMove(e) {
    move.mousePos = getClientPosition(e);
    move.movementX = e.movementX;
    move.movementY = e.movementY;
-   if ((e.pointerType !== "mouse")) {  // touch buttons don't have movementXY, so we have to get it ourself
+   if (e.pointerType !== "mouse") {  // firefox touch event don't have correct movementXY, so we have to get it ourself
       _pointer.getMovement(e.pointerId, move);
    }
    if (!_2fingers.is2Fingers() && 
