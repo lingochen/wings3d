@@ -75,6 +75,7 @@ body {
   width: 100%;
   height: 100%;
 /*  line-height: 0px;*/
+  touch-action:　none;
 }
 .workbench #svgUI {
   z-index: 10;

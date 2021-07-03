@@ -492,26 +492,34 @@ function toggleMenuOff() {
    }
 };
 let _checkContextUp = false;
+function contextUpClear(evt) {
+   _checkContextUp = false;
+   document.removeEventListener("pointerdown", contextUpClear);
+}
 function clickListener(e) {
-   if (!(_checkContextUp && (e.button === 2))) { // linux, mac, contextMenu on mouse down, so there will be a mouseUp that we have to skip.
-   //if ( (e.button == 0) || (e.button == 1) ) {  // somehow, any click should 
+   if (!_checkContextUp) { // linux, mac, contextMenu on mouse down, so there will be a mouseUp that we have to skip.
+      //if ( (e.button == 0) || (e.button == 1) ) {  // somehow, any click should 
       if (e.target !== currentMenu) {  // inside menu, could be scrollbar
          toggleMenuOff();
          if (!currentMenu) {  // no menu
             // remove listening event
             document.removeEventListener("pointerup", clickListener);
+            document.removeEventListener("pointerdown", contextUpClear);
          }
       }
+   } else {
+      _checkContextUp = false;
+      document.removeEventListener("pointerdown", contextUpClear);
    }
-   _checkContextUp = false;
 };
 function showContextMenu(popupMenu, evt) {   // button pressed.
    if (currentMenu) {
       toggleMenuOff();
    } else {
       document.addEventListener("pointerup", clickListener, false);
+      document.addEventListener("pointerdown", contextUpClear);
+      _checkContextUp = true;
    }
-   _checkContextUp = true;
    currentMenu = popupMenu;
    currentMenu.classList.add("toggleOn");   // toggleMenuOn
 };
