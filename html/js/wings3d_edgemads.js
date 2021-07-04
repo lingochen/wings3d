@@ -169,6 +169,20 @@ class EdgeMadsor extends Madsor {
             View.undoQueue(cmd);
          }
        });
+       UI.bindMenuItemMMB(id, (ev)=>{
+         if (this.isTurnable()) {
+            const cmd = new TurnEdgeCommand(false, false);
+            cmd.doIt(this);
+            View.undoQueue(cmd);
+         }
+       });
+       UI.bindMenuItemRMB(id, (ev)=>{
+         if (this.isTurnable()) {
+            const cmd = new TurnEdgeCommand(true, true);
+            cmd.doIt(this);
+            View.undoQueue(cmd);
+         }
+       });
 
       // select boundary
       UI.bindMenuItem(action.edgeBoundary.name, (ev) => {
