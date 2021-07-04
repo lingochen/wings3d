@@ -4136,6 +4136,64 @@ PreviewCage.prototype.negativeDirection = function(snapshot) {
    snapshot.direction = snapshot.directionNegative;
 };
 
+/**
+ * turn Edge clockwise/counterclockwise, slide along polygon edges.
+ * assume no edge share same faces, so it is spinnable.
+ * 
+ */
+PreviewCage.prototype.spinEdge = function(checkShorter=false) {
+   function isShorter(wEdge) {
+      const result = vec3.create();
+      const pt0 = wEdge.left.next.origin;
+      const pt1 = wEdge.right.next.origin;
+      vec3.sub(result, pt0, pt1);
+      const targetLen = vec3.len(result);
+      vec3.sub(result, wEdge.left.origin, wEdge.right.origin);
+      return targetLen < vec3.len(result);
+   }
+
+   let undo = [];
+   for (let wEdge of this.selectedSet) {
+      if (!checkShorter || isShorter(wEdge)) {
+         this.geometry.spinWEdge(wEdge);
+         undo.push(wEdge);
+      }
+   }
+
+   this.updateAffected();  // update all affected polygon.
+   
+   return undo;
+}
+PreviewCage.prototype.spinEdgeCounter = function(selection) {
+   if (!selection) {
+      selection = this.selectedSet;
+   }
+
+   for (let wEdge of this.selectedSet) {
+      this.geometry.spinWEdgeCounter(wEdge);
+   }
+
+   this.updateAffected();  // update all affected polygon.
+
+   return selection;
+};
+/**
+ * check if any edge share the same polygon.
+ */
+PreviewCage.prototype.isEdgeSpinnable = function() {
+   const faces = new Set;
+   // check if any edges are sharing same face. failed if any
+   for (let wEdge of this.selectedSet) {
+      for (let hEdge of wEdge) {
+         if (faces.has(hEdge.face)) {
+            return false;
+         }
+         faces.add(hEdge.face);
+      }
+   }
+   
+   return true;
+}
 
 // check if given plane can cut selected face. coplanar does not count.
 PreviewCage.prototype.planeCuttableFace = function(plane) {
