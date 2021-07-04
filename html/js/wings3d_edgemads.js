@@ -137,7 +137,7 @@ class EdgeMadsor extends Madsor {
        // loopCut
        UI.bindMenuItem(action.edgeLoopCut.name, (ev) => {
          const command = new GenericEditCommand(this, this.loopCut, null, this.undoLoopCut, null);
-         if (command.doIt()) {
+         if (command.doIt(this)) {
             View.undoQueue(command);
          } else { // geometry status. no LoopCut available.
 
@@ -160,6 +160,16 @@ class EdgeMadsor extends Madsor {
             }
           });
       }
+      // turn/spin edge, clockwise/counterclockwise,
+      let id = action.edgeTurn.name;
+      UI.bindMenuItem(id, (ev)=>{
+         if (this.isTurnable()) {
+            const cmd = new TurnEdgeCommand(true, false);
+            cmd.doIt(this);
+            View.undoQueue(cmd);
+         }
+       });
+
       // select boundary
       UI.bindMenuItem(action.edgeBoundary.name, (ev) => {
          const cmd = View._toggleEdgeMode();
@@ -333,6 +343,28 @@ class EdgeMadsor extends Madsor {
       return this.snapshotSelected(PreviewCage.prototype.flattenEdge, axis);
    }
 
+   isTurnable() {
+      for (let preview of this.selectedCage()) {
+         if (!preview.isEdgeSpinnable()) {
+            alert('Selected edges must not be in the same face.');
+            return false;  // if one of cage not turnable then abort operation.
+         }
+      }
+      return true;
+   }
+
+   turn(checkShorter) { // spin edges (clockwise or counterclockwise)
+      return this.snapshotSelected(PreviewCage.prototype.spinEdge, checkShorter);
+   }
+
+   undoTurn(snapshots) {
+      this.doAll(snapshots, PreviewCage.prototype.spinEdgeCounter);
+   }
+
+   turnCounter() {
+      return this.snapshotSelected(PreviewCage.prototype.spinEdgeCounter);
+   }
+
    dragSelect(cage, hilite, selectArray, onOff) {
       if (hilite.edge !== null) {
         if (cage.dragSelectEdge(hilite.edge, onOff)) {
@@ -464,6 +496,39 @@ class EdgeSelectCommand extends EditCommand {
    }
 }
 
+
+class TurnEdgeCommand extends EditCommand {
+   constructor(isClockwise, checkShorter) {
+      super();
+      this.isClockwise = isClockwise;
+      this.checkShorter = checkShorter;
+   }
+
+   doIt(currentMadsor) {
+      if (this.isClockwise) {
+         let undo = currentMadsor.turn(this.checkShorter);
+         if (this.checkShorter) {
+            this.snapshots = undo;
+         }
+      } else {
+         currentMadsor.turnCounter();
+      }
+      return true;
+   }
+
+   undo(currentMadsor) {
+      if (this.isClockwise) {
+         if (this.snapshots) {
+            currentMadsor.undoTurn(this.snapshots);
+         } else {
+            currentMadsor.turnCounter();
+         }
+      } else {
+         currentMadsor.turn(false);
+      }
+   }
+
+}
 
 
 

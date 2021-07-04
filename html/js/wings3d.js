@@ -453,6 +453,7 @@ const action = {
    edgeSoft: ()=> {notImplemented(this);},
    edgeHard: ()=> {notImplemented(this);},
    edgeInvert: ()=> {notImplemented(this);},
+   edgeTurn: ()=> {notImplemented(this);},
    // face
    faceExtrudeMenu: () =>{notImplemented(this);},
    faceExtrudeX: () =>{notImplemented(this);},

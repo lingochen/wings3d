@@ -3637,22 +3637,12 @@ WingedTopology.prototype.extrudeEdge = function(startFenceHEdge, finishFenceHEdg
 };
 
 
-WingedTopology.prototype.slideToPrev = function(outEdge, prevPrev) {
-   if (!prevPrev) {
-      prevPrev = outEdge.prev().prev();
-   } else {
-      // check(prevPrev.next.next === outEdge)
-   }
+WingedTopology.prototype._slideToPrev = function(outEdge, prevPrev) {
+   // fix up th pointer
    const prev = prevPrev.next;
    const inEdge = outEdge.pair;
 
-   if (outEdge.face.numberOfVertex <= 3) {   // collapseLoop already.
-      const result = {inEdge: outEdge, delFace: outEdge.face, inNext: outEdge.next, inPrev: outEdge.prev()};
-      this.this.removeEdge(outEdge);
-      return result;
-   }
 
-   // fix up th pointer
    prev.next = inEdge.next;
    inEdge.next = prev;
    prevPrev.next = outEdge;
@@ -3670,20 +3660,31 @@ WingedTopology.prototype.slideToPrev = function(outEdge, prevPrev) {
    prev.face = inEdge.face;
    ++inEdge.face.numberOfVertex;
    --outEdge.face.numberOfVertex;
+   this.addAffectedFace( outEdge.face );
+   this.addAffectedFace( inEdge.face );
 
    // for slideToNext
    return {inEdge: inEdge};
 };
-
-
-// slide dow
-WingedTopology.prototype.slideToNext = function(inEdge) {
-   if (inEdge.face.numberOfVertex <= 3) {   // collapseLoop if slide, just remove the edge, simpler
-      const result = {inEdge: inEdge, delFace: inEdge.face, inNext: inEdge.next, inPrev: inEdge.prev()};
-      this.removeEdge(inEdge);   // todo: removeEdge should return result, instead of closure.
+WingedTopology.prototype.slideToPrev = function(outEdge, prevPrev) {
+   if (outEdge.face.numberOfVertex <= 3) {   // collapseLoop already.
+      const result = {inEdge: outEdge, delFace: outEdge.face, inNext: outEdge.next, inPrev: outEdge.prev()};
+      this.this.removeEdge(outEdge);
       return result;
    }
 
+   if (!prevPrev) {
+      prevPrev = outEdge.prev().prev();
+   } else {
+      // check(prevPrev.next.next === outEdge)
+   }
+
+   return this._slideToPrev(outEdge, prevPrev);
+};
+
+
+// slide down
+WingedTopology.prototype._slideToNext = function(inEdge) {
    // Fix up the pointer and face.
    const outEdge = inEdge.pair;
    const next = inEdge.next;
@@ -3712,6 +3713,15 @@ WingedTopology.prototype.slideToNext = function(inEdge) {
 
    return {prevPrev: prev, outEdge: outEdge};   // for slideToPrev
 };
+WingedTopology.prototype.slideToNext = function(inEdge) {
+   if (inEdge.face.numberOfVertex <= 3) {   // collapseLoop if slide, just remove the edge, simpler
+      const result = {inEdge: inEdge, delFace: inEdge.face, inNext: inEdge.next, inPrev: inEdge.prev()};
+      this.removeEdge(inEdge);   // todo: removeEdge should return result, instead of closure.
+      return result;
+   }// else
+   
+   return this._slideToNext(inEdge);
+};
 WingedTopology.prototype.undoSlideToNext = function(result) {
    if (result.delFace) {   // yep, removeEdge, so now restore.
       this.insertEdge(result.inPrev, result.inNext, result.inEdge, result.delFace);
@@ -3719,6 +3729,27 @@ WingedTopology.prototype.undoSlideToNext = function(result) {
       this.slideToPrev(result.outEdge, result.prevPrev);
    }
 };
+
+
+/**
+ * reuse _slideToNext
+ */
+WingedTopology.prototype.spinWEdgeCounter = function(wEdge) {
+   const leftUndo = this._slideToNext(wEdge.left);
+   const rightUndo = this._slideToNext(wEdge.right);
+
+   return {left: leftUndo, right: rightUndo};
+};
+
+/**
+ * reuse _slideToPrev
+ */
+WingedTopology.prototype.spinWEdge = function(wEdge) {
+   const leftUndo = this._slideToPrev(wEdge.left, wEdge.left.prev().prev());
+   const rightUndo = this._slideToPrev(wEdge.right, wEdge.right.prev().prev());
+
+   return {left: leftUndo, right: rightUndo};
+}
 
 
 //
