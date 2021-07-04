@@ -561,7 +561,7 @@ function undoEdit() {
 };
 
 function doCommand(command) {
-   if (command.doIt()) {
+   if (command.doIt(mode.current)) {
       undoQueue(command);
       return true;
    } else {
