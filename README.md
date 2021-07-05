@@ -2,7 +2,7 @@
 [Wings3D](http://www.wings3d.com) in a browser. Wings3D is an advanced subdivision modeler that is both powerful and easy to use..
 
 ## getting started
-* [Development](https://dev.wings3d.net) - newest features, but can be unusable.
+* [Development](https://dev.wings3d.net) - newest features, but can be unusable. [Release Notes](https://github.com/lingochen/wings3d/blob/trunk/CHANGES.md)
 * [Stable](https://www.wings3d.net) - playground
 
 ### Prerequisites
