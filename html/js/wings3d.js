@@ -311,6 +311,7 @@ const action = {
    createDodecahedronPref: () => {notImplemented(this);},
    createIcosahedron: () => {notImplemented(this);},
    createIcosahedronPref: () => {notImplemented(this);},
+   createImagePlane: () => {notImplemented(this);},
    // outliner/geometory
    toggleObjectSelect: () => {notImplemented(this);},
    toggleObjectVisibility: () =>{notImplemented(this);},
