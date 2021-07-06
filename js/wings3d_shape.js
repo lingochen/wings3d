@@ -3,6 +3,7 @@
  *    makeCone
  *    
  */
+import {Attribute} from "./wings3d_wingededge.js";
 const {vec3} = glMatrix;
 
 
@@ -316,6 +317,42 @@ function makeTorus(mesh, defaultMaterial, sections, slices, r1, r2, r) {
 };
 
 
+
+function makeImagePlane(mesh, defaultMaterial, size) {
+   let x = size;
+   let y = size;
+
+   // add 4 vertex, counterclockwise, from (left,bottom)
+   mesh.addVertex([-x, -y, 0]);
+   mesh.addVertex([x, -y, 0]);
+   mesh.addVertex([x, y, 0]);
+   mesh.addVertex([-x, y, 0]);
+
+   // add front, back polygon
+   const front = mesh.addPolygon([0, 1, 2, 3], defaultMaterial);  // front polygon
+   const back = mesh.addPolygon([0, 3, 2, 1], defaultMaterial);  // back polygon
+   mesh.updateAffected();
+   let uv = [[0, 0], [1, 0], [1, 1], [0, 1]];
+   let i = 0;
+   let uvIndex = [];
+   for (let hEdge of front.hEdges()) {
+      const index = Attribute.uv.reserve();
+      Attribute.uv.setChannel(index, 0, uv[i++]);
+      hEdge.setUV(index);
+      uvIndex.push(index);
+   }
+
+   uv = [1, 0, 3, 2];
+   i = 0;
+   for (let hEdge of back.hEdges()) {
+      hEdge.setUV(uvIndex[uv[i++]]);
+   }
+   
+   return true;
+};
+
+
+
 function makePlane(mesh, defaultMaterial, resolution, size, thickness) {
    let sizeX2 = size * 2;
    let startX = -size;
@@ -571,6 +608,7 @@ export {
    makeIcosahedron,
    makeOctahedron,
    makeOctotoad,
+   makeImagePlane,
    makePlane,
    makeSpiral,
    makeSphere,
