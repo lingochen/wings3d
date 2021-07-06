@@ -1886,21 +1886,20 @@ function init() {
       OpenSave.open(['bmp', 'jpg', 'jpeg', 'jfif', 'pjpeg', 'pjp', 'png', 'webp']).then(([files, _loadAsync])=>{
          let file = files[0];
          const texture = createTexture(file.name, {flipY: true});
+         // create material
+         const mat = Material.create(file.name);
+         mat.baseColorTexture = texture;
+         addMaterial(mat);
          file.image().then(img=>{
             img.onload = ()=>{
                texture.setImage(img);
+               // create single plane in the world then texture the image
+               createIntoWorld((cage)=> {
+                  cage.name = file.name;
+                  Shape.makeImagePlane(cage.geometry, mat, 1, img.height/img.width);
+                });
             }
             return img;
-          }).then(_img=>{
-            // createMaterial
-            const mat = Material.create(file.name);
-            mat.baseColorTexture = texture;
-            addMaterial(mat);
-            // create single plane in the world then texture the image
-            createIntoWorld((cage)=> {
-               cage.name = file.name;
-               Shape.makeImagePlane(cage.geometry, mat, 1);
-             });
           });
        }).catch(error=>{
          alert(error);

@@ -318,9 +318,9 @@ function makeTorus(mesh, defaultMaterial, sections, slices, r1, r2, r) {
 
 
 
-function makeImagePlane(mesh, defaultMaterial, size) {
-   let x = size;
-   let y = size;
+function makeImagePlane(mesh, defaultMaterial, xHalfSize, yHalfSize) {
+   let x = xHalfSize;
+   let y = yHalfSize;
 
    // add 4 vertex, counterclockwise, from (left,bottom)
    mesh.addVertex([-x, -y, 0]);

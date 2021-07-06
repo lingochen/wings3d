@@ -384,6 +384,8 @@ class Texture {
       if (this.sampler.flipY) { // restore to default setting
          gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 0);
       }
+
+      return this.image;
    }
 
    setSampler(options) {
