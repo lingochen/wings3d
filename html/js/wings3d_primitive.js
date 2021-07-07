@@ -202,7 +202,7 @@ class PrimitiveMaker {
 
    confirm() {
       View.undoQueue( new CreatePreviewCageCommand(this.cage) );
-      PrimitiveMaker.reationCount++;
+      PrimitiveMaker.creationCount++;
       this.cage.name = this.name + PrimitiveMaker.creationCount;
       // done
       this.cage = null;
