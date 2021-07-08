@@ -29,8 +29,7 @@ import * as OpenSave from './wings3d_opensave.js'
 import { ImportExporter } from './wings3d_importexport.js';
 import { STLImportExporter } from './plugins/stl.js';
 import { GLTFImportExporter } from './plugins/gltf.js';
-import { Material, Texture } from './wings3d_material.js';
-import * as Shape from './wings3d_shape.js';
+import { Texture } from './wings3d_material.js';
 const {vec2, vec3} = glMatrix;
 
 
@@ -1878,32 +1877,6 @@ function init() {
       tweakSelect.setMode("tweakScaleUniform");
       const radio = document.querySelector('input[data-menuid="tweakScaleUniform"');
       radio.checked = true;
-    });
-
-   // ImagePlane...
-   UI.bindMenuItem(Wings3D.action.createImagePlane.name, (ev)=> {
-      // load from disk/cloud.
-      OpenSave.open(['bmp', 'jpg', 'jpeg', 'jfif', 'pjpeg', 'pjp', 'png', 'webp']).then(([files, _loadAsync])=>{
-         let file = files[0];
-         const texture = createTexture(file.name, {flipY: true});
-         // create material
-         const mat = Material.create(file.name);
-         mat.baseColorTexture = texture;
-         addMaterial(mat);
-         file.image().then(img=>{
-            img.onload = ()=>{
-               texture.setImage(img);
-               // create single plane in the world then texture the image
-               createIntoWorld((cage)=> {
-                  cage.name = file.name;
-                  Shape.makeImagePlane(cage.geometry, mat, 1, img.height/img.width);
-                });
-            }
-            return img;
-          });
-       }).catch(error=>{
-         alert(error);
-       });  
     });
 
    // Image List.

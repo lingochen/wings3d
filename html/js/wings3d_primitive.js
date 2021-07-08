@@ -10,6 +10,7 @@ import {i18nElement, i18nSetup} from './wings3d_i18n.js';
 import {Material} from './wings3d_material.js';
 import {CreatePreviewCageCommand} from './wings3d_model.js';
 import * as Shape from './wings3d_shape.js';
+import * as OpenSave from './wings3d_opensave.js'
 const {quat, mat4} = glMatrix;
 
 
@@ -82,6 +83,14 @@ function labelCheckbox(name, value, handler) {
    return label;
 };
 
+function labelRadio(name, group, handler) {
+   const label = document.createElement("label");
+   const input = htmlToElement(`<input type="radio" name=${group}>`, ['change', handler]);
+   label.appendChild(input);
+   label.appendChild(htmlToElement(`span data-i18n>${name}</span>`));
+   return label;
+};
+
 function numberInput(name, value, handler, isTranslate=true) {
    let i18nDat = isTranslate ? 'data-i18n' : '';
    const label = htmlToElement(`<label><span ${i18nDat}>${name}</span></label>`)
@@ -94,6 +103,26 @@ function numberInput(name, value, handler, isTranslate=true) {
    label.appendChild(input);
    return label;
 };
+
+// add common putOn
+function commonPutOn(maker) {
+   let translateY;
+   return tag('<fieldset>',
+         tag('<div class="horizontalPref alignCenter">',
+            htmlToElement('<label data-i18n>Rotate</label>'),
+            tag('<span class="verticalPref">', numberInput('X', {value: 0, step: 1, name: 'rotate_x'}, function(evt) {maker.rotate(0, evt.target.value);}, false), 
+               numberInput('Y', {value: 0, step: 1, name: 'rotate_y'}, function(evt) {maker.rotate(1, evt.target.value);}, false), 
+               numberInput('Z', {value: 0, step: 1, name: 'rotate_z'}, function(evt) {maker.rotate(2, evt.target.value);}, false)),
+            htmlToElement('<label data-i18n>Move</label>'),
+            tag('<span class="verticalPref">', numberInput('X', {value: 0, step: 1, name: 'translate_x'}, function(evt) {maker.translate(0, evt.target.value);}, false), 
+               translateY = numberInput('Y', {value: 0, step: 1, name: 'translate_y'}, function(evt) {maker.translate(1, evt.target.value);}, false), 
+               numberInput('Z', {value: 0, step: 1, name: 'translate_z'}, function(evt) {maker.translate(2, evt.target.value);}, false))),
+         labelCheckbox('Put on Ground', {name: 'ground'}, function(evt){
+            const checked = evt.target.checked;
+            translateY.disabled = checked;         // no translateY when we are attach to the ground.
+            maker.putOnGround(checked);
+          }));
+}
 
 function draggable(container, dragItem) {
    let currentX;
@@ -144,26 +173,6 @@ function makePrimitive(evt, name, maker, ...theDoms) {
       }
    }
 
-   // add common putOn
-   let translateY;
-   form.appendChild( 
-      tag('<fieldset">',
-         tag('<div class="horizontalPref alignCenter">',
-            htmlToElement('<label data-i18n>Rotate</label>'),
-            tag('<span class="verticalPref">', numberInput('X', {value: 0, step: 1, name: 'rotate_x'}, function(evt) {maker.rotate(0, evt.target.value);}, false), 
-               numberInput('Y', {value: 0, step: 1, name: 'rotate_y'}, function(evt) {maker.rotate(1, evt.target.value);}, false), 
-               numberInput('Z', {value: 0, step: 1, name: 'rotate_z'}, function(evt) {maker.rotate(2, evt.target.value);}, false)),
-            htmlToElement('<label data-i18n>Move</label>'),
-            tag('<span class="verticalPref">', numberInput('X', {value: 0, step: 1, name: 'translate_x'}, function(evt) {maker.translate(0, evt.target.value);}, false), 
-               translateY = numberInput('Y', {value: 0, step: 1, name: 'translate_y'}, function(evt) {maker.translate(1, evt.target.value);}, false), 
-               numberInput('Z', {value: 0, step: 1, name: 'translate_z'}, function(evt) {maker.translate(2, evt.target.value);}, false))),
-         labelCheckbox('Put on Ground', {name: 'ground'}, function(evt){
-            const checked = evt.target.checked;
-            translateY.disabled = checked;         // no translateY when we are attach to the ground.
-            maker.putOnGround(checked);
-          }))
-    );
-
    // now add ok, reset button
    form.appendChild(tag('<div>', htmlToElement('<button type="reset" value="Reset">Reset</button>'), 
                                htmlToElement('<button type="submit" value="Ok">Ok</button>')
@@ -183,9 +192,10 @@ class PrimitiveMaker {
    constructor(name, maker, options) {
       this.name = name;
       this.cage = null;
-      this.makeShape = maker;
+      this.maker = maker;
       this.options = Object.assign({}, options);
       this.rotation = [0, 0, 0];
+      this._scale = [1, 1, 1];
       this.translation = [0, 0, 0];
       this.ground = false;
       this.default = {};
@@ -197,6 +207,9 @@ class PrimitiveMaker {
          View.removeFromWorld(this.cage);
          this.cage.freeBuffer();
          this.cage = null;
+         if (this.newMaterial) { // does the same to new material if exists.
+
+         }
       }
    }
 
@@ -204,8 +217,6 @@ class PrimitiveMaker {
       View.undoQueue( new CreatePreviewCageCommand(this.cage) );
       PrimitiveMaker.creationCount++;
       this.cage.name = this.name + PrimitiveMaker.creationCount;
-      // done
-      this.cage = null;
    }
 
    make() {
@@ -213,7 +224,12 @@ class PrimitiveMaker {
       
       View.createIntoWorld((cage)=> {
          this.cage = cage;
-         this.originY = this.makeShape(cage.geometry, Material.defaultMaterial, this.options);
+         let material = Material.defaultMaterial;
+         if (this.maker.material) {
+            material = this.maker.material(this);
+            this.newMaterial = material;
+         }
+         this.originY = this.maker.shape(cage.geometry, material, this.options);
          
          // transform.
          this.snapshot = cage.snapshotTransformBodyGroup(true);
@@ -231,7 +247,7 @@ class PrimitiveMaker {
       let angleQ = quat.create();
       quat.fromEuler(angleQ, this.rotation[0], this.rotation[1], this.rotation[2]);
       const transform = mat4.create();
-      mat4.fromRotationTranslation(transform, angleQ, this.translation);
+      mat4.fromRotationTranslationScale(transform, angleQ, this.translation, this._scale);
       if (this.ground) {
          transform[13] = -this.originY;   // move origin to (y=0)
       }
@@ -268,6 +284,11 @@ class PrimitiveMaker {
       this.transform(this.snapshot);
    }
 
+   scale(index, value) {
+      this._scale[index] = value;
+      this.transform(this.snapshot);
+   }
+
    translate(index, value) {
       this.translation[index] = value;
       this.transform(this.snapshot);
@@ -281,7 +302,7 @@ class PrimitiveMaker {
 PrimitiveMaker.creationCount = 0;
 
 
-function bindMenuPrimitive(name, makeFn, options, optionsDom) {
+function bindMenuPrimitive(name, makeFn, options, optionsDom, common=true) {
    let id = Wings3D.action['create'+name].name;
    UI.bindMenuItem(id, function(ev) {
       const maker = new PrimitiveMaker(name, makeFn, options);
@@ -292,7 +313,11 @@ function bindMenuPrimitive(name, makeFn, options, optionsDom) {
    const handleFn = function(evt) {
       const maker = new PrimitiveMaker(name, makeFn, options);
       maker.make();
-      makePrimitive(evt, name + " Options", maker, ...optionsDom(maker)); 
+      const doms = optionsDom(maker);
+      if (common) {
+         doms.push( commonPutOn(maker) );
+      }
+      makePrimitive(evt, name + " Options", maker, ...doms); 
     }
    UI.bindMenuItemRMB(id, handleFn);
    // preference optional dialog
@@ -374,11 +399,44 @@ function makeDodecahedron(mesh, material, options) {
 function makeIcosahedron(mesh, material, options) {
    return Shape.makeIcosahedron(mesh, material, options.length);
 };
+
+
+function makeImagePlane(mesh, material, options) {
+   return Shape.makeImagePlane(mesh, material, options.width, options.height);
+};
+
+function loadImage(maker) {
+   const mat = Material.create("temp");
+   View.addMaterial(mat);
+   // load from disk/cloud.
+   OpenSave.open(['bmp', 'jpg', 'jpeg', 'jfif', 'pjpeg', 'pjp', 'png', 'webp']).then(([files, _loadAsync])=>{
+      let file = files[0];
+      const texture = View.createTexture(file.name, {flipY: true});
+      file.image().then(img=>{
+         img.onload = ()=>{
+            texture.setImage(img);
+            mat.baseColorTexture = texture;
+            // readjust mesh'size.
+            if (img.width > img.height) {
+               maker.scale(0, img.width/img.height * 2); // scale (x) axis
+            } else {
+               maker.scale(1, img.height/img.width * 2); // scale (y) axis
+            }
+         }
+         return img;
+       });
+    }).catch(error=>{
+      alert(error);
+    });
+   return mat;
+}
+
+
 /**
  * bind menu
  */
 Wings3D.onReady(function() {
-   bindMenuPrimitive("Cone", makeCone, {sections: 16, height: 2, r1: 1, r2: 1}, maker =>        
+   bindMenuPrimitive("Cone", {shape: makeCone}, {sections: 16, height: 2, r1: 1, r2: 1}, maker =>        
       [tag('<div class="primitiveOptions"></div>',
             numberInput("Sections", {min: 3, value: 16, step: 1}, function(evt) {
                maker.update("sections", Number(evt.target.value));
@@ -395,7 +453,7 @@ Wings3D.onReady(function() {
    );
 
    // Cube
-   bindMenuPrimitive("Cube", makeCube,{sizeX: 2, sizeY: 2, sizeZ: 2, cut: 1}, maker=>
+   bindMenuPrimitive("Cube", {shape: makeCube}, {sizeX: 2, sizeY: 2, sizeZ: 2, cut: 1}, maker=>
          [sliderInput("numberOfCuts", {min: 1, max: 20, value:1, step:1}, function(evt){
             maker.update("cut", Number(evt.target.value));
           }),
@@ -417,7 +475,7 @@ Wings3D.onReady(function() {
    );
 
    // cylinder
-   bindMenuPrimitive("Cylinder", makeCylinder, {sections: 16, height: 2, bottomR1: 1, bottomR2: 1, topR1: 1, topR2: 1}, maker=>
+   bindMenuPrimitive("Cylinder", {shape: makeCylinder}, {sections: 16, height: 2, bottomR1: 1, bottomR2: 1, topR1: 1, topR2: 1}, maker=>
          [tag('<div class="primitiveOptions cylinder"></div>',
             numberInput("Sections", {min: 3, value: 16, step: 1}, function(evt) {
                maker.update("sections", Number(evt.target.value));
@@ -441,7 +499,7 @@ Wings3D.onReady(function() {
    );
 
    // sphere
-   bindMenuPrimitive("Sphere", makeSphere, {sections: 16, slices: 8, radialX: 1, radialY: 1}, maker=>
+   bindMenuPrimitive("Sphere", {shape: makeSphere}, {sections: 16, slices: 8, radialX: 1, radialY: 1}, maker=>
          [tag('<div class="primitiveOptions"></div>',
             numberInput("Sections", {min: 3, value: 16, step: 1}, function(evt) {
                maker.update("sections", Number(evt.target.value));
@@ -458,7 +516,7 @@ Wings3D.onReady(function() {
    );
 
    // torus
-   bindMenuPrimitive("Torus", makeTorus,{sections: 16, slices: 8, r1: 1, r2: 1, rMinor: 0.25}, maker=>
+   bindMenuPrimitive("Torus", {shape: makeTorus}, {sections: 16, slices: 8, r1: 1, r2: 1, rMinor: 0.25}, maker=>
          [tag('<div class="primitiveOptions"></div>',
             numberInput("Sections", {min: 3, value: 16, step: 1}, function(evt) {
                maker.update("sections", Number(evt.target.value));
@@ -479,7 +537,7 @@ Wings3D.onReady(function() {
    );
 
    // plane
-   bindMenuPrimitive("Plane", makePlane, {resolution: 40, size: 2, thickness: 0.2}, maker=>
+   bindMenuPrimitive("Plane", {shape: makePlane}, {resolution: 40, size: 2, thickness: 0.2}, maker=>
          [tag('<div class="primitiveOptions"></div>',
             numberInput("Resolution", {min: 3, value: 40, step: 1}, function(evt) {
                maker.update("resolution", Number(evt.target.value));
@@ -493,7 +551,7 @@ Wings3D.onReady(function() {
    );
 
    // spiral
-   bindMenuPrimitive("Spiral", makeSpiral, {loops: 2, segments: 16, sections: 8}, maker=>
+   bindMenuPrimitive("Spiral", {shape: makeSpiral}, {loops: 2, segments: 16, sections: 8}, maker=>
          [tag('<div class="primitiveOptions"></div>',
             numberInput("Loops", {min: 1, max: 32, value: 2}, function(evt) {
                maker.update("loops", Number(evt.target.value));
@@ -507,7 +565,7 @@ Wings3D.onReady(function() {
    );
 
    // spring.
-   bindMenuPrimitive("Spring", makeSpring, {loops: 2, segments: 16, sections: 8}, maker=>
+   bindMenuPrimitive("Spring", {shape: makeSpring}, {loops: 2, segments: 16, sections: 8}, maker=>
          [tag('<div class="primitiveOptions"></div>',
             numberInput("Loops", {min: 1, max: 32, value: 2, step:1}, function(evt) {
                maker.update("loops", Number(evt.target.value));
@@ -521,7 +579,7 @@ Wings3D.onReady(function() {
    );
 
    // tetrahedron
-   bindMenuPrimitive("Tetrahedron", makeTetrahedron, {length: 2}, maker=>
+   bindMenuPrimitive("Tetrahedron", {shape: makeTetrahedron}, {length: 2}, maker=>
          [tag('<div class="primitiveOptions"></div>',
             numberInput("Length", {min: 0, value: 2.0, step:'any'}, function(evt) {
             maker.update("length", Number(evt.target.value));
@@ -529,7 +587,7 @@ Wings3D.onReady(function() {
    );
 
    // Octahedron
-   bindMenuPrimitive("Octahedron", makeOctahedron, {height: 2}, maker=>
+   bindMenuPrimitive("Octahedron", {shape: makeOctahedron}, {height: 2}, maker=>
          [tag('<div class="primitiveOptions"></div>',
             numberInput("Height", {min: 0, value: 2.0, step:'any'}, function(evt) {
             maker.update("height", Number(evt.target.value));
@@ -537,7 +595,7 @@ Wings3D.onReady(function() {
    );
 
    // octotoad
-   bindMenuPrimitive("Octotoad", makeOctotoad, {height: 2}, maker=>
+   bindMenuPrimitive("Octotoad", {shape: makeOctotoad}, {height: 2}, maker=>
       [tag('<div class="primitiveOptions"></div>',
          numberInput("Height", {min: 0, value: 2.0, step:'any'}, function(evt) {
          maker.update("height", Number(evt.target.value));
@@ -545,7 +603,7 @@ Wings3D.onReady(function() {
    );
 
    // octotoad
-   bindMenuPrimitive("Dodecahedron", makeDodecahedron, {length: 1}, maker=>
+   bindMenuPrimitive("Dodecahedron", {shape: makeDodecahedron}, {length: 1}, maker=>
       [tag('<div class="primitiveOptions"></div>',
          numberInput("Edge Length", {min: 0, value: 1.0, step:'any'}, function(evt) {
          maker.update("length", Number(evt.target.value));
@@ -553,11 +611,22 @@ Wings3D.onReady(function() {
    );
 
    // octotoad
-   bindMenuPrimitive("Icosahedron", makeIcosahedron, {length: 1}, maker=>
+   bindMenuPrimitive("Icosahedron", {shape: makeIcosahedron}, {length: 1}, maker=>
       [tag('<div class="primitiveOptions"></div>',
          numberInput("Edge Length", {min: 0, value: 1.0, step:'any'}, function(evt) {
          maker.update("length", Number(evt.target.value));
       }))]  
+   );
+
+   // ImagePlane
+   bindMenuPrimitive("ImagePlane", {shape: makeImagePlane, material: loadImage}, {width: 1, height: 1}, maker=>
+      [tag('<fieldset></fieldset>',
+         htmlToElement('<legend data-i18n>Aligned With...</legend>'),
+         labelRadio("Front", "alignedWith", function(evt) {
+            // set 0, rotate.
+          }),
+       )],
+      false
    );
 });
 
