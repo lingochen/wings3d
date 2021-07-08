@@ -11,7 +11,7 @@ import * as UI from './wings3d_ui.js';
 import * as Util from './wings3d_util.js';
 import * as PbrSphere from './wings3d_materialsphere.js';
 import * as View from './wings3d_view.js';
-//import { Material } from './wings3d_material.js';
+import { Texture } from './wings3d_material.js';
 
 // utility - handling event
 let gDragObject
@@ -512,7 +512,7 @@ class MaterialUI extends HTMLElement {
          update.set('usageCount', (value)=>{this._setUsageCount(value);});
          update.set('baseColor', (color)=>{this._setBaseColor(Util.rgbToHex(...color));});
          for (let textureType of MaterialUI.textureTypes()) {
-            update.set(textureType, (texture)=>{this._setTexture(textureType, texture);});
+            update.set(textureType, (texture)=>{this._setTexture(textureType, Texture.handle(texture));});
          }
          newMat.pbr = new Proxy(newMat.pbr, {
             set(target, prop, value) { // intercept setting of pbr[prop].
