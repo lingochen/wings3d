@@ -404,6 +404,9 @@ const _environment = {
 function addMaterial(material) {
    _environment.materialList.addMaterial(material);
 };
+function deleteMaterial(material) {
+   _environement.materialList.deleteMaterial(material);
+}
 function createTexture(name, sampler) {
    const ret = Texture.create(name, sampler);
    _environment.imageList.loadTexture(ret);
@@ -2174,6 +2177,7 @@ export {
    makeCombineIntoWorld,
    setObject,
    addMaterial,
+   deleteMaterial,
    createTexture,
    createGroup,
    createCage,
