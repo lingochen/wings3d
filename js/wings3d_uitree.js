@@ -538,7 +538,7 @@ class MaterialList extends ListView {
 
    deleteMaterial(objects) {  // default and in-use material is not deletable.
       const mat = objects[0];
-      if (mat.default) {   // default material is not deletable.
+      if (mat._mat === Material.default) {   // default material is not deletable.
          return;
       }
       // remove li

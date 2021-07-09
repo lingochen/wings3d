@@ -244,6 +244,15 @@ static release(material) {
       --this.pbr.usageCount;
       this.isAltered = true;
    }
+
+   get name() {
+      return this.pbr.name;
+   }
+
+   set name(newName) {
+      this.pbr.name = newName;
+      return this.pbr.name;
+   }
 };
 Material.color = null;  // saved the color
 
