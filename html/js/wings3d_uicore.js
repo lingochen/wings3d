@@ -465,6 +465,7 @@ class MaterialUI extends HTMLElement {
    _setName(newName) {
       this.def = newName;
       this.menu.text.textContent = newName;
+      //this._oldPbr.name = newName;
    }
 
    _setBaseColor(color) {

@@ -402,10 +402,10 @@ const _environment = {
    debug: {toggleOn: false, queue: []},
 };
 function addMaterial(material) {
-   _environment.materialList.addMaterial(material);
+   return _environment.materialList.addMaterial(material);
 };
 function deleteMaterial(material) {
-   _environement.materialList.deleteMaterial(material);
+   _environment.materialList.deleteMaterial([material]);
 }
 function createTexture(name, sampler) {
    const ret = Texture.create(name, sampler);
