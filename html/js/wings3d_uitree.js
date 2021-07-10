@@ -470,6 +470,8 @@ class MaterialList extends ListView {
             UI.showContextMenu(contextMenu, ev);
           }, false);
       }
+      // 
+      this._handles = new Map;
    }
 
    /**
@@ -516,6 +518,7 @@ class MaterialList extends ListView {
       this.view.appendChild(mat);
       this.list.push(dat);
 
+      this._handles.set(material, mat);
       return mat;
    }
 
@@ -534,6 +537,16 @@ class MaterialList extends ListView {
          name = dat.name + '2';
       }
       this.addMaterial(Material.create(name, dat.pbr));
+   }
+
+   _deleteMaterial(material) {
+      if (material !== Material.default) {
+         const ui = this._handles.get(material);
+         if (ui) {
+            this.deleteMaterial([ui]);
+            this._handles.delete(material);
+         }
+      }
    }
 
    deleteMaterial(objects) {  // default and in-use material is not deletable.

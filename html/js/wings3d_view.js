@@ -405,7 +405,7 @@ function addMaterial(material) {
    return _environment.materialList.addMaterial(material);
 };
 function deleteMaterial(material) {
-   _environment.materialList.deleteMaterial([material]);
+   _environment.materialList._deleteMaterial(material);
 }
 function createTexture(name, sampler) {
    const ret = Texture.create(name, sampler);

@@ -236,9 +236,9 @@ class PrimitiveMaker {
 
    cancel() {
       this._deleteCage();
-      if (this.materialUI) { // does the same to new material if exists.
-         View.deleteMaterial(this.materialUI);
-         this.materialUI = null;
+      if (this.newMaterial) { // does the same to new material if exists.
+         View.deleteMaterial(this.newMaterial);
+         this.newMaterial = null;
       }
    }
 
@@ -254,7 +254,7 @@ class PrimitiveMaker {
       View.createIntoWorld((cage)=> {
          this.cage = cage;
          this.updateName(this._originalName);
-         let material = (this.materialUI ? this.materialUI.material : Material.default);
+         let material = (this.newMaterial ? this.newMaterial : Material.default);
          this.originY = this.maker(cage.geometry, material, this.options);
          
          // transform.
@@ -306,13 +306,13 @@ class PrimitiveMaker {
       this.make();
    }
 
-   setMaterial(materialUI) {
-      this.materialUI = materialUI;
+   setMaterial(material) {
+      this.newMaterial = material;
    }
 
    getMaterialName() {
-      if (this.materialUI) {
-         return this.materialUI.def;
+      if (this.newMaterial) {
+         return this.newMaterial.name;
       }
       return "";
    }
@@ -355,8 +355,8 @@ class PrimitiveMaker {
          this.name += (PrimitiveMaker.creationCount + 1);
       }
       if (!this._useTextureName.material) {
-         if (this.materialUI) {
-            this.materialUI.material.name = this.name;
+         if (this.newMaterial) {
+            this.newMaterial.name = this.name;
          }
       }
       if (!this._useTextureName.object) {
@@ -369,11 +369,11 @@ class PrimitiveMaker {
    useTextureName(material, object) {
       this._useTextureName.material = material;
       this._useTextureName.object = object;
-      if (this.materialUI) {
+      if (this.newMaterial) {
          if (material) {
-            this.materialUI.material.name = this._textureName;
+            this.newMaterial.name = this._textureName;
          } else {
-            this.materialUI.material.name = this.name;
+            this.newMaterial.name = this.name;
          }
       }
       if (this.cage) {
@@ -425,7 +425,7 @@ function imagePlaneMaker(name, makeFn, options, optionsDom) {
       handler: (evt)=> {
          const maker = new PrimitiveMaker(name, makeFn, options);
          loadImage(maker).then(material=>{
-            mzkdf.setMaterial(material);
+            maker.setMaterial(material);
             maker.make();
             maker.confirm();
           });
@@ -535,7 +535,7 @@ function getRoot(fileName) {
 
 async function loadImage(maker) {
    let mat = Material.create(maker.name);
-   let matUI = View.addMaterial(mat);
+   View.addMaterial(mat);
    // load from disk/cloud.
    return OpenSave.open(['bmp', 'jpg', 'jpeg', 'jfif', 'pjpeg', 'pjp', 'png', 'webp']).then(([files, _loadAsync])=>{
       let file = files[0];
@@ -555,7 +555,7 @@ async function loadImage(maker) {
          }
          return img;
        });
-      return matUI;
+      return mat;
     }).catch(error=>{
       alert(error);
     });
