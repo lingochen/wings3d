@@ -169,6 +169,18 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
             ev.currentTarget.addEventListener("change", vertexColorHandler);  // currentTarget === colorPicker
           });
       }
+
+      // subdivide, selected face or whole body.
+      const subdivide = { face: action.faceSubdivide, body: action.bodySubdivide };
+      if (subdivide[mode]) {
+         const id = subdivide[mode].name;
+         UI.bindMenuItem(id, (_ev) => {
+            View.doCommand( new GenericEditCommand(this, this.subdivide, "catmullclark", this.undoSubdivide) );
+          });
+         UI.bindMenuItemRMB(id, (_ev)=> {
+            View.doCommand( new GenericEditCommand(this, this.subdivide, undefined, this.undoSubdivide) );
+          });
+      }
    }
 
    doMoveAlongAxis(axis, cmd) {
