@@ -256,6 +256,13 @@ class FaceMadsor extends Madsor {
       View.restoreFaceMode(snapshots);
    }
 
+   subdivide(type) {
+      return this.snapshotSelected(PreviewCage.prototype.subdivideFace, type);
+   }
+   undoSubdivide(snapshots) {
+      this.doAll(snapshots, PreviewCage.prototype.undoSubdivideFace);
+   }
+
    assignMaterial(material) {
       return this.snapshotSelected(PreviewCage.prototype.assignFaceMaterial, material);
    }

@@ -510,6 +510,7 @@ const action = {
    faceExtractY: () => {notImplemented(this);},
    faceExtractZ: () => {notImplemented(this);},
    faceExtractFree: () => {notImplemented(this);},
+   faceSubdivide: () => {notImplemented(this);},
    // vertex
    vertexConnect: () => {notImplemented(this);},
    vertexDissolve: () => {notImplemented(this);},

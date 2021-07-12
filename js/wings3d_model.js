@@ -4299,6 +4299,105 @@ PreviewCage.prototype.getBodySelection = function(selection, extent) {
 };
 
 
+// subdivide the given polygon lists
+PreviewCage.prototype._subdivide = function(polygons) {
+   const vertices = new Set;
+   const wEdges = new Set;
+   const splitEdges = [];
+   const subdivides = [];
+
+   // first, collect original vertex, and edges
+   for (let nGon of polygons) {
+      for (let hEdge of nGon.hEdges()) {
+         vertices.add(hEdge.origin);
+         wEdges.add(hEdge.wingedEdge);
+      }
+   }
+
+   // split all wEdges
+   const pt = vec3.create();
+   for (let wEdge of wEdges) {
+      vec3.lerp(pt, wEdge.left.origin, wEdge.right.origin, 0.5);
+      const outEdge = this.geometry.splitEdge(wEdge.left, pt);
+      splitEdges.push(outEdge);
+   }
+
+   // now iterate all faces, subdivide face using new splitEdge's point.
+   for (let nGon of polygons) {
+      let total = 0;
+      vec3.zero(pt);
+      let subdivide = {newEdges: []};
+      let center;
+      let prev;
+      let current;
+      let newEdge;
+      let hEdge;
+      let hEdges = nGon.hEdges();
+      // make sure first is in the original "wEdges"? // wEdges.has(hEdge.wingedEdge);
+      while (hEdge = hEdges.next().value) {  // original hEdge
+         current = hEdges.next().value;   // split hEdge
+         if (!center) {
+            total++;
+            vec3.add(pt, pt, current.origin);
+            if (prev) { // yes, create the newly centered then split to get center
+               newEdge =this.geometry.insertEdge(prev, current);
+               //this.selectFace(newEdge.face);
+               center = this.geometry.splitEdge(newEdge, pt);
+               subdivide.newEdge = newEdge;
+               subdivide.center = center;
+            }
+         } else { // insertEdge to center
+            total++;
+            vec3.add(pt, pt, current.origin);
+            const newOut = this.geometry.insertEdge(center, current);
+            //this.selectFace(newOut.face);
+            subdivide.newEdges.push( newOut );
+         }
+         // skipped the original wEdge. 
+         prev = hEdge;
+      }
+      // fixed up center.
+      vec3.scale(center.destination(), pt, 1.0/total);
+      subdivide.newEdges = subdivide.newEdges.reverse();
+      subdivides.push( subdivide );
+   }
+
+   this.updateAffected();
+   // now select the added subdivide faces.
+   for (let divide of subdivides) {
+      this.selectFace(divide.newEdge.face);
+      for (let newOut of divide.newEdges) {
+         this.selectFace(newOut.face);
+      }
+   }
+
+   // return newly created edges 
+   return {splitEdges: splitEdges.reverse(), subdivides: subdivides.reverse()};
+};
+PreviewCage.prototype.subdivideFace = function(type) {
+   return this._subdivide(this.selectedSet);
+};
+PreviewCage.prototype.undoSubdivideFace = function(undo) {
+   // dissolveEdge.
+   for (let divide of undo.subdivides) {
+      for (let newOut of divide.newEdges) {
+         this.selectFace(newOut.face);
+         this.geometry.removeEdge(newOut);
+      }
+      this.selectFace(divide.newEdge.face);
+      this.geometry.collapseEdge(divide.center.pair);
+      this.geometry.removeEdge(divide.newEdge);
+   }
+
+   // now restore edge
+   for (let split of undo.splitEdges) {
+      this.geometry.collapseEdge(split.pair);
+   }
+
+   this.updateAffected();
+};
+
+
 
 
 
