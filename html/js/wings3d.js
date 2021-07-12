@@ -405,6 +405,7 @@ const action = {
    bodySliceZ: () => {notImplemented(this);},
    bodyWeld: () => {notImplemented(this);},
    bodyColor: () => {notImplemented(this);},
+   bodySubdivide: () => {notImplemented(this);},
    // edge
    cutMenu: () => {notImplemented(this);},
    cutLine2: () => {notImplemented(this);},
