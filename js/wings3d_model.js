@@ -4331,11 +4331,13 @@ PreviewCage.prototype._subdivide = function(polygons) {
       let prev;
       let current;
       let newEdge;
-      let hEdge;
-      let hEdges = nGon.hEdges();
-      // make sure first is in the original "wEdges"? // wEdges.has(hEdge.wingedEdge);
-      while (hEdge = hEdges.next().value) {  // original hEdge
-         current = hEdges.next().value;   // split hEdge
+      let end = nGon.halfEdge;
+      if (!vertices.has(end.origin)) { // make sure first halfEdge has the original vertex.
+         end = end.next;
+      }
+      let hEdge = end;
+      do {
+         current = hEdge.next;
          if (!center) {
             total++;
             vec3.add(pt, pt, current.origin);
@@ -4353,7 +4355,8 @@ PreviewCage.prototype._subdivide = function(polygons) {
          }
          // skipped the original wEdge. 
          prev = hEdge;
-      }
+         hEdge = current.next;
+      } while (hEdge !== end);
       // fixed up center.
       vec3.scale(center.destination(), pt, 1.0/total);
       subdivide.newEdges = subdivide.newEdges.reverse();
@@ -4374,18 +4377,6 @@ PreviewCage.prototype._subdivideSelect = function(subdivides) {
       }
    }
 };
-PreviewCage.prototype.subdivideBody = function(type) {
-   const polygons = new Set(this.geometry.faces);
-   return this._subdivide(polygons);
-}
-PreviewCage.prototype.undoSubdivideBody = function(undo) {
-   return this._undoSubdivide(undo);
-}
-PreviewCage.prototype.subdivideFace = function(type) {
-   const undo = this._subdivide(this.selectedSet);
-   this._subdivideSelect(undo.subdivides);
-   return undo;
-};
 PreviewCage.prototype._undoSubdivide = function(undo) {
    // dissolveEdge.
    for (let divide of undo.subdivides) {
@@ -4402,6 +4393,18 @@ PreviewCage.prototype._undoSubdivide = function(undo) {
    }
 
    this.updateAffected();
+};
+PreviewCage.prototype.subdivideBody = function(type) {
+   const polygons = new Set(this.geometry.faces);
+   return this._subdivide(polygons);
+}
+PreviewCage.prototype.undoSubdivideBody = function(undo) {
+   return this._undoSubdivide(undo);
+}
+PreviewCage.prototype.subdivideFace = function(type) {
+   const undo = this._subdivide(this.selectedSet);
+   this._subdivideSelect(undo.subdivides);
+   return undo;
 };
 PreviewCage.prototype.undoSubdivideFace = function(undo) {
    this._subdivideSelect(undo.subdivides);
