@@ -256,6 +256,13 @@ class BodyMadsor extends Madsor {
       View.restoreBodyMode(snapshots);
    }
 
+   subdivide(type) {
+      return this.snapshotSelected(PreviewCage.prototype.subdivideBody, type);
+   }
+   undoSubdivide(snapshots) {
+      this.doAll(snapshots, PreviewCage.prototype.undoSubdivideBody);
+   }  
+
    slice(planeNormal, numberOfPart) {
       const snapshots = this.snapshotSelected(PreviewCage.prototype.sliceBody, planeNormal, numberOfPart);
       View.restoreVertexMode(snapshots);

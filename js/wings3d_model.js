@@ -4341,7 +4341,6 @@ PreviewCage.prototype._subdivide = function(polygons) {
             vec3.add(pt, pt, current.origin);
             if (prev) { // yes, create the newly centered then split to get center
                newEdge =this.geometry.insertEdge(prev, current);
-               //this.selectFace(newEdge.face);
                center = this.geometry.splitEdge(newEdge, pt);
                subdivide.newEdge = newEdge;
                subdivide.center = center;
@@ -4350,7 +4349,6 @@ PreviewCage.prototype._subdivide = function(polygons) {
             total++;
             vec3.add(pt, pt, current.origin);
             const newOut = this.geometry.insertEdge(center, current);
-            //this.selectFace(newOut.face);
             subdivide.newEdges.push( newOut );
          }
          // skipped the original wEdge. 
@@ -4363,28 +4361,37 @@ PreviewCage.prototype._subdivide = function(polygons) {
    }
 
    this.updateAffected();
-   // now select the added subdivide faces.
+
+   // return newly created edges 
+   return {splitEdges: splitEdges.reverse(), subdivides: subdivides.reverse()};
+};
+PreviewCage.prototype._subdivideSelect = function(subdivides) {
+   // now select/unselect the added subdivide faces.
    for (let divide of subdivides) {
       this.selectFace(divide.newEdge.face);
       for (let newOut of divide.newEdges) {
          this.selectFace(newOut.face);
       }
    }
-
-   // return newly created edges 
-   return {splitEdges: splitEdges.reverse(), subdivides: subdivides.reverse()};
 };
+PreviewCage.prototype.subdivideBody = function(type) {
+   const polygons = new Set(this.geometry.faces);
+   return this._subdivide(polygons);
+}
+PreviewCage.prototype.undoSubdivideBody = function(undo) {
+   return this._undoSubdivide(undo);
+}
 PreviewCage.prototype.subdivideFace = function(type) {
-   return this._subdivide(this.selectedSet);
+   const undo = this._subdivide(this.selectedSet);
+   this._subdivideSelect(undo.subdivides);
+   return undo;
 };
-PreviewCage.prototype.undoSubdivideFace = function(undo) {
+PreviewCage.prototype._undoSubdivide = function(undo) {
    // dissolveEdge.
    for (let divide of undo.subdivides) {
       for (let newOut of divide.newEdges) {
-         this.selectFace(newOut.face);
          this.geometry.removeEdge(newOut);
       }
-      this.selectFace(divide.newEdge.face);
       this.geometry.collapseEdge(divide.center.pair);
       this.geometry.removeEdge(divide.newEdge);
    }
@@ -4395,6 +4402,10 @@ PreviewCage.prototype.undoSubdivideFace = function(undo) {
    }
 
    this.updateAffected();
+};
+PreviewCage.prototype.undoSubdivideFace = function(undo) {
+   this._subdivideSelect(undo.subdivides);
+   this._undoSubdivide(undo);
 };
 
 
