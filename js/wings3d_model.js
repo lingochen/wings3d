@@ -4300,7 +4300,8 @@ PreviewCage.prototype.getBodySelection = function(selection, extent) {
 
 
 // subdivide the given polygon lists
-PreviewCage.prototype._subdivide = function(polygons) {
+PreviewCage.prototype._subdivide = function(polygons, smooth) {
+   const ret = {};
    const vertices = new Set;
    const wEdges = new Set;
    const splitEdges = [];
@@ -4314,43 +4315,80 @@ PreviewCage.prototype._subdivide = function(polygons) {
       }
    }
 
-   // split all wEdges
+   let position;
    const pt = vec3.create();
+   if (smooth) {  // smooth original vertex (catmull-clark),
+      let r = vec3.create();
+      position = new Float32Array(vertices.size*3);
+      let i = 0;
+      for (let vertex of vertices) {
+         let total = 0;
+         vec3.zero(pt);
+         vec3.zero(r);
+         for (let outEdge of vertex.edgeRing()) {
+            vec3.add(pt, pt, outEdge.face);
+            vec3.add(r, r, outEdge.origin);
+            vec3.add(r, r, outEdge.destination());
+            total++;
+         }
+         vec3.scale(pt, pt, 1.0/total);
+         vec3.scale(r, r, 1.0/total);  // = 2*(1.0/(total*2)));
+         vec3.add(pt, pt, r);
+         vec3.scale(r, vertex, total-3);
+         vec3.add(pt, pt, r);
+         vec3.scale(pt, pt, 1/total);
+         position.set(pt, i); // save computation.
+         i+=3;
+      }
+      ret.position = position;
+      ret.vertices = vertices;
+   } 
+
+   // split all wEdges
    for (let wEdge of wEdges) {
-      vec3.lerp(pt, wEdge.left.origin, wEdge.right.origin, 0.5);
+      if (smooth) {
+         vec3.add(pt, wEdge.left.origin, wEdge.right.origin);
+         vec3.add(pt, pt, wEdge.left.face);
+         vec3.add(pt, pt, wEdge.right.face);
+         vec3.scale(pt, pt, 1.0/4.0);
+      } else {
+         vec3.lerp(pt, wEdge.left.origin, wEdge.right.origin, 0.5);
+      } 
       const outEdge = this.geometry.splitEdge(wEdge.left, pt);
       splitEdges.push(outEdge);
    }
 
+   // now we can safely swap 
+   if (smooth) {
+      let i = new Util.Vec3View(position);
+      for (let vertex of vertices) {
+         vec3.copy(pt, vertex);
+         vec3.copy(vertex, i);
+         vec3.copy(i, pt);
+         i.inc();
+      }
+   }
+
    // now iterate all faces, subdivide face using new splitEdge's point.
    for (let nGon of polygons) {
-      let total = 0;
-      vec3.zero(pt);
+      //nGon.getCentroid(pt);
       let subdivide = {newEdges: []};
-      let center;
       let prev;
       let current;
-      let newEdge;
       let end = nGon.halfEdge;
-      if (!vertices.has(end.origin)) { // make sure first halfEdge has the original vertex.
+      if (!vertices.has(end.origin)) { // make sure first halfEdge has the original vertex, so we can subdivide right
          end = end.next;
       }
       let hEdge = end;
       do {
          current = hEdge.next;
-         if (!center) {
-            total++;
-            vec3.add(pt, pt, current.origin);
+         if (!subdivide.center) {
             if (prev) { // yes, create the newly centered then split to get center
-               newEdge =this.geometry.insertEdge(prev, current);
-               center = this.geometry.splitEdge(newEdge, pt);
-               subdivide.newEdge = newEdge;
-               subdivide.center = center;
+               subdivide.newEdge =this.geometry.insertEdge(prev, current);
+               subdivide.center = this.geometry.splitEdge(subdivide.newEdge, nGon); // nGon centroid.
             }
          } else { // insertEdge to center
-            total++;
-            vec3.add(pt, pt, current.origin);
-            const newOut = this.geometry.insertEdge(center, current);
+            const newOut = this.geometry.insertEdge(subdivide.center, current);
             subdivide.newEdges.push( newOut );
          }
          // skipped the original wEdge. 
@@ -4358,15 +4396,17 @@ PreviewCage.prototype._subdivide = function(polygons) {
          hEdge = current.next;
       } while (hEdge !== end);
       // fixed up center.
-      vec3.scale(center.destination(), pt, 1.0/total);
       subdivide.newEdges = subdivide.newEdges.reverse();
       subdivides.push( subdivide );
    }
 
+
    this.updateAffected();
 
    // return newly created edges 
-   return {splitEdges: splitEdges.reverse(), subdivides: subdivides.reverse()};
+   ret.splitEdges = splitEdges.reverse();
+   ret.subdivides = subdivides.reverse();
+   return ret;
 };
 PreviewCage.prototype._subdivideSelect = function(subdivides) {
    // now select/unselect the added subdivide faces.
@@ -4392,17 +4432,26 @@ PreviewCage.prototype._undoSubdivide = function(undo) {
       this.geometry.collapseEdge(split.pair);
    }
 
+   // restore snapshot position.
+   if (undo.position) {
+      let i = new Util.Vec3View(undo.position);
+      for (let vertex of undo.vertices) {
+         vec3.copy(vertex, i);
+         i.inc();
+      }
+   }
+
    this.updateAffected();
 };
-PreviewCage.prototype.subdivideBody = function(type) {
+PreviewCage.prototype.subdivideBody = function(smooth) {
    const polygons = new Set(this.geometry.faces);
-   return this._subdivide(polygons);
+   return this._subdivide(polygons, smooth);
 }
 PreviewCage.prototype.undoSubdivideBody = function(undo) {
    return this._undoSubdivide(undo);
 }
-PreviewCage.prototype.subdivideFace = function(type) {
-   const undo = this._subdivide(this.selectedSet);
+PreviewCage.prototype.subdivideFace = function(smooth) {
+   const undo = this._subdivide(this.selectedSet, smooth);
    this._subdivideSelect(undo.subdivides);
    return undo;
 };

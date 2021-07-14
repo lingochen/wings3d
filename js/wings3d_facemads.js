@@ -256,8 +256,8 @@ class FaceMadsor extends Madsor {
       View.restoreFaceMode(snapshots);
    }
 
-   subdivide(type) {
-      return this.snapshotSelected(PreviewCage.prototype.subdivideFace, type);
+   subdivide(smooth) {
+      return this.snapshotSelected(PreviewCage.prototype.subdivideFace, smooth);
    }
    undoSubdivide(snapshots) {
       this.doAll(snapshots, PreviewCage.prototype.undoSubdivideFace);

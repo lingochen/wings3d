@@ -256,8 +256,8 @@ class BodyMadsor extends Madsor {
       View.restoreBodyMode(snapshots);
    }
 
-   subdivide(type) {
-      return this.snapshotSelected(PreviewCage.prototype.subdivideBody, type);
+   subdivide(smooth) {
+      return this.snapshotSelected(PreviewCage.prototype.subdivideBody, smooth);
    }
    undoSubdivide(snapshots) {
       this.doAll(snapshots, PreviewCage.prototype.undoSubdivideBody);
