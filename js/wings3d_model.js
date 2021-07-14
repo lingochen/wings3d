@@ -4299,13 +4299,15 @@ PreviewCage.prototype.getBodySelection = function(selection, extent) {
 };
 
 
-// subdivide the given polygon lists
+/**
+ * subdivide the given polygon lists
+ * 
+ *  
+ */ 
 PreviewCage.prototype._subdivide = function(polygons, smooth) {
-   const ret = {};
+   const ret = {splitEdges: [], subdivides: []};
    const vertices = new Set;
    const wEdges = new Set;
-   const splitEdges = [];
-   const subdivides = [];
 
    // first, collect original vertex, and edges
    for (let nGon of polygons) {
@@ -4315,11 +4317,10 @@ PreviewCage.prototype._subdivide = function(polygons, smooth) {
       }
    }
 
-   let position;
    const pt = vec3.create();
    if (smooth) {  // smooth original vertex (catmull-clark),
       let r = vec3.create();
-      position = new Float32Array(vertices.size*3);
+      ret.position = new Float32Array(vertices.size*3);
       let i = 0;
       for (let vertex of vertices) {
          let total = 0;
@@ -4337,10 +4338,9 @@ PreviewCage.prototype._subdivide = function(polygons, smooth) {
          vec3.scale(r, vertex, total-3);
          vec3.add(pt, pt, r);
          vec3.scale(pt, pt, 1/total);
-         position.set(pt, i); // save computation.
+         ret.position.set(pt, i); // save computation.
          i+=3;
       }
-      ret.position = position;
       ret.vertices = vertices;
    } 
 
@@ -4355,12 +4355,12 @@ PreviewCage.prototype._subdivide = function(polygons, smooth) {
          vec3.lerp(pt, wEdge.left.origin, wEdge.right.origin, 0.5);
       } 
       const outEdge = this.geometry.splitEdge(wEdge.left, pt);
-      splitEdges.push(outEdge);
+      ret.splitEdges.push(outEdge);
    }
 
    // now we can safely swap 
    if (smooth) {
-      let i = new Util.Vec3View(position);
+      let i = new Util.Vec3View(ret.position);
       for (let vertex of vertices) {
          vec3.copy(pt, vertex);
          vec3.copy(vertex, i);
@@ -4397,15 +4397,15 @@ PreviewCage.prototype._subdivide = function(polygons, smooth) {
       } while (hEdge !== end);
       // fixed up center.
       subdivide.newEdges = subdivide.newEdges.reverse();
-      subdivides.push( subdivide );
+      ret.subdivides.push( subdivide );
    }
 
 
    this.updateAffected();
 
    // return newly created edges 
-   ret.splitEdges = splitEdges.reverse();
-   ret.subdivides = subdivides.reverse();
+   ret.splitEdges = ret.splitEdges.reverse();
+   ret.subdivides = ret.subdivides.reverse();
    return ret;
 };
 PreviewCage.prototype._subdivideSelect = function(subdivides) {
