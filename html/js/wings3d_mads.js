@@ -175,7 +175,7 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
       if (subdivide[mode]) {
          const id = subdivide[mode].name;
          UI.bindMenuItem(id, (_ev) => {
-            View.doCommand( new GenericEditCommand(this, this.subdivide, "catmullclark", this.undoSubdivide) );
+            View.doCommand( new GenericEditCommand(this, this.subdivide, ["catmullclark"], this.undoSubdivide) );
           });
          UI.bindMenuItemRMB(id, (_ev)=> {
             View.doCommand( new GenericEditCommand(this, this.subdivide, undefined, this.undoSubdivide) );
