@@ -788,7 +788,7 @@ class MouseMoveAlongAxis extends MoveableHandler {
 
 class MoveDirectionHandler extends MoveableHandler {
    constructor(madsor, noNegative, cmd) {
-      super(madsor, 0, cmd);
+      super(madsor, 0.0, cmd);
       this.noNegative = noNegative;
    }
 
@@ -802,6 +802,15 @@ class MoveDirectionHandler extends MoveableHandler {
    }
 }
 
+class MoveAlongNormal extends MoveDirectionHandler {
+   constructor(madsor, noNegative, cmd) {
+      super(madsor, noNegative, cmd);
+   }
+
+   snapshotPosition() {
+      return this.madsor.snapshotPositionAndNormal();
+   }
+}
 
 class MoveBidirectionHandler extends MoveableHandler {
    constructor(madsor, cmd) {
@@ -832,26 +841,6 @@ class MoveBidirectionHandler extends MoveableHandler {
 
    // override handleInput
    
-}
-
-class MoveAlongNormal extends MoveableHandler {
-   constructor(madsor, noNegative, cmd) {
-      super(madsor, 0.0, cmd);
-      this.noNegative = noNegative;
-   }
-
-   snapshotPosition() {
-      return this.madsor.snapshotPositionAndNormal();
-   }
-
-   _processMove(move) {
-      this.movement += move;
-      if (this.noNegative && (this.movement < 0)) {
-         move -= this.movement;
-         this.movement = 0.0;
-      }
-      return move;
-   }
 }
 
 
