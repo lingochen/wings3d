@@ -181,6 +181,15 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
             View.doCommand( new GenericEditCommand(this, this.subdivide, undefined, this.undoSubdivide) );
           });
       }
+
+      //tighten/relax, average vertices over adjacent faces
+      const tighten = { vertex: action.vertexTighten, body: action.bodyTighten };
+      if (tighten[mode]) {
+         const id = tighten[mode].name;
+         UI.bindMenuItem(id, (_ev) => {
+            this.doMoveAlongDirection(false, new GenericEditCommand(this, this.tighten));
+          });
+      }
    }
 
    doMoveAlongAxis(axis, cmd) {
@@ -191,6 +200,12 @@ class Madsor { // Modify, Add, Delete, Select, (Mads)tor. Model Object.
 
    doMoveAlongNormal(noNegative, cmd) {
       const move = new MoveAlongNormal(this, noNegative, cmd);
+      move.doIt();
+      View.attachHandlerMouseMove(move);
+   }
+
+   doMoveAlongDirection(noNegative, cmd) {
+      const move = new MoveDirectionHandler(this, noNegative, cmd);
       move.doIt();
       View.attachHandlerMouseMove(move);
    }
@@ -770,19 +785,14 @@ class MouseMoveAlongAxis extends MoveableHandler {
    }
 }
 
-/*class MoveDirectionHandler extends MoveableHandler {
-   constructor(madsor, cmd, noNegative=false) {
+
+class MoveDirectionHandler extends MoveableHandler {
+   constructor(madsor, noNegative, cmd) {
       super(madsor, 0, cmd);
       this.noNegative = noNegative;
    }
 
-   _processInput(moveTo) { 
-      let move = moveTo - this.movement;
-
-   }
-   
-   _processMouse(ev, cameraView) {
-      let move = cameraView.calibrateMovement(ev.movementX);
+   _processMove(move) {
       this.movement += move;
       if (this.noNegative && (this.movement < 0)) {
          move -= this.movement;
@@ -790,7 +800,7 @@ class MouseMoveAlongAxis extends MoveableHandler {
       }
       return move;
    }
-}*/
+}
 
 
 class MoveBidirectionHandler extends MoveableHandler {

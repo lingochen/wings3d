@@ -261,12 +261,16 @@ class BodyMadsor extends Madsor {
    }
    undoSubdivide(snapshots) {
       this.doAll(snapshots, PreviewCage.prototype.undoSubdivideBody);
-   }  
+   }
 
    slice(planeNormal, numberOfPart) {
       const snapshots = this.snapshotSelected(PreviewCage.prototype.sliceBody, planeNormal, numberOfPart);
       View.restoreVertexMode(snapshots);
       return snapshots;
+   }
+
+   tighten() {
+      return this.snapshotSelected(PreviewCage.prototype.tightenBody);
    }
 
    weld(tolerance = 0.001) {
