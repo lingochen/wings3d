@@ -145,6 +145,10 @@ class VertexMadsor extends Madsor {
       return this.snapshotSelected(PreviewCage.prototype.setVertexColor, color);
    }
 
+   tighten() {
+      return this.snapshotSelected(PreviewCage.prototype.tightenVertex);
+   }
+
    dragSelect(cage, hilite, selectArray, onOff) {
       if (hilite.vertex !== null) {
         if (cage.dragSelectVertex(hilite.vertex, onOff)) {

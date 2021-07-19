@@ -406,6 +406,7 @@ const action = {
    bodyWeld: () => {notImplemented(this);},
    bodyColor: () => {notImplemented(this);},
    bodySubdivide: () => {notImplemented(this);},
+   bodyTighten: ()=>{notImplemented(this);},
    // edge
    cutMenu: () => {notImplemented(this);},
    cutLine2: () => {notImplemented(this);},
@@ -549,6 +550,7 @@ const action = {
    vertexScaleRadialY: ()=> {notImplemented(this);},
    vertexScaleRadialZ: ()=> {notImplemented(this);},
    vertexColor: ()=>{notImplemented(this);},
+   vertexTighten: ()=>{notImplemented(this);},
    // guide tour
    helpMenu: () => {notImplemented(this);},
    about: () => {notImplemented(this);},

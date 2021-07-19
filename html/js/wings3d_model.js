@@ -4299,6 +4299,42 @@ PreviewCage.prototype.getBodySelection = function(selection, extent) {
 };
 
 
+
+/**
+ * tighten/relax the given vertex list. find the average of neighboring vertices.
+ * 
+ */
+PreviewCage.prototype._tighten = function(vertices) {
+   const faces = new Set;
+   const dir = new Float32Array(vertices.size * 3);
+   const position = new Float32Array(vertices.size * 3);
+   let i = new Util.Vec3View(dir);
+   let j = new Util.Vec3View(position);
+   for (let vertex of vertices) {
+      // add and count total
+      let total = 0;
+      for (let hEdge of vertex.eachInEdge()) {
+         faces.add(hEdge.face);
+         vec3.add(i, i, hEdge.origin);
+         total++;
+      }
+      vec3.scale(i, i, 1/total);    // get average
+      vec3.sub(i, i, vertex);       // get direction to original.
+      i.inc();
+      vec3.copy(j, vertex);         // save original position
+      j.inc();
+   }
+
+   return {faces: faces, vertices: vertices, direction: dir, position: position};
+};
+PreviewCage.prototype.tightenVertex = function() {
+   return this._tighten(this.selectedSet);
+}
+PreviewCage.prototype.tightenBody = function() {
+   return this._tighten(this.geometry.vertices);
+}
+
+
 /**
  * subdivide the given polygon lists
  * 
