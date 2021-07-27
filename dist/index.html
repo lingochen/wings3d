@@ -5,11 +5,11 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
    <link rel="icon" type="image/png" href="img/favicon-96x96.png" />
-   <link rel="stylesheet" href="styles.css?v=916cbb05761d1b182a97ad9fe02cf6f0" />
+   <link rel="stylesheet" href="styles.css?v=1d7d80c8703ba06e6068554bec39ecdd" />
    <script src="./vendor/FileSaver.min.js?v=0cd1ebc44c182996e7d62f29b28dba9f" defer></script>
    <script src="./vendor/gl-matrix-min.js?v=8d57dae6ce3862af598c7ccad3df15ad" type="module"></script>
 
-   <script src="wings3d.bundle.js?v=b10d505a70a31532ea4c871953247d60" type="module"></script>
+   <script src="wings3d.bundle.js?v=0880387fb9d06be7f44f6737d8e852c1" type="module"></script>
 
   <script>  
     function help(text) {
@@ -205,7 +205,7 @@
           <li><a href="https://github.com/lingochen/wings3d" target="_blank" onmouseover="help('About Wings3d4Web')" data-menuid="about">About</a></li>
         </ul>
       </li>
-    <li><select id="selectLanguage">
+    <li><select id="selectLanguage" tabindex="-1">
       <option value='{"lang":"en","ver":"ad5961b8e48ae8ad14a49634789e7629"}'>English</option>
       <option value='{"lang":"zh_hant","ver":"e269a0dc2914d89ffc5a88db77848fb5"}'>正體</option>
       <option value='{"lang":"zh_hans","ver":"197f869a904b9d68830efbfb54eb699e"}'>简体</option>
@@ -329,13 +329,15 @@
       <div id="selectionGroup" class="sidebarPanel"><span>test3</span></div>
     </div>
     <div id="workbench" class="workbench">
-      <div id="statusbar"> Wings3D Geometry </div>
-      
-        <canvas id="glcanvas" tabindex='1'>
+      <canvas id="glcanvas" tabindex='1'>
           Your browser doesn't appear to support the 
           <code>&lt;canvas&gt;</code> element.
-        </canvas>
-        <svg id="svgUI"></svg>
+      </canvas>
+      <div id="overlayUI">
+        <div id="statusbar"> Wings3D Geometry </div>
+        <wings3d-scrubber id="jogDial" class="hide"></wings3d-scrubber>
+      </div>
+      <svg id="svgUI"></svg>
     </div>
   </div>
   <footer id="helpbar" class="marginal">This is help bar</footer>
@@ -409,8 +411,9 @@
       <li><hr /></li>
       <li><a data-menuid="createPlane" data-i18n>Various Planes</a><img data-menuid="createPlanePref" class="smallIcon smallPref" src="" alt=""></li>
       <!-- <li class="not-implemented"><a data-menuid="createGrid">Grid</a></li> -->
-      <li><hr></li>
+      <li><hr /></li>
       <li><a data-menuid="createMaterial" data-i18n>Material...</a></li>
+      <li><a data-menuid="createImagePlane" data-i18n>Image Plane...</a><img data-menuid="createImagePlanePref" class="smallIcon smallPref" src="" alt=""></li>
       <li><hr /></li>
       <li><a data-menuid="createSpiral" data-i18n>Spiral</a><img data-menuid="createSpiralPref" class="smallIcon smallPref" src="" alt=""></li>
       <li><a data-menuid="createSpring" data-i18n>Spring</a><img data-menuid="createSpringPref" class="smallIcon smallPref" src="" alt=""></li>
@@ -532,6 +535,8 @@
       <li><hr /></li>
       <li><a data-menuid="edgeCorner" data-i18n>Corner</a></li>
       <li><hr /></li>
+      <li><a data-menuid="edgeTurn" data-i18n>Turn</a></li>
+      <li><hr /></li>
       <li><a data-menuid="closeCrack">Close Crack</a></li>
     </ul>
     <ul id="face-context-menu" class="context-menu popup menu">
@@ -615,6 +620,7 @@
       <li><a data-menuid="faceMirror" data-i18n>Mirror</a></li>
       <li><a data-menuid="faceDissolve" data-i18n>Dissolve</a></li>
       <li><a data-menuid="faceCollapse" data-i18n>Collapse</a></li>
+      <li><a data-menuid="faceSubdivide" data-i18n>Subdivide</a></li>
       <li><hr /></li>
       <li class="dropside">
         <a data-menuid="faceMaterialMenu" data-i18n>Material</a>
@@ -690,6 +696,7 @@
       </li>
       <li><hr /></li>
       <li><a data-menuid="vertexConnect" data-i18n>Connect</a></li>
+      <li><a data-menuid="vertexTighten" data-i18n>Tighten</a></li>
       <li><a data-menuid="vertexBevel" data-i18n>Bevel</a></li>
       <li><a data-menuid="vertexDissolve" data-i18n>Dissolve</a></li>
       <li><a data-menuid="vertexCollapse" data-i18n>Collapse</a></li>
@@ -746,6 +753,8 @@
       <li><hr /></li>
       <li><a data-menuid="bodyInvert" data-i18n>Invert</a></li>
       <li><hr /></li>
+      <li><a data-menuid="bodyTighten" data-i18n>Tighten</a></li>
+      <li><a data-menuid="bodySubdivide" data-i18n>Subdivide</a></li>
       <li><a data-menuid="bodyCombine" data-i18n>Combine</a></li>
       <li><a data-menuid="bodySeparate" data-i18n>Separate</a></li>
       <li><hr /></li>

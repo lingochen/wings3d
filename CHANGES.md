@@ -1,5 +1,9 @@
 # Release notes
 
+## 2021/07/27
+- add tighten command to vertex/body mode.
+- add subdivide command to face/body mode
+
 ## 2021/07/09
 - Add "ImagePlane..." to "object creation" menu, also the option dialog.
 - Fix MaterialUI/Material various bugs.
