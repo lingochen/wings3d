@@ -1161,7 +1161,7 @@ Polygon.prototype.updatePosition = function() {
    }
    if (this.numberOfVertex > 3) {
       // redo triangulation.
-      this.triangulation = triangulate(this);
+      this.triangulation = triangulate(this, min, max);
    }
 };
 
@@ -1170,19 +1170,19 @@ Polygon.prototype.updatePosition = function() {
  * recompute numberOfVertex, triangulation, and reorient, and call updatePosition to compute normal and centroid and radius.
  */
 Polygon.prototype.updateIncipient = function() {
-   this._update();
+   const box = this._update();
 
    if (this.triangulation) {  // redo full triangulation
-      this.triangulation = triangulate(this);
+      this.triangulation = triangulate(this, box,min, box.max);
    } else { // really incipient, so use naive triangulation.
       this.triangulation = triangulateNaive(this);
    }
 };
 
 Polygon.prototype.updateFull = function() {
-   this._update();
+   const box = this._update();
    // redo triangulation.
-   this.triangulation = triangulate(this);
+   this.triangulation = triangulate(this, box.min, box.max);
 };
 
 Polygon.prototype._update = function() {
@@ -1227,6 +1227,7 @@ Polygon.prototype._update = function() {
    if (this.numberOfVertex > 2) {
       this.computeNormal();
    }
+   return {min: min, max: max};
 };
 
 /**
