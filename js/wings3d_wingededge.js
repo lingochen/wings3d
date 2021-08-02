@@ -1086,7 +1086,7 @@ Polygon.prototype.oneRing = function* () {
 };
 
 // ccw ordering
-Polygon.prototype.computeNormal = (function() {
+/*Polygon.prototype.computeNormal = (function() {
    const U = vec3.create();
    const V = vec3.create();
    return function() {
@@ -1103,7 +1103,25 @@ Polygon.prototype.computeNormal = (function() {
       Polygon.normal.set(i+1, V[1]);
       Polygon.normal.set(i+2, V[2]);
    };
-}());
+}());*/
+/**
+ * ccw ordering 
+ * newell's method for polygon normal.
+*/
+Polygon.prototype.computeNormal = function() {
+  let normal = [0, 0, 0];
+  for (let hEdge of this.hEdges()) {
+     let v0 = hEdge.origin, v1 = hEdge.destination();
+     normal[0] += (v0[1] - v1[1]) * (v0[2] + v1[2]);
+     normal[1] += (v0[2] - v1[2]) * (v0[0] + v1[0]);
+     normal[2] += (v0[0] - v1[0]) * (v0[1] + v1[1]);
+  }
+  vec3.normalize(normal, normal);
+  const i = this.index * 3;
+  Polygon.normal.set(i, normal[0]);
+  Polygon.normal.set(i+1, normal[1]);
+  Polygon.normal.set(i+2, normal[2]);
+}
 
 
 /**
@@ -1140,6 +1158,10 @@ Polygon.prototype.updatePosition = function() {
    // compute normal.
    if (this.numberOfVertex > 2) {
       this.computeNormal();
+   }
+   if (this.numberOfVertex > 3) {
+      // redo triangulation.
+      this.triangulation = triangulate(this);
    }
 };
 
