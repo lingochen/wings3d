@@ -10,11 +10,11 @@ const {vec3} = glMatrix;
 
 
 
-function triangleNormal(normal, h1, h0, h2) {
+/*function triangleNormal(normal, h1, h0, h2) {
    const v0 = [h1.origin[0]-h0.origin[0], h1.origin[1]-h0.origin[1], h1.origin[2]-h0.origin[2]];
    const v1 = [h2.origin[0]-h0.origin[0], h2.origin[1]-h0.origin[1], h2.origin[2]-h0.origin[2]];
    vec3.cross(normal, v1, v0);
-}
+}*/
 
 function quadTriangulate(hEdges, isOdd) {
    if (isOdd) {
@@ -30,7 +30,7 @@ function quadTriangulate(hEdges, isOdd) {
    }
 }
 
-function triangulate(polygon) {
+function triangulate(polygon, min, max) {
    const totalVertex = polygon.numberOfVertex;
    if (totalVertex < 5) {  
       let hEdges = [];
@@ -43,10 +43,11 @@ function triangulate(polygon) {
          hEdges[2].setEdgeTriangle(hEdges[1]);
          return 1; // success.
       } else if (totalVertex === 4) {  // split on concave vertex or where split triangles has similar size
-         const area = [];
          const normal = [0, 0, 0];
          polygon.getNormal(normal);
          const n = [0, 0, 0];
+         /*
+         const area = [];
          let s = 3;  // 4-1
          for (let i = 0; i < 4; ++i) {
             triangleNormal(n, hEdges[s], hEdges[i], hEdges[(i+1) % 4]);
@@ -70,7 +71,24 @@ function triangulate(polygon) {
          } else if (even[1] > even[3]) {
             even = area[3] / area[1];
          }
-         quadTriangulate(hEdges, (odd > even));
+         quadTriangulate(hEdges, (odd > even)); */
+         let v0 = vec3.create(), v1 = vec3.create();
+         vec3.sub(v0, hEdges[3].destination(), hEdges[3].origin);
+         for (let i = 0; i < 4; ++i) {
+            vec3.sub(v1, hEdges[i].destination(), hEdges[i].origin);
+            vec3.cross(n, v0, v1);
+            if (vec3.dot(normal, n) < 0) { // concave, 
+               quadTriangulate(hEdges, i % 2);
+               return 1;
+            }
+            let t = v0;
+            v0 = v1;
+            v1 = t;
+         }
+
+         vec3.sub(v0, hEdges[2].origin, hEdges[0].origin);
+         vec3.sub(v1, hEdges[3].origin, hEdges[1].origin);
+         quadTriangulate(hEdges, vec3.len(v0) > vec3.len(v1));
          return 1;
       } 
       // less than 3, bad triangles
@@ -106,16 +124,40 @@ function triangulateNaive(polygon) {
 
 
 
+/**
+ * triangulateNice() - an earcut implementation.
+ * implement "Gang Mei, John C.Tipper and Nengxiong Xu"' high quality earclipping triangulation
+ * (David Eberly said triangluation only needs to check concave vertices, an optimization).
+ * 
+ */
+function triangulateNice(polygon, min, max) {
+   // get dominant axis.
+
+
+   // compute and sort concave, convex vertex order by degree, (check intersection?)
+   const hEdges = [];
+   for (let hEdge of polygon.hEdges()) {
+      hEdges.push(hEdge);
+   }
+   // calculation in dominant axis
+
+
+   
+
+
+   // ear clipping
+
+}
+
 
 
 /**
- * return a list of triangle compose of 3 hEdges.
- * internally setup line drawing.
  * 
- * monotones, using sweep and prune. 
+ * triangulationFast() - monotones, using sweep and prune. 
  * https://www.bowdoin.edu/~ltoma/teaching/cs3250-CompGeom/spring18/syllabus.html
  * has a clear explanation how monotones worked, and how to sweep the line.
  * the key insight is the "reflex/concave" vertex's diagonal cut off the monotones.
+ * use ""
  * 
  * first we check if the polygon is triangle or quad. trivial case.
  * 
