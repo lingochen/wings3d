@@ -267,7 +267,7 @@ function computeAngle(crossNorm, v0, v1, v2) {
    // angle = pi - atan2(v[i] x v[i+1].magnitude, v[i] * v[i+1]);
    vec3.sub(edge0, v0, v1);
    vec3.sub(edge1, v2, v1);
-   vec3.cross(crossNorm, edge0, edge1);
+   vec3.cross(crossNorm, edge0, edge1);   // fixeme: wrong order?
    let rad = Math.atan2(vec3.length(crossNorm), vec3.dot(edge0, edge1));
    vec3.normalize(crossNorm, crossNorm);
    return rad;
