@@ -335,12 +335,20 @@ HalfEdge.prototype.setTriangle = function(apex) {
    HalfEdge.triangleList.set(i+2, apex.getIndex());  // draw triangle
    this.updateApex(apex);  // set draw edge
 };
-HalfEdge.prototype.setEdgeTriangle = function(apex) {    // edge only
+HalfEdge.prototype.setTriangleEdge = function(apex) {    // edge only
    const idx = (this.getIndex()-1)*3;
    HalfEdge.triangleList.set(idx, 0);                    // non-drawing triangle
    HalfEdge.triangleList.set(idx+1, 0);                  // non-drawing triangle
    HalfEdge.triangleList.set(idx+2, 0);                  // non-drawing triangle
    this.updateApex(apex);                                // setup edge drawing
+};
+HalfEdge.prototype.setTriangleInternal = function(next, apex) {   // internal triangle,
+   const idx = this.getIndex();
+   const i = (idx-1)*3;
+   HalfEdge.triangleList.set(i, idx);                       // draw triangle
+   HalfEdge.triangleList.set(i+1, next.getIndex());
+   HalfEdge.triangleList.set(i+2, apex.getIndex());  // draw triangle
+   this.updateApex(next);  // set draw edge
 };
 
 HalfEdge.prototype.updateApex = function(apex) {
@@ -432,7 +440,7 @@ HalfEdge.prototype.discardInternal = function(affected) {
    if (asset.value) {
       affected.uv.push( asset );
    }
-   this.setEdgeTriangle(null);
+   this.setTriangleEdge(null);
 
    // reset HalfEdge
    this.face = null;
@@ -928,6 +936,7 @@ const Polygon = function(startEdge, size, material=Material.default) {
    this.halfEdge = startEdge;
    this.numberOfVertex = size;      // how many vertex in the polygon
    this.assignMaterial(material);
+   this.triangulation = 0;          // false
    //this.update(); //this should init right?
 };
 Polygon.prototype = Object.create(BoundingSphere.prototype);
@@ -1116,11 +1125,13 @@ Polygon.prototype.computeNormal = function() {
      normal[1] += (v0[2] - v1[2]) * (v0[0] + v1[0]);
      normal[2] += (v0[0] - v1[0]) * (v0[1] + v1[1]);
   }
+  const dir = [normal[0], normal[1], normal[2]];
   vec3.normalize(normal, normal);
   const i = this.index * 3;
   Polygon.normal.set(i, normal[0]);
   Polygon.normal.set(i+1, normal[1]);
   Polygon.normal.set(i+2, normal[2]);
+  return dir;
 }
 
 
@@ -1157,11 +1168,11 @@ Polygon.prototype.updatePosition = function() {
    
    // compute normal.
    if (this.numberOfVertex > 2) {
-      this.computeNormal();
-   }
-   if (this.numberOfVertex > 3) {
-      // redo triangulation.
-      this.triangulation = triangulate(this, min, max);
+      const dir = this.computeNormal();
+      if (this.numberOfVertex > 3) {
+         // redo triangulation.
+         this.triangulation = triangulate(this, dir);
+      }
    }
 };
 
@@ -1170,19 +1181,21 @@ Polygon.prototype.updatePosition = function() {
  * recompute numberOfVertex, triangulation, and reorient, and call updatePosition to compute normal and centroid and radius.
  */
 Polygon.prototype.updateIncipient = function() {
-   const box = this._update();
-
-   if (this.triangulation) {  // redo full triangulation
-      this.triangulation = triangulate(this, box,min, box.max);
-   } else { // really incipient, so use naive triangulation.
-      this.triangulation = triangulateNaive(this);
+   const dir = this._update();
+   if (dir) {
+      if (this.triangulation) {  // redo full triangulation
+         this.triangulation = triangulate(this, dir);
+      } else { // really incipient, so use naive triangulation.
+         this.triangulation = triangulateNaive(this);
+      }
    }
 };
 
 Polygon.prototype.updateFull = function() {
-   const box = this._update();
-   // redo triangulation.
-   this.triangulation = triangulate(this, box.min, box.max);
+   const dir = this._update();
+   if (dir) {
+      this.triangulation = triangulate(this, dir);
+   }
 };
 
 Polygon.prototype._update = function() {
@@ -1225,9 +1238,9 @@ Polygon.prototype._update = function() {
 
    // now ask updatePosition to compute normal centroid and radius and compute normal.
    if (this.numberOfVertex > 2) {
-      this.computeNormal();
+      return this.computeNormal();
    }
-   return {min: min, max: max};
+   return null;
 };
 
 /**
@@ -1248,7 +1261,7 @@ Polygon.prototype.isOk = function() {
          hEdge = hEdge.next;
       } while (hEdge !== this.halfEdge);
       if (count !== this.numberOfVertex) {
-         throw "Polygon's Number of Vertex is not consistent"
+         throw "Polygon's Number of Vertex is not consistent";
       }
    } else {
       throw("halfEdge should not be null");
