@@ -167,21 +167,27 @@ function triangulateNice(polygon, sub) {
          let v2;
          const s = vec3.create();
          for (let reflex of concave) {
-            // check if reflex is inside ear
-            sub(s, reflex.hEdge.origin, ear.hEdge.origin);
-            let z = ear.prev.v[0]*s[1] - ear.prev.v[1]*s[0];
-            if (z > 0) {
-               z = s[0]*ear.v[1] - s[1]*ear.v[0];
-               if (z > 0) {
-                  if (!v2) {
-                     v2 = vec3.create();
-                     sub(v2, ear.prev.hEdge.origin, ear.next.hEdge.origin);
-                  }
-                  sub(s, reflex.hEdge.origin, ear.next.hEdge.origin);
-                  z = s[0]*v2[1] - s[1]*v2[0];
-                  if (z > 0) {   // yes, inside
-                     reflex.intersect.push(ear);
-                     return true;
+            if (reflex.hEdge !== ear.hEdge && 
+                reflex.hEdge !== ear.prev.hEdge && 
+                reflex.hEdge !== ear.next.hEdge) {
+               // check if reflex is inside ear
+               sub(s, reflex.hEdge.origin, ear.hEdge.origin);
+               let z = ear.prev.v[0]*s[1] - ear.prev.v[1]*s[0];
+               if (z >= 0) {
+                  z = s[1]*ear.v[0] - s[0]*ear.v[1];
+                  if (z >= 0) {
+                     if (!v2) {
+                        v2 = vec3.create();
+                        sub(v2, ear.prev.hEdge.origin, ear.next.hEdge.origin);
+                     }
+                     sub(s, reflex.hEdge.origin, ear.next.hEdge.origin);
+                     z = s[1]*v2[0] - s[0]*v2[1];
+                     if (z >= 0) {   // yes, inside
+                        ear.notEar = true;
+                        notEarCount++;
+                        reflex.intersect.push(ear);
+                        return true;
+                     }
                   }
                }
             }
@@ -191,7 +197,10 @@ function triangulateNice(polygon, sub) {
    }
    function removeFromConcave(reflex) {
       concave.delete(reflex);
-      queue.push(...reflex.intersect);
+      for (let ear of reflex.intersect) {
+         ear.notEar = false;
+         notEarCount--;
+      }
       reflex.intersect = null;
    }
    function setTriangle(ear) {
@@ -199,6 +208,13 @@ function triangulateNice(polygon, sub) {
          ear.hEdge.setTriangle(ear.prev.hEdge);
       } else { // internal triangle
          ear.hEdge.setTriangleInternal(ear.next.hEdge, ear.prev.hEdge);
+      }
+   }
+   function setTriangleEdge(ear) {
+      if (ear.hEdge.next === ear.next.hEdge) {
+         ear.hEdge.setTriangleEdge(ear.prev.hEdge);
+      } else {
+         ear.hEdge.setTriangleEdge(ear.next.hEdge);
       }
    }
    function computeAngle(v0, v1) {
@@ -218,63 +234,54 @@ function triangulateNice(polygon, sub) {
       iMinus = i;
       i++;
    }
-   // calculation angle in dominant axis
+   // calculation angle in dominant axis (concave included 180degree)
    for (let i = 0; i < polygon.numberOfVertex; ++i) {
       let current = queue[i];
       current.prev = queue[current.prev];
       current.next = queue[current.next];
       let rad = computeAngle(current.prev.v, current.v);
       current.rad = rad;
-      if (rad < 0) {
+      if (rad <= 0) {
          current.intersect = [];
          concave.add( current );
       }
    }
    // cut off ear by most acute angle.
-   let lastChanceCount = queue.length;
+   let notEarCount = 0;
    do {
-      do {
-         //s ort concave, convex vertex order by degree, (check intersection?)
-         queue.sort((ear0, ear1)=>{return (ear0.rad - ear1.rad)});
-         let ear = queue.pop();
-         if (!hasReflexInside(ear)) { // remove ear, or push into concave's intersect
-            setTriangle(ear);
-            // reconnect next to prev
-            let prev = ear.prev;
-            let next = ear.next;
-            ear.next.prev = prev;
-            ear.prev.next = next;
-            sub(prev.v, next.hEdge.origin, prev.hEdge.origin);
-            let rad = computeAngle(prev.prev.v, prev.v);
-            if (prev.rad < 0 && rad >= 0) { // remove from trouble.
-               removeFromConcave(prev);
-            }
-            prev.rad = rad;
-            rad = computeAngle(prev.v, next.v);
-            if (next.rad < 0 && rad >= 0) {
-               removeFromConcave(next);
-            }
-            next.rad = rad;
+      //s ort concave, convex vertex order by degree, (check intersection?)
+      queue.sort((ear0, ear1)=>{return (ear0.notEar ? -4 : ear0.rad) - (ear1.notEar ? -4 : ear1.rad);});
+      let ear = queue[queue.length-1];
+      if (!hasReflexInside(ear)) { // remove ear, or push into concave's intersect
+         queue.pop();
+         setTriangle(ear);
+         // reconnect next to prev
+         let prev = ear.prev;
+         let next = ear.next;
+         ear.next.prev = prev;
+         ear.prev.next = next;
+         sub(prev.v, next.hEdge.origin, prev.hEdge.origin);
+         let rad = computeAngle(prev.prev.v, prev.v);
+         if (prev.rad <= 0 && rad > 0) { // remove from trouble.
+            removeFromConcave(prev);
          }
-      } while (queue.length > 3);
-      // check concave is empty?
-      for (let ear of concave) {
-         queue.push(...ear.intersect);
-         ear.intersect = [];
+         prev.rad = rad;
+         rad = computeAngle(prev.v, next.v);
+         if (next.rad <= 0 && rad > 0) {
+            removeFromConcave(next);
+         }
+         next.rad = rad;
       }
-      if (lastChanceCount === queue.length) { // check if we actually make any progress
+      if (notEarCount === queue.length) { // impossible to make anymore progress
          console.log("TriangulateNice impcomplete");
          return 0;   // no progress.
       }
-      lastChanceCount = queue.length;
    } while (queue.length > 3);
    
    // cleanup
    setTriangle(queue[2]);
-   let ear = queue[0];
-   ear.hEdge.setTriangleEdge(ear.prev.hEdge);
-   ear = queue[1];
-   ear.hEdge.setTriangleEdge(ear.prev.hEdge);
+   setTriangleEdge(queue[1]);
+   setTriangleEdge(queue[0]);
 
    return 1;
 }
