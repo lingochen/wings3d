@@ -185,7 +185,6 @@ function triangulateNice(polygon, sub) {
                      if (z >= 0) {   // yes, inside
                         ear.notEar = true;
                         notEarCount++;
-                        reflex.intersect.push(ear);
                         return true;
                      }
                   }
@@ -194,14 +193,6 @@ function triangulateNice(polygon, sub) {
          }
       }
       return false;
-   }
-   function removeFromConcave(reflex) {
-      concave.delete(reflex);
-      for (let ear of reflex.intersect) {
-         ear.notEar = false;
-         notEarCount--;
-      }
-      reflex.intersect = null;
    }
    function setTriangle(ear) {
       if (ear.hEdge.next === ear.next.hEdge) {
@@ -242,7 +233,6 @@ function triangulateNice(polygon, sub) {
       let rad = computeAngle(current.prev.v, current.v);
       current.rad = rad;
       if (rad <= 0) {
-         current.intersect = [];
          concave.add( current );
       }
    }
@@ -263,14 +253,22 @@ function triangulateNice(polygon, sub) {
          sub(prev.v, next.hEdge.origin, prev.hEdge.origin);
          let rad = computeAngle(prev.prev.v, prev.v);
          if (prev.rad <= 0 && rad > 0) { // remove from trouble.
-            removeFromConcave(prev);
+            concave.delete(prev);
          }
          prev.rad = rad;
+         if (prev.notEar) {
+            prev.notEar = false;
+            notEarCount--;
+         }
          rad = computeAngle(prev.v, next.v);
          if (next.rad <= 0 && rad > 0) {
-            removeFromConcave(next);
+            concave.delete(next);
          }
          next.rad = rad;
+         if (next.notEar) {
+            next.notEar = false;
+            notEarCount--;
+         }
       }
       if (notEarCount === queue.length) { // impossible to make anymore progress
          console.log("TriangulateNice impcomplete");
@@ -306,7 +304,7 @@ function triangulateNice(polygon, sub) {
  * 
  * @param {Polygon} polygon 
  */
-function triangulateFast(polygon) {
+/*function triangulateFast(polygon, sub) {
    // find the dominant axis
 
    // build the "sweep and prune" list
@@ -314,7 +312,7 @@ function triangulateFast(polygon) {
 
    // sweep start
 
-};
+};*/
 
 
 
