@@ -164,6 +164,19 @@ WingedEdge.prototype.getIndex = function(hEdge) {
 };
 
 
+WingedEdge.prototype.getApex = function(hEdge, pt) {
+   const data = WingedEdge.index.buffer;
+   let idx = this.index * 24;    // 24 = 4*3*2;
+   if (this.right === hEdge) {
+      idx += 12;
+   }
+
+   idx += 8;  // apex index
+   const apex = data[idx]*3;
+   pt[0] = Vertex.position.buffer[apex];
+   pt[1] = Vertex.position.buffer[apex+1];
+   pt[2] = Vertex.position.buffer[apex+2];
+}
 /**
  * buildup drawingLine using triangle, assume this wingedEdge is lived.
  * @param {Float32Array} data - array
@@ -350,6 +363,10 @@ HalfEdge.prototype.setTriangleInternal = function(next, apex) {   // internal tr
    HalfEdge.triangleList.set(i+2, apex.getIndex());  // draw triangle
    this.updateApex(next);  // set draw edge
 };
+
+HalfEdge.prototype.getApex = function(pt) {
+   this.wingedEdge.getApex(this, pt);
+}
 
 HalfEdge.prototype.updateApex = function(apex) {
    this.wingedEdge.updateApex(this, apex);

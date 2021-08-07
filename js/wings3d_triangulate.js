@@ -170,7 +170,7 @@ function triangulateNice(polygon, sub) {
             if (reflex.hEdge !== ear.hEdge && 
                 reflex.hEdge !== ear.prev.hEdge && 
                 reflex.hEdge !== ear.next.hEdge) {
-               // check if reflex is inside ear
+               // check if reflex is inside ear, (we are including point on the edge, so FixMe: check for zero size triangle)
                sub(s, reflex.hEdge.origin, ear.hEdge.origin);
                let z = ear.prev.v[0]*s[1] - ear.prev.v[1]*s[0];
                if (z >= 0) {
