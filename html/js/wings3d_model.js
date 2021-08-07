@@ -363,6 +363,7 @@ PreviewCage.prototype.updateBVH = function() {
 
 //-- end of bvh
 
+
 PreviewCage.prototype.rayPick = function(ray) {
    if (this.bvh.root === null) {
       this.initBVH();
@@ -375,15 +376,30 @@ PreviewCage.prototype.rayPick = function(ray) {
    var center;
    var hitT = Number.POSITIVE_INFINITY;   // z_far is the furthest possible intersection
 
+   const apex = vec3.create(), intersect= vec3.create(), iV = vec3.create(), line = vec3.create();
+   let distanceToEdge = Number.POSITIVE_INFINITY;
    for (let sphere of this.bvh.root.intersectExtent(ray)) {
       sphere.eachEdge( function(edge) {
          // now check the triangle is ok?
-         var t = Geom.intersectTriangle(ray, [sphere.center, edge.origin, edge.destination()]);
-         if ((t != 0.0) && (t < hitT)) {
-            // intersection, check for smallest t, closest intersection
-            hitT = t;
-            hitEdge = edge;
-            center = sphere.center;
+         edge.getApex(apex);
+         let t = Geom.intersectTriangle(ray, [apex, edge.origin, edge.destination()]);
+         //var t = Geom.intersectTriangle(ray, [sphere.center, edge.origin, edge.destination()]);
+         if ((t != 0.0) && (t <= hitT)) { // intersection, check for smallest t, closest intersection
+            // find the distance from intesection to line-segment.
+            vec3.scaleAndAdd(intersect, ray.origin, ray.direction, t);
+            vec3.sub(iV, intersect, edge.origin);
+            vec3.sub(line, edge.destination(), edge.origin);
+            let s = vec3.dot(line,iV) / vec3.dot(line, line);
+            s = Math.min(Math.max(s, 0), 1); // == clamp
+            vec3.scaleAndAdd(iV, edge.origin, line, s);
+            vec3.sub(iV, intersect, iV);
+            let distance = vec3.length(iV);
+            if (distance < distanceToEdge) {
+               distanceToEdge = distance;
+               hitT = t;
+               hitEdge = edge;
+               center = sphere.center;
+            }
          }
       });
    }
