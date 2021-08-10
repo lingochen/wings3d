@@ -202,10 +202,8 @@ function triangulateNice(polygon, sub) {
       }
    }
    function setTriangleEdge(ear) {
-      if (ear.hEdge.next === ear.next.hEdge) {
-         ear.hEdge.setTriangleEdge(ear.prev.hEdge);
-      } else {
-         ear.hEdge.setTriangleEdge(ear.next.hEdge);
+      if (ear.hEdge.next === ear.next.hEdge) {  // turning to internal, so get the edge now.
+         ear.hEdge.setTriangleEdge(ear.next.next.hEdge);
       }
    }
    function computeAngle(v0, v1) {
@@ -237,7 +235,6 @@ function triangulateNice(polygon, sub) {
       }
    }
    // cut off ear by most acute angle.
-   let firstCut = null;
    let notEarCount = 0;
    do {
       //s ort concave, convex vertex order by degree, (check intersection?)
@@ -246,12 +243,10 @@ function triangulateNice(polygon, sub) {
       if (!hasReflexInside(ear)) { // remove ear, or push into concave's intersect
          queue.pop();
          setTriangle(ear);
-         if (firstCut===null) {
-            firstCut = {ear: ear.prev, apex: ear.next.hEdge};
-         }
          // reconnect next to prev
          let prev = ear.prev;
          let next = ear.next;
+         setTriangleEdge(prev);
          ear.next.prev = prev;
          ear.prev.next = next;
          sub(prev.v, next.hEdge.origin, prev.hEdge.origin);
@@ -282,14 +277,8 @@ function triangulateNice(polygon, sub) {
    
    // cleanup
    setTriangle(queue[2]);
-   for (let i = 1; i >= 0; i--) {
-      if (queue[i] === firstCut.ear) {
-         firstCut.ear.hEdge.setTriangleEdge(firstCut.apex);
-      } else {
-         setTriangleEdge(queue[i]);
-      }
-   }
-   //setTriangleEdge(queue[0]);
+   setTriangleEdge(queue[1]);
+   setTriangleEdge(queue[0]);
 
    return 1;
 }
