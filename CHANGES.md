@@ -1,5 +1,8 @@
 # Release notes
 
+## 2021/08/11
+- better showing/picking of nGon.
+
 ## 2021/07/27
 - add tighten command to vertex/body mode.
 - add subdivide command to face/body mode
