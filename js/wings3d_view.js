@@ -9,8 +9,12 @@ import * as Render from './wings3d_render.js';
 import * as Camera from './wings3d_camera.js';
 import {i18n} from './wings3d_i18n.js';
 import {gl} from './wings3d_gl.js';
+import { ImportExporter } from './wings3d_importexport.js';
+import { STLImportExporter } from './plugins/stl.js';
+import { GLTFImportExporter } from './plugins/gltf.js';
 import {WavefrontObjImportExporter } from './plugins/wavefront_obj.js';
 import {X3dImportExporter} from './plugins/x3d.js';
+import {WingsImportExporter} from './plugins/wings.js';
 import * as Wings3D from './wings3d.js';
 import {EditCommandSimple, EditCommandCombo} from './wings3d_undo.js';
 import {FaceMadsor} from './wings3d_facemads.js';
@@ -26,9 +30,6 @@ import * as Util from './wings3d_util.js';
 import * as TreeView from './wings3d_uitree.js';
 import { GenericEditCommand, ToggleCheckbox } from './wings3d_mads.js';
 import * as OpenSave from './wings3d_opensave.js'
-import { ImportExporter } from './wings3d_importexport.js';
-import { STLImportExporter } from './plugins/stl.js';
-import { GLTFImportExporter } from './plugins/gltf.js';
 import { Texture } from './wings3d_material.js';
 const {vec2, vec3} = glMatrix;
 
@@ -2021,17 +2022,19 @@ function init() {
    }, false);   
 
    // import/export
-   ImportExporter.addLoadStore( new WavefrontObjImportExporter() );
-   ImportExporter.addLoadStore( new STLImportExporter() );
-   ImportExporter.addLoadStore( new GLTFImportExporter() );
-   let X3d = new X3dImportExporter();
-   ImportExporter.setDefault(X3d);
+   ImportExporter.addLoadStore( ()=>{return new WavefrontObjImportExporter()} );
+   ImportExporter.addLoadStore( ()=>{return new STLImportExporter()} );
+   ImportExporter.addLoadStore( ()=>{return new GLTFImportExporter()} );
+//   ImportExporter.addLoadStore( ()=>{return new WingsImportExporter()} );
+   const createX3d = ()=>{return new X3dImportExporter()};
+   ImportExporter.setDefault(createX3d);
    // clearNew
    async function clearNew(evt) {
       if (undo.isModified &&  (_environment.world.numberOfCage() > 0)) {
          const [_form, answer] = await UI.execDialog('#askSaveDialog', null); // no, save, cancel
          let isCancel = answer.value === "cancel";
          if (answer.value === "ok") {  // call save.
+            const X3d = createX3d();
             await OpenSave.save(X3d.extension()).then((file, saver)=>{
                return X3d.export(file, saver, getWorld());
             }).catch(error=>{
@@ -2094,31 +2097,32 @@ function init() {
           });
       }
    }
-   for (let loadStore of ImportExporter.LOADSTORE) {
+   for (let createLoadStore of ImportExporter.LOADSTORE) {
+      const loadStore = createLoadStore();
       if (loadStore.importMenuText) {
          const importMenuText = loadStore.importMenuText;
          // first get import Submenu.
          UI.addMenuItem('fileImport', 'import' + importMenuText.name, `${importMenuText.name} (.${importMenuText.ext})...`, function(evt) {
-               merge(evt, loadStore);
+               merge(evt, createLoadStore());
             });
       }
       if (loadStore.exportMenuText) {
          const exportMenuText = loadStore.exportMenuText;
          UI.addMenuItem('fileExport', 'export' + exportMenuText.name, `${exportMenuText.name} (.${exportMenuText.ext})...`, function(evt) {
-            save(evt, loadStore, 2);
+            save(evt, createLoadStore(), 2);
          });
       }
    }
    // registering save/saveAs/ handling.
    UI.bindMenuItem(Wings3D.action.save.name, function(evt) {
-      save(evt, X3d);
+      save(evt, createX3d());
     });
    UI.bindMenuItem(Wings3D.action.saveAs.name, function(evt) {
-      saveAs(evt, X3d);
+      saveAs(evt, createX3d());
     });
    // Open handling, remember to save first. then new.
    UI.bindMenuItem(Wings3D.action.open.name, function(evt) {
-      open(evt, X3d);
+      open(evt, createX3d());
     });
    // "New", clear away old objects, but ask to save it first.
    UI.bindMenuItem(Wings3D.action.clearNew.name, function(evt) {
