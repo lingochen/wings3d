@@ -125,19 +125,20 @@ class ImportExporter {
       return decoder.decode(dataView);   
    }
 
-   static addLoadStore(loadStore) {
+   static addLoadStore(create) {
+      const loadStore = create();
       if (loadStore.importMenuText || loadStore.exportMenuText) {
-         ImportExporter.LOADSTORE.add(loadStore);
+         ImportExporter.LOADSTORE.add(create);
       }
    }
 
-   static setDefault(loadstore) {
+   static setDefault(create) {
       if (ImportExporter.DEFAULT) {
          ImportExporter.LOADSTORE.add(ImportExporter.DEFAULT);
       }
-      ImportExporter.DEFAULT = loadstore;
+      ImportExporter.DEFAULT = create;
       // remove from LOADER, STORER.
-      ImportExporter.LOADSTORE.delete(loadstore);
+      ImportExporter.LOADSTORE.delete(create);
    }
 };
 ImportExporter.LOADSTORE = new Set;
