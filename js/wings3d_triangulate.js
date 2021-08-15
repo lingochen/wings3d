@@ -270,7 +270,7 @@ function triangulateNice(polygon, sub) {
          }
       }
       if (notEarCount === queue.length) { // impossible to make anymore progress
-         console.log("TriangulateNice impcomplete");
+         console.log("TriangulateNice incomplete");
          return 0;   // no progress.
       }
    } while (queue.length > 3);
