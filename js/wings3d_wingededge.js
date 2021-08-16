@@ -2043,6 +2043,12 @@ WingedTopology.prototype._unwindNewEdges = function(halfEdges) {
  * add wrapper, use original name,
  */
 WingedTopology.prototype.addPolygon = function(pts, material) {
+   return this._addPolygon(0, pts.length, pts, material).face;
+}
+/**
+ * get halfLoop for attribute purpose.
+ */
+WingedTopology.prototype.addPolygonEx = function(pts, material) {
    return this._addPolygon(0, pts.length, pts, material);
 }
 
@@ -2132,7 +2138,7 @@ WingedTopology.prototype._addPolygon = function(start, end, pts, material) {
       halfLoop[i].face = newPolygon;
    }
 
-   return newPolygon;
+   return {face: newPolygon, hLoop: halfLoop};
 };
 
 // utility for addPolygon.
