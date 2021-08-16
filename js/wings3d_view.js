@@ -2025,7 +2025,7 @@ function init() {
    ImportExporter.addLoadStore( ()=>{return new WavefrontObjImportExporter()} );
    ImportExporter.addLoadStore( ()=>{return new STLImportExporter()} );
    ImportExporter.addLoadStore( ()=>{return new GLTFImportExporter()} );
-//   ImportExporter.addLoadStore( ()=>{return new WingsImportExporter()} );
+   ImportExporter.addLoadStore( ()=>{return new WingsImportExporter()} );
    const createX3d = ()=>{return new X3dImportExporter()};
    ImportExporter.setDefault(createX3d);
    // clearNew
