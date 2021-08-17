@@ -34,7 +34,9 @@ class ImportExporter {
 
    createMaterial(name, pbr) {
       const mat = Material.create(name);
-      mat.setValues(pbr);
+      if (pbr) {
+         mat.setValues(pbr);
+      }
       return mat;
    }
 
