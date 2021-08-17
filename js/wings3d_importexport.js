@@ -32,8 +32,15 @@ class ImportExporter {
       return View.createGroup(name);
    }
 
-   createMaterial(name) {
-      return Material.create(name);
+   createMaterial(name, pbr) {
+      const mat = Material.create(name);
+      mat.setValues(pbr);
+      return mat;
+   }
+
+   createMaterialTraditional(name, old) {
+      const pbr = Material.convertTraditionalToMetallicRoughness(old);
+      return this.createMaterial(name, pbr);
    }
 
    createTexture(name, sampler) {

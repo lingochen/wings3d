@@ -193,6 +193,7 @@ class WingsImportExporter extends ImportExporter {
       }
 
       let world = [];
+      let catalogue = [];
       if ((text === magic) && (reader.byteLength-19 === reader.getUint32(pos))) {   // magicHeader, dataSize
          pos+=6;   // skipp size(4 bytes), erlang header (2 bytes)
          let dataSize = reader.getUint32(pos);
@@ -205,26 +206,25 @@ class WingsImportExporter extends ImportExporter {
             let header = parser.readNext();
             if ((header.type === "tuple") && (header.len === 3) &&
                  (parser.readNext() === "wings") && (parser.readNext() === 2)) {
-               let objs = [];
                if (parser.readTuple() === 3) {
-                  objs = this.readShape(parser);
-                  this.readMaterial(parser);
+                  const objs = this.readShape(parser);
+                  const catalog = this.readMaterial(parser);
                   let prop = this._inspectUnknown(parser);
                   //console.log(prop);
+                  [world, catalogue] = this.buildShape(objs, catalog);
                }
-
-               world = this.buildShape(objs);
             }
          } else {
             console.log("error: wings3d file corrupted");
          }
       }
   
-      return {world: world, materialCatalog: []};
+      return {world: world, materialCatalog: catalogue};
    }
 
-   buildShape(shapes) {
+   buildShape(shapes, catalog) {
       const objs = [];
+      const catalogue = new Set;
       for (let shape of shapes) {
          const ret = this.createCage(shape.name);
          let geometry = ret.geometry;
@@ -252,6 +252,8 @@ class WingsImportExporter extends ImportExporter {
          for (let i = 0; i < shape.faces.length; ++i) {
             let pts = [], colors = [], uv = [];
             const face = shape.faces[i];
+            const material = catalog.get(face.material);
+            catalogue.add(material);
             const start = face.wEdge;
             let current = start;
             do {
@@ -268,20 +270,23 @@ class WingsImportExporter extends ImportExporter {
                   current = wEdge.right.prev;
                }
             } while (start !== current);
-            const hLoop = geometry.addPolygonEx(pts).hLoop;  
-            for (let i = 0; i < hLoop.length; ++i) {
-               if (colors[i]) {
-                  hLoop[i].setVertexColor(colors[i]);
-               }
-               if (uv[i]) {
-                  hLoop[i].setUV(0, uv[i]);
+            const result = geometry.addPolygonEx(0, pts.length, pts, material);
+            if (result) {
+               const hLoop = result.hLoop;  
+               for (let i = 0; i < hLoop.length; ++i) {
+                  if (colors[i]) {
+                     hLoop[i].setVertexColor(colors[i]);
+                  }
+                  if (uv[i]) {
+                     hLoop[i].setUV(0, uv[i]);
+                  }
                }
             }
          }
          objs.push( ret );
       }
 
-      return objs;
+      return [objs, catalogue];
    }
 
    skipUnknown(parser) {   // 
@@ -429,7 +434,7 @@ class WingsImportExporter extends ImportExporter {
    }
 
    readMaterial(parser) {
-      const catalog = [];
+      const catalog = new Map;
       let len = parser.readList();
       for (let i = 0; i < len; ++i) {
          parser.readTuple();
@@ -461,7 +466,24 @@ class WingsImportExporter extends ImportExporter {
             }
          }
          parser.readNil();
-         catalog.push( mat );
+         // convert to our material
+         const opengl = mat.opengl;
+         let material;
+         if (mat.opengl.metallic) {
+            material = this.createMaterial(mat.name, {baseColor: opengl.diffuse, 
+                                                      emission: opengl.emission,
+                                                      metallic: opengl.metallic,
+                                                      roughness: opengl.roughness,});
+
+         } else { // convert old
+            const old = {diffuseMaterial: opengl.diffuse || [0.3, 0.3, 0.3, 1],
+                         emissionMaterial: opengl.emission || [0, 0, 0, 1],
+                         specularMaterial: opengl.specular || [0, 0, 0, 1],
+                         shininessMaterial: opengl.shininess || 0,
+                          }; 
+            material = this.createMaterialTraditional(mat.name, old);
+         }
+         catalog.set( mat.name, material );
       }
       parser.readNil();
       // catalog of material;

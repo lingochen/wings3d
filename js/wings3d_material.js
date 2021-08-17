@@ -147,10 +147,12 @@ static release(material) {
    setValues(inputDat) {
       for (const key of Object.keys(inputDat)) {
          if (this.pbr.hasOwnProperty(key)) {
-            if ((key == "baseColor" || key == "emission") && !Array.isArray(inputDat[key])) {
-               this.pbr[key] = Util.hexToRGB(inputDat[key]);
-            } else {
-               this.pbr[key] = inputDat[key];//parseFloat(inputDat[key]);
+            if (inputDat[key]) {
+               if ((key == "baseColor" || key == "emission") && !Array.isArray(inputDat[key])) {
+                  this.pbr[key] = Util.hexToRGB(inputDat[key]);
+               } else {
+                  this.pbr[key] = inputDat[key];//parseFloat(inputDat[key]);
+               }
             }
          } else {
             console.log("unknown input material: " + key);

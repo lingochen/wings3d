@@ -2043,17 +2043,12 @@ WingedTopology.prototype._unwindNewEdges = function(halfEdges) {
  * add wrapper, use original name,
  */
 WingedTopology.prototype.addPolygon = function(pts, material) {
-   return this._addPolygon(0, pts.length, pts, material).face;
-}
-/**
- * get halfLoop for attribute purpose.
- */
-WingedTopology.prototype.addPolygonEx = function(pts, material) {
-   return this._addPolygon(0, pts.length, pts, material);
+   return this.addPolygonEx(0, pts.length, pts, material).face;
 }
 
 // passed in an array of vertex index. automatically create the required edge.
 // return polygon index.
+// rename as addPolygonEx() - (2021/08/17)
 // add proper handling for non-manifold. (2017/05/28)
 // add checking for complex polygon. (2017/05/29)
 /**
@@ -2062,7 +2057,7 @@ WingedTopology.prototype.addPolygonEx = function(pts, material) {
  *       {array} pts - cw pts polygon list
  *       {Material} material - assigned material.
  */
-WingedTopology.prototype._addPolygon = function(start, end, pts, material) {
+WingedTopology.prototype.addPolygonEx = function(start, end, pts, material) {
    const length = end - start;
    if (length < 3) { // at least a triangle
       console.log("Bad polygon: less than 3 edges");
