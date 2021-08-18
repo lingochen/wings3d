@@ -192,6 +192,7 @@ class WingsImportExporter extends ImportExporter {
           text += String.fromCharCode(val);
       }
 
+      this.textureCache = new Map;
       let world = [];
       let catalogue = [];
       if ((text === magic) && (reader.byteLength-19 === reader.getUint32(pos))) {   // magicHeader, dataSize
@@ -209,7 +210,7 @@ class WingsImportExporter extends ImportExporter {
                if (parser.readTuple() === 3) {
                   const objs = this.readShape(parser);
                   const catalog = this.readMaterial(parser);
-                  let prop = this._inspectUnknown(parser);
+                  let prop = this.readProps(parser);
                   //console.log(prop);
                   [world, catalogue] = this.buildShape(objs, catalog);
                }
@@ -278,7 +279,7 @@ class WingsImportExporter extends ImportExporter {
                      hLoop[i].setVertexColor(colors[i]);
                   }
                   if (uv[i]) {
-                     hLoop[i].setUV(0, uv[i]);
+                     hLoop[i].setUV(uv[i]);
                   }
                }
             }
@@ -287,6 +288,32 @@ class WingsImportExporter extends ImportExporter {
       }
 
       return [objs, catalogue];
+   }
+
+   readKeyValue(parser, tupleLen) {  // needs to guarantee key, value
+      if (tupleLen === undefined) {
+         tupleLen = parser.readTuple();
+      }
+      if (tupleLen !== 2) {
+         throw("ETF: bad {key, value}");
+      }
+      const key = parser.readNext();
+      let value = parser.readNext();
+      if (value.type === "tuple") {  // a tuple
+         let [subKey, subValue] = this.readKeyValue(parser, value.len);
+         value = {};
+         value[subKey] = subValue;
+      } else if (value.type === "list") {  // a list
+         let len = value.len;
+         value = {};
+         for (let i = 0; i < len; ++i) {
+            let [key_, value_] = this.readKeyValue(parser);
+            value[key_] = value_;
+         }
+         parser.readNil();
+      }
+
+      return [key, value];
    }
 
    skipUnknown(parser) {   // 
@@ -309,7 +336,7 @@ class WingsImportExporter extends ImportExporter {
       for (let i = 0; i < len; ++i) {
          if (parser.readTuple() === 4) {  // winged tuple
             objs.push( this.readObject(parser));
-            this.readPlugin(parser);
+            this.skipUnknown(parser);
          }
       }
       parser.readNil();
@@ -342,7 +369,7 @@ class WingsImportExporter extends ImportExporter {
          const nil = parser.readNext();   // check end
          geometry.push( wEdge );
       }
-      let nil = parser.readNext();   // check end
+      parser.readNil();   // check end
       return geometry;
    }
 
@@ -351,11 +378,19 @@ class WingsImportExporter extends ImportExporter {
       const faceList = parser.readNext();
       const faces = [];
       for (let i = 0; i < faceList.len; ++i) {
-         const material = parser.readNext();
+         let material = parser.readNext();
          if (material.type && material.type === "NIL") {
             faces.push({material:"default", wEdge: null});
          } else {
-            faces.push({material, wEdge: null});
+            if (material.len === 1) {  // [{material, "material_name"}]
+               parser.readTuple();  
+               parser.readNext();               // atom="material"
+               material = parser.readNext();    // string="name"
+               faces.push({material, wEdge: null});
+            } else {
+               throw("ETF: unknown face material type");
+            }
+            parser.readNil();
          }
       }
       parser.readNil();
@@ -392,11 +427,11 @@ class WingsImportExporter extends ImportExporter {
             break;
          case 'uv_rt':
             uv = new DataView(parser.readNext());
-            wEdge.right.uv = [uv.getFloat32(0,false), uv.getFloat32(4,false)];
+            wEdge.right.uv = this.createUV(0, [uv.getFloat64(0,false), uv.getFloat64(8,false)]);
             break;
          case 'uv_lt':
             uv = new DataView(parser.readNext());
-            wEdge.left.uv = [uv.getFloat32(0,false), uv.getFloat32(4,false)];
+            wEdge.left.uv = this.createUV(0, [uv.getFloat64(0,false), uv.getFloat64(8,false)]);
             break;
          case 'edge':
             wEdge.start = parser.readNext();
@@ -413,25 +448,37 @@ class WingsImportExporter extends ImportExporter {
       };
    }
 
-   readPlugin(parser) {
-      this.skipUnknown(parser);
-      /*if (parser.readList() === 3) {
-         parser.readTuple();
-         let atom = parser.readNext();
-         let len = parser.readList();
-         for (let i = 0; i < len; ++i) {
-            let size = parser.readTuple();
-            atom = parser.readNext();
-            atom = parser.readNext();
-            console.log(atom);
-         }
-         parser.readNil();
-
-         atom = parser.readNext();
-         const mode = parser.readNext();
-         console.log(mode);
-      }*/
+   readProps(parser) {
+      let size = parser.readList();
+      const prefs = this._inspectUnknown(parser);
+      const plugin = this._inspectUnknown(parser);
+      const curretView = this._inspectUnknown(parser);
+      const views = this._inspectUnknown(parser);
+      this.loadImage(parser);
    }
+
+   loadImage(parser) {
+      const size = parser.readTuple();
+      const imagesAtom = parser.readNext();
+      let images = parser.readList();
+      for (let i = 0; i < images; ++i) {
+         let [index, image] = this.readKeyValue(parser);
+         const texture = this.textureCache.get(index);
+         if (image.filename) {
+            texture.name = image.name;
+            this.loadAsync(image.filename).then(files=>{
+               return files[0].image();
+            }).then(img=>{
+               img.onload = ()=>{
+                  texture.setImage(img);
+               }
+               return img;
+            });
+         }
+      }
+      parser.readNil();
+   }
+
 
    readMaterial(parser) {
       const catalog = new Map;
@@ -466,10 +513,10 @@ class WingsImportExporter extends ImportExporter {
             }
          }
          parser.readNil();
-         // convert to our material
+         // instantiated material
          const opengl = mat.opengl;
          let material;
-         if (mat.opengl.metallic) {
+         if (opengl.metallic) {
             material = this.createMaterial(mat.name, {baseColor: opengl.diffuse, 
                                                       emission: opengl.emission,
                                                       metallic: opengl.metallic,
@@ -483,6 +530,14 @@ class WingsImportExporter extends ImportExporter {
                           }; 
             material = this.createMaterialTraditional(mat.name, old);
          }
+         // image map
+         const maps = mat.maps;
+         if (maps.diffuse) {
+            const texture = this.createTexture(maps.diffuse, {flipY: true});
+            this.textureCache.set(maps.diffuse, texture);
+            material.baseColorTexture = texture;
+         }
+
          catalog.set( mat.name, material );
       }
       parser.readNil();
