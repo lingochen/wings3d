@@ -448,8 +448,9 @@ class X3dImportExporter extends ImportExporter {
       for (let i = 0; i < index.length; ++i) {
          const value = parseInt(index[i], 10);
          if (value === -1) {  // done, have polygon.
-            let hLoop = current.cage.geometry.addPolygonEx(start, i, index, appearance).hLoop;
-            if (current.uv) {
+            let result =  current.cage.geometry.addPolygonEx(start, i, index, appearance);
+            if (current.uv && result) {
+               let hLoop = result.hLoop;
                for (let j = 0; j < hLoop.length; ++j) {
                   hLoop[j].setUV(currentUV[uvIndex[start+j]]);
                }
