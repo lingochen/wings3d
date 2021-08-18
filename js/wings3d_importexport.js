@@ -6,7 +6,8 @@
 // 3) google drive, microsoft onedrive, baidupan to come later.
 //
 import {PreviewCage, CreatePreviewCageCommand} from './wings3d_model.js';
-import {WingedTopology, HalfEdge} from './wings3d_wingededge.js';
+import {WingedTopology, HalfEdge, Attribute} from './wings3d_wingededge.js';
+import * as GL from './wings3d_gl.js';
 import {Material} from "./wings3d_material.js";
 import * as View from './wings3d_view.js';
 
@@ -60,6 +61,17 @@ class ImportExporter {
       return index;
    }
 
+   createUV(channel, uv) { // uv
+      let texCoord = (GL.toHalf(uv[0]) << 16) + GL.toHalf(uv[1]);
+      let index = this.reservedUv.get(texCoord);
+      if (index === undefined) {  
+         index = Attribute.uv.reserve();
+         Attribute.uv.setChannel(index, channel, uv);
+         this.reservedUv.set(texCoord, index);
+      }
+      return index;
+   }
+
    async export(world, file, saveAsync) {
       this.saveAsync = saveAsync;
 
@@ -82,6 +94,7 @@ class ImportExporter {
       this.files = files;
       this.workingFiles.selected = files[0];
       this.reservedColors = new Map;
+      this.reservedUv = new Map;
 
       return this._import(files[0]).then((objs)=>{  // put into world.
          if (objs) {

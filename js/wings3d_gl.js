@@ -1272,6 +1272,7 @@ TriangleIndexBuffer.prototype.set = function(indexArray, newVals) {
 export {
    createWebGLContext,
    _createWebGLContext,
+   toHalf,
    ColorAttribute,
    TexCoordAttribute,
    TriangleIndexBuffer,
