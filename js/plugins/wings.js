@@ -533,8 +533,11 @@ class WingsImportExporter extends ImportExporter {
          // image map
          const maps = mat.maps;
          if (maps.diffuse) {
-            const texture = this.createTexture(maps.diffuse, {flipY: true});
-            this.textureCache.set(maps.diffuse, texture);
+            let texture = this.textureCache.get(maps.diffuse);
+            if (texture === undefined) {
+               texture = this.createTexture(maps.diffuse, {flipY: true});
+               this.textureCache.set(maps.diffuse, texture);
+            }
             material.baseColorTexture = texture;
          }
 
