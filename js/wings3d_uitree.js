@@ -417,7 +417,23 @@ class ImageList extends ListView {
    }
 
    loadTexture(texture) {
-      this.buildImageItem(texture);
+      const ret = this.buildImageItem(texture);
+      const textureProxy = new Proxy(texture, {
+         get(target, prop, receiver) {
+            if (prop === 'ui') {
+              return ret;
+            }
+            return Reflect.get(...arguments);
+         },
+         set(obj, prop, value) {
+            if (prop === "name") {
+               ret.rename(value);
+            }
+            return Reflect.set(...arguments);
+         }
+       });
+
+      return textureProxy;
    }
 
    showImage(images) {

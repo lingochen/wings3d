@@ -79,6 +79,11 @@ class ImageUI extends HTMLElement {
       this.removeEventListener('dragstart', this.listener.dragStart);
    }
 
+   rename(newName) {
+      const span = this.shadowRoot.querySelector("span");
+      span.textContent = newName;
+   }
+
    get texture() {
       return this._texture;
    }

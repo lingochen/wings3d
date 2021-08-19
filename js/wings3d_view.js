@@ -410,8 +410,7 @@ function deleteMaterial(material) {
 }
 function createTexture(name, sampler) {
    const ret = Texture.create(name, sampler);
-   _environment.imageList.loadTexture(ret);
-   return ret;
+   return _environment.imageList.loadTexture(ret);
 }
 function createGroup(name) {
    const ret = new PreviewGroup();
