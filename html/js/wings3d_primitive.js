@@ -534,8 +534,7 @@ function getRoot(fileName) {
 }
 
 async function loadImage(maker) {
-   let mat = Material.create(maker.name);
-   View.addMaterial(mat);
+   let mat = View.createMaterial(maker.name);
    // load from disk/cloud.
    return OpenSave.open(['bmp', 'jpg', 'jpeg', 'jfif', 'pjpeg', 'pjp', 'png', 'webp']).then(([files, _loadAsync])=>{
       let file = files[0];

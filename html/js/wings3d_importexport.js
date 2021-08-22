@@ -34,11 +34,7 @@ class ImportExporter {
    }
 
    createMaterial(name, pbr) {
-      const mat = Material.create(name);
-      if (pbr) {
-         mat.setValues(pbr);
-      }
-      return mat;
+      return View.createMaterial(name, pbr);
    }
 
    createMaterialTraditional(name, old) {
@@ -110,10 +106,10 @@ class ImportExporter {
             } else if (cages.length > 0) {
                View.undoQueue(cages[0]);
             }
-            // put materialCatalog to UItree
-            for (let material of objs.materialCatalog) {
-               View.addMaterial(material);
-            }
+            // put into combo? f
+            //for (let material of objs.materialCatalog) {
+            //   View.addMaterial(material);
+            //}
             // finalized and update
             View.updateWorld();
             // show import stat, # of vertex, edges, faces, and !!boundary edges!!

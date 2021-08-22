@@ -486,8 +486,6 @@ class MaterialList extends ListView {
             UI.showContextMenu(contextMenu, ev);
           }, false);
       }
-      // 
-      this._handles = new Map;
    }
 
    /**
@@ -525,16 +523,53 @@ class MaterialList extends ListView {
           });
          this.submenu.prepend(li); // put on submenu
       }
-      // set webcomponent mat value
-      mat.material = material;
-      if (material === Material.default) {
-         mat.default = true;
-      }
 
       this.view.appendChild(mat);
       this.list.push(dat);
 
-      this._handles.set(material, mat);
+      // now proxy the material
+      const matProxy =  new Proxy(material, {
+         get(target, prop, receiver) {
+            const origFunc = target[prop];
+            switch (prop) {
+               case "ui":
+                  return mat;
+               case "assigned":
+               case "unassigned":
+                  return function(...args) {
+                     const result = origFunc.apply(target, args);
+                     mat._setUsageCount(result);
+                     return result;
+                  }
+               /*case "setValues":
+                  return function(...args) {
+                     origFunc.apply(target, args);
+                     mat._setBaseColor(Util.rgbToHex(...target.pbr.baseColor));
+                  }*/
+            }
+            return Reflect.get(...arguments);
+         },
+         set(obj, prop, value) {
+            switch (prop) {
+               case "name":
+                  mat._setName(value);
+                  break;
+               case "baseColorTexture":
+               case "roughnessTexture": 
+               case "normalTexture":
+               case "occlusionTexture": 
+               case "emissionTexture":
+                  mat._setTexture(prop, value);
+            }
+            return Reflect.set(...arguments);
+         }
+       });
+      // set webcomponent mat value
+      mat.setMaterial(material, matProxy);
+      if (material.isDefault()) {
+         mat.default = true;
+      }
+
       return mat;
    }
 
@@ -556,18 +591,17 @@ class MaterialList extends ListView {
    }
 
    _deleteMaterial(material) {
-      if (material !== Material.default) {
-         const ui = this._handles.get(material);
+      if (!material.isDefault()) {
+         const ui = material.ui;
          if (ui) {
             this.deleteMaterial([ui]);
-            this._handles.delete(material);
          }
       }
    }
 
    deleteMaterial(objects) {  // default and in-use material is not deletable.
       const mat = objects[0];
-      if (mat._mat === Material.default) {   // default material is not deletable.
+      if (mat.default) {   // default material is not deletable.
          return;
       }
       // remove li
@@ -578,7 +612,7 @@ class MaterialList extends ListView {
       this.submenu.removeChild(mat.menu.li);
       // remove from Material.
       Material.release(mat._mat);
-      mat.material = null;    // clear
+      mat.material = null;
    }
 
    newName() {
@@ -611,7 +645,7 @@ function getMaterialList(labelId, id) {
    const label = document.querySelector(labelId);
    if (label && listView) {
       const ret = new MaterialList(label, listView);
-      const mat = ret.addMaterial(Material.default);
+      ret.addMaterial(Material.default);
       return ret;
    }
    // console log error
