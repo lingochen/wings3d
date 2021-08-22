@@ -123,6 +123,10 @@ static release(material) {
       }
    }
 
+   isDefault() {
+      return this === Material.default;
+   }
+
    setGPU() {
       // now put on Material.color (for gpu)
       const i = this.index * (3*5);
@@ -240,11 +244,13 @@ static release(material) {
    assigned() {
       ++this.pbr.usageCount;
       this.isAltered = true;
+      return this.pbr.usageCount;
    }
 
    unassigned() {
       --this.pbr.usageCount;
       this.isAltered = true;
+      return this.pbr.usageCount;
    }
 
    get name() {

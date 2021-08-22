@@ -91,8 +91,7 @@ class ImageUI extends HTMLElement {
    set texture(texture) {
       if (texture) {
          this._texture = texture;
-         const span = this.shadowRoot.querySelector("span");
-         span.textContent = texture.name;
+         this.rename(texture.name);
       }
    }
 };
@@ -360,7 +359,8 @@ class MaterialUI extends HTMLElement {
 
       UI.runDialog('#materialSetting', ev, (form)=>{
          const data = extractData(form);
-         dat.setValues(data);    // proxy will reflect back to setBaseColor
+         dat.setValues(data);
+         this._setBaseColor(Util.rgbToHex(...data.baseColor));
        }, (form)=>{ // handle setup
          form.reset();
          {  // resetCSS
@@ -458,6 +458,7 @@ class MaterialUI extends HTMLElement {
    // should we merge with "def"?
    rename(newName) {
       this._mat.name = newName;
+      this._setName(newName);
    }
 
    removeTexture(textureType) {
@@ -470,7 +471,6 @@ class MaterialUI extends HTMLElement {
    _setName(newName) {
       this.def = newName;
       this.menu.text.textContent = newName;
-      //this._oldPbr.name = newName;
    }
 
    _setBaseColor(color) {
@@ -484,6 +484,7 @@ class MaterialUI extends HTMLElement {
          if (texture.isExist()) { // enabled 
             li.classList.add("shown");
             li.querySelector('span').textContent = texture.name;
+            this.shadowRoot.querySelector('input').disabled = false;
             return true;
          } //else
          li.classList.remove('shown');
@@ -496,41 +497,18 @@ class MaterialUI extends HTMLElement {
    }
 
    isInUse() {
-      return this.material.isInUse();
+      return this._mat.isInUse();
    }
 
    get material() {
-      return this._mat;
+      return this._matProxy;
    }
 
-   set material(newMat) {
-      if (this._mat) {  // restore pbr
-         this._mat.pbr = this._oldPbr;
-         this._oldPbr = null;
-      }
+   setMaterial(newMat, proxy) {
       this._mat = newMat;
+      this._matProxy = proxy;
       if (newMat) {
          this.def = newMat.pbr.name;
-         this._oldPbr = newMat.pbr;
-         // intercept change.
-         const update = new Map;
-         update.set('name', (value)=>{this._setName(value);});
-         update.set('usageCount', (value)=>{this._setUsageCount(value);});
-         update.set('baseColor', (color)=>{this._setBaseColor(Util.rgbToHex(...color));});
-         for (let textureType of MaterialUI.textureTypes()) {
-            update.set(textureType, (texture)=>{this._setTexture(textureType, Texture.handle(texture));});
-         }
-         newMat.pbr = new Proxy(newMat.pbr, {
-            set(target, prop, value) { // intercept setting of pbr[prop].
-               target[prop] = value;
-               const fn = update.get(prop);
-               if (fn) {   // update the UI.
-                  fn(value);
-               }
-
-               return true;
-            },
-         });
 
          this._setBaseColor(newMat.getBaseColorInHex());
          this._setUsageCount(newMat.pbr.usageCount);

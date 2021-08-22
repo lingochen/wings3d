@@ -30,7 +30,7 @@ import * as Util from './wings3d_util.js';
 import * as TreeView from './wings3d_uitree.js';
 import { GenericEditCommand, ToggleCheckbox } from './wings3d_mads.js';
 import * as OpenSave from './wings3d_opensave.js'
-import { Texture } from './wings3d_material.js';
+import { Material, Texture } from './wings3d_material.js';
 const {vec2, vec3} = glMatrix;
 
 
@@ -402,8 +402,9 @@ const _environment = {
    fileName: "",              // save fileName. + path.
    debug: {toggleOn: false, queue: []},
 };
-function addMaterial(material) {
-   return _environment.materialList.addMaterial(material);
+function createMaterial(name, pbr) {
+   const mat = Material.create(name, pbr);
+   return _environment.materialList.addMaterial(mat).material;
 };
 function deleteMaterial(material) {
    _environment.materialList._deleteMaterial(material);
@@ -2179,7 +2180,7 @@ export {
    updateWorld,
    makeCombineIntoWorld,
    setObject,
-   addMaterial,
+   createMaterial,
    deleteMaterial,
    createTexture,
    createGroup,
