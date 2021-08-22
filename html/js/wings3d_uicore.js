@@ -62,6 +62,7 @@ class ImageUI extends HTMLElement {
          ev.dataTransfer.setData('text/plain', 'ImageUI');
          gDragObject = this;
       }
+      this.observer = new Map;
    }
 
    connectedCallback() {
@@ -79,9 +80,33 @@ class ImageUI extends HTMLElement {
       this.removeEventListener('dragstart', this.listener.dragStart);
    }
 
+   addObserver(materialUI, name) {
+      let type = this.observer.get(materialUI);
+      if (!type) {
+         type = new Set;
+         this.observer.set(materialUI, type);
+      }
+      type.add(name);
+   }
+
+   deleteObserver(materialUI, name) {
+      let type = this.observer.get(materialUI);
+      if (type) {
+         type.delete(name);
+         if (type.size === 0) {
+            this.observer.delete(materialUI);
+         }
+      }
+   }
+
    rename(newName) {
       const span = this.shadowRoot.querySelector("span");
       span.textContent = newName;
+      for (const [ui, types] of this.observer) {
+         for (const type of types) {
+            ui._setTextureName(type, newName);
+         }
+      }
    }
 
    get texture() {
@@ -490,6 +515,13 @@ class MaterialUI extends HTMLElement {
          li.classList.remove('shown');
       }
       return false;
+   }
+
+   _setTextureName(type, name) {
+      const li = this.shadowRoot.querySelector(`.${type}`);
+      if (li) {
+         li.querySelector('span').textContent = name;
+      }
    }
 
    _setUsageCount(count) {

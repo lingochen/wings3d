@@ -559,7 +559,14 @@ class MaterialList extends ListView {
                case "normalTexture":
                case "occlusionTexture": 
                case "emissionTexture":
+                  let oldTexture = obj[prop];
                   mat._setTexture(prop, value);
+                  if (value.ui) {
+                     value.ui.addObserver(mat, prop);
+                  }
+                  if (oldTexture.ui) {
+                     oldTexture.ui.deleteObserver(mat, prop);
+                  }
             }
             return Reflect.set(...arguments);
          }
