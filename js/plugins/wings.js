@@ -464,7 +464,7 @@ class WingsImportExporter extends ImportExporter {
       for (let i = 0; i < images; ++i) {
          let [index, image] = this.readKeyValue(parser);
          const texture = this.textureCache.get(index);
-         if (image.filename) {
+         if (texture && image.filename) {
             texture.name = image.name;
             this.loadAsync(image.filename).then(files=>{
                return files[0].image();
@@ -531,14 +531,21 @@ class WingsImportExporter extends ImportExporter {
             material = this.createMaterialTraditional(mat.name, old);
          }
          // image map
-         const maps = mat.maps;
-         if (maps.diffuse) {
-            let texture = this.textureCache.get(maps.diffuse);
-            if (texture === undefined) {
-               texture = this.createTexture(maps.diffuse, {flipY: true});
-               this.textureCache.set(maps.diffuse, texture);
+         if (mat.maps) {
+            const maps = mat.maps;
+            // FixMe: needs to support metallic texture
+            const types = [["diffuse", "baseColorTexture"], ["roughness", "roughnessTexture"], ["normal", "normalTexture"], 
+                           ["occlusion", "occlusionTexture"], ["emission", "emissionTexture"]]; // [metallic, "metallicTexture"];
+            for (const [inType, outType] of types) {
+               if (maps[inType]) {
+                  let texture = this.textureCache.get(maps[inType]);
+                  if (texture === undefined) {
+                     texture = this.createTexture(maps[inType], {flipY: true});
+                     this.textureCache.set(maps[inType], texture);
+                  }
+                  material[outType] = texture;
+               }
             }
-            material.baseColorTexture = texture;
          }
 
          catalog.set( mat.name, material );
