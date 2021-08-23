@@ -46,7 +46,10 @@ class Renderport {
          let g = this.miniAxis[axis] = document.createElementNS(SVGNS, 'g');
          g.setAttributeNS(null, 'transform', 'translate(-100,-100)');
          let circle = document.createElementNS(SVGNS, 'circle');
-         circle.setAttributeNS(null, 'style', 'cx: 7; cy: -7; r: 14; stroke: blue; stroke-width: 1px;');
+         circle.setAttributeNS(null, 'style', 'stroke: blue; stroke-width: 1px;');
+         circle.setAttribute("r", 14);    // firefox no style "cx, cy, r"
+         circle.setAttribute("cx", 7);
+         circle.setAttribute("cy", -7);
          g.appendChild(circle);
          let text = document.createElementNS(SVGNS, 'text');
          text.style.fontSize = "28px";
