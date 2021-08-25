@@ -379,7 +379,7 @@ class Texture {
 
    /**
     * 
-    * image - (dom image), - 
+    * image - (dom image, or canvas), - 
     */
    setImage(image) {
       this.image = gl.resizeImage(image);
@@ -403,6 +403,19 @@ class Texture {
       }
 
       return this.image;
+   }
+
+   /**
+    * imageData - (ImageData)
+    */
+   setImageData(imageData) {
+      let canvas = document.createElement('canvas');
+      canvas.width = imageData.width;
+      canvas.height = imageData.height;
+      let ctx = canvas.getContext('2d');
+      ctx.putImageData(imageData, 0, 0);
+
+      return this.setImage(canvas);
    }
 
    setSampler(options) {

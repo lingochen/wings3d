@@ -464,16 +464,36 @@ class WingsImportExporter extends ImportExporter {
       for (let i = 0; i < images; ++i) {
          let [index, image] = this.readKeyValue(parser);
          const texture = this.textureCache.get(index);
-         if (texture && image.filename) {
+         if (texture) { 
             texture.name = image.name;
-            this.loadAsync(image.filename).then(files=>{
-               return files[0].image();
-            }).then(img=>{
-               img.onload = ()=>{
-                  texture.setImage(img);
+            if (image.filename) {
+               this.loadAsync(image.filename).then(files=>{
+                  return files[0].image();
+               }).then(img=>{
+                  img.onload = ()=>{
+                     texture.setImage(img);
+                  }
+                  return img;
+               });
+            } else if (image.pixels) { // process internal image.
+               let pixels = new Uint8ClampedArray(image.pixels);
+               if (image.samples_per_pixel === 3) {   // FixMe: how about 2, or 1?
+                  const size = 4 * image.width * image. height;   // copy rgb to rgba
+                  let data = new Uint8ClampedArray(size);
+                  let s = 0, d = 0;
+                  while (d < size) {
+                     data[d++] = pixels[s++];
+                     data[d++] = pixels[s++];
+                     data[d++] = pixels[s++];
+                     data[d++] = 255;
+                  }
+                  pixels = data;
                }
-               return img;
-            });
+               // now put into texture
+               texture.setSampler({flipY: false});
+               const imageData = new ImageData(pixels, image.width, image.height);
+               texture.setImageData(imageData);
+            }
          }
       }
       parser.readNil();
