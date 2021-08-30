@@ -1,5 +1,8 @@
 # Release notes
 
+## 2021/08/30
+- add preliminary Wings3D ".wings" model import support.
+
 ## 2021/08/11
 - better showing/picking of nGon.
 
