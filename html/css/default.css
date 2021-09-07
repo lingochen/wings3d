@@ -110,6 +110,16 @@ body {
   overflow-x: hidden;
 }
 
+g.axisLetter {
+  pointer-events: auto;
+}
+g.axisLetter text {
+  fill: black;
+}
+g.axisLetter:hover text {
+  fill: white;
+}
+
 #jogDial {
   display: flex;
   justify-content: center;

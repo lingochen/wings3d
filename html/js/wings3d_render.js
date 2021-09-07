@@ -12,7 +12,6 @@ import {onReady, GROUND_GRID_SIZE} from './wings3d.js';
 import * as ShaderProg from './wings3d_shaderprog.js';
 import * as Util from './wings3d_util.js';
 import {unProject, transformVertex, clipLine, Plane, Frustum} from './wings3d_geomutil.js';
-import { GLTFImportExporter } from './plugins/gltf.js';
 const {vec3, vec4, mat4} = glMatrix;
 
 
@@ -35,6 +34,20 @@ class Renderport {
    constructor(viewport, isOrtho, showAxes, showGround) { // [x, y, width, height]
       this.lineEnd = {x: null, y: null, z: null};
       this.miniAxis = {x: null, y: null, z: null};
+      // rotate event handler, we use m_svgUI because g would use appendNode() to order the node, which disabled setPointerCapture.
+      const rotate = (evt)=>{
+         //evt.stopPropagation();
+         evt.preventDefault();
+         m_svgUI.onpointermove = (evt)=>{this.camera.rotate(evt.movementX, evt.movementY);};
+         m_svgUI.setPointerCapture(evt.pointerId);
+         m_svgUI.requestPointerLock();
+         m_svgUI.addEventListener("pointerup", (evt)=>{
+            //evt.stopPropagation();
+            m_svgUI.onpointermove = null;
+            m_svgUI.releasePointerCapture(evt.pointerId);
+            document.exitPointerLock();
+          });
+      }
 
       for (let axis of Object.keys(this.lineEnd)) {
          this.lineEnd[axis] = document.createElementNS(SVGNS, 'text');
@@ -47,17 +60,21 @@ class Renderport {
          g.setAttributeNS(null, 'transform', 'translate(-100,-100)');
          let circle = document.createElementNS(SVGNS, 'circle');
          circle.setAttributeNS(null, 'style', 'stroke: blue; stroke-width: 1px;');
-         circle.setAttribute("r", 14);    // firefox no style "cx, cy, r"
+         circle.setAttribute("r", 14);    // firefox don't support style "cx, cy, r"
          circle.setAttribute("cx", 7);
          circle.setAttribute("cy", -7);
          g.appendChild(circle);
          let text = document.createElementNS(SVGNS, 'text');
          text.style.fontSize = "28px";
          text.style.fontFamily = 'Arial';
-         text.style.fill = 'black';
+         //text.style.fill = 'black';
          text.textContent = axis;
          g.appendChild(text);
          m_svgUI.appendChild(g);
+         g.classList.add("axisLetter");
+         // event Handling
+         g.addEventListener("pointerdown", rotate);
+
       }
 
       this.camera = new Camera;
