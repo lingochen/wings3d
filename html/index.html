@@ -114,6 +114,22 @@
         <a data-menuid="editMenu" data-i18n>Edit</a>
       </li>
       <li class="dropdown">
+        <a data-menuid="viewMenu" data-i18n>View</a>
+        <ul class="popup menu">
+          <li class="dropside">
+            <a data-menuid="viewAlong" data-i18n>View Along</a>
+            <ul class="popup menu">
+               <li><a data-menuid="viewAlongP_X">+X</a></li>
+               <li><a data-menuid="viewAlongP_Y">+Y</a></li>
+               <li><a data-menuid="viewAlongP_Z">+Z</a></li>
+               <li><a data-menuid="viewAlongN_X">-X</a></li>
+               <li><a data-menuid="viewAlongN_Y">-Y</a></li>
+               <li><a data-menuid="viewAlongN_Z">-Z</a></li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+      <li class="dropdown">
         <a data-menuid="selectMenu" data-i18n>Select</a>
         <ul class="popup menu">
           <li><a onmouseover="help('Deselect selection')" onmouseleave="help()" data-menuid="deselect" data-hotkey="space" data-i18n>Deselect</a></li>

@@ -319,6 +319,39 @@ class Camera {
       }
       // keep
    };
+
+   /**
+    * axis = [x = 0, y =  1, z = 2, -x = 3, -y = 4, -z = 5]
+    */
+   viewAxis(axis) {
+      let azimuth, elevation;
+      switch (axis) {   // switch, for 
+         case 0:
+            azimuth = -90.0; elevation = 0.0;
+            break;
+         case 1:
+            azimuth = 0.0; elevation = 90.0;
+            break;
+         case 2:
+            azimuth = 0.0; elevation = 0.0;
+            break;
+         case 3:
+            azimuth = 90.0; elevation = 0.0;
+            break;
+         case 4:
+            azimuth = 0.0; elevation = -90.0;
+            break;
+         case 5:
+            azimuth = 180.0; elevation = 0.0;
+            break;
+         default:
+            console.log("viewAxis non-existent axis: " + axis);
+            azimuth = this.azimuth;
+            elevation = this.elevation;
+      }
+      this.azimuth = azimuth;
+      this.elevation = elevation;
+   }
 }
 
 

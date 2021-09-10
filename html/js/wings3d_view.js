@@ -1705,6 +1705,20 @@ function init() {
    });
 
 
+   // viewAlong
+   const viewAlong = [{id: Wings3D.action.viewAlongP_X, hotkey: 'x'}, 
+                      {id: Wings3D.action.viewAlongP_Y, hotkey: 'y'}, 
+                      {id: Wings3D.action.viewAlongP_Z, hotkey: 'z'},
+                      {id: Wings3D.action.viewAlongN_X, hotkey: 'x', meta: 'shift'}, 
+                      {id: Wings3D.action.viewAlongN_Y, hotkey: 'y', meta: 'shift'}, 
+                      {id: Wings3D.action.viewAlongN_Z, hotkey: 'z', meta: 'shift'}];
+   for (let i = 0; i < 6; ++i) {
+      const axis = viewAlong[i];
+      UI.bindMenuItem(axis.id.name, (_evt)=>{
+         m_windows.current.camera.viewAxis(i);
+       }, axis.hotkey, axis.meta);
+   }
+
    // init menu
    const selectionMenu = [ {id: Wings3D.action.deselect, fn: 'resetSelection', hotKey: ' '},
                          {id: Wings3D.action.more, fn: 'moreSelection', hotKey: '+'},

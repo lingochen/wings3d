@@ -252,6 +252,15 @@ const action = {
    saveAs: () => {notImpelmented(this);},
    open: () => {notImplemented(this);},
    clearNew: () => {notImplemented(this);},
+   // view menu
+   viewMenu: ()=>{notImplemented(this);},
+   viewAlong: ()=>{notImplemented(this);},
+   viewAlongP_X: ()=>{notImplemented(this);},
+   viewAlongP_Y: ()=>{notImplemented(this);},
+   viewAlongP_Z: ()=>{notImplemented(this);},
+   viewAlongN_X: ()=>{notImplemented(this);},
+   viewAlongN_Y: ()=>{notImplemented(this);},
+   viewAlongN_Z: ()=>{notImplemented(this);},
    // windowMenu
    windowMenu: ()=>{notImplemented(this);},
    geometryWindow: ()=>{notImplemented(this);},
