@@ -37,18 +37,25 @@ class Renderport {
       // rotate event handler, we use m_svgUI because g would use appendNode() to order the node, which disabled setPointerCapture.
       const rotate = (evt)=>{
          //evt.stopPropagation();
+         let isMoved = false;
+         let axis = evt.currentTarget.dataset.axis;
          evt.preventDefault();
-         m_svgUI.onpointermove = (evt)=>{this.camera.rotate(evt.movementX, evt.movementY);};
+         m_svgUI.onpointermove = (evt)=>{this.camera.rotate(evt.movementX, evt.movementY); isMoved = true;};
          m_svgUI.setPointerCapture(evt.pointerId);
          m_svgUI.requestPointerLock();
-         m_svgUI.addEventListener("pointerup", (evt)=>{
+         m_svgUI.onpointerup = (evt)=>{
             //evt.stopPropagation();
             m_svgUI.onpointermove = null;
             m_svgUI.releasePointerCapture(evt.pointerId);
             document.exitPointerLock();
-          });
+            if (!isMoved) {   // align to axis,
+               this.camera.viewAxis(Number(axis));
+            }
+            m_svgUI.onpointerup = null;
+          };
       }
 
+      let axisCount =0;
       for (let axis of Object.keys(this.lineEnd)) {
          this.lineEnd[axis] = document.createElementNS(SVGNS, 'text');
          this.lineEnd[axis].style.fontSize = "18px";
@@ -72,6 +79,7 @@ class Renderport {
          g.appendChild(text);
          m_svgUI.appendChild(g);
          g.classList.add("axisLetter");
+         g.dataset.axis = axisCount++;
          // event Handling
          g.addEventListener("pointerdown", rotate);
 
