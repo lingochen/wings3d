@@ -1442,6 +1442,7 @@ function canvasHandleMouseUp(ev) {
 function canvasHandleMouseMove(e) {
    _pointer.moveUpdate(e);
    const move = Object.assign({}, e);
+   move.buttons = e.buttons;
    move.mousePos = getClientPosition(e);
    move.movementX = e.movementX;
    move.movementY = e.movementY;
