@@ -44,6 +44,15 @@ class CameraMouseMoveHandler extends MouseMoveHandler {
       this.view = view;
    }
 
+
+   handleInput(evt, cameraView, axis) {
+      this._transformSelection(this._processInput(Number(evt.target.value), cameraView, axis));
+   }
+
+   getInputSetting() {
+      return [{value: this.view.elevation, name: "El"}, {value: this.view.azimuth, name: "Az"}];
+   }
+
    handleMouseMove(ev) {
       // if middle button down, pan 
       if (ev.buttons == 4) {

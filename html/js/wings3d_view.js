@@ -748,6 +748,7 @@ const _mousePointer = (function(){
 
 function attachHandlerCamera(camera) {
    function gotoExit(mousePos) {
+      _jogDial.hide();
       Wings3D.log(Wings3D.action.cameraModeExit, m_windows.current.camera);
       modeHelp();
       handler.camera = null;
@@ -756,6 +757,9 @@ function attachHandlerCamera(camera) {
 
    // let camera handle the mouse event until it quit.0
    _mousePointer.hide();
+   _jogDial.show((evt, index)=>{   // callBack 
+      handler.camera.onInput(evt, index);
+    }, camera.getInputSetting());
    // tell tutor step, we are in camera mode
    Wings3D.log(Wings3D.action.cameraModeEnter, m_windows.current.camera);
    help(`L:${i18n('accept')}   M:${i18n('dragPan')}  R:${i18n('cancelRestoreView')}   ${i18n('moveMouseTumble')}`);
@@ -773,7 +777,14 @@ function attachHandlerCamera(camera) {
 
       onMove: (e)=>{
          camera.handleMouseMove(e);
+         _jogDial.update(camera.getInputSetting());
       },
+
+
+      onInput: (evt, index)=>{
+         camera.handleInput(evt, m_windows.current.camera, index);
+         Render.needToRedraw();
+      }
    };
 };
 
