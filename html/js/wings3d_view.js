@@ -2214,6 +2214,7 @@ export {
    createIntoWorld,
    // mouse handler
    //rayPick,
+   attachHandlerCamera,
    attachHandlerMouseMove,
    attachHandlerMouseSelect,
    // undo/redo

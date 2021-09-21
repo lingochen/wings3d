@@ -7,6 +7,7 @@
 */
 import {gl} from './wings3d_gl.js';
 import * as View from './wings3d_view.js';
+import * as UI from './wings3d_ui.js';
 import {Camera} from './wings3d_camera.js';
 import {onReady, GROUND_GRID_SIZE} from './wings3d.js';
 import * as ShaderProg from './wings3d_shaderprog.js';
@@ -34,28 +35,20 @@ class Renderport {
    constructor(viewport, isOrtho, showAxes, showGround) { // [x, y, width, height]
       this.lineEnd = {x: null, y: null, z: null};
       this.miniAxis = {x: null, y: null, z: null};
-      // rotate event handler, we use m_svgUI because g would use appendNode() to order the node, which disabled setPointerCapture.
-      const rotate = (evt)=>{
-         //evt.stopPropagation();
-         let isMoved = false;
-         let axis = evt.currentTarget.dataset.axis;
+      const cameraHandler = (evt)=>{
+         if (evt.button === 0) { // left down
+            evt.stopPropagation();
+            View.attachHandlerCamera( this.camera.getMouseMoveHandler() );
+         }
+       };
+      const axisHandler = (evt)=>{
          evt.preventDefault();
-         m_svgUI.onpointermove = (evt)=>{this.camera.rotate(evt.movementX, evt.movementY); isMoved = true;};
-         m_svgUI.setPointerCapture(evt.pointerId);
-         m_svgUI.requestPointerLock();
-         m_svgUI.onpointerup = (evt)=>{
-            //evt.stopPropagation();
-            m_svgUI.onpointermove = null;
-            m_svgUI.releasePointerCapture(evt.pointerId);
-            document.exitPointerLock();
-            if (!isMoved) {   // align to axis,
-               this.camera.viewAxis(Number(axis));
-            }
-            m_svgUI.onpointerup = null;
-          };
-      }
+         evt.stopImmediatePropagation();
+         UI.showContextMenu(axisMenu, evt);
+         UI.positionDom(axisMenu, UI.getPosition(evt));
+       };
 
-      let axisCount =0;
+      const axisMenu = document.querySelector("#align-axis-context-menu");
       for (let axis of Object.keys(this.lineEnd)) {
          this.lineEnd[axis] = document.createElementNS(SVGNS, 'text');
          this.lineEnd[axis].style.fontSize = "18px";
@@ -79,10 +72,9 @@ class Renderport {
          g.appendChild(text);
          m_svgUI.appendChild(g);
          g.classList.add("axisLetter");
-         g.dataset.axis = axisCount++;
          // event Handling
-         g.addEventListener("pointerdown", rotate);
-
+         g.addEventListener("pointerdown", cameraHandler);
+         g.addEventListener("contextmenu", axisHandler);
       }
 
       this.camera = new Camera;
