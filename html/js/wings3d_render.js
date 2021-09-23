@@ -30,6 +30,7 @@ function needToRedraw() {
 function clearRedraw() {
    m_isRedraw = false;
 }
+// const upArrow = '<polygon  width="448" height="512" points="34.9 289.5, 12.7 267.3, 12.7 233.4, 207 39, 240.9 39, 435.2 233.3, 435.2 267.2, 413 289.4, 378.7 289, 264 168.6, 264 456, 240 480, 208 480, 184 456, 184 168.6, 69.2 289.1, 34.9 289.5"/>';
 
 class Renderport {
    constructor(viewport, isOrtho, showAxes, showGround) { // [x, y, width, height]

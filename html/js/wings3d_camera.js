@@ -44,9 +44,16 @@ class CameraMouseMoveHandler extends MouseMoveHandler {
       this.view = view;
    }
 
-
    handleInput(evt, cameraView, axis) {
-      this._transformSelection(this._processInput(Number(evt.target.value), cameraView, axis));
+      const value = Number(evt.target.value);
+      if (!isNaN(value)) {
+         if (axis === 0) {
+            this.view.azimuth = value;
+         } else {
+            this.view.elevation = value;
+         }
+      } 
+      //this._transformSelection(this._processInput(Number(evt.target.value), cameraView, axis));
    }
 
    getInputSetting() {

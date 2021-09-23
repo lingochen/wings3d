@@ -1397,7 +1397,9 @@ function canvasHandleMouseDown(ev) {
    _pointer.downUpdate(ev);
    if (ev.button === 0) {
       if (handler.camera !== null) {
-         handler.camera.commit();
+         if (ev.pointerType === "mouse") {   // skipped touch/pen down event,
+            handler.camera.commit();
+         }
       } else if (handler.mousemove !== null) {
          if (ev.pointerType === "mouse") {   // skipped touch/pen down event,
             handler.mousemove.commit();      // yes commit. do the commit thing.
