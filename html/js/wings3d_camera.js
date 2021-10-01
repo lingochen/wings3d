@@ -37,11 +37,12 @@ const pref = {
 
 
 class CameraMouseMoveHandler extends MouseMoveHandler {
-   constructor(view) {
+   constructor(view, isPan) {
       super();
       this.saveView = { origin: [0, 0, 0], };
       copyCam(this.saveView, view);
       this.view = view;
+      this.isPan = isPan;
    }
 
    handleInput(evt, cameraView, axis) {
@@ -62,8 +63,8 @@ class CameraMouseMoveHandler extends MouseMoveHandler {
 
    handleMouseMove(ev) {
       // if middle button down, pan 
-      if (ev.buttons == 4) {
-         this.view.pan(ev.movementX, 0);
+      if ((ev.buttons == 4) || this.isPan) {
+         this.view.pan(ev.movementX, ev.movementY);
       } else {
          // rotated
          this.view.rotate(ev.movementX, ev.movementY);
@@ -232,7 +233,11 @@ class Camera {
    }
 
    getMouseMoveHandler() {
-      return new CameraMouseMoveHandler(this);
+      return new CameraMouseMoveHandler(this, false);
+   }
+
+   getMousePanHandler() {
+      return new CameraMouseMoveHandler(this, true);
    }
 
 

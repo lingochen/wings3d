@@ -60,10 +60,16 @@ class Renderport {
    constructor(viewport, isOrtho, showAxes, showGround) { // [x, y, width, height]
       this.lineEnd = {x: null, y: null, z: null};
       this.miniAxis = {x: null, y: null, z: null, pan: null,};
-      const cameraHandler = (evt)=>{
+      const rotateHandler = (evt)=>{
          if (evt.button === 0) { // left down
             evt.stopPropagation();
             View.attachHandlerCamera( this.camera.getMouseMoveHandler() );
+         }
+       };
+      const panHandler = (evt)=> {
+         if (evt.button === 0) { // left down
+            evt.stopPropagation();
+            View.attachHandlerCamera( this.camera.getMousePanHandler() );
          }
        };
       const axisHandler = (evt)=>{
@@ -93,7 +99,7 @@ class Renderport {
          g.appendChild(text);
          g.classList.add("axisLetter");
          // event Handling
-         g.addEventListener("pointerdown", cameraHandler);
+         g.addEventListener("pointerdown", rotateHandler);
          g.addEventListener("contextmenu", axisHandler);
          m_svgUI.appendChild(g);
       }
@@ -107,6 +113,8 @@ class Renderport {
       pan.appendChild(createArrow(0, 9, -90));
       pan.appendChild(createArrow(8, 18, 180));
       pan.classList.add("axisLetter");
+      // add listener
+      pan.addEventListener("pointerdown", panHandler);
       m_svgUI.appendChild(pan);
 
       // zoom object
