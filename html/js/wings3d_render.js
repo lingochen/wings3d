@@ -30,12 +30,36 @@ function needToRedraw() {
 function clearRedraw() {
    m_isRedraw = false;
 }
-// const upArrow = '<polygon  width="448" height="512" points="34.9 289.5, 12.7 267.3, 12.7 233.4, 207 39, 240.9 39, 435.2 233.3, 435.2 267.2, 413 289.4, 378.7 289, 264 168.6, 264 456, 240 480, 208 480, 184 456, 184 168.6, 69.2 289.1, 34.9 289.5"/>';
+const createRect = () => {
+   let rect = document.createElementNS(SVGNS, 'rect');
+   rect.setAttribute('style', 'width: 30; height: 34; stroke: blue; stroke-width: 1px;');
+   return rect;
+}
+const createCircle = ()=> {
+   let circle = document.createElementNS(SVGNS, 'circle');
+   circle.setAttributeNS(null, 'style', 'stroke: blue; stroke-width: 1px;');
+   circle.setAttribute("r", 14);    // firefox don't support style "cx, cy, r"
+   circle.setAttribute("cx", 7);
+   circle.setAttribute("cy", -7);
+   return circle;
+ };
+const createArrow = (x, y, degree)=>{
+   const arrow = document.createElementNS(SVGNS, 'use');
+   arrow.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', '#upArrowIcon');
+   arrow.setAttribute("x", x);
+   arrow.setAttribute("y", y);
+   let width = 13, height = 15;
+   arrow.setAttribute("width", width);
+   arrow.setAttribute("height", height);
+   x += width/2; y+= height/2;
+   arrow.setAttribute('transform', `rotate(${degree}, ${x}, ${y})`);
+   return arrow;
+}
 
 class Renderport {
    constructor(viewport, isOrtho, showAxes, showGround) { // [x, y, width, height]
       this.lineEnd = {x: null, y: null, z: null};
-      this.miniAxis = {x: null, y: null, z: null};
+      this.miniAxis = {x: null, y: null, z: null, pan: null,};
       const cameraHandler = (evt)=>{
          if (evt.button === 0) { // left down
             evt.stopPropagation();
@@ -49,6 +73,7 @@ class Renderport {
          UI.positionDom(axisMenu, UI.getPosition(evt));
        };
 
+
       const axisMenu = document.querySelector("#align-axis-context-menu");
       for (let axis of Object.keys(this.lineEnd)) {
          this.lineEnd[axis] = document.createElementNS(SVGNS, 'text');
@@ -57,26 +82,34 @@ class Renderport {
          this.lineEnd[axis].textContent = axis;
          m_svgUI.appendChild(this.lineEnd[axis]);
          // miniAis circle text
-         let g = this.miniAxis[axis] = document.createElementNS(SVGNS, 'g');
+         const g = this.miniAxis[axis] = document.createElementNS(SVGNS, 'g');
          g.setAttributeNS(null, 'transform', 'translate(-100,-100)');
-         let circle = document.createElementNS(SVGNS, 'circle');
-         circle.setAttributeNS(null, 'style', 'stroke: blue; stroke-width: 1px;');
-         circle.setAttribute("r", 14);    // firefox don't support style "cx, cy, r"
-         circle.setAttribute("cx", 7);
-         circle.setAttribute("cy", -7);
-         g.appendChild(circle);
-         let text = document.createElementNS(SVGNS, 'text');
+         g.appendChild(createCircle());
+         const text = document.createElementNS(SVGNS, 'text');
          text.style.fontSize = "28px";
          text.style.fontFamily = 'Arial';
          //text.style.fill = 'black';
          text.textContent = axis;
          g.appendChild(text);
-         m_svgUI.appendChild(g);
          g.classList.add("axisLetter");
          // event Handling
          g.addEventListener("pointerdown", cameraHandler);
          g.addEventListener("contextmenu", axisHandler);
+         m_svgUI.appendChild(g);
       }
+
+      // pan object
+      let pan = this.miniAxis.pan = document.createElementNS(SVGNS, 'g');
+      pan.setAttribute('transform', 'translate(-100,-100)');
+      pan.appendChild(createRect());
+      pan.appendChild(createArrow(8, 0, 0));
+      pan.appendChild(createArrow(16, 9, 90));
+      pan.appendChild(createArrow(0, 9, -90));
+      pan.appendChild(createArrow(8, 18, 180));
+      pan.classList.add("axisLetter");
+      m_svgUI.appendChild(pan);
+
+      // zoom object
 
       this.camera = new Camera;
       this.viewport = viewport;
@@ -412,6 +445,9 @@ class Renderport {
          for (const v of draw) {
             this._renderCircle(v.axis, v.color, v.end);
          }
+         // render pan, we really aren't updating it here, can we break it out?
+         this._renderCircle("pan", View.theme.css.infoBackground, [-0.96, -0.62, 0.0, 1.0]);
+         // render zoom
       }
    }
 
@@ -623,6 +659,17 @@ onReady(function() {
 
    // setup svgUI
    m_svgUI = document.getElementById('svgUI');
+   // setup defs arrow
+   const defs = document.createElementNS(SVGNS, 'defs');
+   const arrow = document.createElementNS(SVGNS, 'svg');
+   arrow.setAttribute('viewBox', '0 0 30 35'); // 424 512
+   arrow.setAttribute('id', "upArrowIcon");
+   const polygon = document.createElementNS(SVGNS, 'polygon');  
+   polygon.setAttribute("points", "15 0, 0 15, 10 15, 10 35, 20 35, 20 15, 30 15, 15 0");
+   //polygon.setAttribute("style", "fill:white");
+   arrow.appendChild(polygon);
+   defs.appendChild(arrow);
+   m_svgUI.appendChild(defs);
 });
 
 

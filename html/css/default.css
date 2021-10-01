@@ -113,10 +113,10 @@ body {
 g.axisLetter {
   pointer-events: auto;
 }
-g.axisLetter text {
+g.axisLetter text, .axisLetter use {
   fill: black;
 }
-g.axisLetter:hover text {
+g.axisLetter:hover text, .axisLetter:hover use {
   fill: white;
 }
 
