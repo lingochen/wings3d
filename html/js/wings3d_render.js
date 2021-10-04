@@ -30,36 +30,19 @@ function needToRedraw() {
 function clearRedraw() {
    m_isRedraw = false;
 }
-const createRect = () => {
-   let rect = document.createElementNS(SVGNS, 'rect');
-   rect.setAttribute('style', 'width: 30; height: 34; stroke: blue; stroke-width: 1px;');
-   return rect;
-}
 const createCircle = ()=> {
    let circle = document.createElementNS(SVGNS, 'circle');
-   circle.setAttributeNS(null, 'style', 'stroke: blue; stroke-width: 1px;');
+   circle.setAttributeNS(null, 'style', 'stroke:blue; stroke-width:1px; fill:currentColor;');
    circle.setAttribute("r", 14);    // firefox don't support style "cx, cy, r"
    circle.setAttribute("cx", 7);
    circle.setAttribute("cy", -7);
    return circle;
  };
-const createArrow = (x, y, degree)=>{
-   const arrow = document.createElementNS(SVGNS, 'use');
-   arrow.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', '#upArrowIcon');
-   arrow.setAttribute("x", x);
-   arrow.setAttribute("y", y);
-   let width = 13, height = 15;
-   arrow.setAttribute("width", width);
-   arrow.setAttribute("height", height);
-   x += width/2; y+= height/2;
-   arrow.setAttribute('transform', `rotate(${degree}, ${x}, ${y})`);
-   return arrow;
-}
-
 class Renderport {
    constructor(viewport, isOrtho, showAxes, showGround) { // [x, y, width, height]
       this.lineEnd = {x: null, y: null, z: null};
       this.miniAxis = {x: null, y: null, z: null, pan: null,};
+      this.cameraControl = document.createElementNS(SVGNS, "g");
       const rotateHandler = (evt)=>{
          if (evt.button === 0) { // left down
             evt.stopPropagation();
@@ -78,7 +61,6 @@ class Renderport {
          UI.showContextMenu(axisMenu, evt);
          UI.positionDom(axisMenu, UI.getPosition(evt));
        };
-
 
       const axisMenu = document.querySelector("#align-axis-context-menu");
       for (let axis of Object.keys(this.lineEnd)) {
@@ -105,13 +87,11 @@ class Renderport {
       }
 
       // pan object
-      let pan = this.miniAxis.pan = document.createElementNS(SVGNS, 'g');
-      pan.setAttribute('transform', 'translate(-100,-100)');
-      pan.appendChild(createRect());
-      pan.appendChild(createArrow(8, 0, 0));
-      pan.appendChild(createArrow(16, 9, 90));
-      pan.appendChild(createArrow(0, 9, -90));
-      pan.appendChild(createArrow(8, 18, 180));
+      let pan = this.miniAxis.pan = document.createElementNS(SVGNS, "g");
+      let child = document.createElementNS(SVGNS, "use");      
+      child.setAttribute("href", "#panCameraIcon");
+      pan.appendChild(child);
+      pan.setAttribute("transform", "translate(-100, -100)");
       pan.classList.add("axisLetter");
       // add listener
       pan.addEventListener("pointerdown", panHandler);
@@ -434,7 +414,7 @@ class Renderport {
          g.transform.baseVal.getItem(0).setTranslate(
             x+viewport[0], this.canvasHeight-(y+viewport[1])
          );
-         g.setAttributeNS(null, 'fill', color);
+         g.setAttribute('color', color);
          g.parentNode.appendChild(g);              // move to last
       //}
    };
@@ -639,8 +619,21 @@ function initMiniAxis(gl) {
    mat4.ortho(groundAxisProg.miniAxisVBO.projection, -ratio, ratio, -1.0, 1.0, 0.00001,  10000000.0);*/
 }
 
-
-
+const arrowIcon = `
+<symbol id="upArrowIcon" viewBox="0 0 30 35" xmlns="http://www.w3.org/2000/svg">
+  <polygon points="15 0, 0 15, 10 15, 10 35, 20 35, 20 15, 30 15, 15 0" />
+</symbol>
+`;
+const iconDefs = `
+<defs xmlns="http://www.w3.org/2000/svg">
+  <g id='panCameraIcon'>
+    <rect width="30" height="34" stroke="blue" stroke-width="1px" fill="currentColor"/>
+    <use href="#upArrowIcon" x='8' width='13' height='15' transform="rotate(0, 14.5, 7.5)" />
+    <use href="#upArrowIcon" x='16' y='9' width='13' height='15' transform="rotate(90, 22.5,16.5)" />
+    <use href="#upArrowIcon" y='9' width='13' height='15' transform="rotate(-90, 6.5, 16.5)" />
+    <use href="#upArrowIcon" x='8' y='18' width='13' height='15' transform="rotate(180, 14.5, 25.5)" />
+  </g>
+</defs>`;
 onReady(function() {
    gl.enable(gl.DEPTH_TEST);
    gl.enable(gl.CULL_FACE);   // enable cull face (2018-05-30) back face culling is default
@@ -668,16 +661,11 @@ onReady(function() {
    // setup svgUI
    m_svgUI = document.getElementById('svgUI');
    // setup defs arrow
-   const defs = document.createElementNS(SVGNS, 'defs');
-   const arrow = document.createElementNS(SVGNS, 'svg');
-   arrow.setAttribute('viewBox', '0 0 30 35'); // 424 512
-   arrow.setAttribute('id', "upArrowIcon");
-   const polygon = document.createElementNS(SVGNS, 'polygon');  
-   polygon.setAttribute("points", "15 0, 0 15, 10 15, 10 35, 20 35, 20 15, 30 15, 15 0");
-   //polygon.setAttribute("style", "fill:white");
-   arrow.appendChild(polygon);
-   defs.appendChild(arrow);
-   m_svgUI.appendChild(defs);
+   const parser = new DOMParser();
+   let doc =parser.parseFromString(arrowIcon, "image/svg+xml");
+   m_svgUI.appendChild(doc.documentElement);
+   doc = parser.parseFromString(iconDefs, "image/svg+xml");
+   m_svgUI.appendChild(doc.documentElement);
 });
 
 
