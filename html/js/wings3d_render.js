@@ -42,6 +42,7 @@ class Renderport {
    constructor(viewport, isOrtho, showAxes, showGround) { // [x, y, width, height]
       this.lineEnd = {x: null, y: null, z: null};
       this.miniAxis = {x: null, y: null, z: null, pan: null,};
+      this.lineMarker = document.createElementNS(SVGNS, "g");
       this.cameraControl = document.createElementNS(SVGNS, "g");
       const rotateHandler = (evt)=>{
          if (evt.button === 0) { // left down
@@ -83,7 +84,7 @@ class Renderport {
          // event Handling
          g.addEventListener("pointerdown", rotateHandler);
          g.addEventListener("contextmenu", axisHandler);
-         m_svgUI.appendChild(g);
+         this.cameraControl.appendChild(g);
       }
 
       // pan object
@@ -95,7 +96,11 @@ class Renderport {
       pan.classList.add("axisLetter");
       // add listener
       pan.addEventListener("pointerdown", panHandler);
-      m_svgUI.appendChild(pan);
+      this.cameraControl.appendChild(pan);
+
+      // zoom object
+
+      m_svgUI.appendChild(this.cameraControl);
 
       // zoom object
 
@@ -445,7 +450,7 @@ class Renderport {
          // set current rotation.
          const modelView = mat4.create();//m_miniAxisVBO.modelView;
          mat4.copy(modelView, inModelView);
-         modelView[12] = 0.15-ratio;
+         modelView[12] = -ratio+0.15;
          modelView[13] = -1.0+0.15;
          modelView[14] = 0.0;
          // set current projection
