@@ -1,9 +1,13 @@
-/*
-// Render all objects and helpers (such as axes) in the scene.
-//     Used for the Geometry. Original Erlang Version: Bjorn Gustavsson
-//
-// expand it to handle multiple geometry panes. 2020/10/08
-//
+/**
+ *  Render all objects and helpers (such as axes) in the scene.
+ * Used for the Geometry. Original Erlang Version: Bjorn Gustavsson
+ * 
+ * expand it to handle multiple geometry panes. 2020/10/08
+ * 
+ * 2023/02/12 - start new web-component icons
+ * change to use web-component, web-component icon/widget for zoom/pan/(rotate/mini-axis) icons. 
+ * leverage html/css capabilities to layout/position icons/elements.
+ * 
 */
 import {gl} from './wings3d_gl.js';
 import * as View from './wings3d_view.js';
