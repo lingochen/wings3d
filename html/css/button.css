@@ -123,6 +123,11 @@ label.button span {
     text-align: center;
 }
 
+.svgImg {
+  width: 32px;
+  height: 32px;
+}
+
 .iconImg {
   object-fit: none;
   object-position: 0 0;
