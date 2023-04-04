@@ -34,79 +34,18 @@ function needToRedraw() {
 function clearRedraw() {
    m_isRedraw = false;
 }
-const createCircle = ()=> {
-   let circle = document.createElementNS(SVGNS, 'circle');
-   circle.setAttributeNS(null, 'style', 'stroke:blue; stroke-width:1px; fill:currentColor;');
-   circle.setAttribute("r", 14);    // firefox don't support style "cx, cy, r"
-   circle.setAttribute("cx", 7);
-   circle.setAttribute("cy", -7);
-   return circle;
- };
 class Renderport {
    constructor(viewport, isOrtho, showAxes, showGround) { // [x, y, width, height]
       this.lineEnd = {x: null, y: null, z: null};
       this.miniAxis = {x: null, y: null, z: null, pan: null,};
-      this.lineMarker = document.createElementNS(SVGNS, "g");
-      this.cameraControl = document.createElementNS(SVGNS, "g");
-      const rotateHandler = (evt)=>{
-         if (evt.button === 0) { // left down
-            evt.stopPropagation();
-            View.attachHandlerCamera( this.camera.getMouseMoveHandler() );
-         }
-       };
-      const panHandler = (evt)=> {
-         if (evt.button === 0) { // left down
-            evt.stopPropagation();
-            View.attachHandlerCamera( this.camera.getMousePanHandler() );
-         }
-       };
-      const axisHandler = (evt)=>{
-         evt.preventDefault();
-         evt.stopImmediatePropagation();
-         UI.showContextMenu(axisMenu, evt);
-         UI.positionDom(axisMenu, UI.getPosition(evt));
-       };
 
-      const axisMenu = document.querySelector("#align-axis-context-menu");
       for (let axis of Object.keys(this.lineEnd)) {
          this.lineEnd[axis] = document.createElementNS(SVGNS, 'text');
          this.lineEnd[axis].style.fontSize = "18px";
          this.lineEnd[axis].style.fontFamily = 'Arial';
          this.lineEnd[axis].textContent = axis;
          m_svgUI.appendChild(this.lineEnd[axis]);
-         // miniAis circle text
-         const g = this.miniAxis[axis] = document.createElementNS(SVGNS, 'g');
-         g.setAttributeNS(null, 'transform', 'translate(-100,-100)');
-         g.appendChild(createCircle());
-         const text = document.createElementNS(SVGNS, 'text');
-         text.style.fontSize = "28px";
-         text.style.fontFamily = 'Arial';
-         //text.style.fill = 'black';
-         text.textContent = axis;
-         g.appendChild(text);
-         g.classList.add("axisLetter");
-         // event Handling
-         g.addEventListener("pointerdown", rotateHandler);
-         g.addEventListener("contextmenu", axisHandler);
-         this.cameraControl.appendChild(g);
       }
-
-      // pan object
-      let pan = this.miniAxis.pan = document.createElementNS(SVGNS, "g");
-      let child = document.createElementNS(SVGNS, "use");      
-      child.setAttribute("href", "#panCameraIcon");
-      pan.appendChild(child);
-      pan.setAttribute("transform", "translate(-100, -100)");
-      pan.classList.add("axisLetter");
-      // add listener
-      pan.addEventListener("pointerdown", panHandler);
-      this.cameraControl.appendChild(pan);
-
-      // zoom object
-
-      m_svgUI.appendChild(this.cameraControl);
-
-      // zoom object
 
       this.camera = new Camera;
       this.viewport = viewport;
@@ -408,43 +347,11 @@ class Renderport {
       }
    }
 
-   _renderCircle(axis, color, pos) {
-      //if (clipLine(origin, end)) {
-         const g = this.miniAxis[axis];
-         if (g.style.display === "none") { // unhideText,
-            g.style.display = "block";
-         }
-         // line inside view volume
-         const viewport = this.viewport;
-         //console.log(end[0], end[1], end[2], end[3]);
-         const x = Math.trunc((0.5*pos[0]/pos[3]+0.5)*(viewport[2])-7);
-         const y = Math.trunc((0.5*pos[1]/pos[3]+0.5)*(viewport[3])-7);
-   
-         g.transform.baseVal.getItem(0).setTranslate(
-            x+viewport[0], this.canvasHeight-(y+viewport[1])
-         );
-         g.setAttribute('color', color);
-         g.parentNode.appendChild(g);              // move to last
-      //}
-   };
-
    _renderMiniAxisLetter(projection, modelView) {
       if (View.prop.showMiniAxis) {
          let endx = transformVertex(vec4.fromValues(0.1, 0.0, 0.0, 1.0), modelView, projection), 
          endy = transformVertex(vec4.fromValues(0.0, 0.1, 0.0, 1.0), modelView, projection), 
          endz = transformVertex(vec4.fromValues(0.0, 0.0, 0.1, 1.0), modelView, projection);
-         
-         let draw = [{axis: 'x', color: View.theme.colorX, end: endx},
-                     {axis: 'y', color: View.theme.colorY, end: endy},
-                     {axis: 'z', color: View.theme.colorZ, end: endz}];
-         draw.sort((a,b)=>{return b.end[2]-a.end[2];});
-
-         for (const v of draw) {
-            this._renderCircle(v.axis, v.color, v.end);
-         }
-         // render pan, we really aren't updating it here, can we break it out?
-         this._renderCircle("pan", View.theme.css.infoBackground, [-0.96, -0.62, 0.0, 1.0]);
-         // render zoom
       }
    }
 
