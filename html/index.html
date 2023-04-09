@@ -253,50 +253,7 @@
         <span data-i18n>Redo</span>
       </label>
     </div>
-    <div>
-      <input type="radio" name="cameraNavigation" id="rotateCameraFor" checked>
-      <label data-menuid="rotateCamera" class="button" for="rotateCameraFor">
-        <img src="./img/blue.svg#RotateCamera" class="svgImg" alt>
-        <span data-i18n>Rotate</span>
-      </label>
-      <input type="radio" name="cameraNavigation" id="panCameraFor">
-      <label data-menuid="panCamera" class="button" for="panCameraFor">
-        <img src="./img/blue.svg#PanCamera" class="svgImg" alt>
-        <span data-i18n>Pan</span>
-      </label>
-      <input type="radio" name="cameraNavigation" id="zoomCameraFor">
-      <label data-menuid="zoomCamera" class="button" for="zoomCameraFor">
-        <img src="./img/blue.svg#ZoomCamera" class="svgImg" alt>
-        <span data-i18n>Zoom</span>
-      </label>
-    </div>
-    <div class="button-group object-select">
-      <input type="radio" name="toggleMode" id="toggleMultiModeFor" checked>
-      <label data-menuid="toggleMultiMode" class="button" for="toggleMultiModeFor">
-        <img src="./img/bluecube.png" class="iconImg multiImg" alt>
-        <span data-i18n>Multi</span>
-      </label>
-      <input type="radio" name="toggleMode" id="toggleVertexModeFor">
-      <label data-menuid="toggleVertexMode" class="button" for="toggleVertexModeFor">
-        <img src="./img/bluecube.png" class="iconImg vertexImg" alt>
-        <span data-i18n>Vertex</span>
-      </label>
-      <input type="radio" name="toggleMode" id="toggleEdgeModeFor">
-      <label data-menuid="toggleEdgeMode" class="button" for="toggleEdgeModeFor">
-        <img src="./img/bluecube.png" class="iconImg edgeImg" alt>
-        <span data-i18n>Edge</span>
-      </label>
-      <input type="radio" name="toggleMode" id="toggleFaceModeFor">
-      <label data-menuid="toggleFaceMode" class="button" for="toggleFaceModeFor">
-        <img src="./img/bluecube.png" class="iconImg faceImg" alt>
-        <span data-i18n>Face</span>
-      </label>
-      <input type="radio" name="toggleMode" id="toggleBodyModeFor">
-      <label data-menuid="toggleBodyMode" class="button" for="toggleBodyModeFor">
-        <img src="./img/bluecube.png" class="iconImg bodyImg" alt>
-        <span data-i18n>Body</span>
-      </label>
-    </div>
+<!--
     <div class="button-group set-pref">
       <label data-menuid="preferenceButton" class="button">
         <img src="./img/bluecube.png" class="iconImg prefImg" alt>
@@ -321,6 +278,24 @@
       <label data-menuid="toggleAxes" for="toggleAxesFor" class="button">
         <img src="./img/bluecube.png" class="iconImg axesImg" alt>
         <span data-i18n>Axes</span>
+      </label>
+    </div>
+ -->
+    <div class="button-group">
+      <input type="radio" name="workPanel" id="selectionToolFor" checked>
+      <label data-menuid="selectionTool" class="button" for="selectionToolFor">
+        <img src="./img/blue.svg#SelectionTool" class="svgImg" alt>
+        <span data-i18n>Select</span>
+      </label>
+      <input type="radio" name="workPanel" id="createObjectFor" checked>
+      <label data-menuid="createObject" class="button" for="createObjectFor">
+        <img src="./img/blue.svg#CreateObject" class="svgImg" alt>
+        <span data-i18n>Create</span>
+      </label>
+      <input type="radio" name="workPanel" id="cameraNavigationFor" checked>
+      <label data-menuid="cameraNavigation" class="button" for="cameraNavigationFor">
+        <img src="./img/blue.svg#CameraTripod" class="svgImg" alt>
+        <span data-i18n>Camera</span>
       </label>
     </div>
   </nav>
@@ -372,6 +347,66 @@
         <wings3d-scrubber id="jogDial" class="hide"></wings3d-scrubber>
       </div>
       <svg id="svgUI"></svg>
+    </div>
+    <div id="rightPane">
+      <wings3d-tabpanel>
+        <div class="button-bar button-group">
+          <input type="radio" name="cameraNavigation" id="rotateCameraFor" checked>
+          <label data-menuid="rotateCamera" class="button" for="rotateCameraFor">
+            <img src="./img/blue.svg#RotateCamera" class="svgImg" alt>
+            <span data-i18n>Rotate</span>
+          </label>
+          <input type="radio" name="cameraNavigation" id="panCameraFor">
+          <label data-menuid="panCamera" class="button" for="panCameraFor">
+            <img src="./img/blue.svg#PanCamera" class="svgImg" alt>
+            <span data-i18n>Pan</span>
+          </label>
+          <input type="radio" name="cameraNavigation" id="zoomCameraFor">
+          <label data-menuid="zoomCamera" class="button" for="zoomCameraFor">
+            <img src="./img/blue.svg#ZoomCamera" class="svgImg" alt>
+            <span data-i18n>Zoom</span>
+          </label>
+        </div>    
+        <div id="numericInput" class="dialog">
+          <header class="modal-header">Numeric Input
+          </header>
+          <div class="verticalPref">
+            <label><input type="number" step= "any"/><span>D</span></label>
+            <label class="hide"><input type="number" step= "any"/><span>Dy</span></label>
+            <label class="hide"><input type="number" step= "any"/><span>Dz</span></label>
+            <button type="submit" value="ok">Ok</button>
+          </div>
+        </div>
+      </wings3d-tabpanel>
+      <wings3d-tabpanel>
+     <div class="button-bar button-group object-select">
+      <input type="radio" name="toggleMode" id="toggleMultiModeFor" checked>
+      <label data-menuid="toggleMultiMode" class="button" for="toggleMultiModeFor">
+        <img src="./img/bluecube.png" class="iconImg multiImg" alt>
+        <span data-i18n>Multi</span>
+      </label>
+      <input type="radio" name="toggleMode" id="toggleVertexModeFor">
+      <label data-menuid="toggleVertexMode" class="button" for="toggleVertexModeFor">
+        <img src="./img/bluecube.png" class="iconImg vertexImg" alt>
+        <span data-i18n>Vertex</span>
+      </label>
+      <input type="radio" name="toggleMode" id="toggleEdgeModeFor">
+      <label data-menuid="toggleEdgeMode" class="button" for="toggleEdgeModeFor">
+        <img src="./img/bluecube.png" class="iconImg edgeImg" alt>
+        <span data-i18n>Edge</span>
+      </label>
+      <input type="radio" name="toggleMode" id="toggleFaceModeFor">
+      <label data-menuid="toggleFaceMode" class="button" for="toggleFaceModeFor">
+        <img src="./img/bluecube.png" class="iconImg faceImg" alt>
+        <span data-i18n>Face</span>
+      </label>
+      <input type="radio" name="toggleMode" id="toggleBodyModeFor">
+      <label data-menuid="toggleBodyMode" class="button" for="toggleBodyModeFor">
+        <img src="./img/bluecube.png" class="iconImg bodyImg" alt>
+        <span data-i18n>Body</span>
+      </label>
+    </div>     
+      </wings3d-tabpanel>
     </div>
   </div>
   <footer id="helpbar" class="marginal">This is help bar</footer>
@@ -1207,16 +1242,6 @@
     </div>
     <button type="submit" value="ok">Ok</button>     
   </form>
-  <form id="numericInput" class="dialog">
-    <header class="modal-header">Numeric Input
-      <button class="close" type="submit" aria-label="close modal" data-close>✕</button>
-    </header>
-    <div class="verticalPref">
-      <label><input type="number" step= "any"/><span>D</span></label>
-      <label class="hide"><input type="number" step= "any"/><span>Dy</span></label>
-      <label class="hide"><input type="number" step= "any"/><span>Dz</span></label>
-      <button type="submit" value="ok">Ok</button>
-    </div>
-  </form>
+
 </body>
 </html>

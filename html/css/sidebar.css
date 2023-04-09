@@ -151,3 +151,11 @@ li > p {
   background-blend-mode: multiply;
   background-color: white;
 }
+
+#rightPane {
+  width: 200px;
+}
+
+#rightPane label {
+  display: block;
+}
