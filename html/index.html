@@ -349,7 +349,21 @@
       <svg id="svgUI"></svg>
     </div>
     <div id="rightPane">
-      <wings3d-tabpanel>
+      <wings3d-tabpanel for="createObjectFor">
+        <div class="button-bar button-group">
+        <input type="radio" name="createObject" id="createCubeFor">
+        <label data-menuid="createCube" class="button" for="createCubeFor">
+          <img src="./img/blue.svg#questionMark" class="svgImg" alt>
+          <span data-i18n>Cube</span>
+        </label>
+        <input type="radio" name="createObject" id="createCylinderFor">
+        <label data-menuid="createCylinder" class="button" for="createCylinderFor">
+          <img src="./img/blue.svg#questionMark" class="svgImg" alt>
+          <span data-i18n>Cylinder</span>
+        </label>
+        </div>
+      </wings3d-tabpanel>
+      <wings3d-tabpanel for="cameraNavigationFor">
         <div class="button-bar button-group">
           <input type="radio" name="cameraNavigation" id="rotateCameraFor" checked>
           <label data-menuid="rotateCamera" class="button" for="rotateCameraFor">
@@ -378,7 +392,7 @@
           </div>
         </div>
       </wings3d-tabpanel>
-      <wings3d-tabpanel>
+      <wings3d-tabpanel for="selectionToolFor">
      <div class="button-bar button-group object-select">
       <input type="radio" name="toggleMode" id="toggleMultiModeFor" checked>
       <label data-menuid="toggleMultiMode" class="button" for="toggleMultiModeFor">

@@ -11,6 +11,7 @@ import './js/wings3d_ui.js';
 import './js/wings3d_i18n.js';
 import './js/wings3d_primitive.js';
 import './js/wings3d_uicore.js';
+import './js/ui/wings3d_tabpanel.js';
 
 // plugins
 import "./js/plugins/wavefront_obj.js";

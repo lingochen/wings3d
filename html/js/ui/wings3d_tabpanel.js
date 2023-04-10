@@ -8,6 +8,25 @@
  * "deselect" custom event. using <input> is a temporary kludge.
  */
 
+function changeStylesheetRule(styleSheet, selector, property, value) {
+	selector = selector.toLowerCase();
+	property = property.toLowerCase();
+	value = value.toLowerCase();
+
+	for(let i = 0; i < styleSheet.cssRules.length; i++) {
+	   const rule = styleSheet.cssRules[i];
+		if(rule.selectorText === selector) {
+			rule.style[property] = value;
+			return;
+		}
+	}
+  
+   const rule = `${selector} { ${property}: ${value}; }`;
+	styleSheet.insertRule(rule, 0);
+}
+changeStylesheetRule(document.styleSheets[1], "wings3d-tabpanel:not([selected])", "display", "none");
+
+
 
 const _selectedPanelSet = new Set;
 
