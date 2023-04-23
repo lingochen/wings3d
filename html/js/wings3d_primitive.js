@@ -22,6 +22,7 @@ const htmlToElement = (function() {
    const template = document.createElement('template');
 
    return function(html, ...handlers) {
+      //const template = document.getElementById("shapeParameters");
       //html = html.trim(); // Never return a text node of whitespace as the result
       template.innerHTML = html;
       const element = template.content.firstChild;
@@ -171,6 +172,11 @@ function draggable(container, dragItem) {
 
 
 function makePrimitive(evt, name, maker, ...theDoms) {
+   const panelDiv = document.getElementById("shapeParameters");
+   if (!panelDiv) {
+      console.log("no place for form");
+      return;
+   }
    const form = htmlToElement('<form class="dialog small"></form>', 
                               ['submit', function(evt){
                                  evt.preventDefault();
@@ -179,7 +185,7 @@ function makePrimitive(evt, name, maker, ...theDoms) {
                                  } else {
                                     maker.cancel();
                                  } 
-                                 document.body.removeChild(form);
+                                 panelDiv.removeChild(form);
                               }]);
    let header;
    form.appendChild(header = tag(`<h3 class="primitiveHeader"><span data-i18n>${name}</span></h3>`,
@@ -197,12 +203,12 @@ function makePrimitive(evt, name, maker, ...theDoms) {
                                htmlToElement('<button type="submit" value="Ok">Ok</button>')
                        ));
 
-   draggable(form, header);
+   //draggable(form, header);
    i18nElement(i18nSetup(form));
    // display dialog, shown at the mouse location.   
    form.style.display = 'flex';
-   UI.positionDom(form, UI.getPosition(evt));
-   document.body.appendChild(form);
+   //UI.positionDom(form, UI.getPosition(evt));
+   panelDiv.appendChild(form);
 };
 
 

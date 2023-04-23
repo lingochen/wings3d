@@ -153,9 +153,9 @@ li > p {
 }
 
 #rightPane {
-  width: 13.5em;
+  width: 16.5em;
 }
-
+/*
 #rightPane label {
-  display: block;
-}
+  display: block;\
+} */
