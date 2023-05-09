@@ -751,7 +751,7 @@ const _cameraPointer = (function(){
       m_windows.current.camera.rotate(dx, dy);
    }
    function pan(dx, dy) {
-      m_windows.current.camera.pan(dx, dy);
+      m_windows.current.camera.pan(dx, -dy);
    }
    function zoom(_dx, dy) {
       m_windows.current.camera.zoom(dy);
@@ -760,8 +760,8 @@ const _cameraPointer = (function(){
       camera: rotate,
       cursor: "rotateCursor",
       isOn: false,
-      lastX: 0,
-      lastY: 0,
+      //lastX: 0,
+      //lastY: 0,
    };
 
    return {
@@ -774,30 +774,30 @@ const _cameraPointer = (function(){
       },
 
       onDown: (ev)=>{
-         if (ev.button === 0) {  // is left Mouse Button Down
+         //if (ev.button === 0) {  // is left Mouse Button Down
             movement.isOn = true;
-            movement.lastX = ev.clientX;
-            movement.lastY = ev.clientY;
-         }
+            //movement.lastX = ev.clientX;
+            //movement.lastY = ev.clientY;
+         //}
       },
 
       onUp: (ev)=>{
-         if (ev.button === 0) {  // is left Mouse Button Up?
+         //if (ev.button === 0) {  // is left Mouse Button Up?
             movement.isOn = false;
-         }
+         //}
       },
 
       onInput: (ev)=>{
 
       },
 
-      onMove: (ev)=>{
+      onMove: (move)=>{
          if (movement.isOn) {
-            let dx = ev.clienX - movement.lastX,
-                dy = movement.lastY - ev.clientY;     // reverse y dir
-            movement.camera(dx, dy);
-            movement.lastX = ev.clientX;
-            movement.lastY = ev.clientY;
+            //let dx = ev.clienX - movement.lastX,
+            //    dy = movement.lastY - ev.clientY;     // reverse y dir
+            movement.camera(move.movementX, move.movementY);
+            //movement.lastX = ev.clientX;
+            //movement.lastY = ev.clientY;
          }
       },
 
@@ -1499,6 +1499,8 @@ function canvasHandleMouseDown(ev) {
          if (ev.pointerType === "mouse") {   // skipped touch/pen down event,
             handler.camera.commit();
          }
+      } else if (handler.camera2) {
+         handler.camera2.onDown(ev);
       } else if (handler.mousemove !== null) {
          if (ev.pointerType === "mouse") {   // skipped touch/pen down event,
             handler.mousemove.commit();      // yes commit. do the commit thing.
@@ -1528,10 +1530,14 @@ function canvasHandleMouseUp(ev) {
    // touch event
    _pointer.upUpdate(ev);
    if (ev.button == 0) {
-      selectFinish(ev);
-      if (ev.pointerType !== "mouse") {   // deselect current selection? todo: determine if needed 2021/07/01
-         lastPick = null;
-         setCurrent(null);
+      if (handler.camera2) {
+         handler.camera2.onUp(ev);
+      } else {
+         selectFinish(ev);
+         if (ev.pointerType !== "mouse") {   // deselect current selection? todo: determine if needed 2021/07/01
+            lastPick = null;
+            setCurrent(null);
+         }
       }
    } else if (ev.button == 1) { // check for middle button down
       if (handler.camera === null) {
@@ -1565,6 +1571,8 @@ function canvasHandleMouseMove(e) {
        ((move.movementX !== 0) || (move.movementY !== 0))) {
       if (handler.camera !== null) {
          handler.camera.onMove(move);
+      } else if (handler.camera2) {
+         handler.camera2.onMove(move);
       } else if (handler.mousemove !== null) {
          handler.mousemove.onMove(move);
       } else {
