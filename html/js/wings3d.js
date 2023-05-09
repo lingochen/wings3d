@@ -244,6 +244,12 @@ const action = {
    cameraModeExit: () => {notImplemented(this);},
    cameraZoom: () => {notImplemented(this);},
    contextMenu: () => {notImplemented(this);},
+   cameraNavigation: ()=>{notImplemented(this);},
+   createObject: ()=>{notImplemented(this);},
+   selectionTool: ()=>{notImplemented(this);},
+   panCamera: ()=>{notImplemented(this);},
+   rotateCamera: ()=>{notImplemented(this);},
+   zoomCamera: ()=>{notImplemented(this);},
    // fileMenu
    fileMenu: () => {notImplemented(this);},
    importMenu: () => {notImplemented(this);},

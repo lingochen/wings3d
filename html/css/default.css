@@ -85,6 +85,16 @@ body {
 #glcanvas {
   background-color: black;
 }
+#glcanvas.rotateCursor {
+  cursor: help;
+
+}
+#glcanvas.panCursor {
+  cursor: move;
+}
+#glcanvas.zoomCursor {
+  cursor: zoom-in;
+}
 #overlayUI {
   display: flex;
   flex-direction: column;
@@ -128,6 +138,8 @@ g.axisLetter:hover text, .axisLetter:hover use {
 #jogDial.hide {
   display: none;
 }
+
+
 
 /* global class */
 .unselectable {

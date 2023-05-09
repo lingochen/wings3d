@@ -596,7 +596,7 @@ function resetModified() {
 //
 const hilite = {cage: null, edge: null, vertex: null, face: null, plane: null};
 let currentCage;
-const handler = {camera: null, mousemove: null, mouseSelect: null};
+const handler = {camera: null, camera2: null, mousemove: null, mouseSelect: null};
 const planeRect = {center: vec3.create(), halfSize: vec3.create(), normal: vec3.create(), hilite: false};
 
 
@@ -744,6 +744,105 @@ const _mousePointer = (function(){
       },
    };
 }());
+
+
+const _cameraPointer = (function(){
+   function rotate(dx, dy) {
+      m_windows.current.camera.rotate(dx, dy);
+   }
+   function pan(dx, dy) {
+      m_windows.current.camera.pan(dx, dy);
+   }
+   function zoom(_dx, dy) {
+      m_windows.current.camera.zoom(dy);
+   }
+   let movement = {
+      camera: rotate,
+      cursor: "rotateCursor",
+      isOn: false,
+      lastX: 0,
+      lastY: 0,
+   };
+
+   return {
+      commit: ()=>{
+
+      },
+
+      rescind: ()=>{
+
+      },
+
+      onDown: (ev)=>{
+         if (ev.button === 0) {  // is left Mouse Button Down
+            movement.isOn = true;
+            movement.lastX = ev.clientX;
+            movement.lastY = ev.clientY;
+         }
+      },
+
+      onUp: (ev)=>{
+         if (ev.button === 0) {  // is left Mouse Button Up?
+            movement.isOn = false;
+         }
+      },
+
+      onInput: (ev)=>{
+
+      },
+
+      onMove: (ev)=>{
+         if (movement.isOn) {
+            let dx = ev.clienX - movement.lastX,
+                dy = movement.lastY - ev.clientY;     // reverse y dir
+            movement.camera(dx, dy);
+            movement.lastX = ev.clientX;
+            movement.lastY = ev.clientY;
+         }
+      },
+
+      setPan: function(){
+         movement.camera = pan;
+         this.cameraPointerHide();
+         movement.cursor = "panCursor";
+         this.cameraPointerShow();
+      },
+
+      setRotate: function(){
+         movement.camera = rotate;
+         this.cameraPointerHide();
+         movement.cursor = "rotateCursor";
+         this.cameraPointerShow();
+      },
+
+      setZoom: function(){
+         movement.camera = zoom;
+         this.cameraPointerHide();
+         movement.cursor = "zoomCursor";
+         this.cameraPointerShow();
+      },
+
+      cameraPointerShow: ()=>{
+         document.getElementById('glcanvas').classList.add(movement.cursor);
+      },
+
+      cameraPointerHide: ()=>{
+         document.getElementById('glcanvas').classList.remove(movement.cursor);
+      },
+   };
+}());
+function attachCamera2() {
+   if (handler.camera2 === null) {
+      handler.camera2 = _cameraPointer;
+      _cameraPointer.cameraPointerShow();
+   }
+}
+function detachCamera2() {
+   if (handler.camera2) {
+      _cameraPointer.cameraPointerHide();
+      handler.camera2 = null;
+   }
+}
 
 
 function attachHandlerCamera(camera) {
@@ -1718,6 +1817,33 @@ function init() {
       changeGeometryWindows(3, 4);
    });
 
+   // bind [camera, create, select] action
+   UI.bindMenuItem(Wings3D.action.cameraNavigation.name, (ev)=>{
+      // change cursor
+      attachCamera2();
+   });
+   UI.bindMenuItem(Wings3D.action.createObject.name, (ev)=>{
+      // change cursor
+      detachCamera2();
+   });
+   UI.bindMenuItem(Wings3D.action.selectionTool.name, (ev)=>{
+      // change cursor
+      detachCamera2();
+   });
+
+   // bind [pan, rotate, zoom] camera action
+   UI.bindMenuItem(Wings3D.action.panCamera.name, (ev)=>{
+      // change cursor
+      _cameraPointer.setPan();
+   });
+   UI.bindMenuItem(Wings3D.action.rotateCamera.name, (ev)=>{
+      // change cursor
+      _cameraPointer.setRotate();
+   });
+   UI.bindMenuItem(Wings3D.action.zoomCamera.name, (ev)=>{
+      // change cursor
+      _cameraPointer.setZoom();
+   });
 
    // viewAlong
    const viewAlong = [{id: Wings3D.action.viewAlongP_X, hotkey: 'x'}, 
