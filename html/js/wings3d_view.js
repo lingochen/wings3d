@@ -964,160 +964,7 @@ function modeHelp() {
    }
 }
 
-//-- touch event handling -----------------------------------------------
-// two-finger touch event.
-let _2fingers = (()=>{
-   let touchStart, touchCurrent;
-   function touchRecord(evt) {
-      const data =  {pos: [evt.clientX, evt.clientY], velocity: [0, 0], time: Date.now()};
-      return data;
-   }
-
-   const startHandler = {
-      is2Fingers: ()=>{return false;},
-
-      onDown: (evt)=> {
-         if (evt.touches.length === 2) {
-            touchStart = [touchRecord(evt.touches[0]), touchRecord(evt.touches[1])];
-            touchCurrent = touchStart;
-            return actionHandler;
-         }
-         return startHandler;
-      },
-
-      onUp: (evt)=> {
-         if (evt.touches.length === 2) {
-            touchStart = [touchRecord(evt.touches[0]), touchRecord(evt.touches[1])];
-            touchCurrent = touchStart;
-            return actionHandler;
-         }
-         return startHandler;
-      },
-
-      onCancel: (_evt)=>{
-         return startHandler;
-      },
-
-      onMove: (_evt)=> {
-         return startHandler;
-      },
-   };
-
-   function touchAction(onRotate, onScale, onTranslate) { 
-      // check if we have enough movement
-      let a0 = touchStart[0].pos, a1 = touchCurrent[0].pos, 
-               b0 = touchStart[1].pos, b1 = touchCurrent[1].pos;
-      const aV = [0, 0], bV= [0, 0];
-      vec2.sub(aV, a1, a0);
-      vec2.sub(bV, b1, b0);
-      let aLen = vec2.len(aV), bLen = vec2.len(bV);
-
-      if ((aLen > 9) || (bLen > 9)) {
-         const ba1 = [0, 0], ba0 = [0, 0];
-         vec2.sub(ba1, b1, a1);
-         vec2.sub(ba0, b0, a0);
-         let rotate = Math.atan2(ba1[1], ba1[0]) - Math.atan2(ba0[1], ba0[0]);
-         const jitter = Math.PI/25;
-         if ( (rotate > jitter) || (rotate < -jitter) ) {
-            if (a0[0] > b0[0]) { // we want a to be on the left
-               [aLen, bLen] = [bLen, aLen];
-            }
-            if (rotate > 0) {
-               onRotate(-aLen, -bLen);
-            } else {
-               onRotate(aLen, bLen);
-            }
-            touchStart = touchCurrent;
-         } else {
-            let scale = Math.sqrt(vec2.sqrLen(ba1) / vec2.sqrLen(ba0));
-            if (vec2.dot(aV, bV) <= 0) {  // scale should not move on same dir.
-               if ( (scale > 1.04) || (scale < 0.96) ) {
-                  onScale(scale);
-                  touchStart = touchCurrent;
-               }
-            } else {
-               // check if we are panning, (no rotate,scale), the length of (a1,a0) == (b1,b0), so we just check 1
-               let scale = aLen / bLen;
-               if ((scale < 1.22) && (scale > 0.8)) {  // 2 finger should move more less togther
-                  vec2.lerp(aV, aV, bV, 0.5);   // average vec
-                  onTranslate(aV);
-                  touchStart = touchCurrent;
-               } 
-            }
-         }
-      }
-   }
-
-   const actionHandler = {
-      is2Fingers: ()=>{return true;},
-
-      onGesture: (rotate, scale, translate)=>{
-         touchAction(rotate, scale, translate);
-      },
-
-      onDown: (evt)=> {
-         if (evt.touches.length !== 2) {  // we only want 2 finger
-            touchStart = touchCurrent = null;
-            return startHandler;
-         }
-         return actionHandler;
-      },
-
-      onUp: (evt)=> {
-         if (evt.touches.length !== 2) {
-            touchStart = touchCurrent = null;
-            return startHandler;
-         }
-         // this should not happened!
-         return actionHandler;
-      },
-
-      onCancel: (evt)=> {
-
-      },
-
-      onMove: (evt)=> { // we have 2 finger, now check if 
-         if (evt.touches.length === 2) {
-            touchCurrent = [touchRecord(evt.touches[0]), touchRecord(evt.touches[1])];
-         }
-         return actionHandler;
-      }
-   };
-   return startHandler;
-})();
-function canvasHandleTouchDown(evt) {
-   _2fingers = _2fingers.onDown(evt);
-}
-function canvasHandleTouchUp(evt) {
-   _2fingers = _2fingers.onUp(evt);
-}
-/** 
-   firefox for window don't handle 2 pointers move well. (the 2nd touch fire event sporadically with large movement)
-   so we revert using touchmove when we detect 2 pointers.
-   todo: comeback to revisit(2021/04/26) the problem.
-*/
-function canvasHandleTouchMove(evt) {
-   // evt.preventDefault();
-   _2fingers = _2fingers.onMove(evt);
-   if (evt.touches.length === 2) {
-      // check, move, zoom, rotate
-      _2fingers.onGesture((dx, dy)=> {
-         m_windows.current.camera.rotate(dx, dy);
-      },
-      (scale)=>{
-         // now zoom action
-         if (scale >= 1.0) {  // negative direction
-            m_windows.current.camera.zoomStep( scale * -50 );
-         } else {
-            m_windows.current.camera.zoomStep( 1/scale * 50);
-         }
-      },
-      (translate)=> {
-         m_windows.current.camera.pan(translate[0], -translate[1]);
-      }
-   );
-   }
-}
+//-- deprecated jog dial handling -----------------------------------------------
 const _jogDial = (()=> {
    function simulatePointer(name, button) {  //button: 0 = left, 1 = middle, 2 = right
       return new PointerEvent(name, {
@@ -1179,7 +1026,7 @@ const _jogDial = (()=> {
       },
    };
 })();
-//-- end of touch event handling ----------------------------------------
+//-- end of jog dial handling ----------------------------------------
 //
 // mouse handling ---------------------------------------------------------------------
 //
@@ -1191,7 +1038,6 @@ let _pointer = (function() {
 
    return {
       downUpdate: (evt)=> {
-         //_2fingers = _2fingers.onDown(evt);
          if (evt.isPrimary) { // only interested in primary
             // check lastTime of the up Event
             const currentTime = Date.now();
@@ -1208,14 +1054,12 @@ let _pointer = (function() {
       },
 
       upUpdate: (evt) => { // check primary
-         //_2fingers = _2fingers.onUp(evt);
          if (evt.isPrimary) {
             states.delete(evt.pointerId); // reset pos
          }
       },
 
       moveUpdate: (evt) => {  //
-         //_2fingers = _2fingers.onMove(evt);
          const pos = [evt.screenX, evt.screenY];
          if (!states.has(evt.pointerId)) {
             states.set(evt.pointerId, {last: pos, current: pos});
@@ -1480,6 +1324,12 @@ function selectFinish(ev) {
 }
 
 
+/*const transformUI = {
+
+
+};*/
+
+
 
 function canvasHandleMouseEnter(ev) {
    modeHelp();
@@ -1495,10 +1345,13 @@ function canvasHandleMouseDown(ev) {
    // touch event
    _pointer.downUpdate(ev);
    if (ev.button === 0) {
-      if (handler.camera !== null) {
+      if (handler.camera) {
          if (ev.pointerType === "mouse") {   // skipped touch/pen down event,
             handler.camera.commit();
          }
+      } else if (handler.doTransform) {  
+         // in transformAdjustingMode, so do nothing.
+
       } else if (handler.camera2) {
          handler.camera2.onDown(ev);
       } else if (handler.mousemove !== null) {
@@ -1532,6 +1385,8 @@ function canvasHandleMouseUp(ev) {
    if (ev.button == 0) {
       if (handler.camera2) {
          handler.camera2.onUp(ev);
+      } else if (handler.doTransform) {
+         // nothing to do.
       } else {
          selectFinish(ev);
          if (ev.pointerType !== "mouse") {   // deselect current selection? todo: determine if needed 2021/07/01
@@ -1567,8 +1422,7 @@ function canvasHandleMouseMove(e) {
    if (e.pointerType !== "mouse") {  // firefox touch event don't have correct movementXY, so we have to get it ourself
       _pointer.getMovement(e.pointerId, move);
    }
-   if (!_2fingers.is2Fingers() && 
-       ((move.movementX !== 0) || (move.movementY !== 0))) {
+   if ((move.movementX !== 0) || (move.movementY !== 0)) {
       if (handler.camera !== null) {
          handler.camera.onMove(move);
       } else if (handler.camera2) {
@@ -1583,7 +1437,7 @@ function canvasHandleMouseMove(e) {
 
 // contextMenu, mouse right click.
 function canvasHandleContextMenu(ev) {
-   if (_2fingers.is2Fingers() || handler.mouseSelect || handler.mousemove) {  // add mousemove, 2021/06/29, prevent touch contexmenu
+   if (handler.mouseSelect || handler.mousemove) {  // add mousemove, 2021/06/29, prevent touch contexmenu
       // prevent propagation.
       ev.preventDefault();
       ev.stopImmediatePropagation();      // prevent document's contextmenu popup
@@ -2155,9 +2009,6 @@ function init() {
    gl.canvas.addEventListener("pointerup", canvasHandleMouseUp, false);
    gl.canvas.addEventListener("pointerleave", canvasHandleMouseLeave, false);
    gl.canvas.addEventListener("pointermove", canvasHandleMouseMove, false);
-   gl.canvas.addEventListener("touchstart", canvasHandleTouchDown);
-   gl.canvas.addEventListener("touchend", canvasHandleTouchUp);
-   gl.canvas.addEventListener("touchmove", canvasHandleTouchMove);
    gl.canvas.addEventListener("wheel", canvasHandleWheel, false);
    // capture keydown
    gl.canvas.addEventListener("pointerover", function(evt) { gl.canvas.focus(); });
