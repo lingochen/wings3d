@@ -935,13 +935,10 @@ function attachHandlerMouseSelect(mouseSelectHandler) {
    handler.mouseSelect = mouseSelectHandler;
 };
 
-function createElementSVG(element) {
-   return document.createElementNS("http://www.w3.org/2000/svg", element);
-}
 const TweakMode = (function(){
 /*   let selection = {pos: [0,0], area: null};       // dome area...
          // start tweaking, svgUI shown (dome, spike ...)
-         const dome = createElementSVG('circle');
+         const dome = createSvgElement('circle');
          selection.pos = mousePos;
          dome.setAttributeNS(null, 'cx', mousePos.x);
          dome.setAttributeNS(null, 'cy', mousePos.y);
@@ -1177,11 +1174,11 @@ const boxSelect = (function(){
    let selectionRectangle = {rect: null, start: [0, 0], end: [0, 0]};
 
    function setupRectangle(mousePos) {
-      selectionRectangle.rect = createElementSVG('rect');
-      selectionRectangle.rect.setAttributeNS(null, 'x', mousePos.x);
-      selectionRectangle.rect.setAttributeNS(null, 'y', mousePos.y);
-      selectionRectangle.rect.setAttributeNS(null, 'fill', 'blue');
-      selectionRectangle.rect.setAttributeNS(null, 'fill-opacity', 0.50);
+      selectionRectangle.rect = UI.createSvgElement('rect', {x: mousePos.x, y: mousePos.y, fill: 'blue', 'fill-opacity': 0.50});
+      //selectionRectangle.rect.setAttributeNS(null, 'x', mousePos.x);
+      //selectionRectangle.rect.setAttributeNS(null, 'y', mousePos.y);
+      //selectionRectangle.rect.setAttributeNS(null, 'fill', 'blue');
+      //selectionRectangle.rect.setAttributeNS(null, 'fill-opacity', 0.50);
       Render.svgUI.appendChild(selectionRectangle.rect);
    }
    
@@ -1324,7 +1321,7 @@ function selectFinish(ev) {
 }
 
 
-/*const transformUI = {
+/*const tweakTransform = {
 
 
 };*/
@@ -1635,11 +1632,11 @@ function init() {
       m_windows.viewports.push( new Render.Renderport([0, 0, gl.canvas.width, gl.canvas.height], prop.orthogonalView, prop.showAxes, prop.showGroundplane) );
    }
    m_windows.current = m_windows.viewports[0];
-   m_windows.hilite = createElementSVG('rect');
-   m_windows.hilite.setAttributeNS(null, 'x', 0);
-   m_windows.hilite.setAttributeNS(null, 'y', 0);
-   m_windows.hilite.setAttributeNS(null, 'stroke', 'black');
-   m_windows.hilite.setAttributeNS(null, 'fill', 'none');
+   m_windows.hilite = UI.createSvgElement('rect', {x: 0, y: 0, stroke: 'black', fill: 'none'});
+   //m_windows.hilite.setAttributeNS(null, 'x', 0);
+   //m_windows.hilite.setAttributeNS(null, 'y', 0);
+   //m_windows.hilite.setAttributeNS(null, 'stroke', 'black');
+   //m_windows.hilite.setAttributeNS(null, 'fill', 'none');
    Render.svgUI.appendChild(m_windows.hilite);
    //
    UI.bindMenuItem(Wings3D.action.singlePane.name, (ev)=> {

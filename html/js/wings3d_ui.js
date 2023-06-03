@@ -7,6 +7,22 @@ import * as Hotkey from './wings3d_hotkey.js';
 import * as Wings3D from './wings3d.js';
 
 
+const SVGNS = "http://www.w3.org/2000/svg";
+function createSvgElement(objName, attributes={}, styles={}) {
+   const obj = document.createElementNS(SVGNS, objName);
+   for (const [prop, value] of Object.entries(attributes)) {
+      obj.setAttribute(prop, value);
+   }
+   Object.assign(obj.style, styles);
+   return obj;
+}
+function createSvgText(text, attributes={}, styles={}) {
+   const obj = createSvgElement('text', attributes, styles);
+   obj.textContent = text;
+   return obj;
+}
+
+
 const menuIdAttrib = "data-menuId";
 function _bindMenuItem(mode, menuItems, button, id, fn, hotkey, meta) {
    Wings3D.bindAction(menuItems, button, id, fn);
@@ -593,6 +609,8 @@ function showPopup() {//dom, name) {
 
 export {
    styleSheet,
+   createSvgElement,
+   createSvgText,
    getArrow,
    placement,
    getPosition,

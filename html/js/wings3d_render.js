@@ -21,7 +21,6 @@ const {vec3, vec4, mat4} = glMatrix;
 
 
 
-const SVGNS = "http://www.w3.org/2000/svg";
 // initPolygonStipple(); no webgl support. shader replacement? ignore for now
 let m_lineProg;        // to be replaced
 let m_groundAxisProg;  // to be replaced
@@ -40,10 +39,10 @@ class Renderport {
       this.miniAxis = {x: null, y: null, z: null, pan: null,};
 
       for (let axis of Object.keys(this.lineEnd)) {
-         this.lineEnd[axis] = document.createElementNS(SVGNS, 'text');
-         this.lineEnd[axis].style.fontSize = "18px";
-         this.lineEnd[axis].style.fontFamily = 'Arial';
-         this.lineEnd[axis].textContent = axis;
+         this.lineEnd[axis] = UI.createSvgText(axis, {}, {fonSize:'18px', fontFamily:'Arial'});
+         //this.lineEnd[axis].style.fontSize = "18px";
+         //this.lineEnd[axis].style.fontFamily = 'Arial';
+         //this.lineEnd[axis].textContent = axis;
          m_svgUI.appendChild(this.lineEnd[axis]);
       }
 
